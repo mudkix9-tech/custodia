@@ -1,0 +1,82 @@
+@import "tailwindcss";
+@source "../../../packages/ui/src";
+
+@theme {
+  --color-bone-50: #FBF8F3;
+  --color-bone-100: #F6F1E8;
+  --color-bone-200: #EDE6D7;
+  --color-bone-300: #DFD5C0;
+
+  --color-ink-900: #1F1B16;
+  --color-ink-800: #2B2620;
+  --color-ink-700: #3A342C;
+  --color-ink-600: #5A5247;
+  --color-ink-500: #7A7062;
+  --color-ink-400: #9B9080;
+  --color-ink-300: #BDB3A2;
+
+  --color-sage-50: #EFF2EC;
+  --color-sage-100: #DDE4D5;
+  --color-sage-300: #A9B89A;
+  --color-sage-500: #6B8A5A;
+  --color-sage-600: #557448;
+  --color-sage-700: #3F5836;
+
+  --color-amber-50: #FBF1DE;
+  --color-amber-100: #F4E0B6;
+  --color-amber-500: #C68A2A;
+  --color-amber-600: #A26F1E;
+
+  --color-clay-50: #F8E6DE;
+  --color-clay-100: #F1CDBD;
+  --color-clay-500: #C25A38;
+  --color-clay-600: #A14727;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --shadow-card: 0 1px 0 rgba(31,27,22,0.04), 0 1px 2px rgba(31,27,22,0.04);
+  --shadow-lift: 0 1px 0 rgba(31,27,22,0.04), 0 8px 24px -8px rgba(31,27,22,0.10);
+  --shadow-inset-hairline: inset 0 0 0 1px rgba(31,27,22,0.06);
+}
+
+@layer base {
+  :root {
+    --background: #FBF8F3;
+    --foreground: #1F1B16;
+  }
+  
+  html, body {
+    background: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  .hairline {
+    box-shadow: inset 0 0 0 1px rgba(31,27,22,0.07);
+  }
+  .hairline-strong {
+    box-shadow: inset 0 0 0 1px rgba(31,27,22,0.12);
+  }
+  .grain {
+    background-image: radial-gradient(rgba(31,27,22,0.025) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+  .fade-up {
+    animation: fade-up 480ms cubic-bezier(.2,.7,.2,1) both;
+  }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes draw-stroke {
+  from { stroke-dashoffset: var(--len, 1000); }
+  to   { stroke-dashoffset: 0; }
+}

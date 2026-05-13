@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privaro — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['"Instrument Serif"', 'ui-serif', 'Georgia', 'serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            // Warm off-white surfaces
+            bone: {
+              50:  '#FBF8F3',
+              100: '#F6F1E8',
+              200: '#EDE6D7',
+              300: '#DFD5C0',
+            },
+            ink: {
+              900: '#1F1B16',
+              800: '#2B2620',
+              700: '#3A342C',
+              600: '#5A5247',
+              500: '#7A7062',
+              400: '#9B9080',
+              300: '#BDB3A2',
+            },
+            sage: {
+              50:  '#EFF2EC',
+              100: '#DDE4D5',
+              300: '#A9B89A',
+              500: '#6B8A5A',
+              600: '#557448',
+              700: '#3F5836',
+            },
+            amber: {
+              50:  '#FBF1DE',
+              100: '#F4E0B6',
+              500: '#C68A2A',
+              600: '#A26F1E',
+            },
+            clay: {
+              50:  '#F8E6DE',
+              100: '#F1CDBD',
+              500: '#C25A38',
+              600: '#A14727',
+            },
+          },
+          boxShadow: {
+            'card':   '0 1px 0 rgba(31,27,22,0.04), 0 1px 2px rgba(31,27,22,0.04)',
+            'lift':   '0 1px 0 rgba(31,27,22,0.04), 0 8px 24px -8px rgba(31,27,22,0.10)',
+            'inset-hairline': 'inset 0 0 0 1px rgba(31,27,22,0.06)',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    html, body { background: #FBF8F3; color: #1F1B16; }
+    body { font-feature-settings: "ss01", "cv11"; -webkit-font-smoothing: antialiased; }
+    .hairline { box-shadow: inset 0 0 0 1px rgba(31,27,22,0.07); }
+    .hairline-strong { box-shadow: inset 0 0 0 1px rgba(31,27,22,0.12); }
+    /* Subtle paper grain */
+    .grain {
+      background-image:
+        radial-gradient(rgba(31,27,22,0.025) 1px, transparent 1px);
+      background-size: 3px 3px;
+    }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fade-up 480ms cubic-bezier(.2,.7,.2,1) both; }
+    @keyframes draw-stroke {
+      from { stroke-dashoffset: var(--len, 1000); }
+      to   { stroke-dashoffset: 0; }
+    }
+  </style>
+
+  <!-- React + Babel (pinned per system rules) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <!-- Recharts (UMD) + PropTypes (Recharts dep) -->
+  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+
+  <!-- Lucide (UMD, exposes window.lucide with React-compatible icons via createIcon factories;
+       we'll use the lucide-react-style approach by reading from window.lucide.icons and rendering inline SVGs) -->
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.js"></script>
+</head>
+<body class="min-h-screen font-sans">
+  <div id="root"></div>
+
+  <!-- Lucide Icon helper: bridges the UMD lucide build into a <Icon name="..." /> React component
+       that mirrors lucide-react ergonomics. -->
+  <script type="text/babel" data-presets="react" src="icons.jsx"></script>
+  <script type="text/babel" data-presets="react" src="data.jsx"></script>
+  <script type="text/babel" data-presets="react" src="parts.jsx"></script>
+  <script type="text/babel" data-presets="react" src="App.jsx"></script>
+</body>
+</html>

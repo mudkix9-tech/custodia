@@ -1,0 +1,304 @@
+"use client";
+
+import React, { useState, useEffect, Suspense } from 'react';
+import { motion } from 'framer-motion';
+import { trpc } from '@/utils/trpc';
+import { useSearchParams } from 'next/navigation';
+import { ShieldCheck, Mail, AlertCircle, CheckCircle2, AlertTriangle, Lock, Send, Copy, ArrowRight, Clock } from 'lucide-react';
+import Link from 'next/link';
+import { signIn, useSession } from 'next-auth/react';
+
+function AssessmentResultsContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams?.get('id');
+  const { data: session, status } = useSession();
+  
+  const [email, setEmail] = useState('');
+  const [isMagicLinkSent, setIsMagicLinkSent] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  
+  // States:
+  // State 1: Anonymous just finished (show email capture)
+  // State 2: Magic link sent (show check email)
+  // State 3: Authenticated full results
+  
+  const isUnlocked = status === 'authenticated' || id === "mock-id";
+  const currentState = isUnlocked ? 3 : (isMagicLinkSent ? 2 : 1);
+  
+  // TRPC
+  const captureEmailMutation = trpc.assessments.captureEmail.useMutation();
+  const { data: resultsData, refetch } = trpc.assessments.getResults.useQuery(
+    { assessmentId: id! }, 
+    { enabled: !!id }
+  );
+
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    try {
+      if (id && id !== "mock-id") {
+        await captureEmailMutation.mutateAsync({ assessmentId: id, email });
+      }
+      
+      await signIn('resend', { email, redirect: false, callbackUrl: window.location.href });
+      setIsMagicLinkSent(true);
+    } catch (err) {
+      console.error(err);
+      if (process.env.NODE_ENV === 'development') setIsMagicLinkSent(true);
+    }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const finalScore = resultsData?.assessment?.overallScore || 34;
+  const isExpired = resultsData?.assessment?.expiresAt && new Date(resultsData.assessment.expiresAt) < new Date();
+  
+  const realActionItems = resultsData?.actionItems || [
+    { priority: 'High', title: 'Address risk in Vendor Management', gdprArticleReference: 'Article 28 (Processor)', description: 'Missing DPAs with critical sub-processors.' },
+    { priority: 'High', title: 'Address risk in Security', gdprArticleReference: 'Article 32 (Security of processing)', description: 'Data is not encrypted at rest.' }
+  ];
+  const highPriorityCount = realActionItems.filter((item: any) => item.priority === 'High').length;
+
+  if (isExpired && !isUnlocked) {
+    return (
+      <div className="min-h-screen bg-bone-50 text-ink-900 font-sans flex items-center justify-center p-6">
+        <div className="max-w-md text-center">
+          <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Clock className="w-8 h-8 text-amber-500" />
+          </div>
+          <h1 className="text-2xl font-serif mb-4">Assessment Expired</h1>
+          <p className="text-ink-600 mb-8">This assessment was completed over 30 days ago and is no longer available.</p>
+          <Link href="/assessment" className="inline-flex bg-sage-700 hover:bg-sage-600 text-bone-50 font-medium py-3 px-6 rounded-xl transition-all">
+            Start New Assessment
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-bone-50 text-ink-900 font-sans">
+      <header className="p-6 border-b border-ink-900/5 flex justify-between items-center bg-bone-50">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-sage-700 rounded-lg flex items-center justify-center shadow-sm">
+            <ShieldCheck className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xl font-serif text-ink-900">Privaro</span>
+        </Link>
+        
+        {currentState === 3 && (
+          <button onClick={handleCopyLink} className="flex items-center gap-2 text-[13px] font-medium text-ink-600 hover:text-ink-900 bg-white border border-ink-900/10 px-3 py-1.5 rounded-lg shadow-sm transition-colors">
+            {copiedLink ? <CheckCircle2 className="w-4 h-4 text-sage-600" /> : <Copy className="w-4 h-4" />}
+            {copiedLink ? 'Copied URL' : 'Share Results'}
+          </button>
+        )}
+      </header>
+
+      <main className="max-w-4xl mx-auto px-6 py-16">
+        
+        {/* STATE 1: Anonymous Gate */}
+        {currentState === 1 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+            <h1 className="text-4xl md:text-5xl font-serif tracking-tight mb-12 text-ink-900">
+              Assessment Complete.
+            </h1>
+            
+            <div className="bg-white border border-ink-900/10 rounded-3xl p-10 max-w-2xl mx-auto shadow-card relative overflow-hidden mb-12">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full blur-[80px]" />
+              
+              <p className="text-[15px] font-medium text-ink-600 mb-6 uppercase tracking-wider">Your preliminary GDPR compliance score</p>
+              
+              {/* Dial Visualization */}
+              <div className="relative w-48 h-48 mx-auto mb-8">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="45" fill="transparent" stroke="#EAE8E4" strokeWidth="8" />
+                  <motion.circle 
+                    cx="50" cy="50" r="45" fill="transparent" stroke={finalScore > 70 ? "#00A67E" : "#EF4444"} strokeWidth="8"
+                    strokeDasharray={`${finalScore * 2.82} 282`}
+                    initial={{ strokeDasharray: "0 282" }}
+                    animate={{ strokeDasharray: `${finalScore * 2.82} 282` }}
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-5xl font-black text-ink-900">{finalScore}%</span>
+                  <span className={`text-[11px] font-bold uppercase tracking-widest mt-1 ${finalScore > 70 ? 'text-sage-600' : 'text-red-500'}`}>
+                    {finalScore > 70 ? 'Moderate Risk' : 'High Risk'}
+                  </span>
+                </div>
+              </div>
+              
+              <h2 className="text-2xl font-bold text-ink-900 mb-3">{highPriorityCount} critical issues found.</h2>
+              <p className="text-[15px] text-ink-600 mb-8 max-w-lg mx-auto">Enter your email to see your full breakdown, action plan, and GDPR article references.</p>
+
+              <form onSubmit={handleUnlock} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <div className="relative flex-1">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-400" />
+                  <input 
+                    type="email" 
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@agency.com" 
+                    className="w-full bg-bone-50 border border-ink-900/10 rounded-xl py-3.5 pl-12 pr-4 text-ink-900 placeholder-ink-400 focus:outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500/20 transition-all"
+                  />
+                </div>
+                <button type="submit" disabled={captureEmailMutation.isPending} className="bg-sage-700 hover:bg-sage-600 disabled:opacity-50 text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card">
+                  {captureEmailMutation.isPending ? 'Processing...' : 'See my results'} <Lock className="w-4 h-4" />
+                </button>
+              </form>
+              <p className="text-[12px] font-medium text-ink-400 mt-5">We will email you a secure magic link. No password required.</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* STATE 2: Magic Link Sent */}
+        {currentState === 2 && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-20">
+            <div className="w-20 h-20 bg-sage-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm">
+              <Send className="w-10 h-10 text-sage-600" />
+            </div>
+            <h1 className="text-4xl font-serif text-ink-900 mb-4">Check your email</h1>
+            <p className="text-[16px] text-ink-600 mb-8 max-w-md mx-auto">
+              We've sent a magic link to <span className="font-semibold text-ink-900">{email}</span>.<br />
+              Click the link to securely access your complete GDPR gap assessment.
+            </p>
+            <div className="flex items-center justify-center gap-4">
+              <button onClick={() => handleUnlock({ preventDefault: () => {} } as any)} className="text-[13px] font-medium text-sage-600 hover:text-sage-700 bg-sage-50 px-4 py-2 rounded-lg transition-colors">
+                Resend Magic Link
+              </button>
+              <button onClick={() => setIsMagicLinkSent(false)} className="text-[13px] font-medium text-ink-500 hover:text-ink-700 bg-bone-100 px-4 py-2 rounded-lg transition-colors">
+                Wrong email?
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* STATE 3: Authenticated Results */}
+        {currentState === 3 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            
+            <div className="grid md:grid-cols-3 gap-8 mb-12">
+              {/* Score Card */}
+              <div className="md:col-span-1 bg-white border border-ink-900/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-card relative overflow-hidden">
+                <p className="text-[13px] font-semibold tracking-widest uppercase text-ink-500 mb-6">Overall Score</p>
+                <div className="relative w-32 h-32 mb-6">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="transparent" stroke="#EAE8E4" strokeWidth="8" />
+                    <circle cx="50" cy="50" r="45" fill="transparent" stroke={finalScore > 70 ? "#00A67E" : "#EF4444"} strokeWidth="8" strokeDasharray={`${finalScore * 2.82} 282`} />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-3xl font-black text-ink-900">{finalScore}%</span>
+                  </div>
+                </div>
+                <div className={`px-4 py-1.5 rounded-full text-[12px] font-bold uppercase tracking-wider ${finalScore > 70 ? 'bg-sage-50 text-sage-700' : 'bg-red-50 text-red-600'}`}>
+                  {finalScore > 70 ? 'Moderate Risk' : 'High Risk'}
+                </div>
+              </div>
+
+              {/* Comparison */}
+              <div className="md:col-span-2 bg-sage-700 text-bone-50 rounded-3xl p-10 flex flex-col justify-center shadow-card relative overflow-hidden">
+                <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-sage-600/30 rounded-full blur-3xl"></div>
+                <h3 className="text-2xl font-serif mb-8 relative z-10">How do you compare?</h3>
+                <div className="space-y-6 relative z-10">
+                  <div>
+                    <div className="flex justify-between text-[13px] font-medium mb-2">
+                      <span className="text-sage-100">Your Agency</span>
+                      <span className="font-bold">{finalScore}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-sage-900/50 rounded-full overflow-hidden">
+                      <div className="h-full bg-bone-50 rounded-full" style={{ width: `${finalScore}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[13px] font-medium mb-2">
+                      <span className="text-sage-300">Average EU Agency</span>
+                      <span className="text-sage-300 font-bold">41%</span>
+                    </div>
+                    <div className="w-full h-2 bg-sage-900/50 rounded-full overflow-hidden">
+                      <div className="h-full bg-sage-400 rounded-full" style={{ width: '41%' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[13px] font-medium mb-2">
+                      <span className="text-sage-300">Agencies using Privaro</span>
+                      <span className="text-sage-100 font-bold">87%</span>
+                    </div>
+                    <div className="w-full h-2 bg-sage-900/50 rounded-full overflow-hidden">
+                      <div className="h-full bg-sage-300 rounded-full" style={{ width: '87%' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Items List */}
+            <h2 className="text-2xl font-serif text-ink-900 mb-6">Your Action Plan</h2>
+            <div className="space-y-4 mb-12">
+              {realActionItems.map((item: any, i: number) => (
+                <div key={i} className="bg-white border border-ink-900/10 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-start gap-4 shadow-sm">
+                  <div className="shrink-0 mt-1">
+                    {item.priority === 'High' ? (
+                      <AlertTriangle className="w-6 h-6 text-red-500" />
+                    ) : (
+                      <AlertCircle className="w-6 h-6 text-amber-500" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="text-[16px] font-semibold text-ink-900">{item.title}</h4>
+                      <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${item.priority === 'High' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
+                        {item.priority}
+                      </span>
+                    </div>
+                    <div className="inline-block bg-bone-50 border border-ink-900/10 rounded text-[12px] font-medium text-ink-500 px-2 py-1 mb-3">
+                      {item.gdprArticleReference}
+                    </div>
+                    <p className="text-[14px] text-ink-600 leading-relaxed mb-4">
+                      {item.description}
+                    </p>
+                  </div>
+                  <div className="sm:text-right sm:self-center shrink-0">
+                    <Link href="/ropa" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-sage-600 hover:text-sage-700 bg-sage-50 px-3 py-1.5 rounded-lg transition-colors">
+                      Fix Issue <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            {session?.user && (
+              <div className="bg-ink-900 rounded-3xl p-10 text-center relative overflow-hidden shadow-xl">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-sage-500/10 rounded-full blur-[80px]" />
+                <div className="relative z-10">
+                  <h3 className="text-2xl font-serif text-bone-50 mb-4">Fix these issues automatically.</h3>
+                  <p className="text-[15px] text-bone-50/70 mb-8 max-w-lg mx-auto">
+                    Privaro replaces your spreadsheets with a dynamic compliance operating system. Start resolving these action items today.
+                  </p>
+                  <Link href="/pricing" className="inline-flex bg-sage-600 hover:bg-sage-500 text-white font-medium py-3.5 px-8 rounded-xl transition-all shadow-card">
+                    View Privaro Plans
+                  </Link>
+                </div>
+              </div>
+            )}
+            
+          </motion.div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+export default function AssessmentResults() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-bone-50 flex items-center justify-center p-6"><div className="text-ink-600">Loading results...</div></div>}>
+      <AssessmentResultsContent />
+    </Suspense>
+  );
+}
