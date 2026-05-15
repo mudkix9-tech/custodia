@@ -5,43 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1776872246472,
-      "tag": "0000_mute_invaders",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1776872652207,
-      "tag": "0001_tense_darwin",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1777027382662,
-      "tag": "0002_demonic_titanium_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1777050142324,
-      "tag": "0003_lonely_master_chief",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1777211309478,
-      "tag": "0004_mushy_nuke",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1778343965220,
-      "tag": "0005_audit_logs_update",
+      "when": 1778762917303,
+      "tag": "0000_wide_sway",
       "breakpoints": true
     }
   ]

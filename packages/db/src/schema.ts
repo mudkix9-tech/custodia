@@ -1293,3 +1293,85 @@ export const regulatoryImpactAssessments = pgTable('regulatory_impact_assessment
     unq: unique('idx_ria_unique').on(table.regulatoryUpdateId, table.organizationId)
   };
 });
+
+export const apiKeys = pgTable('api_keys', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+
+  name: varchar('name', { length: 255 }).notNull(),
+  keyHash: varchar('key_hash', { length: 64 }).notNull(),
+  prefix: varchar('prefix', { length: 12 }).notNull(),
+
+  // Permissions
+  scopes: jsonb('scopes').default('["read"]'),
+
+  // Security
+  allowedIps: jsonb('allowed_ips'),
+
+  // Usage tracking
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  requestCount: integer('request_count').default(0),
+
+  // Lifecycle
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  revokedBy: uuid('revoked_by').references(() => users.id),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_ak_org').on(table.organizationId),
+    hashIdx: index('idx_ak_hash').on(table.keyHash),
+    prefixIdx: index('idx_ak_prefix').on(table.prefix),
+  }
+});
+
+export const webhooks = pgTable('webhooks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+
+  url: varchar('url', { length: 1024 }).notNull(),
+  events: jsonb('events').notNull(), // array of event strings
+  secret: varchar('secret', { length: 255 }).notNull(),
+
+  isActive: boolean('is_active').default(true),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_wh_org').on(table.organizationId),
+  }
+});
+
+export const webhookDeliveries = pgTable('webhook_deliveries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  webhookId: uuid('webhook_id').notNull().references(() => webhooks.id),
+  eventId: varchar('event_id', { length: 100 }).notNull(),
+
+  eventType: varchar('event_type', { length: 100 }).notNull(),
+  payload: jsonb('payload').notNull(),
+
+  // Delivery tracking
+  status: varchar('status', { length: 50 }).default('pending'), // pending, success, failed, exhausted
+  attempts: integer('attempts').default(0),
+  maxAttempts: integer('max_attempts').default(5),
+
+  // Response from endpoint
+  responseStatus: integer('response_status'),
+  responseBody: text('response_body'),
+  responseTimeMs: integer('response_time_ms'),
+
+  // Error tracking
+  lastError: text('last_error'),
+  nextRetryAt: timestamp('next_retry_at', { withTimezone: true }),
+
+  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    webhookIdx: index('idx_wd_webhook').on(table.webhookId),
+    retryIdx: index('idx_wd_retry').on(table.nextRetryAt),
+  }
+});
