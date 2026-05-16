@@ -43,6 +43,13 @@
       "when": 1778343965220,
       "tag": "0005_audit_logs_update",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778932215930,
+      "tag": "0006_tiny_daredevil",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,7 @@ import { complianceGaps, complianceReports, organizations, organizationVendors, 
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
 
 export const complianceQueue = new Queue('compliance', { connection });
 

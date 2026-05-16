@@ -1293,3 +1293,38 @@ export const regulatoryImpactAssessments = pgTable('regulatory_impact_assessment
     unq: unique('idx_ria_unique').on(table.regulatoryUpdateId, table.organizationId)
   };
 });
+
+export const organizationIntegrations = pgTable('organization_integrations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+
+  // Provider
+  provider: varchar('provider', { length: 50 }).notNull(), // 'hubspot', 'salesforce', 'google_workspace', 'mailchimp', 'microsoft_365', 'slack'
+  providerAccountId: varchar('provider_account_id', { length: 255 }), // the account/tenant ID on the provider's side
+  providerAccountName: varchar('provider_account_name', { length: 255 }), // "Acme Agency HubSpot" for display
+
+  // OAuth tokens (encrypted at rest)
+  accessToken: text('access_token').notNull(), // AES-256 encrypted
+  refreshToken: text('refresh_token'), // AES-256 encrypted, nullable
+  tokenType: varchar('token_type', { length: 50 }).default('Bearer'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  scopes: jsonb('scopes').default('[]'), // actual scopes granted by the user
+
+  // Status
+  status: varchar('status', { length: 50 }).default('active'), // active, expired, revoked, error
+  lastError: text('last_error'), // last error message if status is 'error'
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  lastSyncAt: timestamp('last_sync_at', { withTimezone: true }), // last time data was pulled from this integration
+
+  // Metadata
+  connectedBy: uuid('connected_by').references(() => users.id),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow()
+}, (table) => {
+  return {
+    orgIdx: index('idx_oi_org').on(table.organizationId),
+    providerIdx: index('idx_oi_provider').on(table.provider),
+    orgProviderUnique: unique('unique_org_provider').on(table.organizationId, table.provider)
+  };
+});

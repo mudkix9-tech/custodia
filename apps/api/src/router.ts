@@ -18,6 +18,7 @@ import { trainingRouter } from './routers/training.js';
 import { settingsRouter } from './routers/settings.js';
 import { notificationsRouter } from './routers/notifications.js';
 import { regulatoryRouter } from './routers/regulatory.js';
+import { integrationsRouter } from './routers/integrations.js';
 
 export const appRouter = router({
   healthcheck: publicProcedure.query(() => {
@@ -43,6 +44,7 @@ export const appRouter = router({
   settings: settingsRouter,
   notifications: notificationsRouter,
   regulatory: regulatoryRouter,
+  integrations: integrationsRouter,
 });
 
 export type AppRouter = typeof appRouter;
