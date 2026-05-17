@@ -19,7 +19,12 @@ import { settingsRouter } from './routers/settings.js';
 import { notificationsRouter } from './routers/notifications.js';
 import { regulatoryRouter } from './routers/regulatory.js';
 
+import { apiKeysRouter } from "./routers/apiKeys.js";
+import { webhooksRouter } from "./routers/webhooks.js";
+
 export const appRouter = router({
+  apiKeys: apiKeysRouter,
+  webhooks: webhooksRouter,
   healthcheck: publicProcedure.query(() => {
     return { status: 'ok', timestamp: new Date().toISOString() };
   }),
