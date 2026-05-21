@@ -149,7 +149,7 @@ export const onboardingRouter = router({
       slug: z.string().min(1),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { industry, ...orgData } = input;
+      const { industry, companySize, ...orgData } = input;
 
       const [org] = await db.update(organizations)
         .set({
