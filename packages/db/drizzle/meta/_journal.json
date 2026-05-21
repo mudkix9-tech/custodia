@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1778762917303,
-      "tag": "0000_wide_sway",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1778932215930,
-      "tag": "0006_tiny_daredevil",
+      "when": 1779376979137,
+      "tag": "0000_daily_green_goblin",
       "breakpoints": true
     }
   ]

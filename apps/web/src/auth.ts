@@ -41,6 +41,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (dbUser.organizationId) {
             const [org] = await db.select().from(organizations).where(eq(organizations.id, dbUser.organizationId));
             token.tier = org?.subscriptionTier || 'starter';
+            token.onboardingCompleted = org?.onboardingCompleted;
+            token.onboardingDismissed = org?.onboardingDismissed;
           }
         }
       }
@@ -53,6 +55,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).role = token.role as string;
         (session.user as any).permissions = token.permissions as string[];
         (session.user as any).tier = token.tier as string;
+        (session as any).onboardingCompleted = token.onboardingCompleted as boolean;
+        (session as any).onboardingDismissed = token.onboardingDismissed as boolean;
         (session as any).tokenInvalidatedAt = token.tokenInvalidatedAt;
       }
       return session;

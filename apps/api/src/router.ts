@@ -22,8 +22,10 @@ import { integrationsRouter } from './routers/integrations.js';
 
 import { apiKeysRouter } from "./routers/apiKeys.js";
 import { webhooksRouter } from "./routers/webhooks.js";
+import { onboardingRouter } from './routers/onboarding.js';
 
 export const appRouter = router({
+  onboarding: onboardingRouter,
   apiKeys: apiKeysRouter,
   webhooks: webhooksRouter,
   healthcheck: publicProcedure.query(() => {
