@@ -17,6 +17,10 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
+// ============================================================================
+// CORE ENTITIES
+// ============================================================================
+
 export const organizations = pgTable('organizations', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
@@ -38,6 +42,7 @@ export const organizations = pgTable('organizations', {
   complianceScore: integer('compliance_score').default(0),
   lastAssessmentAt: timestamp('last_assessment_at', { withTimezone: true }),
   nextReviewDueAt: timestamp('next_review_due_at', { withTimezone: true }),
+
   // Subscription (Paddle)
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   paddleCustomerId: varchar('paddle_customer_id', { length: 255 }),
@@ -90,7 +95,7 @@ export const users = pgTable('users', {
   
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   invitedAt: timestamp('invited_at', { withTimezone: true }),
-  invitedBy: uuid('invited_by'), // Self referencing relation defined via relations in Drizzle
+  invitedBy: uuid('invited_by'),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -115,6 +120,10 @@ export const documents = pgTable('documents', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+// ============================================================================
+// CLIENTS
+// ============================================================================
+
 export const clients = pgTable('clients', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id),
@@ -129,7 +138,7 @@ export const clients = pgTable('clients', {
   dpaStatus: varchar('dpa_status', { length: 50 }).default('not_started'),
   dpaSignedAt: timestamp('dpa_signed_at', { withTimezone: true }),
   dpaExpiresAt: timestamp('dpa_expires_at', { withTimezone: true }),
-  dpaDocumentId: uuid('dpa_document_id'), // Will link to documents table
+  dpaDocumentId: uuid('dpa_document_id'),
   
   portalEnabled: boolean('portal_enabled').default(false),
   portalToken: varchar('portal_token', { length: 255 }).unique(),
@@ -141,6 +150,10 @@ export const clients = pgTable('clients', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
 });
+
+// ============================================================================
+// ROPA (Records of Processing Activities)
+// ============================================================================
 
 export const processingActivities = pgTable('processing_activities', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -154,7 +167,7 @@ export const processingActivities = pgTable('processing_activities', {
   lawfulBasis: varchar('lawful_basis', { length: 50 }).notNull(),
   lawfulBasisDetail: text('lawful_basis_detail'),
   
-  liaId: uuid('lia_id'), // Will link to legitimate_interest_assessments table
+  liaId: uuid('lia_id'),
   
   dataSubjectCategories: jsonb('data_subject_categories').notNull().default([]),
   estimatedDataSubjects: varchar('estimated_data_subjects', { length: 50 }),
@@ -176,14 +189,14 @@ export const processingActivities = pgTable('processing_activities', {
   status: varchar('status', { length: 50 }).default('draft'),
   riskLevel: varchar('risk_level', { length: 20 }).default('low'),
   requiresDpia: boolean('requires_dpia').default(false),
-  dpiaId: uuid('dpia_id'), // Will link to dpias table
+  dpiaId: uuid('dpia_id'),
   
   lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
   reviewedBy: uuid('reviewed_by').references(() => users.id),
   
   version: integer('version').default(1),
-  previousVersionId: uuid('previous_version_id'), // Self referencing
+  previousVersionId: uuid('previous_version_id'),
   
   createdBy: uuid('created_by').references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -225,7 +238,7 @@ export const legitimateInterestAssessments = pgTable('legitimate_interest_assess
   balancingTestSafeguards: text('balancing_test_safeguards'),
   balancingTestOverrides: text('balancing_test_overrides').notNull(),
   
-  outcome: varchar('outcome', { length: 50 }).notNull(), // approved, rejected, needs_review
+  outcome: varchar('outcome', { length: 50 }).notNull(),
   assessedBy: uuid('assessed_by').references(() => users.id),
   assessedAt: timestamp('assessed_at', { withTimezone: true }).defaultNow(),
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
@@ -255,9 +268,9 @@ export const processingRecipients = pgTable('processing_recipients', {
   id: uuid('id').defaultRandom().primaryKey(),
   processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
   
-  recipientType: varchar('recipient_type', { length: 50 }).notNull(), // internal_team, vendor, client, supervisory_authority, other_third_party
+  recipientType: varchar('recipient_type', { length: 50 }).notNull(),
   name: varchar('name', { length: 255 }).notNull(),
-  vendorId: uuid('vendor_id'), // will reference vendors via relation to avoid circular dep if needed, but we can use -> vendors.id since vendors is below. Actually vendors is defined below processingActivities so we must use no references() or move vendors up. We will use no references() here to prevent circular.
+  vendorId: uuid('vendor_id'),
   purpose: text('purpose'),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -270,7 +283,7 @@ export const processingTransfers = pgTable('processing_transfers', {
   
   destinationCountry: char('destination_country', { length: 2 }).notNull(),
   destinationEntity: varchar('destination_entity', { length: 255 }),
-  vendorId: uuid('vendor_id'), 
+  vendorId: uuid('vendor_id'),
   
   transferMechanism: varchar('transfer_mechanism', { length: 100 }).notNull(),
   mechanismDetail: text('mechanism_detail'),
@@ -285,6 +298,10 @@ export const processingTransfers = pgTable('processing_transfers', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
+
+// ============================================================================
+// DPIA (Data Protection Impact Assessment)
+// ============================================================================
 
 export const dpias = pgTable('dpias', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -302,7 +319,7 @@ export const dpias = pgTable('dpias', {
   residualRiskLevel: varchar('residual_risk_level', { length: 20 }),
   requiresPriorConsultation: boolean('requires_prior_consultation').default(false),
   
-  status: varchar('status', { length: 50 }).default('draft'), // draft, in_progress, completed, approved
+  status: varchar('status', { length: 50 }).default('draft'),
   version: integer('version').default(1),
   
   approvedBy: uuid('approved_by').references(() => users.id),
@@ -320,8 +337,8 @@ export const dpiaRisks = pgTable('dpia_risks', {
   dpiaId: uuid('dpia_id').notNull().references(() => dpias.id, { onDelete: 'cascade' }),
   
   description: text('description').notNull(),
-  likelihood: integer('likelihood'), // 1-5
-  severity: integer('severity'), // 1-5
+  likelihood: integer('likelihood'),
+  severity: integer('severity'),
   initialRiskScore: integer('initial_risk_score'),
   residualRiskScore: integer('residual_risk_score'),
   
@@ -333,11 +350,15 @@ export const dpiaMeasures = pgTable('dpia_measures', {
   dpiaRiskId: uuid('dpia_risk_id').notNull().references(() => dpiaRisks.id, { onDelete: 'cascade' }),
   
   description: text('description').notNull(),
-  status: varchar('status', { length: 50 }).default('planned'), // planned, implemented
+  status: varchar('status', { length: 50 }).default('planned'),
   implementedAt: timestamp('implemented_at', { withTimezone: true }),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+// ============================================================================
+// VENDORS
+// ============================================================================
 
 export const vendors = pgTable('vendors', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -423,7 +444,6 @@ export const vendorSubProcessors = pgTable('vendor_sub_processors', {
   parentVendorId: uuid('parent_vendor_id').notNull().references(() => vendors.id, { onDelete: 'cascade' }),
   subProcessorVendorId: uuid('sub_processor_vendor_id').references(() => vendors.id),
   
-  // For unlinked/unknown sub-processors
   name: varchar('name', { length: 255 }),
   service: varchar('service', { length: 255 }),
   country: char('country', { length: 2 }),
@@ -487,7 +507,7 @@ export const transferImpactAssessments = pgTable('transfer_impact_assessments', 
   lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
   
   // Document
-  documentId: uuid('document_id'), // Will be linked to documents table later if needed
+  documentId: uuid('document_id'),
   
   // Version
   version: integer('version').default(1),
@@ -497,12 +517,16 @@ export const transferImpactAssessments = pgTable('transfer_impact_assessments', 
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+// ============================================================================
+// GAP ASSESSMENT
+// ============================================================================
+
 export const assessmentTemplates = pgTable('assessment_templates', {
   id: uuid('id').defaultRandom().primaryKey(),
   questionText: text('question_text').notNull(),
   category: varchar('category', { length: 100 }).notNull(),
-  options: jsonb('options').notNull(), // { text: string, riskWeight: number }[]
-  dependsOn: jsonb('depends_on'), // { conditions: { question_id, answer_equals }[], logic: 'AND' | 'OR' }
+  options: jsonb('options').notNull(),
+  dependsOn: jsonb('depends_on'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
@@ -510,8 +534,8 @@ export const assessments = pgTable('assessments', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id),
   anonymousSessionId: varchar('anonymous_session_id', { length: 255 }),
-  email: varchar('email', { length: 255 }), // For anonymous leads before they create an org
-  status: varchar('status', { length: 50 }).default('in_progress'), // in_progress, completed, calculated
+  email: varchar('email', { length: 255 }),
+  status: varchar('status', { length: 50 }).default('in_progress'),
   overallScore: integer('overall_score'),
   completedAt: timestamp('completed_at', { withTimezone: true }),
   expiresAt: timestamp('expires_at', { withTimezone: true }),
@@ -534,13 +558,16 @@ export const actionItems = pgTable('action_items', {
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   gdprArticleReference: varchar('gdpr_article_reference', { length: 255 }),
-  priority: varchar('priority', { length: 50 }).notNull(), // High, Medium, Low
-  status: varchar('status', { length: 50 }).default('open'), // open, resolved
+  priority: varchar('priority', { length: 50 }).notNull(),
+  status: varchar('status', { length: 50 }).default('open'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-// --- Auth.js Tables ---
+// ============================================================================
+// AUTH.JS TABLES
+// ============================================================================
+
 export const accounts = pgTable(
   "account",
   {
@@ -594,21 +621,25 @@ export const pendingSignups = pgTable("pending_signups", {
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
 
+// ============================================================================
+// AUDIT LOGS
+// ============================================================================
+
 export const auditLogs = pgTable("audit_logs", {
   id: uuid("id").defaultRandom().primaryKey(),
   organizationId: uuid("organization_id").references(() => organizations.id),
-  userId: uuid("user_id").references(() => users.id), // null for system actions
+  userId: uuid("user_id").references(() => users.id),
   userEmail: varchar('user_email', { length: 255 }),
   ipAddress: varchar('ip_address', { length: 45 }),
   userAgent: text('user_agent'),
   
   action: varchar("action", { length: 255 }).notNull(),
   resourceType: varchar("resource_type", { length: 100 }),
-  resourceId: varchar("resource_id", { length: 255 }), // Can be UUID or string depending on resource
+  resourceId: varchar("resource_id", { length: 255 }),
   
   description: text('description').notNull(),
-  changes: jsonb('changes'), // Structured before/after diff
-  metadata: jsonb('metadata'), // Sanitized raw input
+  changes: jsonb('changes'),
+  metadata: jsonb('metadata'),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
@@ -619,25 +650,25 @@ export const auditLogs = pgTable("audit_logs", {
 }));
 
 // ============================================================================
-// PHASE 4: DSAR Automation
+// DSAR AUTOMATION
 // ============================================================================
 
 export const dsarRequests = pgTable('dsar_requests', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id),
   
-  referenceNumber: varchar('reference_number', { length: 50 }).notNull().unique(), // e.g., DSAR-2026-0001
-  requestType: varchar('request_type', { length: 50 }).notNull(), // access, rectification, erasure, restriction, portability, objection
+  referenceNumber: varchar('reference_number', { length: 50 }).notNull().unique(),
+  requestType: varchar('request_type', { length: 50 }).notNull(),
   
   subjectName: varchar('subject_name', { length: 255 }).notNull(),
   subjectEmail: varchar('subject_email', { length: 255 }).notNull(),
-  subjectIdentifier: jsonb('subject_identifier'), // { accountId: '...' }
+  subjectIdentifier: jsonb('subject_identifier'),
   
   subjectVerified: boolean('subject_verified').default(false),
-  verificationMethod: varchar('verification_method', { length: 100 }), // email_confirmation, id_document, account_login
+  verificationMethod: varchar('verification_method', { length: 100 }),
   verificationDate: timestamp('verification_date', { withTimezone: true }),
   
-  source: varchar('source', { length: 50 }), // intake_portal, email, manual
+  source: varchar('source', { length: 50 }),
   originalMessage: text('original_message'),
   
   receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
@@ -646,9 +677,9 @@ export const dsarRequests = pgTable('dsar_requests', {
   extensionReason: text('extension_reason'),
   extendedDeadlineAt: timestamp('extended_deadline_at', { withTimezone: true }),
   
-  status: varchar('status', { length: 50 }).default('new'), // new, identity_verification, in_progress, pending_review, completed, refused, overdue
+  status: varchar('status', { length: 50 }).default('new'),
   
-  refusalReason: varchar('refusal_reason', { length: 100 }), // manifestly_unfounded, manifestly_excessive, identity_not_verified
+  refusalReason: varchar('refusal_reason', { length: 100 }),
   refusalDetail: text('refusal_detail'),
   
   completedAt: timestamp('completed_at', { withTimezone: true }),
@@ -672,14 +703,14 @@ export const dsarTasks = pgTable('dsar_tasks', {
   systemName: varchar('system_name', { length: 255 }).notNull(),
   vendorId: uuid('vendor_id').references(() => vendors.id),
   searchInstructions: text('search_instructions'),
-  priority: varchar('priority', { length: 20 }).default('normal'), // normal, high
-  relatedActivities: jsonb('related_activities').default([]), // array of strings (ROPA names)
-  dataCategories: jsonb('data_categories').default([]), // array of data categories
+  priority: varchar('priority', { length: 20 }).default('normal'),
+  relatedActivities: jsonb('related_activities').default([]),
+  dataCategories: jsonb('data_categories').default([]),
   
-  status: varchar('status', { length: 50 }).default('pending'), // pending, in_progress, completed, not_applicable
+  status: varchar('status', { length: 50 }).default('pending'),
   dataFound: boolean('data_found'),
   dataDescription: text('data_description'),
-  actionTaken: varchar('action_taken', { length: 100 }), // exported, deleted, rectified, restricted, no_data_found
+  actionTaken: varchar('action_taken', { length: 100 }),
   actionDetail: text('action_detail'),
   evidenceDocumentId: uuid('evidence_document_id').references(() => documents.id),
   
@@ -694,9 +725,9 @@ export const dsarCommunications = pgTable('dsar_communications', {
   id: uuid('id').defaultRandom().primaryKey(),
   dsarId: uuid('dsar_id').notNull().references(() => dsarRequests.id, { onDelete: 'cascade' }),
   
-  direction: varchar('direction', { length: 10 }).notNull(), // inbound, outbound
-  type: varchar('type', { length: 50 }).notNull(), // acknowledgment, verification_request, extension_notice, response, refusal, follow_up
-  channel: varchar('channel', { length: 50 }), // email, portal, manual
+  direction: varchar('direction', { length: 10 }).notNull(),
+  type: varchar('type', { length: 50 }).notNull(),
+  channel: varchar('channel', { length: 50 }),
   
   subject: varchar('subject', { length: 255 }),
   body: text('body'),
@@ -713,22 +744,22 @@ export const dsarCommunications = pgTable('dsar_communications', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-// ==========================================
-// PHASE 5: PRIVACY POLICIES & COOKIE CONSENT
-// ==========================================
+// ============================================================================
+// PRIVACY POLICIES & COOKIE CONSENT
+// ============================================================================
 
 export const privacyPolicies = pgTable('privacy_policies', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id),
   
-  type: varchar('type', { length: 50 }).notNull(), // 'website_visitors', 'employees', 'clients', 'job_applicants', 'cookie_policy'
+  type: varchar('type', { length: 50 }).notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   language: varchar('language', { length: 10 }).default('en'),
   
-  currentVersionId: uuid('current_version_id'), // Will reference policyVersions.id
+  currentVersionId: uuid('current_version_id'),
   publishedAt: timestamp('published_at', { withTimezone: true }),
   
-  syncWithRopa: boolean('sync_with_ropa').default(false), // Replaces auto_update
+  syncWithRopa: boolean('sync_with_ropa').default(false),
   embedUrl: varchar('embed_url', { length: 500 }),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -743,11 +774,11 @@ export const policyVersions = pgTable('policy_versions', {
   versionNumber: integer('version_number').notNull(),
   contentHtml: text('content_html').notNull(),
   contentMarkdown: text('content_markdown').notNull(),
-  contentJson: jsonb('content_json'), // Structured sections
+  contentJson: jsonb('content_json'),
   
   changeSummary: text('change_summary'),
-  changeType: varchar('change_type', { length: 50 }), // 'minor', 'major', 'legal_update', 'auto_generated'
-  diffFromPrevious: jsonb('diff_from_previous'), // Section-level diffs
+  changeType: varchar('change_type', { length: 50 }),
+  diffFromPrevious: jsonb('diff_from_previous'),
   
   createdBy: uuid('created_by').references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -784,7 +815,7 @@ export const consentCookies = pgTable('consent_cookies', {
   cookieName: varchar('cookie_name', { length: 255 }).notNull(),
   cookieDomain: varchar('cookie_domain', { length: 255 }),
   cookiePath: varchar('cookie_path', { length: 255 }).default('/'),
-  category: varchar('category', { length: 50 }).notNull(), // necessary, analytics, marketing, functional, uncategorized
+  category: varchar('category', { length: 50 }).notNull(),
   provider: varchar('provider', { length: 255 }),
   purpose: text('purpose'),
   expiry: varchar('expiry', { length: 100 }),
@@ -798,15 +829,11 @@ export const consentCookies = pgTable('consent_cookies', {
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).defaultNow(),
 });
 
-// Since Drizzle natively doesn't strictly support `PARTITION BY RANGE` inside pgTable easily, 
-// we declare it as a standard table, and we'll have to execute a raw SQL migration to alter it 
-// or let users know it's logically partitioned. We'll use Drizzle's normal declaration but we 
-// should make sure it has the right fields for our usage.
 export const consentRecords = pgTable('consent_records', {
   id: uuid('id').defaultRandom().primaryKey(),
   domainId: uuid('domain_id').notNull().references(() => consentDomains.id),
   
-  consentId: varchar('consent_id', { length: 255 }).notNull(), // Stored in pvr_consent_id cookie
+  consentId: varchar('consent_id', { length: 255 }).notNull(),
   
   categoriesAccepted: jsonb('categories_accepted').notNull(),
   categoriesRejected: jsonb('categories_rejected').default('[]'),
@@ -817,7 +844,7 @@ export const consentRecords = pgTable('consent_records', {
   policyVersionId: uuid('policy_version_id').references(() => policyVersions.id),
   bannerVersion: varchar('banner_version', { length: 50 }),
   
-  interactionType: varchar('interaction_type', { length: 50 }), // 'accept_all', 'reject_all', 'custom', 'dismiss'
+  interactionType: varchar('interaction_type', { length: 50 }),
   
   tcfString: text('tcf_string'),
   gcmConsentState: jsonb('gcm_consent_state'),
@@ -827,30 +854,27 @@ export const consentRecords = pgTable('consent_records', {
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
-// ----------------------------------------------------------------------------
+
+// ============================================================================
 // BREACH MANAGEMENT
-// ----------------------------------------------------------------------------
+// ============================================================================
 
 export const breaches = pgTable('breaches', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id),
   
-  referenceNumber: varchar('reference_number', { length: 50 }).notNull().unique(), // BRE-2026-0001
+  referenceNumber: varchar('reference_number', { length: 50 }).notNull().unique(),
   title: varchar('title', { length: 255 }).notNull(),
   
-  // Discovery
   discoveredAt: timestamp('discovered_at', { withTimezone: true }).notNull(),
   discoveredBy: uuid('discovered_by').references(() => users.id),
-  discoveryMethod: varchar('discovery_method', { length: 100 }), // 'internal_monitoring', 'employee_report', 'vendor_notification', 'external_report', 'dpa_notification'
+  discoveryMethod: varchar('discovery_method', { length: 100 }),
   
-  // 72-hour deadline
-  notificationDeadline: timestamp('notification_deadline', { withTimezone: true }).notNull(), // discovered_at + 72 hours
+  notificationDeadline: timestamp('notification_deadline', { withTimezone: true }).notNull(),
   
-  // Classification
-  breachType: varchar('breach_type', { length: 100 }).notNull(), // 'confidentiality', 'integrity', 'availability', 'combined'
-  breachCause: varchar('breach_cause', { length: 100 }), // 'cyber_attack', 'human_error', 'system_failure', 'stolen_device', 'vendor_breach', 'unauthorized_access'
+  breachType: varchar('breach_type', { length: 100 }).notNull(),
+  breachCause: varchar('breach_cause', { length: 100 }),
   
-  // Scope
   description: text('description').notNull(),
   dataCategoriesAffected: jsonb('data_categories_affected').default('[]'),
   dataSubjectsAffected: jsonb('data_subjects_affected').default('[]'),
@@ -858,54 +882,47 @@ export const breaches = pgTable('breaches', {
   estimatedIndividualsAffected: integer('estimated_individuals_affected'),
   affectedSystems: jsonb('affected_systems').default('[]'),
   
-  // Risk assessment
-  riskToIndividuals: varchar('risk_to_individuals', { length: 20 }), // 'unlikely', 'low', 'medium', 'high'
+  riskToIndividuals: varchar('risk_to_individuals', { length: 20 }),
   riskAssessmentDetail: text('risk_assessment_detail'),
   
-  // Notification decisions (separate decisions per Article 33 and 34)
-  notifyAuthority: boolean('notify_authority'), // Required unless risk is 'unlikely'
+  notifyAuthority: boolean('notify_authority'),
   authorityNotifiedAt: timestamp('authority_notified_at', { withTimezone: true }),
-  authorityReference: varchar('authority_reference', { length: 255 }), // Reference number from DPA
+  authorityReference: varchar('authority_reference', { length: 255 }),
   
-  notifyIndividuals: boolean('notify_individuals'), // Required only if risk is 'high'
+  notifyIndividuals: boolean('notify_individuals'),
   individualsNotifiedAt: timestamp('individuals_notified_at', { withTimezone: true }),
   individualNotificationMethod: varchar('individual_notification_method', { length: 100 }),
   
-  // Status
-  status: varchar('status', { length: 50 }).default('detected'), // detected, assessing, contained, notified, investigating, resolved, closed
+  status: varchar('status', { length: 50 }).default('detected'),
   
-  // Resolution
   rootCause: text('root_cause'),
   lessonsLearned: text('lessons_learned'),
   resolvedAt: timestamp('resolved_at', { withTimezone: true }),
   
-  // Vendor-originated breach workflow
   vendorOriginated: boolean('vendor_originated').default(false),
   vendorId: uuid('vendor_id').references(() => vendors.id),
   vendorNotificationDate: timestamp('vendor_notification_date', { withTimezone: true }),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow()
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const breachNotifications = pgTable('breach_notifications', {
   id: uuid('id').defaultRandom().primaryKey(),
   breachId: uuid('breach_id').notNull().references(() => breaches.id, { onDelete: 'cascade' }),
   
-  notificationType: varchar('notification_type', { length: 50 }).notNull(), // 'supervisory_authority', 'individuals', 'vendor_upstream'
-  recipient: varchar('recipient', { length: 255 }), // DPA name or 'affected individuals'
+  notificationType: varchar('notification_type', { length: 50 }).notNull(),
+  recipient: varchar('recipient', { length: 255 }),
   
-  // Content
   documentId: uuid('document_id').references(() => documents.id),
-  contentJson: jsonb('content_json'), // structured notification data
+  contentJson: jsonb('content_json'),
   
-  // Approval flow status
-  status: varchar('status', { length: 50 }).default('draft'), // draft, approved, sent, acknowledged
+  status: varchar('status', { length: 50 }).default('draft'),
   sentAt: timestamp('sent_at', { withTimezone: true }),
   acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
   
   createdBy: uuid('created_by').references(() => users.id),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow()
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
 export const breachRemediationTasks = pgTable('breach_remediation_tasks', {
@@ -914,61 +931,22 @@ export const breachRemediationTasks = pgTable('breach_remediation_tasks', {
   
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
-  priority: varchar('priority', { length: 20 }).default('medium'), // critical, high, medium, low
+  priority: varchar('priority', { length: 20 }).default('medium'),
   
   assignedTo: uuid('assigned_to').references(() => users.id),
   dueAt: timestamp('due_at', { withTimezone: true }),
   
-  status: varchar('status', { length: 50 }).default('pending'), // pending, in_progress, completed, cancelled
+  status: varchar('status', { length: 50 }).default('pending'),
   completedAt: timestamp('completed_at', { withTimezone: true }),
   completionNotes: text('completion_notes'),
   evidenceDocumentId: uuid('evidence_document_id').references(() => documents.id),
   
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow()
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-export const breachesRelations = relations(breaches, ({ one, many }) => ({
-  organization: one(organizations, {
-    fields: [breaches.organizationId],
-    references: [organizations.id],
-  }),
-  notifications: many(breachNotifications),
-  tasks: many(breachRemediationTasks),
-}));
-
-export const breachNotificationsRelations = relations(breachNotifications, ({ one }) => ({
-  breach: one(breaches, {
-    fields: [breachNotifications.breachId],
-    references: [breaches.id],
-  }),
-}));
-
-export const breachRemediationTasksRelations = relations(breachRemediationTasks, ({ one }) => ({
-  breach: one(breaches, {
-    fields: [breachRemediationTasks.breachId],
-    references: [breaches.id],
-  }),
-  assignedUser: one(users, {
-    fields: [breachRemediationTasks.assignedTo],
-    references: [users.id],
-  }),
-}));
-export const processingActivitiesRelations = relations(processingActivities, ({ many }) => ({
-  dataCategories: many(processingDataCategories),
-  recipients: many(processingRecipients),
-  clients: many(clientProcessingActivities),
-}));
-
-export const processingRecipientsRelations = relations(processingRecipients, ({ one }) => ({
-  activity: one(processingActivities, {
-    fields: [processingRecipients.processingActivityId],
-    references: [processingActivities.id],
-  }),
-  vendor: one(vendors, {
-    fields: [processingRecipients.vendorId],
-    references: [vendors.id],
-  }),
-}));
+// ============================================================================
+// COMPLIANCE REPORTING
+// ============================================================================
 
 export const complianceGaps = pgTable('compliance_gaps', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -1006,24 +984,24 @@ export const complianceReports = pgTable('compliance_reports', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id),
   
-  reportType: varchar('report_type', { length: 50 }).notNull(), // monthly, quarterly, on_demand, audit_file
+  reportType: varchar('report_type', { length: 50 }).notNull(),
   
   scoreTotal: integer('score_total').notNull(),
-  categoryScores: jsonb('category_scores').notNull(), // flat JSONB: { ropa: 85, vendors: 54, etc }
-  scoreBreakdown: jsonb('score_breakdown').notNull(), // detailed calculation
+  categoryScores: jsonb('category_scores').notNull(),
+  scoreBreakdown: jsonb('score_breakdown').notNull(),
   topGaps: jsonb('top_gaps').default([]),
   
   documentId: uuid('document_id').references(() => documents.id),
-  generatedBy: uuid('generated_by').references(() => users.id), // null for scheduled
+  generatedBy: uuid('generated_by').references(() => users.id),
   
   snapshotDate: timestamp('snapshot_date', { withTimezone: true }).notNull().defaultNow(),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-// -----------------------------------------------------------------------------
+// ============================================================================
 // AI & VECTOR SEARCH
-// -----------------------------------------------------------------------------
+// ============================================================================
 
 export const documentEmbeddings = pgTable('document_embeddings', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -1063,6 +1041,333 @@ export const organizationEmbeddings = pgTable('organization_embeddings', {
   vectorIdx: index('idx_org_embeddings_vector').using('hnsw', t.embedding.op('vector_cosine_ops')),
 }));
 
+// ============================================================================
+// TRAINING
+// ============================================================================
+
+export const trainingModules = pgTable('training_modules', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id),
+  isGlobal: boolean('is_global').default(false),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  targetRole: varchar('target_role', { length: 50 }).default('all'),
+  isMandatory: boolean('is_mandatory').default(true),
+  
+  content: jsonb('content').default([]),
+  quiz: jsonb('quiz').default({ questions: [] }),
+  
+  passingScore: integer('passing_score').default(70),
+  status: varchar('status', { length: 50 }).default('draft'),
+  recurrence: varchar('recurrence', { length: 50 }).default('annual'),
+  
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+});
+
+export const trainingCompletions = pgTable('training_completions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  moduleId: uuid('module_id').notNull().references(() => trainingModules.id),
+  
+  status: varchar('status', { length: 50 }).default('not_started'),
+  progressPercent: integer('progress_percent').default(0),
+  slidesViewed: jsonb('slides_viewed').default([]),
+  
+  quizScore: integer('quiz_score'),
+  quizPassed: boolean('quiz_passed'),
+  quizAttempts: integer('quiz_attempts').default(0),
+  lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
+  quizAnswers: jsonb('quiz_answers'),
+  
+  certificateId: varchar('certificate_id', { length: 100 }).unique(),
+  certificateDocumentId: uuid('certificate_document_id').references(() => documents.id),
+  
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  
+  assignedBy: uuid('assigned_by').references(() => users.id),
+  assignedAt: timestamp('assigned_at', { withTimezone: true }),
+  dueAt: timestamp('due_at', { withTimezone: true }),
+  
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  unq: unique().on(t.userId, t.moduleId),
+}));
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+export const notificationQueue = pgTable('notification_queue', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  userId: uuid('user_id').references(() => users.id),
+  
+  type: varchar('type', { length: 100 }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  body: text('body').notNull(),
+  actionUrl: varchar('action_url', { length: 500 }),
+  
+  channel: varchar('channel', { length: 50 }).notNull(),
+  priority: varchar('priority', { length: 20 }).default('normal'),
+  
+  status: varchar('status', { length: 50 }).default('pending'),
+  attempts: integer('attempts').default(0),
+  maxAttempts: integer('max_attempts').default(3),
+  lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
+  nextRetryAt: timestamp('next_retry_at', { withTimezone: true }),
+  
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+  error: text('error'),
+  
+  emailTo: varchar('email_to', { length: 255 }),
+  emailMessageId: varchar('email_message_id', { length: 255 }),
+  
+  slackResponse: jsonb('slack_response'),
+  
+  payload: jsonb('payload'),
+  
+  scheduledFor: timestamp('scheduled_for', { withTimezone: true }),
+  
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  idxPending: index('idx_nq_pending').on(t.status, t.priority, t.createdAt).where(sql`${t.status} = 'pending'`),
+  idxOrg: index('idx_nq_org').on(t.organizationId),
+  idxRetry: index('idx_nq_retry').on(t.nextRetryAt).where(sql`${t.status} = 'failed' AND ${t.attempts} < ${t.maxAttempts}`),
+}));
+
+// ============================================================================
+// REGULATORY UPDATES
+// ============================================================================
+
+export const regulatoryUpdates = pgTable('regulatory_updates', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  
+  sourceId: varchar('source_id', { length: 50 }).notNull(),
+  sourceName: varchar('source_name', { length: 255 }).notNull(),
+  sourceUrl: varchar('source_url', { length: 500 }).notNull(),
+  
+  title: varchar('title', { length: 500 }).notNull(),
+  summary: text('summary').notNull(),
+  keyChanges: jsonb('key_changes').default([]),
+  originalLanguage: char('original_language', { length: 2 }).default('en'),
+  
+  category: varchar('category', { length: 100 }),
+  severity: varchar('severity', { length: 20 }).default('info'),
+  affectsRegions: jsonb('affects_regions').default(['EU']),
+  affectsArticles: jsonb('affects_articles').default([]),
+  
+  impactRules: jsonb('impact_rules').default([]),
+  
+  status: varchar('status', { length: 50 }).default('draft'),
+  reviewedBy: varchar('reviewed_by', { length: 100 }),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  
+  effectiveDate: date('effective_date'),
+  contentHash: varchar('content_hash', { length: 64 }).unique(),
+  
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    statusIdx: index('idx_ru_status').on(table.status),
+    severityIdx: index('idx_ru_severity').on(table.severity),
+    publishedIdx: index('idx_ru_published').on(table.publishedAt),
+  };
+});
+
+export const regulatoryImpactAssessments = pgTable('regulatory_impact_assessments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  regulatoryUpdateId: uuid('regulatory_update_id').notNull().references(() => regulatoryUpdates.id, { onDelete: 'cascade' }),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  
+  affectedActivities: jsonb('affected_activities').notNull(),
+  affectedVendors: jsonb('affected_vendors').default([]),
+  affectedTransfers: jsonb('affected_transfers').default([]),
+  
+  recommendedActions: jsonb('recommended_actions').default([]),
+  
+  status: varchar('status', { length: 50 }).default('unread'),
+  acknowledgedBy: uuid('acknowledged_by').references(() => users.id),
+  acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+  
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_ria_org').on(table.organizationId),
+    statusIdx: index('idx_ria_status').on(table.status),
+    unq: unique('idx_ria_unique').on(table.regulatoryUpdateId, table.organizationId),
+  };
+});
+
+// ============================================================================
+// CRM INTEGRATIONS (Phase 18)
+// ============================================================================
+
+export const organizationIntegrations = pgTable('organization_integrations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+
+  provider: varchar('provider', { length: 50 }).notNull(),
+  providerAccountId: varchar('provider_account_id', { length: 255 }),
+  providerAccountName: varchar('provider_account_name', { length: 255 }),
+
+  accessToken: text('access_token').notNull(),
+  refreshToken: text('refresh_token'),
+  tokenType: varchar('token_type', { length: 50 }).default('Bearer'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  scopes: jsonb('scopes').default('[]'),
+
+  status: varchar('status', { length: 50 }).default('active'),
+  lastError: text('last_error'),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
+
+  connectedBy: uuid('connected_by').references(() => users.id),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_oi_org').on(table.organizationId),
+    providerIdx: index('idx_oi_provider').on(table.provider),
+    orgProviderUnique: unique('unique_org_provider').on(table.organizationId, table.provider),
+  };
+});
+
+// ============================================================================
+// PUBLIC API & WEBHOOKS (Phase 17)
+// ============================================================================
+
+export const apiKeys = pgTable('api_keys', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+
+  name: varchar('name', { length: 255 }).notNull(),
+  keyHash: varchar('key_hash', { length: 64 }).notNull(),
+  prefix: varchar('prefix', { length: 12 }).notNull(),
+
+  scopes: jsonb('scopes').default('["read"]'),
+
+  allowedIps: jsonb('allowed_ips'),
+
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  requestCount: integer('request_count').default(0),
+
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  revokedBy: uuid('revoked_by').references(() => users.id),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_ak_org').on(table.organizationId),
+    hashIdx: index('idx_ak_hash').on(table.keyHash),
+    prefixIdx: index('idx_ak_prefix').on(table.prefix),
+  };
+});
+
+export const webhooks = pgTable('webhooks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+
+  url: varchar('url', { length: 1024 }).notNull(),
+  events: jsonb('events').notNull(),
+  secret: varchar('secret', { length: 255 }).notNull(),
+
+  isActive: boolean('is_active').default(true),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_wh_org').on(table.organizationId),
+  };
+});
+
+export const webhookDeliveries = pgTable('webhook_deliveries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  webhookId: uuid('webhook_id').notNull().references(() => webhooks.id),
+  eventId: varchar('event_id', { length: 100 }).notNull(),
+
+  eventType: varchar('event_type', { length: 100 }).notNull(),
+  payload: jsonb('payload').notNull(),
+
+  status: varchar('status', { length: 50 }).default('pending'),
+  attempts: integer('attempts').default(0),
+  maxAttempts: integer('max_attempts').default(5),
+
+  responseStatus: integer('response_status'),
+  responseBody: text('response_body'),
+  responseTimeMs: integer('response_time_ms'),
+
+  lastError: text('last_error'),
+  nextRetryAt: timestamp('next_retry_at', { withTimezone: true }),
+
+  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    webhookIdx: index('idx_wd_webhook').on(table.webhookId),
+    retryIdx: index('idx_wd_retry').on(table.nextRetryAt),
+  };
+});
+
+// ============================================================================
+// RELATIONS
+// ============================================================================
+
+export const breachesRelations = relations(breaches, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [breaches.organizationId],
+    references: [organizations.id],
+  }),
+  notifications: many(breachNotifications),
+  tasks: many(breachRemediationTasks),
+}));
+
+export const breachNotificationsRelations = relations(breachNotifications, ({ one }) => ({
+  breach: one(breaches, {
+    fields: [breachNotifications.breachId],
+    references: [breaches.id],
+  }),
+}));
+
+export const breachRemediationTasksRelations = relations(breachRemediationTasks, ({ one }) => ({
+  breach: one(breaches, {
+    fields: [breachRemediationTasks.breachId],
+    references: [breaches.id],
+  }),
+  assignedUser: one(users, {
+    fields: [breachRemediationTasks.assignedTo],
+    references: [users.id],
+  }),
+}));
+
+export const processingActivitiesRelations = relations(processingActivities, ({ many }) => ({
+  dataCategories: many(processingDataCategories),
+  recipients: many(processingRecipients),
+  clients: many(clientProcessingActivities),
+}));
+
+export const processingRecipientsRelations = relations(processingRecipients, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [processingRecipients.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  vendor: one(vendors, {
+    fields: [processingRecipients.vendorId],
+    references: [vendors.id],
+  }),
+}));
+
 export const clientsRelations = relations(clients, ({ many }) => ({
   processingActivities: many(clientProcessingActivities),
 }));
@@ -1076,65 +1381,6 @@ export const clientProcessingActivitiesRelations = relations(clientProcessingAct
     fields: [clientProcessingActivities.processingActivityId],
     references: [processingActivities.id],
   }),
-}));
-
-export const trainingModules = pgTable('training_modules', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  organizationId: uuid('organization_id').references(() => organizations.id),
-  isGlobal: boolean('is_global').default(false),
-  title: varchar('title', { length: 255 }).notNull(),
-  description: text('description'),
-  targetRole: varchar('target_role', { length: 50 }).default('all'),
-  isMandatory: boolean('is_mandatory').default(true),
-  
-  content: jsonb('content').default([]), // TrainingSlide[]
-  quiz: jsonb('quiz').default({ questions: [] }), // TrainingQuiz
-  
-  passingScore: integer('passing_score').default(70),
-  status: varchar('status', { length: 50 }).default('draft'), // draft, published, archived
-  recurrence: varchar('recurrence', { length: 50 }).default('annual'), // annual, none
-  
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
-});
-
-export const trainingCompletions = pgTable('training_completions', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-  userId: uuid('user_id').notNull().references(() => users.id),
-  moduleId: uuid('module_id').notNull().references(() => trainingModules.id),
-  
-  // Progress tracking
-  status: varchar('status', { length: 50 }).default('not_started'), // not_started, in_progress, passed, failed
-  progressPercent: integer('progress_percent').default(0),
-  slidesViewed: jsonb('slides_viewed').default([]), // track which slides viewed and for how long
-  
-  // Quiz results
-  quizScore: integer('quiz_score'),
-  quizPassed: boolean('quiz_passed'),
-  quizAttempts: integer('quiz_attempts').default(0),
-  lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
-  quizAnswers: jsonb('quiz_answers'),
-  
-  // Certificate
-  certificateId: varchar('certificate_id', { length: 100 }).unique(),
-  certificateDocumentId: uuid('certificate_document_id').references(() => documents.id),
-  
-  // Timing
-  startedAt: timestamp('started_at', { withTimezone: true }),
-  completedAt: timestamp('completed_at', { withTimezone: true }),
-  expiresAt: timestamp('expires_at', { withTimezone: true }),
-  
-  // Assignment tracking
-  assignedBy: uuid('assigned_by').references(() => users.id),
-  assignedAt: timestamp('assigned_at', { withTimezone: true }),
-  dueAt: timestamp('due_at', { withTimezone: true }),
-  
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-}, (t) => ({
-  unq: unique().on(t.userId, t.moduleId)
 }));
 
 export const trainingModulesRelations = relations(trainingModules, ({ one, many }) => ({
@@ -1168,210 +1414,13 @@ export const trainingCompletionsRelations = relations(trainingCompletions, ({ on
   }),
 }));
 
-export const notificationQueue = pgTable('notification_queue', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-  userId: uuid('user_id').references(() => users.id),
-  
-  // What
-  type: varchar('type', { length: 100 }).notNull(),
-  title: varchar('title', { length: 255 }).notNull(),
-  body: text('body').notNull(),
-  actionUrl: varchar('action_url', { length: 500 }),
-  
-  // Routing
-  channel: varchar('channel', { length: 50 }).notNull(), // 'email', 'slack', 'in_app', 'webhook'
-  priority: varchar('priority', { length: 20 }).default('normal'), // low, normal, high, critical
-  
-  // Delivery
-  status: varchar('status', { length: 50 }).default('pending'), // pending, processing, sent, delivered, failed, skipped
-  attempts: integer('attempts').default(0),
-  maxAttempts: integer('max_attempts').default(3),
-  lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
-  nextRetryAt: timestamp('next_retry_at', { withTimezone: true }),
-  
-  // Result
-  sentAt: timestamp('sent_at', { withTimezone: true }),
-  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
-  error: text('error'),
-  
-  // For email channel
-  emailTo: varchar('email_to', { length: 255 }),
-  emailMessageId: varchar('email_message_id', { length: 255 }),
-  
-  // For slack channel
-  slackResponse: jsonb('slack_response'),
-  
-  // Metadata
-  payload: jsonb('payload'),
-  
-  // Scheduling
-  scheduledFor: timestamp('scheduled_for', { withTimezone: true }), // null = immediate
-  
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-}, (t) => ({
-  idxPending: index('idx_nq_pending').on(t.status, t.priority, t.createdAt).where(sql`${t.status} = 'pending'`),
-  idxOrg: index('idx_nq_org').on(t.organizationId),
-  idxRetry: index('idx_nq_retry').on(t.nextRetryAt).where(sql`${t.status} = 'failed' AND ${t.attempts} < ${t.maxAttempts}`),
-}));
-
 export const notificationQueueRelations = relations(notificationQueue, ({ one }) => ({
   organization: one(organizations, {
     fields: [notificationQueue.organizationId],
-    references: [organizations.id]
+    references: [organizations.id],
   }),
   user: one(users, {
     fields: [notificationQueue.userId],
-    references: [users.id]
-  })
+    references: [users.id],
+  }),
 }));
-
-export const regulatoryUpdates = pgTable('regulatory_updates', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  
-  // Source
-  sourceId: varchar('source_id', { length: 50 }).notNull(),
-  sourceName: varchar('source_name', { length: 255 }).notNull(),
-  sourceUrl: varchar('source_url', { length: 500 }).notNull(),
-  
-  // Content
-  title: varchar('title', { length: 500 }).notNull(),
-  summary: text('summary').notNull(),
-  keyChanges: jsonb('key_changes').default([]),
-  originalLanguage: char('original_language', { length: 2 }).default('en'),
-  
-  // Classification
-  category: varchar('category', { length: 100 }),
-  severity: varchar('severity', { length: 20 }).default('info'),
-  affectsRegions: jsonb('affects_regions').default(['EU']),
-  affectsArticles: jsonb('affects_articles').default([]),
-  
-  // Impact matching
-  impactRules: jsonb('impact_rules').default([]),
-  
-  // Status
-  status: varchar('status', { length: 50 }).default('draft'),
-  reviewedBy: varchar('reviewed_by', { length: 100 }),
-  publishedAt: timestamp('published_at', { withTimezone: true }),
-  
-  effectiveDate: date('effective_date'),
-  contentHash: varchar('content_hash', { length: 64 }).unique(),
-  
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow()
-}, (table) => {
-  return {
-    statusIdx: index('idx_ru_status').on(table.status),
-    severityIdx: index('idx_ru_severity').on(table.severity),
-    publishedIdx: index('idx_ru_published').on(table.publishedAt),
-  };
-});
-
-export const regulatoryImpactAssessments = pgTable('regulatory_impact_assessments', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  regulatoryUpdateId: uuid('regulatory_update_id').notNull().references(() => regulatoryUpdates.id, { onDelete: 'cascade' }),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-  
-  // What's affected
-  affectedActivities: jsonb('affected_activities').notNull(),
-  affectedVendors: jsonb('affected_vendors').default([]),
-  affectedTransfers: jsonb('affected_transfers').default([]),
-  
-  // Recommended actions
-  recommendedActions: jsonb('recommended_actions').default([]),
-  
-  // Status
-  status: varchar('status', { length: 50 }).default('unread'), // unread, read, acknowledged, action_taken
-  acknowledgedBy: uuid('acknowledged_by').references(() => users.id),
-  acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
-  
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow()
-}, (table) => {
-  return {
-    orgIdx: index('idx_ria_org').on(table.organizationId),
-    statusIdx: index('idx_ria_status').on(table.status),
-    unq: unique('idx_ria_unique').on(table.regulatoryUpdateId, table.organizationId)
-  };
-});
-
-export const apiKeys = pgTable('api_keys', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-
-  name: varchar('name', { length: 255 }).notNull(),
-  keyHash: varchar('key_hash', { length: 64 }).notNull(),
-  prefix: varchar('prefix', { length: 12 }).notNull(),
-
-  // Permissions
-  scopes: jsonb('scopes').default('["read"]'),
-
-  // Security
-  allowedIps: jsonb('allowed_ips'),
-
-  // Usage tracking
-  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
-  requestCount: integer('request_count').default(0),
-
-  // Lifecycle
-  expiresAt: timestamp('expires_at', { withTimezone: true }),
-  revokedAt: timestamp('revoked_at', { withTimezone: true }),
-  revokedBy: uuid('revoked_by').references(() => users.id),
-
-  createdBy: uuid('created_by').references(() => users.id),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-}, (table) => {
-  return {
-    orgIdx: index('idx_ak_org').on(table.organizationId),
-    hashIdx: index('idx_ak_hash').on(table.keyHash),
-    prefixIdx: index('idx_ak_prefix').on(table.prefix),
-  }
-});
-
-export const webhooks = pgTable('webhooks', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-
-  url: varchar('url', { length: 1024 }).notNull(),
-  events: jsonb('events').notNull(), // array of event strings
-  secret: varchar('secret', { length: 255 }).notNull(),
-
-  isActive: boolean('is_active').default(true),
-
-  createdBy: uuid('created_by').references(() => users.id),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-}, (table) => {
-  return {
-    orgIdx: index('idx_wh_org').on(table.organizationId),
-  }
-});
-
-export const webhookDeliveries = pgTable('webhook_deliveries', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  webhookId: uuid('webhook_id').notNull().references(() => webhooks.id),
-  eventId: varchar('event_id', { length: 100 }).notNull(),
-
-  eventType: varchar('event_type', { length: 100 }).notNull(),
-  payload: jsonb('payload').notNull(),
-
-  // Delivery tracking
-  status: varchar('status', { length: 50 }).default('pending'), // pending, success, failed, exhausted
-  attempts: integer('attempts').default(0),
-  maxAttempts: integer('max_attempts').default(5),
-
-  // Response from endpoint
-  responseStatus: integer('response_status'),
-  responseBody: text('response_body'),
-  responseTimeMs: integer('response_time_ms'),
-
-  // Error tracking
-  lastError: text('last_error'),
-  nextRetryAt: timestamp('next_retry_at', { withTimezone: true }),
-
-  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-}, (table) => {
-  return {
-    webhookIdx: index('idx_wd_webhook').on(table.webhookId),
-    retryIdx: index('idx_wd_retry').on(table.nextRetryAt),
-  }
-});

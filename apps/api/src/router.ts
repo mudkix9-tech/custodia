@@ -18,6 +18,7 @@ import { trainingRouter } from './routers/training.js';
 import { settingsRouter } from './routers/settings.js';
 import { notificationsRouter } from './routers/notifications.js';
 import { regulatoryRouter } from './routers/regulatory.js';
+import { integrationsRouter } from './routers/integrations.js';
 
 import { apiKeysRouter } from "./routers/apiKeys.js";
 import { webhooksRouter } from "./routers/webhooks.js";
@@ -48,6 +49,7 @@ export const appRouter = router({
   settings: settingsRouter,
   notifications: notificationsRouter,
   regulatory: regulatoryRouter,
+  integrations: integrationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -6,7 +6,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { Resend } from 'resend';
 import crypto from 'crypto';
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
 export const notificationsJobQueue = new Queue('notifications', { connection });
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
