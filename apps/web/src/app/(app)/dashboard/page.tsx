@@ -1,5 +1,6 @@
 import React from 'react';
 import { RegulatoryWidget } from '@/components/dashboard/RegulatoryWidget';
+import { SetupProgress } from '@/components/dashboard/SetupProgress';
 import { getSession } from 'next-auth/react';
 
 export default function DashboardPage() {
@@ -11,6 +12,8 @@ export default function DashboardPage() {
           <p className="text-ink-600">Here's your compliance overview and pending tasks.</p>
         </div>
       </div>
+
+      <SetupProgress />
 
       <RegulatoryWidget />
 

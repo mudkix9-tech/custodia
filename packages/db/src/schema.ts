@@ -43,6 +43,12 @@ export const organizations = pgTable('organizations', {
   lastAssessmentAt: timestamp('last_assessment_at', { withTimezone: true }),
   nextReviewDueAt: timestamp('next_review_due_at', { withTimezone: true }),
 
+  // Onboarding
+  onboardingCompleted: boolean('onboarding_completed').default(false),
+  onboardingDismissed: boolean('onboarding_dismissed').default(false),
+  onboardingStep: integer('onboarding_step').default(0),
+  onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
+
   // Subscription (Paddle)
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   paddleCustomerId: varchar('paddle_customer_id', { length: 255 }),
