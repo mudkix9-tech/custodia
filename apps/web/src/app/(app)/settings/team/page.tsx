@@ -1,210 +1,356 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { trpc } from '@/utils/trpc';
-import { Shield, Plus, Users, Mail, Loader2, MoreVertical, ShieldAlert } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { Users, MoreVertical, Shield, UserPlus, Mail, ShieldAlert, Loader2, Plus, Settings } from 'lucide-react';
+import { format } from 'date-fns';
+
+const MODULES = ['ROPA', 'Vendors', 'DSARs', 'Breaches', 'Training', 'Billing', 'Users'];
+const ACTIONS = ['View', 'Edit', 'Manage'];
 
 export default function TeamSettingsPage() {
   const { data: session } = useSession();
-  const { data: teamMembers, isLoading, refetch } = trpc.team.list.useQuery();
-  const inviteMutation = trpc.team.invite.useMutation();
-  const updateRoleMutation = trpc.team.updateRole.useMutation();
-  const removeMutation = trpc.team.remove.useMutation();
+  const userRole = (session?.user as any)?.role || 'member';
+  const isAdmin = userRole === 'admin' || userRole === 'owner';
+  const isOwner = userRole === 'owner';
 
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [inviteData, setInviteData] = useState({ email: '', name: '', role: 'member' as any });
+  const { data: team, isLoading, refetch } = trpc.team.list.useQuery();
+  const updateRole = trpc.team.updateRole.useMutation();
+  const updatePermissions = trpc.team.updatePermissions.useMutation();
+  const removeMember = trpc.team.remove.useMutation();
+  const inviteMember = trpc.team.bulkInvite.useMutation(); // using bulk invite for single and multiple
 
-  const isOwnerOrAdmin = (session?.user as any)?.role === 'owner' || (session?.user as any)?.role === 'admin';
+  const [inviteEmails, setInviteEmails] = useState('');
+  const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('member');
+  const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [inviteError, setInviteError] = useState('');
+  const [isBulk, setIsBulk] = useState(false);
+
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+
+  const handleUpdateRole = async (userId: string, newRole: 'admin' | 'member' | 'viewer') => {
+    try {
+      await updateRole.mutateAsync({ userId, role: newRole });
+      refetch();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to update role');
+    }
+  };
+
+  const handleRemove = async (userId: string, name: string) => {
+    if (confirm(`Are you sure you want to remove ${name} from the organization?`)) {
+      try {
+        await removeMember.mutateAsync({ userId });
+        refetch();
+      } catch (e) {
+        console.error(e);
+        alert('Failed to remove member');
+      }
+    }
+  };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    setInviteStatus('sending');
+    setInviteError('');
     try {
-      await inviteMutation.mutateAsync(inviteData);
-      setInviteData({ email: '', name: '', role: 'member' });
-      setIsInviteOpen(false);
+      const emails = isBulk ? inviteEmails.split('\n').map(e => e.trim()).filter(e => e) : [inviteEmails];
+      await inviteMember.mutateAsync({ emails, role: inviteRole });
+      setInviteStatus('sent');
+      setInviteEmails('');
       refetch();
-    } catch (error: any) {
-      alert(error.message || 'Failed to invite user');
+      setTimeout(() => setInviteStatus('idle'), 3000);
+    } catch (e: any) {
+      setInviteStatus('error');
+      setInviteError(e.message || 'Failed to send invite');
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: any) => {
+  const handlePermissionChange = async (module: string, action: string, state: 'inherit' | 'allow' | 'deny') => {
+    if (!selectedUser) return;
+
+    // In a real app we'd construct a proper permission object mapping
+    // This is simplified to show the concept
+    const permString = `${module}:${action}:${state}`;
+    const newPerms = [...(selectedUser.permissions || []).filter((p: string) => !p.startsWith(`${module}:${action}`)), permString];
+
+    setSelectedUser({ ...selectedUser, permissions: newPerms });
+
     try {
-      await updateRoleMutation.mutateAsync({ userId, role: newRole });
+      await updatePermissions.mutateAsync({ userId: selectedUser.id, permissions: newPerms });
       refetch();
-    } catch (error: any) {
-      alert(error.message || 'Failed to update role');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to update permissions');
     }
   };
 
-  const handleRemove = async (userId: string) => {
-    if (!confirm('Are you sure you want to remove this team member?')) return;
-    try {
-      await removeMutation.mutateAsync({ userId });
-      refetch();
-    } catch (error: any) {
-      alert(error.message || 'Failed to remove user');
-    }
-  };
+  if (isLoading) return <div className="p-8">Loading team...</div>;
 
   return (
-    <div className="flex-1 p-8 bg-bone-50 min-h-screen">
-      <div className="max-w-5xl mx-auto space-y-8">
-        
-        {/* Header section */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-serif text-ink-900 tracking-tight flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-card border border-ink-900/8">
-                <Users className="w-5 h-5 text-sage-600" />
+    <div className="max-w-5xl mx-auto p-8 fade-up">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-serif text-ink-900 mb-2">Team Management</h1>
+          <p className="text-ink-600">Manage organization members, roles, and granular access permissions.</p>
+        </div>
+      </div>
+
+      <div className="space-y-8 flex relative">
+        <div className={`flex-1 space-y-8 transition-all ${selectedUser ? 'mr-[400px]' : ''}`}>
+          {isAdmin && (
+            <div className="bg-white rounded-2xl border border-ink-900/10 p-6 shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-medium text-ink-900 flex items-center gap-2">
+                  <UserPlus className="w-5 h-5" /> Invite New Members
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => { setIsBulk(!isBulk); setInviteEmails(''); }}
+                  className="text-sm text-sage-600 hover:text-sage-700 font-medium"
+                >
+                  {isBulk ? 'Single invite' : 'Bulk invite'}
+                </button>
               </div>
-              Team Management
-            </h1>
-            <p className="text-[13.5px] text-ink-500 mt-2">
-              Manage your agency team members, roles, and access permissions.
-            </p>
-          </div>
-          
-          {isOwnerOrAdmin && (
-            <button 
-              onClick={() => setIsInviteOpen(true)}
-              className="px-4 py-2 bg-sage-700 hover:bg-sage-600 text-bone-50 font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 shadow-card"
-            >
-              <Plus className="w-4 h-4" />
-              Invite Member
-            </button>
+
+              <form onSubmit={handleInvite} className={`flex gap-4 ${isBulk ? 'flex-col' : 'items-end'}`}>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-ink-900 mb-1.5">{isBulk ? 'Email Addresses (one per line)' : 'Email Address'}</label>
+                  {isBulk ? (
+                    <textarea
+                      required
+                      value={inviteEmails}
+                      onChange={e => setInviteEmails(e.target.value)}
+                      className="w-full bg-bone-50 border border-ink-900/10 rounded-lg p-3 text-sm h-32 resize-none"
+                      placeholder="colleague1@example.com&#10;colleague2@example.com"
+                    />
+                  ) : (
+                    <div className="relative">
+                      <Mail className="w-4 h-4 absolute left-3 top-3 text-ink-400" />
+                      <input
+                        type="email"
+                        required
+                        value={inviteEmails}
+                        onChange={e => setInviteEmails(e.target.value)}
+                        className="w-full bg-bone-50 border border-ink-900/10 rounded-lg pl-9 pr-3 py-2 text-sm"
+                        placeholder="colleague@example.com"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className={`${isBulk ? 'w-full' : 'w-48'}`}>
+                  <label className="block text-sm font-medium text-ink-900 mb-1.5">Role</label>
+                  <select
+                    value={inviteRole}
+                    onChange={e => setInviteRole(e.target.value as any)}
+                    className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="member">Member</option>
+                    <option value="viewer">Viewer</option>
+                  </select>
+                </div>
+                <button
+                  type="submit"
+                  disabled={inviteStatus === 'sending'}
+                  className={`bg-ink-900 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 ${isBulk ? 'w-full' : 'h-[38px]'}`}
+                >
+                  {inviteStatus === 'sending' ? 'Sending...' : 'Send Invitations'}
+                </button>
+              </form>
+              {inviteStatus === 'sent' && <p className="text-sm text-sage-600 mt-2">Invitations sent successfully!</p>}
+              {inviteStatus === 'error' && <p className="text-sm text-red-600 mt-2">{inviteError}</p>}
+            </div>
           )}
+
+          <div className="bg-white rounded-2xl border border-ink-900/10 overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-ink-900/10">
+              <h2 className="text-lg font-medium text-ink-900 flex items-center gap-2">
+                <Users className="w-5 h-5" /> Current Members
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-bone-50 border-b border-ink-900/10 text-xs font-semibold text-ink-500 uppercase tracking-wider">
+                    <th className="px-6 py-3">Name</th>
+                    <th className="px-6 py-3">Email</th>
+                    <th className="px-6 py-3">Role</th>
+                    <th className="px-6 py-3">Joined</th>
+                    {isAdmin && <th className="px-6 py-3 text-right">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink-900/10 text-sm">
+                  {team?.map((member) => (
+                    <tr key={member.id} className="hover:bg-ink-900/5">
+                      <td className="px-6 py-4 font-medium text-ink-900">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center font-medium text-xs">
+                            {member.name?.[0]?.toUpperCase() || member.email[0].toUpperCase()}
+                          </div>
+                          {member.name || 'Invited User'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-ink-600">{member.email}</td>
+                      <td className="px-6 py-4">
+                        {isAdmin && member.id !== (session?.user as any)?.id ? (
+                          <select
+                            value={member.role}
+                            onChange={(e) => handleUpdateRole(member.id, e.target.value as any)}
+                            className="bg-transparent border border-ink-900/20 rounded text-sm text-ink-700 focus:ring-sage-500 py-1 pl-2 pr-6"
+                            disabled={member.role === 'owner' && !isOwner}
+                          >
+                            <option value="owner" disabled>Owner</option>
+                            <option value="admin">Admin</option>
+                            <option value="member">Member</option>
+                            <option value="viewer">Viewer</option>
+                          </select>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-ink-100 text-ink-800 capitalize">
+                            {member.role}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-ink-500">
+                        {member.invitedAt && !member.emailVerified ? (
+                          <span className="text-clay-600 italic">Invited {format(new Date(member.invitedAt), 'MMM d, yyyy')}</span>
+                        ) : member.createdAt ? (
+                          format(new Date(member.createdAt), 'MMM d, yyyy')
+                        ) : 'Unknown'}
+                      </td>
+                      {isAdmin && (
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setSelectedUser(selectedUser?.id === member.id ? null : member)}
+                              className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${selectedUser?.id === member.id ? 'bg-sage-100 text-sage-700' : 'bg-white border border-ink-900/10 text-ink-600 hover:bg-ink-900/5'}`}
+                            >
+                              Permissions
+                            </button>
+                            {member.id !== (session?.user as any)?.id && member.role !== 'owner' && (
+                              <button
+                                onClick={() => handleRemove(member.id, member.name || member.email)}
+                                className="text-xs font-medium text-red-600 hover:bg-red-50 bg-white border border-red-200 px-3 py-1.5 rounded-md transition-colors"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {team?.length === 0 && (
+                <div className="p-8 text-center text-ink-500">No team members found.</div>
+              )}
+            </div>
+          </div>
+
+          {/* Pending Invitations Section */}
+          <div className="bg-white rounded-2xl border border-ink-900/10 overflow-hidden shadow-sm mt-8">
+            <div className="p-6 border-b border-ink-900/10">
+              <h2 className="text-lg font-medium text-ink-900 flex items-center gap-2">
+                <Mail className="w-5 h-5" /> Pending Invitations
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <tbody className="divide-y divide-ink-900/10 text-sm">
+                  {team?.filter(m => m.invitedAt && !m.emailVerified).map(member => (
+                    <tr key={`invite-${member.id}`} className="hover:bg-ink-900/5">
+                      <td className="px-6 py-4 font-medium text-ink-900">{member.email}</td>
+                      <td className="px-6 py-4 capitalize text-ink-600">{member.role}</td>
+                      <td className="px-6 py-4 text-ink-500 text-right">
+                        <button className="text-xs font-medium bg-white border border-ink-900/10 text-ink-600 hover:bg-ink-900/5 px-3 py-1.5 rounded-md mr-2">Resend</button>
+                        <button onClick={() => handleRemove(member.id, member.email)} className="text-xs font-medium text-red-600 hover:bg-red-50 bg-white border border-red-200 px-3 py-1.5 rounded-md">Cancel</button>
+                      </td>
+                    </tr>
+                  ))}
+                  {team?.filter(m => m.invitedAt && !m.emailVerified).length === 0 && (
+                     <tr className="hover:bg-ink-900/5">
+                       <td colSpan={3} className="px-6 py-4 text-ink-500 text-center">No pending invitations.</td>
+                     </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
 
-        {/* Invite Modal */}
-        {isInviteOpen && (
-          <div className="bg-white hairline rounded-2xl p-6 shadow-sm fade-up border-l-4 border-l-sage-500">
-            <h2 className="text-[15px] font-medium text-ink-900 mb-4">Invite New Team Member</h2>
-            <form onSubmit={handleInvite} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-              <div className="space-y-1.5 sm:col-span-1">
-                <label className="text-[12px] font-medium text-ink-700">Name</label>
-                <input 
-                  required
-                  value={inviteData.name}
-                  onChange={e => setInviteData({...inviteData, name: e.target.value})}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13px] text-ink-900" 
-                  placeholder="Jane Doe" 
-                />
+        {/* Slide-over Panel for Granular Permissions */}
+        {selectedUser && (
+          <div className="w-[380px] fixed top-[73px] bottom-0 right-0 bg-white border-l border-ink-900/10 shadow-xl z-30 overflow-y-auto">
+            <div className="p-6 border-b border-ink-900/10 sticky top-0 bg-white z-10 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-medium text-ink-900">Edit Permissions</h3>
+                <p className="text-sm text-ink-500 mt-1">{selectedUser.name}</p>
               </div>
-              <div className="space-y-1.5 sm:col-span-1">
-                <label className="text-[12px] font-medium text-ink-700">Email Address</label>
-                <input 
-                  type="email" required
-                  value={inviteData.email}
-                  onChange={e => setInviteData({...inviteData, email: e.target.value})}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13px] text-ink-900" 
-                  placeholder="jane@agency.com" 
-                />
-              </div>
-              <div className="space-y-1.5 sm:col-span-1">
-                <label className="text-[12px] font-medium text-ink-700">Role</label>
-                <select 
-                  value={inviteData.role}
-                  onChange={e => setInviteData({...inviteData, role: e.target.value as any})}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13px] text-ink-900"
-                >
-                  <option value="admin">Admin</option>
-                  <option value="member">Member</option>
-                  <option value="viewer">Viewer</option>
-                </select>
-              </div>
-              <div className="sm:col-span-1 flex gap-2">
-                <button type="submit" disabled={inviteMutation.isPending} className="flex-1 py-2 bg-sage-700 text-bone-50 text-[13px] font-medium rounded-lg hover:bg-sage-600 transition-colors">
-                  {inviteMutation.isPending ? 'Sending...' : 'Send Invite'}
-                </button>
-                <button type="button" onClick={() => setIsInviteOpen(false)} className="px-4 py-2 bg-bone-100 text-ink-700 text-[13px] font-medium rounded-lg hover:bg-bone-200 transition-colors">
-                  Cancel
-                </button>
-              </div>
-            </form>
+              <button onClick={() => setSelectedUser(null)} className="text-ink-400 hover:text-ink-900 bg-ink-900/5 hover:bg-ink-900/10 p-2 rounded-full transition-colors">
+                <Plus className="w-5 h-5 rotate-45" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {selectedUser.role === 'owner' ? (
+                <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm border border-amber-200">
+                  <ShieldAlert className="w-5 h-5 mb-2" />
+                  Owner permissions cannot be restricted. They have full access to all modules.
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <p className="text-sm text-ink-600 mb-4">
+                    Override role-based access for specific modules. Green check grants access, red cross denies, gray dash inherits from role.
+                  </p>
+
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-ink-900/10">
+                        <th className="pb-2 font-medium text-ink-500 uppercase tracking-wider text-xs">Module</th>
+                        {ACTIONS.map(a => (
+                          <th key={a} className="pb-2 font-medium text-ink-500 uppercase tracking-wider text-xs text-center">{a}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-900/5">
+                      {MODULES.map(module => (
+                        <tr key={module}>
+                          <td className="py-3 font-medium text-ink-900">{module}</td>
+                          {ACTIONS.map(action => {
+                            const permState = (selectedUser.permissions || []).find((p: string) => p.startsWith(`${module}:${action}:`));
+                            const state = permState ? permState.split(':')[2] : 'inherit';
+
+                            return (
+                              <td key={`${module}-${action}`} className="py-3 text-center">
+                                <button
+                                  onClick={() => handlePermissionChange(module, action, state === 'inherit' ? 'allow' : state === 'allow' ? 'deny' : 'inherit')}
+                                  className={`w-6 h-6 rounded-full inline-flex items-center justify-center transition-colors ${
+                                    state === 'allow' ? 'bg-sage-100 text-sage-600' :
+                                    state === 'deny' ? 'bg-red-100 text-red-600' :
+                                    'bg-bone-100 text-ink-300 hover:bg-bone-200'
+                                  }`}
+                                >
+                                  {state === 'allow' ? '✓' : state === 'deny' ? '×' : '-'}
+                                </button>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="pt-4 border-t border-ink-900/10 text-xs text-ink-500">
+                    Changes save automatically and will invalidate the user's current session to enforce new permissions.
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
-
-        {/* Team List */}
-        <div className="bg-white hairline rounded-2xl overflow-hidden shadow-sm">
-          {isLoading ? (
-            <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-sage-600" /></div>
-          ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-ink-900/10 bg-bone-50/50">
-                  <th className="px-6 py-4 text-[12px] font-medium text-ink-500 uppercase tracking-wider">Member</th>
-                  <th className="px-6 py-4 text-[12px] font-medium text-ink-500 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-4 text-[12px] font-medium text-ink-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-[12px] font-medium text-ink-500 uppercase tracking-wider text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-900/10">
-                {teamMembers?.map((member) => (
-                  <tr key={member.id} className="hover:bg-bone-50/30 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-bone-100 text-ink-700 flex items-center justify-center font-medium text-[13px]">
-                          {member.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="text-[13.5px] font-medium text-ink-900">{member.name}</div>
-                          <div className="text-[12px] text-ink-500">{member.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {isOwnerOrAdmin && member.role !== 'owner' ? (
-                        <select
-                          value={member.role}
-                          onChange={(e) => handleRoleChange(member.id, e.target.value)}
-                          className="bg-bone-50 hairline rounded-md px-2 py-1 text-[12.5px] text-ink-700 focus:outline-none focus:ring-1 focus:ring-sage-500/20"
-                        >
-                          <option value="admin">Admin</option>
-                          <option value="member">Member</option>
-                          <option value="viewer">Viewer</option>
-                        </select>
-                      ) : (
-                        <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium ${
-                          member.role === 'owner' ? 'bg-amber-50 text-amber-700' :
-                          member.role === 'admin' ? 'bg-sage-50 text-sage-700' :
-                          'bg-bone-100 text-ink-600'
-                        }`}>
-                          {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-[12px] text-ink-500 flex items-center gap-1.5">
-                        <div className={`w-1.5 h-1.5 rounded-full ${member.lastLoginAt ? 'bg-sage-500' : 'bg-amber-400'}`} />
-                        {member.lastLoginAt ? 'Active' : 'Invited'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {isOwnerOrAdmin && member.id !== session?.user?.id && member.role !== 'owner' && (
-                        <button 
-                          onClick={() => handleRemove(member.id)}
-                          className="text-[12px] font-medium text-clay-600 hover:bg-clay-50 px-3 py-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        <div className="bg-amber-50 border border-amber-500/20 rounded-xl p-4 flex gap-3 mt-6">
-          <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
-          <div className="text-[13px] text-amber-800 leading-relaxed">
-            <strong>Role Permissions:</strong> Owners and Admins have full access to billing, team management, and all ROPA features. Members can view and edit ROPAs. Viewers have read-only access.
-          </div>
-        </div>
-
       </div>
     </div>
   );

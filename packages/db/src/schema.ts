@@ -38,6 +38,7 @@ export const organizations = pgTable('organizations', {
   dpoIsExternal: boolean('dpo_is_external').default(false),
   
   leadSupervisoryAuthority: varchar('lead_supervisory_authority', { length: 100 }),
+
   
   complianceScore: integer('compliance_score').default(0),
   lastAssessmentAt: timestamp('last_assessment_at', { withTimezone: true }),
@@ -52,6 +53,7 @@ export const organizations = pgTable('organizations', {
   // Subscription (Paddle)
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   paddleCustomerId: varchar('paddle_customer_id', { length: 255 }),
+  deletionScheduledAt: timestamp('deletion_scheduled_at', { withTimezone: true }),
   paddleSubscriptionId: varchar('paddle_subscription_id', { length: 255 }),
   subscriptionTier: varchar('subscription_tier', { length: 50 }).default('starter'),
   subscriptionStatus: varchar('subscription_status', { length: 50 }).default('trialing'),
@@ -63,6 +65,7 @@ export const organizations = pgTable('organizations', {
 
   settings: jsonb('settings').default({}),
   branding: jsonb('branding').default({}),
+
   
   // Notifications
   slackWebhookUrl: varchar('slack_webhook_url', { length: 500 }),
@@ -98,6 +101,8 @@ export const users = pgTable('users', {
   policyAcknowledgedAt: timestamp('policy_acknowledged_at', { withTimezone: true }),
   
   notificationOverrides: jsonb('notification_overrides').default({}),
+  timezone: varchar('timezone', { length: 100 }).default('UTC'),
+  language: varchar('language', { length: 10 }).default('en'),
   
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   invitedAt: timestamp('invited_at', { withTimezone: true }),
@@ -1430,3 +1435,18 @@ export const notificationQueueRelations = relations(notificationQueue, ({ one })
     references: [users.id],
   }),
 }));
+export const activeSessions = pgTable('active_sessions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: varchar('token_hash', { length: 255 }).notNull(),
+  device: varchar('device', { length: 255 }),
+  browser: varchar('browser', { length: 255 }),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  location: varchar('location', { length: 255 }),
+  lastActiveAt: timestamp('last_active_at', { withTimezone: true }).defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    userIdx: index('idx_as_user').on(table.userId),
+  };
+});
