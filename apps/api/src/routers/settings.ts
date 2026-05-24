@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc.js';
 import { db } from '../db.js';
 import { organizations, users } from 'db';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
 const checkOrgContext = (user: any) => {
@@ -15,30 +15,42 @@ export const settingsRouter = router({
       checkOrgContext(ctx.user);
       const [org] = await db.select().from(organizations).where(eq(organizations.id, ctx.user!.orgId));
       if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
-      return {
-        slackWebhookUrl: org.slackWebhookUrl,
-        notificationPreferences: org.notificationPreferences,
-      };
+      return org;
     }),
 
   updateOrgSettings: protectedProcedure
     .input(z.object({
-      slackWebhookUrl: z.string().url().optional().or(z.literal('')),
+      name: z.string().optional(),
+      legalName: z.string().optional().nullable(),
+      slug: z.string().optional(),
+      registrationNumber: z.string().optional().nullable(),
+      countryCode: z.string().length(2).optional().or(z.literal('')),
+      address: z.any().optional().nullable(),
+      hasDpo: z.boolean().optional(),
+      dpoName: z.string().optional().nullable(),
+      dpoEmail: z.string().email().optional().or(z.literal('')).nullable(),
+      dpoIsExternal: z.boolean().optional(),
+      leadSupervisoryAuthority: z.string().optional().nullable(),
+      slackWebhookUrl: z.string().url().optional().or(z.literal('').transform(() => null)).nullable(),
       notificationPreferences: z.record(z.any()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      // Ensure only admins can update org settings
+
       if (ctx.user!.role !== 'admin' && ctx.user!.role !== 'owner') {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Must be admin or owner' });
       }
 
-      const updateData: any = {};
-      if (input.slackWebhookUrl !== undefined) updateData.slackWebhookUrl = input.slackWebhookUrl === '' ? null : input.slackWebhookUrl;
-      if (input.notificationPreferences !== undefined) updateData.notificationPreferences = input.notificationPreferences;
+      // Convert empty strings to null for DB constraints if needed
+      const updateData = { ...input };
+      if (updateData.countryCode === '') updateData.countryCode = undefined; // Assuming DB schema handles it or allows it
+      if (updateData.dpoEmail === '') updateData.dpoEmail = null;
 
       const [updated] = await db.update(organizations)
-        .set(updateData)
+        .set({
+            ...updateData,
+            updatedAt: new Date(),
+        })
         .where(eq(organizations.id, ctx.user!.orgId))
         .returning();
 
@@ -49,18 +61,21 @@ export const settingsRouter = router({
     .query(async ({ ctx }) => {
       const [user] = await db.select().from(users).where(eq(users.id, ctx.user!.id));
       if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
-      return {
-        notificationOverrides: user.notificationOverrides,
-      };
+      return user;
     }),
 
   updateUserSettings: protectedProcedure
     .input(z.object({
-      notificationOverrides: z.record(z.any()),
+      name: z.string().optional(),
+      timezone: z.string().optional(),
+      language: z.string().optional(),
+      notificationOverrides: z.record(z.any()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const updateData: any = { ...input };
+
       const [updated] = await db.update(users)
-        .set({ notificationOverrides: input.notificationOverrides })
+        .set(updateData)
         .where(eq(users.id, ctx.user!.id))
         .returning();
 
