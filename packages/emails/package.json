@@ -1,0 +1,26 @@
+{
+  "name": "emails",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "email dev --dir src/templates --port 3333"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-email": "^6.3.2",
+    "resend": "^6.12.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "@types/react": "^19.2.15",
+    "typescript": "^5.9.3"
+  }
+}
