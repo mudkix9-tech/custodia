@@ -1,3 +1,4 @@
+import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc.js';
 import { db } from '../db.js';
@@ -10,32 +11,35 @@ import {
 } from 'db';
 import { eq, and, desc, inArray, ilike, or } from 'drizzle-orm';
 import * as xlsx from 'xlsx';
+import { paginatedQuery } from '../utils/pagination.js';
 
 export const auditRouter = router({
   listLogs: protectedProcedure
     .input(z.object({
-      limit: z.number().min(1).max(100).default(50),
-      cursor: z.number().default(0),
+      limit: z.number().min(1).max(100).default(25),
+      cursor: z.string().nullish(),
       // Future: add filters here (date, user, resource, action)
     }))
     .query(async ({ ctx, input }) => {
       const isAdminOrOwner = ['admin', 'owner'].includes(ctx.user!.role);
       
-      const logs = await db.query.auditLogs.findMany({
-        where: eq(auditLogs.organizationId, ctx.user!.orgId),
-        orderBy: [desc(auditLogs.createdAt)],
-        limit: input.limit,
-        offset: input.cursor,
-      });
+      const res = await paginatedQuery(
+        auditLogs,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc'
+      );
 
-      return logs.map((log: any) => {
-        // Redact IP and UserAgent for non-admins
+      res.data = res.data.map((log: any) => {
         if (!isAdminOrOwner) {
           log.ipAddress = null;
           log.userAgent = null;
         }
         return log;
       });
+
+      return res;
     }),
 
   exportLogs: protectedProcedure
@@ -101,12 +105,20 @@ export const auditRouter = router({
     };
   }),
 
-  listGaps: protectedProcedure.query(async ({ ctx }) => {
-    return await db.query.complianceGaps.findMany({
-      where: eq(complianceGaps.organizationId, ctx.user!.orgId),
-      orderBy: [desc(complianceGaps.createdAt)],
-    });
-  }),
+  listGaps: protectedProcedure
+    .input(z.object({
+      limit: z.number().min(1).max(100).default(25),
+      cursor: z.string().nullish(),
+    }))
+    .query(async ({ ctx, input }) => {
+      return paginatedQuery(
+        complianceGaps,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc'
+      );
+    }),
 
   dismissGap: protectedProcedure
     .input(z.object({
@@ -126,6 +138,7 @@ export const auditRouter = router({
           eq(complianceGaps.id, input.gapId),
           eq(complianceGaps.organizationId, ctx.user!.orgId)
         ));
+      await dispatchWebhook(ctx.user!.orgId, 'compliance.gap_resolved', { gapId: input.gapId });
       return { success: true };
     }),
 

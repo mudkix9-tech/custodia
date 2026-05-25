@@ -1,4 +1,10 @@
-import { db } from '../index.js';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pkg from 'pg';
+const { Pool } = pkg;
+const pool = new Pool({ connectionString: process.env.DATABASE_URL || 'postgres://privaro:privaro_password@localhost:5432/privaro_db' });
+import * as schema from '../schema.js';
+const db = drizzle(pool, { schema });
+import { eq } from 'drizzle-orm';
 import { documentEmbeddings } from '../schema.js';
 import OpenAI from 'openai';
 import * as fs from 'fs/promises';
@@ -32,7 +38,7 @@ async function generateEmbedding(text: string) {
     input: text,
     encoding_format: 'float',
   });
-  return response.data[0].embedding;
+  return response.data[0]?.embedding || [];
 }
 
 function getHash(text: string) {
@@ -73,7 +79,7 @@ export async function seedCorpus() {
         
         // Check if exists
         const existing = await db.query.documentEmbeddings.findFirst({
-          where: (t, { eq }) => eq(t.contentHash, hash)
+          where: eq(documentEmbeddings.contentHash, hash)
         });
         
         if (existing) {

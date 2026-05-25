@@ -1,3 +1,4 @@
+import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
@@ -177,6 +178,11 @@ const tasksRouter = router({
       await db.delete(breachRemediationTasks).where(eq(breachRemediationTasks.id, input.id));
       return { success: true };
     }),
+});
+
+const paginationInput = z.object({
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().nullish(),
 });
 
 export const breachesRouter = router({

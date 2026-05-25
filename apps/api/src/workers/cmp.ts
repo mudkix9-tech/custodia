@@ -174,7 +174,7 @@ const cmpWorker = new Worker('cmp-automation', async job => {
 
     try {
       await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS ${sql.raw(partitionName)} PARTITION OF consent_records
+        CREATE TABLE IF NOT EXISTS ${sql.identifier(partitionName)} PARTITION OF consent_records
         FOR VALUES FROM (${startDate}) TO (${endDate});
       `);
       console.log(`[CMP Worker] Created partition ${partitionName}`);

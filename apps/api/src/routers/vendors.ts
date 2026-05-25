@@ -1,3 +1,4 @@
+import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
 import { db } from '../db.js';
 import { vendors, organizationVendors, users, vendorSubProcessors } from 'db';
@@ -62,6 +63,11 @@ export function calculateVendorRisk(vendor: any, orgVendor: any) {
 
   return { score, level };
 }
+
+const paginationInput = z.object({
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().nullish(),
+});
 
 export const vendorsRouter = router({
   // GLOBAL

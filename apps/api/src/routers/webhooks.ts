@@ -1,11 +1,17 @@
+import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
-import { router, protectedProcedure } from '../trpc.js';
+import { router, protectedProcedure, requireRole } from '../trpc.js';
 import { db } from '../db.js';
 import * as schema from '../../../../packages/db/src/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 
 
 import { randomBytes } from 'crypto';
+
+const paginationInput = z.object({
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().nullish(),
+});
 
 export const WEBHOOK_EVENTS = {
   // Processing Activities
@@ -52,15 +58,17 @@ export const WEBHOOK_EVENTS = {
 
 export const webhooksRouter = router({
   list: protectedProcedure
+    .use(requireRole("admin"))
     .query(async ({ ctx }) => {
       const hooks = await db.query.webhooks.findMany({
-        where: eq(schema.webhooks.organizationId, ctx.user.orgId),
+        where: eq(schema.webhooks.organizationId, ctx.user!.orgId),
         orderBy: desc(schema.webhooks.createdAt),
       });
       return hooks;
     }),
 
   create: protectedProcedure
+    .use(requireRole("admin"))
     .input(z.object({
       url: z.string().url(),
       events: z.array(z.string()).min(1),
@@ -68,43 +76,46 @@ export const webhooksRouter = router({
     .mutation(async ({ ctx, input }) => {
       const secret = `whsec_${randomBytes(32).toString('hex')}`;
       const [hook] = await db.insert(schema.webhooks).values({
-        organizationId: ctx.user.orgId,
+        organizationId: ctx.user!.orgId,
         url: input.url,
         events: input.events,
         secret,
-        createdBy: ctx.user.id,
+        createdBy: ctx.user!.id,
       }).returning();
       return hook;
     }),
 
   delete: protectedProcedure
+    .use(requireRole("admin"))
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await db.delete(schema.webhooks)
         .where(
           and(
             eq(schema.webhooks.id, input.id),
-            eq(schema.webhooks.organizationId, ctx.user.orgId)
+            eq(schema.webhooks.organizationId, ctx.user!.orgId)
           )
         );
       return { success: true };
     }),
 
   test: protectedProcedure
+    .use(requireRole("admin"))
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { dispatchWebhook } = require('../utils/webhookDispatcher');
-      await dispatchWebhook(ctx.user.orgId, 'webhook.test', { message: 'Test webhook delivery' }, input.id as any);
+      await dispatchWebhook(ctx.user!.orgId, 'webhook.test', { message: 'Test webhook delivery' }, input.id as any);
       return { success: true };
     }),
 
   getDeliveries: protectedProcedure
+    .use(requireRole("admin"))
     .input(z.object({ webhookId: z.string() }))
     .query(async ({ ctx, input }) => {
       const [hook] = await db.select().from(schema.webhooks).where(
         and(
           eq(schema.webhooks.id, input.webhookId),
-          eq(schema.webhooks.organizationId, ctx.user.orgId)
+          eq(schema.webhooks.organizationId, ctx.user!.orgId)
         )
       );
       if (!hook) throw new Error('Not found');
@@ -117,12 +128,13 @@ export const webhooksRouter = router({
     }),
 
   redeliver: protectedProcedure
+    .use(requireRole("admin"))
     .input(z.object({ webhookId: z.string(), deliveryId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const [hook] = await db.select().from(schema.webhooks).where(
         and(
           eq(schema.webhooks.id, input.webhookId),
-          eq(schema.webhooks.organizationId, ctx.user.orgId)
+          eq(schema.webhooks.organizationId, ctx.user!.orgId)
         )
       );
       if (!hook) throw new Error('Webhook not found');

@@ -21,7 +21,7 @@ export async function sendEmail({ to, subject, template, from, replyTo, tags }: 
     to: Array.isArray(to) ? to : [to],
     subject,
     html,
-    reply_to: replyTo,
+    replyTo: replyTo,
     tags: tags ? Object.entries(tags).map(([name, value]) => ({ name, value })) : undefined,
   });
 

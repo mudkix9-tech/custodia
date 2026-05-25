@@ -1,3 +1,4 @@
+import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
@@ -20,6 +21,11 @@ const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev';
 
 // Helpers
+const paginationInput = z.object({
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().nullish(),
+});
+
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
 };
@@ -150,10 +156,17 @@ const tasksRouter = router({
 
   list: protectedProcedure
     .use(requirePermission('dsar', 'view'))
-    .input(z.object({ dsarId: z.string().uuid() }))
+    .input(paginationInput.extend({ dsarId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return db.select().from(dsarTasks).where(eq(dsarTasks.dsarId, input.dsarId));
+      return paginatedQuery(
+        dsarTasks,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc',
+        [eq(dsarTasks.dsarId, input.dsarId)]
+      );
     }),
 
   update: protectedProcedure
@@ -185,10 +198,17 @@ const tasksRouter = router({
 const commsRouter = router({
   list: protectedProcedure
     .use(requirePermission('dsar', 'view'))
-    .input(z.object({ dsarId: z.string().uuid() }))
+    .input(paginationInput.extend({ dsarId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return db.select().from(dsarCommunications).where(eq(dsarCommunications.dsarId, input.dsarId)).orderBy(desc(dsarCommunications.sentAt));
+      return paginatedQuery(
+        dsarCommunications,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'sentAt',
+        'desc',
+        [eq(dsarCommunications.dsarId, input.dsarId)]
+      );
     }),
 
   send: protectedProcedure
@@ -343,9 +363,16 @@ export const dsarRouter = router({
 
   list: protectedProcedure
     .use(requirePermission('dsar', 'view'))
-    .query(async ({ ctx }) => {
+    .input(paginationInput)
+    .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return db.select().from(dsarRequests).where(eq(dsarRequests.organizationId, ctx.user!.orgId)).orderBy(desc(dsarRequests.createdAt));
+      return paginatedQuery(
+        dsarRequests,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc'
+      );
     }),
 
   getById: protectedProcedure

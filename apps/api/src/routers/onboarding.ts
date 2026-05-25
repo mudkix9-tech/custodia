@@ -318,7 +318,7 @@ export const onboardingRouter = router({
       }).returning();
 
       await db.insert(policyVersions).values({
-        policyId: policy.id,
+        policyId: policy!.id,
         versionNumber: 1,
         contentHtml: '# Privacy Policy\n\nThis policy is auto-generated based on your Processing Activities.', contentMarkdown: '# Privacy Policy\n\nThis policy is auto-generated based on your Processing Activities.',
 
@@ -366,7 +366,7 @@ export const onboardingRouter = router({
             organizationId: ctx.user!.orgId,
             name: invite.email.split('@')[0],
             invitedAt: new Date(),
-          });
+          } as any);
         }
       }
 

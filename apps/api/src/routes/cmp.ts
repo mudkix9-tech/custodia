@@ -99,7 +99,7 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
     // This is a minimal implementation of the requested robust banner logic.
     const script = `
 (function() {
-  const config = ${JSON.stringify(config)};
+  const config = JSON.parse('${JSON.stringify(config).replace(/</g, '\\u003c')}');
   
   function getCookie(name) {
     const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');

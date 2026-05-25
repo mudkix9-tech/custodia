@@ -33,11 +33,13 @@ export async function paginatedQuery<T>(
   orgId: string,
   params: PaginationParams,
   sortField: string = 'createdAt',
-  sortOrder: 'asc' | 'desc' = 'desc'
+  sortOrder: 'asc' | 'desc' = 'desc',
+  additionalWhere?: any[]
 ): Promise<PaginatedResponse<T>> {
   const limit = Math.min(params.limit || 25, 100);
 
   let whereConditions: any[] = [eq(table.organizationId, orgId)];
+  if (additionalWhere) whereConditions.push(...additionalWhere);
 
   if (params.after) {
     try {

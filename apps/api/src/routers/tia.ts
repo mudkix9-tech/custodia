@@ -2,17 +2,18 @@ import { z } from 'zod';
 import { db } from '../db.js';
 import { transferImpactAssessments, processingTransfers, organizationVendors, vendors } from 'db';
 import { eq, and, desc } from 'drizzle-orm';
-import { router, protectedProcedure } from '../trpc.js';
+import { router, protectedProcedure, requireRole } from '../trpc.js';
 import { TRPCError } from '@trpc/server';
 
 export const tiaRouter = router({
   getForVendor: protectedProcedure
+    .use(requireRole("admin"))
     .input(z.object({ vendorId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const [tia] = await db.select()
         .from(transferImpactAssessments)
         .where(and(
-          eq(transferImpactAssessments.organizationId, ctx.user.orgId),
+          eq(transferImpactAssessments.organizationId, ctx.user!.orgId),
           eq(transferImpactAssessments.vendorId, input.vendorId)
         ))
         .orderBy(desc(transferImpactAssessments.createdAt))
@@ -22,6 +23,7 @@ export const tiaRouter = router({
     }),
 
   save: protectedProcedure
+    .use(requireRole("admin"))
     .input(z.object({
       id: z.string().uuid().optional(),
       vendorId: z.string().uuid(),
@@ -47,7 +49,7 @@ export const tiaRouter = router({
       let tiaId = input.id;
       
       const payload: any = {
-        organizationId: ctx.user.orgId,
+        organizationId: ctx.user!.orgId,
         vendorId: input.vendorId,
         destinationCountry: input.destinationCountry,
         transferMechanism: input.transferMechanism,
@@ -66,7 +68,7 @@ export const tiaRouter = router({
       };
 
       if (input.status === 'completed') {
-        payload.approvedBy = ctx.user.id;
+        payload.approvedBy = ctx.user!.id;
         payload.approvedAt = new Date();
       }
 
@@ -75,7 +77,7 @@ export const tiaRouter = router({
           .set(payload)
           .where(and(
             eq(transferImpactAssessments.id, tiaId),
-            eq(transferImpactAssessments.organizationId, ctx.user.orgId)
+            eq(transferImpactAssessments.organizationId, ctx.user!.orgId)
           ))
           .returning();
         if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
@@ -102,7 +104,7 @@ export const tiaRouter = router({
             .set({ tiaCompleted: true })
             .where(and(
               eq(organizationVendors.vendorId, input.vendorId),
-              eq(organizationVendors.organizationId, ctx.user.orgId)
+              eq(organizationVendors.organizationId, ctx.user!.orgId)
             ));
             
           await db.update(processingTransfers)
@@ -119,13 +121,14 @@ export const tiaRouter = router({
     
     // PDF Export placeholder (simulating Puppeteer pipeline)
     exportPdf: protectedProcedure
+      .use(requireRole("admin"))
       .input(z.object({ tiaId: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
         const [tia] = await db.select()
           .from(transferImpactAssessments)
           .where(and(
             eq(transferImpactAssessments.id, input.tiaId),
-            eq(transferImpactAssessments.organizationId, ctx.user.orgId)
+            eq(transferImpactAssessments.organizationId, ctx.user!.orgId)
           ));
           
         if (!tia) throw new TRPCError({ code: 'NOT_FOUND' });

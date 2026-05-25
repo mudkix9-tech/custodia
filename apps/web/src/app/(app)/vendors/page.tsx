@@ -7,7 +7,8 @@ import { Plus, Search, FileText, Download, ShieldAlert, CheckCircle2, Clock, Lin
 import Link from 'next/link';
 
 export default function VendorsPage() {
-  const { data: vendors = [], isLoading } = trpc.vendors.getOrgVendors.useQuery();
+  const { data: vendorsResp, isLoading } = trpc.vendors.getOrgVendors.useQuery({} as any);
+  const vendors = (vendorsResp as any)?.data || [];
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 

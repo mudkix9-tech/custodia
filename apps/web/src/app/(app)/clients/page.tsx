@@ -7,7 +7,8 @@ import { Plus, Search, Building2, Globe, FileText, CheckCircle2, Clock } from 'l
 import Link from 'next/link';
 
 export default function ClientsPage() {
-  const { data: clients = [], isLoading } = trpc.clients.list.useQuery();
+  const { data: clientsResp, isLoading } = trpc.clients.list.useQuery({} as any);
+  const clients = (clientsResp as any)?.data || [];
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 

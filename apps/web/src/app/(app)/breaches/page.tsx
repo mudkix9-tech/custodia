@@ -7,7 +7,8 @@ import ReportBreachModal from '@/components/breaches/ReportBreachModal';
 
 export default function BreachesPage() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const { data: breaches, isLoading, refetch } = trpc.breaches.list.useQuery();
+  const { data: breachesResp, isLoading, refetch } = trpc.breaches.list.useQuery({} as any);
+  const breaches = (breachesResp as any)?.data || [];
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">

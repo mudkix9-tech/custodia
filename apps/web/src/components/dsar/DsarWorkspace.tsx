@@ -1,4 +1,5 @@
 "use client";
+import DOMPurify from 'dompurify';
 
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
@@ -169,7 +170,7 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
               </button>
             </div>
             
-            {tasks?.length === 0 ? (
+            {((tasks as any)?.data || [])?.length === 0 ? (
               <div className="text-center py-12 border-2 border-dashed border-ink-900/10 rounded-2xl">
                 <CheckCircle2 className="w-8 h-8 text-ink-300 mx-auto mb-3" />
                 <p className="text-ink-600">No tasks generated yet.</p>
@@ -177,7 +178,7 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
               </div>
             ) : (
               <div className="space-y-4">
-                {tasks?.map(task => (
+                {((tasks as any)?.data || [])?.map((task: any) => (
                   <div key={task.id} className={`p-5 rounded-2xl border ${task.status === 'completed' ? 'bg-sage-50/30 border-sage-500/20' : 'bg-white border-ink-900/10'}`}>
                     <div className="flex justify-between items-start mb-3">
                       <div>
@@ -221,14 +222,14 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
         {activeTab === 'comms' && (
           <div className="fade-up h-full flex flex-col">
             <div className="flex-1 overflow-y-auto space-y-4 mb-6">
-              {comms?.map(comm => (
+              {((comms as any)?.data || [])?.map((comm: any) => (
                 <div key={comm.id} className={`p-4 rounded-xl border max-w-2xl ${comm.direction === 'inbound' ? 'bg-bone-50 border-ink-900/10 mr-auto' : 'bg-blue-50 border-blue-100 ml-auto'}`}>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500">{comm.direction === 'inbound' ? 'From Subject' : 'Sent by System/Team'}</span>
                     <span className="text-[11px] text-ink-400">{format(new Date(comm.sentAt!), 'MMM dd, h:mm a')}</span>
                   </div>
                   <div className="font-medium text-ink-900 text-[14px] mb-1">{comm.subject}</div>
-                  <div className="text-[13px] text-ink-700 whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: comm.body || '' }} />
+                  <div className="text-[13px] text-ink-700 whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comm.body || '') }} />
                   
                   {Array.isArray(comm.attachments) && comm.attachments.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-ink-900/10 flex flex-wrap gap-2">
@@ -242,7 +243,7 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
                   )}
                 </div>
               ))}
-              {comms?.length === 0 && <div className="text-center text-ink-500 py-10">No communications yet.</div>}
+              {((comms as any)?.data || [])?.length === 0 && <div className="text-center text-ink-500 py-10">No communications yet.</div>}
             </div>
 
             <div className="bg-bone-50 p-4 rounded-2xl border border-ink-900/10">

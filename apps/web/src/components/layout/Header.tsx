@@ -1,4 +1,5 @@
 "use client";
+import DOMPurify from 'dompurify';
 
 import React, { useState } from 'react';
 import { Menu, Search, Bell, ExternalLink } from 'lucide-react';
@@ -103,7 +104,7 @@ export function Header() {
                           </div>
                           {notification.actionUrl && <ExternalLink className="w-3 h-3 text-ink-300 opacity-0 group-hover:opacity-100 transition-opacity" />}
                         </div>
-                        <p className="text-xs text-ink-600 mt-1 leading-snug" dangerouslySetInnerHTML={{ __html: notification.body || '' }} />
+                        <p className="text-xs text-ink-600 mt-1 leading-snug" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(notification.body || '') }} />
                         <p className="text-[10px] text-ink-400 mt-2 font-medium">{timeAgo}</p>
                       </div>
                     );
