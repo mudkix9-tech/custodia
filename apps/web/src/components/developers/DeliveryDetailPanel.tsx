@@ -8,7 +8,7 @@ export default function DeliveryDetailPanel({ delivery }: { delivery: any }) {
   const redeliverMutation = trpc.webhooks.redeliver.useMutation({
     onSuccess: () => {
       setRedeliverSuccess(true);
-      utils.webhooks.getDeliveries.invalidate();
+      utils.webhooks.getDeliveries.invalidate({});
       setTimeout(() => setRedeliverSuccess(null), 3000);
     },
     onError: () => {

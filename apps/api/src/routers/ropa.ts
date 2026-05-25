@@ -1,3 +1,4 @@
+import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
@@ -15,6 +16,11 @@ const sanitize = (text?: string) => {
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
 };
+
+const paginationInput = z.object({
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().nullish(),
+});
 
 export const ropaRouter = router({
   list: protectedProcedure

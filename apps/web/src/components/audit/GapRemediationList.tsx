@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { AlertCircle, CheckCircle2, ChevronRight, X } from 'lucide-react';
 
 export function GapRemediationList() {
-  const { data: gaps = [], isLoading } = trpc.audit.listGaps.useQuery();
+  const { data: gaps = [], isLoading } = trpc.audit.listGaps.useQuery({});
   const utils = trpc.useUtils();
   const dismissMutation = trpc.audit.dismissGap.useMutation();
   
@@ -13,12 +13,12 @@ export function GapRemediationList() {
 
   if (isLoading) return <div className="text-sm text-ink-500 p-8">Scanning for compliance gaps...</div>;
 
-  const openGaps = gaps.filter((g: any) => g.status === 'open' || g.status === 'in_progress');
+  const openGaps = ((gaps as any)?.data || gaps || []).filter((g: any) => g.status === 'open' || g.status === 'in_progress');
 
   const handleDismiss = async () => {
     if (!dismissingId || dismissReason.length < 10) return;
     await dismissMutation.mutateAsync({ gapId: dismissingId, reason: dismissReason });
-    utils.audit.listGaps.invalidate();
+    utils.audit.listGaps.invalidate({});
     setDismissingId(null);
     setDismissReason('');
   };

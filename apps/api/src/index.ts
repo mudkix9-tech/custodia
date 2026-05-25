@@ -44,6 +44,16 @@ Sentry.init({
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
 });
 
+
+// Validate essential environment variables
+const requiredEnvVars = ['DATABASE_URL', 'REDIS_URL'];
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    console.error(`FATAL: Missing required environment variable: ${envVar}`);
+    process.exit(1);
+  }
+}
+
 const server = fastify({
   maxParamLength: 5000,
   logger: {
@@ -116,8 +126,16 @@ server.get('/api/health', async (request, reply) => {
     checks.status = 'degraded';
   }
 
-  // Redis check mock or implement if exported from worker
-  checks.checks.redis = 'ok'; // Skipping explicit redis ping for now unless redis is imported
+  try {
+    const Redis = (await import('ioredis')).default;
+    const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+    await redis.ping();
+    checks.checks.redis = 'ok';
+    redis.disconnect();
+  } catch (e) {
+    checks.checks.redis = 'error';
+    checks.status = 'degraded';
+  }
 
   const httpStatus = checks.status === 'ok' ? 200 : 503;
   return reply.code(httpStatus).send(checks);
@@ -158,5 +176,22 @@ const start = async () => {
     process.exit(1);
   }
 };
+
+
+const signals = ['SIGINT', 'SIGTERM'];
+signals.forEach((signal) => {
+  process.on(signal, async () => {
+    console.log(`Received ${signal}, gracefully shutting down...`);
+    // Ideally close BullMQ workers, fastify, etc.
+    try {
+      await server.close();
+      console.log('Server closed.');
+      process.exit(0);
+    } catch (err) {
+      console.error('Error during shutdown', err);
+      process.exit(1);
+    }
+  });
+});
 
 start();

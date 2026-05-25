@@ -705,6 +705,11 @@ export const dsarRequests = pgTable('dsar_requests', {
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgStatusIdx: index('idx_dsar_requests_org_status').on(table.organizationId, table.status),
+    deadlineIdx: index('idx_dsar_requests_deadline').on(table.deadlineAt),
+  };
 });
 
 export const dsarTasks = pgTable('dsar_tasks', {
@@ -864,6 +869,11 @@ export const consentRecords = pgTable('consent_records', {
   withdrawnAt: timestamp('withdrawn_at', { withTimezone: true }),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    domainIdx: index('idx_consent_records_domain').on(table.domainId),
+    givenAtIdx: index('idx_consent_records_given_at').on(table.givenAt),
+  };
 });
 
 // ============================================================================
@@ -1328,6 +1338,7 @@ export const webhookDeliveries = pgTable('webhook_deliveries', {
   return {
     webhookIdx: index('idx_wd_webhook').on(table.webhookId),
     retryIdx: index('idx_wd_retry').on(table.nextRetryAt),
+    statusIdx: index('idx_webhook_deliveries_status').on(table.status),
   };
 });
 

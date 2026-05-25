@@ -10,10 +10,10 @@ export default function ConsentDashboard() {
   const [domain, setDomain] = useState('');
   
   const utils = trpc.useContext();
-  const { data: domains, isLoading } = trpc.consent.listDomains.useQuery();
+  const { data: domains, isLoading } = trpc.consent.listDomains.useQuery({});
   const createMutation = trpc.consent.createDomain.useMutation({
     onSuccess: () => {
-      utils.consent.listDomains.invalidate();
+      utils.consent.listDomains.invalidate({});
       setIsCreating(false);
       setDomain('');
     }
@@ -63,7 +63,7 @@ export default function ConsentDashboard() {
       )}
 
       <div className="grid md:grid-cols-2 gap-6">
-        {domains?.map(d => (
+        {((domains as any)?.data || [])?.map((d: any) => (
           <div key={d.id} className="bg-white rounded-2xl border border-ink-900/10 overflow-hidden shadow-sm flex flex-col">
             <div className="p-6 border-b border-ink-900/5 flex justify-between items-start">
               <div className="flex items-center gap-3">

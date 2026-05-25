@@ -1,3 +1,5 @@
+import { dispatchWebhook } from '../utils/webhookDispatcher.js';
+import { paginatedQuery } from '../utils/pagination.js';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { z } from 'zod';
 import { db } from '../db.js';
@@ -99,12 +101,24 @@ ${currentRopaState}
   return { markdown: newMarkdown, diffs, hasChanges };
 }
 
+const paginationInput = z.object({
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().nullish(),
+});
+
 export const policiesRouter = router({
   list: protectedProcedure
     .use(requirePermission('ropa', 'view')) // Requires privacy policies permission, using ropa for now
-    .query(async ({ ctx }) => {
+    .input(paginationInput)
+    .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return db.select().from(privacyPolicies).where(eq(privacyPolicies.organizationId, ctx.user!.orgId));
+      return paginatedQuery(
+        privacyPolicies,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc'
+      );
     }),
 
   getById: protectedProcedure
@@ -116,7 +130,7 @@ export const policiesRouter = router({
       if (!policy) return null;
       
       const versions = await db.select().from(policyVersions)
-        .where(eq(policyVersions.policyId, policy.id))
+        .where(eq(policyVersions.policyId, policy!.id))
         .orderBy(desc(policyVersions.versionNumber));
         
       return { policy, versions };
@@ -132,6 +146,7 @@ export const policiesRouter = router({
         name: input.name,
         type: input.type,
       }).returning();
+      await dispatchWebhook(ctx.user!.orgId, 'policy.created', { policyId: policy!.id });
       return policy;
     }),
 
@@ -150,7 +165,7 @@ export const policiesRouter = router({
       const { markdown, diffs } = await generatePolicyMarkdown(ctx.user!.orgId, currentVersion?.contentMarkdown);
       
       const [newVersion] = await db.insert(policyVersions).values({
-        policyId: policy.id,
+        policyId: policy!.id,
         versionNumber: (currentVersion?.versionNumber || 0) + 1,
         contentMarkdown: markdown,
         contentHtml: `<div>${markdown.replace(/\n/g, '<br/>')}</div>`, // simplistic
@@ -160,6 +175,7 @@ export const policiesRouter = router({
         createdBy: ctx.user!.id,
       }).returning();
       
+      await dispatchWebhook(ctx.user!.orgId, 'policy.updated', { policyId: policy!.id });
       return newVersion;
     }),
 
@@ -171,6 +187,7 @@ export const policiesRouter = router({
       await db.update(privacyPolicies)
         .set({ currentVersionId: input.versionId, publishedAt: new Date() })
         .where(eq(privacyPolicies.id, input.policyId));
+      await dispatchWebhook(ctx.user!.orgId, 'policy.published', { policyId: input.policyId });
       return { success: true };
     }),
 });

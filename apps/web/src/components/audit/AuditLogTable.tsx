@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { Download, Search, Settings, Server, User, Clock, ShieldAlert, FileJson } from 'lucide-react';
 
 export function AuditLogTable() {
-  const [cursor, setCursor] = useState(0);
+  const [cursor, setCursor] = useState<string | null>(null);
   const { data: logs, isLoading } = trpc.audit.listLogs.useQuery({ limit: 50, cursor });
   
   const [selectedLog, setSelectedLog] = useState<any>(null);
@@ -15,7 +15,7 @@ export function AuditLogTable() {
     return <div className="p-8 text-center text-ink-500">Loading audit ledger...</div>;
   }
 
-  if (!logs || logs.length === 0) {
+  if (((logs as any)?.data || [])?.length === 0) {
     return (
       <div className="bg-white border border-ink-900/10 rounded-2xl p-12 text-center">
         <ShieldAlert className="w-12 h-12 text-ink-300 mx-auto mb-4" />
@@ -64,7 +64,7 @@ export function AuditLogTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-900/5">
-            {logs.map((log) => (
+            {((logs as any)?.data || []).map((log: any) => (
               <tr key={log.id} className="hover:bg-bone-50/50 transition-colors">
                 <td className="px-6 py-3 text-ink-600 whitespace-nowrap">
                   <div className="flex items-center gap-2">
@@ -113,17 +113,17 @@ export function AuditLogTable() {
       </div>
 
       <div className="p-4 border-t border-ink-900/5 flex items-center justify-between bg-bone-50">
-        <span className="text-sm text-ink-500">Showing {logs.length} entries</span>
+        <span className="text-sm text-ink-500">Showing {((logs as any)?.data || []).length} entries</span>
         <div className="flex gap-2">
           <button 
-            disabled={cursor === 0}
-            onClick={() => setCursor(Math.max(0, cursor - 50))}
+            disabled={!cursor}
+            onClick={() => setCursor(((logs as any)?.pagination?.previous_cursor) || null)}
             className="px-3 py-1.5 text-sm font-medium text-ink-700 bg-white border border-ink-900/20 rounded-lg hover:bg-bone-100 disabled:opacity-50"
           >
             Previous
           </button>
           <button 
-            onClick={() => setCursor(cursor + 50)}
+            onClick={() => setCursor(((logs as any)?.pagination?.next_cursor) || null)}
             className="px-3 py-1.5 text-sm font-medium text-ink-700 bg-white border border-ink-900/20 rounded-lg hover:bg-bone-100"
           >
             Next

@@ -1,4 +1,5 @@
 "use client";
+import DOMPurify from 'dompurify';
 
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
@@ -90,7 +91,7 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
                 {activeTab === 'rich' && (
                   <div 
                     className="prose prose-sm prose-ink max-w-none"
-                    dangerouslySetInnerHTML={{ __html: currentDraft.contentHtml || currentDraft.contentMarkdown }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(currentDraft.contentHtml || currentDraft.contentMarkdown || '') }}
                   />
                 )}
                 {activeTab === 'markdown' && (

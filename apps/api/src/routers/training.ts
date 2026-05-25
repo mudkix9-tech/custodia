@@ -1,3 +1,5 @@
+import { dispatchWebhook } from '../utils/webhookDispatcher.js';
+import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
@@ -11,6 +13,11 @@ import crypto from 'crypto';
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
 };
+
+const paginationInput = z.object({
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().nullish(),
+});
 
 export const trainingRouter = router({
   // MODULES
@@ -277,6 +284,7 @@ export const trainingRouter = router({
         if (comp.module.recurrence === 'annual') {
           payload.expiresAt = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
         }
+        await dispatchWebhook(ctx.user!.orgId, 'training.completed', { completionId: comp.id, userId: ctx.user!.id, moduleId: comp.moduleId });
         payload.certificateId = `CERT-${new Date().getFullYear()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
         
         // Generate PDF
@@ -357,12 +365,28 @@ export const trainingRouter = router({
       return { url: 'mock_s3_url' };
     }),
 
-  orgOverview: protectedProcedure.query(async ({ ctx }) => {
-    checkOrgContext(ctx.user);
-    const comps = await db.query.trainingCompletions.findMany({
-      where: eq(trainingCompletions.organizationId, ctx.user!.orgId),
-      with: { user: true, module: true }
-    });
-    return comps;
-  }),
+  orgOverview: protectedProcedure
+    .input(paginationInput)
+    .query(async ({ ctx, input }) => {
+      checkOrgContext(ctx.user);
+      const res = await paginatedQuery(
+        trainingCompletions,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc'
+      );
+
+      const compIds = res.data.map((r: any) => r.id);
+      if (compIds.length > 0) {
+        const fullComps = await db.query.trainingCompletions.findMany({
+          where: inArray(trainingCompletions.id, compIds),
+          with: { user: true, module: true }
+        });
+        const map = new Map(fullComps.map((c: any) => [c.id, c]));
+        res.data = res.data.map((r: any) => map.get(r.id) || r);
+      }
+
+      return res;
+    }),
 });

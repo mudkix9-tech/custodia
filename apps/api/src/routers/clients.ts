@@ -1,3 +1,5 @@
+import { dispatchWebhook } from '../utils/webhookDispatcher.js';
+import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc.js';
 import { db } from '../db.js';
@@ -10,6 +12,11 @@ import {
 import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
+
+const paginationInput = z.object({
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().nullish(),
+});
 
 export const clientsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -64,6 +71,7 @@ export const clientsRouter = router({
         ...input,
         contactEmail: input.contactEmail || undefined,
       }).returning();
+      await dispatchWebhook(ctx.user.orgId, 'client.created', { clientId: newClient!.id });
       return newClient;
     }),
 
@@ -86,6 +94,7 @@ export const clientsRouter = router({
           eq(clients.organizationId, ctx.user.orgId)
         )).returning();
       if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
+      await dispatchWebhook(ctx.user.orgId, 'client.updated', { clientId: updated.id });
       return updated;
     }),
 
@@ -131,6 +140,7 @@ export const clientsRouter = router({
           eq(clients.id, input.id),
           eq(clients.organizationId, ctx.user.orgId)
         )).returning();
+      await dispatchWebhook(ctx.user.orgId, 'client.updated', { clientId: input.id, portalEnabled: input.enabled });
       return updated;
     }),
 

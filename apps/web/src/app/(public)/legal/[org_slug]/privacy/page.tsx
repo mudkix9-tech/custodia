@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 import React from 'react';
 import { db } from 'api/src/db';
 import { organizations, privacyPolicies, policyVersions } from 'db';
@@ -48,7 +49,7 @@ export default async function PublicPrivacyPolicy({ params }: { params: { org_sl
 
         <div 
           className="prose prose-ink prose-a:text-sage-600 hover:prose-a:text-sage-700 max-w-none"
-          dangerouslySetInnerHTML={{ __html: version.contentHtml }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(version.contentHtml || '') }}
         />
         
         <div className="mt-16 pt-8 border-t border-ink-900/10 text-center text-sm text-ink-400">

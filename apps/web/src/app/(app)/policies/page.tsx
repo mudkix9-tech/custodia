@@ -12,10 +12,10 @@ export default function PoliciesDashboard() {
   const [type, setType] = useState('website_visitors');
   
   const utils = trpc.useContext();
-  const { data: policies, isLoading } = trpc.policies.list.useQuery();
+  const { data: policies, isLoading } = trpc.policies.list.useQuery({});
   const createMutation = trpc.policies.create.useMutation({
     onSuccess: () => {
-      utils.policies.list.invalidate();
+      utils.policies.list.invalidate({});
       setIsCreating(false);
       setName('');
     }
@@ -71,7 +71,7 @@ export default function PoliciesDashboard() {
       )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {policies?.map(policy => {
+        {((policies as any)?.data || [])?.map((policy: any) => {
           // Mocking out-of-sync logic for UI purposes
           const isOutOfSync = policy.syncWithRopa && (!policy.publishedAt || new Date().getTime() - new Date(policy.publishedAt).getTime() > 30 * 24 * 60 * 60 * 1000);
           
@@ -111,7 +111,7 @@ export default function PoliciesDashboard() {
             </Link>
           );
         })}
-        {policies?.length === 0 && !isCreating && (
+        {((policies as any)?.data || [])?.length === 0 && !isCreating && (
           <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-ink-900/10">
             <p className="text-ink-500">No privacy policies created yet.</p>
           </div>

@@ -18,7 +18,7 @@ const COLUMNS = [
 
 export function DsarDashboardClient() {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
-  const { data: requests, isLoading } = trpc.dsar.list.useQuery();
+  const { data: requests, isLoading } = trpc.dsar.list.useQuery({});
 
   if (isLoading) return <div className="text-ink-500">Loading DSARs...</div>;
 
@@ -44,7 +44,7 @@ export function DsarDashboardClient() {
       {viewMode === 'kanban' ? (
         <div className="flex gap-4 overflow-x-auto pb-4">
           {COLUMNS.map(col => {
-            const colRequests = requests?.filter(r => r.status === col.id) || [];
+            const colRequests = ((requests as any)?.data || [])?.filter((r: any) => r.status === col.id) || [];
             return (
               <div key={col.id} className="min-w-[300px] w-[300px] flex-shrink-0 bg-bone-50/50 rounded-2xl p-4 border border-ink-900/5">
                 <div className="flex items-center justify-between mb-4 px-1">
@@ -55,7 +55,7 @@ export function DsarDashboardClient() {
                 </div>
 
                 <div className="space-y-3">
-                  {colRequests.map(request => {
+                  {colRequests.map((request: any) => {
                     const daysRemaining = differenceInDays(new Date(request.deadlineAt), new Date());
                     let deadlineColor = 'text-sage-600 bg-sage-50';
                     if (daysRemaining <= 14 && daysRemaining > 7) deadlineColor = 'text-amber-600 bg-amber-50';
@@ -105,7 +105,7 @@ export function DsarDashboardClient() {
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-900/5">
-              {requests?.map(request => (
+              {((requests as any)?.data || [])?.map((request: any) => (
                 <tr key={request.id} className="hover:bg-bone-50/50">
                   <td className="px-6 py-4 font-mono text-[13px]">{request.referenceNumber}</td>
                   <td className="px-6 py-4 font-medium text-ink-900">{request.subjectName}</td>

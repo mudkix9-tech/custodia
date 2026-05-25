@@ -1,3 +1,4 @@
+import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import { z } from 'zod';
 import { router, protectedProcedure, requireRole } from '../trpc.js';
 import { db } from '../db.js';
@@ -41,7 +42,7 @@ export const teamRouter = router({
         role: input.role,
         invitedAt: new Date(),
         invitedBy: ctx.user!.id,
-      }).returning();
+      } as any).returning();
 
       if (!newUser) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       
@@ -71,7 +72,7 @@ export const teamRouter = router({
             role: input.role,
             invitedAt: new Date(),
             invitedBy: ctx.user!.id,
-          }).returning();
+          } as any).returning();
           newUsers.push(newUser);
         }
       }
@@ -98,6 +99,7 @@ export const teamRouter = router({
 
       if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
 
+      await dispatchWebhook(ctx.user!.orgId, 'team.role_changed', { userId: input.userId });
       return updated;
     }),
 
@@ -141,6 +143,7 @@ export const teamRouter = router({
         .where(and(eq(users.id, input.userId), eq(users.organizationId, ctx.user!.orgId)))
         .returning();
 
+      await dispatchWebhook(ctx.user!.orgId, 'team.user_removed', { userId: input.userId });
       return { success: true };
     }),
 });

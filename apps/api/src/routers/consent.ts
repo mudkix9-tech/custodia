@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '../db.js';
 import { consentDomains, consentCookies, consentRecords } from 'db';
 import { eq, count } from 'drizzle-orm';
+import { paginatedQuery } from '../utils/pagination.js';
 import { TRPCError } from '@trpc/server';
 import { cmpJobsQueue } from '../workers/cmp.js';
 
@@ -12,10 +13,20 @@ const checkOrgContext = (user: any) => {
 
 export const consentRouter = router({
   listDomains: protectedProcedure
-    .use(requirePermission('ropa', 'view')) // Adjust permissions in future
-    .query(async ({ ctx }) => {
+    .use(requirePermission('ropa', 'view'))
+    .input(z.object({
+      limit: z.number().min(1).max(100).default(25),
+      cursor: z.string().nullish(),
+    }))
+    .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return db.select().from(consentDomains).where(eq(consentDomains.organizationId, ctx.user!.orgId));
+      return paginatedQuery(
+        consentDomains,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc'
+      );
     }),
 
   getDomain: protectedProcedure

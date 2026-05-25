@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 export default function TrainingAdminDashboard() {
   const { data: modules, isLoading: loadingModules } = trpc.training.listModules.useQuery();
-  const { data: completions, isLoading: loadingCompletions } = trpc.training.orgOverview.useQuery();
+  const { data: completions, isLoading: loadingCompletions } = trpc.training.orgOverview.useQuery({} as any);
 
   const [activeTab, setActiveTab] = useState<'overview' | 'modules' | 'completions'>('overview');
 
@@ -19,13 +19,13 @@ export default function TrainingAdminDashboard() {
     );
   }
 
-  const passed = completions?.filter(c => c.status === 'passed').length || 0;
-  const inProgress = completions?.filter(c => c.status === 'in_progress').length || 0;
-  const notStarted = completions?.filter(c => c.status === 'not_started').length || 0;
-  const total = completions?.length || 0;
+  const passed = ((completions as any)?.data || [])?.filter((c: any) => c.status === 'passed').length || 0;
+  const inProgress = ((completions as any)?.data || [])?.filter((c: any) => c.status === 'in_progress').length || 0;
+  const notStarted = ((completions as any)?.data || [])?.filter((c: any) => c.status === 'not_started').length || 0;
+  const total = ((completions as any)?.data || [])?.length || 0;
   
   const completionRate = total > 0 ? Math.round((passed / total) * 100) : 0;
-  const overdueCount = completions?.filter(c => 
+  const overdueCount = ((completions as any)?.data || [])?.filter((c: any) =>
     c.status !== 'passed' && 
     c.dueAt && new Date(c.dueAt).getTime() < new Date().getTime()
   ).length || 0;
@@ -116,7 +116,7 @@ export default function TrainingAdminDashboard() {
                   <h3 className="text-[14px] font-semibold text-ink-900">Recent Activity</h3>
                 </div>
                 <div className="divide-y divide-ink-900/10">
-                  {completions?.slice(0, 5).map(c => (
+                  {((completions as any)?.data || [])?.slice(0, 5).map((c: any) => (
                     <div key={c.id} className="p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-ink-100 flex items-center justify-center text-ink-600 font-medium text-[13px]">
@@ -142,7 +142,7 @@ export default function TrainingAdminDashboard() {
                       </div>
                     </div>
                   ))}
-                  {completions?.length === 0 && (
+                  {((completions as any)?.data || [])?.length === 0 && (
                     <div className="p-8 text-center text-[13.5px] text-ink-500">No training activity recorded yet.</div>
                   )}
                 </div>
@@ -207,7 +207,7 @@ export default function TrainingAdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-900/10">
-                  {completions?.map(c => (
+                  {((completions as any)?.data || [])?.map((c: any) => (
                     <tr key={c.id} className="hover:bg-bone-50/30 transition-colors">
                       <td className="py-3 px-6 font-medium text-ink-900">{c.user?.name}</td>
                       <td className="py-3 px-6 text-ink-600">{c.module?.title}</td>
