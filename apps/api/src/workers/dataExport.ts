@@ -1,14 +1,24 @@
 import { createWorker } from '../lib/queue.js';
 import { db } from '../db.js';
-import { organizations, users, processingActivities, vendors, dsarRequests, breaches, documents } from 'db';
+import { notificationQueue, organizations, users, processingActivities, vendors, dsarRequests, breaches, documents } from 'db';
 import { eq } from 'drizzle-orm';
-// Note: simulating ZIP/S3 due to missing libraries and real S3 credentials
-// but providing full functional worker structure as requested.
+import archiver from 'archiver';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import stream from 'stream';
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION || 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+  }
+});
 
 export const dataExportWorker = createWorker('data-export', async (job: any) => {
     const { organizationId, requestedBy } = job.data;
 
-    // Simulate complex gathering operations
     console.log(`Starting data export for org ${organizationId}`);
 
     // 1. Gather data
@@ -22,14 +32,68 @@ export const dataExportWorker = createWorker('data-export', async (job: any) => 
         processingActivities: activities,
     };
 
-    // 2. Generate JSON files and Zip them (Simulated)
-    console.log(`Generated export data payload.`);
+    // 2. Generate JSON files and Zip them
+    const archive = archiver('zip', { zlib: { level: 9 } });
 
-    // 3. Simulated S3 Upload -> generating a mock signed URL
-    const signedUrl = "https://mock-s3-signed-url.example.com/export.zip";
+    // We create a passthrough stream so we can pipe the archiver output to S3 Upload
+    const pass = new stream.PassThrough();
+    archive.pipe(pass);
 
-    // 4. Send email logic (Simulated via notification queue or direct mailer)
+    archive.append(JSON.stringify(exportData, null, 2), { name: 'export.json' });
+
+    // Fetch documents
+    const orgDocuments = await db.query.documents.findMany({
+      where: eq(documents.organizationId, organizationId),
+    });
+
+    for (const doc of orgDocuments) {
+      if (doc.s3Key) {
+        try {
+          const response = await s3Client.send(new GetObjectCommand({
+            Bucket: process.env.S3_BUCKET || 'default-bucket',
+            Key: doc.s3Key,
+          }));
+          if (response.Body) {
+             archive.append(response.Body as stream.Readable, { name: `documents/${doc.originalName}` });
+          }
+        } catch(e) {
+          console.error(`Failed to fetch document ${doc.id} from S3`, e);
+        }
+      }
+    }
+
+    // Finalize archive
+    archive.finalize();
+
+    // 3. S3 Upload
+    const exportKey = `exports/${organizationId}/${Date.now()}.zip`;
+    const upload = new Upload({
+      client: s3Client,
+      params: {
+        Bucket: process.env.S3_BUCKET || 'default-bucket',
+        Key: exportKey,
+        Body: pass,
+      }
+    });
+
+    await upload.done();
+
+    const signedUrl = await getSignedUrl(s3Client, new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET || 'default-bucket',
+      Key: exportKey,
+    }), { expiresIn: 7 * 24 * 60 * 60 }); // 7 days
+
+    // 4. Send email logic (Queue notification)
     console.log(`Sending email to user ${requestedBy} with link: ${signedUrl}`);
+    await db.insert(notificationQueue).values({
+      organizationId,
+      userId: requestedBy,
+      type: 'general.data_export_ready',
+      title: 'Your data export is ready',
+      body: `Your data export is ready. Download it before it expires in 7 days.`,
+      actionUrl: signedUrl,
+      channel: 'email',
+    });
 
     console.log(`Data export for org ${organizationId} completed.`);
     return { success: true, signedUrl };

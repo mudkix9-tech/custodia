@@ -329,6 +329,11 @@ export const notificationWorker = new Worker('notifications', async (job) => {
 }, { connection });
 
 export async function scheduleNotificationJobs() {
+  // Using enqueuePendingNotifications to fill the process-queue
+  await notificationsJobQueue.add('enqueue-pending', {}, {
+    repeat: { pattern: '* * * * *' }
+  });
+
   await notificationsJobQueue.add('process-queue', {}, {
     repeat: { pattern: '* * * * *' } // Run every minute to drain the queue
   });
