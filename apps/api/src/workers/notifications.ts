@@ -3,33 +3,98 @@ import { Redis } from 'ioredis';
 import { db } from '../db.js';
 import { notificationQueue, organizations, users } from 'db';
 import { eq, and, sql } from 'drizzle-orm';
-import { Resend } from 'resend';
 import crypto from 'crypto';
+import React from 'react';
+import { sendEmail } from 'emails';
+import {
+  MagicLink,
+  TeamInvitation,
+  WelcomeNewUser,
+  PasswordChanged,
+  MfaEnabled,
+  AssessmentResults,
+  AssessmentFollowupDay3,
+  AssessmentFollowupDay7,
+  AssessmentFollowupDay14,
+  DsarAcknowledgment,
+  DsarVerification,
+  DsarDeadlineWarning,
+  DsarCompleted,
+  DsarExtensionNotice,
+  BreachReported,
+  BreachDeadline48h,
+  BreachDeadline24h,
+  BreachDeadline12h,
+  BreachOverdue,
+  DpaExpiring30d,
+  DpaExpiring7d,
+  DpaExpired,
+  VendorBreachAlert,
+  SubProcessorChanged,
+  GapDetected,
+  MonthlyReport,
+  QuarterlyReport,
+  ScoreDropped,
+  TrainingAssigned,
+  TrainingDue7d,
+  TrainingOverdue,
+  TrainingCompleted,
+  PaymentFailed,
+  PaymentSucceeded,
+  SubscriptionExpiring,
+  TrialEndingSoon,
+  DataExportReady,
+  AccountDeletionScheduled,
+  AccountDeletionCanceled
+} from 'emails';
 
 const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
 export const notificationsJobQueue = new Queue('notifications', { connection });
 
-const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
-
-// Helper to get email templates based on type
-function getEmailTemplate(notification: any) {
-  return {
-    subject: `Privaro Notification: ${notification.title}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-        <h2>${notification.title}</h2>
-        <p>${notification.body}</p>
-        ${notification.actionUrl ? `<a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}${notification.actionUrl}" style="display: inline-block; padding: 10px 20px; background-color: #294036; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px;">View Details</a>` : ''}
-        <hr style="margin-top: 40px; border: none; border-top: 1px solid #eee;" />
-        <p style="font-size: 12px; color: #999;">This is an automated notification from Privaro. You can manage your preferences in your account settings.</p>
-      </div>
-    `
-  };
-}
+const EMAIL_TEMPLATES: Record<string, (data: any) => React.ReactElement> = {
+  'auth.magic_link': (data) => React.createElement(MagicLink, data),
+  'auth.team_invitation': (data) => React.createElement(TeamInvitation, data),
+  'auth.welcome_new_user': (data) => React.createElement(WelcomeNewUser, data),
+  'auth.password_changed': (data) => React.createElement(PasswordChanged, data),
+  'auth.mfa_enabled': (data) => React.createElement(MfaEnabled, data),
+  'assessment.results': (data) => React.createElement(AssessmentResults, data),
+  'assessment.followup_day3': (data) => React.createElement(AssessmentFollowupDay3, data),
+  'assessment.followup_day7': (data) => React.createElement(AssessmentFollowupDay7, data),
+  'assessment.followup_day14': (data) => React.createElement(AssessmentFollowupDay14, data),
+  'dsar.acknowledgment': (data) => React.createElement(DsarAcknowledgment, data),
+  'dsar.verification': (data) => React.createElement(DsarVerification, data),
+  'dsar.deadline_warning': (data) => React.createElement(DsarDeadlineWarning, data),
+  'dsar.completed': (data) => React.createElement(DsarCompleted, data),
+  'dsar.extension_notice': (data) => React.createElement(DsarExtensionNotice, data),
+  'breach.reported': (data) => React.createElement(BreachReported, data),
+  'breach.deadline_48h': (data) => React.createElement(BreachDeadline48h, data),
+  'breach.deadline_24h': (data) => React.createElement(BreachDeadline24h, data),
+  'breach.deadline_12h': (data) => React.createElement(BreachDeadline12h, data),
+  'breach.overdue': (data) => React.createElement(BreachOverdue, data),
+  'vendor.dpa_expiring_30d': (data) => React.createElement(DpaExpiring30d, data),
+  'vendor.dpa_expiring_7d': (data) => React.createElement(DpaExpiring7d, data),
+  'vendor.dpa_expired': (data) => React.createElement(DpaExpired, data),
+  'vendor.breach_alert': (data) => React.createElement(VendorBreachAlert, data),
+  'vendor.sub_processor_changed': (data) => React.createElement(SubProcessorChanged, data),
+  'compliance.gap_detected': (data) => React.createElement(GapDetected, data),
+  'compliance.monthly_report': (data) => React.createElement(MonthlyReport, data),
+  'compliance.quarterly_report': (data) => React.createElement(QuarterlyReport, data),
+  'compliance.score_dropped': (data) => React.createElement(ScoreDropped, data),
+  'training.assigned': (data) => React.createElement(TrainingAssigned, data),
+  'training.due_7d': (data) => React.createElement(TrainingDue7d, data),
+  'training.overdue': (data) => React.createElement(TrainingOverdue, data),
+  'training.completed': (data) => React.createElement(TrainingCompleted, data),
+  'billing.payment_failed': (data) => React.createElement(PaymentFailed, data),
+  'billing.payment_succeeded': (data) => React.createElement(PaymentSucceeded, data),
+  'billing.subscription_expiring': (data) => React.createElement(SubscriptionExpiring, data),
+  'billing.trial_ending_soon': (data) => React.createElement(TrialEndingSoon, data),
+  'general.data_export_ready': (data) => React.createElement(DataExportReady, data),
+  'general.account_deletion_scheduled': (data) => React.createElement(AccountDeletionScheduled, data),
+  'general.account_deletion_canceled': (data) => React.createElement(AccountDeletionCanceled, data),
+};
 
 const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
   email: async (notification) => {
-    const template = getEmailTemplate(notification);
     let recipients: string[] = [];
     
     if (notification.userId) {
@@ -49,21 +114,67 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
     }
 
     try {
-      const result = await resend.emails.send({
-        from: 'Privaro <notifications@privaro.io>',
-        to: recipients,
-        subject: template.subject,
-        html: template.html,
-      });
+      const templateFn = EMAIL_TEMPLATES[notification.type];
 
-      await db.update(notificationQueue)
-        .set({ 
-          status: 'sent', 
-          sentAt: new Date(), 
-          emailMessageId: result.data?.id,
-          emailTo: recipients.join(', '),
-        })
-        .where(eq(notificationQueue.id, notification.id));
+
+      if (templateFn) {
+        let payload = {};
+        try {
+          payload = typeof notification.payload === 'string' ? JSON.parse(notification.payload) : notification.payload || {};
+        } catch (e) {
+          // ignore parse error
+        }
+
+        // Add URL fallback
+        const data = {
+          ...payload,
+          url: (payload as any).url || (notification.actionUrl ? `${process.env.FRONTEND_URL || 'http://localhost:3000'}${notification.actionUrl}` : undefined)
+        };
+
+        const template = templateFn(data);
+
+        const result = await sendEmail({
+          to: recipients,
+          subject: notification.title,
+          template,
+        });
+
+        await db.update(notificationQueue)
+          .set({
+            status: 'sent',
+            sentAt: new Date(),
+            emailMessageId: result.data?.id,
+            emailTo: recipients.join(', '),
+          })
+          .where(eq(notificationQueue.id, notification.id));
+      } else {
+        // Fallback for unknown types
+        const result = await sendEmail({
+          to: recipients,
+          subject: notification.title,
+          template: React.createElement('div', {
+            style: { fontFamily: 'Arial, sans-serif', padding: '20px', color: '#333' }
+          },
+            React.createElement('h2', null, notification.title),
+            React.createElement('p', null, notification.body),
+            notification.actionUrl ? React.createElement('a', {
+              href: `${process.env.FRONTEND_URL || 'http://localhost:3000'}${notification.actionUrl}`,
+              style: { display: 'inline-block', padding: '10px 20px', backgroundColor: '#294036', color: 'white', textDecoration: 'none', borderRadius: '5px', marginTop: '20px' }
+            }, 'View Details') : null,
+            React.createElement('hr', { style: { marginTop: '40px', border: 'none', borderTop: '1px solid #eee' } }),
+            React.createElement('p', { style: { fontSize: '12px', color: '#999' } }, 'This is an automated notification from Privaro. You can manage your preferences in your account settings.')
+          )
+        });
+
+        await db.update(notificationQueue)
+          .set({
+            status: 'sent',
+            sentAt: new Date(),
+            emailMessageId: result.data?.id,
+            emailTo: recipients.join(', '),
+          })
+          .where(eq(notificationQueue.id, notification.id));
+      }
     } catch (e: any) {
       throw new Error(`Resend Error: ${e.message}`);
     }
