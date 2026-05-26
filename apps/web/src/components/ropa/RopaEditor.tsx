@@ -67,7 +67,8 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
   });
 
   const updateClientsMutation = trpc.clients.updateActivitiesBulk.useMutation();
-  const { data: allClients = [] } = trpc.clients.list.useQuery();
+  const { data: clientsData } = trpc.clients.list.useQuery({ limit: 100 });
+  const allClients = clientsData?.data || [];
 
   const { data: impacts = [] } = trpc.regulatory.listUnacknowledgedImpacts.useQuery(undefined, { enabled: !isNew });
   const [showImpacts, setShowImpacts] = useState(false);

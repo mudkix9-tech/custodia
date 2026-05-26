@@ -15,6 +15,7 @@ import {
   users,
   auditLogs
 } from 'db';
+import { isAdequateDestination } from '../constants/transferDestinations.js';
 
 const ROPA_TEMPLATES = {
   marketing_agency: [
@@ -119,8 +120,6 @@ const ROPA_TEMPLATES = {
     },
   ],
 };
-
-const EU_COUNTRIES = ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
 
 export const onboardingRouter = router({
   getStatus: protectedProcedure
@@ -276,7 +275,7 @@ export const onboardingRouter = router({
 
           // Check if non-EU transfer needs to be created
           const hq = vendor.headquartersCountry;
-          const isEuHq = hq && EU_COUNTRIES.includes(hq);
+          const isEuHq = hq && isAdequateDestination(hq);
           const hasEuHosting = vendor.usingEuHosting;
 
           if (!isEuHq && !hasEuHosting && hq) {

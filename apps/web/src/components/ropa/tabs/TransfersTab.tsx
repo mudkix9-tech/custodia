@@ -13,7 +13,8 @@ export function TransfersTab({ activityId }: { activityId: string }) {
 
   const utils = trpc.useUtils();
   const { data = [], isLoading } = trpc.ropa.transfers.list.useQuery({ processingActivityId: activityId });
-  const { data: orgVendors = [] } = trpc.vendors.getOrgVendors.useQuery();
+  const { data: orgVendorsResp } = trpc.vendors.getOrgVendors.useQuery({ limit: 100 });
+  const orgVendors = orgVendorsResp?.data || [];
   const createMutation = trpc.ropa.transfers.create.useMutation();
   const updateMutation = trpc.ropa.transfers.update.useMutation();
   const deleteMutation = trpc.ropa.transfers.delete.useMutation();

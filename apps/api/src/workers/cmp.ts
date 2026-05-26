@@ -3,7 +3,7 @@ import { Redis } from 'ioredis';
 import { db } from '../db.js';
 import { consentCookies, consentDomains, consentRecords } from 'db';
 import { eq, sql } from 'drizzle-orm';
-import puppeteer from 'puppeteer';
+import { scanDomain } from '../lib/browserPool.js';
 
 const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
@@ -42,54 +42,13 @@ const cmpWorker = new Worker('cmp-automation', async job => {
 
     console.log(`[Cookie Scanner] Scanning ${domainData.domain}...`);
     
-    let browser;
     try {
-      browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      });
+      const mergedCookies = await scanDomain(`https://${domainData.domain}`);
 
-      const page = await browser.newPage();
-      const client = await page.target().createCDPSession();
-      await client.send('Network.enable');
-
-      const discoveredCookies: any[] = [];
-
-      client.on('Network.responseReceivedExtraInfo', (params: any) => {
-        const setCookieHeaders = params.headers?.['set-cookie'] || params.headers?.['Set-Cookie'];
-        if (setCookieHeaders) {
-          // Simplistic parse: just grab name and domain
-          const parts = setCookieHeaders.split(';').map((p: string) => p.trim());
-          const [nameValuePair] = parts;
-          if (nameValuePair) {
-            const [name] = nameValuePair.split('=');
-            let domain = domainData.domain;
-            for (const part of parts) {
-              if (part.toLowerCase().startsWith('domain=')) {
-                domain = part.split('=')[1];
-              }
-            }
-            discoveredCookies.push({ name, domain, isNetwork: true });
-          }
-        }
-      });
-
-      // Visit site without accepting consent
-      await page.goto(`https://${domainData.domain}`, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
-      await new Promise(r => setTimeout(r, 3000)); // wait for lazy-loaded scripts
-
-      const browserCookies = await page.cookies();
-      await browser.close();
-
-      // Merge cookies
+      // Merge cookies mapping
       const allCookiesMap = new Map();
-      for (const bc of browserCookies) {
-        allCookiesMap.set(bc.name, { ...bc, isThirdParty: !bc.domain.includes(domainData.domain) });
-      }
-      for (const dc of discoveredCookies) {
-        if (!allCookiesMap.has(dc.name)) {
-          allCookiesMap.set(dc.name, { name: dc.name, domain: dc.domain, isThirdParty: !dc.domain.includes(domainData.domain) });
-        }
+      for (const bc of mergedCookies) {
+        allCookiesMap.set(bc.name, { ...bc, isThirdParty: bc.domain ? !bc.domain.includes(domainData.domain) : false });
       }
 
       // Bulk upsert into db
@@ -122,7 +81,6 @@ const cmpWorker = new Worker('cmp-automation', async job => {
 
     } catch (err: any) {
       console.error(`[Cookie Scanner] Error scanning ${domainData.domain}: ${err.message}`);
-      if (browser) await browser.close();
     }
   }
 

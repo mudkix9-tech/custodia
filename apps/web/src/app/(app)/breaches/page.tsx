@@ -7,8 +7,19 @@ import ReportBreachModal from '@/components/breaches/ReportBreachModal';
 
 export default function BreachesPage() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const { data: breachesResp, isLoading, refetch } = trpc.breaches.list.useQuery({} as any);
-  const breaches = (breachesResp as any)?.data || [];
+  const {
+    data: breachesResp,
+    isLoading,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = trpc.breaches.list.useInfiniteQuery(
+    { limit: 25 },
+    { getNextPageParam: (lastPage: any) => lastPage.pagination?.next_cursor }
+  );
+
+  const breaches = breachesResp?.pages.flatMap((page: any) => page.data) || [];
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -26,6 +37,18 @@ export default function BreachesPage() {
       </div>
 
       <BreachList breaches={breaches || []} isLoading={isLoading} />
+
+      {hasNextPage && (
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
+          >
+            {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+          </button>
+        </div>
+      )}
 
       <ReportBreachModal 
         isOpen={isReportModalOpen} 

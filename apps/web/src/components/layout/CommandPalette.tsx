@@ -26,13 +26,13 @@ export function CommandPalette() {
 
   // A basic implementation for MVP: searching vendors and ROPA locally.
   // In a full implementation, this might call a Meilisearch endpoint or a dedicated TRPC search route.
-  const ropaQuery = trpc.ropa.list.useQuery(undefined, { enabled: isOpen });
-  const vendorQuery = trpc.vendors.getOrgVendors.useQuery(undefined, { enabled: isOpen });
+  const ropaQuery = trpc.ropa.list.useQuery({ limit: 100 }, { enabled: isOpen });
+  const vendorQuery = trpc.vendors.getOrgVendors.useQuery({ limit: 100 }, { enabled: isOpen });
 
   if (!isOpen) return null;
 
-  const ropaResults = (ropaQuery.data || []).filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
-  const vendorResults = (vendorQuery.data || []).filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
+  const ropaResults = ((ropaQuery.data?.data as any[]) || []).filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
+  const vendorResults = ((vendorQuery.data?.data as any[]) || []).filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-ink-900/40 backdrop-blur-sm p-4">

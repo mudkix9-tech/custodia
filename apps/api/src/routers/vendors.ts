@@ -5,8 +5,7 @@ import { vendors, organizationVendors, users, vendorSubProcessors } from 'db';
 import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { router, publicProcedure, protectedProcedure } from '../trpc.js';
 import { TRPCError } from '@trpc/server';
-
-const EU_COUNTRIES = ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
+import { isAdequateDestination } from '../constants/transferDestinations.js';
 
 // Risk Algorithm (as requested)
 export function calculateVendorRisk(vendor: any, orgVendor: any) {
@@ -15,7 +14,7 @@ export function calculateVendorRisk(vendor: any, orgVendor: any) {
   // Jurisdiction (0-25 points)
   if (['US'].includes(vendor.headquartersCountry)) score += 20;
   else if (['CN', 'RU'].includes(vendor.headquartersCountry)) score += 25;
-  else if (vendor.headquartersCountry && !EU_COUNTRIES.includes(vendor.headquartersCountry)) score += 10;
+  else if (vendor.headquartersCountry && !isAdequateDestination(vendor.headquartersCountry)) score += 10;
   // EU-based vendors get 0
 
   // EU hosting availability (0-15 points)
@@ -34,7 +33,7 @@ export function calculateVendorRisk(vendor: any, orgVendor: any) {
   else score += 15;
 
   // Transfer mechanism (0-10 points)
-  if (vendor.headquartersCountry && !EU_COUNTRIES.includes(vendor.headquartersCountry)) {
+  if (vendor.headquartersCountry && !isAdequateDestination(vendor.headquartersCountry)) {
     const mechanisms = vendor.transferMechanisms || [];
     if (mechanisms.includes('adequacy_decision')) score += 0;
     else if (mechanisms.includes('standard_contractual_clauses')) score += 5;
@@ -88,28 +87,45 @@ export const vendorsRouter = router({
   }),
 
   // ORG
-  getOrgVendors: protectedProcedure.query(async ({ ctx }) => {
-    const records = await db.select({
-      orgVendor: organizationVendors,
-      vendor: vendors
-    })
-    .from(organizationVendors)
-    .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
-    .where(eq(organizationVendors.organizationId, ctx.user.orgId));
-    
-    return records.map(r => ({
-      ...r.vendor,
-      orgVendorId: r.orgVendor.id,
-      dpaStatus: r.orgVendor.dpaStatus,
-      dpaSignedAt: r.orgVendor.dpaSignedAt,
-      dpaExpiresAt: r.orgVendor.dpaExpiresAt,
-      tiaCompleted: r.orgVendor.tiaCompleted,
-      usingEuHosting: r.orgVendor.usingEuHosting,
-      riskScore: r.orgVendor.riskScore,
-      riskLevel: r.orgVendor.riskLevel,
-      lastReviewedAt: r.orgVendor.lastReviewedAt,
-    }));
-  }),
+  getOrgVendors: protectedProcedure
+    .input(paginationInput)
+    .query(async ({ ctx, input }) => {
+      const res = await paginatedQuery(
+        organizationVendors,
+        ctx.user.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc'
+      );
+
+      const vendorIds = res.data.map((ov: any) => ov.vendorId);
+      let vendorsMap = new Map();
+
+      if (vendorIds.length > 0) {
+        const vendorDataList = await db.select().from(vendors).where(inArray(vendors.id, vendorIds));
+        for (const v of vendorDataList) {
+          vendorsMap.set(v.id, v);
+        }
+      }
+
+      res.data = res.data.map((ov: any) => {
+        const v = vendorsMap.get(ov.vendorId) || {};
+        return {
+          ...v,
+          orgVendorId: ov.id,
+          dpaStatus: ov.dpaStatus,
+          dpaSignedAt: ov.dpaSignedAt,
+          dpaExpiresAt: ov.dpaExpiresAt,
+          tiaCompleted: ov.tiaCompleted,
+          usingEuHosting: ov.usingEuHosting,
+          riskScore: ov.riskScore,
+          riskLevel: ov.riskLevel,
+          lastReviewedAt: ov.lastReviewedAt,
+        };
+      });
+
+      return res;
+    }),
 
   getOrgVendorDetails: protectedProcedure
     .input(z.object({ vendorId: z.string().uuid() }))

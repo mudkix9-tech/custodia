@@ -4,7 +4,8 @@ import { db } from '../db.js';
 import { processingActivities, organizations } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import puppeteer from 'puppeteer';
+import { dataExportQueue } from '../lib/queue.js';
+import { renderHtmlToPdf } from '../lib/browserPool.js';
 
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
@@ -99,15 +100,8 @@ export const exportRouter = router({
       `;
 
       // 2. Launch Puppeteer and generate PDF
-      let browser;
       try {
-        browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
-        const page = await browser.newPage();
-        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-        
-        const pdfBuffer = await page.pdf({
-          format: 'A4',
-          printBackground: true,
+        const pdfBuffer = await renderHtmlToPdf(htmlContent, {
           margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
           displayHeaderFooter: true,
           headerTemplate: '<div></div>',
@@ -125,10 +119,21 @@ export const exportRouter = router({
       } catch (err) {
         console.error("Puppeteer PDF generation failed:", err);
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to generate PDF' });
-      } finally {
-        if (browser) {
-          await browser.close();
-        }
       }
+    }),
+
+  generateAuditZip: protectedProcedure
+    .use(requirePermission('ropa', 'view'))
+    .mutation(async ({ ctx }) => {
+      checkOrgContext(ctx.user);
+
+      // Queue the job using the same pattern as dataExport
+      await dataExportQueue.add('full-audit-export', {
+        organizationId: ctx.user!.orgId,
+        requestedBy: ctx.user!.id,
+        isFullAudit: true
+      });
+
+      return { success: true, message: 'Audit export queued' };
     }),
 });

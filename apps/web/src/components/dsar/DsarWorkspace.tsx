@@ -13,8 +13,10 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
   
   const utils = trpc.useContext();
   const { data: dsar, isLoading } = trpc.dsar.getById.useQuery({ id: dsarId });
-  const { data: tasks } = trpc.dsar.tasks.list.useQuery({ dsarId });
-  const { data: comms } = trpc.dsar.comms.list.useQuery({ dsarId });
+  const { data: tasksResp } = trpc.dsar.tasks.list.useQuery({ dsarId, limit: 100 });
+  const tasks = tasksResp?.data || [];
+  const { data: commsResp } = trpc.dsar.comms.list.useQuery({ dsarId, limit: 100 });
+  const comms = commsResp?.data || [];
   
   const generateTasksMutation = trpc.dsar.tasks.generateFromRopa.useMutation({
     onSuccess: () => utils.dsar.tasks.list.invalidate({ dsarId })

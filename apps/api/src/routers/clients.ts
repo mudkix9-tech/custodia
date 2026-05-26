@@ -19,20 +19,36 @@ const paginationInput = z.object({
 });
 
 export const clientsRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    const orgClients = await db.query.clients.findMany({
-      where: eq(clients.organizationId, ctx.user.orgId),
-      orderBy: (clients, { desc }) => [desc(clients.createdAt)],
-      with: {
-        processingActivities: true,
-      }
-    });
+  list: protectedProcedure
+    .input(paginationInput)
+    .query(async ({ ctx, input }) => {
+      const res = await paginatedQuery(
+        clients,
+        ctx.user.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc'
+      );
 
-    return orgClients.map(c => ({
-      ...c,
-      linkedActivitiesCount: c.processingActivities.length,
-    }));
-  }),
+      const clientIds = res.data.map((c: any) => c.id);
+      let activitiesCounts = new Map();
+      if (clientIds.length > 0) {
+        const counts = await db.select({
+          clientId: clientProcessingActivities.clientId,
+        }).from(clientProcessingActivities).where(inArray(clientProcessingActivities.clientId, clientIds));
+
+        for (const count of counts) {
+          activitiesCounts.set(count.clientId, (activitiesCounts.get(count.clientId) || 0) + 1);
+        }
+      }
+
+      res.data = res.data.map((c: any) => ({
+        ...c,
+        linkedActivitiesCount: activitiesCounts.get(c.id) || 0,
+      }));
+
+      return res;
+    }),
 
   get: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))

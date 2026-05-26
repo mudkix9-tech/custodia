@@ -4,22 +4,27 @@ import { db } from '../db.js';
 import { notificationQueue } from 'db';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import { paginatedQuery } from '../utils/pagination.js';
+
+const paginationInput = z.object({
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().nullish(),
+});
 
 export const notificationsRouter = router({
   listInApp: protectedProcedure
-    .query(async ({ ctx }) => {
+    .input(paginationInput)
+    .query(async ({ ctx, input }) => {
       if (!ctx.user?.orgId) throw new TRPCError({ code: 'FORBIDDEN' });
       
-      return db.select()
-        .from(notificationQueue)
-        .where(
-          and(
-            eq(notificationQueue.organizationId, ctx.user.orgId),
-            eq(notificationQueue.channel, 'in_app')
-          )
-        )
-        .orderBy(desc(notificationQueue.createdAt))
-        .limit(50);
+      return paginatedQuery(
+        notificationQueue,
+        ctx.user.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc',
+        [eq(notificationQueue.channel, 'in_app')]
+      );
     }),
 
   markRead: protectedProcedure

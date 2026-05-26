@@ -22,7 +22,19 @@ export default function RopaListPage() {
   }, [router]);
   
   // Use suspense for data loading in Next.js 15
-  const { data: processingActivities, isLoading, refetch } = trpc.ropa.list.useQuery();
+  const {
+    data,
+    isLoading,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = trpc.ropa.list.useInfiniteQuery(
+    { limit: 25 },
+    { getNextPageParam: (lastPage) => lastPage.pagination.next_cursor }
+  );
+
+  const processingActivities = data?.pages.flatMap((page) => page.data) || [];
   const bulkCreateMutation = trpc.ropa.bulkCreate.useMutation();
   const generatePdfMutation = trpc.export.generatePdf.useMutation();
 
@@ -36,7 +48,7 @@ export default function RopaListPage() {
     const headers = ['Name', 'Purpose', 'Lawful Basis', 'Status', 'Risk Level', 'Description'];
     const csvContent = [
       headers.join(','),
-      ...processingActivities.map(a => [
+      ...processingActivities.map((a: any) => [
         `"${a.name.replace(/"/g, '""')}"`,
         `"${a.purpose.replace(/"/g, '""')}"`,
         `"${a.lawfulBasis || ''}"`,
@@ -240,6 +252,18 @@ export default function RopaListPage() {
             onRowClick={(row: any) => router.push(`/ropa/${row.id}`)}
             emptyStateMessage="No processing activities found. Create your first record to begin."
           />
+
+          {hasNextPage && (
+            <div className="mt-4 flex justify-center">
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
+              >
+                {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

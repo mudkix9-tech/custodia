@@ -350,7 +350,8 @@ function ActivitiesTab({ client }: { client: any }) {
 }
 
 function LinkActivityModal({ clientId, isOpen, onClose, existingActivityIds }: any) {
-  const { data: allActivities = [] } = trpc.ropa.list.useQuery(undefined, { enabled: isOpen });
+  const { data } = trpc.ropa.list.useQuery({ limit: 100 }, { enabled: isOpen });
+  const allActivities = data?.data || [];
   const linkBulk = trpc.clients.linkActivitiesBulk.useMutation();
   const utils = trpc.useUtils();
   const [selected, setSelected] = useState<string[]>([]);
