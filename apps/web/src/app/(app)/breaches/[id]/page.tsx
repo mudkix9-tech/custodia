@@ -1,4 +1,5 @@
 'use client';
+import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -21,7 +22,7 @@ export default function BreachWorkspace() {
 
   const [activeTab, setActiveTab] = useState(0);
 
-  if (isLoading) return <div className="p-6 animate-pulse bg-gray-100 dark:bg-gray-800 h-64 rounded-xl m-6"></div>;
+  if (isLoading) return <GenericWorkspaceSkeleton />;
   if (!breach) return <div className="p-6">Breach not found.</div>;
 
   return (

@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Network, Plus, Trash2, ShieldCheck, AlertTriangle, Link as LinkIcon, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+
 
 export function SubProcessorList({ vendorId }: { vendorId: string }) {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -21,6 +23,7 @@ export function SubProcessorList({ vendorId }: { vendorId: string }) {
   const addLinkedMutation = trpc.vendors.subProcessors.addLinked.useMutation();
   const addUnlinkedMutation = trpc.vendors.subProcessors.addUnlinked.useMutation();
   const removeMutation = trpc.vendors.subProcessors.remove.useMutation();
+  const { confirm, dialog } = useConfirm();
   const utils = trpc.useUtils();
 
   if (isLoading) return <div className="p-8 text-ink-500">Loading sub-processors...</div>;

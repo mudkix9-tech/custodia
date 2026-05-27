@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { Trash2 } from 'lucide-react';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 export function DataCategoriesTab({ activityId }: { activityId: string }) {
   const utils = trpc.useUtils();
@@ -11,6 +12,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
   const createMutation = trpc.ropa.dataCategories.create.useMutation();
   const updateMutation = trpc.ropa.dataCategories.update.useMutation();
   const deleteMutation = trpc.ropa.dataCategories.delete.useMutation();
+  const { confirm, dialog } = useConfirm();
 
   const handleAdd = async () => {
     await createMutation.mutateAsync({
@@ -30,8 +32,16 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
   };
 
   const handleDelete = async (id: string) => {
-    await deleteMutation.mutateAsync({ id });
-    utils.ropa.dataCategories.list.invalidate();
+    const confirmed = await confirm({
+      title: 'Remove data category?',
+      description: 'Are you sure you want to remove this data category?',
+      variant: 'destructive',
+      confirmText: 'Remove',
+    });
+    if (confirmed) {
+      await deleteMutation.mutateAsync({ id });
+      utils.ropa.dataCategories.list.invalidate();
+    }
   };
 
   // Create editable cell component
@@ -89,11 +99,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
       id: 'actions',
       header: '',
       cell: ({ row }: any) => (
-        <button 
-          onClick={() => handleDelete(row.original.id)}
-          className="p-1.5 text-ink-400 hover:text-clay-600 hover:bg-bone-100 rounded-md transition-colors"
-        >
-          <Trash2 className="w-4 h-4" />
+        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-ink-400 hover:text-clay-600 hover:bg-bone-100 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
         </button>
       ),
       size: 50,
@@ -102,6 +108,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
 
   return (
     <div className="space-y-6 fade-up">
+      {dialog}
       <div className="bg-bone-50 hairline rounded-2xl p-6">
         <h2 className="text-[14px] font-medium text-ink-900 mb-4">Data Categories</h2>
         <DataGrid

@@ -1,4 +1,5 @@
 "use client";
+import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
@@ -14,9 +15,32 @@ export default function VendorDetailsPage() {
   const vendorId = params?.id as string;
 
   const { data: vendor, isLoading } = trpc.vendors.getOrgVendorDetails.useQuery({ vendorId }, { enabled: !!vendorId });
-  const updateMutation = trpc.vendors.updateOrgVendor.useMutation();
   const utils = trpc.useUtils();
+  const updateMutation = trpc.vendors.updateOrgVendor.useMutation({
+    onMutate: async (newUpdate) => {
+      await utils.vendors.getOrgVendorDetails.cancel({ vendorId: newUpdate.vendorId });
+      const previousData = utils.vendors.getOrgVendorDetails.getData({ vendorId: newUpdate.vendorId });
 
+      if (previousData && previousData.orgVendor) {
+        utils.vendors.getOrgVendorDetails.setData({ vendorId: newUpdate.vendorId }, {
+          ...previousData,
+          orgVendor: {
+            ...previousData.orgVendor,
+            ...newUpdate,
+          }
+        } as any);
+      }
+      return { previousData };
+    },
+    onError: (err, newUpdate, context) => {
+      if (context?.previousData) {
+        utils.vendors.getOrgVendorDetails.setData({ vendorId: newUpdate.vendorId }, context.previousData);
+      }
+    },
+    onSettled: (data, error, variables) => {
+      utils.vendors.getOrgVendorDetails.invalidate({ vendorId: variables.vendorId });
+    }
+  });
   const [activeTab, setActiveTab] = useState<'dpa' | 'tia' | 'sub-processors' | 'ropa'>('dpa');
 
   if (isLoading) return <div className="p-8 text-ink-500">Loading vendor intelligence...</div>;

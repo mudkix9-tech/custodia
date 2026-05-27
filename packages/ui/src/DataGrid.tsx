@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -36,6 +36,17 @@ export interface DataGridProps<TData, TValue> {
   setGlobalFilter?: (value: string) => void;
 }
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
 export function DataGrid<TData, TValue>({
   mode = 'full',
   columns,
@@ -55,6 +66,7 @@ export function DataGrid<TData, TValue>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const isFull = mode === 'full';
+  const isMobile = useIsMobile();
 
   const table = useReactTable({
     data,
@@ -78,7 +90,6 @@ export function DataGrid<TData, TValue>({
     meta: {
       updateData: (rowIndex: number, columnId: string, value: unknown) => {
         if (onInlineEdit && data[rowIndex]) {
-          // Pass the unique row identifier. Assuming 'id' exists.
           const rowId = (data[rowIndex] as any).id || String(rowIndex);
           onInlineEdit(rowId, columnId, value);
         }
@@ -117,88 +128,116 @@ export function DataGrid<TData, TValue>({
               </div>
             )}
           </div>
-          {/* Column visibility toggle could go here */}
         </div>
       )}
 
-      {/* TABLE CONTAINER */}
+      {/* TABLE/CARD CONTAINER */}
       <div className={cn(
         "rounded-2xl hairline overflow-hidden bg-bone-50",
         !isFull && "shadow-none"
       )}>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-[13px] text-left">
-            <thead className="bg-bone-50 text-[11px] uppercase tracking-[0.12em] text-ink-400 border-b border-ink-900/8 sticky top-0 z-10">
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      className="px-4 py-3 font-semibold"
-                      style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
-                    >
-                      {header.isPlaceholder ? null : (
-                        <div
-                          {...{
-                            className: header.column.getCanSort() ? 'cursor-pointer select-none flex items-center gap-1 hover:text-ink-900 transition-colors' : '',
-                            onClick: header.column.getToggleSortingHandler(),
-                          }}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: <ChevronUp className="w-3 h-3" />,
-                            desc: <ChevronDown className="w-3 h-3" />,
-                          }[header.column.getIsSorted() as string] ?? null}
-                        </div>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {isLoading ? (
-                // SKELETON LOADER
-                Array.from({ length: isFull ? 5 : 3 }).map((_, i) => (
-                  <tr key={i} className="border-b border-ink-900/6">
-                    {columns.map((col, j) => (
-                      <td key={j} className="px-4 py-3">
-                        <div className="h-4 bg-bone-200 rounded animate-pulse" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row, i) => (
-                  <tr
-                    key={row.id}
-                    onClick={() => isFull && onRowClick?.(row.original)}
-                    className={cn(
-                      "border-b border-ink-900/6 transition-colors group",
-                      isFull && onRowClick && "cursor-pointer hover:bg-bone-100/60",
-                      i % 2 === 0 && "bg-bone-50/50",
-                      !isFull && "h-10" // 40px compact row
-                    )}
-                    style={{ height: isFull ? '48px' : '40px' }}
-                  >
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="px-4 py-2 text-ink-900">
+        {isMobile ? (
+          <div className="space-y-3 p-4">
+            {isLoading ? (
+               Array.from({ length: isFull ? 5 : 3 }).map((_, i) => (
+                 <div key={i} className="bg-white p-4 rounded-xl shadow-sm border border-ink-900/10 space-y-3 animate-pulse">
+                   <div className="h-4 bg-bone-200 rounded w-1/3"></div>
+                   <div className="h-4 bg-bone-200 rounded w-1/2"></div>
+                 </div>
+               ))
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <div key={row.id} className="bg-white p-4 rounded-xl shadow-sm border border-ink-900/10 space-y-2">
+                  {row.getVisibleCells().map((cell) => (
+                    <div key={cell.id} className="flex justify-between py-1 border-b border-ink-900/5 last:border-0">
+                      <span className="text-sm text-ink-500">{typeof cell.column.columnDef.header === 'string' ? cell.column.columnDef.header : cell.column.id}</span>
+                      <span className="text-sm text-ink-900 font-medium">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ))
+            ) : (
+              <div className="h-32 flex items-center justify-center text-center text-ink-500">
+                {emptyStateMessage}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-[13px] text-left">
+              <thead className="bg-bone-50 text-[11px] uppercase tracking-[0.12em] text-ink-400 border-b border-ink-900/8 sticky top-0 z-10">
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        className="px-4 py-3 font-semibold"
+                        style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
+                      >
+                        {header.isPlaceholder ? null : (
+                          <div
+                            {...{
+                              className: header.column.getCanSort() ? 'cursor-pointer select-none flex items-center gap-1 hover:text-ink-900 transition-colors' : '',
+                              onClick: header.column.getToggleSortingHandler(),
+                            }}
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {{
+                              asc: <ChevronUp className="w-3 h-3" />,
+                              desc: <ChevronDown className="w-3 h-3" />,
+                            }[header.column.getIsSorted() as string] ?? null}
+                          </div>
+                        )}
+                      </th>
                     ))}
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={columns.length} className="h-32 text-center text-ink-500">
-                    {emptyStateMessage}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  Array.from({ length: isFull ? 5 : 3 }).map((_, i) => (
+                    <tr key={i} className="border-b border-ink-900/6">
+                      {columns.map((col, j) => (
+                        <td key={j} className="px-4 py-3">
+                          <div className="h-4 bg-bone-200 rounded animate-pulse" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row, i) => (
+                    <tr
+                      key={row.id}
+                      onClick={() => isFull && onRowClick?.(row.original)}
+                      className={cn(
+                        "border-b border-ink-900/6 transition-colors group",
+                        isFull && onRowClick && "cursor-pointer hover:bg-bone-100/60",
+                        i % 2 === 0 && "bg-bone-50/50",
+                        !isFull && "h-10"
+                      )}
+                      style={{ height: isFull ? '48px' : '40px' }}
+                    >
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id} className="px-4 py-2 text-ink-900">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={columns.length} className="h-32 text-center text-ink-500">
+                      {emptyStateMessage}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* FOOTERS & PAGINATION */}

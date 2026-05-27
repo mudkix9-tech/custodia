@@ -15,8 +15,29 @@ export function Header() {
     refetchInterval: 30000 // Poll every 30s
   });
   const notifications = notificationsResp?.data || [];
+  const utils = trpc.useUtils();
   const markReadMutation = trpc.notifications.markRead.useMutation({
-    onSuccess: () => refetch()
+    onMutate: async ({ ids }) => {
+      await utils.notifications.listInApp.cancel();
+      const previousData = utils.notifications.listInApp.getData({ limit: 50 });
+      if (previousData) {
+        utils.notifications.listInApp.setData({ limit: 50 }, {
+          ...previousData,
+          data: previousData.data.map((n: any) =>
+            ids.includes(n.id) ? { ...n, status: 'read' } : n
+          )
+        } as any);
+      }
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData) {
+        utils.notifications.listInApp.setData({ limit: 50 }, context.previousData);
+      }
+    },
+    onSettled: () => {
+      utils.notifications.listInApp.invalidate();
+    }
   });
   const unreadCount = notifications.filter((n: any) => n.status === 'pending').length;
 

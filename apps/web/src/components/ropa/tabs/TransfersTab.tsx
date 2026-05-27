@@ -6,6 +6,7 @@ import { trpc } from '@/utils/trpc';
 import { Trash2, Lock, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 export function TransfersTab({ activityId }: { activityId: string }) {
   const { data: session } = useSession();
@@ -18,6 +19,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
   const createMutation = trpc.ropa.transfers.create.useMutation();
   const updateMutation = trpc.ropa.transfers.update.useMutation();
   const deleteMutation = trpc.ropa.transfers.delete.useMutation();
+  const { confirm, dialog } = useConfirm();
 
   const handleAdd = async () => {
     await createMutation.mutateAsync({
@@ -37,8 +39,16 @@ export function TransfersTab({ activityId }: { activityId: string }) {
   };
 
   const handleDelete = async (id: string) => {
-    await deleteMutation.mutateAsync({ id });
-    utils.ropa.transfers.list.invalidate();
+    const confirmed = await confirm({
+      title: 'Remove transfer?',
+      description: 'Are you sure you want to remove this data transfer?',
+      variant: 'destructive',
+      confirmText: 'Remove',
+    });
+    if (confirmed) {
+      await deleteMutation.mutateAsync({ id });
+      utils.ropa.transfers.list.invalidate();
+    }
   };
 
   const EditableCell = ({ getValue, row, column, table }: any) => {
@@ -170,11 +180,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
       id: 'actions',
       header: '',
       cell: ({ row }: any) => (
-        <button 
-          onClick={() => handleDelete(row.original.id)}
-          className="p-1.5 text-ink-400 hover:text-clay-600 hover:bg-bone-100 rounded-md transition-colors"
-        >
-          <Trash2 className="w-4 h-4" />
+        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-ink-400 hover:text-clay-600 hover:bg-bone-100 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
         </button>
       ),
       size: 50,

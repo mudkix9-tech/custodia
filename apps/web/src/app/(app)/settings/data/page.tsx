@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Database, Download, AlertTriangle } from 'lucide-react';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+
 import { useSession } from 'next-auth/react';
 import { trpc } from '@/utils/trpc';
 
@@ -15,6 +17,8 @@ export default function DataPrivacySettingsPage() {
 
   const [exportStatus, setExportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [deleteStatus, setDeleteStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const { confirm, dialog } = useConfirm();
+  const org = trpc.settings.getOrgSettings.useQuery();
 
   const handleExport = async () => {
     setExportStatus('loading');
@@ -30,7 +34,14 @@ export default function DataPrivacySettingsPage() {
   };
 
   const handleDelete = async () => {
-    if (confirm("Are you absolutely sure you want to permanently delete this organization? This action cannot be undone and will begin a 30-day deletion grace period.")) {
+    const confirmed = await confirm({
+      title: 'Delete organization',
+      description: 'This permanently deletes all data after a 30-day grace period.',
+      requireTyping: org.data?.name || 'confirm',
+      confirmText: 'Schedule deletion',
+      variant: 'destructive',
+    });
+    if (confirmed) {
       setDeleteStatus('loading');
       try {
         await scheduleDeletion.mutateAsync();

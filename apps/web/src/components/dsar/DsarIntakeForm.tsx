@@ -3,6 +3,11 @@
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { CheckCircle2, ShieldAlert } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { FieldError } from '@/components/ui/FieldError';
+
 
 const REQUEST_TYPES = [
   { id: 'access', label: 'Access my data', desc: 'I want to know what personal data you hold about me and how you use it' },
@@ -13,32 +18,42 @@ const REQUEST_TYPES = [
   { id: 'objection', label: 'Object to processing', desc: 'I want to object to how you are using my data' },
 ];
 
+const dsarSchema = z.object({
+  requestType: z.string().min(1, 'Please select a request type'),
+  subjectName: z.string().min(1, 'Name is required'),
+  subjectEmail: z.string().email('Please enter a valid email address'),
+  identifier: z.string().optional(),
+  details: z.string().optional(),
+  consentVerified: z.boolean().refine(val => val === true, { message: 'You must verify your identity' })
+});
+
 export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName: string }) {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    requestType: '',
-    subjectName: '',
-    subjectEmail: '',
-    identifier: '',
-    details: '',
-    consent: false,
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
+    resolver: zodResolver(dsarSchema),
+    defaultValues: {
+      requestType: 'access',
+      subjectName: '',
+      subjectEmail: '',
+      identifier: '',
+      details: '',
+      consentVerified: false
+    }
   });
+  const formData = watch();
 
   const [reference, setReference] = useState('');
   const submitMutation = trpc.dsar.submitPublic.useMutation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.consent) return;
-
+  const onSubmit = async (data: any) => {
     try {
       const result = await submitMutation.mutateAsync({
         orgSlug,
-        requestType: formData.requestType,
-        subjectName: formData.subjectName,
-        subjectEmail: formData.subjectEmail,
-        subjectIdentifier: { provided_id: formData.identifier },
-        details: formData.details
+        requestType: data.requestType,
+        subjectName: data.subjectName,
+        subjectEmail: data.subjectEmail,
+        subjectIdentifier: { provided_id: data.identifier },
+        details: data.details
       });
       setReference(result.referenceNumber);
       setStep(3); // Success step
@@ -76,7 +91,7 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-8 md:p-10">
+    <form onSubmit={handleSubmit(onSubmit)} className="p-8 md:p-10">
       {step === 1 && (
         <div className="space-y-6 fade-up">
           <div>
@@ -90,9 +105,8 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
                   <div className="flex items-start gap-3">
                     <input 
                       type="radio" 
-                      name="requestType"
-                      checked={formData.requestType === type.id}
-                      onChange={() => setFormData(prev => ({...prev, requestType: type.id}))}
+                      value={type.id}
+                      {...register('requestType')}
                       className="mt-1 text-[var(--org-primary)] focus:ring-[var(--org-primary)]"
                     />
                     <div>
@@ -126,8 +140,7 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
               <input 
                 required
                 type="text"
-                value={formData.subjectName}
-                onChange={e => setFormData(prev => ({...prev, subjectName: e.target.value}))}
+                {...register('subjectName')}
                 className="w-full bg-bone-50 border border-ink-900/10 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--org-primary)]/20 focus:border-[var(--org-primary)]"
               />
             </div>
@@ -136,8 +149,7 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
               <input 
                 required
                 type="email"
-                value={formData.subjectEmail}
-                onChange={e => setFormData(prev => ({...prev, subjectEmail: e.target.value}))}
+                {...register('subjectEmail')}
                 className="w-full bg-bone-50 border border-ink-900/10 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--org-primary)]/20 focus:border-[var(--org-primary)]"
               />
             </div>
@@ -148,8 +160,7 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
             <p className="text-[12px] text-ink-500 mb-2">How can we identify your data in our systems?</p>
             <input 
               type="text"
-              value={formData.identifier}
-              onChange={e => setFormData(prev => ({...prev, identifier: e.target.value}))}
+              {...register('identifier')}
               className="w-full bg-bone-50 border border-ink-900/10 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--org-primary)]/20 focus:border-[var(--org-primary)]"
             />
           </div>
@@ -159,8 +170,7 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
             <p className="text-[12px] text-ink-500 mb-2">Is there anything specific you want us to address?</p>
             <textarea 
               rows={4}
-              value={formData.details}
-              onChange={e => setFormData(prev => ({...prev, details: e.target.value}))}
+              {...register('details')}
               className="w-full bg-bone-50 border border-ink-900/10 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--org-primary)]/20 focus:border-[var(--org-primary)]"
             />
           </div>
@@ -170,8 +180,7 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
               <input 
                 required
                 type="checkbox"
-                checked={formData.consent}
-                onChange={e => setFormData(prev => ({...prev, consent: e.target.checked}))}
+                {...register('consentVerified')}
                 className="mt-1 text-[var(--org-primary)] focus:ring-[var(--org-primary)] rounded border-ink-900/20"
               />
               <span className="text-[13px] text-ink-600 leading-relaxed">
@@ -190,7 +199,7 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
             </button>
             <button 
               type="submit"
-              disabled={!formData.consent || submitMutation.isPending}
+              disabled={!formData.consentVerified || submitMutation.isPending}
               className="px-6 py-2.5 bg-[var(--org-primary)] text-white rounded-xl font-medium disabled:opacity-50 transition-opacity"
             >
               {submitMutation.isPending ? 'Submitting...' : 'Submit Request'}

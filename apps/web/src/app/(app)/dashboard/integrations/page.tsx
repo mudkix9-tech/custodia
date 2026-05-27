@@ -1,10 +1,13 @@
 "use client";
 import { trpc } from '@/utils/trpc';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+
 
 export default function IntegrationsPage() {
   const { data: providers } = trpc.integrations.listProviders.useQuery();
   const { data: connections } = trpc.integrations.listConnections.useQuery({ organizationId: 'org-id-here' });
   const disconnectMutation = trpc.integrations.disconnect.useMutation();
+  const { confirm, dialog } = useConfirm();
 
   const handleDisconnect = async (id: string) => {
     if (window.confirm('Disconnecting will disable automatic DSAR data discovery. Any in-progress DSAR searches will be marked as manual. Proceed?')) {
@@ -15,6 +18,7 @@ export default function IntegrationsPage() {
 
   return (
     <div className="p-8">
+      {dialog}
       <h1 className="text-2xl font-bold mb-6">Integrations Marketplace</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {providers?.map((provider) => {

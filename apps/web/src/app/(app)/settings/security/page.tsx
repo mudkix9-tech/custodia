@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Shield, Key, Smartphone, Monitor } from 'lucide-react';
+
 import { useSession } from 'next-auth/react';
 import { trpc } from '@/utils/trpc';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Shield, Key, Smartphone, Monitor, Clock, LogOut, CheckCircle2 } from 'lucide-react';
+
 import { format } from 'date-fns';
 
 export default function SecuritySettingsPage() {
@@ -15,6 +18,7 @@ export default function SecuritySettingsPage() {
   const changePassword = trpc.security.changePassword.useMutation();
   const revokeSession = trpc.security.revokeSession.useMutation();
   const revokeAllSessions = trpc.security.revokeAllSessions.useMutation();
+  const { confirm, dialog } = useConfirm();
 
   const enableMfa = trpc.security.enableMfa.useMutation();
   const verifyMfa = trpc.security.verifyMfa.useMutation();
@@ -73,7 +77,8 @@ export default function SecuritySettingsPage() {
   };
 
   const handleRevokeAll = async () => {
-    if (confirm("Are you sure you want to revoke all other sessions?")) {
+    const confirmed = await confirm({ title: 'Revoke all other sessions?', description: 'This will log out all other devices.', variant: 'destructive', confirmText: 'Revoke All' });
+    if (confirmed) {
       try {
         await revokeAllSessions.mutateAsync({});
         refetchSessions();
@@ -108,14 +113,15 @@ export default function SecuritySettingsPage() {
   };
 
   const handleDisableMfa = async () => {
-      if (confirm('Are you sure you want to disable MFA? This decreases account security.')) {
-          try {
-              await disableMfa.mutateAsync();
-              refetchUser();
-          } catch(e: any) {
-              alert(e.message || 'Failed to disable MFA');
-          }
-      }
+    const confirmed = await confirm({ title: 'Disable MFA?', description: 'Are you sure you want to disable MFA? This decreases account security.', variant: 'destructive', confirmText: 'Disable' });
+    if (confirmed) {
+        try {
+            await disableMfa.mutateAsync();
+            refetchUser();
+        } catch(e: any) {
+            alert(e.message || 'Failed to disable MFA');
+        }
+    }
   };
 
   return (

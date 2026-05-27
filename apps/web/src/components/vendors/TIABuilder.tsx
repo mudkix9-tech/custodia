@@ -2,8 +2,34 @@
 
 import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { FieldError } from '@/components/ui/FieldError';
 import { FileText, CheckCircle2, AlertTriangle, ShieldCheck, Download, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
+
+const tiaSchema = z.object({
+  transferMechanism: z.string().min(1, 'Transfer mechanism is required'),
+  destinationCountry: z.string().length(2, 'Must be a 2-letter country code'),
+  surveillanceLawsExist: z.boolean().nullable(),
+  effectiveRemediesExist: z.boolean().nullable(),
+  legalAssessmentConclusion: z.string().optional(),
+  independentDpaExists: z.boolean().optional(),
+  residualRiskLevel: z.string().optional(),
+  residualRiskJustification: z.string().optional(),
+  conditions: z.string().optional(),
+  technicalMeasures: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    implemented: z.boolean(),
+    detail: z.string()
+  })),
+  organizationalMeasures: z.array(z.any()).optional(),
+  contractualMeasures: z.array(z.any()).optional(),
+  conclusion: z.enum(['proceed', 'proceed_with_conditions', 'suspend']).optional(),
+  conclusionNotes: z.string().optional()
+});
 
 export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, defaultCountry?: string }) {
   const [step, setStep] = useState(1);
@@ -13,29 +39,32 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
   const utils = trpc.useUtils();
 
   // Form state
-  const [formData, setFormData] = useState<any>({
-    destinationCountry: defaultCountry || '',
-    transferMechanism: 'sccs',
-    surveillanceLawsExist: null,
-    independentDpaExists: null,
-    effectiveRemediesExist: null,
-    legalAssessmentConclusion: '',
-    technicalMeasures: [
-      { measure: 'encryption_at_rest', label: 'Encryption at rest', implemented: false, detail: '' },
-      { measure: 'encryption_in_transit', label: 'Encryption in transit', implemented: false, detail: '' },
-    ],
-    organizationalMeasures: [
-      { measure: 'access_controls', label: 'Strict internal access controls', implemented: false, detail: '' },
-      { measure: 'transparency', label: 'Transparency reporting on govt requests', implemented: false, detail: '' },
-    ],
-    contractualMeasures: [
-      { measure: 'audit_rights', label: 'Enhanced audit rights', implemented: false, detail: '' },
-      { measure: 'challenge_requests', label: 'Commitment to challenge govt requests', implemented: false, detail: '' },
-    ],
-    residualRiskLevel: '',
-    residualRiskJustification: '',
-    conclusion: '',
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
+    resolver: zodResolver(tiaSchema),
+    defaultValues: {
+      transferMechanism: '',
+      destinationCountry: 'US',
+      surveillanceLawsExist: null,
+      effectiveRemediesExist: null,
+      technicalMeasures: [
+        { id: 'e2ee', label: 'End-to-End Encryption', implemented: false, detail: '' },
+        { id: 'pseudonymisation', label: 'Pseudonymisation', implemented: false, detail: '' },
+        { id: 'data_minimisation', label: 'Data Minimisation in Transit', implemented: false, detail: '' }
+      ],
+      conclusion: 'proceed_with_conditions',
+      conclusionNotes: ''
+    }
   });
+  const formData = watch();
+
+  const setFormData = (updater: any) => {
+    if (typeof updater === 'function') {
+      const newState = updater(formData);
+      Object.keys(newState).forEach(key => setValue(key as any, newState[key]));
+    } else {
+      Object.keys(updater).forEach(key => setValue(key as any, updater[key]));
+    }
+  };
 
   useEffect(() => {
     if (tia && !formData.destinationCountry) {
@@ -177,15 +206,15 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
                 <div>
                   <div className="font-medium text-sm text-ink-900 mb-2">Are there surveillance laws that compel access to the data?</div>
                   <div className="flex gap-4">
-                    <label className="flex items-center gap-2 text-sm"><input type="radio" checked={formData.surveillanceLawsExist === true} onChange={() => setFormData({...formData, surveillanceLawsExist: true})} className="text-sage-600" /> Yes</label>
-                    <label className="flex items-center gap-2 text-sm"><input type="radio" checked={formData.surveillanceLawsExist === false} onChange={() => setFormData({...formData, surveillanceLawsExist: false})} className="text-sage-600" /> No</label>
+                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="true" {...register('surveillanceLawsExist')} className="text-sage-600" /> Yes</label>
+                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="false" {...register('surveillanceLawsExist')} className="text-sage-600" /> No</label>
                   </div>
                 </div>
                 <div>
                   <div className="font-medium text-sm text-ink-900 mb-2">Are there effective, enforceable legal remedies for data subjects?</div>
                   <div className="flex gap-4">
-                    <label className="flex items-center gap-2 text-sm"><input type="radio" checked={formData.effectiveRemediesExist === true} onChange={() => setFormData({...formData, effectiveRemediesExist: true})} className="text-sage-600" /> Yes</label>
-                    <label className="flex items-center gap-2 text-sm"><input type="radio" checked={formData.effectiveRemediesExist === false} onChange={() => setFormData({...formData, effectiveRemediesExist: false})} className="text-sage-600" /> No</label>
+                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="true" {...register('effectiveRemediesExist')} className="text-sage-600" /> Yes</label>
+                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="false" {...register('effectiveRemediesExist')} className="text-sage-600" /> No</label>
                   </div>
                 </div>
               </div>
@@ -233,11 +262,7 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
                         <div className="flex-1">
                           <div className="text-sm font-medium">{m.label}</div>
                           {m.implemented && (
-                            <input type="text" placeholder="Details..." className="w-full mt-2 px-3 py-1.5 text-xs border border-ink-900/20 rounded" value={m.detail} onChange={e => {
-                              const newM = [...formData.technicalMeasures];
-                              newM[i].detail = e.target.value;
-                              setFormData({...formData, technicalMeasures: newM});
-                            }} />
+                            <input type="text" placeholder="Details..." className="w-full mt-2 px-3 py-1.5 text-xs border border-ink-900/20 rounded" {...register(`technicalMeasures.${i}.detail` as const)} />
                           )}
                         </div>
                       </div>

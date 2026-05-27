@@ -1,4 +1,7 @@
 "use client";
+import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+
 
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -17,7 +20,7 @@ export default function ClientDetailPage() {
   const { data: client, isLoading } = trpc.clients.get.useQuery({ id });
   const [activeTab, setActiveTab] = useState('overview');
 
-  if (isLoading) return <div className="p-8 text-ink-500">Loading client...</div>;
+  if (isLoading) return <GenericWorkspaceSkeleton />;
   if (!client) return <div className="p-8 text-red-500">Client not found</div>;
 
   const tabs = [
@@ -260,10 +263,17 @@ function OverviewTab({ client }: { client: any }) {
 function ActivitiesTab({ client }: { client: any }) {
   const [isLinkOpen, setIsLinkOpen] = useState(false);
   const unlink = trpc.clients.unlinkActivity.useMutation();
+  const { confirm, dialog } = useConfirm();
   const utils = trpc.useUtils();
 
   const handleUnlink = async (activityId: string) => {
-    if (confirm("Remove this activity from the client's portal?")) {
+    const confirmed = await confirm({
+      title: 'Unlink Activity?',
+      description: 'Are you sure you want to unlink this processing activity from the client?',
+      variant: 'destructive',
+      confirmText: 'Unlink',
+    });
+    if (confirmed) {
       await unlink.mutateAsync({ clientId: client.id, processingActivityId: activityId });
       utils.clients.get.invalidate({ id: client.id });
     }

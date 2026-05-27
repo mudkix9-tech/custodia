@@ -1,4 +1,5 @@
 "use client";
+import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import { useState, useEffect, useCallback } from 'react';
 import { trpc } from '@/utils/trpc';
@@ -95,7 +96,7 @@ export default function OrganizationSettingsPage() {
      handleBrandingChange('logoUrl', mockUrl);
   };
 
-  if (isLoading) return <div className="p-8">Loading...</div>;
+  if (isLoading) return <GenericWorkspaceSkeleton />;
 
   return (
     <div className="max-w-4xl mx-auto p-8 fade-up">

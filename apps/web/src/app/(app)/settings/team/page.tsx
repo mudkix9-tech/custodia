@@ -1,4 +1,7 @@
 "use client";
+import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+
 
 import { useState } from 'react';
 import { trpc } from '@/utils/trpc';
@@ -19,6 +22,7 @@ export default function TeamSettingsPage() {
   const updateRole = trpc.team.updateRole.useMutation();
   const updatePermissions = trpc.team.updatePermissions.useMutation();
   const removeMember = trpc.team.remove.useMutation();
+  const { confirm, dialog } = useConfirm();
   const inviteMember = trpc.team.bulkInvite.useMutation(); // using bulk invite for single and multiple
 
   const [inviteEmails, setInviteEmails] = useState('');
@@ -40,7 +44,13 @@ export default function TeamSettingsPage() {
   };
 
   const handleRemove = async (userId: string, name: string) => {
-    if (confirm(`Are you sure you want to remove ${name} from the organization?`)) {
+    const confirmed = await confirm({
+      title: `Remove ${name}?`,
+      description: `Are you sure you want to remove ${name} from the organization? They will lose access immediately.`,
+      variant: 'destructive',
+      confirmText: 'Remove',
+    });
+    if (confirmed) {
       try {
         await removeMember.mutateAsync({ userId });
         refetch();
@@ -87,7 +97,7 @@ export default function TeamSettingsPage() {
     }
   };
 
-  if (isLoading) return <div className="p-8">Loading team...</div>;
+  if (isLoading) return <GenericWorkspaceSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto p-8 fade-up">

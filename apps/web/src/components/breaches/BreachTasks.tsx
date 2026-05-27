@@ -4,7 +4,27 @@ import { trpc } from '@/utils/trpc';
 export default function BreachTasks({ breachId }: { breachId: string }) {
   const { data: tasks, isLoading, refetch } = trpc.breaches.tasks.list.useQuery({ breachId });
   const createTask = trpc.breaches.tasks.create.useMutation({ onSuccess: () => refetch() });
-  const updateTask = trpc.breaches.tasks.update.useMutation({ onSuccess: () => refetch() });
+  const utils = trpc.useUtils();
+  const updateTask = trpc.breaches.tasks.update.useMutation({
+    onMutate: async (newUpdate) => {
+      await utils.breaches.tasks.list.cancel({ breachId });
+      const previousTasks = utils.breaches.tasks.list.getData({ breachId });
+      if (previousTasks) {
+        utils.breaches.tasks.list.setData({ breachId }, previousTasks.map(t =>
+          t.id === newUpdate.id ? { ...t, ...newUpdate } : t
+        ) as any);
+      }
+      return { previousTasks };
+    },
+    onError: (err, newUpdate, context) => {
+      if (context?.previousTasks) {
+        utils.breaches.tasks.list.setData({ breachId }, context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      utils.breaches.tasks.list.invalidate({ breachId });
+    }
+  });
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
 
