@@ -12,7 +12,18 @@ export default function PoliciesDashboard() {
   const [type, setType] = useState('website_visitors');
   
   const utils = trpc.useContext();
-  const { data: policies, isLoading } = trpc.policies.list.useQuery({});
+  const {
+    data: policiesResp,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = trpc.policies.list.useInfiniteQuery(
+    { limit: 25 },
+    { getNextPageParam: (lastPage: any) => lastPage.pagination?.next_cursor }
+  );
+
+  const policies = policiesResp?.pages.flatMap((page: any) => page.data) || [];
   const createMutation = trpc.policies.create.useMutation({
     onSuccess: () => {
       utils.policies.list.invalidate({});
@@ -111,12 +122,24 @@ export default function PoliciesDashboard() {
             </Link>
           );
         })}
-        {((policies as any)?.data || [])?.length === 0 && !isCreating && (
+        {(policies || [])?.length === 0 && !isCreating && (
           <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-ink-900/10">
             <p className="text-ink-500">No privacy policies created yet.</p>
           </div>
         )}
       </div>
+
+      {hasNextPage && (
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
+          >
+            {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

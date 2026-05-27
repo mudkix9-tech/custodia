@@ -3,9 +3,10 @@ import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
 import { processingActivities, legitimateInterestAssessments, processingDataCategories, processingRecipients, processingTransfers, auditLogs, vendors, organizationVendors, clientProcessingActivities } from 'db';
-import { eq, and, desc, inArray } from 'drizzle-orm';
+import { eq, and, desc, inArray, not } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import DOMPurify from 'isomorphic-dompurify';
+import { queueNotification } from '../utils/notifications.js';
 
 const sanitize = (text?: string) => {
   if (!text) return text;
@@ -25,12 +26,16 @@ const paginationInput = z.object({
 export const ropaRouter = router({
   list: protectedProcedure
     .use(requirePermission('ropa', 'view'))
-    .query(async ({ ctx }) => {
+    .input(paginationInput)
+    .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return db.select()
-        .from(processingActivities)
-        .where(eq(processingActivities.organizationId, ctx.user!.orgId))
-        .orderBy(desc(processingActivities.updatedAt));
+      return paginatedQuery(
+        processingActivities,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'updatedAt',
+        'desc'
+      );
     }),
 
   get: protectedProcedure
@@ -215,8 +220,31 @@ export const ropaRouter = router({
         source: z.string().optional(),
         retentionPeriod: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [inserted] = await db.insert(processingDataCategories).values(input).returning();
+
+        if (inserted?.isSpecialCategory) {
+          const [activity] = await db.select().from(processingActivities).where(eq(processingActivities.id, input.processingActivityId));
+
+          await db.update(processingActivities)
+            .set({
+              requiresDpia: true,
+              involvesSpecialCategories: true,
+              riskLevel: 'high', // escalate if currently low/medium
+            })
+            .where(eq(processingActivities.id, input.processingActivityId));
+
+          if (ctx.user?.orgId && activity) {
+            // Queue notification
+            await queueNotification({
+              organizationId: ctx.user.orgId,
+              type: 'compliance.gap_detected' as any,
+              title: 'DPIA required',
+              body: `Adding special category data to "${activity.name}" requires a Data Protection Impact Assessment.`,
+              actionUrl: `/ropa/${input.processingActivityId}?tab=dpia`,
+            });
+          }
+        }
         return inserted;
       }),
     update: protectedProcedure
@@ -225,20 +253,87 @@ export const ropaRouter = router({
         id: z.string().uuid(),
         data: z.record(z.any())
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
+        const [existing] = await db.select().from(processingDataCategories).where(eq(processingDataCategories.id, input.id));
+        if (!existing) throw new TRPCError({ code: 'NOT_FOUND' });
+
         const [updated] = await db.update(processingDataCategories)
           .set(input.data)
           .where(eq(processingDataCategories.id, input.id))
           .returning();
+
+        if (updated?.isSpecialCategory && !existing.isSpecialCategory) {
+          const [activity] = await db.select().from(processingActivities).where(eq(processingActivities.id, updated.processingActivityId));
+          await db.update(processingActivities)
+            .set({
+              requiresDpia: true,
+              involvesSpecialCategories: true,
+              riskLevel: 'high',
+            })
+            .where(eq(processingActivities.id, updated.processingActivityId));
+
+          if (ctx.user?.orgId && activity) {
+            // Queue notification
+            await queueNotification({
+              organizationId: ctx.user.orgId,
+              type: 'compliance.gap_detected' as any,
+              title: 'DPIA required',
+              body: `Adding special category data to "${activity.name}" requires a Data Protection Impact Assessment.`,
+              actionUrl: `/ropa/${updated.processingActivityId}?tab=dpia`,
+            });
+          }
+        } else if (!updated?.isSpecialCategory && existing.isSpecialCategory && updated) {
+          // Check if there are any other special categories remaining
+          const remainingSpecial = await db.select().from(processingDataCategories)
+            .where(and(
+              eq(processingDataCategories.processingActivityId, updated.processingActivityId),
+              eq(processingDataCategories.isSpecialCategory, true),
+              not(eq(processingDataCategories.id, input.id))
+            ));
+
+          if (remainingSpecial.length === 0) {
+            await db.update(processingActivities)
+              .set({
+                requiresDpia: false,
+                involvesSpecialCategories: false,
+                riskLevel: 'medium', // Reset to default/medium
+              })
+              .where(eq(processingActivities.id, updated.processingActivityId));
+          }
+        }
+
         return updated;
       }),
     delete: protectedProcedure
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ input }) => {
+        const [existing] = await db.select().from(processingDataCategories).where(eq(processingDataCategories.id, input.id));
+        if (!existing) throw new TRPCError({ code: 'NOT_FOUND' });
+
         const [deleted] = await db.delete(processingDataCategories)
           .where(eq(processingDataCategories.id, input.id))
           .returning();
+
+        if (existing.isSpecialCategory) {
+          const remainingSpecial = await db.select().from(processingDataCategories)
+            .where(and(
+              eq(processingDataCategories.processingActivityId, existing.processingActivityId),
+              eq(processingDataCategories.isSpecialCategory, true),
+              not(eq(processingDataCategories.id, input.id)) // Exclude the deleted one
+            ));
+
+          if (remainingSpecial.length === 0) {
+            await db.update(processingActivities)
+              .set({
+                requiresDpia: false,
+                involvesSpecialCategories: false,
+                riskLevel: 'medium',
+              })
+              .where(eq(processingActivities.id, existing.processingActivityId));
+          }
+        }
+
         return deleted;
       })
   }),

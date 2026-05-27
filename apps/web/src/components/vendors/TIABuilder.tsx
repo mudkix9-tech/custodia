@@ -38,24 +38,24 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
   });
 
   useEffect(() => {
-    if (tia) {
-      setFormData({
-        ...formData,
+    if (tia && !formData.destinationCountry) {
+      setFormData((prev: any) => ({
+        ...prev,
         destinationCountry: tia.destinationCountry,
         transferMechanism: tia.transferMechanism,
         surveillanceLawsExist: tia.surveillanceLawsExist,
         independentDpaExists: tia.independentDpaExists,
         effectiveRemediesExist: tia.effectiveRemediesExist,
         legalAssessmentConclusion: tia.legalAssessmentConclusion,
-        technicalMeasures: Array.isArray(tia.technicalMeasures) && tia.technicalMeasures.length > 0 ? tia.technicalMeasures : formData.technicalMeasures,
-        organizationalMeasures: Array.isArray(tia.organizationalMeasures) && tia.organizationalMeasures.length > 0 ? tia.organizationalMeasures : formData.organizationalMeasures,
-        contractualMeasures: Array.isArray(tia.contractualMeasures) && tia.contractualMeasures.length > 0 ? tia.contractualMeasures : formData.contractualMeasures,
+        technicalMeasures: Array.isArray(tia.technicalMeasures) && tia.technicalMeasures.length > 0 ? tia.technicalMeasures : prev.technicalMeasures,
+        organizationalMeasures: Array.isArray(tia.organizationalMeasures) && tia.organizationalMeasures.length > 0 ? tia.organizationalMeasures : prev.organizationalMeasures,
+        contractualMeasures: Array.isArray(tia.contractualMeasures) && tia.contractualMeasures.length > 0 ? tia.contractualMeasures : prev.contractualMeasures,
         residualRiskLevel: tia.residualRiskLevel,
         residualRiskJustification: tia.residualRiskJustification,
         conclusion: tia.conclusion,
-      });
+      }));
     }
-  }, [tia]);
+  }, [tia]); // Only run when tia loads
 
   const handleSave = async (status: string) => {
     await saveMutation.mutateAsync({

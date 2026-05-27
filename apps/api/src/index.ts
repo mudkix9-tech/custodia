@@ -24,6 +24,7 @@ import { scheduleBreachesJobs } from './workers/breaches.js';
 import { scheduleComplianceJobs } from './workers/compliance.js';
 import { scheduleNotificationJobs } from './workers/notifications.js';
 import { scheduleRegulatoryJobs } from './workers/regulatoryScraper.js';
+import { scheduleGlobalJobs } from './workers/index.js';
 import cmpRoutes from './routes/cmp.js';
 import { complianceWorker } from './workers/compliance.js';
 import { paddleWebhookHandler } from './webhooks/paddle.js';
@@ -170,6 +171,7 @@ const start = async () => {
       await scheduleComplianceJobs();
       await scheduleNotificationJobs();
       await scheduleRegulatoryJobs();
+      await scheduleGlobalJobs();
     }
   } catch (err) {
     server.log.error(err);

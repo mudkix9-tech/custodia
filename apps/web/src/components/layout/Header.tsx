@@ -11,14 +11,13 @@ import { formatDistanceToNow } from 'date-fns';
 export function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const { data: dbNotifications, refetch } = trpc.notifications.listInApp.useQuery(undefined, {
+  const { data: notificationsResp, refetch } = trpc.notifications.listInApp.useQuery({ limit: 50 }, {
     refetchInterval: 30000 // Poll every 30s
   });
+  const notifications = notificationsResp?.data || [];
   const markReadMutation = trpc.notifications.markRead.useMutation({
     onSuccess: () => refetch()
   });
-
-  const notifications = dbNotifications || [];
   const unreadCount = notifications.filter((n: any) => n.status === 'pending').length;
 
   const handleMarkAllRead = () => {

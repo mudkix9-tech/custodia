@@ -9,7 +9,8 @@ import Link from 'next/link';
 export function RecipientsTab({ activityId }: { activityId: string }) {
   const utils = trpc.useUtils();
   const { data: recipients = [], isLoading } = trpc.ropa.recipients.list.useQuery({ processingActivityId: activityId });
-  const { data: orgVendors = [] } = trpc.vendors.getOrgVendors.useQuery();
+  const { data: orgVendorsResp } = trpc.vendors.getOrgVendors.useQuery({ limit: 100 });
+  const orgVendors = orgVendorsResp?.data || [];
   
   const createMutation = trpc.ropa.recipients.create.useMutation();
   const deleteMutation = trpc.ropa.recipients.delete.useMutation();
@@ -19,7 +20,7 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
 
   const handleAddVendor = async () => {
     if (!selectedVendorId) return;
-    const vendor = orgVendors.find((v: any) => v.id === selectedVendorId);
+    const vendor = orgVendors.find((v: any) => v.id === selectedVendorId) as any;
     if (!vendor) return;
 
     await createMutation.mutateAsync({

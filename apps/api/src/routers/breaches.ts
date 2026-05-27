@@ -10,6 +10,11 @@ const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
 };
 
+const paginationInput = z.object({
+  limit: z.number().min(1).max(100).default(25),
+  cursor: z.string().nullish(),
+});
+
 // Risk Assessment Matrix Logic
 function assessBreachRisk(answers: any) {
   let severityScore = 0;
@@ -180,11 +185,6 @@ const tasksRouter = router({
     }),
 });
 
-const paginationInput = z.object({
-  limit: z.number().min(1).max(100).default(25),
-  cursor: z.string().nullish(),
-});
-
 export const breachesRouter = router({
   notifications: notificationsRouter,
   tasks: tasksRouter,
@@ -223,16 +223,30 @@ export const breachesRouter = router({
 
   list: protectedProcedure
     .use(requirePermission('breach', 'view'))
-    .query(async ({ ctx }) => {
+    .input(paginationInput)
+    .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return db.select().from(breaches).where(eq(breaches.organizationId, ctx.user!.orgId)).orderBy(desc(breaches.createdAt));
+      return paginatedQuery(
+        breaches,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'createdAt',
+        'desc'
+      );
     }),
 
   register: protectedProcedure
     .use(requirePermission('breach', 'view'))
-    .query(async ({ ctx }) => {
+    .input(paginationInput)
+    .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return db.select().from(breaches).where(eq(breaches.organizationId, ctx.user!.orgId)).orderBy(desc(breaches.discoveredAt));
+      return paginatedQuery(
+        breaches,
+        ctx.user!.orgId,
+        { limit: input.limit, after: input.cursor || undefined },
+        'discoveredAt',
+        'desc'
+      );
     }),
 
   getById: protectedProcedure

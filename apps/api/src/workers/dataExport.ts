@@ -7,6 +7,7 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import stream from 'stream';
+import { generateAuditFile } from '../lib/auditExport.js';
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -17,71 +18,84 @@ const s3Client = new S3Client({
 });
 
 export const dataExportWorker = createWorker('data-export', async (job: any) => {
-    const { organizationId, requestedBy } = job.data;
+    const { organizationId, requestedBy, isFullAudit } = job.data;
 
     console.log(`Starting data export for org ${organizationId}`);
 
-    // 1. Gather data
-    const org = await db.query.organizations.findFirst({ where: eq(organizations.id, organizationId) });
-    const orgUsers = await db.query.users.findMany({ where: eq(users.organizationId, organizationId) });
-    const activities = await db.query.processingActivities.findMany({ where: eq(processingActivities.organizationId, organizationId) });
+    let signedUrl;
+    let notificationTitle;
+    let notificationBody;
 
-    const exportData = {
-        organization: org,
-        users: orgUsers,
-        processingActivities: activities,
-    };
+    if (isFullAudit) {
+      signedUrl = await generateAuditFile(organizationId);
+      notificationTitle = 'Your audit file is ready';
+      notificationBody = 'Your complete compliance audit file has been generated and is ready for download.';
+    } else {
+      // 1. Gather data
+      const org = await db.query.organizations.findFirst({ where: eq(organizations.id, organizationId) });
+      const orgUsers = await db.query.users.findMany({ where: eq(users.organizationId, organizationId) });
+      const activities = await db.query.processingActivities.findMany({ where: eq(processingActivities.organizationId, organizationId) });
 
-    // 2. Generate JSON files and Zip them
-    const archive = archiver('zip', { zlib: { level: 9 } });
+      const exportData = {
+          organization: org,
+          users: orgUsers,
+          processingActivities: activities,
+      };
 
-    // We create a passthrough stream so we can pipe the archiver output to S3 Upload
-    const pass = new stream.PassThrough();
-    archive.pipe(pass);
+      // 2. Generate JSON files and Zip them
+      const archive = archiver('zip', { zlib: { level: 9 } });
 
-    archive.append(JSON.stringify(exportData, null, 2), { name: 'export.json' });
+      // We create a passthrough stream so we can pipe the archiver output to S3 Upload
+      const pass = new stream.PassThrough();
+      archive.pipe(pass);
 
-    // Fetch documents
-    const orgDocuments = await db.query.documents.findMany({
-      where: eq(documents.organizationId, organizationId),
-    });
+      archive.append(JSON.stringify(exportData, null, 2), { name: 'export.json' });
 
-    for (const doc of orgDocuments) {
-      if (doc.s3Key) {
-        try {
-          const response = await s3Client.send(new GetObjectCommand({
-            Bucket: process.env.S3_BUCKET || 'default-bucket',
-            Key: doc.s3Key,
-          }));
-          if (response.Body) {
-             archive.append(response.Body as stream.Readable, { name: `documents/${doc.originalName}` });
+      // Fetch documents
+      const orgDocuments = await db.query.documents.findMany({
+        where: eq(documents.organizationId, organizationId),
+      });
+
+      for (const doc of orgDocuments) {
+        if (doc.s3Key) {
+          try {
+            const response = await s3Client.send(new GetObjectCommand({
+              Bucket: process.env.S3_BUCKET || 'default-bucket',
+              Key: doc.s3Key,
+            }));
+            if (response.Body) {
+               archive.append(response.Body as stream.Readable, { name: `documents/${doc.originalName}` });
+            }
+          } catch(e) {
+            console.error(`Failed to fetch document ${doc.id} from S3`, e);
           }
-        } catch(e) {
-          console.error(`Failed to fetch document ${doc.id} from S3`, e);
         }
       }
-    }
 
-    // Finalize archive
-    archive.finalize();
+      // Finalize archive
+      archive.finalize();
 
-    // 3. S3 Upload
-    const exportKey = `exports/${organizationId}/${Date.now()}.zip`;
-    const upload = new Upload({
-      client: s3Client,
-      params: {
+      // 3. S3 Upload
+      const exportKey = `exports/${organizationId}/${Date.now()}.zip`;
+      const upload = new Upload({
+        client: s3Client,
+        params: {
+          Bucket: process.env.S3_BUCKET || 'default-bucket',
+          Key: exportKey,
+          Body: pass,
+        }
+      });
+
+      await upload.done();
+
+      signedUrl = await getSignedUrl(s3Client, new GetObjectCommand({
         Bucket: process.env.S3_BUCKET || 'default-bucket',
         Key: exportKey,
-        Body: pass,
-      }
-    });
+      }), { expiresIn: 7 * 24 * 60 * 60 }); // 7 days
 
-    await upload.done();
-
-    const signedUrl = await getSignedUrl(s3Client, new GetObjectCommand({
-      Bucket: process.env.S3_BUCKET || 'default-bucket',
-      Key: exportKey,
-    }), { expiresIn: 7 * 24 * 60 * 60 }); // 7 days
+      notificationTitle = 'Your data export is ready';
+      notificationBody = `Your data export is ready. Download it before it expires in 7 days.`;
+    }
 
     // 4. Send email logic (Queue notification)
     console.log(`Sending email to user ${requestedBy} with link: ${signedUrl}`);
@@ -89,8 +103,8 @@ export const dataExportWorker = createWorker('data-export', async (job: any) => 
       organizationId,
       userId: requestedBy,
       type: 'general.data_export_ready',
-      title: 'Your data export is ready',
-      body: `Your data export is ready. Download it before it expires in 7 days.`,
+      title: notificationTitle,
+      body: notificationBody,
       actionUrl: signedUrl,
       channel: 'email',
     });

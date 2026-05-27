@@ -18,7 +18,18 @@ const COLUMNS = [
 
 export function DsarDashboardClient() {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
-  const { data: requests, isLoading } = trpc.dsar.list.useQuery({});
+  const {
+    data: requestsResp,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = trpc.dsar.list.useInfiniteQuery(
+    { limit: 25 },
+    { getNextPageParam: (lastPage: any) => lastPage.pagination?.next_cursor }
+  );
+
+  const requests = requestsResp?.pages.flatMap((page: any) => page.data) || [];
 
   if (isLoading) return <div className="text-ink-500">Loading DSARs...</div>;
 
@@ -130,6 +141,18 @@ export function DsarDashboardClient() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {viewMode === 'datagrid' && hasNextPage && (
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
+          >
+            {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+          </button>
         </div>
       )}
     </div>

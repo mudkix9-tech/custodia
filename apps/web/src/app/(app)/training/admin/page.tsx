@@ -6,8 +6,10 @@ import { Shield, Users, BookOpen, Clock, AlertTriangle, Plus } from 'lucide-reac
 import Link from 'next/link';
 
 export default function TrainingAdminDashboard() {
-  const { data: modules, isLoading: loadingModules } = trpc.training.listModules.useQuery();
-  const { data: completions, isLoading: loadingCompletions } = trpc.training.orgOverview.useQuery({} as any);
+  const { data: modulesResp, isLoading: loadingModules } = trpc.training.listModules.useQuery({ limit: 100 });
+  const modules = modulesResp?.data || [];
+  const { data: completionsResp, isLoading: loadingCompletions } = trpc.training.orgOverview.useQuery({ limit: 100 } as any);
+  const completions = completionsResp?.data || [];
 
   const [activeTab, setActiveTab] = useState<'overview' | 'modules' | 'completions'>('overview');
 

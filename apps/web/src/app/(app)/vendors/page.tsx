@@ -7,8 +7,18 @@ import { Plus, Search, FileText, Download, ShieldAlert, CheckCircle2, Clock, Lin
 import Link from 'next/link';
 
 export default function VendorsPage() {
-  const { data: vendorsResp, isLoading } = trpc.vendors.getOrgVendors.useQuery({} as any);
-  const vendors = (vendorsResp as any)?.data || [];
+  const {
+    data: vendorsResp,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = trpc.vendors.getOrgVendors.useInfiniteQuery(
+    { limit: 25 },
+    { getNextPageParam: (lastPage: any) => lastPage.pagination?.next_cursor }
+  );
+
+  const vendors = vendorsResp?.pages.flatMap((page: any) => page.data) || [];
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -137,6 +147,17 @@ export default function VendorsPage() {
           isLoading={isLoading}
           emptyStateMessage="No vendors tracked yet. Click 'Discover Vendors' to start building your register."
         />
+        {hasNextPage && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
+            >
+              {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+            </button>
+          </div>
+        )}
       </div>
 
       <DiscoverModal isOpen={isDiscoverOpen} onClose={() => setIsDiscoverOpen(false)} />

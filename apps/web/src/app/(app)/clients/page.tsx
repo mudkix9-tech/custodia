@@ -7,8 +7,18 @@ import { Plus, Search, Building2, Globe, FileText, CheckCircle2, Clock } from 'l
 import Link from 'next/link';
 
 export default function ClientsPage() {
-  const { data: clientsResp, isLoading } = trpc.clients.list.useQuery({} as any);
-  const clients = (clientsResp as any)?.data || [];
+  const {
+    data: clientsResp,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = trpc.clients.list.useInfiniteQuery(
+    { limit: 25 },
+    { getNextPageParam: (lastPage: any) => lastPage.pagination?.next_cursor }
+  );
+
+  const clients = clientsResp?.pages.flatMap((page: any) => page.data) || [];
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -132,6 +142,17 @@ export default function ClientsPage() {
           isLoading={isLoading}
           emptyStateMessage="No clients added yet. Click 'Add Client' to start managing agency clients."
         />
+        {hasNextPage && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
+            >
+              {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+            </button>
+          </div>
+        )}
       </div>
 
       <AddClientModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
