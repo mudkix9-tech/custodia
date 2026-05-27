@@ -1,4 +1,5 @@
 "use client";
+import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import React, { useState, useEffect } from 'react';
 import { Bell, AlertCircle, Save } from 'lucide-react';
@@ -66,7 +67,7 @@ export default function NotificationsSettingsPage() {
     }
   }, [userSettings]);
 
-  if (isLoadingOrg || isLoadingUser) return <div className="p-8">Loading settings...</div>;
+  if (isLoadingOrg || isLoadingUser) return <GenericWorkspaceSkeleton />;
 
   const handleOrgToggle = (type: string, channel: string) => {
     if (!isEditable) return;

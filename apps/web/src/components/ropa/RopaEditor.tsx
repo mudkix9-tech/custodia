@@ -4,6 +4,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/utils/trpc';
 import { Save, ArrowLeft, AlertCircle, Info, ExternalLink, X } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { FieldError } from '@/components/ui/FieldError';
+import { announce } from '@/components/layout/Announcer';
+
 import { DataCategoriesTab } from './tabs/DataCategoriesTab';
 import { RecipientsTab } from './tabs/RecipientsTab';
 import { TransfersTab } from './tabs/TransfersTab';
@@ -22,18 +28,51 @@ const TABS = [
   { id: 'history', label: 'History' },
 ];
 
+const ropaSchema = z.object({
+  name: z.string().min(1, 'Activity name is required'),
+  purpose: z.string().min(10, 'Purpose must be at least 10 characters'),
+  description: z.string().optional(),
+  status: z.string(),
+  riskLevel: z.string(),
+  lawfulBasis: z.string().min(1, 'Lawful basis is required'),
+  lawfulBasisNotes: z.string().optional(),
+  isSystematicMonitoring: z.boolean().optional(),
+  isLargeScale: z.boolean().optional(),
+  isAutomatedDecisionMaking: z.boolean().optional(),
+  retentionSchedule: z.string().optional(),
+  retentionReviewDate: z.date().nullable().optional(),
+  securityMeasures: z.array(z.string()).optional(),
+  securityNotes: z.string().optional()
+});
+
 export function RopaEditor({ initialData = null }: { initialData?: any }) {
   const router = useRouter();
   const isNew = !initialData;
   const [activeTab, setActiveTab] = useState('general');
-  const [formData, setFormData] = useState(initialData || {
-    name: '',
-    purpose: '',
-    description: '',
-    status: 'draft',
-    riskLevel: 'low',
-    lawfulBasis: '',
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
+    resolver: zodResolver(ropaSchema),
+    defaultValues: initialData || {
+      name: '',
+      purpose: '',
+      description: '',
+      status: 'draft',
+      riskLevel: 'low',
+      lawfulBasis: '',
+      lawfulBasisNotes: '',
+      isSystematicMonitoring: false,
+      isLargeScale: false,
+      isAutomatedDecisionMaking: false,
+      retentionSchedule: '',
+      retentionReviewDate: null,
+      securityMeasures: [],
+      securityNotes: ''
+    }
   });
+  const formData = watch();
+
+  const handleFieldChange = (field: any, value: any) => {
+    setValue(field, value, { shouldDirty: true });
+  };
 
   const [assignedClientIds, setAssignedClientIds] = useState<string[]>(
     initialData?.clients?.map((c: any) => c.clientId) || []
@@ -108,6 +147,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           data: formData
         });
         setSaveStatus('saved');
+      announce('Processing activity saved successfully.');
         setTimeout(() => setSaveStatus('idle'), 2000);
       } catch (err) {
         setSaveStatus('error');
@@ -117,9 +157,6 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
     return () => clearTimeout(timer);
   }, [formData, activeTab]);
 
-  const handleFieldChange = (field: string, value: any) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }));
-  };
 
   const handleCreate = async () => {
     setSaveStatus('saving');
@@ -262,18 +299,17 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 <label className="text-[12.5px] font-medium text-ink-700">Activity Name <span className="text-clay-600">*</span></label>
                 <input 
                   type="text" 
-                  value={formData.name}
-                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  {...register('name')}
                   className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder="e.g. Employee Payroll Processing"
                 />
+                {errors.name && <FieldError>{errors.name.message as string}</FieldError>}
               </div>
 
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-ink-700">Purpose of Processing <span className="text-clay-600">*</span></label>
                 <textarea 
-                  value={formData.purpose}
-                  onChange={(e) => handleFieldChange('purpose', e.target.value)}
+                  {...register('purpose')}
                   rows={3}
                   className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder="Describe exactly why this processing occurs..."
@@ -371,8 +407,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-ink-700">Lawful Basis (Art. 6) <span className="text-clay-600">*</span></label>
                 <select 
-                  value={formData.lawfulBasis || ''}
-                  onChange={(e) => handleFieldChange('lawfulBasis', e.target.value)}
+                  {...register('lawfulBasis')}
                   className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                 >
                   <option value="" disabled>Select Lawful Basis...</option>
@@ -383,6 +418,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                   <option value="public_task">Public Task (Art. 6(1)(e))</option>
                   <option value="legitimate_interest">Legitimate Interest (Art. 6(1)(f))</option>
                 </select>
+                {errors.lawfulBasis && <FieldError>{errors.lawfulBasis.message as string}</FieldError>}
               </div>
 
               {formData.lawfulBasis === 'legitimate_interest' && (

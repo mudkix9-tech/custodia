@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { Trash2, Building2, Globe, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+
 import Link from 'next/link';
 
 export function RecipientsTab({ activityId }: { activityId: string }) {
@@ -14,6 +16,7 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
   
   const createMutation = trpc.ropa.recipients.create.useMutation();
   const deleteMutation = trpc.ropa.recipients.delete.useMutation();
+  const { confirm, dialog } = useConfirm();
 
   const [selectedVendorId, setSelectedVendorId] = useState('');
   const [customName, setCustomName] = useState('');
@@ -46,8 +49,16 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
   };
 
   const handleDelete = async (id: string) => {
-    await deleteMutation.mutateAsync({ id });
-    utils.ropa.recipients.list.invalidate();
+    const confirmed = await confirm({
+      title: 'Remove recipient?',
+      description: 'Are you sure you want to remove this data recipient?',
+      variant: 'destructive',
+      confirmText: 'Remove',
+    });
+    if (confirmed) {
+      await deleteMutation.mutateAsync({ id });
+      utils.ropa.recipients.list.invalidate();
+    }
   };
 
   const columns = [
@@ -100,11 +111,7 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
       id: 'actions',
       header: '',
       cell: ({ row }: any) => (
-        <button 
-          onClick={() => handleDelete(row.original.id)}
-          className="p-1.5 text-ink-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-        >
-          <Trash2 className="w-4 h-4" />
+        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-ink-400 hover:text-clay-600 hover:bg-bone-100 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
         </button>
       ),
       size: 50,
@@ -113,6 +120,7 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
 
   return (
     <div className="space-y-6 fade-up">
+      {dialog}
       <div className="bg-bone-50 border border-ink-900/10 rounded-2xl p-6 shadow-sm">
         <h2 className="text-[15px] font-semibold text-ink-900 mb-4">Add Recipient</h2>
         

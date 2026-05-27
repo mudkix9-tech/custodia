@@ -1,4 +1,5 @@
 "use client";
+import { GenericListSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
@@ -9,7 +10,7 @@ export default function UpdatesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { data: updates, isLoading } = trpc.regulatory.listHistory.useQuery({ limit: 100 });
 
-  if (isLoading) return <div className="p-8">Loading updates...</div>;
+  if (isLoading) return <GenericListSkeleton />;
 
   const filteredUpdates = updates?.filter(u => 
     u.title.toLowerCase().includes(searchTerm.toLowerCase()) || 

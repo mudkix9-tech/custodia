@@ -1,4 +1,5 @@
 'use client';
+import { GenericListSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import { trpc } from '@/utils/trpc';
 import { BookOpen, CheckCircle, Clock, PlayCircle } from 'lucide-react';

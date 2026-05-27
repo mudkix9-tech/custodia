@@ -3,6 +3,10 @@
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import WebhookDeliveryLog from '@/components/developers/WebhookDeliveryLog';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { ExternalLink, Copy, Check, Eye, EyeOff, Key, Plus, Trash2, Webhook, Activity, AlertCircle } from 'lucide-react';
+import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
+
 
 function Card({ children, className }: { children: React.ReactNode, className?: string }) {
   return <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${className || ''}`}>{children}</div>;
@@ -50,6 +54,7 @@ export default function DevelopersSettingsPage() {
     }
   });
 
+  const { confirm, dialog } = useConfirm();
   const deleteWebhookMutation = trpc.webhooks.delete.useMutation({
     onSuccess: () => utils.webhooks.list.invalidate()
   });
@@ -109,7 +114,7 @@ export default function DevelopersSettingsPage() {
               {!key.revokedAt && (
                 <button
                   className="text-red-600 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1.5 rounded bg-white"
-                  onClick={() => revokeKeyMutation.mutate({ id: key.id })}
+                  onClick={async () => { const confirmed = await confirm({ title: 'Revoke API Key?', description: 'This will instantly disable the key. Any applications using it will lose access.', variant: 'destructive', confirmText: 'Revoke' }); if (confirmed) revokeKeyMutation.mutate({ id: key.id }); }}
                 >
                   Revoke
                 </button>
@@ -157,7 +162,10 @@ export default function DevelopersSettingsPage() {
                   </button>
                   <button
                     className="text-red-600 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1.5 rounded bg-white"
-                    onClick={() => deleteWebhookMutation.mutate({ id: hook.id })}
+                    onClick={async () => {
+                      const confirmed = await confirm({ title: 'Delete webhook?', description: 'This will permanently delete the webhook and stop sending events.', variant: 'destructive' });
+                      if (confirmed) deleteWebhookMutation.mutate({ id: hook.id });
+                    }}
                   >
                     Delete
                   </button>

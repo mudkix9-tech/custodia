@@ -1,7 +1,11 @@
 "use client";
+import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import { Plug, Zap } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Plus, Check, ExternalLink, ShieldAlert, ArrowRight } from 'lucide-react';
+
 import { useSession } from 'next-auth/react';
 
 export default function IntegrationsSettingsPage() {
@@ -16,6 +20,7 @@ export default function IntegrationsSettingsPage() {
     { enabled: !!orgId }
   );
   const disconnectMutation = trpc.integrations.disconnect.useMutation();
+  const { confirm, dialog } = useConfirm();
 
   const handleDisconnect = async (id: string) => {
     if (!isEditable) return;
@@ -25,7 +30,7 @@ export default function IntegrationsSettingsPage() {
     }
   };
 
-  if (providersLoading) return <div className="p-8">Loading integrations...</div>;
+  if (providersLoading) return <GenericWorkspaceSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto p-8 fade-up">

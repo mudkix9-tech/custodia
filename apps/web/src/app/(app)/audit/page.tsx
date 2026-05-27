@@ -1,4 +1,5 @@
 "use client";
+import { GenericListSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';

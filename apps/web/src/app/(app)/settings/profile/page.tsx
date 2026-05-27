@@ -1,4 +1,5 @@
 "use client";
+import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 import React, { useState, useEffect } from "react";
 
 import { User, Bell, Save } from 'lucide-react';
@@ -60,7 +61,7 @@ export default function ProfileSettingsPage() {
     return userOverrides[type].mutedChannels.includes(channel);
   };
 
-  if (isLoading) return <div className="p-8">Loading profile...</div>;
+  if (isLoading) return <GenericWorkspaceSkeleton />;
 
   return (
     <div className="max-w-4xl mx-auto p-8 fade-up">

@@ -1,4 +1,5 @@
 "use client";
+import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import { use } from 'react';
 import { RopaEditor } from '@/components/ropa/RopaEditor';
@@ -9,14 +10,7 @@ export default function EditRopaPage({ params }: { params: Promise<{ id: string 
   const { data, isLoading, error } = trpc.ropa.get.useQuery({ id });
 
   if (isLoading) {
-    return (
-      <div className="flex-1 min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-8 w-8 bg-[#00A67E]/20 rounded-full animate-ping mb-4"></div>
-          <p className="text-slate-400">Loading activity...</p>
-        </div>
-      </div>
-    );
+    return <GenericWorkspaceSkeleton />;
   }
 
   if (error || !data) {
