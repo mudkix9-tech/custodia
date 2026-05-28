@@ -383,6 +383,7 @@ export const vendors = pgTable('vendors', {
   description: text('description'),
   category: varchar('category', { length: 100 }),
   dsarSearchInstructions: text('dsar_search_instructions'),
+  suggestedForIndustries: jsonb('suggested_for_industries').default([]),
   
   headquartersCountry: char('headquarters_country', { length: 2 }),
   dataProcessingLocations: jsonb('data_processing_locations').default([]),

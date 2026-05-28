@@ -17,7 +17,7 @@ import {
 } from 'db';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
 
-const ROPA_TEMPLATES = {
+export const ROPA_TEMPLATES = {
   marketing_agency: [
     {
       id: 'website_analytics',
@@ -119,8 +119,430 @@ const ROPA_TEMPLATES = {
       securityMeasures: ['encryption_in_transit', 'access_controls'],
     },
   ],
+  ecommerce: [
+    {
+      id: 'ecommerce_order_processing',
+      name: 'Customer Order Processing',
+      description: 'Processing online orders, payments, and shipping',
+      purpose: 'To process customer orders, process payments, and fulfill deliveries.',
+      lawfulBasis: 'contract',
+      lawfulBasisDetail: 'Processing necessary for the performance of a contract to deliver purchased goods.',
+      dataSubjectCategories: ['customers'],
+      estimatedDataSubjects: '1000-100000',
+      processingType: ['collection', 'storage', 'sharing'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'shipping_address', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'phone', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'payment_details', categoryGroup: 'financial', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['ecommerce_platform', 'payment_gateway', 'shipping_provider'],
+      retentionPeriod: '7 years for tax and accounting purposes',
+      securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'pci_compliance', 'access_controls'],
+    },
+    {
+      id: 'ecommerce_marketing',
+      name: 'Marketing Email Campaigns',
+      description: 'Sending promotional offers and abandoned cart emails',
+      purpose: 'To send marketing communications and abandoned cart reminders to customers and subscribers.',
+      lawfulBasis: 'consent',
+      lawfulBasisDetail: 'Consent obtained during checkout or via newsletter signup.',
+      dataSubjectCategories: ['customers', 'website_visitors'],
+      estimatedDataSubjects: '10000-100000',
+      processingType: ['collection', 'storage', 'analysis', 'sharing'],
+      dataCategories: [
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'purchase_history', categoryGroup: 'behavioral', source: 'automated_collection' },
+      ],
+      suggestedVendorCategories: ['email_marketing'],
+      retentionPeriod: 'Until consent is withdrawn',
+      securityMeasures: ['encryption_in_transit', 'access_controls'],
+    },
+    {
+      id: 'ecommerce_support',
+      name: 'Customer Support Tickets',
+      description: 'Handling customer inquiries and returns',
+      purpose: 'To provide customer support, handle returns, and resolve issues.',
+      lawfulBasis: 'legitimate_interests',
+      lawfulBasisDetail: 'Legitimate interest in providing customer service and resolving issues.',
+      dataSubjectCategories: ['customers'],
+      estimatedDataSubjects: '1000-10000',
+      processingType: ['collection', 'storage', 'analysis'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'order_details', categoryGroup: 'financial', source: 'direct_from_subject' },
+        { category: 'support_history', categoryGroup: 'behavioral', source: 'automated_collection' },
+      ],
+      suggestedVendorCategories: ['helpdesk'],
+      retentionPeriod: '3 years after last contact',
+      securityMeasures: ['encryption_in_transit', 'access_controls'],
+    }
+  ],
+  saas: [
+    {
+      id: 'saas_user_management',
+      name: 'User Account Management',
+      description: 'Managing user accounts, authentication, and profiles',
+      purpose: 'To provide access to the SaaS platform and manage user profiles.',
+      lawfulBasis: 'contract',
+      lawfulBasisDetail: 'Processing necessary to provide the software service as per the terms of service.',
+      dataSubjectCategories: ['users'],
+      estimatedDataSubjects: '1000-100000',
+      processingType: ['collection', 'storage'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'password_hash', categoryGroup: 'security', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['identity_provider', 'cloud_hosting'],
+      retentionPeriod: 'Duration of account + 30 days',
+      securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'access_controls', 'mfa'],
+    },
+    {
+      id: 'saas_product_analytics',
+      name: 'Product Usage Analytics',
+      description: 'Tracking how users interact with the product',
+      purpose: 'To analyze feature usage, identify bugs, and improve the product experience.',
+      lawfulBasis: 'legitimate_interests',
+      lawfulBasisDetail: 'Legitimate interest in improving the product and understanding user behavior.',
+      dataSubjectCategories: ['users'],
+      estimatedDataSubjects: '1000-100000',
+      processingType: ['collection', 'storage', 'analysis'],
+      dataCategories: [
+        { category: 'user_id', categoryGroup: 'technical', source: 'automated_collection' },
+        { category: 'feature_usage', categoryGroup: 'behavioral', source: 'automated_collection' },
+        { category: 'ip_address', categoryGroup: 'technical', source: 'automated_collection' },
+      ],
+      suggestedVendorCategories: ['product_analytics'],
+      retentionPeriod: '24 months',
+      securityMeasures: ['encryption_in_transit', 'access_controls', 'pseudonymization'],
+    },
+    {
+      id: 'saas_billing',
+      name: 'Customer Billing',
+      description: 'Processing subscription payments and invoices',
+      purpose: 'To process recurring subscription payments and generate invoices.',
+      lawfulBasis: 'contract',
+      lawfulBasisDetail: 'Processing necessary to bill for the service.',
+      dataSubjectCategories: ['customers'],
+      estimatedDataSubjects: '1000-10000',
+      processingType: ['collection', 'storage', 'sharing'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'billing_address', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'payment_details', categoryGroup: 'financial', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['payment_gateway', 'billing_software'],
+      retentionPeriod: '7 years for tax and accounting purposes',
+      securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'pci_compliance', 'access_controls'],
+    }
+  ],
+  recruitment: [
+    {
+      id: 'recruitment_candidate_processing',
+      name: 'Candidate Application Processing',
+      description: 'Collecting and reviewing candidate applications',
+      purpose: 'To assess candidate suitability for open roles and manage the recruitment pipeline.',
+      lawfulBasis: 'legitimate_interests',
+      lawfulBasisDetail: 'Legitimate interest in finding suitable candidates for open positions.',
+      dataSubjectCategories: ['candidates'],
+      estimatedDataSubjects: '1000-10000',
+      processingType: ['collection', 'storage', 'analysis'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'phone', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'resume_cv', categoryGroup: 'employment', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['ats'],
+      retentionPeriod: '6 months after position filled, unless consent given for longer',
+      securityMeasures: ['encryption_in_transit', 'access_controls'],
+    },
+    {
+      id: 'recruitment_interview_scheduling',
+      name: 'Interview Scheduling',
+      description: 'Coordinating interview times with candidates',
+      purpose: 'To schedule and conduct interviews with candidates.',
+      lawfulBasis: 'legitimate_interests',
+      lawfulBasisDetail: 'Legitimate interest in facilitating the interview process.',
+      dataSubjectCategories: ['candidates'],
+      estimatedDataSubjects: '100-1000',
+      processingType: ['collection', 'storage', 'sharing'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'calendar_availability', categoryGroup: 'behavioral', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['calendar_tool', 'video_conferencing'],
+      retentionPeriod: '6 months after position filled',
+      securityMeasures: ['encryption_in_transit', 'access_controls'],
+    }
+  ],
+  healthcare: [
+    {
+      id: 'healthcare_patient_records',
+      name: 'Patient Record Management',
+      description: 'Managing electronic health records and patient history',
+      purpose: 'To provide medical care, maintain patient history, and ensure continuity of care.',
+      lawfulBasis: 'vital_interests',
+      lawfulBasisDetail: 'Processing necessary for the provision of health or social care or treatment.',
+      dataSubjectCategories: ['patients'],
+      estimatedDataSubjects: '1000-10000',
+      processingType: ['collection', 'storage', 'analysis'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'dob', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'medical_history', categoryGroup: 'health', source: 'direct_from_subject' },
+        { category: 'test_results', categoryGroup: 'health', source: 'automated_collection' },
+      ],
+      suggestedVendorCategories: ['emr', 'health_cloud'],
+      retentionPeriod: '10 years after last treatment (varies by local law)',
+      securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'strict_access_controls', 'audit_logging'],
+    },
+    {
+      id: 'healthcare_appointments',
+      name: 'Appointment Scheduling',
+      description: 'Managing patient appointments and reminders',
+      purpose: 'To schedule patient visits and send appointment reminders.',
+      lawfulBasis: 'contract',
+      lawfulBasisDetail: 'Processing necessary to fulfill the appointment booking.',
+      dataSubjectCategories: ['patients'],
+      estimatedDataSubjects: '1000-10000',
+      processingType: ['collection', 'storage', 'sharing'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'phone', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'appointment_time', categoryGroup: 'behavioral', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['scheduling_software', 'sms_provider'],
+      retentionPeriod: '3 years after appointment',
+      securityMeasures: ['encryption_in_transit', 'access_controls'],
+    }
+  ],
+  legal: [
+    {
+      id: 'legal_matter_management',
+      name: 'Client Matter Management',
+      description: 'Managing case files, documents, and client communications',
+      purpose: 'To provide legal representation and manage client matters.',
+      lawfulBasis: 'contract',
+      lawfulBasisDetail: 'Processing necessary for the performance of a contract to provide legal services.',
+      dataSubjectCategories: ['clients', 'third_parties'],
+      estimatedDataSubjects: '100-1000',
+      processingType: ['collection', 'storage', 'analysis'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'contact_details', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'case_details', categoryGroup: 'legal', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['practice_management', 'document_management'],
+      retentionPeriod: '7 years after matter closed (varies by jurisdiction)',
+      securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'strict_access_controls', 'audit_logging'],
+    },
+    {
+      id: 'legal_conflict_checking',
+      name: 'Conflict Checking',
+      description: 'Checking for conflicts of interest before taking on a new client',
+      purpose: 'To ensure compliance with professional conduct rules regarding conflicts of interest.',
+      lawfulBasis: 'legal_obligation',
+      lawfulBasisDetail: 'Processing necessary to comply with legal/professional obligations.',
+      dataSubjectCategories: ['clients', 'prospective_clients'],
+      estimatedDataSubjects: '1000-10000',
+      processingType: ['collection', 'storage', 'analysis'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'company_name', categoryGroup: 'employment', source: 'direct_from_subject' },
+        { category: 'matter_description', categoryGroup: 'legal', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['practice_management'],
+      retentionPeriod: 'Indefinitely (for conflict checking purposes)',
+      securityMeasures: ['encryption_in_transit', 'access_controls'],
+    }
+  ],
+  consulting: [
+    {
+      id: 'consulting_engagement_management',
+      name: 'Client Engagement Management',
+      description: 'Managing consulting projects, deliverables, and communications',
+      purpose: 'To deliver consulting services as per client agreements.',
+      lawfulBasis: 'contract',
+      lawfulBasisDetail: 'Processing necessary for the performance of a consulting contract.',
+      dataSubjectCategories: ['clients'],
+      estimatedDataSubjects: '100-1000',
+      processingType: ['collection', 'storage', 'sharing'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'job_title', categoryGroup: 'employment', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['project_management', 'collaboration_tools'],
+      retentionPeriod: 'Duration of contract + 6 years',
+      securityMeasures: ['encryption_in_transit', 'access_controls'],
+    }
+  ],
+  real_estate: [
+    {
+      id: 'real_estate_property_listings',
+      name: 'Property Listing Management',
+      description: 'Managing property listings and inquiries',
+      purpose: 'To market properties and handle inquiries from potential buyers/tenants.',
+      lawfulBasis: 'legitimate_interests',
+      lawfulBasisDetail: 'Legitimate interest in marketing properties and matching buyers with sellers.',
+      dataSubjectCategories: ['clients', 'prospects'],
+      estimatedDataSubjects: '1000-10000',
+      processingType: ['collection', 'storage', 'sharing'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'contact_details', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'property_preferences', categoryGroup: 'behavioral', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['crm', 'property_management'],
+      retentionPeriod: '3 years after last contact',
+      securityMeasures: ['encryption_in_transit', 'access_controls'],
+    },
+    {
+      id: 'real_estate_tenant_screening',
+      name: 'Tenant Screening',
+      description: 'Processing tenant applications and background checks',
+      purpose: 'To assess the suitability of prospective tenants for rental properties.',
+      lawfulBasis: 'legitimate_interests',
+      lawfulBasisDetail: 'Legitimate interest in ensuring reliable tenants for landlords.',
+      dataSubjectCategories: ['applicants'],
+      estimatedDataSubjects: '100-1000',
+      processingType: ['collection', 'storage', 'analysis'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'financial_history', categoryGroup: 'financial', source: 'third_party' },
+        { category: 'employment_details', categoryGroup: 'employment', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['background_check_provider'],
+      retentionPeriod: '1 year after application decision',
+      securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'access_controls'],
+    }
+  ],
+  education: [
+    {
+      id: 'education_student_enrollment',
+      name: 'Student Enrollment',
+      description: 'Processing student applications and enrollment data',
+      purpose: 'To manage the admissions process and enroll students in courses.',
+      lawfulBasis: 'public_task',
+      lawfulBasisDetail: 'Processing necessary for the performance of a task carried out in the public interest (for public institutions) or contract (private).',
+      dataSubjectCategories: ['students', 'parents'],
+      estimatedDataSubjects: '1000-10000',
+      processingType: ['collection', 'storage', 'analysis'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'dob', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'academic_records', categoryGroup: 'education', source: 'direct_from_subject' },
+        { category: 'contact_details', categoryGroup: 'contact', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['sis', 'lms'],
+      retentionPeriod: 'Duration of enrollment + statutory retention period',
+      securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'access_controls'],
+    }
+  ],
+  generic: [
+    {
+      id: 'generic_customer_management',
+      name: 'Customer/Client Management',
+      description: 'Managing customer records and communications',
+      purpose: 'To manage business relationships and fulfill contracts.',
+      lawfulBasis: 'contract',
+      lawfulBasisDetail: 'Processing necessary for the performance of a contract.',
+      dataSubjectCategories: ['customers'],
+      estimatedDataSubjects: '1000-10000',
+      processingType: ['collection', 'storage'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'phone', categoryGroup: 'contact', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['crm'],
+      retentionPeriod: 'Duration of relationship + 6 years',
+      securityMeasures: ['encryption_in_transit', 'access_controls'],
+    },
+    {
+      id: 'generic_employee_records',
+      name: 'Employee Records',
+      description: 'Managing HR data, payroll, and benefits',
+      purpose: 'To manage employment relationships, run payroll, and provide benefits.',
+      lawfulBasis: 'legal_obligation',
+      lawfulBasisDetail: 'Processing necessary to comply with employment law obligations.',
+      dataSubjectCategories: ['employees'],
+      estimatedDataSubjects: '10-1000',
+      processingType: ['collection', 'storage', 'sharing'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'ssn_tax_id', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'bank_details', categoryGroup: 'financial', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['hris', 'payroll_provider'],
+      retentionPeriod: 'Duration of employment + 6 years (or statutory requirement)',
+      securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'strict_access_controls'],
+    },
+    {
+      id: 'generic_email_marketing',
+      name: 'Email Marketing',
+      description: 'Sending newsletters and promotional emails',
+      purpose: 'To market products/services to interested parties.',
+      lawfulBasis: 'consent',
+      lawfulBasisDetail: 'Consent obtained via opt-in forms.',
+      dataSubjectCategories: ['prospects', 'customers'],
+      estimatedDataSubjects: '1000-10000',
+      processingType: ['collection', 'storage', 'sharing'],
+      dataCategories: [
+        { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['email_marketing'],
+      retentionPeriod: 'Until consent is withdrawn',
+      securityMeasures: ['encryption_in_transit', 'access_controls'],
+    },
+    {
+      id: 'generic_website_analytics',
+      name: 'Website Analytics',
+      description: 'Tracking website visitor traffic and behavior',
+      purpose: 'To understand website usage and improve the user experience.',
+      lawfulBasis: 'legitimate_interests',
+      lawfulBasisDetail: 'Legitimate interest in monitoring website performance.',
+      dataSubjectCategories: ['website_visitors'],
+      estimatedDataSubjects: '10000-100000',
+      processingType: ['collection', 'storage', 'analysis'],
+      dataCategories: [
+        { category: 'ip_address', categoryGroup: 'technical', source: 'automated_collection' },
+        { category: 'browsing_history', categoryGroup: 'behavioral', source: 'automated_collection' },
+      ],
+      suggestedVendorCategories: ['analytics'],
+      retentionPeriod: '14-24 months',
+      securityMeasures: ['encryption_in_transit', 'pseudonymization'],
+    },
+    {
+      id: 'generic_accounting',
+      name: 'Accounting and Invoicing',
+      description: 'Managing financial records, invoices, and expenses',
+      purpose: 'To maintain accurate financial records and comply with tax laws.',
+      lawfulBasis: 'legal_obligation',
+      lawfulBasisDetail: 'Processing necessary to comply with tax and accounting legal obligations.',
+      dataSubjectCategories: ['customers', 'suppliers', 'employees'],
+      estimatedDataSubjects: '100-1000',
+      processingType: ['collection', 'storage', 'sharing'],
+      dataCategories: [
+        { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+        { category: 'billing_address', categoryGroup: 'contact', source: 'direct_from_subject' },
+        { category: 'transaction_history', categoryGroup: 'financial', source: 'direct_from_subject' },
+      ],
+      suggestedVendorCategories: ['accounting_software'],
+      retentionPeriod: '7 years for tax authorities',
+      securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'access_controls'],
+    }
+  ]
 };
-
 export const onboardingRouter = router({
   getStatus: protectedProcedure
     .query(async ({ ctx }) => {
@@ -128,6 +550,7 @@ export const onboardingRouter = router({
         onboardingCompleted: organizations.onboardingCompleted,
         onboardingDismissed: organizations.onboardingDismissed,
         onboardingStep: organizations.onboardingStep,
+        settings: organizations.settings,
       }).from(organizations).where(eq(organizations.id, ctx.user!.orgId));
 
       return org;
@@ -198,20 +621,20 @@ export const onboardingRouter = router({
     }),
 
   getTemplates: protectedProcedure
-    .input(z.object({ industry: z.string().default('marketing_agency') }))
+    .input(z.object({ industry: z.string().default('generic') }))
     .query(async ({ input }) => {
       const industry = input.industry as keyof typeof ROPA_TEMPLATES;
-      return ROPA_TEMPLATES[industry] || ROPA_TEMPLATES.marketing_agency;
+      return ROPA_TEMPLATES[industry] || ROPA_TEMPLATES.generic;
     }),
 
   createFromTemplate: protectedProcedure
     .input(z.object({
       templateId: z.string(),
-      industry: z.string().default('marketing_agency')
+      industry: z.string().default('generic')
     }))
     .mutation(async ({ ctx, input }) => {
       const industry = input.industry as keyof typeof ROPA_TEMPLATES;
-      const templates = ROPA_TEMPLATES[industry] || ROPA_TEMPLATES.marketing_agency;
+      const templates = ROPA_TEMPLATES[industry] || ROPA_TEMPLATES.generic;
       const template = templates.find(t => t.id === input.templateId);
 
       if (!template) {

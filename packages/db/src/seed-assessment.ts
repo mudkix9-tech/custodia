@@ -15,7 +15,7 @@ const questions = [
   // Data Mapping
   {
     category: 'Data Mapping',
-    questionText: 'Do you know exactly what personal data your agency collects and stores?',
+    questionText: 'Do you know exactly what personal data your organization collects and stores?',
     options: [
       { text: 'Yes, fully documented', riskWeight: 0 },
       { text: 'Partially', riskWeight: 5 },
@@ -296,20 +296,54 @@ const questions = [
     dependsOn: null,
   },
 
-  // Client Compliance (Agency-Specific)
+  // Client Compliance
   {
     category: 'Client Compliance',
-    questionText: 'When you act as a data processor for your clients, do you have DPAs in place with each client?',
+    questionText: 'Do you process patient health records?',
+    options: [
+      { text: 'Yes, fully documented', riskWeight: 0 },
+      { text: 'Partially', riskWeight: 5 },
+      { text: 'No', riskWeight: 10 },
+    ],
+    dependsOn: {
+      conditions: [
+        { questionId: 'q_industry', answerIn: ['healthcare', 'medical'] }
+      ],
+      logic: 'AND'
+    },
+  },
+  {
+    category: 'Client Compliance',
+    questionText: 'Do you process payment card data?',
+    options: [
+      { text: 'Yes', riskWeight: 0 },
+      { text: 'No', riskWeight: 0 },
+    ],
+    dependsOn: {
+      conditions: [
+        { questionId: 'q_industry', answerIn: ['ecommerce', 'saas'] }
+      ],
+      logic: 'OR'
+    },
+  },
+  {
+    category: 'Client Compliance',
+    questionText: 'When you act as a data processor on behalf of clients, do you have DPAs in place with each client?',
     options: [
       { text: 'Yes, all clients', riskWeight: 0 },
       { text: 'Some clients', riskWeight: 5 },
       { text: 'No', riskWeight: 10 },
     ],
-    dependsOn: null,
+    dependsOn: {
+      conditions: [
+        { questionId: 'q_industry', answerIn: ['marketing_agency', 'design_agency', 'consulting', 'recruitment', 'web_development'] }
+      ],
+      logic: 'OR'
+    },
   },
   {
     category: 'Client Compliance',
-    questionText: 'Can you demonstrate your GDPR compliance to clients who ask?',
+    questionText: 'Can you demonstrate your GDPR compliance to clients or partners who ask?',
     options: [
       { text: 'Yes, with a dashboard or compiled report', riskWeight: 0 },
       { text: 'Yes, but it takes hours to compile manually', riskWeight: 5 },

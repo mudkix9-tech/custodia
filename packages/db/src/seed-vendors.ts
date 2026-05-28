@@ -18,6 +18,7 @@ const VENDORS = [
     name: 'HubSpot',
     website: 'https://hubspot.com',
     category: 'CRM & Marketing',
+    suggestedForIndustries: ['marketing_agency', 'consulting', 'generic'],
     headquartersCountry: 'US',
     dataProcessingLocations: ['US', 'EU'],
     dpaAvailable: true,
@@ -33,6 +34,7 @@ const VENDORS = [
     name: 'Stripe',
     website: 'https://stripe.com',
     category: 'Payments',
+    suggestedForIndustries: ['ecommerce', 'saas', 'generic'],
     headquartersCountry: 'US',
     dataProcessingLocations: ['US', 'IE'],
     dpaAvailable: true,
@@ -47,6 +49,7 @@ const VENDORS = [
     name: 'Amazon Web Services (AWS)',
     website: 'https://aws.amazon.com',
     category: 'Cloud Infrastructure',
+    suggestedForIndustries: ['saas', 'web_development', 'generic'],
     headquartersCountry: 'US',
     dataProcessingLocations: ['Global'],
     dpaAvailable: true,
@@ -62,6 +65,7 @@ const VENDORS = [
     name: 'Google Workspace',
     website: 'https://workspace.google.com',
     category: 'Productivity',
+    suggestedForIndustries: ['generic'],
     headquartersCountry: 'US',
     dataProcessingLocations: ['Global'],
     dpaAvailable: true,
@@ -77,6 +81,7 @@ const VENDORS = [
     name: 'Mailchimp',
     website: 'https://mailchimp.com',
     category: 'Email Marketing',
+    suggestedForIndustries: ['marketing_agency', 'ecommerce', 'generic'],
     headquartersCountry: 'US',
     dataProcessingLocations: ['US'],
     dpaAvailable: true,
@@ -92,6 +97,7 @@ const VENDORS = [
     name: 'Slack',
     website: 'https://slack.com',
     category: 'Communication',
+    suggestedForIndustries: ['saas', 'web_development', 'design_agency', 'generic'],
     headquartersCountry: 'US',
     dataProcessingLocations: ['US', 'DE', 'FR'],
     dpaAvailable: true,
@@ -108,6 +114,7 @@ const VENDORS = [
     name: 'Notion',
     website: 'https://notion.so',
     category: 'Productivity',
+    suggestedForIndustries: ['consulting', 'generic'],
     headquartersCountry: 'US',
     dataProcessingLocations: ['US'],
     dpaAvailable: true,
@@ -122,6 +129,7 @@ const VENDORS = [
     name: 'Meta (Facebook)',
     website: 'https://facebook.com/business',
     category: 'Advertising',
+    suggestedForIndustries: ['marketing_agency', 'ecommerce'],
     headquartersCountry: 'US',
     dataProcessingLocations: ['US', 'IE'],
     dpaAvailable: true,
@@ -136,6 +144,7 @@ const VENDORS = [
     name: 'Postmark',
     website: 'https://postmarkapp.com',
     category: 'Transactional Email',
+    suggestedForIndustries: ['saas', 'web_development', 'generic'],
     headquartersCountry: 'US',
     dataProcessingLocations: ['US'],
     dpaAvailable: true,
@@ -150,6 +159,7 @@ const VENDORS = [
     name: 'GitHub',
     website: 'https://github.com',
     category: 'Development',
+    suggestedForIndustries: ['saas', 'web_development', 'generic'],
     headquartersCountry: 'US',
     dataProcessingLocations: ['US'],
     dpaAvailable: true,
@@ -159,6 +169,188 @@ const VENDORS = [
     securityCertifications: ['soc1', 'soc2_type2', 'iso27001'],
     subProcessorListUrl: 'https://docs.github.com/en/site-policy/privacy-policies/github-subprocessors',
     transferMechanisms: ['standard_contractual_clauses']
+  },
+  {
+    name: 'Shopify',
+    website: 'https://shopify.com',
+    category: 'E-commerce',
+    headquartersCountry: 'CA',
+    suggestedForIndustries: ['ecommerce']
+  },
+  {
+    name: 'WooCommerce',
+    website: 'https://woocommerce.com',
+    category: 'E-commerce',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['ecommerce']
+  },
+  {
+    name: 'BigCommerce',
+    website: 'https://bigcommerce.com',
+    category: 'E-commerce',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['ecommerce']
+  },
+  {
+    name: 'Klarna',
+    website: 'https://klarna.com',
+    category: 'Payments',
+    headquartersCountry: 'SE',
+    suggestedForIndustries: ['ecommerce']
+  },
+  {
+    name: 'Adyen',
+    website: 'https://adyen.com',
+    category: 'Payments',
+    headquartersCountry: 'NL',
+    suggestedForIndustries: ['ecommerce']
+  },
+  {
+    name: 'ShipStation',
+    website: 'https://shipstation.com',
+    category: 'Shipping',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['ecommerce']
+  },
+  {
+    name: 'Doctolib',
+    website: 'https://doctolib.com',
+    category: 'Healthcare',
+    headquartersCountry: 'FR',
+    suggestedForIndustries: ['healthcare']
+  },
+  {
+    name: 'DrChrono',
+    website: 'https://drchrono.com',
+    category: 'Healthcare',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['healthcare']
+  },
+  {
+    name: 'Jane App',
+    website: 'https://jane.app',
+    category: 'Healthcare',
+    headquartersCountry: 'CA',
+    suggestedForIndustries: ['healthcare']
+  },
+  {
+    name: 'Healthie',
+    website: 'https://gethealthie.com',
+    category: 'Healthcare',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['healthcare']
+  },
+  {
+    name: 'Greenhouse',
+    website: 'https://greenhouse.io',
+    category: 'Recruitment',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['recruitment']
+  },
+  {
+    name: 'Lever',
+    website: 'https://lever.co',
+    category: 'Recruitment',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['recruitment']
+  },
+  {
+    name: 'Workable',
+    website: 'https://workable.com',
+    category: 'Recruitment',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['recruitment']
+  },
+  {
+    name: 'BullHorn',
+    website: 'https://bullhorn.com',
+    category: 'Recruitment',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['recruitment']
+  },
+  {
+    name: 'LinkedIn Recruiter',
+    website: 'https://linkedin.com/talent',
+    category: 'Recruitment',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['recruitment']
+  },
+  {
+    name: 'Clio',
+    website: 'https://clio.com',
+    category: 'Legal',
+    headquartersCountry: 'CA',
+    suggestedForIndustries: ['legal']
+  },
+  {
+    name: 'PracticePanther',
+    website: 'https://practicepanther.com',
+    category: 'Legal',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['legal']
+  },
+  {
+    name: 'MyCase',
+    website: 'https://mycase.com',
+    category: 'Legal',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['legal']
+  },
+  {
+    name: 'LawPay',
+    website: 'https://lawpay.com',
+    category: 'Legal',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['legal']
+  },
+  {
+    name: 'Xero',
+    website: 'https://xero.com',
+    category: 'Accounting',
+    headquartersCountry: 'NZ',
+    suggestedForIndustries: ['accounting']
+  },
+  {
+    name: 'QuickBooks',
+    website: 'https://quickbooks.intuit.com',
+    category: 'Accounting',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['accounting']
+  },
+  {
+    name: 'FreshBooks',
+    website: 'https://freshbooks.com',
+    category: 'Accounting',
+    headquartersCountry: 'CA',
+    suggestedForIndustries: ['accounting']
+  },
+  {
+    name: 'Sage',
+    website: 'https://sage.com',
+    category: 'Accounting',
+    headquartersCountry: 'UK',
+    suggestedForIndustries: ['accounting']
+  },
+  {
+    name: 'Procore',
+    website: 'https://procore.com',
+    category: 'Construction',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['construction']
+  },
+  {
+    name: 'PlanGrid',
+    website: 'https://plangrid.com',
+    category: 'Construction',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['construction']
+  },
+  {
+    name: 'CoConstruct',
+    website: 'https://coconstruct.com',
+    category: 'Construction',
+    headquartersCountry: 'US',
+    suggestedForIndustries: ['construction']
   }
 ];
 
