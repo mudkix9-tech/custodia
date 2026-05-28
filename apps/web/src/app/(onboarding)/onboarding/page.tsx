@@ -118,7 +118,7 @@ export default function OnboardingPage() {
       <OnboardingProgress currentStep={currentStep} totalSteps={6} />
 
       {currentStep === 1 && <Step1OrgProfile onNext={handleStep1} />}
-      {currentStep === 2 && <Step2AddTools onNext={handleStep2} />}
+      {currentStep === 2 && <Step2AddTools onNext={handleStep2} industry={industry} />}
       {currentStep === 3 && <Step3CreateActivities templates={templates} onNext={handleStep3} />}
       {currentStep === 4 && <Step4GeneratePolicy policyPreview={policyData} onNext={handleStep4} />}
       {currentStep === 5 && <Step5InviteTeam onNext={handleStep5} />}

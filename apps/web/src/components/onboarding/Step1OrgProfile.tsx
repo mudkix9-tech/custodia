@@ -63,10 +63,21 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded-md"
             >
-              <option value="marketing_agency">Marketing Agency</option>
-              <option value="design_agency">Design Agency</option>
-              <option value="digital_agency">Digital Agency</option>
+              <option value="marketing_agency">Marketing / Digital Agency</option>
+              <option value="design_agency">Design / Creative Agency</option>
               <option value="web_development">Web Development</option>
+              <option value="ecommerce">E-commerce</option>
+              <option value="saas">SaaS / Technology</option>
+              <option value="recruitment">Recruitment / Staffing</option>
+              <option value="healthcare">Healthcare / Medical</option>
+              <option value="legal">Legal / Law Firm</option>
+              <option value="consulting">Consulting / Professional Services</option>
+              <option value="real_estate">Real Estate</option>
+              <option value="education">Education / Training</option>
+              <option value="accounting">Accounting / Finance</option>
+              <option value="hospitality">Hospitality / Travel</option>
+              <option value="construction">Construction / Engineering</option>
+              <option value="nonprofit">Non-profit / NGO</option>
               <option value="other">Other</option>
             </select>
           </div>

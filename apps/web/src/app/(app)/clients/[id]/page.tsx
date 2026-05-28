@@ -195,7 +195,7 @@ function OverviewTab({ client }: { client: any }) {
         <section className={`border rounded-2xl p-6 shadow-sm ${client.portalEnabled ? 'bg-indigo-50 border-indigo-100' : 'bg-white border-ink-900/10'}`}>
           <div className="flex items-center gap-3 mb-4">
             <Globe className={`w-6 h-6 ${client.portalEnabled ? 'text-indigo-600' : 'text-ink-400'}`} />
-            <h3 className="text-lg font-bold text-ink-900">Client Portal</h3>
+            <h3 className="text-lg font-bold text-ink-900">Trust Portal</h3>
           </div>
           
           <p className="text-[14px] text-ink-600 mb-6">

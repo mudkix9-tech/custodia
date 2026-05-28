@@ -349,7 +349,7 @@ export default function OrganizationSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">Client Portal Preview</label>
+              <label className="block text-sm font-medium text-ink-900 mb-1.5">Trust Portal Preview</label>
               <div className="border border-ink-900/10 rounded-xl overflow-hidden h-32 bg-bone-50 flex flex-col">
                 {/* Mock Header */}
                 <div

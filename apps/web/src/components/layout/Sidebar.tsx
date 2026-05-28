@@ -27,7 +27,7 @@ export function Logo({ className = '' }: { className?: string }) {
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { id: 'clients', label: 'Clients', icon: Users, href: '/clients' },
+  { id: 'clients', label: 'Trust Portals', icon: Users, href: '/clients' },
   { id: 'ropa', label: 'Data Processing', icon: Database, href: '/ropa' },
   { id: 'vendors', label: 'Vendors', icon: Building2, href: '/vendors' },
   { id: 'dsars', label: 'Data Requests', icon: UserCircle, href: '/dsar', badge: 1 },

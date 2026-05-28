@@ -28,7 +28,7 @@ const TIERS = [
     name: 'Agency',
     price: '€179',
     description: 'Multi-tenant management for compliance agencies.',
-    features: ['Everything in Professional', '1M Cookie Consent Views', 'White-labeled Client Portals', 'Cross-Org Vendor Intelligence'],
+    features: ['Everything in Professional', '1M Cookie Consent Views', 'White-labeled Trust Portals', 'Cross-Org Vendor Intelligence'],
     paddlePriceId: process.env.NEXT_PUBLIC_PADDLE_AGENCY_PRICE_ID || 'pri_01agency',
   }
 ];

@@ -15,7 +15,7 @@ export const defaultTrainingModules = [
         id: 'slide-1-1',
         type: 'text',
         title: 'What is GDPR and Why It Matters',
-        content: 'The General Data Protection Regulation (GDPR) is the toughest privacy and security law in the world. It protects the personal data of individuals in the EU. It matters because non-compliance can lead to massive fines (up to €20M or 4% of global revenue) and severe reputational damage to our agency and our clients.',
+        content: 'The General Data Protection Regulation (GDPR) is the toughest privacy and security law in the world. It protects the personal data of individuals in the EU. It matters because non-compliance can lead to massive fines (up to €20M or 4% of global revenue) and severe reputational damage to our organization and our clients.',
         estimatedMinutes: 2
       },
       {
@@ -37,7 +37,7 @@ export const defaultTrainingModules = [
         id: 'slide-1-3',
         type: 'text',
         title: 'What Counts as Personal Data?',
-        content: 'Personal data is any information relating to an identified or identifiable living person. This includes names, email addresses, location data, online identifiers (IP addresses, cookies), and even physical characteristics. In our agency work, this commonly appears in client databases, marketing lists, and web analytics.',
+        content: 'Personal data is any information relating to an identified or identifiable living person. This includes names, email addresses, location data, online identifiers (IP addresses, cookies), and even physical characteristics. In our day-to-day work, this commonly appears in databases, marketing lists, and web analytics.',
         estimatedMinutes: 2
       },
       {
@@ -107,8 +107,8 @@ export const defaultTrainingModules = [
     id: '22222222-2222-2222-2222-222222222222',
     organizationId: null,
     isGlobal: true,
-    title: 'Data Handling for Agency Staff',
-    description: 'How to compliantly process data day-to-day using marketing tools and client platforms.',
+    title: 'Data Handling Best Practices',
+    description: 'How to compliantly process data day-to-day using various tools and platforms.',
     targetRole: 'all',
     isMandatory: true,
     passingScore: 70,
@@ -271,8 +271,8 @@ export const defaultTrainingModules = [
     id: '55555555-5555-5555-5555-555555555555',
     organizationId: null,
     isGlobal: true,
-    title: 'Working with Client Data',
-    description: 'Agency-specific rules for managing client data minimization, retention, and DPAs.',
+    title: 'Processing Data on Behalf of Others',
+    description: 'Rules for managing data minimization, retention, and DPAs when processing data on behalf of others.',
     targetRole: 'all',
     isMandatory: true,
     passingScore: 70,
