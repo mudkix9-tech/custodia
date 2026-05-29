@@ -14,9 +14,26 @@ function LoginPageContent() {
 
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [domainData, setDomainData] = useState<{ sso: boolean, name?: string } | null>(null);
+
+
+  const checkEmailDomain = async (emailToCheck: string) => {
+    if (!emailToCheck.includes('@')) return;
+    try {
+      const res = await fetch(`/api/auth/check-domain?email=${encodeURIComponent(emailToCheck)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDomainData(data);
+      }
+    } catch (e) {}
+  };
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (domainData?.sso) {
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/sso/login?email=${encodeURIComponent(email)}`;
+      return;
+    }
     setIsLoading('email');
     await signIn('resend', { email, callbackUrl });
     setIsLoading(null);
@@ -64,7 +81,7 @@ function LoginPageContent() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-4 w-4 text-ink-400" />
                 </div>
-                <input
+                                <input
                   id="email"
                   name="email"
                   type="email"
@@ -72,6 +89,7 @@ function LoginPageContent() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => checkEmailDomain(email)}
                   className="appearance-none block w-full pl-10 pr-3 py-2.5 hairline bg-bone-50 rounded-lg text-[13.5px] text-ink-900 placeholder-ink-400 focus:outline-none focus:ring-2 focus:ring-sage-500/20 sm:text-sm transition-shadow"
                   placeholder="name@agency.com"
                 />
@@ -79,12 +97,12 @@ function LoginPageContent() {
             </div>
 
             <div>
-              <button
+                            <button
                 type="submit"
                 disabled={isLoading !== null}
                 className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-card text-[13.5px] font-medium text-bone-50 bg-sage-700 hover:bg-sage-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500 disabled:opacity-50 transition-all"
               >
-                {isLoading === 'email' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send magic link'}
+                {isLoading === 'email' ? <Loader2 className="w-4 h-4 animate-spin" /> : domainData?.sso ? `Sign in with SSO${domainData.name ? ` (${domainData.name})` : ''}` : 'Send magic link'}
               </button>
             </div>
           </form>

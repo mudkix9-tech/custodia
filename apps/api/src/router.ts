@@ -25,6 +25,7 @@ import { dataRouter } from './routers/data.js';
 import { apiKeysRouter } from "./routers/apiKeys.js";
 import { webhooksRouter } from "./routers/webhooks.js";
 import { onboardingRouter } from './routers/onboarding.js';
+import { groupRouter } from './routers/group.js';
 
 export const appRouter = router({
   onboarding: onboardingRouter,
@@ -56,6 +57,7 @@ export const appRouter = router({
   integrations: integrationsRouter,
   security: securityRouter,
   data: dataRouter,
+  group: groupRouter,
 });
 
 export type AppRouter = typeof appRouter;

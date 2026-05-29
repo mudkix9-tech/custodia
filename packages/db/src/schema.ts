@@ -39,6 +39,16 @@ export const organizations = pgTable('organizations', {
   
   leadSupervisoryAuthority: varchar('lead_supervisory_authority', { length: 100 }),
 
+  // SSO fields
+  ssoEnabled: boolean('sso_enabled').default(false),
+  ssoProvider: varchar('sso_provider', { length: 50 }),
+  ssoConnectionId: varchar('sso_connection_id', { length: 255 }),
+  ssoEnforced: boolean('sso_enforced').default(false),
+
+  // Multi-entity fields
+  parentOrganizationId: uuid('parent_organization_id').references((): any => organizations.id), // self-referencing, added in constraints or relations
+
+
   
   complianceScore: integer('compliance_score').default(0),
   lastAssessmentAt: timestamp('last_assessment_at', { withTimezone: true }),
@@ -93,6 +103,7 @@ export const users = pgTable('users', {
   mfaSecret: varchar('mfa_secret', { length: 255 }),
   
   role: varchar('role', { length: 50 }).notNull().default('member'),
+  organizationGroupRole: varchar('organization_group_role', { length: 50 }), // e.g. group_admin
   permissions: jsonb('permissions').default([]),
   
   tokenInvalidatedAt: timestamp('token_invalidated_at', { withTimezone: true }),
@@ -1462,3 +1473,13 @@ export const activeSessions = pgTable('active_sessions', {
     userIdx: index('idx_as_user').on(table.userId),
   };
 });
+
+
+export const organizationsRelations = relations(organizations, ({ one, many }) => ({
+  parent: one(organizations, {
+    fields: [organizations.parentOrganizationId],
+    references: [organizations.id],
+    relationName: 'parentOrganization'
+  }),
+  children: many(organizations, { relationName: 'parentOrganization' }),
+}));
