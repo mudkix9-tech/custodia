@@ -3,6 +3,8 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { decode } from '@auth/core/jwt';
 import { db } from './db.js';
+import { getDbForOrg, getPrimaryDb } from './lib/dbRouter.js';
+
 import { users } from 'db';
 import { eq, sql } from 'drizzle-orm';
 import { 
@@ -18,10 +20,14 @@ import { auditLogs } from 'db';
 export interface Context {
   req: FastifyRequest;
   res: FastifyReply;
+  db: any;
+  primaryDb: any;
   user?: {
     id: string;
     orgId: string;
     role: string;
+    customRoleId?: string | null;
+    customRolePermissions?: any;
     permissions: string[];
   };
 }
@@ -58,13 +64,19 @@ const isAuthed = t.middleware(async ({ ctx, next }) => {
     throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Token invalidated' });
   }
 
+  const orgId = decoded.org as string;
+  const userDb = orgId ? await getDbForOrg(orgId) : db;
+
   return next({
     ctx: {
       ...ctx,
+      db: userDb,
+      primaryDb: getPrimaryDb(),
       user: {
         id: decoded.sub,
         orgId: decoded.org as string,
         role: decoded.role as string,
+        customRoleId: decoded.customRoleId as string | null,
         permissions: (decoded.permissions as string[]) || [],
       }
     }
@@ -124,6 +136,37 @@ export const requirePermission = (resource: string, action: string) => {
       throw new TRPCError({ code: 'UNAUTHORIZED' });
     }
     
+    // Check custom role permissions first if assigned
+    if (ctx.user.customRoleId) {
+      if (!ctx.user.customRolePermissions) {
+        const { customRoles } = await import('db');
+        const [cr] = await db.select({ permissions: customRoles.permissions }).from(customRoles).where(eq(customRoles.id, ctx.user.customRoleId));
+        if (cr) {
+           ctx.user.customRolePermissions = cr.permissions;
+        }
+      }
+      const p = ctx.user.customRolePermissions;
+      if (p) {
+        // Assume format: { resource: { action: boolean } }
+        // For backwards compatibility and string overrides, we check explicit denies first
+        const hasExplicitDeny = ctx.user.permissions.includes(`-${resource}:${action}`);
+        if (hasExplicitDeny) {
+           throw new TRPCError({ code: 'FORBIDDEN', message: 'Permission explicitly denied' });
+        }
+
+        const hasExplicitGrant = ctx.user.permissions.includes(`${resource}:${action}`);
+        if (hasExplicitGrant) {
+           return next({ ctx });
+        }
+
+        const isAllowed = p[resource] && p[resource][action];
+        if (!isAllowed && !p['*']?.['*']) {
+           throw new TRPCError({ code: 'FORBIDDEN', message: `Missing required permission via custom role: ${resource}:${action}` });
+        }
+        return next({ ctx });
+      }
+    }
+
     // Check role-based defaults first
     const roleDefaults = ROLE_PERMISSION_DEFAULTS[ctx.user.role] || [];
     const hasRoleDefault = roleDefaults.includes(`${resource}:${action}`) || roleDefaults.includes('*:*');

@@ -77,13 +77,13 @@ const notificationsRouter = router({
     .input(z.object({ breachId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [breach] = await db.select().from(breaches).where(and(eq(breaches.id, input.breachId), eq(breaches.organizationId, ctx.user!.orgId)));
+      const [breach] = await ctx.db.select().from(breaches).where(and(eq(breaches.id, input.breachId), eq(breaches.organizationId, ctx.user!.orgId)));
       if (!breach) throw new TRPCError({ code: 'NOT_FOUND' });
 
-      const [org] = await db.select().from(organizations).where(eq(organizations.id, ctx.user!.orgId));
+      const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, ctx.user!.orgId));
       const authority = org?.leadSupervisoryAuthority || 'generic';
 
-      const [user] = await db.select().from(users).where(eq(users.id, ctx.user!.id));
+      const [user] = await ctx.db.select().from(users).where(eq(users.id, ctx.user!.id));
 
       // Very simple mock generation template based on authority
       let content = {
@@ -96,7 +96,7 @@ const notificationsRouter = router({
         dpo_contact: org?.dpoEmail || user?.email,
       };
 
-      const [draft] = await db.insert(breachNotifications).values({
+      const [draft] = await ctx.db.insert(breachNotifications).values({
         breachId: breach.id,
         notificationType: 'supervisory_authority',
         status: 'draft',
@@ -111,14 +111,14 @@ const notificationsRouter = router({
     .input(z.object({ breachId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return db.select().from(breachNotifications).where(eq(breachNotifications.breachId, input.breachId));
+      return ctx.db.select().from(breachNotifications).where(eq(breachNotifications.breachId, input.breachId));
     }),
   update: protectedProcedure
     .use(requirePermission('breach', 'edit'))
     .input(z.object({ id: z.string().uuid(), content: z.any() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(breachNotifications).set({ contentJson: input.content }).where(eq(breachNotifications.id, input.id)).returning();
+      const [updated] = await ctx.db.update(breachNotifications).set({ contentJson: input.content }).where(eq(breachNotifications.id, input.id)).returning();
       return updated;
     }),
   approve: protectedProcedure
@@ -126,7 +126,7 @@ const notificationsRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(breachNotifications).set({ status: 'approved' }).where(eq(breachNotifications.id, input.id)).returning();
+      const [updated] = await ctx.db.update(breachNotifications).set({ status: 'approved' }).where(eq(breachNotifications.id, input.id)).returning();
       return updated;
     }),
   markSent: protectedProcedure
@@ -134,9 +134,9 @@ const notificationsRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [notif] = await db.select().from(breachNotifications).where(eq(breachNotifications.id, input.id));
+      const [notif] = await ctx.db.select().from(breachNotifications).where(eq(breachNotifications.id, input.id));
       if (!notif || notif.status !== 'approved') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Notification must be approved first.' });
-      const [updated] = await db.update(breachNotifications).set({ status: 'sent', sentAt: new Date() }).where(eq(breachNotifications.id, input.id)).returning();
+      const [updated] = await ctx.db.update(breachNotifications).set({ status: 'sent', sentAt: new Date() }).where(eq(breachNotifications.id, input.id)).returning();
       return updated;
     }),
 });
@@ -147,7 +147,7 @@ const tasksRouter = router({
     .input(z.object({ breachId: z.string().uuid(), title: z.string(), description: z.string().optional(), priority: z.string().default('medium'), dueAt: z.date().optional() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [task] = await db.insert(breachRemediationTasks).values({
+      const [task] = await ctx.db.insert(breachRemediationTasks).values({
         breachId: input.breachId,
         title: input.title,
         description: input.description,
@@ -161,14 +161,14 @@ const tasksRouter = router({
     .input(z.object({ breachId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return db.select().from(breachRemediationTasks).where(eq(breachRemediationTasks.breachId, input.breachId)).orderBy(breachRemediationTasks.createdAt);
+      return ctx.db.select().from(breachRemediationTasks).where(eq(breachRemediationTasks.breachId, input.breachId)).orderBy(breachRemediationTasks.createdAt);
     }),
   update: protectedProcedure
     .use(requirePermission('breach', 'edit'))
     .input(z.object({ id: z.string().uuid(), status: z.string(), completionNotes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(breachRemediationTasks).set({ 
+      const [updated] = await ctx.db.update(breachRemediationTasks).set({
         status: input.status, 
         completionNotes: input.completionNotes,
         completedAt: input.status === 'completed' ? new Date() : null
@@ -180,7 +180,7 @@ const tasksRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      await db.delete(breachRemediationTasks).where(eq(breachRemediationTasks.id, input.id));
+      await ctx.db.delete(breachRemediationTasks).where(eq(breachRemediationTasks.id, input.id));
       return { success: true };
     }),
 });
@@ -203,7 +203,7 @@ export const breachesRouter = router({
       const deadline = new Date(input.discoveredAt);
       deadline.setHours(deadline.getHours() + 72);
 
-      const [breach] = await db.insert(breaches).values({
+      const [breach] = await ctx.db.insert(breaches).values({
         organizationId: ctx.user!.orgId,
         referenceNumber,
         title: input.title,
@@ -254,7 +254,7 @@ export const breachesRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [breach] = await db.select().from(breaches).where(and(eq(breaches.id, input.id), eq(breaches.organizationId, ctx.user!.orgId)));
+      const [breach] = await ctx.db.select().from(breaches).where(and(eq(breaches.id, input.id), eq(breaches.organizationId, ctx.user!.orgId)));
       if (!breach) throw new TRPCError({ code: 'NOT_FOUND' });
       return breach;
     }),
@@ -269,7 +269,7 @@ export const breachesRouter = router({
       checkOrgContext(ctx.user);
       const riskResults = assessBreachRisk(input.answers);
       
-      const [updated] = await db.update(breaches).set({
+      const [updated] = await ctx.db.update(breaches).set({
         dataCategoriesAffected: input.answers.dataCategories,
         estimatedRecordsAffected: input.answers.recordsAffected,
         riskToIndividuals: riskResults.overallRisk,
@@ -287,7 +287,7 @@ export const breachesRouter = router({
     .input(z.object({ id: z.string().uuid(), status: z.string() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(breaches).set({ status: input.status, updatedAt: new Date() }).where(and(eq(breaches.id, input.id), eq(breaches.organizationId, ctx.user!.orgId))).returning();
+      const [updated] = await ctx.db.update(breaches).set({ status: input.status, updatedAt: new Date() }).where(and(eq(breaches.id, input.id), eq(breaches.organizationId, ctx.user!.orgId))).returning();
       return updated;
     }),
 
@@ -296,7 +296,7 @@ export const breachesRouter = router({
     .input(z.object({ id: z.string().uuid(), rootCause: z.string(), lessonsLearned: z.string() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(breaches).set({ 
+      const [updated] = await ctx.db.update(breaches).set({
         status: 'closed', 
         rootCause: input.rootCause, 
         lessonsLearned: input.lessonsLearned,

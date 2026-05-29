@@ -22,12 +22,12 @@ export const exportRouter = router({
       checkOrgContext(ctx.user);
 
       // Fetch org details
-      const org = await db.query.organizations.findFirst({
+      const org = await ctx.db.query.organizations.findFirst({
         where: eq(organizations.id, ctx.user!.orgId)
       });
 
       // Fetch ROPA data
-      const query = db.select().from(processingActivities).where(eq(processingActivities.organizationId, ctx.user!.orgId));
+      const query = ctx.db.select().from(processingActivities).where(eq(processingActivities.organizationId, ctx.user!.orgId));
       // If client_summary, filter by client (assuming we add a where clause if needed)
       const activities = await query;
 

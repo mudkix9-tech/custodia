@@ -60,7 +60,7 @@ export const webhooksRouter = router({
   list: protectedProcedure
     .use(requireRole("admin"))
     .query(async ({ ctx }) => {
-      const hooks = await db.query.webhooks.findMany({
+      const hooks = await ctx.db.query.webhooks.findMany({
         where: eq(schema.webhooks.organizationId, ctx.user!.orgId),
         orderBy: desc(schema.webhooks.createdAt),
       });
@@ -75,7 +75,7 @@ export const webhooksRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const secret = `whsec_${randomBytes(32).toString('hex')}`;
-      const [hook] = await db.insert(schema.webhooks).values({
+      const [hook] = await ctx.db.insert(schema.webhooks).values({
         organizationId: ctx.user!.orgId,
         url: input.url,
         events: input.events,
@@ -89,7 +89,7 @@ export const webhooksRouter = router({
     .use(requireRole("admin"))
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await db.delete(schema.webhooks)
+      await ctx.db.delete(schema.webhooks)
         .where(
           and(
             eq(schema.webhooks.id, input.id),
@@ -112,7 +112,7 @@ export const webhooksRouter = router({
     .use(requireRole("admin"))
     .input(z.object({ webhookId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [hook] = await db.select().from(schema.webhooks).where(
+      const [hook] = await ctx.db.select().from(schema.webhooks).where(
         and(
           eq(schema.webhooks.id, input.webhookId),
           eq(schema.webhooks.organizationId, ctx.user!.orgId)
@@ -120,7 +120,7 @@ export const webhooksRouter = router({
       );
       if (!hook) throw new Error('Not found');
 
-      return db.query.webhookDeliveries.findMany({
+      return ctx.db.query.webhookDeliveries.findMany({
         where: eq(schema.webhookDeliveries.webhookId, input.webhookId),
         orderBy: desc(schema.webhookDeliveries.createdAt),
         limit: 50,
@@ -131,7 +131,7 @@ export const webhooksRouter = router({
     .use(requireRole("admin"))
     .input(z.object({ webhookId: z.string(), deliveryId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const [hook] = await db.select().from(schema.webhooks).where(
+      const [hook] = await ctx.db.select().from(schema.webhooks).where(
         and(
           eq(schema.webhooks.id, input.webhookId),
           eq(schema.webhooks.organizationId, ctx.user!.orgId)
@@ -139,7 +139,7 @@ export const webhooksRouter = router({
       );
       if (!hook) throw new Error('Webhook not found');
 
-      const [delivery] = await db.select().from(schema.webhookDeliveries).where(
+      const [delivery] = await ctx.db.select().from(schema.webhookDeliveries).where(
         and(
           eq(schema.webhookDeliveries.id, input.deliveryId),
           eq(schema.webhookDeliveries.webhookId, input.webhookId)
@@ -157,7 +157,7 @@ export const webhooksRouter = router({
         timestamp: new Date().toISOString()
       };
 
-      const [newDelivery] = await db.insert(schema.webhookDeliveries).values({
+      const [newDelivery] = await ctx.db.insert(schema.webhookDeliveries).values({
         webhookId: hook.id,
         eventId,
         eventType: delivery.eventType,

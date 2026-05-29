@@ -13,7 +13,8 @@ import OpenAI from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { TRPCError } from '@trpc/server';
 // @ts-ignore
-import pdfParse from 'pdf-parse';
+import * as pdfParseModule from 'pdf-parse';
+const pdfParse = pdfParseModule.default || pdfParseModule;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'dummy_key',
@@ -45,7 +46,7 @@ export const aiRouter = router({
       const orgId = ctx.user!.orgId;
       
       // 1. Rate Limiting Check
-      const org = await db.query.organizations.findFirst({
+      const org = await ctx.db.query.organizations.findFirst({
         where: eq(organizations.id, orgId)
       });
       
@@ -63,7 +64,7 @@ export const aiRouter = router({
         });
       }
       
-      await db.update(organizations)
+      await ctx.db.update(organizations)
         .set({ aiQueriesUsed: (org.aiQueriesUsed || 0) + 1 })
         .where(eq(organizations.id, orgId));
 
@@ -72,7 +73,7 @@ export const aiRouter = router({
       const embeddingArray = `[${questionEmbedding.join(',')}]`;
 
       // 3. Retrieve Global GDPR Context
-      const gdprChunksResult = await db.execute(sql`
+      const gdprChunksResult = await ctx.db.execute(sql`
         SELECT content, source_reference, 
                1 - (embedding <=> ${embeddingArray}::vector) AS similarity
         FROM document_embeddings
@@ -83,7 +84,7 @@ export const aiRouter = router({
       const gdprChunks = gdprChunksResult.rows || [];
 
       // 4. Retrieve Org-Specific Embeddings
-      const orgChunksResult = await db.execute(sql`
+      const orgChunksResult = await ctx.db.execute(sql`
         SELECT content, metadata,
                1 - (embedding <=> ${embeddingArray}::vector) AS similarity
         FROM organization_embeddings
@@ -95,7 +96,7 @@ export const aiRouter = router({
       const orgChunks = orgChunksResult.rows || [];
 
       // 5. Retrieve ROPA Context
-      const activities = await db.query.processingActivities.findMany({
+      const activities = await ctx.db.query.processingActivities.findMany({
         where: and(
           eq(processingActivities.organizationId, orgId),
           eq(processingActivities.status, 'active'),
@@ -165,7 +166,7 @@ If the answer is not in the provided context, inform the user you do not have en
     .mutation(async ({ ctx, input }) => {
       const orgId = ctx.user!.orgId;
       
-      const org = await db.query.organizations.findFirst({
+      const org = await ctx.db.query.organizations.findFirst({
         where: eq(organizations.id, orgId)
       });
       if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
@@ -180,7 +181,7 @@ If the answer is not in the provided context, inform the user you do not have en
         });
       }
 
-      await db.update(organizations)
+      await ctx.db.update(organizations)
         .set({ aiDpasAnalyzed: (org.aiDpasAnalyzed || 0) + 1 })
         .where(eq(organizations.id, orgId));
 

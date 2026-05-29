@@ -16,7 +16,7 @@ export const regulatoryRouter = router({
       const limit = input?.limit || 50;
       const offset = input?.offset || 0;
       
-      const updates = await db.select()
+      const updates = await ctx.db.select()
         .from(regulatoryUpdates)
         .where(eq(regulatoryUpdates.status, 'published'))
         .orderBy(desc(regulatoryUpdates.publishedAt))
@@ -30,7 +30,7 @@ export const regulatoryRouter = router({
     .query(async ({ ctx }) => {
       if (!ctx.user?.orgId) throw new TRPCError({ code: 'FORBIDDEN' });
       
-      const impacts = await db.select({
+      const impacts = await ctx.db.select({
         assessment: regulatoryImpactAssessments,
         update: regulatoryUpdates
       })
@@ -57,7 +57,7 @@ export const regulatoryRouter = router({
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user?.orgId) throw new TRPCError({ code: 'FORBIDDEN' });
       
-      const [updated] = await db.update(regulatoryImpactAssessments)
+      const [updated] = await ctx.db.update(regulatoryImpactAssessments)
         .set({ 
           status: 'acknowledged',
           acknowledgedBy: ctx.user.id,
@@ -79,7 +79,7 @@ export const regulatoryRouter = router({
   adminListDrafts: protectedProcedure
     .use(requireRole('owner')) // Assuming owner acts as super admin for now
     .query(async () => {
-      return db.select()
+      return ctx.db.select()
         .from(regulatoryUpdates)
         .where(eq(regulatoryUpdates.status, 'draft'))
         .orderBy(desc(regulatoryUpdates.createdAt));
@@ -91,7 +91,7 @@ export const regulatoryRouter = router({
       updateId: z.string().uuid(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const [update] = await db.update(regulatoryUpdates)
+      const [update] = await ctx.db.update(regulatoryUpdates)
         .set({ 
           status: 'published',
           publishedAt: new Date(),

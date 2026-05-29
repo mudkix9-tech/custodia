@@ -546,7 +546,7 @@ export const ROPA_TEMPLATES = {
 export const onboardingRouter = router({
   getStatus: protectedProcedure
     .query(async ({ ctx }) => {
-      const [org] = await db.select({
+      const [org] = await ctx.db.select({
         onboardingCompleted: organizations.onboardingCompleted,
         onboardingDismissed: organizations.onboardingDismissed,
         onboardingStep: organizations.onboardingStep,
@@ -573,7 +573,7 @@ export const onboardingRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { industry, companySize, ...orgData } = input;
 
-      const [org] = await db.update(organizations)
+      const [org] = await ctx.db.update(organizations)
         .set({
           ...orgData,
           settings: sql`jsonb_set(jsonb_set(COALESCE(settings, '{}'::jsonb), '{industry}', ${JSON.stringify(industry)}::jsonb, true), '{companySize}', ${JSON.stringify(companySize)}::jsonb, true)`,
@@ -592,7 +592,7 @@ export const onboardingRouter = router({
     .mutation(async ({ ctx, input }) => {
       if (input.vendorIds.length > 0) {
         // Find existing vendors to not duplicate
-        const existing = await db.select({ vendorId: organizationVendors.vendorId })
+        const existing = await ctx.db.select({ vendorId: organizationVendors.vendorId })
           .from(organizationVendors)
           .where(and(
             eq(organizationVendors.organizationId, ctx.user!.orgId),
@@ -603,7 +603,7 @@ export const onboardingRouter = router({
         const toAdd = input.vendorIds.filter(id => !existingIds.includes(id));
 
         if (toAdd.length > 0) {
-          await db.insert(organizationVendors).values(
+          await ctx.db.insert(organizationVendors).values(
             toAdd.map(id => ({
               organizationId: ctx.user!.orgId,
               vendorId: id,
@@ -613,7 +613,7 @@ export const onboardingRouter = router({
         }
       }
 
-      await db.update(organizations)
+      await ctx.db.update(organizations)
         .set({ onboardingStep: 2 })
         .where(eq(organizations.id, ctx.user!.orgId));
 
@@ -642,7 +642,7 @@ export const onboardingRouter = router({
       }
 
       // Create main processing activity
-      const [activity] = await db.insert(processingActivities).values({
+      const [activity] = await ctx.db.insert(processingActivities).values({
         organizationId: ctx.user!.orgId,
         name: template.name,
         description: template.description,
@@ -659,7 +659,7 @@ export const onboardingRouter = router({
 
       // Insert data categories
       if (template.dataCategories.length > 0) {
-        await db.insert(processingDataCategories).values(
+        await ctx.db.insert(processingDataCategories).values(
           template.dataCategories.map(cat => ({
             processingActivityId: activity!.id,
             category: cat.category,
@@ -672,7 +672,7 @@ export const onboardingRouter = router({
       // Link to existing organization vendors based on suggested categories
       if (template.suggestedVendorCategories.length > 0) {
         // Fetch org's vendors that match the suggested categories
-        const matchingVendors = await db.select({
+        const matchingVendors = await ctx.db.select({
           id: vendors.id,
           name: vendors.name,
           category: vendors.category,
@@ -689,7 +689,7 @@ export const onboardingRouter = router({
 
         for (const vendor of matchingVendors) {
           // Add as recipient
-          await db.insert(processingRecipients).values({
+          await ctx.db.insert(processingRecipients).values({
             processingActivityId: activity!.id,
             recipientType: 'vendor',
             name: vendor.name,
@@ -702,7 +702,7 @@ export const onboardingRouter = router({
           const hasEuHosting = vendor.usingEuHosting;
 
           if (!isEuHq && !hasEuHosting && hq) {
-            await db.insert(processingTransfers).values({
+            await ctx.db.insert(processingTransfers).values({
               processingActivityId: activity!.id,
               destinationCountry: hq.substring(0, 2),
               destinationEntity: vendor.name,
@@ -713,7 +713,7 @@ export const onboardingRouter = router({
         }
       }
 
-      await db.update(organizations)
+      await ctx.db.update(organizations)
         .set({ onboardingStep: 3 })
         .where(eq(organizations.id, ctx.user!.orgId));
 
@@ -726,11 +726,11 @@ export const onboardingRouter = router({
       // Stub for policy generation - creates the draft record
       // In reality this might call the AI or template engine
 
-      const [org] = await db.select({ slug: organizations.slug })
+      const [org] = await ctx.db.select({ slug: organizations.slug })
         .from(organizations)
         .where(eq(organizations.id, ctx.user!.orgId));
 
-      const [policy] = await db.insert(privacyPolicies).values({
+      const [policy] = await ctx.db.insert(privacyPolicies).values({
         organizationId: ctx.user!.orgId,
         name: 'Website Privacy Policy',
 
@@ -739,7 +739,7 @@ export const onboardingRouter = router({
 
       }).returning();
 
-      await db.insert(policyVersions).values({
+      await ctx.db.insert(policyVersions).values({
         policyId: policy!.id,
         versionNumber: 1,
         contentHtml: '# Privacy Policy\n\nThis policy is auto-generated based on your Processing Activities.', contentMarkdown: '# Privacy Policy\n\nThis policy is auto-generated based on your Processing Activities.',
@@ -747,7 +747,7 @@ export const onboardingRouter = router({
         createdBy: ctx.user!.id,
       });
 
-      await db.update(organizations)
+      await ctx.db.update(organizations)
         .set({ onboardingStep: 4 })
         .where(eq(organizations.id, ctx.user!.orgId));
 
@@ -758,7 +758,7 @@ export const onboardingRouter = router({
     .use(requireRole('admin'))
     .input(z.object({ policyId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      await db.update(privacyPolicies)
+      await ctx.db.update(privacyPolicies)
         .set({ publishedAt: new Date() })
         .where(and(
           eq(privacyPolicies.id, input.policyId),
@@ -780,9 +780,9 @@ export const onboardingRouter = router({
       // Just record they are invited (this would normally queue emails)
       for (const invite of input.invites) {
         // Check if user exists
-        const [existingUser] = await db.select().from(users).where(eq(users.email, invite.email));
+        const [existingUser] = await ctx.db.select().from(users).where(eq(users.email, invite.email));
         if (!existingUser) {
-          await db.insert(users).values({
+          await ctx.db.insert(users).values({
             email: invite.email,
             role: invite.role,
             organizationId: ctx.user!.orgId,
@@ -792,7 +792,7 @@ export const onboardingRouter = router({
         }
       }
 
-      await db.update(organizations)
+      await ctx.db.update(organizations)
         .set({ onboardingStep: 5 })
         .where(eq(organizations.id, ctx.user!.orgId));
 
@@ -801,7 +801,7 @@ export const onboardingRouter = router({
 
   complete: protectedProcedure
     .mutation(async ({ ctx }) => {
-      await db.update(organizations)
+      await ctx.db.update(organizations)
         .set({
           onboardingCompleted: true,
           onboardingCompletedAt: new Date(),
@@ -814,7 +814,7 @@ export const onboardingRouter = router({
 
   dismiss: protectedProcedure
     .mutation(async ({ ctx }) => {
-      await db.update(organizations)
+      await ctx.db.update(organizations)
         .set({ onboardingDismissed: true })
         .where(eq(organizations.id, ctx.user!.orgId));
 
@@ -823,7 +823,7 @@ export const onboardingRouter = router({
 
   resume: protectedProcedure
     .mutation(async ({ ctx }) => {
-      const [org] = await db.select({ onboardingStep: organizations.onboardingStep })
+      const [org] = await ctx.db.select({ onboardingStep: organizations.onboardingStep })
         .from(organizations)
         .where(eq(organizations.id, ctx.user!.orgId));
 

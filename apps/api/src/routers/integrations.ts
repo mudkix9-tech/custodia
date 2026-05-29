@@ -20,7 +20,7 @@ export const integrationsRouter = router({
     .input(z.object({ organizationId: z.string().uuid() }))
     .query(async ({ input, ctx }) => {
       // In a real app, verify ctx.user has access to organizationId
-      return db.select({
+      return ctx.db.select({
         id: organizationIntegrations.id,
         provider: organizationIntegrations.provider,
         providerAccountName: organizationIntegrations.providerAccountName,
@@ -35,7 +35,7 @@ export const integrationsRouter = router({
   disconnect: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ input, ctx }) => {
-      const [integration] = await db.select()
+      const [integration] = await ctx.db.select()
         .from(organizationIntegrations)
         .where(eq(organizationIntegrations.id, input.id));
 
@@ -47,7 +47,7 @@ export const integrationsRouter = router({
       // e.g. if provider === 'hubspot', call DELETE /oauth/v1/refresh-tokens/:token
 
       // 2. Soft-revoke: update status and delete tokens
-      await db.update(organizationIntegrations)
+      await ctx.db.update(organizationIntegrations)
         .set({
           status: 'revoked',
           accessToken: 'REVOKED', // Don't leave encrypted tokens around

@@ -93,7 +93,7 @@ export const auditRouter = router({
         queryConditions.push(sql`created_at BETWEEN ${input.filters.from} AND ${input.filters.to}`);
       }
 
-      let query = db.select()
+      let query = ctx.db.select()
         .from(auditLogs)
         .where(and(...queryConditions))
         .orderBy(desc(auditLogs.createdAt)) as any;
@@ -141,12 +141,12 @@ export const auditRouter = router({
   getDashboardMetrics: protectedProcedure.query(async ({ ctx }) => {
     const orgId = ctx.user!.orgId;
     
-    const latestReport = await db.query.complianceReports.findFirst({
+    const latestReport = await ctx.db.query.complianceReports.findFirst({
       where: eq(complianceReports.organizationId, orgId),
       orderBy: [desc(complianceReports.snapshotDate)],
     });
 
-    const activeGaps = await db.query.complianceGaps.findMany({
+    const activeGaps = await ctx.db.query.complianceGaps.findMany({
       where: and(
         eq(complianceGaps.organizationId, orgId),
         inArray(complianceGaps.status, ['open', 'in_progress'])
@@ -188,7 +188,7 @@ export const auditRouter = router({
       reason: z.string().min(10),
     }))
     .mutation(async ({ ctx, input }) => {
-      await db.update(complianceGaps)
+      await ctx.db.update(complianceGaps)
         .set({
           status: 'dismissed',
           dismissalReason: input.reason,
@@ -208,9 +208,9 @@ export const auditRouter = router({
     .input(z.object({ format: z.enum(['json', 'csv']) }))
     .query(async ({ ctx, input }) => {
       const orgId = ctx.user!.orgId;
-      const org = await db.query.organizations.findFirst({ where: eq(organizations.id, orgId) });
+      const org = await ctx.db.query.organizations.findFirst({ where: eq(organizations.id, orgId) });
       
-      const activities = await db.query.processingActivities.findMany({
+      const activities = await ctx.db.query.processingActivities.findMany({
         where: eq(processingActivities.organizationId, orgId),
         with: {
           dataCategories: true,

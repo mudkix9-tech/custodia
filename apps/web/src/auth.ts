@@ -49,6 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (dbUser) {
           token.org = dbUser.organizationId;
           token.role = dbUser.role;
+          token.customRoleId = dbUser.customRoleId;
           token.permissions = dbUser.permissions;
           token.tokenInvalidatedAt = dbUser.tokenInvalidatedAt ? dbUser.tokenInvalidatedAt.getTime() : null;
           
@@ -67,6 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.sub as string;
         (session.user as any).organizationId = token.org as string;
         (session.user as any).role = token.role as string;
+        (session.user as any).customRoleId = token.customRoleId as string | null;
         (session.user as any).permissions = token.permissions as string[];
         (session.user as any).tier = token.tier as string;
         (session as any).onboardingCompleted = token.onboardingCompleted as boolean;

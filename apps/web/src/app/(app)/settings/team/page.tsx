@@ -14,7 +14,7 @@ const ACTIONS = ['View', 'Edit', 'Manage'];
 
 export default function TeamSettingsPage() {
   const { data: session } = useSession();
-  const userRole = (session?.user as any)?.role || 'member';
+  const userRole = (session?.user as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.role || 'member';
   const isAdmin = userRole === 'admin' || userRole === 'owner';
   const isOwner = userRole === 'owner';
 
@@ -31,7 +31,7 @@ export default function TeamSettingsPage() {
   const [inviteError, setInviteError] = useState('');
   const [isBulk, setIsBulk] = useState(false);
 
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any /* eslint-disable-line @typescript-eslint/no-explicit-any */ | null>(null);
 
   const handleUpdateRole = async (userId: string, newRole: 'admin' | 'member' | 'viewer') => {
     try {
@@ -72,7 +72,7 @@ export default function TeamSettingsPage() {
       setInviteEmails('');
       refetch();
       setTimeout(() => setInviteStatus('idle'), 3000);
-    } catch (e: any) {
+    } catch (e: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
       setInviteStatus('error');
       setInviteError(e.message || 'Failed to send invite');
     }
@@ -154,7 +154,7 @@ export default function TeamSettingsPage() {
                   <label className="block text-sm font-medium text-ink-900 mb-1.5">Role</label>
                   <select
                     value={inviteRole}
-                    onChange={e => setInviteRole(e.target.value as any)}
+                    onChange={e => setInviteRole(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)}
                     className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm"
                   >
                     <option value="admin">Admin</option>
@@ -205,17 +205,26 @@ export default function TeamSettingsPage() {
                       </td>
                       <td className="px-6 py-4 text-ink-600">{member.email}</td>
                       <td className="px-6 py-4">
-                        {isAdmin && member.id !== (session?.user as any)?.id ? (
+                        {isAdmin && member.id !== (session?.user as { id?: string })?.id ? (
                           <select
-                            value={member.role}
-                            onChange={(e) => handleUpdateRole(member.id, e.target.value as any)}
-                            className="bg-transparent border border-ink-900/20 rounded text-sm text-ink-700 focus:ring-sage-500 py-1 pl-2 pr-6"
+                            value={member.customRoleId || member.role}
+                            onChange={(e) => handleUpdateRole(member.id, e.target.value)}
+                            className="bg-transparent border border-ink-900/20 rounded text-sm text-ink-700 focus:ring-sage-500 py-1 pl-2 pr-6 max-w-[120px]"
                             disabled={member.role === 'owner' && !isOwner}
                           >
-                            <option value="owner" disabled>Owner</option>
-                            <option value="admin">Admin</option>
-                            <option value="member">Member</option>
-                            <option value="viewer">Viewer</option>
+                            <optgroup label="Basic Roles">
+                              <option value="owner" disabled>Owner</option>
+                              <option value="admin">Admin</option>
+                              <option value="member">Member</option>
+                              <option value="viewer">Viewer</option>
+                            </optgroup>
+                            {customRoles && customRoles.length > 0 && (
+                              <optgroup label="Custom Roles">
+                                {customRoles.map((cr: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => (
+                                  <option key={cr.id} value={cr.id}>{cr.name}</option>
+                                ))}
+                              </optgroup>
+                            )}
                           </select>
                         ) : (
                           <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-ink-100 text-ink-800 capitalize">
@@ -239,7 +248,7 @@ export default function TeamSettingsPage() {
                             >
                               Permissions
                             </button>
-                            {member.id !== (session?.user as any)?.id && member.role !== 'owner' && (
+                            {member.id !== (session?.user as { id?: string })?.id && member.role !== 'owner' && (
                               <button
                                 onClick={() => handleRemove(member.id, member.name || member.email)}
                                 className="text-xs font-medium text-red-600 hover:bg-red-50 bg-white border border-red-200 px-3 py-1.5 rounded-md transition-colors"

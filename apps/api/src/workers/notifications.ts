@@ -44,9 +44,8 @@ import {
   SubscriptionExpiring,
   TrialEndingSoon,
   DataExportReady,
-  AccountDeletionScheduled,
-  AccountDeletionCanceled
-} from 'emails';
+
+  } from 'emails';
 
 const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
 export const notificationsJobQueue = new Queue('notifications', { connection });
@@ -89,8 +88,8 @@ const EMAIL_TEMPLATES: Record<string, (data: any) => React.ReactElement> = {
   'billing.subscription_expiring': (data) => React.createElement(SubscriptionExpiring, data),
   'billing.trial_ending_soon': (data) => React.createElement(TrialEndingSoon, data),
   'general.data_export_ready': (data) => React.createElement(DataExportReady, data),
-  'general.account_deletion_scheduled': (data) => React.createElement(AccountDeletionScheduled, data),
-  'general.account_deletion_canceled': (data) => React.createElement(AccountDeletionCanceled, data),
+  'general.account_deletion_scheduled': (data) => React.createElement( data),
+  'general.account_deletion_canceled': (data) => React.createElement( data),
 };
 
 const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
@@ -329,6 +328,11 @@ export const notificationWorker = new Worker('notifications', async (job) => {
 }, { connection });
 
 export async function scheduleNotificationJobs() {
+  // Using enqueuePendingNotifications to fill the process-queue
+  await notificationsJobQueue.add('enqueue-pending', {}, {
+    repeat: { pattern: '* * * * *' }
+  });
+
   // Using enqueuePendingNotifications to fill the process-queue
   await notificationsJobQueue.add('enqueue-pending', {}, {
     repeat: { pattern: '* * * * *' }

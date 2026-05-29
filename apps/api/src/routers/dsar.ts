@@ -37,7 +37,7 @@ const verificationRouter = router({
     .mutation(async ({ input }) => {
       try {
         const decoded = jwt.verify(input.token, JWT_SECRET) as { dsarId: string, email: string };
-        const [dsar] = await db.select().from(dsarRequests).where(eq(dsarRequests.id, decoded.dsarId));
+        const [dsar] = await ctx.db.select().from(dsarRequests).where(eq(dsarRequests.id, decoded.dsarId));
         
         if (!dsar) throw new TRPCError({ code: 'NOT_FOUND', message: 'DSAR not found' });
         if (dsar.subjectEmail !== decoded.email) throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -46,7 +46,7 @@ const verificationRouter = router({
           return { alreadyVerified: true };
         }
 
-        await db.update(dsarRequests)
+        await ctx.db.update(dsarRequests)
           .set({ 
             subjectVerified: true, 
             verificationMethod: 'email_confirmation',
@@ -65,7 +65,7 @@ const verificationRouter = router({
     .input(z.object({ id: z.string().uuid(), method: z.string() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(dsarRequests)
+      const [updated] = await ctx.db.update(dsarRequests)
         .set({ subjectVerified: true, verificationMethod: input.method, verificationDate: new Date(), status: 'in_progress' })
         .where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)))
         .returning();
@@ -81,7 +81,7 @@ const tasksRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       
-      const [dsar] = await db.select().from(dsarRequests).where(and(
+      const [dsar] = await ctx.db.select().from(dsarRequests).where(and(
         eq(dsarRequests.id, input.dsarId),
         eq(dsarRequests.organizationId, ctx.user!.orgId)
       ));
@@ -89,7 +89,7 @@ const tasksRouter = router({
       if (!dsar) throw new TRPCError({ code: 'NOT_FOUND' });
 
       // 1. Get all active processing activities for this org
-      const activities = await db.query.processingActivities.findMany({
+      const activities = await ctx.db.query.processingActivities.findMany({
         where: and(
           eq(processingActivities.organizationId, ctx.user!.orgId),
           eq(processingActivities.status, 'active'),
@@ -148,7 +148,7 @@ const tasksRouter = router({
       }
 
       if (tasks.length > 0) {
-        await db.insert(dsarTasks).values(tasks);
+        await ctx.db.insert(dsarTasks).values(tasks);
       }
 
       return tasks;
@@ -177,7 +177,7 @@ const tasksRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(dsarTasks).set({ ...input.data, updatedAt: new Date() }).where(eq(dsarTasks.id, input.id)).returning();
+      const [updated] = await ctx.db.update(dsarTasks).set({ ...input.data, updatedAt: new Date() }).where(eq(dsarTasks.id, input.id)).returning();
       return updated;
     }),
   addManual: protectedProcedure
@@ -185,7 +185,7 @@ const tasksRouter = router({
     .input(z.object({ dsarId: z.string().uuid(), systemName: z.string(), searchInstructions: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [inserted] = await db.insert(dsarTasks).values({
+      const [inserted] = await ctx.db.insert(dsarTasks).values({
         dsarId: input.dsarId,
         systemName: input.systemName,
         searchInstructions: input.searchInstructions,
@@ -222,15 +222,15 @@ const commsRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       
-      const [dsar] = await db.select().from(dsarRequests).where(and(eq(dsarRequests.id, input.dsarId), eq(dsarRequests.organizationId, ctx.user!.orgId)));
+      const [dsar] = await ctx.db.select().from(dsarRequests).where(and(eq(dsarRequests.id, input.dsarId), eq(dsarRequests.organizationId, ctx.user!.orgId)));
       if (!dsar) throw new TRPCError({ code: 'NOT_FOUND' });
 
-      const [org] = await db.select().from(organizations).where(eq(organizations.id, ctx.user!.orgId));
+      const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, ctx.user!.orgId));
       if (!org) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Org not found' });
 
       try {
         // Enqueue the outbound email
-        await db.insert(notificationQueue).values({
+        await ctx.db.insert(notificationQueue).values({
           organizationId: ctx.user!.orgId,
           type: 'dsar.reply_received',
           title: input.subject,
@@ -242,7 +242,7 @@ const commsRouter = router({
           payload: { dsarId: dsar.id }
         });
 
-        const [comm] = await db.insert(dsarCommunications).values({
+        const [comm] = await ctx.db.insert(dsarCommunications).values({
           dsarId: input.dsarId,
           direction: 'outbound',
           type: input.type,
@@ -264,7 +264,7 @@ const commsRouter = router({
     .input(z.object({ dsarId: z.string().uuid(), subject: z.string(), body: z.string(), channel: z.string().default('email') }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [comm] = await db.insert(dsarCommunications).values({
+      const [comm] = await ctx.db.insert(dsarCommunications).values({
         dsarId: input.dsarId,
         direction: 'inbound',
         type: 'follow_up',
@@ -280,7 +280,7 @@ const commsRouter = router({
     .input(z.object({ dsarId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [dsar] = await db.select().from(dsarRequests).where(and(eq(dsarRequests.id, input.dsarId), eq(dsarRequests.organizationId, ctx.user!.orgId)));
+      const [dsar] = await ctx.db.select().from(dsarRequests).where(and(eq(dsarRequests.id, input.dsarId), eq(dsarRequests.organizationId, ctx.user!.orgId)));
       if (!dsar) throw new TRPCError({ code: 'NOT_FOUND' });
       return { 
         subject: `Response to your Data Subject Request (${dsar.referenceNumber})`, 
@@ -305,14 +305,14 @@ export const dsarRouter = router({
       details: z.string().optional()
     }))
     .mutation(async ({ input }) => {
-      const [org] = await db.select().from(organizations).where(eq(organizations.slug, input.orgSlug));
+      const [org] = await ctx.db.select().from(organizations).where(eq(organizations.slug, input.orgSlug));
       if (!org) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization not found' });
 
       const referenceNumber = `DSAR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
       const deadlineAt = new Date();
       deadlineAt.setDate(deadlineAt.getDate() + 30); // 30 days deadline
 
-      const [newDsar] = await db.insert(dsarRequests).values({
+      const [newDsar] = await ctx.db.insert(dsarRequests).values({
         organizationId: org.id,
         referenceNumber,
         requestType: input.requestType,
@@ -346,7 +346,7 @@ export const dsarRouter = router({
         });
 
         // Log the outbound comm
-        await db.insert(dsarCommunications).values({
+        await ctx.db.insert(dsarCommunications).values({
           dsarId: newDsar.id,
           direction: 'outbound',
           type: 'verification_request',
@@ -380,7 +380,7 @@ export const dsarRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const dsar = await db.query.dsarRequests.findFirst({
+      const dsar = await ctx.db.query.dsarRequests.findFirst({
         where: and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)),
         with: {
           assignedTo: true
@@ -398,7 +398,7 @@ export const dsarRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(dsarRequests)
+      const [updated] = await ctx.db.update(dsarRequests)
         .set({ status: input.status, updatedAt: new Date() })
         .where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)))
         .returning();
@@ -414,7 +414,7 @@ export const dsarRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [dsar] = await db.select().from(dsarRequests).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)));
+      const [dsar] = await ctx.db.select().from(dsarRequests).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)));
       if (!dsar) throw new TRPCError({ code: 'NOT_FOUND' });
 
       // Ensure extension happens within original 30 days
@@ -426,7 +426,7 @@ export const dsarRouter = router({
       const extendedDeadline = new Date(dsar.deadlineAt);
       extendedDeadline.setDate(extendedDeadline.getDate() + input.days);
 
-      const [updated] = await db.update(dsarRequests)
+      const [updated] = await ctx.db.update(dsarRequests)
         .set({ 
           extended: true, 
           extensionReason: input.reason, 
@@ -448,7 +448,7 @@ export const dsarRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(dsarRequests)
+      const [updated] = await ctx.db.update(dsarRequests)
         .set({ 
           status: 'refused',
           refusalReason: input.reason,
@@ -466,7 +466,7 @@ export const dsarRouter = router({
     .input(z.object({ id: z.string().uuid(), userId: z.string().uuid().nullable() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(dsarRequests).set({ assignedTo: input.userId, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
+      const [updated] = await ctx.db.update(dsarRequests).set({ assignedTo: input.userId, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
       return updated;
     }),
 
@@ -475,7 +475,7 @@ export const dsarRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(dsarRequests).set({ status: 'completed', completedAt: new Date(), completedBy: ctx.user!.id, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
+      const [updated] = await ctx.db.update(dsarRequests).set({ status: 'completed', completedAt: new Date(), completedBy: ctx.user!.id, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
       return updated;
     }),
 
@@ -488,7 +488,7 @@ export const dsarRouter = router({
       const expiry = new Date();
       expiry.setDate(expiry.getDate() + 30);
       const mockUrl = `https://s3.privaro.io/mock-package-${input.id}.json`;
-      const [updated] = await db.update(dsarRequests).set({ dataPackageUrl: mockUrl, dataPackageFormat: 'json', dataPackageExpiresAt: expiry, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
+      const [updated] = await ctx.db.update(dsarRequests).set({ dataPackageUrl: mockUrl, dataPackageFormat: 'json', dataPackageExpiresAt: expiry, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
       return updated;
     }),
 });

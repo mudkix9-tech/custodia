@@ -14,7 +14,7 @@ export const dpiaRouter = router({
     .use(requirePermission('ropa', 'view'))
     .query(async ({ ctx }) => {
       checkOrgContext(ctx.user);
-      return db.select()
+      return ctx.db.select()
         .from(dpias)
         .where(eq(dpias.organizationId, ctx.user!.orgId))
         .orderBy(desc(dpias.updatedAt));
@@ -25,7 +25,7 @@ export const dpiaRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const dpia = await db.query.dpias.findFirst({
+      const dpia = await ctx.db.query.dpias.findFirst({
         where: and(
           eq(dpias.id, input.id),
           eq(dpias.organizationId, ctx.user!.orgId)
@@ -46,7 +46,7 @@ export const dpiaRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       
-      const [newDpia] = await db.insert(dpias).values({
+      const [newDpia] = await ctx.db.insert(dpias).values({
         organizationId: ctx.user!.orgId,
         title: input.title,
         description: input.description,
@@ -68,7 +68,7 @@ export const dpiaRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       
-      const [updated] = await db.update(dpias)
+      const [updated] = await ctx.db.update(dpias)
         .set({ ...input.data, updatedAt: new Date() })
         .where(and(eq(dpias.id, input.id), eq(dpias.organizationId, ctx.user!.orgId)))
         .returning();
@@ -81,7 +81,7 @@ export const dpiaRouter = router({
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ dpiaId: z.string().uuid() }))
       .query(async ({ input }) => {
-        return db.select().from(dpiaRisks).where(eq(dpiaRisks.dpiaId, input.dpiaId));
+        return ctx.db.select().from(dpiaRisks).where(eq(dpiaRisks.dpiaId, input.dpiaId));
       }),
       
     create: protectedProcedure
@@ -95,7 +95,7 @@ export const dpiaRouter = router({
       .mutation(async ({ input }) => {
         const initialRiskScore = (input.likelihood && input.severity) ? input.likelihood * input.severity : null;
         
-        const [inserted] = await db.insert(dpiaRisks).values({
+        const [inserted] = await ctx.db.insert(dpiaRisks).values({
           ...input,
           initialRiskScore,
         }).returning();
@@ -110,7 +110,7 @@ export const dpiaRouter = router({
       }))
       .mutation(async ({ input }) => {
         // If updating likelihood or severity, recalculate initialRiskScore
-        const [updated] = await db.update(dpiaRisks)
+        const [updated] = await ctx.db.update(dpiaRisks)
           .set(input.data)
           .where(eq(dpiaRisks.id, input.id))
           .returning();
@@ -121,7 +121,7 @@ export const dpiaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ input }) => {
-        const [deleted] = await db.delete(dpiaRisks).where(eq(dpiaRisks.id, input.id)).returning();
+        const [deleted] = await ctx.db.delete(dpiaRisks).where(eq(dpiaRisks.id, input.id)).returning();
         return deleted;
       })
   }),
@@ -131,7 +131,7 @@ export const dpiaRouter = router({
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ dpiaRiskId: z.string().uuid() }))
       .query(async ({ input }) => {
-        return db.select().from(dpiaMeasures).where(eq(dpiaMeasures.dpiaRiskId, input.dpiaRiskId));
+        return ctx.db.select().from(dpiaMeasures).where(eq(dpiaMeasures.dpiaRiskId, input.dpiaRiskId));
       }),
       
     create: protectedProcedure
@@ -142,7 +142,7 @@ export const dpiaRouter = router({
         status: z.string().default('planned'),
       }))
       .mutation(async ({ input }) => {
-        const [inserted] = await db.insert(dpiaMeasures).values(input).returning();
+        const [inserted] = await ctx.db.insert(dpiaMeasures).values(input).returning();
         return inserted;
       }),
       
@@ -153,7 +153,7 @@ export const dpiaRouter = router({
         data: z.record(z.any()),
       }))
       .mutation(async ({ input }) => {
-        const [updated] = await db.update(dpiaMeasures)
+        const [updated] = await ctx.db.update(dpiaMeasures)
           .set(input.data)
           .where(eq(dpiaMeasures.id, input.id))
           .returning();
@@ -164,7 +164,7 @@ export const dpiaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ input }) => {
-        const [deleted] = await db.delete(dpiaMeasures).where(eq(dpiaMeasures.id, input.id)).returning();
+        const [deleted] = await ctx.db.delete(dpiaMeasures).where(eq(dpiaMeasures.id, input.id)).returning();
         return deleted;
       })
   })

@@ -1,11 +1,48 @@
-import { S3Client } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-export const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+const s3Clients = new Map<string, S3Client>();
+
+export function getS3BucketForOrg(dataRegion: string): string {
+  const bucketMap: Record<string, string> = {
+    'eu-west-1': 'privaro-documents-eu-west-1',
+    'eu-central-1': 'privaro-documents-eu-central-1',
+    'eu-west-3': 'privaro-documents-eu-west-3',
+    'eu-north-1': 'privaro-documents-eu-north-1',
+  };
+  return bucketMap[dataRegion] || bucketMap['eu-west-1'];
+}
+
+export function getS3ClientForRegion(region: string): S3Client {
+  if (!s3Clients.has(region)) {
+    s3Clients.set(region, new S3Client({ region, forcePathStyle: true })); // use forcePathStyle for dev/testing often
   }
-});
+  return s3Clients.get(region)!;
+}
 
-export const S3_BUCKET = process.env.S3_BUCKET || 'default-bucket';
+export async function generateUploadUrl(key: string, contentType: string, dataRegion: string = 'eu-west-1'): Promise<string> {
+  const region = dataRegion || 'eu-west-1';
+  const client = getS3ClientForRegion(region);
+  const bucket = getS3BucketForOrg(region);
+
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    ContentType: contentType,
+  });
+
+  return getSignedUrl(client, command, { expiresIn: 3600 });
+}
+
+export async function generateDownloadUrl(key: string, dataRegion: string = 'eu-west-1'): Promise<string> {
+  const region = dataRegion || 'eu-west-1';
+  const client = getS3ClientForRegion(region);
+  const bucket = getS3BucketForOrg(region);
+
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  });
+
+  return getSignedUrl(client, command, { expiresIn: 3600 });
+}

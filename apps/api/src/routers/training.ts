@@ -27,7 +27,7 @@ export const trainingRouter = router({
       checkOrgContext(ctx.user);
 
       const limit = input.limit;
-      const res = await db.select().from(trainingModules)
+      const res = await ctx.db.select().from(trainingModules)
         .where(or(
           eq(trainingModules.isGlobal, true),
           eq(trainingModules.organizationId, ctx.user!.orgId)
@@ -50,7 +50,7 @@ export const trainingRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const mod = await db.query.trainingModules.findFirst({
+      const mod = await ctx.db.query.trainingModules.findFirst({
         where: and(
           eq(trainingModules.id, input.id),
           or(
@@ -73,7 +73,7 @@ export const trainingRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [newMod] = await db.insert(trainingModules).values({
+      const [newMod] = await ctx.db.insert(trainingModules).values({
         organizationId: ctx.user!.orgId,
         title: input.title,
         description: input.description,
@@ -95,7 +95,7 @@ export const trainingRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       const { id, ...data } = input;
-      const [updated] = await db.update(trainingModules)
+      const [updated] = await ctx.db.update(trainingModules)
         .set({ ...data, updatedAt: new Date() })
         .where(and(
           eq(trainingModules.id, id),
@@ -111,7 +111,7 @@ export const trainingRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [updated] = await db.update(trainingModules)
+      const [updated] = await ctx.db.update(trainingModules)
         .set({ status: 'published', updatedAt: new Date() })
         .where(and(
           eq(trainingModules.id, input.id),
@@ -123,11 +123,11 @@ export const trainingRouter = router({
 
       // Auto-assign to existing users if mandatory
       if (updated.isMandatory) {
-        const orgUsers = await db.query.users.findMany({
+        const orgUsers = await ctx.db.query.users.findMany({
           where: eq(users.organizationId, ctx.user!.orgId)
         });
         
-        const existingCompletions = await db.query.trainingCompletions.findMany({
+        const existingCompletions = await ctx.db.query.trainingCompletions.findMany({
           where: eq(trainingCompletions.moduleId, input.id)
         });
         const existingUserIds = existingCompletions.map(c => c.userId);
@@ -142,7 +142,7 @@ export const trainingRouter = router({
           }));
 
         if (newAssignments.length > 0) {
-          await db.insert(trainingCompletions).values(newAssignments);
+          await ctx.db.insert(trainingCompletions).values(newAssignments);
         }
       }
 
@@ -153,7 +153,7 @@ export const trainingRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const completions = await db.query.trainingCompletions.findMany({
+      const completions = await ctx.db.query.trainingCompletions.findMany({
         where: and(
           eq(trainingCompletions.organizationId, ctx.user!.orgId),
           eq(trainingCompletions.moduleId, input.id)
@@ -174,20 +174,20 @@ export const trainingRouter = router({
   // COMPLETIONS (EMPLOYEE)
   myModules: protectedProcedure.query(async ({ ctx }) => {
     checkOrgContext(ctx.user);
-    const myComps = await db.query.trainingCompletions.findMany({
+    const myComps = await ctx.db.query.trainingCompletions.findMany({
       where: eq(trainingCompletions.userId, ctx.user!.id),
       with: { module: true },
       orderBy: desc(trainingCompletions.createdAt)
     });
 
     // Also inject global modules if missing
-    const globals = await db.query.trainingModules.findMany({
+    const globals = await ctx.db.query.trainingModules.findMany({
       where: and(eq(trainingModules.isGlobal, true), eq(trainingModules.status, 'published'))
     });
 
     for (const g of globals) {
       if (!myComps.find(c => c.moduleId === g.id)) {
-        const [newComp] = await db.insert(trainingCompletions).values({
+        const [newComp] = await ctx.db.insert(trainingCompletions).values({
           organizationId: ctx.user!.orgId,
           userId: ctx.user!.id,
           moduleId: g.id,
@@ -203,7 +203,7 @@ export const trainingRouter = router({
   startModule: protectedProcedure
     .input(z.object({ completionId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const [updated] = await db.update(trainingCompletions)
+      const [updated] = await ctx.db.update(trainingCompletions)
         .set({ status: 'in_progress', startedAt: new Date(), updatedAt: new Date() })
         .where(and(
           eq(trainingCompletions.id, input.completionId),
@@ -220,7 +220,7 @@ export const trainingRouter = router({
       timeSpentMs: z.number()
     }))
     .mutation(async ({ ctx, input }) => {
-      const comp = await db.query.trainingCompletions.findFirst({
+      const comp = await ctx.db.query.trainingCompletions.findFirst({
         where: and(
           eq(trainingCompletions.id, input.completionId),
           eq(trainingCompletions.userId, ctx.user!.id)
@@ -236,7 +236,7 @@ export const trainingRouter = router({
         views.push({ slideId: input.slideId, timeSpentMs: input.timeSpentMs, firstViewedAt: new Date() });
       }
 
-      await db.update(trainingCompletions)
+      await ctx.db.update(trainingCompletions)
         .set({ slidesViewed: views, updatedAt: new Date() })
         .where(eq(trainingCompletions.id, input.completionId));
       return { success: true };
@@ -248,7 +248,7 @@ export const trainingRouter = router({
       answers: z.record(z.string(), z.string()), // Question ID -> Selected Option ID
     }))
     .mutation(async ({ ctx, input }) => {
-      const comp = await db.query.trainingCompletions.findFirst({
+      const comp = await ctx.db.query.trainingCompletions.findFirst({
         where: and(
           eq(trainingCompletions.id, input.completionId),
           eq(trainingCompletions.userId, ctx.user!.id)
@@ -303,8 +303,8 @@ export const trainingRouter = router({
         
         // Generate PDF
         try {
-          const org = await db.query.organizations.findFirst({ where: eq(organizations.id, ctx.user!.orgId) });
-          const user = await db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
+          const org = await ctx.db.query.organizations.findFirst({ where: eq(organizations.id, ctx.user!.orgId) });
+          const user = await ctx.db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
           
           const htmlContent = `
             <!DOCTYPE html>
@@ -341,7 +341,7 @@ export const trainingRouter = router({
           await browser.close();
 
           // Mock Document Creation
-          const [doc] = await db.insert(documents).values({
+          const [doc] = await ctx.db.insert(documents).values({
             organizationId: ctx.user!.orgId,
             uploaderId: ctx.user!.id,
             filename: `certificate_${payload.certificateId}.pdf`,
@@ -355,7 +355,7 @@ export const trainingRouter = router({
           if (doc) payload.certificateDocumentId = doc.id;
 
           // Update user last training timestamp
-          await db.update(users)
+          await ctx.db.update(users)
             .set({ lastTrainingCompletedAt: new Date() })
             .where(eq(users.id, ctx.user!.id));
 
@@ -364,7 +364,7 @@ export const trainingRouter = router({
         }
       }
 
-      const [updated] = await db.update(trainingCompletions)
+      const [updated] = await ctx.db.update(trainingCompletions)
         .set(payload)
         .where(eq(trainingCompletions.id, input.completionId)).returning();
       
@@ -393,7 +393,7 @@ export const trainingRouter = router({
 
       const compIds = res.data.map((r: any) => r.id);
       if (compIds.length > 0) {
-        const fullComps = await db.query.trainingCompletions.findMany({
+        const fullComps = await ctx.db.query.trainingCompletions.findMany({
           where: inArray(trainingCompletions.id, compIds),
           with: { user: true, module: true }
         });

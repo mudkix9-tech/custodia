@@ -16,7 +16,7 @@ export const portalRouter = router({
     .input(z.object({ token: z.string() }))
     .query(async ({ input }) => {
       // Validate token
-      const client = await db.query.clients.findFirst({
+      const client = await ctx.db.query.clients.findFirst({
         where: eq(clients.portalToken, input.token),
       });
       
@@ -28,7 +28,7 @@ export const portalRouter = router({
       }
 
       // ONLY fetch data scoped to this client via the junction table
-      const cpas = await db.query.clientProcessingActivities.findMany({
+      const cpas = await ctx.db.query.clientProcessingActivities.findMany({
         where: eq(clientProcessingActivities.clientId, client.id),
         with: { processingActivity: true }
       });
@@ -40,15 +40,15 @@ export const portalRouter = router({
       const activityIds = activities.map((a: any) => a.id);
       
       const dataCategoriesList = activityIds.length > 0 
-        ? await db.query.processingDataCategories.findMany() // simplified fetch, filter below
+        ? await ctx.db.query.processingDataCategories.findMany() // simplified fetch, filter below
         : [];
         
       const recipientsList = activityIds.length > 0
-        ? await db.query.processingRecipients.findMany()
+        ? await ctx.db.query.processingRecipients.findMany()
         : [];
         
       const transfersList = activityIds.length > 0
-        ? await db.query.processingTransfers.findMany()
+        ? await ctx.db.query.processingTransfers.findMany()
         : [];
 
       // Org-wide vendor DPA statuses (not client-specific directly, but relates to vendors the client data might be passed to)
@@ -61,7 +61,7 @@ export const portalRouter = router({
         if (t.vendorId && activityIds.includes(t.processingActivityId)) vendorIds.add(t.vendorId);
       });
 
-      const vendorsList = await db.query.organizationVendors.findMany({
+      const vendorsList = await ctx.db.query.organizationVendors.findMany({
         where: eq(organizationVendors.organizationId, client.organizationId),
         with: { vendor: true },
       });
@@ -81,7 +81,7 @@ export const portalRouter = router({
       const clientScore = Math.max(0, score);
 
       // Get org branding for white-label
-      const org = await db.query.organizations.findFirst({
+      const org = await ctx.db.query.organizations.findFirst({
         where: eq(organizations.id, client.organizationId),
         columns: { name: true, branding: true },
       });
