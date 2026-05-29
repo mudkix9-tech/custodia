@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { LayoutDashboard, Users, Database, Building2, UserCircle, GraduationCap, Settings, LifeBuoy, ChevronUp, FileText, Cookie, AlertTriangle, ShieldCheck, Sparkles, Menu, X } from 'lucide-react';
-import { cn } from '@/utils/cn'; // Assuming you have a cn utility, if not, I will add it or just use template literals
+import { cn } from '@/utils/cn';
+import { OrgSwitcher } from './OrgSwitcher';
 
 export function Logo({ className = '' }: { className?: string }) {
   return (
@@ -72,6 +73,10 @@ export function Sidebar() {
           >
             <X size={20} />
           </button>
+        </div>
+
+        <div className="px-3">
+          <OrgSwitcher />
         </div>
 
         <nav className="flex-1 px-3 overflow-y-auto">

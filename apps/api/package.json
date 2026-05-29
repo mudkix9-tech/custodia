@@ -46,6 +46,7 @@
     "@trpc/client": "^11.16.0",
     "@trpc/server": "^11.16.0",
     "@types/uuid": "^10.0.0",
+    "@workos-inc/node": "^10.0.0",
     "archiver": "^8.0.0",
     "argon2": "^0.44.0",
     "bullmq": "^5.77.1",

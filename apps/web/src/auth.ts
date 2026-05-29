@@ -4,6 +4,7 @@ import { db } from './db';
 import Resend from 'next-auth/providers/resend';
 import Google from 'next-auth/providers/google';
 import MicrosoftEntraID from 'next-auth/providers/microsoft-entra-id';
+import WorkOS from 'next-auth/providers/workos';
 import { eq } from 'drizzle-orm';
 import { users, organizations, pendingSignups, assessments, auditLogs } from 'db';
 
@@ -20,6 +21,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+        WorkOS({
+      clientId: process.env.WORKOS_CLIENT_ID,
+      clientSecret: process.env.WORKOS_API_KEY,
+      issuer: 'https://api.workos.com/sso/saml',
+      profile(profile) {
+        return {
+          id: profile.id,
+          name: profile.first_name ? `${profile.first_name} ${profile.last_name}` : profile.email,
+          email: profile.email,
+          image: profile.raw_attributes?.picture ?? null,
+        }
+      }
     }),
     MicrosoftEntraID({
       clientId: process.env.AUTH_MICROSOFT_ENTRA_ID_ID,

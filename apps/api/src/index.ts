@@ -26,6 +26,7 @@ import { scheduleNotificationJobs } from './workers/notifications.js';
 import { scheduleRegulatoryJobs } from './workers/regulatoryScraper.js';
 import { scheduleGlobalJobs } from './workers/index.js';
 import cmpRoutes from './routes/cmp.js';
+import { ssoRoutes } from './routes/sso.js';
 import { complianceWorker } from './workers/compliance.js';
 import { paddleWebhookHandler } from './webhooks/paddle.js';
 import { inboundEmailWebhookHandler } from './webhooks/inbound.js';
