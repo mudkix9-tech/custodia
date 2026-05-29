@@ -71,19 +71,19 @@ const paginationInput = z.object({
 export const vendorsRouter = router({
   // GLOBAL
   getAllGlobal: protectedProcedure.query(async () => {
-    return await db.select().from(vendors).where(eq(vendors.isGlobal, true));
+    return await ctx.db.select().from(vendors).where(eq(vendors.isGlobal, true));
   }),
 
   getById: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ input }) => {
-      const result = await db.select().from(vendors).where(eq(vendors.id, input.id));
+      const result = await ctx.db.select().from(vendors).where(eq(vendors.id, input.id));
       return result[0];
     }),
 
   suggestGlobal: protectedProcedure.query(async () => {
     // Mock suggestion for now. Can be enhanced to look at what's missing.
-    return await db.select().from(vendors).where(eq(vendors.isGlobal, true)).limit(5);
+    return await ctx.db.select().from(vendors).where(eq(vendors.isGlobal, true)).limit(5);
   }),
 
   // ORG
@@ -102,7 +102,7 @@ export const vendorsRouter = router({
       let vendorsMap = new Map();
 
       if (vendorIds.length > 0) {
-        const vendorDataList = await db.select().from(vendors).where(inArray(vendors.id, vendorIds));
+        const vendorDataList = await ctx.db.select().from(vendors).where(inArray(vendors.id, vendorIds));
         for (const v of vendorDataList) {
           vendorsMap.set(v.id, v);
         }
@@ -130,7 +130,7 @@ export const vendorsRouter = router({
   getOrgVendorDetails: protectedProcedure
     .input(z.object({ vendorId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const records = await db.select({
+      const records = await ctx.db.select({
         orgVendor: organizationVendors,
         vendor: vendors
       })
@@ -146,13 +146,13 @@ export const vendorsRouter = router({
   linkVendor: protectedProcedure
     .input(z.object({ vendorId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const [vendor] = await db.select().from(vendors).where(eq(vendors.id, input.vendorId));
+      const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
       if (!vendor) throw new Error("Vendor not found");
 
       // Calculate initial risk
       const { score, level } = calculateVendorRisk(vendor, { dpaStatus: 'not_started', usingEuHosting: false });
 
-      const [newLink] = await db.insert(organizationVendors).values({
+      const [newLink] = await ctx.db.insert(organizationVendors).values({
         organizationId: ctx.user.orgId,
         vendorId: input.vendorId,
         dpaStatus: 'not_started',
@@ -174,13 +174,13 @@ export const vendorsRouter = router({
       notes: z.string().optional()
     }))
     .mutation(async ({ ctx, input }) => {
-      const [orgVendor] = await db.select().from(organizationVendors).where(and(
+      const [orgVendor] = await ctx.db.select().from(organizationVendors).where(and(
         eq(organizationVendors.organizationId, ctx.user.orgId),
         eq(organizationVendors.vendorId, input.vendorId)
       ));
       if (!orgVendor) throw new Error("Link not found");
 
-      const [vendor] = await db.select().from(vendors).where(eq(vendors.id, input.vendorId));
+      const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
 
       const updates: any = {};
       if (input.dpaStatus !== undefined) updates.dpaStatus = input.dpaStatus;
@@ -195,7 +195,7 @@ export const vendorsRouter = router({
       updates.riskScore = score;
       updates.riskLevel = level;
 
-      await db.update(organizationVendors)
+      await ctx.db.update(organizationVendors)
         .set(updates)
         .where(eq(organizationVendors.id, orgVendor.id));
 
@@ -214,7 +214,7 @@ export const vendorsRouter = router({
       securityCertifications: z.array(z.string()).optional()
     }))
     .mutation(async ({ ctx, input }) => {
-      const [newVendor] = await db.insert(vendors).values({
+      const [newVendor] = await ctx.db.insert(vendors).values({
         name: input.name,
         website: input.website,
         headquartersCountry: input.headquartersCountry,
@@ -231,7 +231,7 @@ export const vendorsRouter = router({
       // Link immediately
       const { score, level } = calculateVendorRisk(newVendor, { dpaStatus: 'not_started', usingEuHosting: input.euHostingAvailable });
 
-      await db.insert(organizationVendors).values({
+      await ctx.db.insert(organizationVendors).values({
         organizationId: ctx.user.orgId,
         vendorId: newVendor.id,
         dpaStatus: 'not_started',
@@ -249,7 +249,7 @@ export const vendorsRouter = router({
       .input(z.object({ parentVendorId: z.string().uuid() }))
       .query(async ({ input }) => {
         // Fetch sub-processors and join with vendors if linked
-        const records = await db.select({
+        const records = await ctx.db.select({
           subProcessor: vendorSubProcessors,
           vendor: vendors
         })
@@ -270,7 +270,7 @@ export const vendorsRouter = router({
         purpose: z.string().optional()
       }))
       .mutation(async ({ input }) => {
-        const [sub] = await db.insert(vendorSubProcessors).values({
+        const [sub] = await ctx.db.insert(vendorSubProcessors).values({
           parentVendorId: input.parentVendorId,
           subProcessorVendorId: input.subProcessorVendorId,
           purpose: input.purpose
@@ -286,7 +286,7 @@ export const vendorsRouter = router({
         purpose: z.string().optional()
       }))
       .mutation(async ({ input }) => {
-        const [sub] = await db.insert(vendorSubProcessors).values({
+        const [sub] = await ctx.db.insert(vendorSubProcessors).values({
           parentVendorId: input.parentVendorId,
           name: input.name,
           country: input.country,
@@ -298,7 +298,7 @@ export const vendorsRouter = router({
     remove: protectedProcedure
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ input }) => {
-        const [removed] = await db.delete(vendorSubProcessors)
+        const [removed] = await ctx.db.delete(vendorSubProcessors)
           .where(eq(vendorSubProcessors.id, input.id))
           .returning();
         return removed;
@@ -307,7 +307,7 @@ export const vendorsRouter = router({
     markNotified: protectedProcedure
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ input }) => {
-        const [updated] = await db.update(vendorSubProcessors)
+        const [updated] = await ctx.db.update(vendorSubProcessors)
           .set({ notifiedAt: new Date() })
           .where(eq(vendorSubProcessors.id, input.id))
           .returning();

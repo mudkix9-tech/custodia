@@ -7,12 +7,12 @@ import { scheduleEmailSequence } from '../workers/emails.js';
 
 export const assessmentsRouter = router({
   getQuestions: publicProcedure.query(async () => {
-    return await db.select().from(assessmentTemplates);
+    return await ctx.db.select().from(assessmentTemplates);
   }),
 
   startAssessment: publicProcedure.mutation(async ({ ctx }) => {
     const anonSessionId = (ctx.req as any).cookies?.pvr_anon_session;
-    const [assessment] = await db.insert(assessments).values({
+    const [assessment] = await ctx.db.insert(assessments).values({
       status: 'in_progress',
       anonymousSessionId: anonSessionId || null,
     }).returning();
@@ -23,14 +23,14 @@ export const assessmentsRouter = router({
     const anonSessionId = (ctx.req as any).cookies?.pvr_anon_session;
     if (!anonSessionId) return null;
 
-    const assessment = await db.query.assessments.findFirst({
+    const assessment = await ctx.db.query.assessments.findFirst({
       where: eq(assessments.anonymousSessionId, anonSessionId),
       orderBy: (assessments, { desc }) => [desc(assessments.createdAt)],
     });
 
     if (!assessment) return null;
 
-    const answersList = await db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, assessment.id));
+    const answersList = await ctx.db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, assessment.id));
     
     // Convert to map for frontend
     const answersMap: Record<string, any> = {};
@@ -49,7 +49,7 @@ export const assessmentsRouter = router({
       riskScore: z.number(),
     }))
     .mutation(async ({ input }) => {
-      const [answer] = await db.insert(assessmentAnswers).values({
+      const [answer] = await ctx.db.insert(assessmentAnswers).values({
         assessmentId: input.assessmentId,
         questionId: input.questionId,
         selectedOption: input.selectedOption,
@@ -64,7 +64,7 @@ export const assessmentsRouter = router({
     }))
     .mutation(async ({ input }) => {
       // 1. Fetch all answers for this assessment
-      const answers = await db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, input.assessmentId));
+      const answers = await ctx.db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, input.assessmentId));
       
       // 2. Calculate overall score (0 to 100)
       // Maximum possible risk per question is 10.
@@ -81,18 +81,18 @@ export const assessmentsRouter = router({
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
 
-      await db.update(assessments)
+      await ctx.db.update(assessments)
         .set({ status: 'calculated', completedAt: new Date(), overallScore: score, expiresAt })
         .where(eq(assessments.id, input.assessmentId));
 
       // 4. Clear old action items if any (idempotency)
-      await db.delete(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
+      await ctx.db.delete(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
 
       // 5. Generate Action Items based on risk scores
       for (const ans of answers) {
         if (ans.riskScore >= 5) {
           // Fetch the question to determine the article reference and title
-          const [question] = await db.select().from(assessmentTemplates).where(eq(assessmentTemplates.id, ans.questionId));
+          const [question] = await ctx.db.select().from(assessmentTemplates).where(eq(assessmentTemplates.id, ans.questionId));
           
           if (question) {
             let gdprRef = 'Article 5 (Principles relating to processing of personal data)';
@@ -105,7 +105,7 @@ export const assessmentsRouter = router({
             if (question.category === 'Security') gdprRef = 'Article 32 (Security of processing)';
             if (question.category === 'Lawful Basis') gdprRef = 'Article 6 (Lawfulness of processing)';
 
-            await db.insert(actionItems).values({
+            await ctx.db.insert(actionItems).values({
               assessmentId: input.assessmentId,
               title: title,
               description: desc,
@@ -130,14 +130,14 @@ export const assessmentsRouter = router({
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
 
-      await db.insert(pendingSignups).values({
+      await ctx.db.insert(pendingSignups).values({
         email: input.email,
         anonymousSessionId: anonSessionId,
         assessmentId: input.assessmentId,
         expiresAt: expiresAt,
       });
 
-      await db.update(assessments)
+      await ctx.db.update(assessments)
         .set({ status: 'completed', email: input.email })
         .where(eq(assessments.id, input.assessmentId));
         
@@ -150,8 +150,8 @@ export const assessmentsRouter = router({
   getResults: publicProcedure
     .input(z.object({ assessmentId: z.string().uuid() }))
     .query(async ({ input }) => {
-      const [assessment] = await db.select().from(assessments).where(eq(assessments.id, input.assessmentId));
-      const items = await db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
+      const [assessment] = await ctx.db.select().from(assessments).where(eq(assessments.id, input.assessmentId));
+      const items = await ctx.db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
       
       return { assessment, actionItems: items };
     }),

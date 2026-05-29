@@ -32,7 +32,7 @@ export const dataRouter = router({
       const deletionDate = new Date();
       deletionDate.setDate(deletionDate.getDate() + 30); // 30 day grace period
 
-      const [updated] = await db.update(organizations)
+      const [updated] = await ctx.db.update(organizations)
         .set({ deletionScheduledAt: deletionDate, updatedAt: new Date() })
         .where(eq(organizations.id, ctx.user!.orgId))
         .returning();

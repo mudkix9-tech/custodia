@@ -10,7 +10,7 @@ export const tiaRouter = router({
     .use(requireRole("admin"))
     .input(z.object({ vendorId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const [tia] = await db.select()
+      const [tia] = await ctx.db.select()
         .from(transferImpactAssessments)
         .where(and(
           eq(transferImpactAssessments.organizationId, ctx.user!.orgId),
@@ -73,7 +73,7 @@ export const tiaRouter = router({
       }
 
       if (tiaId) {
-        const [updated] = await db.update(transferImpactAssessments)
+        const [updated] = await ctx.db.update(transferImpactAssessments)
           .set(payload)
           .where(and(
             eq(transferImpactAssessments.id, tiaId),
@@ -84,7 +84,7 @@ export const tiaRouter = router({
         
         // Auto-update linked transfers
         if (input.status === 'completed') {
-          await db.update(processingTransfers)
+          await ctx.db.update(processingTransfers)
             .set({ 
               tiaCompleted: true,
               tiaRiskLevel: input.conclusion === 'suspend' ? 'critical' : input.residualRiskLevel
@@ -94,20 +94,20 @@ export const tiaRouter = router({
 
         return updated;
       } else {
-        const [inserted] = await db.insert(transferImpactAssessments)
+        const [inserted] = await ctx.db.insert(transferImpactAssessments)
           .values(payload)
           .returning();
         
         // Update org vendor
         if (input.status === 'completed') {
-          await db.update(organizationVendors)
+          await ctx.db.update(organizationVendors)
             .set({ tiaCompleted: true })
             .where(and(
               eq(organizationVendors.vendorId, input.vendorId),
               eq(organizationVendors.organizationId, ctx.user!.orgId)
             ));
             
-          await db.update(processingTransfers)
+          await ctx.db.update(processingTransfers)
             .set({ 
               tiaCompleted: true,
               tiaRiskLevel: input.conclusion === 'suspend' ? 'critical' : input.residualRiskLevel
@@ -124,7 +124,7 @@ export const tiaRouter = router({
       .use(requireRole("admin"))
       .input(z.object({ tiaId: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
-        const [tia] = await db.select()
+        const [tia] = await ctx.db.select()
           .from(transferImpactAssessments)
           .where(and(
             eq(transferImpactAssessments.id, input.tiaId),

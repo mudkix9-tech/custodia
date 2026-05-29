@@ -14,7 +14,7 @@ export const teamRouter = router({
   list: protectedProcedure
     .query(async ({ ctx }) => {
       checkOrgContext(ctx.user);
-      return db.select().from(users).where(eq(users.organizationId, ctx.user!.orgId));
+      return ctx.db.select().from(users).where(eq(users.organizationId, ctx.user!.orgId));
     }),
 
   invite: protectedProcedure
@@ -27,7 +27,7 @@ export const teamRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
 
-      const existing = await db.query.users.findFirst({
+      const existing = await ctx.db.query.users.findFirst({
         where: eq(users.email, input.email)
       });
 
@@ -35,7 +35,7 @@ export const teamRouter = router({
         throw new TRPCError({ code: 'CONFLICT', message: 'User already exists' });
       }
 
-      const [newUser] = await db.insert(users).values({
+      const [newUser] = await ctx.db.insert(users).values({
         organizationId: ctx.user!.orgId,
         email: input.email,
         name: input.name || input.email.split('@')[0],
@@ -60,12 +60,12 @@ export const teamRouter = router({
 
       const newUsers = [];
       for (const email of input.emails) {
-        const existing = await db.query.users.findFirst({
+        const existing = await ctx.db.query.users.findFirst({
           where: eq(users.email, email)
         });
 
         if (!existing) {
-          const [newUser] = await db.insert(users).values({
+          const [newUser] = await ctx.db.insert(users).values({
             organizationId: ctx.user!.orgId,
             email: email,
             name: email.split('@')[0],
@@ -84,6 +84,7 @@ export const teamRouter = router({
     .input(z.object({
       userId: z.string().uuid(),
       role: z.enum(['owner', 'admin', 'member', 'viewer']),
+      customRoleId: z.string().uuid().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
@@ -92,8 +93,8 @@ export const teamRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot change your own role' });
       }
 
-      const [updated] = await db.update(users)
-        .set({ role: input.role, tokenInvalidatedAt: new Date(), updatedAt: new Date() })
+      const [updated] = await ctx.db.update(users)
+        .set({ role: input.role, customRoleId: input.customRoleId !== undefined ? input.customRoleId : null, tokenInvalidatedAt: new Date(), updatedAt: new Date() })
         .where(and(eq(users.id, input.userId), eq(users.organizationId, ctx.user!.orgId)))
         .returning();
 
@@ -116,7 +117,7 @@ export const teamRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot change your own permissions' });
       }
 
-      const [updated] = await db.update(users)
+      const [updated] = await ctx.db.update(users)
         .set({ permissions: input.permissions, tokenInvalidatedAt: new Date(), updatedAt: new Date() })
         .where(and(eq(users.id, input.userId), eq(users.organizationId, ctx.user!.orgId)))
         .returning();
@@ -138,7 +139,7 @@ export const teamRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot remove yourself' });
       }
 
-      const [removed] = await db.update(users)
+      const [removed] = await ctx.db.update(users)
         .set({ organizationId: null, role: 'member', tokenInvalidatedAt: new Date() })
         .where(and(eq(users.id, input.userId), eq(users.organizationId, ctx.user!.orgId)))
         .returning();

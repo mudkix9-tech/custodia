@@ -26,8 +26,10 @@ import { apiKeysRouter } from "./routers/apiKeys.js";
 import { webhooksRouter } from "./routers/webhooks.js";
 import { onboardingRouter } from './routers/onboarding.js';
 import { groupRouter } from './routers/group.js';
+import { customRolesRouter } from './routers/customRoles.js';
 
 export const appRouter = router({
+  customRoles: customRolesRouter,
   onboarding: onboardingRouter,
   apiKeys: apiKeysRouter,
   webhooks: webhooksRouter,

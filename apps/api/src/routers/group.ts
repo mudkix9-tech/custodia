@@ -11,12 +11,12 @@ export const groupRouter = router({
       if (!ctx.user || !ctx.user.orgId) throw new TRPCError({ code: 'UNAUTHORIZED' });
 
       // Check if user is a group admin or if this org is a parent
-      const [currentUser] = await db.select().from(users).where(eq(users.id, ctx.user.id));
+      const [currentUser] = await ctx.db.select().from(users).where(eq(users.id, ctx.user.id));
       if (currentUser?.organizationGroupRole !== 'group_admin') {
          throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a group admin' });
       }
 
-      const childOrgs = await db.select().from(organizations)
+      const childOrgs = await ctx.db.select().from(organizations)
         .where(or(
             eq(organizations.parentOrganizationId, ctx.user.orgId),
             eq(organizations.id, ctx.user.orgId) // Include the parent org itself

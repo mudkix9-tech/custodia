@@ -48,6 +48,12 @@ export const organizations = pgTable('organizations', {
   // Multi-entity fields
   parentOrganizationId: uuid('parent_organization_id').references((): any => organizations.id), // self-referencing, added in constraints or relations
 
+  dataRegion: varchar('data_region', { length: 50 }).default('eu-west-1'),
+  dedicatedDatabaseHost: varchar('dedicated_database_host', { length: 500 }),
+  dedicatedDatabaseStatus: varchar('dedicated_database_status', { length: 50 }),
+  dedicatedDatabaseProvisionedAt: timestamp('dedicated_database_provisioned_at', { withTimezone: true }),
+
+
 
   
   complianceScore: integer('compliance_score').default(0),
@@ -86,6 +92,18 @@ export const organizations = pgTable('organizations', {
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
 });
 
+
+export const customRoles = pgTable('custom_roles', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  permissions: jsonb('permissions').default({}),
+  isDefault: boolean('is_default').default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id),
@@ -102,6 +120,7 @@ export const users = pgTable('users', {
   mfaEnabled: boolean('mfa_enabled').default(false),
   mfaSecret: varchar('mfa_secret', { length: 255 }),
   
+  customRoleId: uuid('custom_role_id').references(() => customRoles.id, { onDelete: 'set null' }),
   role: varchar('role', { length: 50 }).notNull().default('member'),
   organizationGroupRole: varchar('organization_group_role', { length: 50 }), // e.g. group_admin
   permissions: jsonb('permissions').default([]),

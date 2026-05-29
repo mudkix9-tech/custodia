@@ -9,7 +9,7 @@ export const apiKeysRouter = router({
   list: protectedProcedure
     .use(requireRole("admin"))
     .query(async ({ ctx }) => {
-      const keys = await db.query.apiKeys.findMany({
+      const keys = await ctx.db.query.apiKeys.findMany({
         where: eq(schema.apiKeys.organizationId, ctx.user!.orgId),
         orderBy: desc(schema.apiKeys.createdAt),
       });
@@ -30,7 +30,7 @@ export const apiKeysRouter = router({
       const hash = createHash('sha256').update(fullKey).digest('hex');
       const prefix = `pvr_live_${random.substring(0, 8)}`;
 
-      const [newKey] = await db.insert(schema.apiKeys).values({
+      const [newKey] = await ctx.db.insert(schema.apiKeys).values({
         organizationId: ctx.user!.orgId,
         name: input.name,
         keyHash: hash,
@@ -51,7 +51,7 @@ export const apiKeysRouter = router({
     .use(requireRole("admin"))
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await db.update(schema.apiKeys)
+      await ctx.db.update(schema.apiKeys)
         .set({
           revokedAt: new Date(),
           revokedBy: ctx.user!.id,

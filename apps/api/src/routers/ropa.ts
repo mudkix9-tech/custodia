@@ -43,7 +43,7 @@ export const ropaRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const activity = await db.query.processingActivities.findFirst({
+      const activity = await ctx.db.query.processingActivities.findFirst({
         where: and(
           eq(processingActivities.id, input.id),
           eq(processingActivities.organizationId, ctx.user!.orgId)
@@ -73,7 +73,7 @@ export const ropaRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       
-      const [newActivity] = await db.insert(processingActivities).values({
+      const [newActivity] = await ctx.db.insert(processingActivities).values({
         organizationId: ctx.user!.orgId,
         name: sanitize(input.name)!,
         purpose: sanitize(input.purpose)!,
@@ -112,7 +112,7 @@ export const ropaRouter = router({
         createdBy: ctx.user!.id,
       }));
 
-      const newActivities = await db.insert(processingActivities).values(values).returning();
+      const newActivities = await ctx.db.insert(processingActivities).values(values).returning();
 
 
 
@@ -129,7 +129,7 @@ export const ropaRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       
-      const activity = await db.query.processingActivities.findFirst({
+      const activity = await ctx.db.query.processingActivities.findFirst({
         where: and(
           eq(processingActivities.id, input.id),
           eq(processingActivities.organizationId, ctx.user!.orgId)
@@ -151,7 +151,7 @@ export const ropaRouter = router({
       if (sanitizedData.purpose) sanitizedData.purpose = sanitize(sanitizedData.purpose);
       if (sanitizedData.description) sanitizedData.description = sanitize(sanitizedData.description);
 
-      const [updated] = await db.update(processingActivities)
+      const [updated] = await ctx.db.update(processingActivities)
         .set({ ...sanitizedData, updatedAt: new Date() })
         .where(eq(processingActivities.id, input.id))
         .returning();
@@ -169,7 +169,7 @@ export const ropaRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       
-      const [deleted] = await db.update(processingActivities)
+      const [deleted] = await ctx.db.update(processingActivities)
         .set({ deletedAt: new Date() })
         .where(and(
           eq(processingActivities.id, input.id),
@@ -191,7 +191,7 @@ export const ropaRouter = router({
         checkOrgContext(ctx.user);
         
         // We can just use standard filtering on resourceId
-        const logs = await db.select().from(auditLogs)
+        const logs = await ctx.db.select().from(auditLogs)
           .where(and(
             eq(auditLogs.organizationId, ctx.user!.orgId),
             eq(auditLogs.resourceId, input.activityId)
@@ -207,7 +207,7 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ processingActivityId: z.string().uuid() }))
       .query(async ({ input }) => {
-        return db.select().from(processingDataCategories)
+        return ctx.db.select().from(processingDataCategories)
           .where(eq(processingDataCategories.processingActivityId, input.processingActivityId));
       }),
     create: protectedProcedure
@@ -221,12 +221,12 @@ export const ropaRouter = router({
         retentionPeriod: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const [inserted] = await db.insert(processingDataCategories).values(input).returning();
+        const [inserted] = await ctx.db.insert(processingDataCategories).values(input).returning();
 
         if (inserted?.isSpecialCategory) {
-          const [activity] = await db.select().from(processingActivities).where(eq(processingActivities.id, input.processingActivityId));
+          const [activity] = await ctx.db.select().from(processingActivities).where(eq(processingActivities.id, input.processingActivityId));
 
-          await db.update(processingActivities)
+          await ctx.db.update(processingActivities)
             .set({
               requiresDpia: true,
               involvesSpecialCategories: true,
@@ -254,17 +254,17 @@ export const ropaRouter = router({
         data: z.record(z.any())
       }))
       .mutation(async ({ ctx, input }) => {
-        const [existing] = await db.select().from(processingDataCategories).where(eq(processingDataCategories.id, input.id));
+        const [existing] = await ctx.db.select().from(processingDataCategories).where(eq(processingDataCategories.id, input.id));
         if (!existing) throw new TRPCError({ code: 'NOT_FOUND' });
 
-        const [updated] = await db.update(processingDataCategories)
+        const [updated] = await ctx.db.update(processingDataCategories)
           .set(input.data)
           .where(eq(processingDataCategories.id, input.id))
           .returning();
 
         if (updated?.isSpecialCategory && !existing.isSpecialCategory) {
-          const [activity] = await db.select().from(processingActivities).where(eq(processingActivities.id, updated.processingActivityId));
-          await db.update(processingActivities)
+          const [activity] = await ctx.db.select().from(processingActivities).where(eq(processingActivities.id, updated.processingActivityId));
+          await ctx.db.update(processingActivities)
             .set({
               requiresDpia: true,
               involvesSpecialCategories: true,
@@ -284,7 +284,7 @@ export const ropaRouter = router({
           }
         } else if (!updated?.isSpecialCategory && existing.isSpecialCategory && updated) {
           // Check if there are any other special categories remaining
-          const remainingSpecial = await db.select().from(processingDataCategories)
+          const remainingSpecial = await ctx.db.select().from(processingDataCategories)
             .where(and(
               eq(processingDataCategories.processingActivityId, updated.processingActivityId),
               eq(processingDataCategories.isSpecialCategory, true),
@@ -292,7 +292,7 @@ export const ropaRouter = router({
             ));
 
           if (remainingSpecial.length === 0) {
-            await db.update(processingActivities)
+            await ctx.db.update(processingActivities)
               .set({
                 requiresDpia: false,
                 involvesSpecialCategories: false,
@@ -308,15 +308,15 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ input }) => {
-        const [existing] = await db.select().from(processingDataCategories).where(eq(processingDataCategories.id, input.id));
+        const [existing] = await ctx.db.select().from(processingDataCategories).where(eq(processingDataCategories.id, input.id));
         if (!existing) throw new TRPCError({ code: 'NOT_FOUND' });
 
-        const [deleted] = await db.delete(processingDataCategories)
+        const [deleted] = await ctx.db.delete(processingDataCategories)
           .where(eq(processingDataCategories.id, input.id))
           .returning();
 
         if (existing.isSpecialCategory) {
-          const remainingSpecial = await db.select().from(processingDataCategories)
+          const remainingSpecial = await ctx.db.select().from(processingDataCategories)
             .where(and(
               eq(processingDataCategories.processingActivityId, existing.processingActivityId),
               eq(processingDataCategories.isSpecialCategory, true),
@@ -324,7 +324,7 @@ export const ropaRouter = router({
             ));
 
           if (remainingSpecial.length === 0) {
-            await db.update(processingActivities)
+            await ctx.db.update(processingActivities)
               .set({
                 requiresDpia: false,
                 involvesSpecialCategories: false,
@@ -343,7 +343,7 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ processingActivityId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
-        const records = await db.select({
+        const records = await ctx.db.select({
           recipient: processingRecipients,
           vendor: {
             id: vendors.id,
@@ -380,14 +380,14 @@ export const ropaRouter = router({
         vendorId: z.string().uuid().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const [inserted] = await db.insert(processingRecipients).values({
+        const [inserted] = await ctx.db.insert(processingRecipients).values({
           ...input,
         }).returning();
 
         // Auto-create transfer if vendor is outside EU and no EU hosting
         if (input.vendorId) {
-          const [vendor] = await db.select().from(vendors).where(eq(vendors.id, input.vendorId));
-          const [orgVendor] = await db.select().from(organizationVendors).where(and(eq(organizationVendors.vendorId, input.vendorId), eq(organizationVendors.organizationId, ctx.user!.orgId)));
+          const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
+          const [orgVendor] = await ctx.db.select().from(organizationVendors).where(and(eq(organizationVendors.vendorId, input.vendorId), eq(organizationVendors.organizationId, ctx.user!.orgId)));
           
           const EU_COUNTRIES = ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
           const hq = vendor?.headquartersCountry;
@@ -396,13 +396,13 @@ export const ropaRouter = router({
 
           if (!isEuHq && !hasEuHosting && hq) {
             // It's a non-EU transfer, create draft transfer
-            const [existingTransfer] = await db.select().from(processingTransfers).where(and(
+            const [existingTransfer] = await ctx.db.select().from(processingTransfers).where(and(
               eq(processingTransfers.processingActivityId, input.processingActivityId),
               eq(processingTransfers.vendorId, input.vendorId)
             ));
 
             if (!existingTransfer) {
-              await db.insert(processingTransfers).values({
+              await ctx.db.insert(processingTransfers).values({
                 processingActivityId: input.processingActivityId,
                 destinationCountry: hq.substring(0, 2),
                 destinationEntity: vendor.name,
@@ -422,7 +422,7 @@ export const ropaRouter = router({
         data: z.record(z.any())
       }))
       .mutation(async ({ input }) => {
-        const [updated] = await db.update(processingRecipients)
+        const [updated] = await ctx.db.update(processingRecipients)
           .set(input.data)
           .where(eq(processingRecipients.id, input.id))
           .returning();
@@ -432,7 +432,7 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ input }) => {
-        const [deleted] = await db.delete(processingRecipients)
+        const [deleted] = await ctx.db.delete(processingRecipients)
           .where(eq(processingRecipients.id, input.id))
           .returning();
         return deleted;
@@ -444,7 +444,7 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ processingActivityId: z.string().uuid() }))
       .query(async ({ input }) => {
-        return db.select().from(processingTransfers)
+        return ctx.db.select().from(processingTransfers)
           .where(eq(processingTransfers.processingActivityId, input.processingActivityId));
       }),
     create: protectedProcedure
@@ -456,7 +456,7 @@ export const ropaRouter = router({
         safeguards: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        const [inserted] = await db.insert(processingTransfers).values({
+        const [inserted] = await ctx.db.insert(processingTransfers).values({
           ...input,
         }).returning();
         return inserted;
@@ -468,7 +468,7 @@ export const ropaRouter = router({
         data: z.record(z.any())
       }))
       .mutation(async ({ input }) => {
-        const [updated] = await db.update(processingTransfers)
+        const [updated] = await ctx.db.update(processingTransfers)
           .set(input.data)
           .where(eq(processingTransfers.id, input.id))
           .returning();
@@ -478,7 +478,7 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ input }) => {
-        const [deleted] = await db.delete(processingTransfers)
+        const [deleted] = await ctx.db.delete(processingTransfers)
           .where(eq(processingTransfers.id, input.id))
           .returning();
         return deleted;

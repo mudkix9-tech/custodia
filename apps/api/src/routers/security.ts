@@ -21,7 +21,7 @@ export const securityRouter = router({
       newPassword: z.string().min(8),
     }))
     .mutation(async ({ ctx, input }) => {
-      const user = await db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
+      const user = await ctx.db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
       if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
 
       // Verifying current password
@@ -34,19 +34,19 @@ export const securityRouter = router({
 
       const newHash = await argon2.hash(input.newPassword);
 
-      const [updated] = await db.update(users)
+      const [updated] = await ctx.db.update(users)
         .set({ passwordHash: newHash, tokenInvalidatedAt: new Date() })
         .where(eq(users.id, ctx.user!.id))
         .returning();
 
-      await db.delete(activeSessions).where(eq(activeSessions.userId, ctx.user!.id));
+      await ctx.db.delete(activeSessions).where(eq(activeSessions.userId, ctx.user!.id));
 
       return { success: true };
     }),
 
   enableMfa: protectedProcedure
     .mutation(async ({ ctx }) => {
-      const user = await db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
+      const user = await ctx.db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
       if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
       if (user.mfaEnabled) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'MFA is already enabled' });
@@ -57,7 +57,7 @@ export const securityRouter = router({
       const qrCodeUrl = await QRCode.toDataURL(uri);
 
       const encryptedSecret = encrypt(secret);
-      await db.update(users).set({ mfaSecret: encryptedSecret }).where(eq(users.id, user.id));
+      await ctx.db.update(users).set({ mfaSecret: encryptedSecret }).where(eq(users.id, user.id));
 
       return { qrCodeUrl, secret };
     }),
@@ -67,7 +67,7 @@ export const securityRouter = router({
         token: z.string().length(6)
     }))
     .mutation(async ({ ctx, input }) => {
-      const user = await db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
+      const user = await ctx.db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
       if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
       if (!user.mfaSecret) throw new TRPCError({ code: 'BAD_REQUEST', message: 'MFA setup not initiated' });
 
@@ -78,22 +78,22 @@ export const securityRouter = router({
           throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid MFA token' });
       }
 
-      await db.update(users).set({ mfaEnabled: true }).where(eq(users.id, user.id));
+      await ctx.db.update(users).set({ mfaEnabled: true }).where(eq(users.id, user.id));
       return { success: true };
     }),
 
   disableMfa: protectedProcedure
     .mutation(async ({ ctx }) => {
-      const user = await db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
+      const user = await ctx.db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
       if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
 
-      await db.update(users).set({ mfaEnabled: false, mfaSecret: null }).where(eq(users.id, user.id));
+      await ctx.db.update(users).set({ mfaEnabled: false, mfaSecret: null }).where(eq(users.id, user.id));
       return { success: true };
     }),
 
   listSessions: protectedProcedure
     .query(async ({ ctx }) => {
-      return db.select().from(activeSessions).where(eq(activeSessions.userId, ctx.user!.id));
+      return ctx.db.select().from(activeSessions).where(eq(activeSessions.userId, ctx.user!.id));
     }),
 
   revokeSession: protectedProcedure
@@ -101,7 +101,7 @@ export const securityRouter = router({
       sessionId: z.string().uuid(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const [revoked] = await db.delete(activeSessions)
+      const [revoked] = await ctx.db.delete(activeSessions)
         .where(and(eq(activeSessions.id, input.sessionId), eq(activeSessions.userId, ctx.user!.id)))
         .returning();
       return { success: !!revoked };
@@ -113,9 +113,9 @@ export const securityRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       if (input.currentSessionId) {
-          await db.delete(activeSessions).where(and(eq(activeSessions.userId, ctx.user!.id), ne(activeSessions.id, input.currentSessionId)));
+          await ctx.db.delete(activeSessions).where(and(eq(activeSessions.userId, ctx.user!.id), ne(activeSessions.id, input.currentSessionId)));
       } else {
-          await db.delete(activeSessions).where(eq(activeSessions.userId, ctx.user!.id));
+          await ctx.db.delete(activeSessions).where(eq(activeSessions.userId, ctx.user!.id));
       }
       return { success: true };
     }),

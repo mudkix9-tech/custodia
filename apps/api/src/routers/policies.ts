@@ -19,12 +19,12 @@ const checkOrgContext = (user: any) => {
 
 // Policy Generation Template Engine
 export async function generatePolicyMarkdown(orgId: string, previousMarkdown?: string) {
-  const [org] = await db.select().from(organizations).where(eq(organizations.id, orgId));
+  const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, orgId));
   if (!org) return { markdown: '', diffs: null, hasChanges: false };
   
   // Fetch ROPA data
-  const activities = await db.select().from(processingActivities).where(eq(processingActivities.organizationId, orgId));
-  const orgVends = await db.select({
+  const activities = await ctx.db.select().from(processingActivities).where(eq(processingActivities.organizationId, orgId));
+  const orgVends = await ctx.db.select({
     orgVendor: organizationVendors,
     vendor: vendors
   }).from(organizationVendors)
@@ -126,10 +126,10 @@ export const policiesRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [policy] = await db.select().from(privacyPolicies).where(eq(privacyPolicies.id, input.id));
+      const [policy] = await ctx.db.select().from(privacyPolicies).where(eq(privacyPolicies.id, input.id));
       if (!policy) return null;
       
-      const versions = await db.select().from(policyVersions)
+      const versions = await ctx.db.select().from(policyVersions)
         .where(eq(policyVersions.policyId, policy!.id))
         .orderBy(desc(policyVersions.versionNumber));
         
@@ -141,7 +141,7 @@ export const policiesRouter = router({
     .input(z.object({ name: z.string(), type: z.string() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [policy] = await db.insert(privacyPolicies).values({
+      const [policy] = await ctx.db.insert(privacyPolicies).values({
         organizationId: ctx.user!.orgId,
         name: input.name,
         type: input.type,
@@ -155,16 +155,16 @@ export const policiesRouter = router({
     .input(z.object({ policyId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [policy] = await db.select().from(privacyPolicies).where(eq(privacyPolicies.id, input.policyId));
+      const [policy] = await ctx.db.select().from(privacyPolicies).where(eq(privacyPolicies.id, input.policyId));
       if (!policy) throw new TRPCError({ code: 'NOT_FOUND', message: 'Policy not found' });
       
       const [currentVersion] = policy.currentVersionId 
-        ? await db.select().from(policyVersions).where(eq(policyVersions.id, policy.currentVersionId))
+        ? await ctx.db.select().from(policyVersions).where(eq(policyVersions.id, policy.currentVersionId))
         : [null];
 
       const { markdown, diffs } = await generatePolicyMarkdown(ctx.user!.orgId, currentVersion?.contentMarkdown);
       
-      const [newVersion] = await db.insert(policyVersions).values({
+      const [newVersion] = await ctx.db.insert(policyVersions).values({
         policyId: policy!.id,
         versionNumber: (currentVersion?.versionNumber || 0) + 1,
         contentMarkdown: markdown,
@@ -184,7 +184,7 @@ export const policiesRouter = router({
     .input(z.object({ policyId: z.string().uuid(), versionId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      await db.update(privacyPolicies)
+      await ctx.db.update(privacyPolicies)
         .set({ currentVersionId: input.versionId, publishedAt: new Date() })
         .where(eq(privacyPolicies.id, input.policyId));
       await dispatchWebhook(ctx.user!.orgId, 'policy.published', { policyId: input.policyId });

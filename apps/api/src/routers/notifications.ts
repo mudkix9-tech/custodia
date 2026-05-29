@@ -34,7 +34,7 @@ export const notificationsRouter = router({
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user?.orgId) throw new TRPCError({ code: 'FORBIDDEN' });
       
-      await db.update(notificationQueue)
+      await ctx.db.update(notificationQueue)
         .set({ status: 'delivered', deliveredAt: new Date() })
         .where(
           and(

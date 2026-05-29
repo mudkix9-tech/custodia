@@ -10,10 +10,57 @@ const checkOrgContext = (user: any) => {
 };
 
 export const settingsRouter = router({
+  getResidencyData: protectedProcedure.query(async ({ ctx }) => {
+    checkOrgContext(ctx.user);
+    const org = await db.query.organizations.findFirst({
+      where: eq(organizations.id, ctx.user!.orgId),
+      columns: {
+        dataRegion: true,
+        dedicatedDatabaseStatus: true,
+        dedicatedDatabaseProvisionedAt: true,
+      }
+    });
+    return org;
+  }),
+
+  updateResidency: protectedProcedure
+    .use(requireRole('admin'))
+    .input(z.object({
+      region: z.string()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      checkOrgContext(ctx.user);
+
+      const org = await db.query.organizations.findFirst({
+        where: eq(organizations.id, ctx.user!.orgId)
+      });
+
+      if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (org.subscriptionTier !== 'enterprise') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Enterprise plan required' });
+      }
+
+      await db.update(organizations)
+        .set({
+          dataRegion: input.region,
+          dedicatedDatabaseStatus: 'provisioning'
+        })
+        .where(eq(organizations.id, ctx.user!.orgId));
+
+      // Trigger provisioning worker
+      const { residencyProvisioningQueue } = await import('../workers/residencyProvisioner.js');
+      await residencyProvisioningQueue.add('provision', {
+        orgId: org.id,
+        region: input.region,
+        orgSlug: org.slug
+      });
+
+      return { success: true };
+    }),
   getOrgSettings: protectedProcedure
     .query(async ({ ctx }) => {
       checkOrgContext(ctx.user);
-      const [org] = await db.select().from(organizations).where(eq(organizations.id, ctx.user!.orgId));
+      const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, ctx.user!.orgId));
       if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
       return org;
     }),
@@ -46,7 +93,7 @@ export const settingsRouter = router({
       if (updateData.countryCode === '') updateData.countryCode = undefined; // Assuming DB schema handles it or allows it
       if (updateData.dpoEmail === '') updateData.dpoEmail = null;
 
-      const [updated] = await db.update(organizations)
+      const [updated] = await ctx.db.update(organizations)
         .set({
             ...updateData,
             updatedAt: new Date(),
@@ -59,7 +106,7 @@ export const settingsRouter = router({
 
   getUserSettings: protectedProcedure
     .query(async ({ ctx }) => {
-      const [user] = await db.select().from(users).where(eq(users.id, ctx.user!.id));
+      const [user] = await ctx.db.select().from(users).where(eq(users.id, ctx.user!.id));
       if (!user) throw new TRPCError({ code: 'NOT_FOUND' });
       return user;
     }),
@@ -74,7 +121,7 @@ export const settingsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const updateData: any = { ...input };
 
-      const [updated] = await db.update(users)
+      const [updated] = await ctx.db.update(users)
         .set(updateData)
         .where(eq(users.id, ctx.user!.id))
         .returning();
