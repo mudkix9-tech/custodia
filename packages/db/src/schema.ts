@@ -86,6 +86,12 @@ export const organizations = pgTable('organizations', {
   // Notifications
   slackWebhookUrl: varchar('slack_webhook_url', { length: 500 }),
   notificationPreferences: jsonb('notification_preferences').default({}),
+
+  // SIEM Settings
+  siemEnabled: boolean('siem_enabled').default(false),
+  siemEndpointUrl: varchar('siem_endpoint_url', { length: 1024 }),
+  siemFormat: varchar('siem_format', { length: 20 }).default('json'),
+  siemAuthHeader: text('siem_auth_header'),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),

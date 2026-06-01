@@ -15,7 +15,7 @@ import {
   generateDescription, 
   fetchResourceBeforeState 
 } from './utils/auditLogger.js';
-import { auditLogs } from 'db';
+import { auditLogs, notificationQueue, organizations } from 'db';
 
 export interface Context {
   req: FastifyRequest;
@@ -226,11 +226,11 @@ const auditLogMiddleware = t.middleware(async ({ ctx, type, path, getRawInput, n
       // Better yet, just fetch it.
       const [u] = await db.select({ email: users.email }).from(users).where(eq(users.id, ctx.user!.id));
 
-      await db.insert(auditLogs).values({
+      const auditLogEntry = {
         organizationId: ctx.user!.orgId,
         userId: ctx.user!.id,
         userEmail: u?.email || 'unknown',
-        ipAddress: ctx.req.ip,
+        ipAddress: ctx.req.ip as string,
         userAgent: ctx.req.headers['user-agent'] || null,
         action: path,
         resourceType: extractResourceType(path),
@@ -238,7 +238,23 @@ const auditLogMiddleware = t.middleware(async ({ ctx, type, path, getRawInput, n
         description: generateDescription(path, rawInput),
         changes: changes,
         metadata: sanitizeForAuditLog(rawInput),
-      });
+      };
+
+      const [insertedAuditLog] = await db.insert(auditLogs).values(auditLogEntry).returning();
+
+      // Check if org has SIEM enabled
+      const [org] = await db.select({ siemEnabled: organizations.siemEnabled }).from(organizations).where(eq(organizations.id, ctx.user!.orgId));
+
+      if (org?.siemEnabled) {
+        await db.insert(notificationQueue).values({
+          organizationId: ctx.user!.orgId,
+          type: 'audit.log',
+          channel: 'siem',
+          title: 'Audit Log Entry',
+          body: 'SIEM integration payload',
+          payload: insertedAuditLog,
+        });
+      }
     } catch (error) {
       console.error('Audit log insertion failed:', error);
       // In a real app we might use Sentry here
