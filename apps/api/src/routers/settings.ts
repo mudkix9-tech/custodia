@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { router, protectedProcedure } from '../trpc.js';
+import { router, protectedProcedure, requireRole } from '../trpc.js';
 import { db } from '../db.js';
-import { organizations, users } from 'db';
-import { eq } from 'drizzle-orm';
+import { organizations, users, notificationQueue } from 'db';
+import { eq, and, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
 const checkOrgContext = (user: any) => {
@@ -63,6 +63,126 @@ export const settingsRouter = router({
       const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, ctx.user!.orgId));
       if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
       return org;
+    }),
+
+  getSiemSettings: protectedProcedure
+    .use(requireRole('admin'))
+    .query(async ({ ctx }) => {
+      checkOrgContext(ctx.user);
+      const [org] = await ctx.db.select({
+        siemEnabled: organizations.siemEnabled,
+        siemEndpointUrl: organizations.siemEndpointUrl,
+        siemFormat: organizations.siemFormat,
+        siemAuthHeader: organizations.siemAuthHeader,
+      }).from(organizations).where(eq(organizations.id, ctx.user!.orgId));
+      if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      // Fetch last delivery status from notificationQueue for SIEM
+      const [lastDelivery] = await ctx.db.select({
+        status: notificationQueue.status,
+        lastAttemptAt: notificationQueue.lastAttemptAt,
+        error: notificationQueue.error,
+      })
+      .from(notificationQueue)
+      .where(and(
+        eq(notificationQueue.organizationId, ctx.user!.orgId),
+        eq(notificationQueue.channel, 'siem')
+      ))
+      .orderBy(desc(notificationQueue.createdAt))
+      .limit(1);
+
+      return {
+        ...org,
+        deliveryStatus: lastDelivery ? lastDelivery : null,
+      };
+    }),
+
+  updateSiemSettings: protectedProcedure
+    .use(requireRole('admin'))
+    .input(z.object({
+      siemEnabled: z.boolean(),
+      siemEndpointUrl: z.string().optional().nullable(),
+      siemFormat: z.string().optional().nullable(),
+      siemAuthHeader: z.string().optional().nullable(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      checkOrgContext(ctx.user);
+
+      const [updated] = await ctx.db.update(organizations)
+        .set({
+          siemEnabled: input.siemEnabled,
+          siemEndpointUrl: input.siemEndpointUrl,
+          siemFormat: input.siemFormat,
+          siemAuthHeader: input.siemAuthHeader,
+          updatedAt: new Date(),
+        })
+        .where(eq(organizations.id, ctx.user!.orgId))
+        .returning({
+          siemEnabled: organizations.siemEnabled,
+          siemEndpointUrl: organizations.siemEndpointUrl,
+          siemFormat: organizations.siemFormat,
+          siemAuthHeader: organizations.siemAuthHeader,
+        });
+
+      return updated;
+    }),
+
+  testSiemConnection: protectedProcedure
+    .use(requireRole('admin'))
+    .mutation(async ({ ctx }) => {
+      checkOrgContext(ctx.user);
+
+      const [org] = await ctx.db.select({
+        siemEnabled: organizations.siemEnabled,
+        siemEndpointUrl: organizations.siemEndpointUrl,
+        siemFormat: organizations.siemFormat,
+        siemAuthHeader: organizations.siemAuthHeader,
+      }).from(organizations).where(eq(organizations.id, ctx.user!.orgId));
+
+      if (!org || !org.siemEndpointUrl) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'SIEM is not configured or missing endpoint URL.' });
+      }
+
+      // Generate a mock audit log payload for the test
+      const testPayload = {
+        createdAt: new Date().toISOString(),
+        organizationId: ctx.user!.orgId,
+        userId: ctx.user!.id,
+        userEmail: 'test@example.com',
+        ipAddress: ctx.req.ip,
+        action: 'system.test',
+        resourceType: 'system',
+        resourceId: 'test-123',
+        description: 'Test SIEM connection',
+        changes: null,
+      };
+
+      const { formatSiemPayload } = await import('../lib/siemFormatters.js');
+      const formattedPayload = formatSiemPayload(org.siemFormat || 'json', testPayload);
+
+      const headers: Record<string, string> = {
+        'Content-Type': org.siemFormat === 'json' ? 'application/json' : 'text/plain',
+      };
+
+      if (org.siemAuthHeader) {
+        headers['Authorization'] = org.siemAuthHeader;
+      }
+
+      try {
+        const response = await fetch(org.siemEndpointUrl, {
+          method: 'POST',
+          headers,
+          body: formattedPayload,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Endpoint returned status ${response.status}`);
+        }
+
+        return { success: true, message: 'Test connection successful' };
+      } catch (error: any) {
+        return { success: false, message: error.message };
+      }
     }),
 
   updateOrgSettings: protectedProcedure

@@ -46,6 +46,7 @@ import {
   DataExportReady,
 
   } from 'emails';
+import { formatSiemPayload } from '../lib/siemFormatters.js';
 
 const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
 export const notificationsJobQueue = new Queue('notifications', { connection });
@@ -272,6 +273,46 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
 
     if (!response.ok) throw new Error(`Webhook returned ${response.status}`);
     
+    await db.update(notificationQueue)
+      .set({ status: 'sent', sentAt: new Date() })
+      .where(eq(notificationQueue.id, notification.id));
+  },
+
+  siem: async (notification) => {
+    const [org] = await db.select().from(organizations).where(eq(organizations.id, notification.organizationId));
+    if (!org) {
+      await db.update(notificationQueue)
+        .set({ status: 'skipped', error: 'Organization not found' })
+        .where(eq(notificationQueue.id, notification.id));
+      return;
+    }
+
+    if (!org.siemEnabled || !org.siemEndpointUrl) {
+      await db.update(notificationQueue)
+        .set({ status: 'skipped', error: 'SIEM not enabled or configured' })
+        .where(eq(notificationQueue.id, notification.id));
+      return;
+    }
+
+    const payloadObj = typeof notification.payload === 'string' ? JSON.parse(notification.payload) : notification.payload || {};
+    const formattedPayload = formatSiemPayload(org.siemFormat || 'json', payloadObj);
+
+    const headers: Record<string, string> = {
+      'Content-Type': org.siemFormat === 'json' ? 'application/json' : 'text/plain',
+    };
+
+    if (org.siemAuthHeader) {
+      headers['Authorization'] = org.siemAuthHeader;
+    }
+
+    const response = await fetch(org.siemEndpointUrl, {
+      method: 'POST',
+      headers,
+      body: formattedPayload,
+    });
+
+    if (!response.ok) throw new Error(`SIEM returned ${response.status}`);
+
     await db.update(notificationQueue)
       .set({ status: 'sent', sentAt: new Date() })
       .where(eq(notificationQueue.id, notification.id));
