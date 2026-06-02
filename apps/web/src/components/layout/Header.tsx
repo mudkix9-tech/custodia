@@ -11,7 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 export function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const { data: notificationsResp, refetch } = trpc.notifications.listInApp.useQuery({ limit: 50 }, {
+  const { data: notificationsResp } = trpc.notifications.listInApp.useQuery({ limit: 50 }, {
     refetchInterval: 30000 // Poll every 30s
   });
   const notifications = notificationsResp?.data || [];
@@ -23,10 +23,10 @@ export function Header() {
       if (previousData) {
         utils.notifications.listInApp.setData({ limit: 50 }, {
           ...previousData,
-          data: previousData.data.map((n: any) =>
+          data: previousData.data.map((n: { id: string, status: string }) =>
             ids.includes(n.id) ? { ...n, status: 'read' } : n
           )
-        } as any);
+        } as unknown as { data: { id: string, status: string }[], nextCursor?: string });
       }
       return { previousData };
     },
@@ -39,10 +39,12 @@ export function Header() {
       utils.notifications.listInApp.invalidate();
     }
   });
-  const unreadCount = notifications.filter((n: any) => n.status === 'pending').length;
+  const unreadCount = notifications.filter((n: { status: string }) => n.status === 'pending').length;
+
+  const { data: orgSettings } = trpc.settings.getOrgSettings.useQuery();
 
   const handleMarkAllRead = () => {
-    const unreadIds = notifications.filter((n: any) => n.status === 'pending').map((n: any) => n.id);
+    const unreadIds = notifications.filter((n: { status: string, id: string }) => n.status === 'pending').map((n: { id: string }) => n.id);
     if (unreadIds.length > 0) {
       markReadMutation.mutate({ ids: unreadIds });
     }
@@ -78,6 +80,16 @@ export function Header() {
           <Search size={20} />
         </button>
 
+        {/* Priority Support */}
+        {orgSettings?.subscriptionTier === 'enterprise' && (
+          <Link
+            href="/support"
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-sage-50 text-sage-700 hover:bg-sage-100 rounded-lg text-sm font-medium transition-colors border border-sage-200"
+          >
+            <span>Priority Support</span>
+          </Link>
+        )}
+
         {/* Notification Center */}
         <div className="relative">
           <button 
@@ -104,7 +116,7 @@ export function Header() {
                   )}
                 </div>
                 <div className="max-h-[300px] overflow-y-auto">
-                  {notifications.map((notification: any) => {
+                  {notifications.map((notification: { id: string, status: string, createdAt: string, actionUrl?: string, title: string, body?: string }) => {
                     const isUnread = notification.status === 'pending';
                     const timeAgo = notification.createdAt ? formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true }) : '';
                     
