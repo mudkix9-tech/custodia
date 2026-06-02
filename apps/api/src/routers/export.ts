@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { dataExportQueue } from '../lib/queue.js';
 import { renderHtmlToPdf } from '../lib/browserPool.js';
+import { generateExecutiveReportHtml, ExecutiveReportData } from '../lib/auditTemplates/executiveReport.js';
 
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
@@ -135,5 +136,75 @@ export const exportRouter = router({
       });
 
       return { success: true, message: 'Audit export queued' };
+    }),
+
+  generateExecutiveReport: protectedProcedure
+    .use(requirePermission('assessments', 'view'))
+    .mutation(async ({ ctx }) => {
+      checkOrgContext(ctx.user);
+
+      // Fetch org details
+      const org = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, ctx.user!.orgId)
+      });
+
+      // Gather mock data for the executive report
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const currentMonth = new Date().getMonth();
+      const trendData = [];
+      let baseScore = 60;
+      for (let i = 0; i < 6; i++) {
+        const monthIndex = (currentMonth - 5 + i + 12) % 12;
+        trendData.push({
+          month: months[monthIndex],
+          score: Math.min(100, Math.max(0, baseScore + Math.floor(Math.random() * 10 - 2)))
+        });
+        baseScore = trendData[trendData.length - 1].score + 2;
+      }
+
+      const reportData: ExecutiveReportData = {
+        organizationName: org?.name || 'Organization',
+        reportDate: new Date().toLocaleDateString(),
+        overallScore: trendData[trendData.length - 1].score, // Use latest score
+        industryAverage: 58,
+        topQuartile: 85,
+        trendData,
+        topRisks: [
+          'High number of unresolved gaps in vendor assessments',
+          'Delay in completing employee privacy training',
+          'Missing data processing agreements for 2 key vendors'
+        ],
+        keyAchievements: [
+          'Successfully launched new Trust Portal',
+          'Completed annual DPIA for core product',
+          'Reduced average DSAR response time by 4 days'
+        ],
+        recommendedActions: [
+          'Prioritize vendor reassessments for critical suppliers',
+          'Schedule targeted training follow-ups for non-compliant departments',
+          'Review and update data retention policies for legacy systems'
+        ]
+      };
+
+      const htmlContent = generateExecutiveReportHtml(reportData);
+
+      try {
+        const pdfBuffer = await renderHtmlToPdf(htmlContent, {
+          margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
+          displayHeaderFooter: true,
+          headerTemplate: '<div></div>',
+          footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%; color: #78716c;">Privaro OS - Executive Summary Report</div>'
+        });
+
+        const base64Pdf = Buffer.from(pdfBuffer).toString('base64');
+        return {
+          success: true,
+          pdfData: base64Pdf,
+          filename: `executive_report_${org?.slug || 'export'}_${new Date().getTime()}.pdf`
+        };
+      } catch (err) {
+        console.error("Puppeteer PDF generation failed:", err);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to generate PDF' });
+      }
     }),
 });
