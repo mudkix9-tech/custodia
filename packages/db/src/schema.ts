@@ -13,9 +13,12 @@ import {
   vector,
   index,
   unique,
-  date
+  date,
+  pgEnum
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
+
+export const subscriptionTierEnum = pgEnum('subscription_tier', ['starter', 'professional', 'agency', 'enterprise']);
 
 // ============================================================================
 // CORE ENTITIES
@@ -71,7 +74,7 @@ export const organizations = pgTable('organizations', {
   paddleCustomerId: varchar('paddle_customer_id', { length: 255 }),
   deletionScheduledAt: timestamp('deletion_scheduled_at', { withTimezone: true }),
   paddleSubscriptionId: varchar('paddle_subscription_id', { length: 255 }),
-  subscriptionTier: varchar('subscription_tier', { length: 50 }).default('starter'),
+  subscriptionTier: subscriptionTierEnum('subscription_tier').default('starter'),
   subscriptionStatus: varchar('subscription_status', { length: 50 }).default('trialing'),
   
   // AI Rate Limiting

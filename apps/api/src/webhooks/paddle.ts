@@ -45,7 +45,7 @@ export async function paddleWebhookHandler(fastify: FastifyInstance) {
           const priceId = data.items[0]?.price?.id;
           
           // Map price ID to tier
-          let tier = 'starter';
+          let tier: 'starter' | 'professional' | 'agency' | 'enterprise' = 'starter';
           if (priceId === process.env.PADDLE_PROFESSIONAL_PRICE_ID) tier = 'professional';
           if (priceId === process.env.PADDLE_AGENCY_PRICE_ID) tier = 'agency';
           

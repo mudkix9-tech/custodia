@@ -9,6 +9,7 @@ const PRICING = [
   { name: 'Starter', price: '39', yearly: '31', desc: 'For small design agencies.', cta: 'Start 14-day free trial', href: '/signup', features: ['ROPA (20 activities)', 'Vendor tracker (30 tools)', 'Privacy policy generator', '2 Users'], popular: false },
   { name: 'Professional', price: '89', yearly: '71', desc: 'The complete OS for growing agencies.', cta: 'Start 14-day free trial', href: '/signup', features: ['Everything in Starter', 'DSAR management', 'Breach workflow & DPIA', 'Cookie consent (5 domains)', 'Employee training', 'Client dashboards (10 clients)', '10 Users'], popular: true },
   { name: 'Agency', price: '179', yearly: '143', desc: 'Unlimited scale for large operations.', cta: 'Start 14-day free trial', href: '/signup', features: ['Everything in Pro', 'Unlimited activities & vendors', 'Unlimited clients & domains', 'Unlimited users', 'API access & Audit file generator', 'Priority support'], popular: false },
+  { name: 'Enterprise', price: 'Custom', yearly: 'Custom', desc: 'For large organizations needing custom compliance controls.', cta: 'Contact us', href: '/enterprise', features: ['Everything in Agency', 'SSO & Custom Roles', 'Dedicated Database', 'SIEM Integration', 'Multi-entity support'], popular: false },
 ];
 
 const FAQS = [
@@ -45,7 +46,7 @@ export default function PricingPage() {
 
       {/* Pricing Cards */}
       <section className="max-w-7xl mx-auto px-6 mb-32">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {PRICING.map((plan, i) => (
             <div key={i} className={`relative bg-bone-50 rounded-2xl p-8 flex flex-col shadow-sm ${plan.popular ? 'border border-sage-500/50 ring-1 ring-sage-500/20' : 'hairline'}`}>
               {plan.popular && (
@@ -56,13 +57,13 @@ export default function PricingPage() {
               <h3 className="text-xl font-bold text-ink-900 mb-2">{plan.name}</h3>
               <p className="text-ink-500 text-sm mb-6 min-h-[40px]">{plan.desc}</p>
               <div className="mb-8 flex items-baseline gap-1">
-                <span className="text-5xl font-bold text-ink-900 tracking-tight">€{annualBilling ? plan.yearly : plan.price}</span>
-                <span className="text-ink-400 text-sm font-medium">/mo</span>
+                <span className="text-5xl font-bold text-ink-900 tracking-tight">{plan.price === 'Custom' ? '' : '€'}{annualBilling ? plan.yearly : plan.price}</span>
+                {plan.price !== 'Custom' && <span className="text-ink-400 text-sm font-medium">/mo</span>}
               </div>
               <Link href={plan.href} className={`w-full py-3 rounded-xl text-sm font-semibold transition-all mb-8 flex justify-center items-center ${plan.popular ? 'bg-sage-600 text-bone-50 hover:bg-sage-500 shadow-card' : 'bg-bone-100 text-ink-900 hover:bg-bone-200'}`}>
                 {plan.cta}
               </Link>
-              <div className="text-xs font-semibold uppercase tracking-widest text-ink-400 mb-4">What's included</div>
+              <div className="text-xs font-semibold uppercase tracking-widest text-ink-400 mb-4">What&apos;s included</div>
               <ul className="space-y-4 mt-auto">
                 {plan.features.map((feat, j) => (
                   <li key={j} className="flex items-start gap-3 text-sm text-ink-600">
@@ -83,25 +84,29 @@ export default function PricingPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr>
-                <th className="w-1/3 py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-ink-900 bg-bone-50/50 rounded-tl-2xl">Feature</th>
-                <th className="w-1/6 py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50">Free</th>
-                <th className="w-1/6 py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50">Starter</th>
-                <th className="w-1/6 py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-sage-700 bg-sage-50 border-x border-sage-500/20 rounded-t-xl">Professional</th>
-                <th className="w-1/6 py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50 rounded-tr-2xl">Agency</th>
+                <th className="w-[28%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-ink-900 bg-bone-50/50 rounded-tl-2xl">Feature</th>
+                <th className="w-[14%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50">Free</th>
+                <th className="w-[14%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50">Starter</th>
+                <th className="w-[14%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-sage-700 bg-sage-50 border-x border-sage-500/20 rounded-t-xl">Professional</th>
+                <th className="w-[14%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50">Agency</th>
+                <th className="w-[14%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50 rounded-tr-2xl">Enterprise</th>
               </tr>
             </thead>
             <tbody className="text-sm">
               {[
-                { name: 'Users', free: '1', starter: '2', pro: '10', agency: 'Unlimited' },
-                { name: 'Gap Assessment', free: true, starter: true, pro: true, agency: true },
-                { name: 'ROPA Activities', free: '-', starter: '20', pro: 'Unlimited', agency: 'Unlimited' },
-                { name: 'Vendor Tracker', free: '-', starter: '30 tools', pro: 'Unlimited', agency: 'Unlimited' },
-                { name: 'Privacy Policy Generator', free: '-', starter: true, pro: true, agency: true },
-                { name: 'Cookie Consent Domains', free: '-', starter: '-', pro: '5 domains', agency: 'Unlimited' },
-                { name: 'DSAR Management', free: '-', starter: '-', pro: true, agency: true },
-                { name: 'Breach Workflow', free: '-', starter: '-', pro: true, agency: true },
-                { name: 'Client Dashboards', free: '-', starter: '-', pro: '10 clients', agency: 'Unlimited' },
-                { name: 'API Access', free: '-', starter: '-', pro: '-', agency: true },
+                { name: 'Users', free: '1', starter: '2', pro: '10', agency: 'Unlimited', enterprise: 'Unlimited' },
+                { name: 'Gap Assessment', free: true, starter: true, pro: true, agency: true, enterprise: true },
+                { name: 'ROPA Activities', free: '-', starter: '20', pro: 'Unlimited', agency: 'Unlimited', enterprise: 'Unlimited' },
+                { name: 'Vendor Tracker', free: '-', starter: '30 tools', pro: 'Unlimited', agency: 'Unlimited', enterprise: 'Unlimited' },
+                { name: 'Privacy Policy Generator', free: '-', starter: true, pro: true, agency: true, enterprise: true },
+                { name: 'Cookie Consent Domains', free: '-', starter: '-', pro: '5 domains', agency: 'Unlimited', enterprise: 'Unlimited' },
+                { name: 'DSAR Management', free: '-', starter: '-', pro: true, agency: true, enterprise: true },
+                { name: 'Breach Workflow', free: '-', starter: '-', pro: true, agency: true, enterprise: true },
+                { name: 'Client Dashboards', free: '-', starter: '-', pro: '10 clients', agency: 'Unlimited', enterprise: 'Unlimited' },
+                { name: 'API Access', free: '-', starter: '-', pro: '-', agency: true, enterprise: true },
+                { name: 'SSO & Custom Roles', free: '-', starter: '-', pro: '-', agency: '-', enterprise: true },
+                { name: 'Dedicated Database', free: '-', starter: '-', pro: '-', agency: '-', enterprise: true },
+                { name: 'SIEM Integration', free: '-', starter: '-', pro: '-', agency: '-', enterprise: true },
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-bone-100/30 transition-colors">
                   <td className="py-4 px-6 border-b border-ink-900/5 text-ink-600 font-medium">{row.name}</td>
@@ -116,6 +121,9 @@ export default function PricingPage() {
                   </td>
                   <td className="py-4 px-6 border-b border-ink-900/5 text-center text-ink-500">
                     {typeof row.agency === 'boolean' ? (row.agency ? <Check className="w-4 h-4 mx-auto text-ink-400" /> : '-') : row.agency}
+                  </td>
+                  <td className="py-4 px-6 border-b border-ink-900/5 text-center text-ink-500">
+                    {typeof row.enterprise === 'boolean' ? (row.enterprise ? <Check className="w-4 h-4 mx-auto text-ink-400" /> : '-') : row.enterprise}
                   </td>
                 </tr>
               ))}
@@ -147,7 +155,7 @@ export default function PricingPage() {
            <div className="relative z-10">
               <ShieldCheck className="w-12 h-12 text-sage-600 mx-auto mb-6" />
               <h2 className="text-3xl font-serif text-ink-900 mb-4 tracking-tight">Start with a free assessment</h2>
-              <p className="text-ink-600 mb-8 max-w-lg mx-auto">See where you stand in 3 minutes. Upgrade when you're ready to fix the gaps.</p>
+              <p className="text-ink-600 mb-8 max-w-lg mx-auto">See where you stand in 3 minutes. Upgrade when you&apos;re ready to fix the gaps.</p>
               <Link href="/assessment" className="inline-flex bg-sage-700 hover:bg-sage-600 text-bone-50 text-base font-semibold py-3.5 px-8 rounded-xl transition-all items-center justify-center gap-2 shadow-card">
                  Take the assessment <ArrowRight className="w-4 h-4"/>
               </Link>
