@@ -17,7 +17,7 @@ import { format as csvFormat } from 'fast-csv';
 import { Upload } from '@aws-sdk/lib-storage';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { s3Client, S3_BUCKET } from '../lib/s3.js';
+import { getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
 import { sql } from 'drizzle-orm';
 
 export const auditRouter = router({
@@ -63,6 +63,13 @@ export const auditRouter = router({
       }
 
       const exportKey = `audit-exports/${ctx.user!.orgId}/${Date.now()}.${input.format}`;
+      
+      const org = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, ctx.user!.orgId)
+      });
+      const dataRegion = (org as any)?.dataRegion || 'eu-west-1';
+      const s3Client = getS3ClientForRegion(dataRegion);
+      const S3_BUCKET = getS3BucketForOrg(dataRegion);
 
       const passThrough = new PassThrough();
       let streamWriter: any = null;
