@@ -11,7 +11,7 @@ import { encrypt, decrypt } from '../lib/crypto.js';
 
 // The types package is weird. We can use the default export or the internal authenticator.
 // Usually `import { authenticator } from 'otplib'` works, but if there's an issue we fall back to TS any
-const authenticator = (otplib as any).authenticator || (otplib as any).default?.authenticator || require('otplib').authenticator;
+const authenticator = (otplib as any).authenticator || (otplib as any).default?.authenticator;
 
 
 export const securityRouter = router({

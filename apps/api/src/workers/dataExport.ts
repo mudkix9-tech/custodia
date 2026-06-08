@@ -2,20 +2,15 @@ import { createWorker } from '../lib/queue.js';
 import { db } from '../db.js';
 import { notificationQueue, organizations, users, processingActivities, vendors, dsarRequests, breaches, documents } from 'db';
 import { eq } from 'drizzle-orm';
-import archiver from 'archiver';
+import * as archiverModule from 'archiver';
+const archiver = (archiverModule as any).default || archiverModule;
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import stream from 'stream';
 import { generateAuditFile } from '../lib/auditExport.js';
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  }
-});
+import { getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
 
 export const dataExportWorker = createWorker('data-export', async (job: any) => {
     const { organizationId, requestedBy, isFullAudit } = job.data;
@@ -33,6 +28,9 @@ export const dataExportWorker = createWorker('data-export', async (job: any) => 
     } else {
       // 1. Gather data
       const org = await db.query.organizations.findFirst({ where: eq(organizations.id, organizationId) });
+      const dataRegion = org?.dataRegion || 'eu-west-1';
+      const s3Client = getS3ClientForRegion(dataRegion);
+      const s3Bucket = getS3BucketForOrg(dataRegion);
       const orgUsers = await db.query.users.findMany({ where: eq(users.organizationId, organizationId) });
       const activities = await db.query.processingActivities.findMany({ where: eq(processingActivities.organizationId, organizationId) });
 
@@ -60,7 +58,7 @@ export const dataExportWorker = createWorker('data-export', async (job: any) => 
         if (doc.s3Key) {
           try {
             const response = await s3Client.send(new GetObjectCommand({
-              Bucket: process.env.S3_BUCKET || 'default-bucket',
+              Bucket: s3Bucket,
               Key: doc.s3Key,
             }));
             if (response.Body) {
@@ -80,7 +78,7 @@ export const dataExportWorker = createWorker('data-export', async (job: any) => 
       const upload = new Upload({
         client: s3Client,
         params: {
-          Bucket: process.env.S3_BUCKET || 'default-bucket',
+          Bucket: s3Bucket,
           Key: exportKey,
           Body: pass,
         }
@@ -89,7 +87,7 @@ export const dataExportWorker = createWorker('data-export', async (job: any) => 
       await upload.done();
 
       signedUrl = await getSignedUrl(s3Client, new GetObjectCommand({
-        Bucket: process.env.S3_BUCKET || 'default-bucket',
+        Bucket: s3Bucket,
         Key: exportKey,
       }), { expiresIn: 7 * 24 * 60 * 60 }); // 7 days
 

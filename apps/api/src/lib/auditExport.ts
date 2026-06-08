@@ -1,11 +1,12 @@
 // @ts-nocheck
-import archiver from 'archiver';
+import * as archiverModule from 'archiver';
+const archiver = (archiverModule as any).default || archiverModule;
 import { PassThrough } from 'stream';
 import { format as csvFormat } from 'fast-csv';
 import { Upload } from '@aws-sdk/lib-storage';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { s3Client, S3_BUCKET } from '../lib/s3.js';
+import { getS3BucketForOrg, getS3ClientForRegion } from '../lib/s3.js';
 import { renderHtmlToPdf } from '../lib/browserPool.js';
 import { db } from '../db.js';
 import { eq, and, isNull, desc, inArray } from 'drizzle-orm';
@@ -33,6 +34,10 @@ export async function generateAuditFile(orgId: string): Promise<string> {
     where: eq(organizations.id, orgId),
   });
   if (!org) throw new Error('Organization not found');
+
+  const dataRegion = org.dataRegion || 'eu-west-1';
+  const s3Client = getS3ClientForRegion(dataRegion);
+  const S3_BUCKET = getS3BucketForOrg(dataRegion);
 
   const archive = archiver('zip', { zlib: { level: 9 } });
   const passThrough = new PassThrough();
