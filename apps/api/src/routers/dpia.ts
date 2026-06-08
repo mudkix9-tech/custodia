@@ -80,7 +80,7 @@ export const dpiaRouter = router({
     list: protectedProcedure
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ dpiaId: z.string().uuid() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         return ctx.db.select().from(dpiaRisks).where(eq(dpiaRisks.dpiaId, input.dpiaId));
       }),
       
@@ -92,7 +92,7 @@ export const dpiaRouter = router({
         likelihood: z.number().min(1).max(5).optional(),
         severity: z.number().min(1).max(5).optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const initialRiskScore = (input.likelihood && input.severity) ? input.likelihood * input.severity : null;
         
         const [inserted] = await ctx.db.insert(dpiaRisks).values({
@@ -108,7 +108,7 @@ export const dpiaRouter = router({
         id: z.string().uuid(),
         data: z.record(z.any()),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         // If updating likelihood or severity, recalculate initialRiskScore
         const [updated] = await ctx.db.update(dpiaRisks)
           .set(input.data)
@@ -120,7 +120,7 @@ export const dpiaRouter = router({
     delete: protectedProcedure
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [deleted] = await ctx.db.delete(dpiaRisks).where(eq(dpiaRisks.id, input.id)).returning();
         return deleted;
       })
@@ -130,7 +130,7 @@ export const dpiaRouter = router({
     list: protectedProcedure
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ dpiaRiskId: z.string().uuid() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         return ctx.db.select().from(dpiaMeasures).where(eq(dpiaMeasures.dpiaRiskId, input.dpiaRiskId));
       }),
       
@@ -141,7 +141,7 @@ export const dpiaRouter = router({
         description: z.string().min(1),
         status: z.string().default('planned'),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [inserted] = await ctx.db.insert(dpiaMeasures).values(input).returning();
         return inserted;
       }),
@@ -152,7 +152,7 @@ export const dpiaRouter = router({
         id: z.string().uuid(),
         data: z.record(z.any()),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [updated] = await ctx.db.update(dpiaMeasures)
           .set(input.data)
           .where(eq(dpiaMeasures.id, input.id))
@@ -163,7 +163,7 @@ export const dpiaRouter = router({
     delete: protectedProcedure
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [deleted] = await ctx.db.delete(dpiaMeasures).where(eq(dpiaMeasures.id, input.id)).returning();
         return deleted;
       })

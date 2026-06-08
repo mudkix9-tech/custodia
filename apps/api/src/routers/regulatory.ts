@@ -12,7 +12,7 @@ export const regulatoryRouter = router({
       limit: z.number().min(1).max(100).default(50),
       offset: z.number().min(0).default(0),
     }).optional())
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const limit = input?.limit || 50;
       const offset = input?.offset || 0;
       
@@ -44,7 +44,7 @@ export const regulatoryRouter = router({
       )
       .orderBy(desc(regulatoryUpdates.publishedAt));
       
-      return impacts.map(row => ({
+      return impacts.map((row: any) => ({
         ...row.assessment,
         update: row.update
       }));
@@ -78,7 +78,7 @@ export const regulatoryRouter = router({
   // Admin Routes
   adminListDrafts: protectedProcedure
     .use(requireRole('owner')) // Assuming owner acts as super admin for now
-    .query(async () => {
+    .query(async ({ ctx }) => {
       return ctx.db.select()
         .from(regulatoryUpdates)
         .where(eq(regulatoryUpdates.status, 'draft'))

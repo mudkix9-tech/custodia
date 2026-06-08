@@ -147,7 +147,7 @@ If the answer is not in the provided context, inform the user you do not have en
         });
 
         // The correct way to handle text blocks from Anthropic SDK
-        const responseText = msg.content.filter(block => block.type === 'text').map((block: any) => block.text).join('\n');
+        const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
         
         return { answer: responseText };
       } catch (err: any) {
@@ -216,7 +216,7 @@ Use this EXACT JSON schema:
           ]
         });
 
-        const responseText = msg.content.filter(block => block.type === 'text').map((block: any) => block.text).join('\n');
+        const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
         
         let jsonResponse;
         try {

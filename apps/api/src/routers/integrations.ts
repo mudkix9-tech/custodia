@@ -7,8 +7,8 @@ import { PROVIDERS } from '../integrations/registry.js';
 
 export const integrationsRouter = router({
   listProviders: protectedProcedure
-    .query(async () => {
-      return Object.values(PROVIDERS).map(p => ({
+    .query(async ({ ctx }) => {
+      return Object.values(PROVIDERS).map((p: any) => ({
         id: p.id,
         name: p.name,
         icon: p.icon,

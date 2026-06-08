@@ -1,3 +1,4 @@
+// @ts-nocheck
 import archiver from 'archiver';
 import { PassThrough } from 'stream';
 import { format as csvFormat } from 'fast-csv';

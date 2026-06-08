@@ -34,7 +34,7 @@ const checkOrgContext = (user: any) => {
 const verificationRouter = router({
   confirm: publicProcedure
     .input(z.object({ token: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
         const decoded = jwt.verify(input.token, JWT_SECRET) as { dsarId: string, email: string };
         const [dsar] = await ctx.db.select().from(dsarRequests).where(eq(dsarRequests.id, decoded.dsarId));
@@ -304,7 +304,7 @@ export const dsarRouter = router({
       subjectIdentifier: z.any().optional(),
       details: z.string().optional()
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const [org] = await ctx.db.select().from(organizations).where(eq(organizations.slug, input.orgSlug));
       if (!org) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization not found' });
 

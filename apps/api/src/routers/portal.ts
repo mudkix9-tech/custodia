@@ -14,7 +14,7 @@ import { TRPCError } from '@trpc/server';
 export const portalRouter = router({
   getPortalData: publicProcedure
     .input(z.object({ token: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       // Validate token
       const client = await ctx.db.query.clients.findFirst({
         where: eq(clients.portalToken, input.token),
@@ -67,16 +67,16 @@ export const portalRouter = router({
       });
 
       // Filter to only vendors relevant to this client
-      const relevantVendors = vendorsList.filter(v => vendorIds.has(v.vendorId));
+      const relevantVendors = vendorsList.filter((v: any) => vendorIds.has(v.vendorId));
 
       // Calculate client-specific compliance score
       let score = 100;
       if (activities.length > 0) {
          // simplistic mock score logic based on completeness
-         score -= activities.filter(a => a.status === 'draft').length * 5;
+         score -= activities.filter((a: any) => a.status === 'draft').length * 5;
       }
       if (relevantVendors.length > 0) {
-         score -= relevantVendors.filter(v => v.dpaStatus !== 'signed').length * 10;
+         score -= relevantVendors.filter((v: any) => v.dpaStatus !== 'signed').length * 10;
       }
       const clientScore = Math.max(0, score);
 

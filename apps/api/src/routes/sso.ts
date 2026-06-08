@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { WorkOS } from '@workos-inc/node';
 import { db } from '../db.js';

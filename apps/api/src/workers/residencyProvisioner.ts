@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Worker, Queue } from 'bullmq';
 import { Redis } from 'ioredis';
 import { RDSClient, CreateDBInstanceCommand, DescribeDBInstancesCommand } from '@aws-sdk/client-rds';

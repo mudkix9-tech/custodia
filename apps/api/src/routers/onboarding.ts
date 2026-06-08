@@ -599,12 +599,12 @@ export const onboardingRouter = router({
             inArray(organizationVendors.vendorId, input.vendorIds)
           ));
 
-        const existingIds = existing.map(e => e.vendorId);
-        const toAdd = input.vendorIds.filter(id => !existingIds.includes(id));
+        const existingIds = existing.map((e: any) => e.vendorId);
+        const toAdd = input.vendorIds.filter((id: any) => !existingIds.includes(id));
 
         if (toAdd.length > 0) {
           await ctx.db.insert(organizationVendors).values(
-            toAdd.map(id => ({
+            toAdd.map((id: any) => ({
               organizationId: ctx.user!.orgId,
               vendorId: id,
               dpaStatus: 'not_started',
@@ -622,7 +622,7 @@ export const onboardingRouter = router({
 
   getTemplates: protectedProcedure
     .input(z.object({ industry: z.string().default('generic') }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const industry = input.industry as keyof typeof ROPA_TEMPLATES;
       return ROPA_TEMPLATES[industry] || ROPA_TEMPLATES.generic;
     }),
@@ -660,7 +660,7 @@ export const onboardingRouter = router({
       // Insert data categories
       if (template.dataCategories.length > 0) {
         await ctx.db.insert(processingDataCategories).values(
-          template.dataCategories.map(cat => ({
+          template.dataCategories.map((cat: any) => ({
             processingActivityId: activity!.id,
             category: cat.category,
             categoryGroup: cat.categoryGroup,

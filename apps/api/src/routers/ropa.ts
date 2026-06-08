@@ -103,7 +103,7 @@ export const ropaRouter = router({
       
       if (input.length === 0) return [];
 
-      const values = input.map(item => ({
+      const values = input.map((item: any) => ({
         ...item,
         name: sanitize(item.name)!,
         purpose: sanitize(item.purpose)!,
@@ -206,7 +206,7 @@ export const ropaRouter = router({
     list: protectedProcedure
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ processingActivityId: z.string().uuid() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         return ctx.db.select().from(processingDataCategories)
           .where(eq(processingDataCategories.processingActivityId, input.processingActivityId));
       }),
@@ -307,7 +307,7 @@ export const ropaRouter = router({
     delete: protectedProcedure
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [existing] = await ctx.db.select().from(processingDataCategories).where(eq(processingDataCategories.id, input.id));
         if (!existing) throw new TRPCError({ code: 'NOT_FOUND' });
 
@@ -365,7 +365,7 @@ export const ropaRouter = router({
         ))
         .where(eq(processingRecipients.processingActivityId, input.processingActivityId));
         
-        return records.map(r => ({
+        return records.map((r: any) => ({
           ...r.recipient,
           vendorData: r.vendor ? { ...r.vendor, ...r.orgVendor } : null
         }));
@@ -421,7 +421,7 @@ export const ropaRouter = router({
         id: z.string().uuid(),
         data: z.record(z.any())
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [updated] = await ctx.db.update(processingRecipients)
           .set(input.data)
           .where(eq(processingRecipients.id, input.id))
@@ -431,7 +431,7 @@ export const ropaRouter = router({
     delete: protectedProcedure
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [deleted] = await ctx.db.delete(processingRecipients)
           .where(eq(processingRecipients.id, input.id))
           .returning();
@@ -443,7 +443,7 @@ export const ropaRouter = router({
     list: protectedProcedure
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ processingActivityId: z.string().uuid() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         return ctx.db.select().from(processingTransfers)
           .where(eq(processingTransfers.processingActivityId, input.processingActivityId));
       }),
@@ -455,7 +455,7 @@ export const ropaRouter = router({
         transferMechanism: z.string(),
         safeguards: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [inserted] = await ctx.db.insert(processingTransfers).values({
           ...input,
         }).returning();
@@ -467,7 +467,7 @@ export const ropaRouter = router({
         id: z.string().uuid(),
         data: z.record(z.any())
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [updated] = await ctx.db.update(processingTransfers)
           .set(input.data)
           .where(eq(processingTransfers.id, input.id))
@@ -477,7 +477,7 @@ export const ropaRouter = router({
     delete: protectedProcedure
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [deleted] = await ctx.db.delete(processingTransfers)
           .where(eq(processingTransfers.id, input.id))
           .returning();

@@ -70,18 +70,18 @@ const paginationInput = z.object({
 
 export const vendorsRouter = router({
   // GLOBAL
-  getAllGlobal: protectedProcedure.query(async () => {
+  getAllGlobal: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.db.select().from(vendors).where(eq(vendors.isGlobal, true));
   }),
 
   getById: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const result = await ctx.db.select().from(vendors).where(eq(vendors.id, input.id));
       return result[0];
     }),
 
-  suggestGlobal: protectedProcedure.query(async () => {
+  suggestGlobal: protectedProcedure.query(async ({ ctx }) => {
     // Mock suggestion for now. Can be enhanced to look at what's missing.
     return await ctx.db.select().from(vendors).where(eq(vendors.isGlobal, true)).limit(5);
   }),
@@ -247,7 +247,7 @@ export const vendorsRouter = router({
   subProcessors: router({
     list: protectedProcedure
       .input(z.object({ parentVendorId: z.string().uuid() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         // Fetch sub-processors and join with vendors if linked
         const records = await ctx.db.select({
           subProcessor: vendorSubProcessors,
@@ -257,7 +257,7 @@ export const vendorsRouter = router({
         .leftJoin(vendors, eq(vendorSubProcessors.subProcessorVendorId, vendors.id))
         .where(eq(vendorSubProcessors.parentVendorId, input.parentVendorId));
         
-        return records.map(r => ({
+        return records.map((r: any) => ({
           ...r.subProcessor,
           vendorData: r.vendor // Will be null for unlinked sub-processors
         }));
@@ -269,7 +269,7 @@ export const vendorsRouter = router({
         subProcessorVendorId: z.string().uuid(),
         purpose: z.string().optional()
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [sub] = await ctx.db.insert(vendorSubProcessors).values({
           parentVendorId: input.parentVendorId,
           subProcessorVendorId: input.subProcessorVendorId,
@@ -285,7 +285,7 @@ export const vendorsRouter = router({
         country: z.string().length(2).optional(),
         purpose: z.string().optional()
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [sub] = await ctx.db.insert(vendorSubProcessors).values({
           parentVendorId: input.parentVendorId,
           name: input.name,
@@ -297,7 +297,7 @@ export const vendorsRouter = router({
 
     remove: protectedProcedure
       .input(z.object({ id: z.string().uuid() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [removed] = await ctx.db.delete(vendorSubProcessors)
           .where(eq(vendorSubProcessors.id, input.id))
           .returning();
@@ -306,7 +306,7 @@ export const vendorsRouter = router({
       
     markNotified: protectedProcedure
       .input(z.object({ id: z.string().uuid() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const [updated] = await ctx.db.update(vendorSubProcessors)
           .set({ notifiedAt: new Date() })
           .where(eq(vendorSubProcessors.id, input.id))

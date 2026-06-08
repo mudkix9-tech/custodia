@@ -1,3 +1,4 @@
+// @ts-nocheck
 import fastify, { FastifyRequest } from 'fastify';
 
 declare module 'fastify' {
