@@ -6,7 +6,7 @@ import { router, publicProcedure } from '../trpc.js';
 import { scheduleEmailSequence } from '../workers/emails.js';
 
 export const assessmentsRouter = router({
-  getQuestions: publicProcedure.query(async () => {
+  getQuestions: publicProcedure.query(async ({ ctx }) => {
     return await ctx.db.select().from(assessmentTemplates);
   }),
 
@@ -25,7 +25,7 @@ export const assessmentsRouter = router({
 
     const assessment = await ctx.db.query.assessments.findFirst({
       where: eq(assessments.anonymousSessionId, anonSessionId),
-      orderBy: (assessments, { desc }) => [desc(assessments.createdAt)],
+      orderBy: (assessments: any, { desc }: any) => [desc(assessments.createdAt)],
     });
 
     if (!assessment) return null;
@@ -34,7 +34,7 @@ export const assessmentsRouter = router({
     
     // Convert to map for frontend
     const answersMap: Record<string, any> = {};
-    answersList.forEach(a => {
+    answersList.forEach((a: any) => {
       answersMap[a.questionId] = { text: a.selectedOption, riskWeight: a.riskScore };
     });
 
@@ -48,7 +48,7 @@ export const assessmentsRouter = router({
       selectedOption: z.string(),
       riskScore: z.number(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const [answer] = await ctx.db.insert(assessmentAnswers).values({
         assessmentId: input.assessmentId,
         questionId: input.questionId,
@@ -62,14 +62,14 @@ export const assessmentsRouter = router({
     .input(z.object({
       assessmentId: z.string().uuid(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       // 1. Fetch all answers for this assessment
       const answers = await ctx.db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, input.assessmentId));
       
       // 2. Calculate overall score (0 to 100)
       // Maximum possible risk per question is 10.
       const totalPossibleRisk = answers.length * 10;
-      const actualRisk = answers.reduce((acc, curr) => acc + curr.riskScore, 0);
+      const actualRisk = answers.reduce((acc: number, curr: any) => acc + curr.riskScore, 0);
       
       // If actualRisk is 0, score is 100%. If actualRisk is max, score is 0%.
       let score = 100;
@@ -149,7 +149,7 @@ export const assessmentsRouter = router({
 
   getResults: publicProcedure
     .input(z.object({ assessmentId: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const [assessment] = await ctx.db.select().from(assessments).where(eq(assessments.id, input.assessmentId));
       const items = await ctx.db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
       
