@@ -14,7 +14,7 @@ import { Anthropic } from '@anthropic-ai/sdk';
 import { TRPCError } from '@trpc/server';
 // @ts-ignore
 import * as pdfParseModule from 'pdf-parse';
-const pdfParse = pdfParseModule.default || pdfParseModule;
+const pdfParse = (pdfParseModule as any).default || pdfParseModule;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'dummy_key',
