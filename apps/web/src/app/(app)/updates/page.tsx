@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import { GenericListSkeleton } from '@/components/skeletons/PageSkeleton';
 

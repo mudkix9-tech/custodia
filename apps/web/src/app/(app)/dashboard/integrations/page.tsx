@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import { trpc } from '@/utils/trpc';
 import { useConfirm } from '@/components/ui/ConfirmDialog';

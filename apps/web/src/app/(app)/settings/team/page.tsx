@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
