@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { trpc } from '@/lib/trpc';
+import { trpc } from '@/utils/trpc';
 import { Plus, Save, Trash2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -26,37 +26,31 @@ const MODULE_ACTIONS: Record<string, string[]> = {
 };
 
 export default function RolesPage() {
-  const queryClient = useQueryClient();
+  const utils = trpc.useUtils();
   const [selectedRole, setSelectedRole] = useState<any /* eslint-disable-line @typescript-eslint/no-explicit-any */ | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({ name: '', description: '', permissions: {} as any /* eslint-disable-line @typescript-eslint/no-explicit-any */ });
 
-  const { data: roles, isLoading } = useQuery({
-    queryKey: ['customRoles'],
-    queryFn: () => trpc.customRoles.list.query()
-  });
+  const { data: roles, isLoading } = trpc.customRoles.list.useQuery();
 
-  const createRole = useMutation({
-    mutationFn: (data: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => trpc.customRoles.create.mutate(data),
+  const createRole = trpc.customRoles.create.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customRoles'] });
+      utils.customRoles.list.invalidate();
       setIsCreating(false);
       setFormData({ name: '', description: '', permissions: {} });
     }
   });
 
-  const updateRole = useMutation({
-    mutationFn: (data: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => trpc.customRoles.update.mutate(data),
+  const updateRole = trpc.customRoles.update.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customRoles'] });
+      utils.customRoles.list.invalidate();
       setSelectedRole(null);
     }
   });
 
-  const deleteRole = useMutation({
-    mutationFn: (id: string) => trpc.customRoles.delete.mutate({ id }),
+  const deleteRole = trpc.customRoles.delete.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customRoles'] });
+      utils.customRoles.list.invalidate();
     }
   });
 
@@ -199,7 +193,7 @@ export default function RolesPage() {
                       <button
                         onClick={() => {
                           if (confirm('Are you sure you want to delete this role? Users with this role will lose their custom permissions.')) {
-                            deleteRole.mutate(selectedRole.id);
+                            deleteRole.mutate({ id: selectedRole.id });
                           }
                         }}
                         className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"

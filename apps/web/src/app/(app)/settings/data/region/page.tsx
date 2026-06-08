@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { trpc } from '@/lib/trpc';
+import { trpc } from '@/utils/trpc';
 import { MapPin, Database, ShieldAlert } from 'lucide-react';
 import React from 'react';
 import { useSession } from 'next-auth/react';
@@ -20,16 +20,14 @@ export default function DataResidencyPage() {
   const [selectedRegion, setSelectedRegion] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
 
-  const { data: orgData, isLoading } = useQuery({
-    queryKey: ['orgResidency'],
-    queryFn: () => trpc.settings.getResidencyData.query(),
+  const { data: orgData, isLoading } = trpc.settings.getResidencyData.useQuery(undefined, {
     enabled: !!session?.user
   });
 
-  const updateResidency = useMutation({
-    mutationFn: (data: { region: string }) => trpc.settings.updateResidency.mutate(data),
+  const utils = trpc.useUtils();
+  const updateResidency = trpc.settings.updateResidency.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orgResidency'] });
+      utils.settings.getResidencyData.invalidate();
       setIsConfirming(false);
     }
   });
