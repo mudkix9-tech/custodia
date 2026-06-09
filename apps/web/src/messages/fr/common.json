@@ -1,0 +1,10 @@
+{
+  "greeting": "Bon retour",
+  "login": "Se connecter",
+  "logout": "Se déconnecter",
+  "settings": "Paramètres",
+  "language": "Langue",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "delete": "Supprimer"
+}

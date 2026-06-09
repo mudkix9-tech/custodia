@@ -1,0 +1,10 @@
+{
+  "greeting": "Welcome back",
+  "login": "Log In",
+  "logout": "Log Out",
+  "settings": "Settings",
+  "language": "Language",
+  "save": "Save changes",
+  "cancel": "Cancel",
+  "delete": "Delete"
+}

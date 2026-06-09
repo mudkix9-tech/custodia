@@ -578,6 +578,7 @@ export const assessmentTemplates = pgTable('assessment_templates', {
   category: varchar('category', { length: 100 }).notNull(),
   options: jsonb('options').notNull(),
   dependsOn: jsonb('depends_on'),
+  translations: jsonb('translations').$type<Record<string, any>>().default({}),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
@@ -1110,6 +1111,7 @@ export const trainingModules = pgTable('training_modules', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id),
   isGlobal: boolean('is_global').default(false),
+  language: varchar('language', { length: 10 }).default('en'),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
   targetRole: varchar('target_role', { length: 50 }).default('all'),

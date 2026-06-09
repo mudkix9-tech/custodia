@@ -11,10 +11,12 @@ type RopaReportData = {
   generatedAt: Date;
   controllerActivities: any[];   // activities where clientId is null
   processorActivities: any[];    // activities grouped by client
+  locale?: string;
 };
 
 export function renderRopaReportHtml(data: RopaReportData): string {
-  const header = renderHeader(data.orgName, 'Article 30 — Record of Processing Activities', data.generatedAt, data.logoUrl);
+  const locale = data.locale || 'en';
+  const header = renderHeader(data.orgName, 'Article 30 — Record of Processing Activities', data.generatedAt, data.logoUrl, locale);
 
   const controllerInfo = `
     <div class="section">
@@ -86,7 +88,7 @@ export function renderRopaReportHtml(data: RopaReportData): string {
     </div>
   `).join('');
 
-  const footer = renderFooter(data.orgName, 'Article 30 Record of Processing Activities');
+  const footer = renderFooter(data.orgName, 'Article 30 Record of Processing Activities', locale);
 
   return wrapPage(`${header}${controllerInfo}${controllerRecords}${processorSections}${footer}`);
 }

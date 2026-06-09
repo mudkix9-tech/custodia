@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: privaaro-api
+    env: node
+    plan: free # Can upgrade to standard if background workers and fast start are needed
+    buildCommand: npm install
+    startCommand: npm run start --workspace=apps/api
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false

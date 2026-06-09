@@ -80,6 +80,31 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
 
     const cookies = await db.select().from(consentCookies).where(eq(consentCookies.domainId, domain.id));
     
+    const lang = (request.query as any)?.lang || request.headers['accept-language']?.split(',')[0].split('-')[0] || 'en';
+
+    const translations: Record<string, any> = {
+      en: {
+        title: "We value your privacy",
+        description: "We use cookies to enhance your browsing experience and analyze our traffic.",
+        rejectAll: "Reject All",
+        acceptAll: "Accept All"
+      },
+      de: {
+        title: "Wir schätzen Ihre Privatsphäre",
+        description: "Wir verwenden Cookies, um Ihr Surferlebnis zu verbessern und unseren Datenverkehr zu analysieren.",
+        rejectAll: "Alle ablehnen",
+        acceptAll: "Alle akzeptieren"
+      },
+      fr: {
+        title: "Nous respectons votre vie privée",
+        description: "Nous utilisons des cookies pour améliorer votre expérience de navigation et analyser notre trafic.",
+        rejectAll: "Tout refuser",
+        acceptAll: "Tout accepter"
+      }
+    };
+    
+    const t = translations[lang] || translations['en'];
+
     // Banner config injection
     const config = {
       domainId: domain.id,
@@ -88,6 +113,8 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
       categories: domain.categories,
       gcmV2Enabled: domain.gcmV2Enabled,
       tcfEnabled: domain.tcfEnabled,
+      language: lang,
+      texts: t,
       cookies: cookies.reduce((acc: any, c) => {
         if (!acc[c.category]) acc[c.category] = [];
         acc[c.category].push({ name: c.cookieName, provider: c.provider, expiry: c.expiry });
@@ -201,12 +228,12 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
     banner.innerHTML = \`
       <div style="max-w-4xl mx-auto flex justify-between items-center">
         <div>
-          <h3 style="margin-top:0;">We value your privacy</h3>
-          <p>We use cookies to enhance your browsing experience and analyze our traffic.</p>
+          <h3 style="margin-top:0;">\${config.texts.title}</h3>
+          <p>\${config.texts.description}</p>
         </div>
         <div style="display:flex;gap:10px;">
-          <button id="pvr-reject" style="padding:10px 20px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;">Reject All</button>
-          <button id="pvr-accept" style="padding:10px 20px;border:none;background:#2c3e38;color:#fff;border-radius:4px;cursor:pointer;">Accept All</button>
+          <button id="pvr-reject" style="padding:10px 20px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;">\${config.texts.rejectAll}</button>
+          <button id="pvr-accept" style="padding:10px 20px;border:none;background:#2c3e38;color:#fff;border-radius:4px;cursor:pointer;">\${config.texts.acceptAll}</button>
         </div>
       </div>
     \`;

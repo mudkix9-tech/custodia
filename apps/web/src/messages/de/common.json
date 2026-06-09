@@ -1,0 +1,10 @@
+{
+  "greeting": "Willkommen zurück",
+  "login": "Anmelden",
+  "logout": "Abmelden",
+  "settings": "Einstellungen",
+  "language": "Sprache",
+  "save": "Änderungen speichern",
+  "cancel": "Abbrechen",
+  "delete": "Löschen"
+}

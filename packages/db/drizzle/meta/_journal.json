@@ -8,6 +8,13 @@
       "when": 1779376979137,
       "tag": "0000_daily_green_goblin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781020149123,
+      "tag": "0001_yellow_puma",
+      "breakpoints": true
     }
   ]
 }

@@ -90,6 +90,7 @@ export async function generateAuditFile(orgId: string): Promise<string> {
     generatedAt,
     controllerActivities,
     processorActivities,
+    locale: (org as any).defaultLanguage || 'en',
   });
   const ropaPdf = await renderHtmlToPdf(ropaHtml);
   archive.append(ropaPdf, { name: 'ropa/article-30-report.pdf' });
