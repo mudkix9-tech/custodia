@@ -47,6 +47,17 @@ export function MarketingHeader() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => {
+      document.body.classList.remove('overflow-hidden');
+    };
+  }, [mobileMenuOpen]);
+
   const handleScrollTo = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith('#')) {
       e.preventDefault();
@@ -89,9 +100,16 @@ export function MarketingHeader() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Overlay Drawer */}
       {mobileMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-[#141712] border-b border-[#2F362D] p-6 flex flex-col gap-4 lg:hidden">
+        <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-[#141712]/95 border-l border-[#2F362D] p-6 flex flex-col gap-4 lg:hidden z-50 h-screen overflow-y-auto pt-24 shadow-2xl backdrop-blur-md">
+          <button 
+            onClick={() => setMobileMenuOpen(false)} 
+            className="absolute top-6 right-6 text-[#9CA297] hover:text-[#F5F3ED] focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md p-1"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
           {NAV_LINKS.map(link => (
             <a 
               key={link.href} 

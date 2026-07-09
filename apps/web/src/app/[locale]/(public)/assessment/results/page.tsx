@@ -114,7 +114,7 @@ function AssessmentResultsContent() {
               <p className="text-[15px] font-medium text-ink-600 mb-6 uppercase tracking-wider">Your preliminary GDPR compliance score</p>
               
               {/* Dial Visualization */}
-              <div className="relative w-48 h-48 mx-auto mb-8">
+              <div className="relative w-48 h-48 mx-auto mb-8 max-w-xs md:max-w-none">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="45" fill="transparent" stroke="#EAE8E4" strokeWidth="8" />
                   <motion.circle 
@@ -148,7 +148,7 @@ function AssessmentResultsContent() {
                     className="w-full bg-bone-50 border border-ink-900/10 rounded-xl py-3.5 pl-12 pr-4 text-ink-900 placeholder-ink-400 focus:outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500/20 transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
-                <button type="submit" disabled={captureEmailMutation.isPending} className="bg-sage-700 hover:bg-sage-600 disabled:opacity-50 disabled:cursor-not-allowed text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:scale-[1.02] active:scale-[0.98]">
+                <button type="submit" disabled={captureEmailMutation.isPending} className="bg-sage-700 hover:bg-sage-600 disabled:opacity-50 disabled:cursor-not-allowed text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:scale-[1.02] active:scale-[0.98] touch-manipulation">
                   {captureEmailMutation.isPending ? 'Processing...' : 'See my results'} <Lock className="w-4 h-4" />
                 </button>
               </form>
@@ -169,10 +169,10 @@ function AssessmentResultsContent() {
               Click the link to securely access your complete GDPR gap assessment.
             </p>
             <div className="flex items-center justify-center gap-4">
-              <button onClick={() => handleUnlock({ preventDefault: () => {} } as React.FormEvent)} className="text-[13px] font-medium text-sage-600 hover:text-sage-700 bg-sage-50 px-4 py-2 rounded-lg transition-colors">
+              <button onClick={() => handleUnlock({ preventDefault: () => {} } as React.FormEvent)} className="text-[13px] font-medium text-sage-600 hover:text-sage-700 bg-sage-50 px-4 py-2 rounded-lg transition-colors touch-manipulation">
                 Resend Magic Link
               </button>
-              <button onClick={() => setIsMagicLinkSent(false)} className="text-[13px] font-medium text-ink-500 hover:text-ink-700 bg-bone-100 px-4 py-2 rounded-lg transition-colors">
+              <button onClick={() => setIsMagicLinkSent(false)} className="text-[13px] font-medium text-ink-500 hover:text-ink-700 bg-bone-100 px-4 py-2 rounded-lg transition-colors touch-manipulation">
                 Wrong email?
               </button>
             </div>
@@ -187,7 +187,7 @@ function AssessmentResultsContent() {
               {/* Score Card */}
               <div className="md:col-span-1 bg-white border border-ink-900/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-card relative overflow-hidden">
                 <p className="text-[13px] font-semibold tracking-widest uppercase text-ink-500 mb-6">Overall Score</p>
-                <div className="relative w-32 h-32 mb-6">
+                <div className="relative w-32 h-32 mb-6 max-w-xs md:max-w-none">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="45" fill="transparent" stroke="#EAE8E4" strokeWidth="8" />
                     <circle cx="50" cy="50" r="45" fill="transparent" stroke={finalScore > 70 ? "#00A67E" : "#EF4444"} strokeWidth="8" strokeDasharray={`${finalScore * 2.82} 282`} />
@@ -264,7 +264,7 @@ function AssessmentResultsContent() {
                     </p>
                   </div>
                   <div className="sm:text-right sm:self-center shrink-0">
-                    <Link href="/ropa" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-sage-600 hover:text-sage-700 bg-sage-50 px-3 py-1.5 rounded-lg transition-colors">
+                    <Link href="/ropa" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-sage-600 hover:text-sage-700 bg-sage-50 px-3 py-1.5 rounded-lg transition-colors touch-manipulation">
                       Fix Issue <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
@@ -281,7 +281,7 @@ function AssessmentResultsContent() {
                   <p className="text-[15px] text-bone-50/70 mb-8 max-w-lg mx-auto">
                     Privaro replaces your spreadsheets with a dynamic compliance operating system. Start resolving these action items today.
                   </p>
-                  <Link href="/pricing" className="inline-flex bg-sage-600 hover:bg-sage-500 text-white font-medium py-3.5 px-8 rounded-xl transition-all shadow-card">
+                  <Link href="/pricing" className="inline-flex bg-sage-600 hover:bg-sage-500 text-white font-medium py-3.5 px-8 rounded-xl transition-all shadow-card touch-manipulation">
                     View Privaro Plans
                   </Link>
                 </div>

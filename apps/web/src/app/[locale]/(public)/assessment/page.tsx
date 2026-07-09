@@ -209,7 +209,7 @@ export default function AssessmentEngine() {
               <button 
                 onClick={handleStart}
                 disabled={startMutation.isPending}
-                className="bg-sage-700 hover:bg-sage-600 text-bone-50 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 mx-auto shadow-card disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                className="bg-sage-700 hover:bg-sage-600 text-bone-50 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 mx-auto shadow-card disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white touch-manipulation"
               >
                 {startMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Start Assessment <ArrowRight className="w-4 h-4" /></>}
               </button>
@@ -240,7 +240,7 @@ export default function AssessmentEngine() {
                     <button
                       key={i}
                       onClick={() => handleSelectOption(displayQuestions[currentStep], option)}
-                      className={`w-full cursor-pointer text-left p-5 rounded-xl border transition-all duration-200 flex items-center justify-between group focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+                      className={`w-full cursor-pointer text-left p-5 rounded-xl border transition-all duration-200 flex items-center justify-between group focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white touch-manipulation ${
                         isSelected 
                           ? 'border-sage-500 bg-sage-50 shadow-sm' 
                           : 'border-ink-900/10 bg-white hover:border-ink-900/20 hover:bg-bone-50'

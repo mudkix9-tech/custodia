@@ -129,7 +129,7 @@ const INTEGRATIONS = [
   { 
     name: 'HubSpot', 
     logo: (
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#FF7A59] fill-current">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 aspect-square text-[#FF7A59] fill-current">
         <path d="M21.4 9.3c-.6 0-1.1-.3-1.4-.7l-2.2 1.3c.1.3.2.7.2 1.1 0 1.7-1.4 3-3 3-1.2 0-2.2-.7-2.7-1.7L6.8 15.6c.1.3.2.7.2 1.1 0 1.7-1.4 3-3 3s-3-1.3-3-3 1.3-3 3-3c.5 0 .9.1 1.3.3l3.9-2.3c-.3-.5-.4-1.1-.4-1.7 0-1.7 1.4-3 3-3 .6 0 1.1.2 1.6.5l2.2-1.3c-.1-.3-.2-.7-.2-1.1 0-1.7 1.4-3 3-3s3 1.3 3 3-1.3 3-3 3zm-9.2 1.7c.6 0 1-.4 1-1s-.4-1-1-1-1 .4-1 1 .4 1 1 1z" />
       </svg>
     ) 
@@ -137,7 +137,7 @@ const INTEGRATIONS = [
   { 
     name: 'Mailchimp', 
     logo: (
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#FFE01B] fill-current">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 aspect-square text-[#FFE01B] fill-current">
         <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1.2 13.9c0 .773-.627 1.4-1.4 1.4s-1.4-.627-1.4-1.4.627-1.4 1.4-1.4 1.4.627 1.4 1.4zm-1.4-4c-.994 0-1.8-.806-1.8-1.8s.806-1.8 1.8-1.8 1.8.806 1.8 1.8-.806 1.8-1.8 1.8z" />
       </svg>
     ) 
@@ -145,7 +145,7 @@ const INTEGRATIONS = [
   { 
     name: 'GA4', 
     logo: (
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#F9AB00] fill-current">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 aspect-square text-[#F9AB00] fill-current">
         <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-5h2v5zm4 0h-2V9h2v8zm4 0h-2V7h2v10z" />
       </svg>
     ) 
@@ -153,7 +153,7 @@ const INTEGRATIONS = [
   { 
     name: 'Stripe', 
     logo: (
-      <svg viewBox="0 0 40 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-4.5 text-[#635BFF] fill-current">
+      <svg viewBox="0 0 40 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-4.5 aspect-[40/18] text-[#635BFF] fill-current">
         <path d="M13.9 6.8c0-1.1.9-1.8 2.4-1.8 1.4 0 2.5.5 3 .9l.8-2c-.8-.5-2.2-1-3.9-1-3.2 0-5.3 1.8-5.3 4.9 0 4.8 6.5 4 6.5 6.8 0 1.3-1.1 2-2.8 2-1.7 0-3.1-.6-3.8-1.1l-.8 2.1c1 .7 2.8 1.2 4.7 1.2 3.4 0 5.8-1.7 5.8-5 0-5.1-6.6-4.2-6.6-7zm-9.3-.9V3.5L1.4 4.2v2.2L4.6 5.9zm0 2.2H1.4v10.9h3.2V8.1zm15.3 0h-3.2v10.9h3.2V8.1zm-8.8 3.5c-.7 0-1.2.5-1.2 1.3 0 .8.5 1.3 1.2 1.3.7 0 1.2-.5 1.2-1.3 0-.8-.5-1.3-1.2-1.3zm0-3.5c-2.3 0-4 1.7-4 4.5s1.7 4.5 4 4.5c2.3 0 4-1.7 4-4.5s-1.7-4.5-4-4.5z" />
       </svg>
     ) 
@@ -161,7 +161,7 @@ const INTEGRATIONS = [
   { 
     name: 'Slack', 
     logo: (
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 shrink-0">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 aspect-square shrink-0">
         <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523 2.528 2.528 0 0 1-2.522-2.523 2.528 2.528 0 0 1 2.522-2.52h2.52v2.52zm1.261 0a2.528 2.528 0 0 1 2.52-2.52h5.043a2.528 2.528 0 0 1 2.522 2.52v5.042a2.528 2.528 0 0 1-2.522 2.52H8.823a2.528 2.528 0 0 1-2.52-2.52v-5.042z" fill="#36C5F0"/>
         <path d="M8.823 5.043a2.528 2.528 0 0 1 2.52-2.52 2.528 2.528 0 0 1 2.522 2.52v2.52h-2.522a2.528 2.528 0 0 1-2.52-2.52zm0 1.261a2.528 2.528 0 0 1 2.52 2.52v5.043a2.528 2.528 0 0 1-2.52 2.522H3.78a2.528 2.528 0 0 1-2.52-2.522V8.824a2.528 2.528 0 0 1 2.52-2.52h5.043z" fill="#2EB67D"/>
         <path d="M18.878 8.824a2.528 2.528 0 0 1 2.52-2.52 2.528 2.528 0 0 1 2.522 2.52 2.528 2.528 0 0 1-2.522 2.52h-2.52v-2.52zm-1.261 0a2.528 2.528 0 0 1-2.52 2.52h-5.043a2.528 2.528 0 0 1-2.522-2.52V3.78a2.528 2.528 0 0 1 2.522-2.52h5.043a2.528 2.528 0 0 1 2.52 2.52v5.043z" fill="#ECB22E"/>
@@ -172,7 +172,7 @@ const INTEGRATIONS = [
   { 
     name: 'Salesforce', 
     logo: (
-      <svg viewBox="0 0 32 22" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-5 text-[#00A1E0] fill-current">
+      <svg viewBox="0 0 32 22" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-5 aspect-[32/22] text-[#00A1E0] fill-current">
         <path d="M25.75 10c0-2.76-2.24-5-5-5-1.5 0-2.85.66-3.79 1.71C16.24 6.27 15.15 6 14 6c-2.76 0-5 2.24-5 5 0 .5.08.97.22 1.42C8.49 13.06 8 14 8 15c0 2.21 1.79 4 4 4h14c2.21 0 4-1.79 4-4 0-1.63-.98-3.04-2.38-3.66.1-.42.13-.86.13-1.34z" />
       </svg>
     ) 
@@ -180,7 +180,7 @@ const INTEGRATIONS = [
   { 
     name: 'AWS', 
     logo: (
-      <svg viewBox="0 0 28 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-4.5 text-[#FF9900] fill-current">
+      <svg viewBox="0 0 28 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-4.5 aspect-[28/18] text-[#FF9900] fill-current">
         <path d="M12.04 16.52c-2.3 0-3.66-1.12-3.66-2.92 0-2.82 2.76-3.18 5.76-3.18V9.8c0-1.42-.64-2.12-2.18-2.12-1.32 0-2.6.48-3.32.96L8 6.48C9.04 5.6 10.96 5 12.56 5c3.22 0 4.88 1.58 4.88 4.6v6.92h-2.14v-1.74c-.72 1.1-2.02 1.74-3.26 1.74zm.76-4.9c-2.08 0-3.66.18-3.66 1.48 0 .8.54 1.28 1.48 1.28 1.34 0 2.18-.8 2.18-2.06v-.7zm7.54 1.7c-.54 1.22-1.72 3.2-3.8 3.2-1.14 0-1.8-.52-2.1-1.04l1.62-1.2c.22.28.52.48.86.48.74 0 1.24-.92 1.18-1.52-.42.54-1.16.88-1.92.88-2.06 0-3.34-1.7-3.34-3.8 0-2.4 1.58-4.1 3.56-4.1.86 0 1.54.4 1.86.82v-.6h2.08v8.88zm-3.38-4.66c0 1.08.62 1.94 1.46 1.94s1.46-.86 1.46-1.94c0-1.12-.6-1.96-1.46-1.96s-1.46.84-1.46 1.96z" />
         <path d="M2.86 19.38C8.54 22.2 16.2 22.2 21.14 19c.4-.26.86.26.54.58-4.34 4.22-11.96 4.76-17.7 1.9-.44-.22-.24-.88.26-1.1z" />
       </svg>
@@ -281,7 +281,7 @@ export default function MarketingSite() {
         {/* Soft forest radial glow behind mockup */}
         <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[550px] bg-[radial-gradient(circle,#24331E_0%,transparent_70%)] opacity-35 pointer-events-none z-0" />
         
-        <div className="max-w-7xl mx-auto px-6 pt-16 pb-8 flex flex-col items-center text-center relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-8 flex flex-col items-center text-center relative z-10">
           <div className="max-w-4xl flex flex-col items-center">
             
             {/* Tagline */}
@@ -458,8 +458,9 @@ export default function MarketingSite() {
                         </span>
                       </div>
 
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-[11px] min-w-[550px]">
+                      <div className="relative group/scroll overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-[11px] min-w-[550px]">
                           <thead>
                             <tr className="border-b border-[#1F1B16]/10 text-[#1F1B16]/50 uppercase tracking-wider text-[10px] font-bold">
                               <th className="pb-2">Cookie ID</th>
@@ -498,7 +499,12 @@ export default function MarketingSite() {
                           </tbody>
                         </table>
                       </div>
-                    </motion.div>
+                      {/* Left scroll indicator mask */}
+                      <div className="absolute top-0 bottom-0 left-0 w-8 bg-gradient-to-r from-[#FBF8F3] to-transparent pointer-events-none opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300" />
+                      {/* Right scroll indicator mask */}
+                      <div className="absolute top-0 bottom-0 right-0 w-8 bg-gradient-to-l from-[#FBF8F3] to-transparent pointer-events-none opacity-100 group-hover/scroll:opacity-0 transition-opacity duration-300" />
+                    </div>
+                  </motion.div>
                   )}
 
                   {activeTab === 'ropa' && (
@@ -619,12 +625,12 @@ export default function MarketingSite() {
 
       {/* SECTION 2: INTEGRATION BAR (REAL LOGOS) */}
       <section id="integrations" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="text-center lg:text-left shrink-0">
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Active Integrations</p>
             <h4 className="text-sm font-bold text-[#F5F3ED] mt-1">Works with the systems you use daily</h4>
           </div>
-          <div className="flex flex-wrap justify-center lg:justify-end items-center gap-x-8 gap-y-6">
+          <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:flex md:flex-wrap justify-center lg:justify-end items-center gap-x-8 gap-y-6">
             {INTEGRATIONS.map((int, i) => (
               <div key={i} className="flex items-center gap-2.5 bg-[#1F241D]/60 border border-[#2F362D]/60 px-4 py-2 rounded-xl text-xs font-semibold text-[#C5C8C1] opacity-70 hover:opacity-100 hover:shadow-md hover:shadow-[#8BA381]/5 hover:text-[#F5F3ED] hover:border-[#8BA381]/40 transition-all duration-300">
                 {int.logo}
@@ -637,9 +643,9 @@ export default function MarketingSite() {
 
       {/* SECTION 3: BENTO GRID FEATURES (12 SYMMETRICAL MODULES) */}
       <section id="features" className="w-full bg-[#141712] relative z-10 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-6 pt-14 pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-12 md:pt-14 md:pb-20">
           
-          <div className="mb-10 max-w-2xl">
+          <div className="mb-10 max-w-2xl text-center md:text-left mx-auto md:mx-0">
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Compliance Suite</p>
             <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight text-balance">Twelve modules. One compliance core.</h2>
             <p className="text-sm text-[#9CA297] leading-relaxed">
@@ -680,7 +686,7 @@ export default function MarketingSite() {
 
       {/* SECTION 4: SUPERVISORY AUTHORITY GRID */}
       <section id="authorities" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-6 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20">
           
           <div className="mb-10">
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Enforcement Landscape</p>
@@ -694,7 +700,7 @@ export default function MarketingSite() {
             {AUTHORITIES.map((auth, i) => (
               <div 
                 key={i}
-                className="bg-[#1F241D]/45 border border-[#2F362D]/90 p-5 rounded-xl hover:border-[#5F7556]/60 transition-all duration-300 flex flex-col justify-between"
+                className="bg-[#1F241D]/45 border border-[#2F362D]/90 p-5 rounded-xl hover:border-[#5F7556]/60 transition-all duration-300 flex flex-col justify-between h-full"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-[#2F362D]/40">
@@ -727,7 +733,7 @@ export default function MarketingSite() {
 
       {/* SECTION 5: COMPARISON SECTION */}
       <section className="w-full bg-[#141712] relative z-10">
-        <div className="max-w-7xl mx-auto px-6 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20">
           
           <div className="text-center mb-10">
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Platform Advantage</p>
@@ -737,43 +743,48 @@ export default function MarketingSite() {
             </p>
           </div>
 
-          <div className="overflow-x-auto border border-[#2F362D]/90 rounded-2xl bg-[#1f241d]/20 backdrop-blur-md">
-            <table className="w-full text-left text-xs sm:text-sm border-collapse min-w-[700px]">
-              <thead>
-                <tr className="border-b border-[#2F362D] text-[#F5F3ED] font-bold">
-                  <th className="p-6">Compliance Capability</th>
-                  <th className="p-6 bg-[#1F241D]/30">Manual Sheets</th>
-                  <th className="p-6 bg-[#1F241D]/30">Legal Consultants</th>
-                  <th className="p-6 text-[#8BA381] bg-[#242A20]/80 border-x border-[#8BA381]/25">Privaro OS</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#2F362D]/60 text-[#9CA297] font-medium">
-                <tr>
-                  <td className="p-6 font-bold text-[#F5F3ED]">ROPA / Record keeping</td>
-                  <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Static spreadsheets (Outdates instantly)</td>
-                  <td className="p-6 bg-[#1F241D]/10">Manual document audits (Slow & expensive)</td>
-                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Automated logs matching live code stack</td>
-                </tr>
-                <tr>
-                  <td className="p-6 font-bold text-[#F5F3ED]">Consent mode tracking</td>
-                  <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Hardcoded scripts (Frequent drifts)</td>
-                  <td className="p-6 bg-[#1F241D]/10">Policy outlines, no actual engineering code</td>
-                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Edge blocking scripts synced with logs</td>
-                </tr>
-                <tr>
-                  <td className="p-6 font-bold text-[#F5F3ED]">Data subject request queue</td>
-                  <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Manual inbox tracking (High human risk)</td>
-                  <td className="p-6 bg-[#1F241D]/10">Guidance documents, manual action steps</td>
-                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> OAuth-verified intake and countdowns</td>
-                </tr>
-                <tr>
-                  <td className="p-6 font-bold text-[#F5F3ED]">Employee training & logging</td>
-                  <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Omitted or undocumented (Audit failure)</td>
-                  <td className="p-6 bg-[#1F241D]/10">External seminars (No centralized logs)</td>
-                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Integrated training portal & auto certifications</td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="relative group/scroll overflow-hidden">
+            <div className="overflow-x-auto border border-[#2F362D]/90 rounded-2xl bg-[#1f241d]/20 backdrop-blur-md">
+              <table className="w-full text-left text-xs sm:text-sm border-collapse min-w-[700px]">
+                <thead>
+                  <tr className="border-b border-[#2F362D] text-[#F5F3ED] font-bold">
+                    <th className="p-6">Compliance Capability</th>
+                    <th className="p-6 bg-[#1F241D]/30">Manual Sheets</th>
+                    <th className="p-6 bg-[#1F241D]/30">Legal Consultants</th>
+                    <th className="p-6 text-[#8BA381] bg-[#242A20]/80 border-x border-[#8BA381]/25">Privaro OS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#2F362D]/60 text-[#9CA297] font-medium">
+                  <tr>
+                    <td className="p-6 font-bold text-[#F5F3ED]">ROPA / Record keeping</td>
+                    <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Static spreadsheets (Outdates instantly)</td>
+                    <td className="p-6 bg-[#1F241D]/10">Manual document audits (Slow & expensive)</td>
+                    <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Automated logs matching live code stack</td>
+                  </tr>
+                  <tr>
+                    <td className="p-6 font-bold text-[#F5F3ED]">Consent mode tracking</td>
+                    <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Hardcoded scripts (Frequent drifts)</td>
+                    <td className="p-6 bg-[#1F241D]/10">Policy outlines, no actual engineering code</td>
+                    <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Edge blocking scripts synced with logs</td>
+                  </tr>
+                  <tr>
+                    <td className="p-6 font-bold text-[#F5F3ED]">Data subject request queue</td>
+                    <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Manual inbox tracking (High human risk)</td>
+                    <td className="p-6 bg-[#1F241D]/10">Guidance documents, manual action steps</td>
+                    <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> OAuth-verified intake and countdowns</td>
+                  </tr>
+                  <tr>
+                    <td className="p-6 font-bold text-[#F5F3ED]">Employee training & logging</td>
+                    <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Omitted or undocumented (Audit failure)</td>
+                    <td className="p-6 bg-[#1F241D]/10">External seminars (No centralized logs)</td>
+                    <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Integrated training portal & auto certifications</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {/* Scroll indicator gradient masks */}
+            <div className="absolute top-0 bottom-0 left-0 w-10 bg-gradient-to-r from-[#141712] to-transparent pointer-events-none opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300" />
+            <div className="absolute top-0 bottom-0 right-0 w-10 bg-gradient-to-l from-[#141712] to-transparent pointer-events-none opacity-100 group-hover/scroll:opacity-0 transition-opacity duration-300" />
           </div>
 
         </div>
@@ -781,7 +792,7 @@ export default function MarketingSite() {
 
       {/* SECTION 6: GDPR RISK CALCULATOR */}
       <section id="risk-calculator" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10 scroll-mt-20">
-        <div className="max-w-4xl mx-auto px-6 py-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 md:py-20">
           
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-3 tracking-tight text-balance">Evaluate your GDPR exposure</h2>
@@ -910,7 +921,7 @@ export default function MarketingSite() {
 
       {/* SECTION 7: PRICING TIERS */}
       <section id="pricing" className="w-full bg-[#141712] relative z-10 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-6 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20">
           
           <div className="text-center mb-10">
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Pricing Matrix</p>
@@ -973,10 +984,10 @@ export default function MarketingSite() {
             ].map((plan, i) => (
               <div 
                 key={i} 
-                className={`border rounded-2xl p-6.5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
+                className={`rounded-2xl p-6.5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
                   plan.popular 
-                    ? 'bg-[#1F241D] border-[#8BA381] shadow-xl shadow-[#6E8B60]/5' 
-                    : 'bg-[#1F241D]/35 border-[#2F362D]/90 hover:border-[#2F362D]'
+                    ? 'bg-[#1F241D] border-2 border-[#8BA381] shadow-2xl shadow-[#6E8B60]/10 scale-[1.01] md:scale-100 z-10' 
+                    : 'bg-[#1F241D]/35 border border-[#2F362D]/90 hover:border-[#2F362D]/60'
                 }`}
               >
                 {plan.popular && (
@@ -1025,7 +1036,7 @@ export default function MarketingSite() {
 
       {/* SECTION 8: TRUST & AUDIT SECURITY CREDENTIALS */}
       <section className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 md:py-16">
           <div className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-2xl p-8 sm:p-10 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#8BA381]/20 to-transparent" />
             
