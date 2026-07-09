@@ -55,7 +55,25 @@ export default async function RootLayout({
       className={`h-full antialiased ${geist.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <head />
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "Privaro",
+              "url": "https://privaro.io",
+              "logo": "https://privaro.io/logo.png",
+              "sameAs": [
+                "https://x.com/privaaro",
+                "https://github.com/mudkix9-tech/privaaro"
+              ],
+              "description": "Dynamic compliance operating system for digital agencies to automate GDPR, ROPA registers, and consent management."
+            })
+          }}
+        />
+      </head>
       <body className="min-h-full font-sans" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <Provider>

@@ -4,24 +4,68 @@ import Link from 'next/link';
 import { Lock, Server, Globe } from 'lucide-react';
 import { MarketingHeader } from '@/components/layout/MarketingHeader';
 
-export const metadata: Metadata = {
-  title: 'Privaro — GDPR Compliance Operating System for EU Agencies',
-  description: 'The complete GDPR compliance platform built for EU marketing, digital, and design agencies. Replace consultants and spreadsheets.',
-  openGraph: {
-    title: 'Privaro — GDPR Compliance for EU Agencies',
-    description: 'The complete GDPR compliance platform built for EU marketing, digital, and design agencies. Replace consultants and spreadsheets.',
-    images: ['/og/homepage.png'],
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Privaro — GDPR Compliance for EU Agencies',
-    description: 'The complete GDPR compliance platform built for EU marketing, digital, and design agencies.',
-  },
-  alternates: {
-    canonical: 'https://privaro.io', // Placeholder domain
-  },
-};
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  
+  const translations: Record<string, { title: string, desc: string, keywords: string[] }> = {
+    en: {
+      title: 'Privaro — GDPR Compliance Operating System for EU Agencies',
+      desc: 'The complete GDPR compliance platform built for EU marketing, digital, and design agencies. Replace consultants and spreadsheets.',
+      keywords: ['GDPR', 'ROPA', 'Consent Management', 'ePrivacy', 'Data Protection', 'Privacy Policy', 'DSAR', 'Compliance OS', 'Agency Compliance']
+    },
+    de: {
+      title: 'Privaro — GDPR-Compliance-Betriebssystem für EU-Agenturen',
+      desc: 'Die komplette GDPR-Compliance-Plattform für EU-Marketing-, Digital- und Design-Agenturen. Ersetzen Sie Berater und Tabellen.',
+      keywords: ['GDPR', 'DSGVO', 'ROPA', 'Einwilligungsmanagement', 'ePrivacy', 'Datenschutz', 'Datenschutzerklärung', 'DSAR', 'Compliance OS']
+    },
+    fr: {
+      title: "Privaro — Système d'exploitation de conformité RGPD pour les agences de l'UE",
+      desc: "La plateforme de conformité RGPD complète conçue pour les agences de marketing, de numérique et de design de l'UE.",
+      keywords: ['GDPR', 'RGPD', 'ROPA', 'Gestion du consentement', 'ePrivacy', 'Protection des données', 'Politique de confidentialité', 'DSAR']
+    }
+  };
+
+  const t = translations[locale] || translations.en;
+
+  return {
+    title: t.title,
+    description: t.desc,
+    keywords: t.keywords,
+    openGraph: {
+      title: t.title,
+      description: t.desc,
+      url: `https://privaro.io/${locale}`,
+      siteName: 'Privaro',
+      images: [
+        {
+          url: 'https://privaro.io/og/homepage.png',
+          width: 1200,
+          height: 630,
+          alt: t.title,
+        }
+      ],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t.title,
+      description: t.desc,
+      images: ['https://privaro.io/og/homepage.png'],
+    },
+    alternates: {
+      canonical: `https://privaro.io/${locale}`,
+      languages: {
+        'en': 'https://privaro.io/en',
+        'de': 'https://privaro.io/de',
+        'fr': 'https://privaro.io/fr',
+      }
+    },
+  };
+}
 
 export default function MarketingLayout({
   children,
