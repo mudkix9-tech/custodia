@@ -279,13 +279,13 @@ export default function MarketingSite() {
       {/* SECTION 1: HERO CONTAINER */}
       <section className="w-full bg-[#141712] relative overflow-hidden">
         {/* Soft forest radial glow behind mockup */}
-        <div className="absolute top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[550px] bg-[radial-gradient(circle,#24331E_0%,transparent_70%)] opacity-35 pointer-events-none z-0" />
+        <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[550px] bg-[radial-gradient(circle,#24331E_0%,transparent_70%)] opacity-35 pointer-events-none z-0" />
         
-        <div className="max-w-7xl mx-auto px-6 pt-24 pb-28 flex flex-col items-center text-center relative z-10">
+        <div className="max-w-7xl mx-auto px-6 pt-16 pb-8 flex flex-col items-center text-center relative z-10">
           <div className="max-w-4xl flex flex-col items-center">
             
             {/* Tagline */}
-            <div className="inline-flex items-center gap-2 bg-[#1F241D] border border-[#2F362D] rounded-full px-4.5 py-1.5 mb-8 text-xs font-semibold text-[#8BA381] tracking-wide">
+            <div className="inline-flex items-center gap-2 bg-[#1F241D] border border-[#2F362D] rounded-full px-4.5 py-1.5 mb-6 text-xs font-semibold text-[#8BA381] tracking-wide">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8BA381] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8BA381]"></span>
@@ -294,20 +294,20 @@ export default function MarketingSite() {
             </div>
             
             {/* Headline */}
-            <h1 className="font-sans tracking-tight mb-8 leading-[1.05]">
-              <span className="block text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#9CA297] mb-3">GDPR compliance for your entire agency.</span>
+            <h1 className="font-sans tracking-tight mb-5 leading-[1.05]">
+              <span className="block text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#9CA297] mb-2">GDPR compliance for your entire agency.</span>
               <span className="block text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#F5F3ED] bg-clip-text">
                 One platform.
               </span>
             </h1>
             
             {/* Subheadline */}
-            <p className="text-xs sm:text-sm text-[#9CA297] max-w-xl mb-10 leading-relaxed font-medium">
+            <p className="text-xs sm:text-sm text-[#9CA297] max-w-xl mb-6 leading-relaxed font-medium">
               Document processing activities, map vendors, manage cookie consent, handle data requests, and train employees — all in one place. No expensive legal consultants. No spreadsheets.
             </p>
             
             {/* Hero CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mb-20">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mb-10">
               <Link href="/assessment" className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#596E51]/10 border border-[#8BA381]/20">
                 Run Free Gap Assessment
               </Link>
@@ -609,15 +609,9 @@ export default function MarketingSite() {
         </div>
       </section>
 
-      {/* DECORATIVE DIVIDER */}
-      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
-        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
-      </div>
-
       {/* SECTION 2: INTEGRATION BAR (REAL LOGOS) */}
       <section id="integrations" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="text-center lg:text-left shrink-0">
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Active Integrations</p>
             <h4 className="text-sm font-bold text-[#F5F3ED] mt-1">Works with the systems you use daily</h4>
@@ -633,25 +627,19 @@ export default function MarketingSite() {
         </div>
       </section>
 
-      {/* DECORATIVE DIVIDER */}
-      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
-        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
-      </div>
-
       {/* SECTION 3: BENTO GRID FEATURES (12 SYMMETRICAL MODULES) */}
       <section id="features" className="w-full bg-[#141712] relative z-10 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-6 py-28">
+        <div className="max-w-7xl mx-auto px-6 pt-14 pb-20">
           
-          <div className="mb-20 max-w-2xl">
+          <div className="mb-10 max-w-2xl">
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Compliance Suite</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-6 tracking-tight">Twelve modules. One compliance core.</h2>
-            <p className="text-base sm:text-lg text-[#9CA297] leading-relaxed">
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight">Twelve modules. One compliance core.</h2>
+            <p className="text-sm text-[#9CA297] leading-relaxed">
               Ditch separate compliance trackers and spreadsheet audits. Monitor, track, and protect your entire operation from a single dashboard.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {MODULES.map((mod, i) => (
               <motion.div 
                 key={i}
@@ -681,20 +669,14 @@ export default function MarketingSite() {
         </div>
       </section>
 
-      {/* DECORATIVE DIVIDER */}
-      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
-        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
-      </div>
-
       {/* SECTION 4: SUPERVISORY AUTHORITY GRID */}
       <section id="authorities" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-6 py-28">
+        <div className="max-w-7xl mx-auto px-6 py-20">
           
-          <div className="mb-16">
+          <div className="mb-10">
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Enforcement Landscape</p>
-            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-[#F5F3ED] mb-5 tracking-tight">Supervisory Authority alignment</h2>
-            <p className="text-[#9CA297] max-w-2xl text-sm sm:text-base leading-relaxed">
+            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight">Supervisory Authority alignment</h2>
+            <p className="text-[#9CA297] max-w-2xl text-xs sm:text-sm leading-relaxed">
               GDPR is uniform, but enforcement priorities vary by nation. Privaro adapts compliance configurations to map to the audits of your target audiences.
             </p>
           </div>
@@ -724,20 +706,14 @@ export default function MarketingSite() {
         </div>
       </section>
 
-      {/* DECORATIVE DIVIDER */}
-      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
-        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
-      </div>
-
       {/* SECTION 5: COMPARISON SECTION */}
       <section className="w-full bg-[#141712] relative z-10">
-        <div className="max-w-7xl mx-auto px-6 py-28">
+        <div className="max-w-7xl mx-auto px-6 py-20">
           
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Platform Advantage</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-4 tracking-tight">Structured workflow, no legacy tools</h2>
-            <p className="text-[#9CA297] max-w-xl mx-auto text-sm sm:text-base">
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-3 tracking-tight">Structured workflow, no legacy tools</h2>
+            <p className="text-[#9CA297] max-w-xl mx-auto text-xs sm:text-sm">
               A comparison of audit-readiness and overhead between manual efforts, consultants, and Privaro.
             </p>
           </div>
@@ -784,19 +760,13 @@ export default function MarketingSite() {
         </div>
       </section>
 
-      {/* DECORATIVE DIVIDER */}
-      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
-        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
-      </div>
-
       {/* SECTION 6: GDPR RISK CALCULATOR */}
       <section id="risk-calculator" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10 scroll-mt-20">
-        <div className="max-w-4xl mx-auto px-6 py-28">
+        <div className="max-w-4xl mx-auto px-6 py-20">
           
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight">Evaluate your GDPR exposure</h2>
-            <p className="text-[#9CA297] max-w-xl mx-auto text-sm sm:text-base">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-3 tracking-tight">Evaluate your GDPR exposure</h2>
+            <p className="text-[#9CA297] max-w-xl mx-auto text-xs sm:text-sm">
               Calculate your organization&apos;s compliance risk profile in 60 seconds. Receive instant recommendations.
             </p>
           </div>
@@ -877,19 +847,13 @@ export default function MarketingSite() {
         </div>
       </section>
 
-      {/* DECORATIVE DIVIDER */}
-      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
-        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
-      </div>
-
       {/* SECTION 7: PRICING TIERS */}
       <section id="pricing" className="w-full bg-[#141712] relative z-10 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-6 py-28">
+        <div className="max-w-7xl mx-auto px-6 py-20">
           
-          <div className="text-center mb-20">
+          <div className="text-center mb-10">
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Pricing Matrix</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-4 tracking-tight">Structured plans for every agency size</h2>
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-3 tracking-tight">Structured plans for every agency size</h2>
             
             {/* Annual Billing Toggle */}
             <div className="inline-flex items-center gap-3 bg-[#1F241D] border border-[#2F362D]/80 p-1 rounded-full mt-4">
@@ -998,15 +962,9 @@ export default function MarketingSite() {
         </div>
       </section>
 
-      {/* DECORATIVE DIVIDER */}
-      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
-        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
-      </div>
-
       {/* SECTION 8: TRUST & AUDIT SECURITY CREDENTIALS */}
       <section className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 py-20">
+        <div className="max-w-7xl mx-auto px-6 py-16">
           <div className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-2xl p-8 sm:p-10 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#8BA381]/20 to-transparent" />
             
