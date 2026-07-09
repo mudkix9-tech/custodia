@@ -227,21 +227,25 @@ function AssessmentResultsContent() {
               <h2 className="text-2xl font-bold text-ink-900 mb-3">{highPriorityCount} critical issues found.</h2>
               <p className="text-[15px] text-ink-600 mb-8 max-w-lg mx-auto">Enter your email to see your full breakdown, action plan, and GDPR article references.</p>
 
-              <form onSubmit={handleUnlock} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                <div className="relative flex-1">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-400" />
-                  <input 
-                    type="email" 
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@agency.com" 
-                    className="w-full bg-bone-50 border border-ink-900/10 rounded-xl py-3.5 pl-12 pr-4 text-ink-900 placeholder-ink-400 focus:outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500/20 transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                </div>
-                <button type="submit" disabled={captureEmailMutation.isPending} className="bg-sage-700 hover:bg-sage-600 disabled:opacity-50 disabled:cursor-not-allowed text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:scale-[1.02] active:scale-[0.98] touch-manipulation">
-                  {captureEmailMutation.isPending ? 'Processing...' : 'See my results'} <Lock className="w-4 h-4" />
-                </button>
+              <form onSubmit={handleUnlock} className="flex flex-col gap-4 max-w-md mx-auto">
+                 <div className="text-left w-full">
+                   <label htmlFor="results-email" className="block text-xs font-bold text-ink-700 uppercase tracking-wider mb-2">Business Email Address</label>
+                   <div className="relative">
+                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-400" />
+                     <input 
+                       id="results-email"
+                       type="email" 
+                       required
+                       value={email}
+                       onChange={(e) => setEmail(e.target.value)}
+                       placeholder="name@agency.com" 
+                       className="w-full bg-bone-50 border border-ink-900/10 rounded-xl py-3.5 pl-12 pr-4 text-ink-900 placeholder-ink-400 focus:outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500/20 transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50"
+                     />
+                   </div>
+                 </div>
+                 <button type="submit" disabled={captureEmailMutation.isPending} className="w-full bg-sage-700 hover:bg-sage-600 disabled:opacity-50 disabled:cursor-not-allowed text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:scale-[1.02] active:scale-[0.98] touch-manipulation">
+                   {captureEmailMutation.isPending ? 'Processing...' : 'See my results'} <Lock className="w-4 h-4" />
+                 </button>
               </form>
               <p className="text-[12px] font-medium text-ink-400 mt-5">We will email you a secure magic link. No password required.</p>
             </div>

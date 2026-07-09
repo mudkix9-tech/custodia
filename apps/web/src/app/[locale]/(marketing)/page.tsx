@@ -362,7 +362,7 @@ export default function MarketingSite() {
       {/* SECTION 1: HERO CONTAINER */}
       <section className="w-full bg-[#141712] relative overflow-hidden">
         {/* Soft forest radial glow behind mockup */}
-        <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[550px] bg-[radial-gradient(circle,#24331E_0%,transparent_70%)] opacity-35 pointer-events-none z-0" />
+        <div aria-hidden="true" className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[550px] bg-[radial-gradient(circle,#24331E_0%,transparent_70%)] opacity-35 pointer-events-none z-0" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-8 flex flex-col items-center text-center relative z-10">
           <div className="max-w-4xl flex flex-col items-center">
@@ -414,7 +414,7 @@ export default function MarketingSite() {
                   <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
                   <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
                   <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
-                  <span className="ml-3 text-[11px] font-sans font-medium text-[#1F1B16]/40">Privaro Compliance Dashboard</span>
+                  <span className="ml-3 text-[11px] font-sans font-medium text-[#1F1B16]/65">Privaro Compliance Dashboard</span>
                 </div>
                 
                 {/* Tabs */}
@@ -479,7 +479,7 @@ export default function MarketingSite() {
                           </div>
                         </div>
                         <h4 className="text-xs font-bold text-[#1F1B16] mt-4">Compliance Status: Solid</h4>
-                        <p className="text-[10px] text-[#1F1B16]/60 mt-1">Audit exposure level is minimal.</p>
+                        <p className="text-[10px] text-[#1F1B16]/75 mt-1">Audit exposure level is minimal.</p>
                       </div>
 
                       {/* Log Feed */}
@@ -488,32 +488,32 @@ export default function MarketingSite() {
                           <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wide flex items-center gap-1.5">
                             <Activity className="w-3.5 h-3.5 text-[#6E8B60]" /> Operational Feed
                           </h4>
-                          <span className="text-[10px] font-sans font-semibold text-[#1F1B16]/40">Real-Time Sync</span>
+                          <span className="text-[10px] font-sans font-semibold text-[#1F1B16]/65">Real-Time Sync</span>
                         </div>
                         <div className="space-y-3 text-[11px]">
                           <div className="flex items-start gap-2.5 border-b border-[#1F1B16]/5 pb-2">
                             <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
                             <div>
                               <p className="font-bold text-[#1F1B16]">HubSpot DPA Verified</p>
-                              <p className="text-[10px] text-[#1F1B16]/60">Data Protection Agreement verified and logged for HubSpot email marketing.</p>
+                              <p className="text-[10px] text-[#1F1B16]/75">Data Protection Agreement verified and logged for HubSpot email marketing.</p>
                             </div>
-                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium font-mono">2 hrs ago</span>
+                            <span className="ml-auto text-[10px] text-[#1F1B16]/65 whitespace-nowrap font-medium font-mono"><time dateTime="PT2H">2 hrs ago</time></span>
                           </div>
                           <div className="flex items-start gap-2.5 border-b border-[#1F1B16]/5 pb-2">
                             <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
                             <div>
                               <p className="font-bold text-[#1F1B16]">Automated Cookie Scan Completed</p>
-                              <p className="text-[10px] text-[#1F1B16]/60">14 active cookie scripts audited. Zero unclassified tags detected.</p>
+                              <p className="text-[10px] text-[#1F1B16]/75">14 active cookie scripts audited. Zero unclassified tags detected.</p>
                             </div>
-                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium font-mono">1 day ago</span>
+                            <span className="ml-auto text-[10px] text-[#1F1B16]/65 whitespace-nowrap font-medium font-mono"><time dateTime="P1D">1 day ago</time></span>
                           </div>
                           <div className="flex items-start gap-2.5">
                             <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
                             <div>
                               <p className="font-bold text-[#1F1B16]">Employee training logs updated</p>
-                              <p className="text-[10px] text-[#1F1B16]/60">12 team members completed the annual GDPR awareness module.</p>
+                              <p className="text-[10px] text-[#1F1B16]/75">12 team members completed the annual GDPR awareness module.</p>
                             </div>
-                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium font-mono">3 days ago</span>
+                            <span className="ml-auto text-[10px] text-[#1F1B16]/65 whitespace-nowrap font-medium font-mono"><time dateTime="P3D">3 days ago</time></span>
                           </div>
                         </div>
                       </div>
@@ -746,13 +746,13 @@ export default function MarketingSite() {
                 transition={{ duration: 0.35, delay: i * 0.03 }}
                 className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-xl p-5.5 flex flex-col justify-between group hover:bg-[#1F241D]/80 hover:border-[#596E51]/40 transition-all duration-300 h-full relative overflow-hidden"
               >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(89,110,81,0.08)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(89,110,81,0.08)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                 <div>
                   <div className="flex items-center justify-between mb-5">
                     <span className="text-[9px] font-sans font-bold tracking-wider text-[#8BA381] bg-[#141712]/80 border border-[#2F362D] px-2 py-0.5 rounded">
                       {mod.tag}
                     </span>
-                    <mod.icon className="w-4 h-4 text-[#5F655A] group-hover:text-[#8BA381] transition-colors" />
+                    <mod.icon aria-hidden="true" className="w-4 h-4 text-[#5F655A] group-hover:text-[#8BA381] transition-colors" />
                   </div>
                   <h3 className="text-base font-bold text-[#F5F3ED] mb-2">{mod.title}</h3>
                   <p className="text-[#9CA297] text-xs leading-relaxed">{mod.desc}</p>
@@ -964,6 +964,7 @@ export default function MarketingSite() {
                 initial={{ opacity: 0, scale: 0.98 }} 
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center"
+                aria-live="polite"
               >
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#6E8B60]/10 border border-[#6E8B60]/20 text-[#8BA381] mb-6">
                   <ShieldCheck className="w-6 h-6" />

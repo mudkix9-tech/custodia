@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -40,6 +40,7 @@ export function Logo({ className = '' }: { className?: string }) {
 export function MarketingHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -58,6 +59,44 @@ export function MarketingHeader() {
     };
   }, [mobileMenuOpen]);
 
+  // Focus trap for mobile navigation drawer
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+
+    const focusableElements = drawer.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (firstElement) {
+      setTimeout(() => firstElement.focus(), 50);
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
+
   const handleScrollTo = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith('#')) {
       e.preventDefault();
@@ -71,11 +110,11 @@ export function MarketingHeader() {
   };
 
   return (
-    <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-[#141712]/80 backdrop-blur-md border-b border-[#252B21]/60 py-3.5' : 'bg-transparent border-b border-transparent py-6'}`}>
+    <header role="banner" className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-[#141712]/80 backdrop-blur-md border-b border-[#252B21]/60 py-3.5' : 'bg-transparent border-b border-transparent py-6'}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <Logo className="focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md" />
         
-        <div className="hidden lg:flex items-center gap-8 bg-[#1F241D]/60 border border-[#2F362D]/60 px-6 py-2 rounded-full backdrop-blur-sm">
+        <nav role="navigation" aria-label="Primary Navigation" className="hidden lg:flex items-center gap-8 bg-[#1F241D]/60 border border-[#2F362D]/60 px-6 py-2 rounded-full backdrop-blur-sm">
           {NAV_LINKS.map(link => (
             <a 
               key={link.href} 
@@ -86,7 +125,7 @@ export function MarketingHeader() {
               {link.name}
             </a>
           ))}
-        </div>
+        </nav>
 
         <div className="hidden lg:flex items-center gap-6">
           <Link href="/login" className="text-xs font-semibold text-[#C5C8C1] hover:text-[#F5F3ED] transition-colors focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md px-1.5 py-0.5">Sign In</Link>
@@ -95,19 +134,30 @@ export function MarketingHeader() {
           </Link>
         </div>
 
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-[#9CA297] hover:text-[#F5F3ED] transition-colors focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md p-1">
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-nav-drawer"
+          aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+          className="lg:hidden text-[#9CA297] hover:text-[#F5F3ED] transition-colors focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md p-1"
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6" aria-hidden="true" /> : <Menu className="w-6 h-6" aria-hidden="true" />}
         </button>
       </div>
 
       {/* Mobile Menu Overlay Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-[#141712]/95 border-l border-[#2F362D] p-6 flex flex-col gap-4 lg:hidden z-50 h-screen overflow-y-auto pt-24 shadow-2xl backdrop-blur-md">
+        <div 
+          ref={drawerRef}
+          id="mobile-nav-drawer"
+          className="fixed inset-y-0 right-0 w-full max-w-sm bg-[#141712]/95 border-l border-[#2F362D] p-6 flex flex-col gap-4 lg:hidden z-50 h-screen overflow-y-auto pt-24 shadow-2xl backdrop-blur-md"
+        >
           <button 
             onClick={() => setMobileMenuOpen(false)} 
+            aria-label="Close navigation menu"
             className="absolute top-6 right-6 text-[#9CA297] hover:text-[#F5F3ED] focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md p-1"
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6" aria-hidden="true" />
           </button>
           
           {NAV_LINKS.map(link => (

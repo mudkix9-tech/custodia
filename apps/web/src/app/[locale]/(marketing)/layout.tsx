@@ -31,21 +31,29 @@ export default function MarketingLayout({
   return (
     <div className="min-h-screen bg-[#141712] text-[#F5F3ED] font-sans selection:bg-[#6E8B60]/30 overflow-x-hidden flex flex-col relative antialiased">
       
+      {/* Skip to Content Link */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-[#1F241D] focus:text-[#F5F3ED] focus:px-4 focus:py-2.5 focus:rounded-lg focus:border focus:border-[#8BA381]/30 focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
       {/* Precision Grid Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#2a332508_1px,transparent_1px),linear-gradient(to_bottom,#2a332508_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)] pointer-events-none z-0" />
-      <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-[#6E8B60]/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-[30%] right-1/4 w-[500px] h-[500px] bg-[#8BA381]/5 rounded-full blur-[140px] pointer-events-none" />
+      <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_right,#2a332508_1px,transparent_1px),linear-gradient(to_bottom,#2a332508_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)] pointer-events-none z-0" />
+      <div aria-hidden="true" className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-[#6E8B60]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div aria-hidden="true" className="absolute top-[30%] right-1/4 w-[500px] h-[500px] bg-[#8BA381]/5 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Navigation */}
       <MarketingHeader />
 
       {/* Main Content */}
-      <main className="flex-grow relative z-10">
+      <main id="main-content" role="main" className="flex-grow relative z-10">
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#0C0F0B] border-t border-[#1F231D] pt-16 pb-10 relative z-10 text-xs">
+      <footer role="contentinfo" className="bg-[#0C0F0B] border-t border-[#1F231D] pt-16 pb-10 relative z-10 text-xs">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
             <div className="col-span-2">
