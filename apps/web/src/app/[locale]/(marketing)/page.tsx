@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Globe, Database, UserCheck, ChevronRight,
   Lock, Check, ArrowRight, XCircle, Activity, CheckCircle,
   Shield, ShieldCheck, FileText, AlertTriangle,
-  Users, BookOpen, Share2, BarChart3, HelpCircle, MessageSquare
+  Users, BookOpen, Share2, BarChart3, HelpCircle, MessageSquare, Copy, ArrowLeft
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -235,6 +235,70 @@ export default function MarketingSite() {
   const [calcAnswers, setCalcAnswers] = useState<Record<string, string>>({});
   const [calcScores, setCalcScores] = useState<Record<string, number>>({});
 
+  // Caching & Prefill Effect
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlJurisdiction = params.get('jurisdiction');
+      const urlRopa = params.get('ropa');
+      const urlCookies = params.get('cookies');
+      const urlSpecial = params.get('special');
+      const urlResults = params.get('results') === 'true';
+
+      if (urlJurisdiction || urlRopa || urlCookies || urlSpecial) {
+        const answers: Record<string, string> = {};
+        const scores: Record<string, number> = {};
+        
+        if (urlJurisdiction) {
+          answers.jurisdiction = urlJurisdiction;
+          scores.jurisdiction = CALCULATOR_QUESTIONS[0].options.find(o => o.value === urlJurisdiction)?.score ?? 0;
+        }
+        if (urlRopa) {
+          answers.ropa = urlRopa;
+          scores.ropa = CALCULATOR_QUESTIONS[1].options.find(o => o.value === urlRopa)?.score ?? 0;
+        }
+        if (urlCookies) {
+          answers.cookies = urlCookies;
+          scores.cookies = CALCULATOR_QUESTIONS[2].options.find(o => o.value === urlCookies)?.score ?? 0;
+        }
+        if (urlSpecial) {
+          answers.special = urlSpecial;
+          scores.special = CALCULATOR_QUESTIONS[3].options.find(o => o.value === urlSpecial)?.score ?? 0;
+        }
+
+        setTimeout(() => {
+          setCalcAnswers(answers);
+          setCalcScores(scores);
+          if (urlResults) {
+            setCalcStep(CALCULATOR_QUESTIONS.length);
+          } else {
+            setCalcStep(0);
+          }
+        }, 0);
+        return;
+      }
+
+      const savedAnswers = localStorage.getItem('pvr_calc_answers');
+      const savedScores = localStorage.getItem('pvr_calc_scores');
+      const savedStep = localStorage.getItem('pvr_calc_step');
+      setTimeout(() => {
+        if (savedAnswers) setCalcAnswers(JSON.parse(savedAnswers));
+        if (savedScores) setCalcScores(JSON.parse(savedScores));
+        if (savedStep) setCalcStep(Number(savedStep));
+      }, 0);
+    } catch (e) {
+      console.error("Failed to load calculator state:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Object.keys(calcAnswers).length > 0) {
+      localStorage.setItem('pvr_calc_answers', JSON.stringify(calcAnswers));
+      localStorage.setItem('pvr_calc_scores', JSON.stringify(calcScores));
+      localStorage.setItem('pvr_calc_step', String(calcStep));
+    }
+  }, [calcAnswers, calcScores, calcStep]);
+
   const handleCalculatorSelect = (questionId: string, value: string, score: number) => {
     setCalcAnswers(prev => ({ ...prev, [questionId]: value }));
     setCalcScores(prev => ({ ...prev, [questionId]: score }));
@@ -250,6 +314,25 @@ export default function MarketingSite() {
     setCalcAnswers({});
     setCalcScores({});
     setCalcStep(0);
+    try {
+      localStorage.removeItem('pvr_calc_answers');
+      localStorage.removeItem('pvr_calc_scores');
+      localStorage.removeItem('pvr_calc_step');
+    } catch (e) {
+      console.error("Failed to clear localStorage:", e);
+    }
+  };
+
+  const [copiedCalculatorLink, setCopiedCalculatorLink] = useState(false);
+  const handleCopyCalculatorLink = () => {
+    try {
+      const shareUrl = `${window.location.origin}${window.location.pathname}?jurisdiction=${calcAnswers.jurisdiction || ''}&ropa=${calcAnswers.ropa || ''}&cookies=${calcAnswers.cookies || ''}&special=${calcAnswers.special || ''}&results=true`;
+      navigator.clipboard.writeText(shareUrl);
+      setCopiedCalculatorLink(true);
+      setTimeout(() => setCopiedCalculatorLink(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
   };
 
   const totalRiskScore = Object.values(calcScores).reduce((a, b) => a + b, 0);
@@ -367,7 +450,7 @@ export default function MarketingSite() {
               </div>
 
               {/* Tab Display Area */}
-              <div className="min-h-[280px]">
+              <div className="min-h-[380px]">
                 <AnimatePresence mode="wait">
                   
                   {activeTab === 'overview' && (
@@ -807,9 +890,19 @@ export default function MarketingSite() {
             {calcStep < CALCULATOR_QUESTIONS.length ? (
               <div>
                 <div className="flex items-center justify-between mb-8">
-                  <span className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wider">
-                    Question {calcStep + 1} of {CALCULATOR_QUESTIONS.length}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    {calcStep > 0 && (
+                      <button 
+                        onClick={() => setCalcStep(prev => prev - 1)}
+                        className="text-[10px] text-[#9CA297] hover:text-[#F5F3ED] flex items-center gap-1 bg-[#141712]/50 border border-[#2F362D] px-2.5 py-1 rounded transition-colors touch-manipulation"
+                      >
+                        <ArrowLeft className="w-3 h-3" /> Back
+                      </button>
+                    )}
+                    <span className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wider">
+                      Question {calcStep + 1} of {CALCULATOR_QUESTIONS.length}
+                    </span>
+                  </div>
                   <div className="flex gap-1">
                     {CALCULATOR_QUESTIONS.map((_, idx) => (
                       <div 
@@ -822,8 +915,35 @@ export default function MarketingSite() {
                   </div>
                 </div>
 
-                <h3 className="text-lg sm:text-xl font-bold text-[#F5F3ED] mb-6 leading-snug">
-                  {CALCULATOR_QUESTIONS[calcStep].text}
+                <h3 className="text-lg sm:text-xl font-bold text-[#F5F3ED] mb-6 leading-snug flex items-center gap-2 flex-wrap">
+                  <span>{CALCULATOR_QUESTIONS[calcStep].text}</span>
+                  {CALCULATOR_QUESTIONS[calcStep].id === 'ropa' && (
+                    <span className="relative group/term inline-block leading-none">
+                      <HelpCircle className="w-3.5 h-3.5 text-[#9CA297]/50 cursor-help hover:text-[#8BA381] transition-colors" />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3.5 bg-[#1F241D] border border-[#2F362D] text-[#C5C8C1] text-[10.5px] rounded-xl shadow-2xl opacity-0 invisible group-hover/term:opacity-100 group-hover/term:visible transition-all duration-200 z-50 pointer-events-none normal-case font-normal leading-relaxed backdrop-blur-md">
+                        <strong className="text-[#F5F3ED] block mb-1">Record of Processing Activities (ROPA):</strong>
+                        A log required under GDPR Article 30 that documents your agency&apos;s data categories, purposes, and recipients of personal data.
+                      </span>
+                    </span>
+                  )}
+                  {CALCULATOR_QUESTIONS[calcStep].id === 'cookies' && (
+                    <span className="relative group/term inline-block leading-none">
+                      <HelpCircle className="w-3.5 h-3.5 text-[#9CA297]/50 cursor-help hover:text-[#8BA381] transition-colors" />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3.5 bg-[#1F241D] border border-[#2F362D] text-[#C5C8C1] text-[10.5px] rounded-xl shadow-2xl opacity-0 invisible group-hover/term:opacity-100 group-hover/term:visible transition-all duration-200 z-50 pointer-events-none normal-case font-normal leading-relaxed backdrop-blur-md">
+                        <strong className="text-[#F5F3ED] block mb-1">ePrivacy & Consent Management:</strong>
+                        GDPR requires blocking marketing pixels and analytic cookies *before* a visitor selects their consent preferences.
+                      </span>
+                    </span>
+                  )}
+                  {CALCULATOR_QUESTIONS[calcStep].id === 'special' && (
+                    <span className="relative group/term inline-block leading-none">
+                      <HelpCircle className="w-3.5 h-3.5 text-[#9CA297]/50 cursor-help hover:text-[#8BA381] transition-colors" />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3.5 bg-[#1F241D] border border-[#2F362D] text-[#C5C8C1] text-[10.5px] rounded-xl shadow-2xl opacity-0 invisible group-hover/term:opacity-100 group-hover/term:visible transition-all duration-200 z-50 pointer-events-none normal-case font-normal leading-relaxed backdrop-blur-md">
+                        <strong className="text-[#F5F3ED] block mb-1">Special Category Data (DPIA):</strong>
+                        Sensitive personal data (health, biometric, location, banking) carries high-risk profiles that require a formal Data Protection Impact Assessment (DPIA).
+                      </span>
+                    </span>
+                  )}
                 </h3>
 
                 <div className="space-y-3">
@@ -852,9 +972,18 @@ export default function MarketingSite() {
                 <h3 className="text-xl sm:text-2xl font-bold text-[#F5F3ED] mb-3">Assessment Diagnostic Complete</h3>
                 
                 <div className={`max-w-md mx-auto border rounded-xl p-5 mb-6 ${riskColor}`}>
-                  <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="flex items-center justify-center gap-2.5 mb-2.5">
                     <span className="text-[10px] font-bold tracking-widest uppercase">EXPOSURE LEVEL:</span>
-                    <span className="font-mono font-bold text-xs bg-[#141712]/55 px-2 py-0.5 rounded border border-current">{riskLevel}</span>
+                    <span className={`font-mono font-bold text-xs bg-[#141712]/55 px-2.5 py-0.5 rounded border flex items-center gap-1.5 ${
+                      riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? 'text-red-400 border-red-500/50' :
+                      riskLevel === 'MEDIUM' ? 'text-amber-400 border-amber-500/50' : 'text-[#8BA381] border-[#8BA381]/50'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${
+                        riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? 'bg-red-500 animate-pulse' :
+                        riskLevel === 'MEDIUM' ? 'bg-amber-500' : 'bg-[#8BA381]'
+                      }`} />
+                      {riskLevel}
+                    </span>
                   </div>
                   <p className="text-xs leading-relaxed font-semibold">{riskText}</p>
                 </div>
@@ -901,13 +1030,23 @@ export default function MarketingSite() {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <Link href={prefillUrl} className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98]">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Link href={prefillUrl} className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-xs sm:text-sm font-bold py-3.5 px-6 rounded-lg transition-all flex items-center justify-center gap-2 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] touch-manipulation">
                     Verify Exposure in Assessment <ArrowRight className="w-4 h-4" />
                   </Link>
                   <button 
+                    onClick={handleCopyCalculatorLink}
+                    className="w-full sm:w-auto bg-[#1F241D] hover:bg-[#2A3127] text-[#C5C8C1] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 touch-manipulation"
+                  >
+                    {copiedCalculatorLink ? (
+                      <>Copied! <Check className="w-3.5 h-3.5 text-[#8BA381]" /></>
+                    ) : (
+                      <>Share Result Link <Copy className="w-3.5 h-3.5" /></>
+                    )}
+                  </button>
+                  <button 
                     onClick={resetCalculator}
-                    className="w-full sm:w-auto bg-[#141712]/50 hover:bg-[#141712] text-[#9CA297] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98]"
+                    className="w-full sm:w-auto bg-[#141712]/50 hover:bg-[#141712] text-[#9CA297] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
                   >
                     Reset Calculator
                   </button>

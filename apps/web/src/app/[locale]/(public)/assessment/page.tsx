@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ShieldCheck, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { evaluateDependsOn } from '@/utils/assessment';
 import { setCookie, getCookie } from 'cookies-next';
 
-export default function AssessmentEngine() {
+function AssessmentEngineContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(-1); // -1 is intro
   const [answers, setAnswers] = useState<Record<string, { text: string; riskWeight?: number }>>({});
@@ -57,6 +58,53 @@ export default function AssessmentEngine() {
       }, 0);
     }
   }, [resumeData, questions, hasStarted]);
+
+  // Prefill from URL Search Parameters
+  useEffect(() => {
+    if (questions && !hasStarted) {
+      const jurisdiction = searchParams?.get('jurisdiction');
+      const ropa = searchParams?.get('ropa');
+      const cookies = searchParams?.get('cookies');
+      const special = searchParams?.get('special');
+      
+      if (jurisdiction || ropa || cookies || special) {
+        const prefilled: Record<string, { text: string; riskWeight?: number }> = {};
+        
+        for (const q of questions) {
+          const typedOptions = q.options as Array<{ text: string; riskWeight?: number }>;
+          
+          if (special && q.questionText.includes('special categories')) {
+            const option = typedOptions.find(o => special === 'yes' ? o.text.includes('Yes') : o.text.includes('We don\'t process'));
+            if (option) prefilled[q.id] = option;
+          }
+          
+          if (cookies && q.questionText.includes('cookie consent banner')) {
+            const option = typedOptions.find(o => cookies === 'automated' || cookies === 'basic' ? o.text === 'Yes' : o.text === 'No');
+            if (option) prefilled[q.id] = option;
+          }
+          if (cookies && q.questionText.includes('reject all non-essential cookies')) {
+            const option = typedOptions.find(o => cookies === 'automated' ? o.text === 'Yes' : o.text.includes('No'));
+            if (option) prefilled[q.id] = option;
+          }
+
+          if (ropa && q.questionText.includes('exactly what personal data your organization collects')) {
+            const option = typedOptions.find(o => ropa === 'yes' ? o.text.includes('fully') : o.text.includes('No') || o.text.includes('Partially'));
+            if (option) prefilled[q.id] = option;
+          }
+          if (ropa && q.questionText.includes('places where personal data lives')) {
+            const option = typedOptions.find(o => ropa === 'yes' ? o.text.includes('fully') : o.text.includes('No') || o.text.includes('Partially'));
+            if (option) prefilled[q.id] = option;
+          }
+        }
+        
+        if (Object.keys(prefilled).length > 0) {
+          setTimeout(() => {
+            setAnswers(prev => ({ ...prev, ...prefilled }));
+          }, 0);
+        }
+      }
+    }
+  }, [questions, searchParams, hasStarted]);
 
   const handleStart = async () => {
     try {
@@ -287,5 +335,17 @@ export default function AssessmentEngine() {
         </AnimatePresence>
       </main>
     </>
+  );
+}
+
+export default function AssessmentEngine() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-bone-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-sage-600" />
+      </div>
+    }>
+      <AssessmentEngineContent />
+    </Suspense>
   );
 }

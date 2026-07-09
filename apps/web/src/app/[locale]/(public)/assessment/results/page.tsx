@@ -1,12 +1,78 @@
 "use client";
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
 import { useSearchParams } from 'next/navigation';
-import { ShieldCheck, Mail, AlertCircle, CheckCircle2, AlertTriangle, Lock, Send, Copy, ArrowRight, Clock } from 'lucide-react';
+import { ShieldCheck, Mail, AlertCircle, CheckCircle2, AlertTriangle, Lock, Send, Copy, ArrowRight, Clock, Download } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
+
+function ConfettiEffect() {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    let animationFrameId: number;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const colors = ['#8BA381', '#596E51', '#FFE01B', '#F9AB00', '#635BFF'];
+    const particles = Array.from({ length: 140 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      r: Math.random() * 4 + 2,
+      d: Math.random() * canvas.height,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      tilt: Math.random() * 10 - 5,
+      tiltAngleIncremental: Math.random() * 0.07 + 0.02,
+      tiltAngle: 0
+    }));
+    
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p, idx) => {
+        p.tiltAngle += p.tiltAngleIncremental;
+        p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+        p.x += Math.sin(p.tiltAngle);
+        p.tilt = Math.sin(p.tiltAngle - idx / 3) * 15;
+        
+        ctx.beginPath();
+        ctx.lineWidth = p.r * 2;
+        ctx.strokeStyle = p.color;
+        ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+        ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+        ctx.stroke();
+      });
+      
+      const active = particles.some(p => p.y < canvas.height);
+      if (active) {
+        animationFrameId = requestAnimationFrame(draw);
+      }
+    };
+    
+    draw();
+    
+    const handleResize = () => {
+      if (canvas) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+  
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-50 w-full h-full" />;
+}
 
 function AssessmentResultsContent() {
   const searchParams = useSearchParams();
@@ -82,7 +148,32 @@ function AssessmentResultsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-bone-50 text-ink-900 font-sans">
+    <div className="min-h-screen bg-bone-50 py-12 px-4 sm:px-6 relative">
+      <ConfettiEffect />
+      <style>{`
+        @media print {
+          body, html {
+            background: white !important;
+            color: black !important;
+          }
+          header, footer, nav, button, .no-print {
+            display: none !important;
+          }
+          .print-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+          }
+          .shadow-card {
+            box-shadow: none !important;
+            border: 1px solid rgba(0,0,0,0.1) !important;
+          }
+        }
+      `}</style>
+      <div className="max-w-4xl mx-auto">
       <header className="p-6 border-b border-ink-900/5 flex justify-between items-center bg-bone-50">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-sage-700 rounded-lg flex items-center justify-center shadow-sm">
@@ -181,7 +272,19 @@ function AssessmentResultsContent() {
 
         {/* STATE 3: Authenticated Results */}
         {currentState === 3 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="print-container">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 pb-6 border-b border-ink-900/10 no-print">
+              <div>
+                <h1 className="text-3xl font-serif text-ink-900 font-bold">GDPR Audit Readiness Report</h1>
+                <p className="text-xs text-ink-500 mt-1">Generated dynamically for your digital agency</p>
+              </div>
+              <button 
+                onClick={() => window.print()} 
+                className="inline-flex items-center justify-center gap-2 bg-[#596E51] text-white px-5 py-2.5 rounded-xl text-xs font-semibold hover:bg-sage-600 transition-colors shadow-md hover:scale-[1.01] active:scale-[0.99] touch-manipulation focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none shrink-0"
+              >
+                <Download className="w-4 h-4" /> Download PDF Report
+              </button>
+            </div>
             
             <div className="grid md:grid-cols-3 gap-8 mb-12">
               {/* Score Card */}
@@ -291,6 +394,7 @@ function AssessmentResultsContent() {
           </motion.div>
         )}
       </main>
+      </div>
     </div>
   );
 }
