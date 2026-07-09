@@ -1,22 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Globe, Database, UserCheck, ChevronRight, CheckCircle2, Menu, X, 
-  Lock, Check, ArrowRight, XCircle, Activity, Server, CheckCircle, 
+  Globe, Database, UserCheck, ChevronRight, CheckCircle2,
+  Lock, Check, ArrowRight, XCircle, Activity, CheckCircle, 
   ArrowUpRight
 } from 'lucide-react';
 import Link from 'next/link';
 
 // --- Premium Design Constants ---
-
-const NAV_LINKS = [
-  { name: 'Features', id: 'features' },
-  { name: 'Risk Calculator', id: 'risk-calculator' },
-  { name: 'DPA Alignment', id: 'authorities' },
-  { name: 'Pricing', id: 'pricing' },
-];
 
 const MODULES = [
   { 
@@ -177,48 +170,14 @@ const CALCULATOR_QUESTIONS = [
   }
 ];
 
-export function Logo({ className = '' }: { className?: string }) {
-  return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" className="text-blue-500">
-        <rect x="1" y="1" width="30" height="30" rx="8" fill="#1E293B" stroke="#3B82F6" strokeWidth="1.5" />
-        <path
-          d="M16 6c-3.5 1.5-6.5 1.8-8 1.8 0 6.4 2 11.5 8 14.4 6-2.9 8-8 8-14.4-1.5 0-4.5-.3-8-1.8z"
-          fill="#3B82F6"
-          opacity="0.2"
-        />
-        <path
-          d="M16 6c-3.5 1.5-6.5 1.8-8 1.8 0 6.4 2 11.5 8 14.4 6-2.9 8-8 8-14.4-1.5 0-4.5-.3-8-1.8zM16 11.5v7"
-          stroke="#3B82F6"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="leading-none">
-        <div className="font-sans font-bold text-[20px] tracking-tight text-white flex items-center gap-1.5">
-          Privaro <span className="text-[10px] uppercase font-mono tracking-wider bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20">OS</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function MarketingSite() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [annualBilling, setAnnualBilling] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'cookies' | 'ropa' | 'dsar'>('overview');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Risk Calculator State
   const [calcStep, setCalcStep] = useState(0);
   const [calcAnswers, setCalcAnswers] = useState<Record<string, string>>({});
   const [calcScores, setCalcScores] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const handleCalculatorSelect = (questionId: string, value: string, score: number) => {
     setCalcAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -261,85 +220,7 @@ export default function MarketingSite() {
   const prefillUrl = `/assessment?jurisdiction=${calcAnswers.jurisdiction || ''}&ropa=${calcAnswers.ropa || ''}&cookies=${calcAnswers.cookies || ''}&special=${calcAnswers.special || ''}&risk=${riskLevel.toLowerCase()}`;
 
   return (
-    <div className="min-h-screen bg-[#070B13] text-[#F3F4F6] font-sans selection:bg-blue-500/30 overflow-x-hidden antialiased">
-      
-      {/* Precision Grid Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b08_1px,transparent_1px),linear-gradient(to_bottom,#1e293b08_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)] pointer-events-none z-0" />
-      <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-[30%] right-1/4 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[140px] pointer-events-none" />
-
-      {/* Navigation */}
-      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b ${isScrolled ? 'bg-[#070B13]/85 backdrop-blur-xl border-slate-800/80 py-3.5' : 'bg-transparent border-transparent py-6'}`}>
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Logo />
-            <div className="hidden md:flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-500/20 px-3 py-1 rounded-full text-[11px] font-mono text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Continuous Audit Engine Active
-            </div>
-          </div>
-          
-          <div className="hidden lg:flex items-center gap-8 bg-[#0F1626]/60 border border-slate-800/60 px-6 py-2 rounded-full backdrop-blur-sm">
-            {NAV_LINKS.map(link => (
-              <button 
-                key={link.id} 
-                onClick={() => {
-                  const el = document.getElementById(link.id);
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="text-xs font-semibold text-slate-400 hover:text-white transition-colors duration-200"
-              >
-                {link.name}
-              </button>
-            ))}
-          </div>
-
-          <div className="hidden lg:flex items-center gap-6">
-            <Link href="/login" className="text-xs font-semibold text-slate-300 hover:text-white transition-colors">Sign In</Link>
-            <Link href="/assessment" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/20 text-xs font-bold py-2.5 px-5 rounded-lg transition-all flex items-center gap-2">
-              Start Free Assessment <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-slate-300 hover:text-white transition-colors">
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full left-0 w-full bg-[#070B13] border-b border-slate-800 p-6 flex flex-col gap-4 lg:hidden"
-            >
-              {NAV_LINKS.map(link => (
-                <button 
-                  key={link.id} 
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    const el = document.getElementById(link.id);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="text-left text-sm font-semibold text-slate-400 hover:text-white py-2 border-b border-slate-900"
-                >
-                  {link.name}
-                </button>
-              ))}
-              <div className="flex flex-col gap-4 mt-4">
-                <Link href="/login" className="text-center text-sm font-semibold text-slate-300 hover:text-white py-2">Sign In</Link>
-                <Link href="/assessment" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center text-sm font-bold py-3 rounded-lg">
-                  Start Free Assessment
-                </Link>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
-
-      <main className="relative z-10 pt-28">
+    <div className="pt-16">
         
         {/* Hero Section */}
         <section className="max-w-7xl mx-auto px-6 pt-16 pb-20 flex flex-col items-center text-center">
@@ -1012,50 +893,6 @@ export default function MarketingSite() {
           </div>
         </section>
 
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-[#050910] border-t border-slate-900 pt-16 pb-10 relative z-10 text-xs">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
-            <div className="col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <Logo />
-              </div>
-              <p className="text-slate-450 text-xs leading-relaxed max-w-xs mb-6">
-                The compliance automation platform designed for modern agencies.
-              </p>
-              <div className="flex items-center gap-4 text-slate-500 font-mono text-[10px]">
-                <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5" /> AWS Dublin</span>
-                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> SSL Secured</span>
-              </div>
-            </div>
-            
-            {/* Footer Links */}
-            {[
-              { title: 'Product Modules', links: ['Continuous Auditor', 'ROPA Ledger', 'Cookie Scan Engine', 'Integrations'] },
-              { title: 'Resource Hub', links: ['GDPR Guidance', 'Audit Prep Checklist', 'Security Posture'] },
-              { title: 'Legal Ledger', links: ['Terms of Service', 'Privacy Policy', 'Cookie Statement', 'Standard DPA'] }
-            ].map((col, i) => (
-              <div key={i}>
-                <h4 className="text-white font-bold mb-4 text-xs">{col.title}</h4>
-                <ul className="space-y-2.5 text-slate-450">
-                  {col.links.map((link, j) => (
-                    <li key={j}><a href="#" className="hover:text-white transition-colors">{link}</a></li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          
-          <div className="border-t border-slate-950 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-slate-500 text-[10.5px]">© {new Date().getFullYear()} Privaro OS. All rights reserved.</p>
-            <div className="flex items-center gap-2 text-slate-400 hover:text-slate-200 cursor-pointer transition-colors text-[10.5px]">
-              <Globe className="w-3.5 h-3.5 text-slate-500" /> English (EU)
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
