@@ -1,484 +1,1071 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { motion, Variants } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ShieldCheck, AlertTriangle, FileText, Globe, Database,
-  UserCheck, LayoutDashboard, ChevronRight, CheckCircle2, Check, ArrowRight, XCircle, Users, Activity
+  Globe, Database, UserCheck, ChevronRight, CheckCircle2, Menu, X, 
+  Lock, Check, ArrowRight, XCircle, Activity, Server, CheckCircle, 
+  ArrowUpRight
 } from 'lucide-react';
 import Link from 'next/link';
 
-// --- Constants ---
+// --- Premium Design Constants ---
+
+const NAV_LINKS = [
+  { name: 'Features', id: 'features' },
+  { name: 'Risk Calculator', id: 'risk-calculator' },
+  { name: 'DPA Alignment', id: 'authorities' },
+  { name: 'Pricing', id: 'pricing' },
+];
+
 const MODULES = [
-  { icon: AlertTriangle, title: 'Compliance Gap Assessment', desc: 'Identify your immediate GDPR risks with our guided agency audit tool.', colSpan: 'md:col-span-2 lg:col-span-2' },
-  { icon: Database, title: 'ROPA Management', desc: 'Dynamic Records of Processing Activities.', colSpan: 'md:col-span-1 lg:col-span-1' },
-  { icon: ShieldCheck, title: 'Vendor Intelligence', desc: 'Pre-built database of 1,000+ marketing tools.', colSpan: 'md:col-span-1 lg:col-span-1' },
-  { icon: FileText, title: 'Dynamic Privacy Policy', desc: 'Auto-updating legal documents tailored for agencies.', colSpan: 'md:col-span-2 lg:col-span-2' },
-  { icon: Globe, title: 'Cookie Consent', desc: 'Google Consent Mode v2 and IAB TCF v2.2 compliant.', colSpan: 'md:col-span-1 lg:col-span-1' },
-  { icon: UserCheck, title: 'DSAR Automation', desc: 'Streamline data subject requests workflows.', colSpan: 'md:col-span-2 lg:col-span-2' },
+  { 
+    tag: "Assessment",
+    title: 'Continuous Gap Audit', 
+    desc: 'Deep-scans your business operations against a checklist of 142 GDPR requirements. Identifies gaps instantly.', 
+    colSpan: 'md:col-span-2 lg:col-span-2' 
+  },
+  { 
+    tag: "ROPA Ledger",
+    title: 'Dynamic ROPA Generator', 
+    desc: 'Maintains cryptographically verifiable Article 30 Records of Processing Activities that auto-update as your stack changes.', 
+    colSpan: 'md:col-span-1 lg:col-span-1' 
+  },
+  { 
+    tag: "Vendor Intel",
+    title: 'Vendor Risk Directory', 
+    desc: 'Over 1,000+ pre-audited sub-processors. Instantly maps their headquarters, data paths, and public DPAs.', 
+    colSpan: 'md:col-span-1 lg:col-span-1' 
+  },
+  { 
+    tag: "Dynamic Docs",
+    title: 'Self-Updating Privacy Policies', 
+    desc: 'Generate hosted, responsive privacy and cookie policies connected to your active vendor list via webhooks.', 
+    colSpan: 'md:col-span-2 lg:col-span-2' 
+  },
+  { 
+    tag: "Consent Management",
+    title: 'Consent Mode v2 Banner', 
+    desc: 'Edge-delivered consent collection script. Full compatibility with Google Consent Mode v2 and IAB TCF v2.2.', 
+    colSpan: 'md:col-span-1 lg:col-span-1' 
+  },
+  { 
+    tag: "Subject Rights",
+    title: 'Automated DSAR Vault', 
+    desc: 'Verify requestor identity, execute secure data exports, and automatically track the statutory 30-day response window.', 
+    colSpan: 'md:col-span-2 lg:col-span-2' 
+  },
+];
+
+const AUTHORITIES = [
+  { 
+    code: 'IE DPC', 
+    name: 'Data Protection Commission', 
+    country: 'Ireland', 
+    focus: 'Lead authority for major tech and cross-border SaaS companies.', 
+    enforcement: 'High focus on analytics tracking consent and marketing profiling.' 
+  },
+  { 
+    code: 'CNIL', 
+    name: 'Commission Nationale', 
+    country: 'France', 
+    focus: 'Highly strict regulatory standards for cookies and analytics trackers.', 
+    enforcement: 'Enforces prior-consent mechanisms and active user opt-out options.' 
+  },
+  { 
+    code: 'BfDI', 
+    name: 'Der Bundesbeauftragte', 
+    country: 'Germany', 
+    focus: 'Federal authority enforcing sovereign data hosting and workspace logs.', 
+    enforcement: 'Strict rules governing employee records and local EU cloud architecture.' 
+  },
+  { 
+    code: 'AEPD', 
+    name: 'Agencia Española', 
+    country: 'Spain', 
+    focus: 'Leads the EU in the volume of administrative compliance investigations.', 
+    enforcement: 'Heavy enforcement against spam lists, email outreach, and cookie walls.' 
+  },
+  { 
+    code: 'Garante', 
+    name: 'Garante Privacy', 
+    country: 'Italy', 
+    focus: 'Aggressive enforcement regarding automated decisions and AI training datasets.', 
+    enforcement: 'Demands transparent lawful bases for marketing automation systems.' 
+  },
+];
+
+const INTEGRATIONS = [
+  { name: 'HubSpot', category: 'CRM & Marketing' },
+  { name: 'Mailchimp', category: 'Email Campaigns' },
+  { name: 'Google Analytics 4', category: 'Web Analytics' },
+  { name: 'Stripe', category: 'Payments' },
+  { name: 'Slack', category: 'Alerting' },
+  { name: 'Amazon Web Services', category: 'Infrastructure' },
+  { name: 'Salesforce', category: 'Enterprise CRM' }
 ];
 
 const PRICING = [
-  { name: 'Free', price: '0', yearly: '0', desc: 'Gap assessment only.', features: ['Basic gap assessment', '1 User limit', 'Community support'] },
-  { name: 'Starter', price: '39', yearly: '31', desc: 'For small design agencies.', features: ['ROPA (20 activities)', 'Vendor tracker (30 tools)', 'Privacy policy generator', '2 Users'], popular: false },
-  { name: 'Professional', price: '89', yearly: '71', desc: 'The complete OS for growing agencies.', features: ['Everything in Starter', 'DSAR management', 'Breach workflow & DPIA', 'Cookie consent (5 domains)', 'Employee training', 'Client dashboards (10 clients)', '10 Users'], popular: true },
-  { name: 'Agency', price: '179', yearly: '143', desc: 'Unlimited scale for large operations.', features: ['Everything in Pro', 'Unlimited activities & vendors', 'Unlimited clients & domains', 'Unlimited users', 'API access & Audit file generator', 'Priority support'], popular: false },
+  { 
+    name: 'Free Starter', 
+    price: '0', 
+    yearly: '0', 
+    desc: 'Baseline assessment tools.', 
+    features: ['GDPR Gap Assessment', '1 Admin Seat', 'Regulatory News Updates', 'Self-Serve Help Docs'] 
+  },
+  { 
+    name: 'Starter Package', 
+    price: '39', 
+    yearly: '31', 
+    desc: 'Designed for small boutique digital agencies.', 
+    features: ['Dynamic ROPA (20 activities)', 'Vendor Tracker (30 processors)', 'Hosted Privacy Policy', '2 Admin Seats', 'Standard Email Support'], 
+    popular: false 
+  },
+  { 
+    name: 'Professional OS', 
+    price: '89', 
+    yearly: '71', 
+    desc: 'Complete compliance management system for growing organizations.', 
+    features: ['Unlimited ROPA activities', 'Unlimited tracked vendors', 'Hosted Cookie Consent banner', 'DSAR Intake Portal', 'DPIA Risk Assessment wizard', 'Client Dashboards (up to 10 clients)', '10 Admin Seats', 'Priority Support'], 
+    popular: true 
+  },
+  { 
+    name: 'Enterprise Scale', 
+    price: '179', 
+    yearly: '143', 
+    desc: 'Custom APIs and deep scaling for large networks.', 
+    features: ['Everything in Professional', 'Custom branding for portals', 'Automated Cookie Scanner API', 'Continuous Audit Log exports', 'Employee Training LMS integrations', 'Unlimited Client Dashboards', 'Dedicated Success Representative'], 
+    popular: false 
+  },
 ];
 
-// --- Animations ---
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const } }
-};
+const CALCULATOR_QUESTIONS = [
+  {
+    id: 'jurisdiction',
+    text: 'Where are your data subjects (visitors, customers, lists) located?',
+    options: [
+      { text: 'We regularly process data of EU/UK citizens', value: 'eu', score: 30 },
+      { text: 'We act as a sub-processor of EU datasets', value: 'sub', score: 20 },
+      { text: 'We process only US/non-EU datasets', value: 'us', score: 5 }
+    ]
+  },
+  {
+    id: 'ropa',
+    text: 'Do you maintain an active, documented Article 30 ROPA ledger?',
+    options: [
+      { text: 'Yes, we have a fully-documented active ROPA', value: 'yes', score: 0 },
+      { text: 'No, we rely on static spreadsheets or have none', value: 'no', score: 35 },
+      { text: 'We do not know what an Article 30 ROPA is', value: 'unknown', score: 40 }
+    ]
+  },
+  {
+    id: 'cookies',
+    text: 'How are cookies and trackers monitored and consented to?',
+    options: [
+      { text: 'Automated crawler & Consent Mode v2 mapping', value: 'automated', score: 0 },
+      { text: 'A basic banner, but no ongoing audits or logs', value: 'basic', score: 20 },
+      { text: 'We install analytics/pixel tags without dynamic block triggers', value: 'none', score: 35 }
+    ]
+  },
+  {
+    id: 'special',
+    text: 'Do you process special category data (health, minors, biometrics, banking)?',
+    options: [
+      { text: 'Yes, we process sensitive datasets regularly', value: 'yes', score: 25 },
+      { text: 'No, we only collect standard email/billing logs', value: 'no', score: 5 }
+    ]
+  }
+];
 
-const stagger: Variants = {
-  visible: { transition: { staggerChildren: 0.1 } }
-};
-
-// --- Components ---
-const AnimatedCounter = ({ from, to, prefix = '', suffix = '' }: { from: number, to: number, prefix?: string, suffix?: string }) => {
-  const [count, setCount] = useState(from);
-  useEffect(() => {
-    let current = from;
-    const step = (to - from) / 30; // 30 frames
-    const timer = setInterval(() => {
-      current += step;
-      if (current >= to) {
-        setCount(to);
-        clearInterval(timer);
-      } else {
-        setCount(current);
-      }
-    }, 30);
-    return () => clearInterval(timer);
-  }, [from, to]);
-  
-  // Format numbers nicely
-  const formatted = count >= 1000 ? count.toLocaleString(undefined, { maximumFractionDigits: 2 }) : (Math.round(count * 100) / 100).toFixed(count % 1 === 0 ? 0 : 2);
-  return <span>{prefix}{formatted}{suffix}</span>;
-};
-
-const DashboardMockup = () => {
+export function Logo({ className = '' }: { className?: string }) {
   return (
-    <motion.div 
-      initial={{ opacity: 0, x: 50, rotateY: -10, rotateX: 10 }}
-      animate={{ opacity: 1, x: 0, rotateY: -5, rotateX: 5 }}
-      transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
-      className="relative w-full aspect-[4/3] max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden border border-ink-900/10 flex flex-col perspective-1000 transform-gpu"
-      style={{ transformStyle: 'preserve-3d' }}
-    >
-       {/* Sidebar */}
-       <div className="flex h-full">
-         <div className="w-16 md:w-48 bg-bone-50 border-r border-ink-900/5 p-4 flex flex-col gap-4">
-           <div className="h-6 w-6 md:w-24 bg-ink-900/10 rounded" />
-           <div className="h-6 w-full bg-sage-500/10 rounded mt-4" />
-           <div className="h-4 w-3/4 bg-ink-900/5 rounded" />
-           <div className="h-4 w-5/6 bg-ink-900/5 rounded" />
-           <div className="h-4 w-2/3 bg-ink-900/5 rounded" />
-         </div>
-         {/* Main Content */}
-         <div className="flex-1 p-6 md:p-8 flex flex-col gap-8 bg-bone-50/30">
-           {/* Header */}
-           <div className="flex justify-between items-center">
-             <div className="h-6 w-32 bg-ink-900/10 rounded" />
-             <div className="h-8 w-8 rounded-full bg-sage-600/20" />
-           </div>
-           
-           {/* Score Card */}
-           <div className="bg-white p-6 rounded-xl shadow-sm border border-ink-900/5 flex items-center gap-6">
-             <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-8 border-sage-100 flex items-center justify-center shrink-0">
-               <svg className="absolute inset-0 w-full h-full -rotate-90">
-                 <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="8" fill="none" className="text-sage-600" strokeDasharray="250" strokeDashoffset={250 * 0.15} />
-               </svg>
-               <span className="text-xl md:text-2xl font-bold text-ink-900"><AnimatedCounter from={0} to={85} /></span>
-             </div>
-             <div>
-               <div className="text-sm text-ink-500 font-medium mb-1">Compliance Score</div>
-               <div className="text-lg md:text-xl font-bold text-ink-900">Good standing</div>
-             </div>
-           </div>
-           
-           {/* Gap List */}
-           <div className="bg-white rounded-xl shadow-sm border border-ink-900/5 p-4 flex flex-col gap-3">
-             <div className="text-sm font-medium text-ink-900 mb-2">Priority Actions</div>
-             <div className="flex justify-between items-center p-2 rounded-lg bg-ink-50/50">
-               <div className="flex gap-3 items-center w-full">
-                 <div className="w-8 h-8 rounded bg-amber-100 flex items-center justify-center shrink-0"><AlertTriangle className="w-4 h-4 text-amber-600"/></div>
-                 <div className="flex-1 h-3 bg-ink-900/10 rounded" />
-                 <div className="w-16 h-5 rounded-full bg-amber-100 shrink-0" />
-               </div>
-             </div>
-             <div className="flex justify-between items-center p-2 rounded-lg bg-ink-50/50">
-               <div className="flex gap-3 items-center w-full">
-                 <div className="w-8 h-8 rounded bg-sage-100 flex items-center justify-center shrink-0"><ShieldCheck className="w-4 h-4 text-sage-600"/></div>
-                 <div className="flex-1 h-3 bg-ink-900/10 rounded" />
-                 <div className="w-16 h-5 rounded-full bg-sage-100 shrink-0" />
-               </div>
-             </div>
-           </div>
-         </div>
-       </div>
-    </motion.div>
-  );
-};
-
-export default function MarketingSite() {
-  const [annualBilling, setAnnualBilling] = useState(true);
-
-  return (
-    <>
-      {/* Precision Grid & Radial Gradient Background */}
-      <div className="fixed inset-0 pointer-events-none z-0 flex justify-center bg-bone-50">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-sage-200/40 via-transparent to-transparent opacity-60"></div>
-        <div className="w-full max-w-[1440px] h-full flex justify-between px-6 opacity-[0.03]">
-          <div className="w-px h-full bg-ink-900" />
-          <div className="w-px h-full bg-ink-900" />
-          <div className="w-px h-full bg-ink-900 hidden md:block" />
-          <div className="w-px h-full bg-ink-900 hidden lg:block" />
+    <div className={`flex items-center gap-2.5 ${className}`}>
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" className="text-blue-500">
+        <rect x="1" y="1" width="30" height="30" rx="8" fill="#1E293B" stroke="#3B82F6" strokeWidth="1.5" />
+        <path
+          d="M16 6c-3.5 1.5-6.5 1.8-8 1.8 0 6.4 2 11.5 8 14.4 6-2.9 8-8 8-14.4-1.5 0-4.5-.3-8-1.8z"
+          fill="#3B82F6"
+          opacity="0.2"
+        />
+        <path
+          d="M16 6c-3.5 1.5-6.5 1.8-8 1.8 0 6.4 2 11.5 8 14.4 6-2.9 8-8 8-14.4-1.5 0-4.5-.3-8-1.8zM16 11.5v7"
+          stroke="#3B82F6"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="leading-none">
+        <div className="font-sans font-bold text-[20px] tracking-tight text-white flex items-center gap-1.5">
+          Privaro <span className="text-[10px] uppercase font-mono tracking-wider bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20">OS</span>
         </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="relative z-10 pt-16 pb-20">
+export default function MarketingSite() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [annualBilling, setAnnualBilling] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'cookies' | 'ropa' | 'dsar'>('overview');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-        {/* Section 1 - Hero Section (Split Layout) */}
-        <section className="max-w-7xl mx-auto px-6 pt-20 pb-32 flex flex-col lg:flex-row items-center gap-16">
-          <motion.div initial="hidden" animate="visible" variants={stagger} className="flex-1 flex flex-col items-start text-left">
+  // Risk Calculator State
+  const [calcStep, setCalcStep] = useState(0);
+  const [calcAnswers, setCalcAnswers] = useState<Record<string, string>>({});
+  const [calcScores, setCalcScores] = useState<Record<string, number>>({});
 
-            <Link href="/assessment">
-              <motion.div variants={fadeUp} className="inline-flex items-center gap-2 bg-sage-50 hover:bg-sage-100 border border-sage-500/20 rounded-full px-4 py-1.5 mb-8 text-sm font-medium text-sage-700 transition-colors cursor-pointer group shadow-sm">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sage-600 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-sage-600"></span>
-                </span>
-                <AnimatedCounter prefix="€" suffix=" billion" from={0} to={5.88} /> in GDPR fines and counting. How compliant is your business?
-                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-              </motion.div>
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleCalculatorSelect = (questionId: string, value: string, score: number) => {
+    setCalcAnswers(prev => ({ ...prev, [questionId]: value }));
+    setCalcScores(prev => ({ ...prev, [questionId]: score }));
+    
+    if (calcStep < CALCULATOR_QUESTIONS.length - 1) {
+      setCalcStep(prev => prev + 1);
+    } else {
+      setCalcStep(CALCULATOR_QUESTIONS.length); // complete state
+    }
+  };
+
+  const resetCalculator = () => {
+    setCalcAnswers({});
+    setCalcScores({});
+    setCalcStep(0);
+  };
+
+  // Calculate overall risk metrics
+  const totalRiskScore = Object.values(calcScores).reduce((a, b) => a + b, 0);
+  let riskLevel = 'LOW';
+  let riskColor = 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10';
+  let riskText = 'Your operations indicate low regulatory exposure. Maintain compliance audits regularly to avoid gap drifts.';
+
+  if (totalRiskScore >= 75) {
+    riskLevel = 'CRITICAL';
+    riskColor = 'text-red-400 border-red-500/20 bg-red-500/10';
+    riskText = 'Extreme regulatory liability detected. Missing Article 30 ROPA records combined with third-party tracking poses direct exposure to severe administrative fines under CNIL and IE DPC mandates.';
+  } else if (totalRiskScore >= 45) {
+    riskLevel = 'HIGH';
+    riskColor = 'text-amber-400 border-amber-500/20 bg-amber-500/10';
+    riskText = 'Significant compliance gaps detected. Lack of automated consent logging or outdated static documentation exposes your agency and clients to audit failure.';
+  } else if (totalRiskScore >= 20) {
+    riskLevel = 'MEDIUM';
+    riskColor = 'text-yellow-400 border-yellow-500/20 bg-yellow-500/10';
+    riskText = 'Moderate exposure. Some technical structures exist, but lack of continuous verification indicates potential compliance degradation.';
+  }
+
+  // Pre-fill URL generation
+  const prefillUrl = `/assessment?jurisdiction=${calcAnswers.jurisdiction || ''}&ropa=${calcAnswers.ropa || ''}&cookies=${calcAnswers.cookies || ''}&special=${calcAnswers.special || ''}&risk=${riskLevel.toLowerCase()}`;
+
+  return (
+    <div className="min-h-screen bg-[#070B13] text-[#F3F4F6] font-sans selection:bg-blue-500/30 overflow-x-hidden antialiased">
+      
+      {/* Precision Grid Background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b08_1px,transparent_1px),linear-gradient(to_bottom,#1e293b08_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)] pointer-events-none z-0" />
+      <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[30%] right-1/4 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[140px] pointer-events-none" />
+
+      {/* Navigation */}
+      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b ${isScrolled ? 'bg-[#070B13]/85 backdrop-blur-xl border-slate-800/80 py-3.5' : 'bg-transparent border-transparent py-6'}`}>
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <Logo />
+            <div className="hidden md:flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-500/20 px-3 py-1 rounded-full text-[11px] font-mono text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Continuous Audit Engine Active
+            </div>
+          </div>
+          
+          <div className="hidden lg:flex items-center gap-8 bg-[#0F1626]/60 border border-slate-800/60 px-6 py-2 rounded-full backdrop-blur-sm">
+            {NAV_LINKS.map(link => (
+              <button 
+                key={link.id} 
+                onClick={() => {
+                  const el = document.getElementById(link.id);
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="text-xs font-semibold text-slate-400 hover:text-white transition-colors duration-200"
+              >
+                {link.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="hidden lg:flex items-center gap-6">
+            <Link href="/login" className="text-xs font-semibold text-slate-300 hover:text-white transition-colors">Sign In</Link>
+            <Link href="/assessment" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/20 text-xs font-bold py-2.5 px-5 rounded-lg transition-all flex items-center gap-2">
+              Start Free Assessment <ArrowRight className="w-3.5 h-3.5" />
             </Link>
-
-            <motion.h1 variants={fadeUp} className="text-5xl md:text-7xl font-serif font-extrabold tracking-tight mb-8 text-ink-900 leading-[1.1]">
-              GDPR compliance shouldn't <br className="hidden md:block" />
-              <span className="text-ink-300">keep you up at night.</span>
-            </motion.h1>
-
-            <motion.p variants={fadeUp} className="text-lg md:text-xl text-ink-500 max-w-xl mb-12 leading-relaxed">
-              Replace spreadsheets, consultants, and five separate tools with <span className="font-semibold text-sage-700">one platform</span>. ROPA documentation, vendor tracking, cookie consent, data requests, and breach management — all in one place.
-            </motion.p>
-
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center gap-4 w-full">
-              <Link href="/assessment" className="group w-full sm:w-auto bg-sage-700 hover:bg-sage-600 text-bone-50 text-base font-semibold py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-card hover:shadow-lg relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite] skew-x-12" />
-                Start free assessment
-              </Link>
-              <Link href="/contact" className="w-full sm:w-auto bg-white/50 hover:bg-white text-ink-900 border border-ink-900/10 text-base font-semibold py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm">
-                Book a demo
-              </Link>
-            </motion.div>
-            <motion.p variants={fadeUp} className="text-sm text-ink-400 mt-4">
-              No credit card required • 3 minutes to complete • Free forever
-            </motion.p>
-
-          </motion.div>
-
-          <div className="flex-1 w-full lg:w-auto flex justify-center lg:justify-end perspective-1000 hidden md:flex">
-             <DashboardMockup />
           </div>
-        </section>
 
-        {/* Section 2 - Integrations Social Proof Bar */}
-        <section className="border-y border-ink-900/5 bg-white py-10 overflow-hidden shadow-sm">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-6">
-            <p className="text-xs font-semibold text-ink-400 uppercase tracking-widest text-center">Seamlessly integrates with your agency stack</p>
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-slate-300 hover:text-white transition-colors">
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="flex flex-wrap justify-center items-center gap-x-12 md:gap-x-20 gap-y-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500"
+              initial={{ opacity: 0, y: -10 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-full left-0 w-full bg-[#070B13] border-b border-slate-800 p-6 flex flex-col gap-4 lg:hidden"
             >
-              <span className="text-xl md:text-2xl font-bold tracking-tight text-slate-800">HubSpot</span>
-              <span className="text-xl md:text-2xl font-bold tracking-tighter text-yellow-500 italic">Mailchimp</span>
-              <span className="text-xl md:text-2xl font-medium tracking-tight text-blue-600 flex items-center gap-1">Google Analytics</span>
-              <span className="text-xl md:text-2xl font-bold tracking-tighter text-indigo-500">stripe</span>
-              <span className="text-xl md:text-2xl font-bold tracking-tight text-red-500">#slack</span>
+              {NAV_LINKS.map(link => (
+                <button 
+                  key={link.id} 
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    const el = document.getElementById(link.id);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="text-left text-sm font-semibold text-slate-400 hover:text-white py-2 border-b border-slate-900"
+                >
+                  {link.name}
+                </button>
+              ))}
+              <div className="flex flex-col gap-4 mt-4">
+                <Link href="/login" className="text-center text-sm font-semibold text-slate-300 hover:text-white py-2">Sign In</Link>
+                <Link href="/assessment" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center text-sm font-bold py-3 rounded-lg">
+                  Start Free Assessment
+                </Link>
+              </div>
             </motion.div>
-          </div>
-        </section>
+          )}
+        </AnimatePresence>
+      </nav>
 
-        {/* Section 3 - The problem */}
-        <section className="max-w-7xl mx-auto px-6 py-32">
-          <h2 className="text-3xl md:text-5xl font-serif text-ink-900 mb-6 tracking-tight text-center font-extrabold">Most agencies manage GDPR compliance with...</h2>
-          <p className="text-lg text-ink-500 mb-16 text-center max-w-2xl mx-auto">A stressful web of disconnected tools, expensive consultants, and crossed fingers. We built Privaro to fix this.</p>
-
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 bg-white p-3 rounded-full border border-ink-900/10 shadow-sm hidden md:block">
-              <span className="text-xs font-bold text-ink-400 uppercase tracking-widest">VS</span>
+      <main className="relative z-10 pt-28">
+        
+        {/* Hero Section */}
+        <section className="max-w-7xl mx-auto px-6 pt-16 pb-20 flex flex-col items-center text-center">
+          <div className="max-w-4xl flex flex-col items-center">
+            
+            <div className="inline-flex items-center gap-2 bg-blue-950/40 border border-blue-500/20 rounded-full px-4.5 py-1.5 mb-8 text-xs font-semibold text-blue-400 tracking-wide">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+              Continuous GDPR Compliance Operating System
+            </div>
+            
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-sans font-extrabold tracking-tight mb-8 leading-[1.08] text-white">
+              Compliance logic. <br />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400">Automated precision.</span>
+            </h1>
+            
+            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mb-10 leading-relaxed">
+              Verify operations, dynamic ROPA ledger generation, and instant cookie scans. 
+              The infrastructure dashboard designed to secure user privacy and client contracts with absolute audit readiness.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mb-20">
+              <Link href="/assessment" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10">
+                Run Free Gap Assessment
+              </Link>
+              <button 
+                onClick={() => {
+                  const el = document.getElementById('risk-calculator');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-sm font-semibold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2"
+              >
+                Test Risk Exposure
+              </button>
             </div>
 
-            <div className="bg-white border border-ink-900/5 rounded-3xl p-10 font-mono text-sm shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-clay-500" />
-              <div className="flex items-center justify-between mb-8 pb-6 border-b border-ink-900/5">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-clay-50 rounded-lg"><Activity className="w-5 h-5 text-clay-600"/></div>
-                  <h3 className="text-ink-900 font-sans text-xl font-bold">The Old Way</h3>
+            {/* Interactive Mockup Container */}
+            <div className="w-full max-w-5xl bg-[#0F1626]/90 border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+              
+              {/* Fake Window Controls */}
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-800/80">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/30" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/30" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/30" />
+                  <span className="ml-3 text-[11px] font-mono text-slate-500">privaro-compliance-console v2.4</span>
                 </div>
-                <span className="text-clay-600 bg-clay-50 border border-clay-100 px-3 py-1 rounded-full text-xs font-sans font-medium">Chaos</span>
-              </div>
-              <ul className="space-y-6">
-                <li className="flex items-start gap-4 text-ink-500 group-hover:text-ink-600 transition-colors">
-                  <XCircle className="w-5 h-5 text-clay-500 shrink-0 mt-0.5" />
-                  <span className="leading-relaxed text-base">Spreadsheets that are out of date the day they are created.</span>
-                </li>
-                <li className="flex items-start gap-4 text-ink-500 group-hover:text-ink-600 transition-colors">
-                  <XCircle className="w-5 h-5 text-clay-500 shrink-0 mt-0.5" />
-                  <span className="leading-relaxed text-base">€200/hr legal consultants for basic document templates.</span>
-                </li>
-                <li className="flex items-start gap-4 text-ink-500 group-hover:text-ink-600 transition-colors">
-                  <XCircle className="w-5 h-5 text-clay-500 shrink-0 mt-0.5" />
-                  <span className="leading-relaxed text-base">Panic mode when a client requests a compliance audit.</span>
-                </li>
-                <li className="flex items-start gap-4 text-ink-500 group-hover:text-ink-600 transition-colors">
-                  <XCircle className="w-5 h-5 text-clay-500 shrink-0 mt-0.5" />
-                  <span className="leading-relaxed text-base">Manual email threads taking 20+ hours per DSAR request.</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-sage-50 border border-sage-500/20 rounded-3xl p-10 font-mono text-sm relative overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-sage-500" />
-              <div className="flex items-center justify-between mb-8 pb-6 border-b border-sage-500/10">
-                <div className="flex items-center gap-3">
-                   <div className="p-2 bg-white rounded-lg shadow-sm"><ShieldCheck className="w-5 h-5 text-sage-600"/></div>
-                   <h3 className="text-ink-900 font-sans text-xl font-bold">With Privaro</h3>
+                
+                {/* Tabs */}
+                <div className="flex gap-1 overflow-x-auto pb-1 max-w-[70%] sm:max-w-none">
+                  {[
+                    { id: 'overview', label: 'Console Overview', icon: Activity },
+                    { id: 'cookies', label: 'Cookie Scanner', icon: Globe },
+                    { id: 'ropa', label: 'ROPA Audit (Art. 30)', icon: Database },
+                    { id: 'dsar', label: 'DSAR Queue', icon: UserCheck }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as 'overview' | 'cookies' | 'ropa' | 'dsar')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all whitespace-nowrap ${
+                        activeTab === tab.id 
+                          ? 'bg-blue-600/15 text-blue-400 border border-blue-500/20' 
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30 border border-transparent'
+                      }`}
+                    >
+                      <tab.icon className="w-3 h-3" />
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
-                <span className="text-sage-700 bg-sage-100 px-3 py-1 rounded-full text-xs font-sans font-medium">Organized</span>
               </div>
-              <ul className="space-y-6">
-                <li className="flex items-start gap-4 text-ink-700 group-hover:text-ink-900 transition-colors">
-                  <CheckCircle2 className="w-5 h-5 text-sage-600 shrink-0 mt-0.5" />
-                  <span className="leading-relaxed text-base">Dynamic ROPA connected to a live vendor database.</span>
-                </li>
-                <li className="flex items-start gap-4 text-ink-700 group-hover:text-ink-900 transition-colors">
-                  <CheckCircle2 className="w-5 h-5 text-sage-600 shrink-0 mt-0.5" />
-                  <span className="leading-relaxed text-base">Auto-updating privacy policies tailored to your stack.</span>
-                </li>
-                <li className="flex items-start gap-4 text-ink-700 group-hover:text-ink-900 transition-colors">
-                  <CheckCircle2 className="w-5 h-5 text-sage-600 shrink-0 mt-0.5" />
-                  <span className="leading-relaxed text-base">Generate a client-facing trust dashboard instantly.</span>
-                </li>
-                <li className="flex items-start gap-4 text-ink-700 group-hover:text-ink-900 transition-colors">
-                  <CheckCircle2 className="w-5 h-5 text-sage-600 shrink-0 mt-0.5" />
-                  <span className="leading-relaxed text-base">Automated DSAR intake portals and resolution workflows.</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
 
-        {/* Section 4 - Product Screenshot Section (Full Width) */}
-        <section className="bg-ink-900 py-32 overflow-hidden border-y border-ink-800 relative">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sage-900/40 via-transparent to-transparent opacity-50"></div>
-          <div className="max-w-7xl mx-auto px-6 relative z-10">
-             <div className="text-center mb-16">
-               <h2 className="text-3xl md:text-5xl font-serif font-extrabold text-white mb-6 tracking-tight">Everything you need. <span className="text-sage-400">Zero clutter.</span></h2>
-               <p className="text-lg text-ink-300 max-w-2xl mx-auto">We designed Privaro to be powerful enough for DPOs, but simple enough for agency founders.</p>
-             </div>
-             
-             {/* Wide CSS Representation of ROPA Editor */}
-             <motion.div 
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="w-full bg-bone-50 rounded-2xl shadow-2xl border border-white/10 p-2 overflow-hidden"
-             >
-                <div className="w-full bg-white rounded-xl overflow-hidden flex flex-col md:flex-row h-[400px]">
-                   {/* Sidebar */}
-                   <div className="w-64 bg-bone-50 border-r border-ink-900/5 hidden md:block p-4">
-                      <div className="h-4 w-24 bg-ink-900/10 rounded mb-8"></div>
-                      <div className="space-y-3">
-                         <div className="h-8 w-full bg-white border border-ink-900/5 rounded-md flex items-center px-3 gap-2">
-                           <Database className="w-4 h-4 text-sage-600" />
-                           <div className="h-2 w-16 bg-ink-900/20 rounded"></div>
-                         </div>
-                         <div className="h-8 w-full rounded-md flex items-center px-3 gap-2">
-                           <Users className="w-4 h-4 text-ink-300" />
-                           <div className="h-2 w-20 bg-ink-900/10 rounded"></div>
-                         </div>
-                         <div className="h-8 w-full rounded-md flex items-center px-3 gap-2">
-                           <Globe className="w-4 h-4 text-ink-300" />
-                           <div className="h-2 w-12 bg-ink-900/10 rounded"></div>
-                         </div>
+              {/* Tab Display Area */}
+              <div className="min-h-[300px] text-left">
+                <AnimatePresence mode="wait">
+                  
+                  {activeTab === 'overview' && (
+                    <motion.div 
+                      key="overview"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.2 }}
+                      className="grid md:grid-cols-3 gap-6"
+                    >
+                      {/* Radial Progress Graphic */}
+                      <div className="bg-slate-950/40 border border-slate-800/50 rounded-xl p-5 flex flex-col items-center justify-center text-center">
+                        <div className="relative w-28 h-28 flex items-center justify-center">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="56" cy="56" r="48" stroke="#1E293B" strokeWidth="6" fill="transparent" />
+                            <circle cx="56" cy="56" r="48" stroke="#10B981" strokeWidth="6" fill="transparent" 
+                              strokeDasharray={2 * Math.PI * 48}
+                              strokeDashoffset={2 * Math.PI * 48 * (1 - 0.94)}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <div className="absolute flex flex-col items-center">
+                            <span className="text-2xl font-bold text-white font-mono">94%</span>
+                            <span className="text-[9px] uppercase font-bold text-emerald-400 tracking-wider">Health</span>
+                          </div>
+                        </div>
+                        <h4 className="text-xs font-bold text-white mt-4">Compliance Status: Solid</h4>
+                        <p className="text-[10px] text-slate-500 mt-1">Audit exposure level is minimal.</p>
                       </div>
-                   </div>
-                   {/* Main Panel */}
-                   <div className="flex-1 p-8 bg-white relative">
-                      <div className="flex justify-between items-center mb-8 pb-4 border-b border-ink-900/5">
-                        <div className="h-6 w-48 bg-ink-900/10 rounded"></div>
-                        <div className="h-8 w-24 bg-sage-600 rounded-md"></div>
+
+                      {/* Diagnostic Logs */}
+                      <div className="md:col-span-2 bg-slate-950/40 border border-slate-800/50 rounded-xl p-5">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                            <Activity className="w-3.5 h-3.5 text-blue-500" /> Compliance Feed
+                          </h4>
+                          <span className="text-[10px] font-mono text-slate-500">Live Updates</span>
+                        </div>
+                        <div className="space-y-3 font-mono text-[11px]">
+                          <div className="flex items-start gap-2.5 text-slate-300 border-b border-slate-900 pb-2">
+                            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <div>
+                              <p className="font-semibold text-white">HubSpot DPA Verified</p>
+                              <p className="text-[10px] text-slate-500">Data protection agreement signatures cross-referenced with EU standard clauses.</p>
+                            </div>
+                            <span className="ml-auto text-[10px] text-slate-500 whitespace-nowrap">2 hrs ago</span>
+                          </div>
+                          <div className="flex items-start gap-2.5 text-slate-300 border-b border-slate-900 pb-2">
+                            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <div>
+                              <p className="font-semibold text-white">Automated Cookie Audit Completed</p>
+                              <p className="text-[10px] text-slate-500">Crawler scanned domain: 14 trackers identified, 0 unclassified scripts found.</p>
+                            </div>
+                            <span className="ml-auto text-[10px] text-slate-500 whitespace-nowrap">1 day ago</span>
+                          </div>
+                          <div className="flex items-start gap-2.5 text-slate-300">
+                            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <div>
+                              <p className="font-semibold text-white">Employee training logs generated</p>
+                              <p className="text-[10px] text-slate-500">LMS training completed by 12 personnel. Compliance ledger certificates generated.</p>
+                            </div>
+                            <span className="ml-auto text-[10px] text-slate-500 whitespace-nowrap">3 days ago</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-4">
-                        {[1, 2, 3, 4].map((i) => (
-                           <div key={i} className="flex items-center gap-4 p-4 border border-ink-900/5 rounded-lg bg-bone-50/30">
-                              <div className="h-4 w-4 rounded-full bg-ink-900/10"></div>
-                              <div className="flex-1 space-y-2">
-                                <div className="h-3 w-1/3 bg-ink-900/20 rounded"></div>
-                                <div className="h-2 w-1/2 bg-ink-900/10 rounded"></div>
-                              </div>
-                              <div className="h-6 w-20 bg-sage-100 rounded-full"></div>
-                           </div>
+                    </motion.div>
+                  )}
+
+                  {activeTab === 'cookies' && (
+                    <motion.div 
+                      key="cookies"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-4"
+                    >
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-950/40 border border-slate-800/50 p-4 rounded-xl">
+                        <div>
+                          <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                            Active Scan Target: <span className="font-mono text-blue-400 font-normal">https://agency.domain.com</span>
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-1">Automatic crawler detects and blocks non-essential cookies prior to user selection.</p>
+                        </div>
+                        <span className="text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded">
+                          Consent Mode v2: ACTIVE
+                        </span>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left font-mono text-[11px]">
+                          <thead>
+                            <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider">
+                              <th className="pb-2 font-semibold">Cookie Identifier</th>
+                              <th className="pb-2 font-semibold">Service Provider</th>
+                              <th className="pb-2 font-semibold">Classification</th>
+                              <th className="pb-2 font-semibold">Expiry</th>
+                              <th className="pb-2 font-semibold">AI Confidence</th>
+                              <th className="pb-2 font-semibold">Action Trigger</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-900 text-slate-300">
+                            <tr>
+                              <td className="py-2.5 font-bold text-white">_ga</td>
+                              <td className="py-2.5">Google Analytics</td>
+                              <td className="py-2.5"><span className="text-blue-400 bg-blue-400/5 px-2 py-0.5 rounded border border-blue-500/10">Analytics</span></td>
+                              <td className="py-2.5">2 Years</td>
+                              <td className="py-2.5 text-emerald-400">99.8%</td>
+                              <td className="py-2.5 text-slate-400">Blocked prior to consent</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2.5 font-bold text-white">_fbp</td>
+                              <td className="py-2.5">Meta Pixel</td>
+                              <td className="py-2.5"><span className="text-purple-400 bg-purple-400/5 px-2 py-0.5 rounded border border-purple-500/10">Marketing</span></td>
+                              <td className="py-2.5">3 Months</td>
+                              <td className="py-2.5 text-emerald-400">99.5%</td>
+                              <td className="py-2.5 text-slate-400">Blocked prior to consent</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2.5 font-bold text-white">stripe_mid</td>
+                              <td className="py-2.5">Stripe Payments</td>
+                              <td className="py-2.5"><span className="text-emerald-400 bg-emerald-400/5 px-2 py-0.5 rounded border border-emerald-500/10">Necessary</span></td>
+                              <td className="py-2.5">1 Year</td>
+                              <td className="py-2.5 text-emerald-400">100%</td>
+                              <td className="py-2.5 text-emerald-400 font-semibold">Always Allowed</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2.5 font-bold text-white">_hjSession</td>
+                              <td className="py-2.5">Hotjar</td>
+                              <td className="py-2.5"><span className="text-blue-400 bg-blue-400/5 px-2 py-0.5 rounded border border-blue-500/10">Analytics</span></td>
+                              <td className="py-2.5">Session</td>
+                              <td className="py-2.5 text-emerald-400">98.2%</td>
+                              <td className="py-2.5 text-slate-400">Blocked prior to consent</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {activeTab === 'ropa' && (
+                    <motion.div 
+                      key="ropa"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-4"
+                    >
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div>
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">Article 30 Registry Ledger</h4>
+                          <p className="text-[10px] text-slate-500 mt-0.5">Records of Processing Activities automatically mapped and updated.</p>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">ROPA Version: v2.4 (Signed)</span>
+                      </div>
+
+                      <div className="space-y-3 font-mono text-[11px]">
+                        {[
+                          { 
+                            name: 'Customer Newsletter & Marketing Campaign System', 
+                            basis: 'Consent (Double Opt-In Required)', 
+                            subjects: 'Prospects, Leads & Active Customers', 
+                            retention: 'Until consent withdrawal (Immediate deletion purge)' 
+                          },
+                          { 
+                            name: 'Transactional Payments & Order Fulfillment Engine', 
+                            basis: 'Contract Performance (GDPR Art. 6.1.b)', 
+                            subjects: 'Registered Paying Clients', 
+                            retention: '7 Years (Mandatory Financial Ledger audits)' 
+                          },
+                          { 
+                            name: 'User Retargeting & Tracking Pixel Campaigns', 
+                            basis: 'Explicit Consent (Prior to Opt-In Check)', 
+                            subjects: 'Anonymous Website Visitors', 
+                            retention: '90 Days from collection timestamp' 
+                          }
+                        ].map((item, index) => (
+                          <div key={index} className="bg-slate-950/40 border border-slate-800/40 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="font-semibold text-white text-xs">{item.name}</span>
+                              <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded font-bold">
+                                {item.basis}
+                              </span>
+                            </div>
+                            <div className="grid sm:grid-cols-2 gap-2 text-[10px] text-slate-400 pt-1 border-t border-slate-900">
+                              <p>Data Subjects: <span className="text-slate-300">{item.subjects}</span></p>
+                              <p className="sm:text-right">Retention Period: <span className="text-slate-300">{item.retention}</span></p>
+                            </div>
+                          </div>
                         ))}
                       </div>
+                    </motion.div>
+                  )}
 
-                      {/* Tooltip Annotation */}
-                      <motion.div 
-                         initial={{ opacity: 0, scale: 0.9 }}
-                         whileInView={{ opacity: 1, scale: 1 }}
-                         transition={{ delay: 0.5 }}
-                         className="absolute top-32 right-12 bg-ink-900 text-white p-4 rounded-xl shadow-xl w-64 border border-white/10"
-                      >
-                         <div className="absolute -left-2 top-4 w-4 h-4 bg-ink-900 rotate-45"></div>
-                         <p className="text-sm font-bold mb-1">Auto-mapped vendors</p>
-                         <p className="text-xs text-ink-300 leading-relaxed">Privaro automatically links your ROPA entries to our live vendor database.</p>
-                      </motion.div>
-                   </div>
-                </div>
-             </motion.div>
+                  {activeTab === 'dsar' && (
+                    <motion.div 
+                      key="dsar"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-3"
+                    >
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div>
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">Active Data Subject Rights Requests</h4>
+                          <p className="text-[10px] text-slate-500 mt-0.5">Automated queue of user erasure, access, or portability tickets.</p>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">Verification: Strict OAuth2 / ID confirmation</span>
+                      </div>
+
+                      {[
+                        {
+                          ref: 'DSAR-2026-0412',
+                          name: 'Sarah Jenkins',
+                          type: 'Erasure Request (Right to be Forgotten)',
+                          status: 'Verified (Pending Purge Execution)',
+                          statusColor: 'text-amber-400 bg-amber-500/5 border-amber-500/10',
+                          timer: '18 Days remaining',
+                          action: 'Trigger Automated Wipe'
+                        },
+                        {
+                          ref: 'DSAR-2026-0398',
+                          name: 'Marcus Vance',
+                          type: 'Access Request (Right to Portability)',
+                          status: 'Completed (Secure package delivered)',
+                          statusColor: 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10',
+                          timer: 'Completed 2 days ago',
+                          action: 'Download Receipt'
+                        }
+                      ].map((ticket, idx) => (
+                        <div key={idx} className="bg-slate-950/40 border border-slate-800/40 rounded-lg p-3.5 flex flex-col sm:flex-row justify-between gap-3 text-xs font-mono">
+                          <div>
+                            <div className="flex items-center gap-2.5 mb-1.5">
+                              <span className="text-[10px] text-slate-500">{ticket.ref}</span>
+                              <span className="font-bold text-white">{ticket.name}</span>
+                              <span className="text-[10px] text-slate-400">({ticket.type})</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2 items-center text-[10px]">
+                              <span className={`px-2 py-0.5 rounded border font-semibold ${ticket.statusColor}`}>
+                                {ticket.status}
+                              </span>
+                              <span className="text-slate-500 flex items-center gap-1">
+                                <ClockIcon className="w-3.5 h-3.5 text-slate-500" /> {ticket.timer}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="sm:self-center flex shrink-0">
+                            <button className="w-full sm:w-auto bg-[#10192A] hover:bg-blue-600/15 text-blue-400 hover:text-blue-300 border border-slate-800 hover:border-blue-500/20 px-3 py-1.5 rounded text-[11px] font-bold transition-all">
+                              {ticket.action}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+
+                </AnimatePresence>
+              </div>
+            </div>
+
           </div>
         </section>
 
-        {/* Section 5 - The 10 modules */}
-        <section id="features" className="max-w-7xl mx-auto px-6 py-32 scroll-mt-24">
-          <div className="mb-16 text-center">
-            <h2 className="text-3xl md:text-5xl font-serif text-ink-900 mb-6 tracking-tight font-extrabold">Ten modules. One source of truth.</h2>
-            <p className="text-lg text-ink-500 max-w-2xl mx-auto">A unified architecture designed to assess, document, manage, respond, and prove your privacy posture effortlessly.</p>
+        {/* Integration Logo Bar (Social Proof) */}
+        <section className="border-y border-slate-800/60 bg-[#0A101C]/40 py-10">
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-center md:text-left">
+              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Live Connect</p>
+              <h4 className="text-sm font-bold text-white mt-1">Works with the systems you use daily</h4>
+            </div>
+            <div className="flex flex-wrap justify-center md:justify-end items-center gap-x-8 gap-y-4 opacity-50">
+              {INTEGRATIONS.map((int, i) => (
+                <div key={i} className="flex items-center gap-2 bg-slate-950/40 border border-slate-800/40 px-3.5 py-1.5 rounded-lg text-xs font-mono text-slate-300 hover:opacity-100 transition-opacity">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  <span>{int.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* GDPR Risk Exposure Calculator */}
+        <section id="risk-calculator" className="max-w-4xl mx-auto px-6 py-28 scroll-mt-24">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-white mb-4 tracking-tight">
+              Evaluate your GDPR exposure
+            </h2>
+            <p className="text-slate-400 max-w-xl mx-auto text-sm sm:text-base">
+              Calculate your organization&apos;s compliance risk profile in 60 seconds. Receive instant recommendations.
+            </p>
+          </div>
+
+          <div className="bg-[#0F1626]/80 border border-slate-800/80 rounded-2xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+            
+            {calcStep < CALCULATOR_QUESTIONS.length ? (
+              <div>
+                {/* Step indicator */}
+                <div className="flex justify-between items-center mb-8">
+                  <span className="text-[10px] font-mono text-blue-400 uppercase tracking-widest font-bold">
+                    Assessment Question {calcStep + 1} of {CALCULATOR_QUESTIONS.length}
+                  </span>
+                  <div className="flex gap-1.5">
+                    {CALCULATOR_QUESTIONS.map((_, i) => (
+                      <div 
+                        key={i} 
+                        className={`w-4 h-1 rounded transition-colors ${i <= calcStep ? 'bg-blue-500' : 'bg-slate-800'}`} 
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-6 leading-snug">
+                  {CALCULATOR_QUESTIONS[calcStep].text}
+                </h3>
+
+                <div className="space-y-3">
+                  {CALCULATOR_QUESTIONS[calcStep].options.map((opt, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleCalculatorSelect(CALCULATOR_QUESTIONS[calcStep].id, opt.value, opt.score)}
+                      className="w-full text-left bg-slate-950/40 hover:bg-slate-900 border border-slate-800 hover:border-slate-700/80 p-4 rounded-xl text-xs sm:text-sm text-slate-300 hover:text-white transition-all flex items-center justify-between group"
+                    >
+                      <span>{opt.text}</span>
+                      <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-1.5 transition-all shrink-0 ml-4" />
+                    </button>
+                  ))}
+                </div>
+
+                {calcStep > 0 && (
+                  <button 
+                    onClick={() => setCalcStep(prev => prev - 1)}
+                    className="text-[11px] font-semibold text-slate-500 hover:text-slate-300 mt-6 block transition-colors"
+                  >
+                    ← Previous Question
+                  </button>
+                )}
+              </div>
+            ) : (
+              // Results Display
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.98 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                className="text-center"
+              >
+                <div className="inline-flex items-center gap-2 mb-6">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping" />
+                  <span className="text-[10px] font-mono text-blue-400 uppercase tracking-widest font-bold">Calculation Complete</span>
+                </div>
+
+                <div className="max-w-2xl mx-auto">
+                  <div className={`inline-block border rounded-full px-6 py-1.5 font-mono text-sm font-bold mb-6 ${riskColor}`}>
+                    RISK LEVEL: {riskLevel}
+                  </div>
+                  
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
+                    Audit Risk Coefficient: {totalRiskScore}%
+                  </h3>
+                  
+                  <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                    {riskText}
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+                    <Link 
+                      href={prefillUrl} 
+                      className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm py-3 px-6 rounded-lg shadow-lg shadow-blue-500/10 transition-all flex items-center justify-center gap-2"
+                    >
+                      Complete Assessment (Pre-filled) <ArrowRight className="w-4 h-4" />
+                    </Link>
+                    <button 
+                      onClick={resetCalculator} 
+                      className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700 px-6 py-3 rounded-lg text-sm font-semibold transition-all"
+                    >
+                      Recalculate
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </section>
+
+        {/* Bento Grid Features */}
+        <section id="features" className="max-w-7xl mx-auto px-6 py-28 border-t border-slate-900/80 scroll-mt-24">
+          <div className="mb-20 max-w-2xl">
+            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Compliance Infrastructure</p>
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-white mb-6 tracking-tight">Six modules. One compliance core.</h2>
+            <p className="text-base sm:text-lg text-slate-400 leading-relaxed">
+              Replace disjointed spreadsheets with a continuous monitoring stack built for the rigorous GDPR standards of cross-border operations.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {MODULES.map((mod, i) => (
-              <motion.div
+              <motion.div 
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: i * 0.05 }}
-                className={`bg-white border border-ink-900/5 rounded-2xl p-8 flex flex-col justify-between group hover:bg-bone-50 hover:-translate-y-1 hover:shadow-lg hover:border-sage-500/20 shadow-sm transition-all duration-300 ${mod.colSpan}`}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                className={`bg-[#0F1626]/50 border border-slate-850 rounded-xl p-6 flex flex-col justify-between group hover:bg-[#0F1626]/85 hover:border-slate-700/60 transition-all ${mod.colSpan}`}
               >
                 <div>
-                  <div className="w-12 h-12 bg-sage-50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                     <mod.icon className="w-6 h-6 text-sage-600" />
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-[9px] font-mono font-bold tracking-wider text-slate-500 uppercase bg-slate-950/60 border border-slate-900 px-2 py-0.5 rounded">
+                      {mod.tag}
+                    </span>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                   </div>
-                  <h3 className="text-xl font-bold text-ink-900 mb-2">{mod.title}</h3>
-                  <p className="text-ink-500 text-sm leading-relaxed">{mod.desc}</p>
+                  <h3 className="text-sm sm:text-base font-bold text-white mb-2">{mod.title}</h3>
+                  <p className="text-slate-400 text-xs leading-relaxed">{mod.desc}</p>
                 </div>
-                <Link href="/features" className="mt-8 flex items-center gap-1 text-sm font-semibold text-sage-700 group-hover:text-sage-600 transition-colors cursor-pointer w-fit">
-                  Explore module <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                <div className="mt-8 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-slate-300 transition-colors cursor-pointer">
+                  Specifications <ChevronRight className="w-3.5 h-3.5" />
+                </div>
               </motion.div>
             ))}
           </div>
         </section>
 
-        {/* Section 6 - How it works (3 steps) */}
-        <section className="max-w-7xl mx-auto px-6 py-32 border-t border-ink-900/5 bg-bone-50 rounded-3xl mb-16">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-serif text-ink-900 mb-6 tracking-tight font-extrabold">How it works</h2>
-            <p className="text-lg text-ink-500">Three simple steps to agency compliance.</p>
+        {/* Supervisory Authority Alignment (Strict Differentiator) */}
+        <section id="authorities" className="max-w-7xl mx-auto px-6 py-28 border-t border-slate-900/80 scroll-mt-24">
+          <div className="mb-16">
+            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Regulatory Scope</p>
+            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-white mb-5 tracking-tight">Supervisory Authority alignment</h2>
+            <p className="text-slate-400 max-w-2xl text-sm sm:text-base leading-relaxed">
+              GDPR is uniform, but enforcement focus differs by country. Privaro adapts compliance configurations based on the jurisdictions of your targets.
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 text-center relative">
-            <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-sage-200 via-sage-300 to-sage-200" />
-            
-            <div className="flex flex-col items-center relative z-10">
-              <div className="w-24 h-24 bg-white border-[8px] border-bone-50 shadow-sm text-sage-700 rounded-full flex items-center justify-center text-3xl font-extrabold font-serif mb-6 group-hover:scale-110 transition-transform">1</div>
-              <h3 className="text-xl font-bold text-ink-900 mb-3">Take the free assessment</h3>
-              <p className="text-ink-500 max-w-xs">Answer a few simple questions about your agency's data practices.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {AUTHORITIES.map((auth, i) => (
+              <div 
+                key={i}
+                className="bg-[#0F1626]/40 border border-slate-850 p-5 rounded-xl hover:border-slate-800 transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-slate-900">
+                    <span className="font-mono font-bold text-white text-xs">{auth.code}</span>
+                    <span className="text-[9px] text-slate-500">{auth.country}</span>
+                  </div>
+                  <p className="text-slate-300 text-xs font-bold mb-2">{auth.name}</p>
+                  <p className="text-slate-400 text-[10.5px] leading-relaxed mb-3">{auth.focus}</p>
+                </div>
+                <div className="text-[10px] font-mono text-blue-400 bg-blue-500/5 border border-blue-500/10 p-2.5 rounded">
+                  <span className="font-bold text-white block mb-0.5 text-[9px]">ENFORCEMENT FOCUS:</span>
+                  {auth.enforcement}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Comparison Section (Austere IDE Style) */}
+        <section className="max-w-7xl mx-auto px-6 py-28 border-t border-slate-900/80">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-white mb-4 tracking-tight">Built for compliance infrastructure</h2>
+            <p className="text-slate-400 max-w-lg mx-auto text-sm">
+              Why static documents fail regulatory audits and how continuous ledger systems ensure compliance.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* The Old Way */}
+            <div className="bg-slate-950/20 border border-slate-900 rounded-xl p-8 sm:p-10 font-mono text-[11px] leading-relaxed">
+              <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-900">
+                <h3 className="text-slate-200 font-sans text-sm font-bold uppercase tracking-wider">Unverified Compliance</h3>
+                <span className="text-red-400 bg-red-500/5 border border-red-500/10 px-2.5 py-0.5 rounded text-[10px] font-sans font-bold">Unchecked Exposure</span>
+              </div>
+              <ul className="space-y-5">
+                {[
+                  'Spreadsheets that are out of date the day they are saved.',
+                  'Paying legal consultants to draft static Word DPAs.',
+                  'Compiling response packages manually when a DSAR arrives.',
+                  'Hoping tracking pixels do not load before the banner accepts.',
+                  'No verifiable audit history of client processing logs.'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3.5 text-slate-400">
+                    <XCircle className="w-4 h-4 text-red-500/80 shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="flex flex-col items-center relative z-10">
-              <div className="w-24 h-24 bg-white border-[8px] border-bone-50 shadow-sm text-sage-700 rounded-full flex items-center justify-center text-3xl font-extrabold font-serif mb-6">2</div>
-              <h3 className="text-xl font-bold text-ink-900 mb-3">See your compliance gaps</h3>
-              <p className="text-ink-500 max-w-xs">Get an instant score and a clear, prioritized list of action items.</p>
-            </div>
-            <div className="flex flex-col items-center relative z-10">
-              <div className="w-24 h-24 bg-white border-[8px] border-bone-50 shadow-sm text-sage-700 rounded-full flex items-center justify-center text-3xl font-extrabold font-serif mb-6">3</div>
-              <h3 className="text-xl font-bold text-ink-900 mb-3">Fix them with Privaro</h3>
-              <p className="text-ink-500 max-w-xs">Use our integrated modules to resolve issues and stay compliant.</p>
+
+            {/* The Privaro Way */}
+            <div className="bg-[#0F1626]/40 border border-blue-900/20 rounded-xl p-8 sm:p-10 font-mono text-[11px] leading-relaxed relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+              <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-900">
+                <h3 className="text-white font-sans text-sm font-bold uppercase tracking-wider">Privaro Compliance OS</h3>
+                <span className="text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-2.5 py-0.5 rounded text-[10px] font-sans font-bold">Automated Guardrails</span>
+              </div>
+              <ul className="space-y-5">
+                {[
+                  'Article 30 ROPA maps connected directly to your active vendor list.',
+                  'Automated crawler audits scripts and locks trackers prior to consent.',
+                  'Identity-verified portals generate secure DSAR reply vaults.',
+                  'Pre-audited profiles monitor vendor sub-processors for shifts.',
+                  'Continuous logging provides accountability proofs for DPAs.'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3.5 text-slate-200">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </section>
 
-        {/* Section 7 - Pricing preview */}
-        <section id="pricing" className="max-w-7xl mx-auto px-6 py-32 border-t border-ink-900/5 scroll-mt-24">
+        {/* Pricing */}
+        <section id="pricing" className="max-w-7xl mx-auto px-6 py-28 border-t border-slate-900/80 scroll-mt-24">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
             <div className="max-w-xl">
-              <h2 className="text-3xl md:text-5xl font-serif font-extrabold text-ink-900 mb-6 tracking-tight">Predictable pricing.</h2>
-              <p className="text-lg text-ink-500">No hidden fees. Cancel anytime. Scale as your agency grows.</p>
+              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">SaaS Licensing</p>
+              <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-white mb-5 tracking-tight">Predictable pricing matrices</h2>
+              <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
+                Scale compliance controls as your operations expand. Standard cancel-anytime agreements.
+              </p>
             </div>
-
-            <div className="inline-flex items-center bg-bone-100 border border-ink-900/5 p-1 rounded-xl">
-              <button onClick={() => setAnnualBilling(false)} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${!annualBilling ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-900'}`}>
+            
+            <div className="inline-flex items-center bg-[#0F1626]/60 border border-slate-800 p-1 rounded-xl">
+              <button onClick={() => setAnnualBilling(false)} className={`px-4.5 py-1.5 rounded-lg text-xs font-bold transition-all ${!annualBilling ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>
                 Monthly
               </button>
-              <button onClick={() => setAnnualBilling(true)} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${annualBilling ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500 hover:text-ink-900'}`}>
-                Annually <span className="text-[10px] uppercase bg-sage-100 text-sage-700 px-1.5 py-0.5 rounded-md font-bold">-20%</span>
+              <button onClick={() => setAnnualBilling(true)} className={`px-4.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${annualBilling ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>
+                Annually <span className="text-[9px] uppercase bg-emerald-950 text-emerald-400 px-1 py-0.5 rounded font-bold">-20%</span>
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {PRICING.map((plan, i) => (
-              <div key={i} className={`relative bg-bone-50 rounded-2xl p-8 flex flex-col shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md ${plan.popular ? 'border-2 border-sage-500' : 'border border-ink-900/10'}`}>
+              <div key={i} className={`relative bg-[#0F1626]/30 rounded-xl p-6 sm:p-7 flex flex-col justify-between border ${plan.popular ? 'border-blue-600/60 ring-1 ring-blue-600/30' : 'border-slate-850'}`}>
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-sage-600 text-bone-50 text-[10px] font-bold uppercase tracking-widest py-1 px-4 rounded-full">
-                    Most Popular
+                  <div className="absolute -top-3 left-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-bold uppercase tracking-wider py-1 px-3 rounded-full">
+                    RECOMMENDED OS
                   </div>
                 )}
-                <h3 className="text-xl font-bold text-ink-900 mb-2">{plan.name}</h3>
-                <p className="text-ink-500 text-sm mb-6 min-h-[40px]">{plan.desc}</p>
-                <div className="mb-8 flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-ink-900 tracking-tight">€{annualBilling ? plan.yearly : plan.price}</span>
-                  <span className="text-ink-400 text-sm font-medium">/mo</span>
+                <div>
+                  <h3 className="text-base font-bold text-white mb-1">{plan.name}</h3>
+                  <p className="text-slate-400 text-xs mb-6 min-h-[35px]">{plan.desc}</p>
+                  <div className="mb-6 flex items-baseline gap-1">
+                    <span className="text-3xl font-mono font-bold text-white">€{annualBilling ? plan.yearly : plan.price}</span>
+                    <span className="text-slate-500 text-xs font-medium">/month</span>
+                  </div>
+                  <Link href={prefillUrl} className={`w-full py-2.5 rounded-lg text-xs font-bold transition-all mb-6 block text-center ${plan.popular ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'}`}>
+                    {plan.price === '0' ? 'Start Free Assessment' : 'License License Option'}
+                  </Link>
+                  <ul className="space-y-3.5 border-t border-slate-900 pt-5 mt-2">
+                    {plan.features.map((feat, j) => (
+                      <li key={j} className="flex items-start gap-2.5 text-xs text-slate-350">
+                        <Check className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-400" />
+                        <span className="leading-snug">{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <Link href={plan.price === '0' ? '/assessment' : '/signup'} className={`w-full py-3 rounded-xl text-sm font-bold transition-all mb-8 flex justify-center items-center ${plan.popular ? 'bg-sage-600 text-bone-50 hover:bg-sage-700 shadow-card' : 'bg-white border border-ink-900/10 text-ink-900 hover:bg-bone-100'}`}>
-                  {plan.price === '0' ? 'Start Free' : 'Get Started'}
-                </Link>
-                <ul className="space-y-4 mt-auto">
-                  {plan.features.map((feat, j) => (
-                    <li key={j} className="flex items-start gap-3 text-sm text-ink-600">
-                      <Check className={`w-4 h-4 shrink-0 mt-0.5 ${plan.popular ? 'text-sage-600' : 'text-ink-300'}`} />
-                      <span className="leading-snug">{feat}</span>
-                    </li>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Security & Verification Credentials Section (Honest claims) */}
+        <section className="max-w-7xl mx-auto px-6 py-20 border-t border-slate-900/80">
+          <div className="bg-slate-950/20 border border-slate-900 rounded-xl p-8 sm:p-10">
+            <div className="text-center mb-10 max-w-xl mx-auto">
+              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2.5">Security & Compliance Architecture</h3>
+              <p className="text-xs text-slate-450 leading-relaxed">
+                Compliance products must process data with complete transparency. Our hosting and encryption standards are documented below.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+              {[
+                { title: 'EU Data Residency', desc: '100% hosted in AWS Dublin (eu-west-1). Customer data never exits EU boundaries.' },
+                { title: 'AES-256 Encryption', desc: 'Strict data encrypt-at-rest pipelines and database sector partitions.' },
+                { title: 'Zero-Knowledge Log', desc: 'Consent validation receipts are cryptographic hashes. No tracking of raw user IPs.' },
+                { title: 'SOC 2 Type II Prep', desc: 'Internal security logs mapped to SOC 2 safety guidelines. Readiness audit target Q4 2026.' },
+                { title: 'GDPR Self-Certified', desc: 'Privaro is self-certified compliant under official EU Art. 30 processing standards.' }
+              ].map((cred, i) => (
+                <div key={i} className="bg-slate-900/30 border border-slate-900/50 p-4.5 rounded-lg">
+                  <Lock className="w-4 h-4 text-blue-400 mb-3" />
+                  <h4 className="text-xs font-bold text-white mb-1.5">{cred.title}</h4>
+                  <p className="text-[10px] text-slate-400 leading-normal">{cred.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-[#050910] border-t border-slate-900 pt-16 pb-10 relative z-10 text-xs">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
+            <div className="col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <Logo />
+              </div>
+              <p className="text-slate-450 text-xs leading-relaxed max-w-xs mb-6">
+                The compliance automation platform designed for modern agencies.
+              </p>
+              <div className="flex items-center gap-4 text-slate-500 font-mono text-[10px]">
+                <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5" /> AWS Dublin</span>
+                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> SSL Secured</span>
+              </div>
+            </div>
+            
+            {/* Footer Links */}
+            {[
+              { title: 'Product Modules', links: ['Continuous Auditor', 'ROPA Ledger', 'Cookie Scan Engine', 'Integrations'] },
+              { title: 'Resource Hub', links: ['GDPR Guidance', 'Audit Prep Checklist', 'Security Posture'] },
+              { title: 'Legal Ledger', links: ['Terms of Service', 'Privacy Policy', 'Cookie Statement', 'Standard DPA'] }
+            ].map((col, i) => (
+              <div key={i}>
+                <h4 className="text-white font-bold mb-4 text-xs">{col.title}</h4>
+                <ul className="space-y-2.5 text-slate-450">
+                  {col.links.map((link, j) => (
+                    <li key={j}><a href="#" className="hover:text-white transition-colors">{link}</a></li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          <div className="text-center">
-             <Link href="/pricing" className="text-sage-700 font-semibold hover:text-sage-600 flex items-center justify-center gap-2 group">
-                See full comparison <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
-             </Link>
+          
+          <div className="border-t border-slate-950 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-slate-500 text-[10.5px]">© {new Date().getFullYear()} Privaro OS. All rights reserved.</p>
+            <div className="flex items-center gap-2 text-slate-400 hover:text-slate-200 cursor-pointer transition-colors text-[10.5px]">
+              <Globe className="w-3.5 h-3.5 text-slate-500" /> English (EU)
+            </div>
           </div>
-        </section>
+        </div>
+      </footer>
+    </div>
+  );
+}
 
-        {/* Section 8 - Final CTA */}
-        <section className="max-w-5xl mx-auto px-6 py-24 bg-sage-700 rounded-3xl text-center shadow-2xl my-12 relative overflow-hidden">
-           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-sage-500/50 to-transparent pointer-events-none"/>
-           <div className="relative z-10">
-              <h2 className="text-4xl md:text-5xl font-serif text-bone-50 mb-6 tracking-tight font-extrabold">Ready to secure your agency?</h2>
-              <p className="text-sage-100 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Start with a free compliance assessment to understand exactly where your agency stands, and what you need to fix.</p>
-              <Link href="/assessment" className="inline-flex bg-bone-50 hover:bg-white text-sage-700 text-lg font-bold py-4 px-8 rounded-xl transition-all items-center justify-center gap-2 shadow-xl group">
-                 Start free assessment <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform"/>
-              </Link>
-              <p className="text-sage-200 text-sm mt-6 font-medium">No credit card required. Free forever.</p>
-           </div>
-        </section>
-
-      </div>
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes shimmer {
-          100% { transform: translateX(100%); }
-        }
-      `}} />
-    </>
+// Simple clock icon
+function ClockIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
   );
 }
