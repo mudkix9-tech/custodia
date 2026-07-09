@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Globe, Database, UserCheck, ChevronRight, CheckCircle2,
-  Lock, Check, ArrowRight, XCircle, Activity, CheckCircle, 
-  ArrowUpRight
+import { 
+  Globe, Database, UserCheck, ChevronRight,
+  Lock, Check, ArrowRight, XCircle, Activity, CheckCircle,
+  Shield, ShieldCheck, FileText, AlertTriangle,
+  Users, BookOpen, Share2, BarChart3, HelpCircle, MessageSquare
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -14,40 +15,76 @@ import Link from 'next/link';
 const MODULES = [
   { 
     tag: "Assessment",
-    title: 'Continuous Gap Audit', 
-    desc: 'Deep-scans your business operations against a checklist of 142 GDPR requirements. Identifies gaps instantly.', 
-    colSpan: 'md:col-span-2 lg:col-span-2' 
+    title: 'Gap Assessment', 
+    desc: 'Scan your operations against 142 GDPR requirements and identify compliance gaps instantly.',
+    icon: Shield
   },
   { 
-    tag: "ROPA Ledger",
-    title: 'Dynamic ROPA Generator', 
-    desc: 'Maintains cryptographically verifiable Article 30 Records of Processing Activities that auto-update as your stack changes.', 
-    colSpan: 'md:col-span-1 lg:col-span-1' 
+    tag: "ROPA Registry",
+    title: 'Activity Register', 
+    desc: 'Maintain up-to-date Article 30 ROPA records that automatically sync with your vendor stack.',
+    icon: Database
   },
   { 
-    tag: "Vendor Intel",
-    title: 'Vendor Risk Directory', 
-    desc: 'Over 1,000+ pre-audited sub-processors. Instantly maps their headquarters, data paths, and public DPAs.', 
-    colSpan: 'md:col-span-1 lg:col-span-1' 
+    tag: "Vendor Auditing",
+    title: 'Vendor Tracking', 
+    desc: 'Map sub-processors, check data hosting locations, and verify Data Protection Agreements (DPAs).',
+    icon: Users
   },
   { 
-    tag: "Dynamic Docs",
-    title: 'Self-Updating Privacy Policies', 
-    desc: 'Generate hosted, responsive privacy and cookie policies connected to your active vendor list via webhooks.', 
-    colSpan: 'md:col-span-2 lg:col-span-2' 
+    tag: "Legal Documents",
+    title: 'Privacy Policies', 
+    desc: 'Generate hosted, responsive privacy policies that update automatically as your active vendors change.',
+    icon: FileText
   },
   { 
-    tag: "Consent Management",
-    title: 'Consent Mode v2 Banner', 
-    desc: 'Edge-delivered consent collection script. Full compatibility with Google Consent Mode v2 and IAB TCF v2.2.', 
-    colSpan: 'md:col-span-1 lg:col-span-1' 
+    tag: "Cookie Consent",
+    title: 'Cookie Consent', 
+    desc: 'Delivers a fast consent banner fully compatible with Google Consent Mode v2 and IAB guidelines.',
+    icon: Globe
   },
   { 
-    tag: "Subject Rights",
-    title: 'Automated DSAR Vault', 
-    desc: 'Verify requestor identity, execute secure data exports, and automatically track the statutory 30-day response window.', 
-    colSpan: 'md:col-span-2 lg:col-span-2' 
+    tag: "User Rights",
+    title: 'Data Requests', 
+    desc: 'Receive and verify subject access requests (DSARs) and automate secure data deletions.',
+    icon: UserCheck
   },
+  { 
+    tag: "Incident Log",
+    title: 'Breach Response', 
+    desc: 'Log security incidents, evaluate reporting thresholds, and format regulator notify sheets.',
+    icon: AlertTriangle
+  },
+  { 
+    tag: "Team Training",
+    title: 'Employee Training', 
+    desc: 'Assign byte-sized GDPR awareness training modules to your team and log certification records.',
+    icon: BookOpen
+  },
+  { 
+    tag: "Client Portals",
+    title: 'Client Portals', 
+    desc: 'Provide secure, read-only compliance dashboards to clients to build trust in sales cycles.',
+    icon: Share2
+  },
+  { 
+    tag: "Audits & Export",
+    title: 'Audit Reports', 
+    desc: 'Generate complete compliance binders to share with auditors, prospects, or legal counsel.',
+    icon: BarChart3
+  },
+  { 
+    tag: "Risk Assessment",
+    title: 'DPIA Wizard', 
+    desc: 'Run Data Protection Impact Assessments (DPIA) for high-risk projects with guided templates.',
+    icon: HelpCircle
+  },
+  { 
+    tag: "Automation",
+    title: 'Compliance AI', 
+    desc: 'Resolve day-to-day data privacy questions using context-aware policy intelligence.',
+    icon: MessageSquare
+  }
 ];
 
 const AUTHORITIES = [
@@ -60,82 +97,101 @@ const AUTHORITIES = [
   },
   { 
     code: 'CNIL', 
-    name: 'Commission Nationale', 
+    name: 'Commission Nationale de l&apos;Informatique', 
     country: 'France', 
-    focus: 'Highly strict regulatory standards for cookies and analytics trackers.', 
-    enforcement: 'Enforces prior-consent mechanisms and active user opt-out options.' 
+    focus: 'Strict enforcement on cookie banner defaults and tracking consent opt-ins.', 
+    enforcement: 'Focus on dark patterns, consent logs, and advertising identifiers.' 
   },
   { 
     code: 'BfDI', 
-    name: 'Der Bundesbeauftragte', 
+    name: 'Federal Commissioner for Data Protection', 
     country: 'Germany', 
-    focus: 'Federal authority enforcing sovereign data hosting and workspace logs.', 
-    enforcement: 'Strict rules governing employee records and local EU cloud architecture.' 
+    focus: 'Highly decentralized enforcement targeting medical, employee, and public sector data.', 
+    enforcement: 'Strict stance on US data transfers and cloud hosting boundaries.' 
   },
   { 
     code: 'AEPD', 
-    name: 'Agencia Española', 
+    name: 'Agencia Española de Protección de Datos', 
     country: 'Spain', 
-    focus: 'Leads the EU in the volume of administrative compliance investigations.', 
-    enforcement: 'Heavy enforcement against spam lists, email outreach, and cookie walls.' 
+    focus: 'Active authority issuing high-frequency administrative fines for security failures.', 
+    enforcement: 'Focuses on web form privacy disclosures, spam, and vendor tracking.' 
   },
   { 
     code: 'Garante', 
-    name: 'Garante Privacy', 
+    name: 'Garante per la Protezione dei Dati Personali', 
     country: 'Italy', 
-    focus: 'Aggressive enforcement regarding automated decisions and AI training datasets.', 
-    enforcement: 'Demands transparent lawful bases for marketing automation systems.' 
-  },
+    focus: 'Pioneering regulator on artificial intelligence restrictions and algorithmic auditing.', 
+    enforcement: 'Aggressive enforcement on automated user profiles and analytics tools.' 
+  }
 ];
 
 const INTEGRATIONS = [
-  { name: 'HubSpot', category: 'CRM & Marketing' },
-  { name: 'Mailchimp', category: 'Email Campaigns' },
-  { name: 'Google Analytics 4', category: 'Web Analytics' },
-  { name: 'Stripe', category: 'Payments' },
-  { name: 'Slack', category: 'Alerting' },
-  { name: 'Amazon Web Services', category: 'Infrastructure' },
-  { name: 'Salesforce', category: 'Enterprise CRM' }
-];
-
-const PRICING = [
   { 
-    name: 'Free Starter', 
-    price: '0', 
-    yearly: '0', 
-    desc: 'Baseline assessment tools.', 
-    features: ['GDPR Gap Assessment', '1 Admin Seat', 'Regulatory News Updates', 'Self-Serve Help Docs'] 
+    name: 'HubSpot', 
+    logo: (
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#FF7A59] fill-current">
+        <path d="M21.4 9.3c-.6 0-1.1-.3-1.4-.7l-2.2 1.3c.1.3.2.7.2 1.1 0 1.7-1.4 3-3 3-1.2 0-2.2-.7-2.7-1.7L6.8 15.6c.1.3.2.7.2 1.1 0 1.7-1.4 3-3 3s-3-1.3-3-3 1.3-3 3-3c.5 0 .9.1 1.3.3l3.9-2.3c-.3-.5-.4-1.1-.4-1.7 0-1.7 1.4-3 3-3 .6 0 1.1.2 1.6.5l2.2-1.3c-.1-.3-.2-.7-.2-1.1 0-1.7 1.4-3 3-3s3 1.3 3 3-1.3 3-3 3zm-9.2 1.7c.6 0 1-.4 1-1s-.4-1-1-1-1 .4-1 1 .4 1 1 1z" />
+      </svg>
+    ) 
   },
   { 
-    name: 'Starter Package', 
-    price: '39', 
-    yearly: '31', 
-    desc: 'Designed for small boutique digital agencies.', 
-    features: ['Dynamic ROPA (20 activities)', 'Vendor Tracker (30 processors)', 'Hosted Privacy Policy', '2 Admin Seats', 'Standard Email Support'], 
-    popular: false 
+    name: 'Mailchimp', 
+    logo: (
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#FFE01B] fill-current">
+        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1.2 13.9c0 .773-.627 1.4-1.4 1.4s-1.4-.627-1.4-1.4.627-1.4 1.4-1.4 1.4.627 1.4 1.4zm-1.4-4c-.994 0-1.8-.806-1.8-1.8s.806-1.8 1.8-1.8 1.8.806 1.8 1.8-.806 1.8-1.8 1.8z" />
+      </svg>
+    ) 
   },
   { 
-    name: 'Professional OS', 
-    price: '89', 
-    yearly: '71', 
-    desc: 'Complete compliance management system for growing organizations.', 
-    features: ['Unlimited ROPA activities', 'Unlimited tracked vendors', 'Hosted Cookie Consent banner', 'DSAR Intake Portal', 'DPIA Risk Assessment wizard', 'Client Dashboards (up to 10 clients)', '10 Admin Seats', 'Priority Support'], 
-    popular: true 
+    name: 'GA4', 
+    logo: (
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#F9AB00] fill-current">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-5h2v5zm4 0h-2V9h2v8zm4 0h-2V7h2v10z" />
+      </svg>
+    ) 
   },
   { 
-    name: 'Enterprise Scale', 
-    price: '179', 
-    yearly: '143', 
-    desc: 'Custom APIs and deep scaling for large networks.', 
-    features: ['Everything in Professional', 'Custom branding for portals', 'Automated Cookie Scanner API', 'Continuous Audit Log exports', 'Employee Training LMS integrations', 'Unlimited Client Dashboards', 'Dedicated Success Representative'], 
-    popular: false 
+    name: 'Stripe', 
+    logo: (
+      <svg viewBox="0 0 40 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-4.5 text-[#635BFF] fill-current">
+        <path d="M13.9 6.8c0-1.1.9-1.8 2.4-1.8 1.4 0 2.5.5 3 .9l.8-2c-.8-.5-2.2-1-3.9-1-3.2 0-5.3 1.8-5.3 4.9 0 4.8 6.5 4 6.5 6.8 0 1.3-1.1 2-2.8 2-1.7 0-3.1-.6-3.8-1.1l-.8 2.1c1 .7 2.8 1.2 4.7 1.2 3.4 0 5.8-1.7 5.8-5 0-5.1-6.6-4.2-6.6-7zm-9.3-.9V3.5L1.4 4.2v2.2L4.6 5.9zm0 2.2H1.4v10.9h3.2V8.1zm15.3 0h-3.2v10.9h3.2V8.1zm-8.8 3.5c-.7 0-1.2.5-1.2 1.3 0 .8.5 1.3 1.2 1.3.7 0 1.2-.5 1.2-1.3 0-.8-.5-1.3-1.2-1.3zm0-3.5c-2.3 0-4 1.7-4 4.5s1.7 4.5 4 4.5c2.3 0 4-1.7 4-4.5s-1.7-4.5-4-4.5z" />
+      </svg>
+    ) 
   },
+  { 
+    name: 'Slack', 
+    logo: (
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 shrink-0">
+        <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523 2.528 2.528 0 0 1-2.522-2.523 2.528 2.528 0 0 1 2.522-2.52h2.52v2.52zm1.261 0a2.528 2.528 0 0 1 2.52-2.52h5.043a2.528 2.528 0 0 1 2.522 2.52v5.042a2.528 2.528 0 0 1-2.522 2.52H8.823a2.528 2.528 0 0 1-2.52-2.52v-5.042z" fill="#36C5F0"/>
+        <path d="M8.823 5.043a2.528 2.528 0 0 1 2.52-2.52 2.528 2.528 0 0 1 2.522 2.52v2.52h-2.522a2.528 2.528 0 0 1-2.52-2.52zm0 1.261a2.528 2.528 0 0 1 2.52 2.52v5.043a2.528 2.528 0 0 1-2.52 2.522H3.78a2.528 2.528 0 0 1-2.52-2.522V8.824a2.528 2.528 0 0 1 2.52-2.52h5.043z" fill="#2EB67D"/>
+        <path d="M18.878 8.824a2.528 2.528 0 0 1 2.52-2.52 2.528 2.528 0 0 1 2.522 2.52 2.528 2.528 0 0 1-2.522 2.52h-2.52v-2.52zm-1.261 0a2.528 2.528 0 0 1-2.52 2.52h-5.043a2.528 2.528 0 0 1-2.522-2.52V3.78a2.528 2.528 0 0 1 2.522-2.52h5.043a2.528 2.528 0 0 1 2.52 2.52v5.043z" fill="#ECB22E"/>
+        <path d="M15.097 18.878a2.528 2.528 0 0 1-2.52 2.52 2.528 2.528 0 0 1-2.522-2.52v-2.52h2.522a2.528 2.528 0 0 1 2.52 2.52zm0-1.261a2.528 2.528 0 0 1-2.52-2.52v-5.043a2.528 2.528 0 0 1 2.52-2.522h5.043a2.528 2.528 0 0 1 2.52 2.522v5.043a2.528 2.528 0 0 1-2.52 2.52h-5.043z" fill="#E01E5A"/>
+      </svg>
+    ) 
+  },
+  { 
+    name: 'Salesforce', 
+    logo: (
+      <svg viewBox="0 0 32 22" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-5 text-[#00A1E0] fill-current">
+        <path d="M25.75 10c0-2.76-2.24-5-5-5-1.5 0-2.85.66-3.79 1.71C16.24 6.27 15.15 6 14 6c-2.76 0-5 2.24-5 5 0 .5.08.97.22 1.42C8.49 13.06 8 14 8 15c0 2.21 1.79 4 4 4h14c2.21 0 4-1.79 4-4 0-1.63-.98-3.04-2.38-3.66.1-.42.13-.86.13-1.34z" />
+      </svg>
+    ) 
+  },
+  { 
+    name: 'AWS', 
+    logo: (
+      <svg viewBox="0 0 28 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-4.5 text-[#FF9900] fill-current">
+        <path d="M12.04 16.52c-2.3 0-3.66-1.12-3.66-2.92 0-2.82 2.76-3.18 5.76-3.18V9.8c0-1.42-.64-2.12-2.18-2.12-1.32 0-2.6.48-3.32.96L8 6.48C9.04 5.6 10.96 5 12.56 5c3.22 0 4.88 1.58 4.88 4.6v6.92h-2.14v-1.74c-.72 1.1-2.02 1.74-3.26 1.74zm.76-4.9c-2.08 0-3.66.18-3.66 1.48 0 .8.54 1.28 1.48 1.28 1.34 0 2.18-.8 2.18-2.06v-.7zm7.54 1.7c-.54 1.22-1.72 3.2-3.8 3.2-1.14 0-1.8-.52-2.1-1.04l1.62-1.2c.22.28.52.48.86.48.74 0 1.24-.92 1.18-1.52-.42.54-1.16.88-1.92.88-2.06 0-3.34-1.7-3.34-3.8 0-2.4 1.58-4.1 3.56-4.1.86 0 1.54.4 1.86.82v-.6h2.08v8.88zm-3.38-4.66c0 1.08.62 1.94 1.46 1.94s1.46-.86 1.46-1.94c0-1.12-.6-1.96-1.46-1.96s-1.46.84-1.46 1.96z" />
+        <path d="M2.86 19.38C8.54 22.2 16.2 22.2 21.14 19c.4-.26.86.26.54.58-4.34 4.22-11.96 4.76-17.7 1.9-.44-.22-.24-.88.26-1.1z" />
+      </svg>
+    ) 
+  }
 ];
 
 const CALCULATOR_QUESTIONS = [
   {
     id: 'jurisdiction',
-    text: 'Where are your data subjects (visitors, customers, lists) located?',
+    text: 'Where are your client targets or website visitors located?',
     options: [
       { text: 'We regularly process data of EU/UK citizens', value: 'eu', score: 30 },
       { text: 'We act as a sub-processor of EU datasets', value: 'sub', score: 20 },
@@ -144,28 +200,28 @@ const CALCULATOR_QUESTIONS = [
   },
   {
     id: 'ropa',
-    text: 'Do you maintain an active, documented Article 30 ROPA ledger?',
+    text: 'Do you maintain an active register of data processing activities?',
     options: [
-      { text: 'Yes, we have a fully-documented active ROPA', value: 'yes', score: 0 },
+      { text: 'Yes, we have an up-to-date processing ledger', value: 'yes', score: 0 },
       { text: 'No, we rely on static spreadsheets or have none', value: 'no', score: 35 },
-      { text: 'We do not know what an Article 30 ROPA is', value: 'unknown', score: 40 }
+      { text: 'We do not maintain any structured compliance records', value: 'unknown', score: 40 }
     ]
   },
   {
     id: 'cookies',
-    text: 'How are cookies and trackers monitored and consented to?',
+    text: 'How do you collect and log tracking cookie consent?',
     options: [
-      { text: 'Automated crawler & Consent Mode v2 mapping', value: 'automated', score: 0 },
-      { text: 'A basic banner, but no ongoing audits or logs', value: 'basic', score: 20 },
-      { text: 'We install analytics/pixel tags without dynamic block triggers', value: 'none', score: 35 }
+      { text: 'We audit and block trackers prior to consent', value: 'automated', score: 0 },
+      { text: 'We have a standard banner, but no cookie logs', value: 'basic', score: 20 },
+      { text: 'We load tracking codes without consent triggers', value: 'none', score: 35 }
     ]
   },
   {
     id: 'special',
-    text: 'Do you process special category data (health, minors, biometrics, banking)?',
+    text: 'Do you handle sensitive data (health, minors, banking, location)?',
     options: [
-      { text: 'Yes, we process sensitive datasets regularly', value: 'yes', score: 25 },
-      { text: 'No, we only collect standard email/billing logs', value: 'no', score: 5 }
+      { text: 'Yes, we handle sensitive client/user datasets', value: 'yes', score: 25 },
+      { text: 'No, we only process basic business contact info', value: 'no', score: 5 }
     ]
   }
 ];
@@ -186,7 +242,7 @@ export default function MarketingSite() {
     if (calcStep < CALCULATOR_QUESTIONS.length - 1) {
       setCalcStep(prev => prev + 1);
     } else {
-      setCalcStep(CALCULATOR_QUESTIONS.length); // complete state
+      setCalcStep(CALCULATOR_QUESTIONS.length);
     }
   };
 
@@ -196,56 +252,63 @@ export default function MarketingSite() {
     setCalcStep(0);
   };
 
-  // Calculate overall risk metrics
   const totalRiskScore = Object.values(calcScores).reduce((a, b) => a + b, 0);
   let riskLevel = 'LOW';
-  let riskColor = 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10';
+  let riskColor = 'text-[#8BA381] border-[#384332] bg-[#242A20]/80';
   let riskText = 'Your operations indicate low regulatory exposure. Maintain compliance audits regularly to avoid gap drifts.';
 
   if (totalRiskScore >= 75) {
     riskLevel = 'CRITICAL';
-    riskColor = 'text-red-400 border-red-500/20 bg-red-500/10';
-    riskText = 'Extreme regulatory liability detected. Missing Article 30 ROPA records combined with third-party tracking poses direct exposure to severe administrative fines under CNIL and IE DPC mandates.';
+    riskColor = 'text-red-400 border-red-950 bg-red-950/20';
+    riskText = 'Extreme regulatory liability detected. Missing processing activity records combined with unconsented tracking poses direct exposure to severe administrative fines.';
   } else if (totalRiskScore >= 45) {
     riskLevel = 'HIGH';
-    riskColor = 'text-amber-400 border-amber-500/20 bg-amber-500/10';
-    riskText = 'Significant compliance gaps detected. Lack of automated consent logging or outdated static documentation exposes your agency and clients to audit failure.';
+    riskColor = 'text-amber-500 border-amber-950 bg-amber-950/20';
+    riskText = 'Significant compliance gaps detected. Lack of active consent logging or outdated static documentation exposes your agency and clients to audit failures.';
   } else if (totalRiskScore >= 20) {
     riskLevel = 'MEDIUM';
-    riskColor = 'text-yellow-400 border-yellow-500/20 bg-yellow-500/10';
-    riskText = 'Moderate exposure. Some technical structures exist, but lack of continuous verification indicates potential compliance degradation.';
+    riskColor = 'text-[#C9C3AC] border-[#444034] bg-[#2A2920]/80';
+    riskText = 'Moderate exposure. Some compliance elements exist, but lack of continuous validation indicates potential compliance degradation.';
   }
 
-  // Pre-fill URL generation
   const prefillUrl = `/assessment?jurisdiction=${calcAnswers.jurisdiction || ''}&ropa=${calcAnswers.ropa || ''}&cookies=${calcAnswers.cookies || ''}&special=${calcAnswers.special || ''}&risk=${riskLevel.toLowerCase()}`;
 
   return (
     <div className="pt-16">
+      
+      {/* SECTION 1: HERO CONTAINER */}
+      <section className="w-full bg-[#141712] relative overflow-hidden">
+        {/* Soft forest radial glow behind mockup */}
+        <div className="absolute top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[550px] bg-[radial-gradient(circle,#24331E_0%,transparent_70%)] opacity-35 pointer-events-none z-0" />
         
-        {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-6 pt-16 pb-20 flex flex-col items-center text-center">
+        <div className="max-w-7xl mx-auto px-6 pt-24 pb-28 flex flex-col items-center text-center relative z-10">
           <div className="max-w-4xl flex flex-col items-center">
             
-            <div className="inline-flex items-center gap-2 bg-blue-950/40 border border-blue-500/20 rounded-full px-4.5 py-1.5 mb-8 text-xs font-semibold text-blue-400 tracking-wide">
+            {/* Tagline */}
+            <div className="inline-flex items-center gap-2 bg-[#1F241D] border border-[#2F362D] rounded-full px-4.5 py-1.5 mb-8 text-xs font-semibold text-[#8BA381] tracking-wide">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8BA381] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8BA381]"></span>
               </span>
-              Continuous GDPR Compliance Operating System
+              GDPR Compliance Operating System
             </div>
             
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-sans font-extrabold tracking-tight mb-8 leading-[1.08] text-white">
-              Compliance logic. <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400">Automated precision.</span>
+            {/* Headline */}
+            <h1 className="font-sans tracking-tight mb-8 leading-[1.05]">
+              <span className="block text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#9CA297] mb-3">GDPR compliance for your entire agency.</span>
+              <span className="block text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#F5F3ED] bg-clip-text">
+                One platform.
+              </span>
             </h1>
             
-            <p className="text-base sm:text-lg text-slate-400 max-w-2xl mb-10 leading-relaxed">
-              Verify operations, dynamic ROPA ledger generation, and instant cookie scans. 
-              The infrastructure dashboard designed to secure user privacy and client contracts with absolute audit readiness.
+            {/* Subheadline */}
+            <p className="text-xs sm:text-sm text-[#9CA297] max-w-xl mb-10 leading-relaxed font-medium">
+              Document processing activities, map vendors, manage cookie consent, handle data requests, and train employees — all in one place. No expensive legal consultants. No spreadsheets.
             </p>
             
+            {/* Hero CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mb-20">
-              <Link href="/assessment" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10">
+              <Link href="/assessment" className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#596E51]/10 border border-[#8BA381]/20">
                 Run Free Gap Assessment
               </Link>
               <button 
@@ -253,40 +316,39 @@ export default function MarketingSite() {
                   const el = document.getElementById('risk-calculator');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-sm font-semibold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-[#1F241D] hover:bg-[#252B21] text-[#C5C8C1] border border-[#2F362D] text-sm font-semibold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2"
               >
                 Test Risk Exposure
               </button>
             </div>
-
-            {/* Interactive Mockup Container */}
-            <div className="w-full max-w-5xl bg-[#0F1626]/90 border border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
-              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+            
+            {/* LIGHT-THEMED BUSINESS APP MOCKUP */}
+            <div className="w-full max-w-5xl bg-[#FBF8F3] border border-[#1F1B16]/10 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden text-[#1F1B16] text-left">
               
-              {/* Fake Window Controls */}
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-800/80">
+              {/* Browser Header Bar */}
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#1F1B16]/10">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500/30" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/30" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/30" />
-                  <span className="ml-3 text-[11px] font-mono text-slate-500">privaro-compliance-console v2.4</span>
+                  <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
+                  <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
+                  <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
+                  <span className="ml-3 text-[11px] font-sans font-medium text-[#1F1B16]/40">Privaro Compliance Dashboard</span>
                 </div>
                 
                 {/* Tabs */}
                 <div className="flex gap-1 overflow-x-auto pb-1 max-w-[70%] sm:max-w-none">
                   {[
-                    { id: 'overview', label: 'Console Overview', icon: Activity },
-                    { id: 'cookies', label: 'Cookie Scanner', icon: Globe },
-                    { id: 'ropa', label: 'ROPA Audit (Art. 30)', icon: Database },
-                    { id: 'dsar', label: 'DSAR Queue', icon: UserCheck }
+                    { id: 'overview', label: 'Compliance Overview', icon: Activity },
+                    { id: 'cookies', label: 'Cookie Consent', icon: Globe },
+                    { id: 'ropa', label: 'Activity Register', icon: Database },
+                    { id: 'dsar', label: 'Data Requests', icon: UserCheck }
                   ].map(tab => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as 'overview' | 'cookies' | 'ropa' | 'dsar')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all whitespace-nowrap ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold transition-all whitespace-nowrap ${
                         activeTab === tab.id 
-                          ? 'bg-blue-600/15 text-blue-400 border border-blue-500/20' 
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30 border border-transparent'
+                          ? 'bg-[#6E8B60]/10 text-[#6E8B60] border border-[#6E8B60]/20' 
+                          : 'text-[#1F1B16]/60 hover:text-[#1F1B16] hover:bg-[#1F1B16]/5 border border-transparent'
                       }`}
                     >
                       <tab.icon className="w-3 h-3" />
@@ -297,7 +359,7 @@ export default function MarketingSite() {
               </div>
 
               {/* Tab Display Area */}
-              <div className="min-h-[300px] text-left">
+              <div className="min-h-[280px]">
                 <AnimatePresence mode="wait">
                   
                   {activeTab === 'overview' && (
@@ -309,58 +371,58 @@ export default function MarketingSite() {
                       transition={{ duration: 0.2 }}
                       className="grid md:grid-cols-3 gap-6"
                     >
-                      {/* Radial Progress Graphic */}
-                      <div className="bg-slate-950/40 border border-slate-800/50 rounded-xl p-5 flex flex-col items-center justify-center text-center">
+                      {/* Radial Progress */}
+                      <div className="bg-[#F4EFE6]/60 border border-[#1F1B16]/8 rounded-xl p-5 flex flex-col items-center justify-center text-center">
                         <div className="relative w-28 h-28 flex items-center justify-center">
                           <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="56" cy="56" r="48" stroke="#1E293B" strokeWidth="6" fill="transparent" />
-                            <circle cx="56" cy="56" r="48" stroke="#10B981" strokeWidth="6" fill="transparent" 
+                            <circle cx="56" cy="56" r="48" stroke="#EAE5DC" strokeWidth="6" fill="transparent" />
+                            <circle cx="56" cy="56" r="48" stroke="#6E8B60" strokeWidth="6" fill="transparent" 
                               strokeDasharray={2 * Math.PI * 48}
                               strokeDashoffset={2 * Math.PI * 48 * (1 - 0.94)}
                               strokeLinecap="round"
                             />
                           </svg>
                           <div className="absolute flex flex-col items-center">
-                            <span className="text-2xl font-bold text-white font-mono">94%</span>
-                            <span className="text-[9px] uppercase font-bold text-emerald-400 tracking-wider">Health</span>
+                            <span className="text-2xl font-bold text-[#1F1B16]">94%</span>
+                            <span className="text-[9px] uppercase font-bold text-[#6E8B60] tracking-wider">Health</span>
                           </div>
                         </div>
-                        <h4 className="text-xs font-bold text-white mt-4">Compliance Status: Solid</h4>
-                        <p className="text-[10px] text-slate-500 mt-1">Audit exposure level is minimal.</p>
+                        <h4 className="text-xs font-bold text-[#1F1B16] mt-4">Compliance Status: Solid</h4>
+                        <p className="text-[10px] text-[#1F1B16]/60 mt-1">Audit exposure level is minimal.</p>
                       </div>
 
-                      {/* Diagnostic Logs */}
-                      <div className="md:col-span-2 bg-slate-950/40 border border-slate-800/50 rounded-xl p-5">
+                      {/* Log Feed */}
+                      <div className="md:col-span-2 bg-[#F4EFE6]/60 border border-[#1F1B16]/8 rounded-xl p-5">
                         <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                            <Activity className="w-3.5 h-3.5 text-blue-500" /> Compliance Feed
+                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wider flex items-center gap-1.5">
+                            <Activity className="w-3.5 h-3.5 text-[#6E8B60]" /> Operational Feed
                           </h4>
-                          <span className="text-[10px] font-mono text-slate-500">Live Updates</span>
+                          <span className="text-[10px] font-sans font-semibold text-[#1F1B16]/40">Real-Time Sync</span>
                         </div>
-                        <div className="space-y-3 font-mono text-[11px]">
-                          <div className="flex items-start gap-2.5 text-slate-300 border-b border-slate-900 pb-2">
-                            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="space-y-3 text-[11px]">
+                          <div className="flex items-start gap-2.5 border-b border-[#1F1B16]/5 pb-2">
+                            <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
                             <div>
-                              <p className="font-semibold text-white">HubSpot DPA Verified</p>
-                              <p className="text-[10px] text-slate-500">Data protection agreement signatures cross-referenced with EU standard clauses.</p>
+                              <p className="font-bold text-[#1F1B16]">HubSpot DPA Verified</p>
+                              <p className="text-[10px] text-[#1F1B16]/60">Data Protection Agreement verified and logged for HubSpot email marketing.</p>
                             </div>
-                            <span className="ml-auto text-[10px] text-slate-500 whitespace-nowrap">2 hrs ago</span>
+                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium">2 hrs ago</span>
                           </div>
-                          <div className="flex items-start gap-2.5 text-slate-300 border-b border-slate-900 pb-2">
-                            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div className="flex items-start gap-2.5 border-b border-[#1F1B16]/5 pb-2">
+                            <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
                             <div>
-                              <p className="font-semibold text-white">Automated Cookie Audit Completed</p>
-                              <p className="text-[10px] text-slate-500">Crawler scanned domain: 14 trackers identified, 0 unclassified scripts found.</p>
+                              <p className="font-bold text-[#1F1B16]">Automated Cookie Scan Completed</p>
+                              <p className="text-[10px] text-[#1F1B16]/60">14 active cookie scripts audited. Zero unclassified tags detected.</p>
                             </div>
-                            <span className="ml-auto text-[10px] text-slate-500 whitespace-nowrap">1 day ago</span>
+                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium">1 day ago</span>
                           </div>
-                          <div className="flex items-start gap-2.5 text-slate-300">
-                            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div className="flex items-start gap-2.5">
+                            <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
                             <div>
-                              <p className="font-semibold text-white">Employee training logs generated</p>
-                              <p className="text-[10px] text-slate-500">LMS training completed by 12 personnel. Compliance ledger certificates generated.</p>
+                              <p className="font-bold text-[#1F1B16]">Employee training logs updated</p>
+                              <p className="text-[10px] text-[#1F1B16]/60">12 team members completed the annual GDPR awareness module.</p>
                             </div>
-                            <span className="ml-auto text-[10px] text-slate-500 whitespace-nowrap">3 days ago</span>
+                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium">3 days ago</span>
                           </div>
                         </div>
                       </div>
@@ -376,62 +438,54 @@ export default function MarketingSite() {
                       transition={{ duration: 0.2 }}
                       className="space-y-4"
                     >
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-950/40 border border-slate-800/50 p-4 rounded-xl">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#F4EFE6]/60 border border-[#1F1B16]/8 p-4 rounded-xl">
                         <div>
-                          <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                            Active Scan Target: <span className="font-mono text-blue-400 font-normal">https://agency.domain.com</span>
+                          <p className="text-xs font-bold text-[#1F1B16]">
+                            Active Target Domain: <span className="text-[#6E8B60]">https://agency.domain.com</span>
                           </p>
-                          <p className="text-[10px] text-slate-500 mt-1">Automatic crawler detects and blocks non-essential cookies prior to user selection.</p>
+                          <p className="text-[10px] text-[#1F1B16]/60 mt-1">Consent banner detects and blocks trackers automatically prior to visitor selection.</p>
                         </div>
-                        <span className="text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded">
+                        <span className="text-[10px] font-bold bg-[#6E8B60]/10 text-[#6E8B60] border border-[#6E8B60]/20 px-2.5 py-1 rounded">
                           Consent Mode v2: ACTIVE
                         </span>
                       </div>
 
                       <div className="overflow-x-auto">
-                        <table className="w-full text-left font-mono text-[11px]">
+                        <table className="w-full text-left text-[11px]">
                           <thead>
-                            <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider">
-                              <th className="pb-2 font-semibold">Cookie Identifier</th>
-                              <th className="pb-2 font-semibold">Service Provider</th>
-                              <th className="pb-2 font-semibold">Classification</th>
-                              <th className="pb-2 font-semibold">Expiry</th>
-                              <th className="pb-2 font-semibold">AI Confidence</th>
-                              <th className="pb-2 font-semibold">Action Trigger</th>
+                            <tr className="border-b border-[#1F1B16]/10 text-[#1F1B16]/50 uppercase tracking-wider text-[10px] font-bold">
+                              <th className="pb-2">Cookie ID</th>
+                              <th className="pb-2">Service</th>
+                              <th className="pb-2">Classification</th>
+                              <th className="pb-2">Expiry</th>
+                              <th className="pb-2">Confidence</th>
+                              <th className="pb-2">Trigger Action</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-900 text-slate-300">
+                          <tbody className="divide-y divide-[#1F1B16]/5 text-[#1F1B16]/80 font-medium">
                             <tr>
-                              <td className="py-2.5 font-bold text-white">_ga</td>
+                              <td className="py-2.5 font-bold text-[#1F1B16]">_ga</td>
                               <td className="py-2.5">Google Analytics</td>
-                              <td className="py-2.5"><span className="text-blue-400 bg-blue-400/5 px-2 py-0.5 rounded border border-blue-500/10">Analytics</span></td>
+                              <td className="py-2.5"><span className="text-[#6E8B60] bg-[#6E8B60]/8 px-2 py-0.5 rounded border border-[#6E8B60]/15 text-[10px] font-bold">Analytics</span></td>
                               <td className="py-2.5">2 Years</td>
-                              <td className="py-2.5 text-emerald-400">99.8%</td>
-                              <td className="py-2.5 text-slate-400">Blocked prior to consent</td>
+                              <td className="py-2.5 text-[#6E8B60] font-bold">99.8%</td>
+                              <td className="py-2.5 text-[#1F1B16]/60">Blocked prior to consent</td>
                             </tr>
                             <tr>
-                              <td className="py-2.5 font-bold text-white">_fbp</td>
+                              <td className="py-2.5 font-bold text-[#1F1B16]">_fbp</td>
                               <td className="py-2.5">Meta Pixel</td>
-                              <td className="py-2.5"><span className="text-purple-400 bg-purple-400/5 px-2 py-0.5 rounded border border-purple-500/10">Marketing</span></td>
+                              <td className="py-2.5"><span className="text-[#B28247] bg-[#B28247]/8 px-2 py-0.5 rounded border border-[#B28247]/15 text-[10px] font-bold">Marketing</span></td>
                               <td className="py-2.5">3 Months</td>
-                              <td className="py-2.5 text-emerald-400">99.5%</td>
-                              <td className="py-2.5 text-slate-400">Blocked prior to consent</td>
+                              <td className="py-2.5 text-[#6E8B60] font-bold">99.5%</td>
+                              <td className="py-2.5 text-[#1F1B16]/60">Blocked prior to consent</td>
                             </tr>
                             <tr>
-                              <td className="py-2.5 font-bold text-white">stripe_mid</td>
+                              <td className="py-2.5 font-bold text-[#1F1B16]">stripe_mid</td>
                               <td className="py-2.5">Stripe Payments</td>
-                              <td className="py-2.5"><span className="text-emerald-400 bg-emerald-400/5 px-2 py-0.5 rounded border border-emerald-500/10">Necessary</span></td>
+                              <td className="py-2.5"><span className="text-[#4F779E] bg-[#4F779E]/8 px-2 py-0.5 rounded border border-[#4F779E]/15 text-[10px] font-bold">Necessary</span></td>
                               <td className="py-2.5">1 Year</td>
-                              <td className="py-2.5 text-emerald-400">100%</td>
-                              <td className="py-2.5 text-emerald-400 font-semibold">Always Allowed</td>
-                            </tr>
-                            <tr>
-                              <td className="py-2.5 font-bold text-white">_hjSession</td>
-                              <td className="py-2.5">Hotjar</td>
-                              <td className="py-2.5"><span className="text-blue-400 bg-blue-400/5 px-2 py-0.5 rounded border border-blue-500/10">Analytics</span></td>
-                              <td className="py-2.5">Session</td>
-                              <td className="py-2.5 text-emerald-400">98.2%</td>
-                              <td className="py-2.5 text-slate-400">Blocked prior to consent</td>
+                              <td className="py-2.5 text-[#6E8B60] font-bold">100%</td>
+                              <td className="py-2.5 text-[#6E8B60] font-bold">Always Allowed</td>
                             </tr>
                           </tbody>
                         </table>
@@ -448,45 +502,39 @@ export default function MarketingSite() {
                       transition={{ duration: 0.2 }}
                       className="space-y-4"
                     >
-                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div className="flex items-center justify-between border-b border-[#1F1B16]/10 pb-3">
                         <div>
-                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">Article 30 Registry Ledger</h4>
-                          <p className="text-[10px] text-slate-500 mt-0.5">Records of Processing Activities automatically mapped and updated.</p>
+                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wider">Processing Activities Register</h4>
+                          <p className="text-[10px] text-[#1F1B16]/60 mt-0.5">Article 30 records mapped to active vendor pipelines.</p>
                         </div>
-                        <span className="text-[10px] text-slate-400 font-mono">ROPA Version: v2.4 (Signed)</span>
+                        <span className="text-[10px] text-[#1F1B16]/40 font-semibold">ROPA Version: v2.4 (Signed)</span>
                       </div>
 
-                      <div className="space-y-3 font-mono text-[11px]">
+                      <div className="space-y-2.5 text-[11px] font-medium">
                         {[
                           { 
-                            name: 'Customer Newsletter & Marketing Campaign System', 
-                            basis: 'Consent (Double Opt-In Required)', 
+                            name: 'Client Email Marketing Campaigns (HubSpot Integration)', 
+                            basis: 'Consent (Opt-In Audited)', 
                             subjects: 'Prospects, Leads & Active Customers', 
-                            retention: 'Until consent withdrawal (Immediate deletion purge)' 
+                            retention: 'Until consent withdrawal (immediate purge)' 
                           },
                           { 
-                            name: 'Transactional Payments & Order Fulfillment Engine', 
-                            basis: 'Contract Performance (GDPR Art. 6.1.b)', 
-                            subjects: 'Registered Paying Clients', 
-                            retention: '7 Years (Mandatory Financial Ledger audits)' 
-                          },
-                          { 
-                            name: 'User Retargeting & Tracking Pixel Campaigns', 
-                            basis: 'Explicit Consent (Prior to Opt-In Check)', 
-                            subjects: 'Anonymous Website Visitors', 
-                            retention: '90 Days from collection timestamp' 
+                            name: 'Transactional Payments & Subscriptions (Stripe Integration)', 
+                            basis: 'Contract Performance (Art. 6.1.b)', 
+                            subjects: 'Active Paying Clients', 
+                            retention: '7 Years (Financial Ledger audits)' 
                           }
                         ].map((item, index) => (
-                          <div key={index} className="bg-slate-950/40 border border-slate-800/40 rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="font-semibold text-white text-xs">{item.name}</span>
-                              <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded font-bold">
+                          <div key={index} className="bg-[#F4EFE6]/60 border border-[#1F1B16]/8 rounded-lg p-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                              <span className="font-bold text-[#1F1B16] text-[11px]">{item.name}</span>
+                              <span className="text-[9px] bg-[#6E8B60]/10 text-[#6E8B60] border border-[#6E8B60]/20 px-2 py-0.5 rounded font-bold shrink-0 self-start sm:self-auto">
                                 {item.basis}
                               </span>
                             </div>
-                            <div className="grid sm:grid-cols-2 gap-2 text-[10px] text-slate-400 pt-1 border-t border-slate-900">
-                              <p>Data Subjects: <span className="text-slate-300">{item.subjects}</span></p>
-                              <p className="sm:text-right">Retention Period: <span className="text-slate-300">{item.retention}</span></p>
+                            <div className="grid sm:grid-cols-2 gap-2 text-[10px] text-[#1F1B16]/60 pt-1.5 border-t border-[#1F1B16]/5">
+                              <p>Data Subjects: <span className="text-[#1F1B16]/80 font-bold">{item.subjects}</span></p>
+                              <p className="sm:text-right">Retention Period: <span className="text-[#1F1B16]/80 font-bold">{item.retention}</span></p>
                             </div>
                           </div>
                         ))}
@@ -503,232 +551,151 @@ export default function MarketingSite() {
                       transition={{ duration: 0.2 }}
                       className="space-y-3"
                     >
-                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div className="flex items-center justify-between border-b border-[#1F1B16]/10 pb-3">
                         <div>
-                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">Active Data Subject Rights Requests</h4>
-                          <p className="text-[10px] text-slate-500 mt-0.5">Automated queue of user erasure, access, or portability tickets.</p>
+                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wider">Active Data Requests</h4>
+                          <p className="text-[10px] text-[#1F1B16]/60 mt-0.5">Secure queue of data access and deletion requests.</p>
                         </div>
-                        <span className="text-[10px] text-slate-400 font-mono">Verification: Strict OAuth2 / ID confirmation</span>
+                        <span className="text-[10px] text-[#1F1B16]/40 font-semibold">Verification: Email OAuth verified</span>
                       </div>
 
-                      {[
-                        {
-                          ref: 'DSAR-2026-0412',
-                          name: 'Sarah Jenkins',
-                          type: 'Erasure Request (Right to be Forgotten)',
-                          status: 'Verified (Pending Purge Execution)',
-                          statusColor: 'text-amber-400 bg-amber-500/5 border-amber-500/10',
-                          timer: '18 Days remaining',
-                          action: 'Trigger Automated Wipe'
-                        },
-                        {
-                          ref: 'DSAR-2026-0398',
-                          name: 'Marcus Vance',
-                          type: 'Access Request (Right to Portability)',
-                          status: 'Completed (Secure package delivered)',
-                          statusColor: 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10',
-                          timer: 'Completed 2 days ago',
-                          action: 'Download Receipt'
-                        }
-                      ].map((ticket, idx) => (
-                        <div key={idx} className="bg-slate-950/40 border border-slate-800/40 rounded-lg p-3.5 flex flex-col sm:flex-row justify-between gap-3 text-xs font-mono">
-                          <div>
-                            <div className="flex items-center gap-2.5 mb-1.5">
-                              <span className="text-[10px] text-slate-500">{ticket.ref}</span>
-                              <span className="font-bold text-white">{ticket.name}</span>
-                              <span className="text-[10px] text-slate-400">({ticket.type})</span>
+                      <div className="space-y-2 text-[11px] font-medium">
+                        {[
+                          {
+                            ref: 'REQ-2026-04',
+                            name: 'Sarah Jenkins',
+                            type: 'Data Deletion (Right to be Forgotten)',
+                            status: 'Pending Purge Approval',
+                            statusColor: 'text-[#B28247] bg-[#B28247]/8 border-[#B28247]/20',
+                            daysLeft: 14
+                          },
+                          {
+                            ref: 'REQ-2026-03',
+                            name: 'Marcus Thorne',
+                            type: 'Data Access Request (Export)',
+                            status: 'Completed & Dispatched',
+                            statusColor: 'text-[#6E8B60] bg-[#6E8B60]/8 border-[#6E8B60]/20',
+                            daysLeft: 0
+                          }
+                        ].map((req, i) => (
+                          <div key={i} className="bg-[#F4EFE6]/60 border border-[#1F1B16]/8 rounded-lg p-3 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-mono text-[#1F1B16]/40 font-bold">{req.ref}</span>
+                                <span className="font-bold text-[#1F1B16]">{req.name}</span>
+                              </div>
+                              <p className="text-[10px] text-[#1F1B16]/60 mt-0.5">{req.type}</p>
                             </div>
-                            <div className="flex flex-wrap gap-2 items-center text-[10px]">
-                              <span className={`px-2 py-0.5 rounded border font-semibold ${ticket.statusColor}`}>
-                                {ticket.status}
+                            <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${req.statusColor}`}>
+                                {req.status}
                               </span>
-                              <span className="text-slate-500 flex items-center gap-1">
-                                <ClockIcon className="w-3.5 h-3.5 text-slate-500" /> {ticket.timer}
+                              <span className="text-[10px] text-[#1F1B16]/60 font-semibold">
+                                {req.daysLeft > 0 ? `${req.daysLeft} days remaining` : 'Archive'}
                               </span>
                             </div>
                           </div>
-                          <div className="sm:self-center flex shrink-0">
-                            <button className="w-full sm:w-auto bg-[#10192A] hover:bg-blue-600/15 text-blue-400 hover:text-blue-300 border border-slate-800 hover:border-blue-500/20 px-3 py-1.5 rounded text-[11px] font-bold transition-all">
-                              {ticket.action}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </motion.div>
                   )}
 
                 </AnimatePresence>
               </div>
+
             </div>
 
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Integration Logo Bar (Social Proof) */}
-        <section className="border-y border-slate-800/60 bg-[#0A101C]/40 py-10">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="text-center md:text-left">
-              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Live Connect</p>
-              <h4 className="text-sm font-bold text-white mt-1">Works with the systems you use daily</h4>
-            </div>
-            <div className="flex flex-wrap justify-center md:justify-end items-center gap-x-8 gap-y-4 opacity-50">
-              {INTEGRATIONS.map((int, i) => (
-                <div key={i} className="flex items-center gap-2 bg-slate-950/40 border border-slate-800/40 px-3.5 py-1.5 rounded-lg text-xs font-mono text-slate-300 hover:opacity-100 transition-opacity">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  <span>{int.name}</span>
-                </div>
-              ))}
-            </div>
+      {/* DECORATIVE DIVIDER */}
+      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
+        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
+      </div>
+
+      {/* SECTION 2: INTEGRATION BAR (REAL LOGOS) */}
+      <section id="integrations" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col lg:flex-row items-center justify-between gap-8">
+          <div className="text-center lg:text-left shrink-0">
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Active Integrations</p>
+            <h4 className="text-sm font-bold text-[#F5F3ED] mt-1">Works with the systems you use daily</h4>
           </div>
-        </section>
-
-        {/* GDPR Risk Exposure Calculator */}
-        <section id="risk-calculator" className="max-w-4xl mx-auto px-6 py-28 scroll-mt-24">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-white mb-4 tracking-tight">
-              Evaluate your GDPR exposure
-            </h2>
-            <p className="text-slate-400 max-w-xl mx-auto text-sm sm:text-base">
-              Calculate your organization&apos;s compliance risk profile in 60 seconds. Receive instant recommendations.
-            </p>
-          </div>
-
-          <div className="bg-[#0F1626]/80 border border-slate-800/80 rounded-2xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
-            
-            {calcStep < CALCULATOR_QUESTIONS.length ? (
-              <div>
-                {/* Step indicator */}
-                <div className="flex justify-between items-center mb-8">
-                  <span className="text-[10px] font-mono text-blue-400 uppercase tracking-widest font-bold">
-                    Assessment Question {calcStep + 1} of {CALCULATOR_QUESTIONS.length}
-                  </span>
-                  <div className="flex gap-1.5">
-                    {CALCULATOR_QUESTIONS.map((_, i) => (
-                      <div 
-                        key={i} 
-                        className={`w-4 h-1 rounded transition-colors ${i <= calcStep ? 'bg-blue-500' : 'bg-slate-800'}`} 
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-6 leading-snug">
-                  {CALCULATOR_QUESTIONS[calcStep].text}
-                </h3>
-
-                <div className="space-y-3">
-                  {CALCULATOR_QUESTIONS[calcStep].options.map((opt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleCalculatorSelect(CALCULATOR_QUESTIONS[calcStep].id, opt.value, opt.score)}
-                      className="w-full text-left bg-slate-950/40 hover:bg-slate-900 border border-slate-800 hover:border-slate-700/80 p-4 rounded-xl text-xs sm:text-sm text-slate-300 hover:text-white transition-all flex items-center justify-between group"
-                    >
-                      <span>{opt.text}</span>
-                      <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-1.5 transition-all shrink-0 ml-4" />
-                    </button>
-                  ))}
-                </div>
-
-                {calcStep > 0 && (
-                  <button 
-                    onClick={() => setCalcStep(prev => prev - 1)}
-                    className="text-[11px] font-semibold text-slate-500 hover:text-slate-300 mt-6 block transition-colors"
-                  >
-                    ← Previous Question
-                  </button>
-                )}
+          <div className="flex flex-wrap justify-center lg:justify-end items-center gap-x-8 gap-y-6 opacity-80">
+            {INTEGRATIONS.map((int, i) => (
+              <div key={i} className="flex items-center gap-2.5 bg-[#1F241D]/60 border border-[#2F362D]/60 px-4 py-2 rounded-xl text-xs font-semibold text-[#C5C8C1] hover:text-[#F5F3ED] hover:border-[#8BA381]/40 transition-all duration-300">
+                {int.logo}
+                <span>{int.name}</span>
               </div>
-            ) : (
-              // Results Display
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.98 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                className="text-center"
-              >
-                <div className="inline-flex items-center gap-2 mb-6">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping" />
-                  <span className="text-[10px] font-mono text-blue-400 uppercase tracking-widest font-bold">Calculation Complete</span>
-                </div>
-
-                <div className="max-w-2xl mx-auto">
-                  <div className={`inline-block border rounded-full px-6 py-1.5 font-mono text-sm font-bold mb-6 ${riskColor}`}>
-                    RISK LEVEL: {riskLevel}
-                  </div>
-                  
-                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
-                    Audit Risk Coefficient: {totalRiskScore}%
-                  </h3>
-                  
-                  <p className="text-slate-400 text-sm leading-relaxed mb-8">
-                    {riskText}
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                    <Link 
-                      href={prefillUrl} 
-                      className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm py-3 px-6 rounded-lg shadow-lg shadow-blue-500/10 transition-all flex items-center justify-center gap-2"
-                    >
-                      Complete Assessment (Pre-filled) <ArrowRight className="w-4 h-4" />
-                    </Link>
-                    <button 
-                      onClick={resetCalculator} 
-                      className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700 px-6 py-3 rounded-lg text-sm font-semibold transition-all"
-                    >
-                      Recalculate
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+            ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Bento Grid Features */}
-        <section id="features" className="max-w-7xl mx-auto px-6 py-28 border-t border-slate-900/80 scroll-mt-24">
+      {/* DECORATIVE DIVIDER */}
+      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
+        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
+      </div>
+
+      {/* SECTION 3: BENTO GRID FEATURES (12 SYMMETRICAL MODULES) */}
+      <section id="features" className="w-full bg-[#141712] relative z-10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 py-28">
+          
           <div className="mb-20 max-w-2xl">
-            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Compliance Infrastructure</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-white mb-6 tracking-tight">Six modules. One compliance core.</h2>
-            <p className="text-base sm:text-lg text-slate-400 leading-relaxed">
-              Replace disjointed spreadsheets with a continuous monitoring stack built for the rigorous GDPR standards of cross-border operations.
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Compliance Suite</p>
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-6 tracking-tight">Twelve modules. One compliance core.</h2>
+            <p className="text-base sm:text-lg text-[#9CA297] leading-relaxed">
+              Ditch separate compliance trackers and spreadsheet audits. Monitor, track, and protect your entire operation from a single dashboard.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {MODULES.map((mod, i) => (
               <motion.div 
                 key={i}
                 initial={{ opacity: 0, y: 15 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-                className={`bg-[#0F1626]/50 border border-slate-850 rounded-xl p-6 flex flex-col justify-between group hover:bg-[#0F1626]/85 hover:border-slate-700/60 transition-all ${mod.colSpan}`}
+                transition={{ duration: 0.35, delay: i * 0.03 }}
+                className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-xl p-5.5 flex flex-col justify-between group hover:bg-[#1F241D]/80 hover:border-[#5F7556]/60 transition-all duration-300 h-full"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-[9px] font-mono font-bold tracking-wider text-slate-500 uppercase bg-slate-950/60 border border-slate-900 px-2 py-0.5 rounded">
+                  <div className="flex items-center justify-between mb-5">
+                    <span className="text-[9px] font-sans font-bold tracking-wider text-[#8BA381] bg-[#141712]/80 border border-[#2F362D] px-2 py-0.5 rounded">
                       {mod.tag}
                     </span>
-                    <ArrowUpRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                    <mod.icon className="w-4 h-4 text-[#5F655A] group-hover:text-[#8BA381] transition-colors" />
                   </div>
-                  <h3 className="text-sm sm:text-base font-bold text-white mb-2">{mod.title}</h3>
-                  <p className="text-slate-400 text-xs leading-relaxed">{mod.desc}</p>
+                  <h3 className="text-base font-bold text-[#F5F3ED] mb-2">{mod.title}</h3>
+                  <p className="text-[#9CA297] text-xs leading-relaxed">{mod.desc}</p>
                 </div>
-                <div className="mt-8 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-slate-300 transition-colors cursor-pointer">
-                  Specifications <ChevronRight className="w-3.5 h-3.5" />
+                <div className="mt-6 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#8BA381]/80 group-hover:text-[#8BA381] transition-colors cursor-pointer">
+                  Manage Module <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </motion.div>
             ))}
           </div>
-        </section>
 
-        {/* Supervisory Authority Alignment (Strict Differentiator) */}
-        <section id="authorities" className="max-w-7xl mx-auto px-6 py-28 border-t border-slate-900/80 scroll-mt-24">
+        </div>
+      </section>
+
+      {/* DECORATIVE DIVIDER */}
+      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
+        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
+      </div>
+
+      {/* SECTION 4: SUPERVISORY AUTHORITY GRID */}
+      <section id="authorities" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 py-28">
+          
           <div className="mb-16">
-            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Regulatory Scope</p>
-            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-white mb-5 tracking-tight">Supervisory Authority alignment</h2>
-            <p className="text-slate-400 max-w-2xl text-sm sm:text-base leading-relaxed">
-              GDPR is uniform, but enforcement focus differs by country. Privaro adapts compliance configurations based on the jurisdictions of your targets.
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Enforcement Landscape</p>
+            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-[#F5F3ED] mb-5 tracking-tight">Supervisory Authority alignment</h2>
+            <p className="text-[#9CA297] max-w-2xl text-sm sm:text-base leading-relaxed">
+              GDPR is uniform, but enforcement priorities vary by nation. Privaro adapts compliance configurations to map to the audits of your target audiences.
             </p>
           </div>
 
@@ -736,146 +703,321 @@ export default function MarketingSite() {
             {AUTHORITIES.map((auth, i) => (
               <div 
                 key={i}
-                className="bg-[#0F1626]/40 border border-slate-850 p-5 rounded-xl hover:border-slate-800 transition-all flex flex-col justify-between"
+                className="bg-[#1F241D]/45 border border-[#2F362D]/90 p-5 rounded-xl hover:border-[#5F7556]/60 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-slate-900">
-                    <span className="font-mono font-bold text-white text-xs">{auth.code}</span>
-                    <span className="text-[9px] text-slate-500">{auth.country}</span>
+                  <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-[#2F362D]/40">
+                    <span className="font-mono font-bold text-[#F5F3ED] text-xs">{auth.code}</span>
+                    <span className="text-[9px] text-[#9CA297]">{auth.country}</span>
                   </div>
-                  <p className="text-slate-300 text-xs font-bold mb-2">{auth.name}</p>
-                  <p className="text-slate-400 text-[10.5px] leading-relaxed mb-3">{auth.focus}</p>
+                  <p className="text-[#F5F3ED] text-xs font-bold mb-2">{auth.name}</p>
+                  <p className="text-[#9CA297] text-[10.5px] leading-relaxed mb-3">{auth.focus}</p>
                 </div>
-                <div className="text-[10px] font-mono text-blue-400 bg-blue-500/5 border border-blue-500/10 p-2.5 rounded">
-                  <span className="font-bold text-white block mb-0.5 text-[9px]">ENFORCEMENT FOCUS:</span>
+                <div className="text-[10px] font-mono text-[#8BA381] bg-[#6E8B60]/5 border border-[#6E8B60]/15 p-2.5 rounded">
+                  <span className="font-bold text-[#F5F3ED] block mb-0.5 text-[9px]">ENFORCEMENT FOCUS:</span>
                   {auth.enforcement}
                 </div>
               </div>
             ))}
           </div>
-        </section>
 
-        {/* Comparison Section (Austere IDE Style) */}
-        <section className="max-w-7xl mx-auto px-6 py-28 border-t border-slate-900/80">
+        </div>
+      </section>
+
+      {/* DECORATIVE DIVIDER */}
+      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
+        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
+      </div>
+
+      {/* SECTION 5: COMPARISON SECTION */}
+      <section className="w-full bg-[#141712] relative z-10">
+        <div className="max-w-7xl mx-auto px-6 py-28">
+          
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-white mb-4 tracking-tight">Built for compliance infrastructure</h2>
-            <p className="text-slate-400 max-w-lg mx-auto text-sm">
-              Why static documents fail regulatory audits and how continuous ledger systems ensure compliance.
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Platform Advantage</p>
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-4 tracking-tight">Structured workflow, no legacy tools</h2>
+            <p className="text-[#9CA297] max-w-xl mx-auto text-sm sm:text-base">
+              A comparison of audit-readiness and overhead between manual efforts, consultants, and Privaro.
             </p>
           </div>
+
+          <div className="overflow-x-auto border border-[#2F362D]/90 rounded-2xl bg-[#1f241d]/20 backdrop-blur-md">
+            <table className="w-full text-left text-xs sm:text-sm border-collapse min-w-[700px]">
+              <thead>
+                <tr className="border-b border-[#2F362D] text-[#F5F3ED] font-bold">
+                  <th className="p-6">Compliance Capability</th>
+                  <th className="p-6 bg-[#1F241D]/30">Manual Sheets</th>
+                  <th className="p-6 bg-[#1F241D]/30">Legal Consultants</th>
+                  <th className="p-6 text-[#8BA381] bg-[#242A20]/80">Privaro OS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#2F362D]/60 text-[#9CA297] font-medium">
+                <tr>
+                  <td className="p-6 font-bold text-[#F5F3ED]">ROPA / Record keeping</td>
+                  <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Static spreadsheets (Outdates instantly)</td>
+                  <td className="p-6 bg-[#1F241D]/10">Manual document audits (Slow & expensive)</td>
+                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Automated logs matching live code stack</td>
+                </tr>
+                <tr>
+                  <td className="p-6 font-bold text-[#F5F3ED]">Consent mode tracking</td>
+                  <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Hardcoded scripts (Frequent drifts)</td>
+                  <td className="p-6 bg-[#1F241D]/10">Policy outlines, no actual engineering code</td>
+                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Edge blocking scripts synced with logs</td>
+                </tr>
+                <tr>
+                  <td className="p-6 font-bold text-[#F5F3ED]">Data subject request queue</td>
+                  <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Manual inbox tracking (High human risk)</td>
+                  <td className="p-6 bg-[#1F241D]/10">Guidance documents, manual action steps</td>
+                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> OAuth-verified intake and countdowns</td>
+                </tr>
+                <tr>
+                  <td className="p-6 font-bold text-[#F5F3ED]">Employee training & logging</td>
+                  <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Omitted or undocumented (Audit failure)</td>
+                  <td className="p-6 bg-[#1F241D]/10">External seminars (No centralized logs)</td>
+                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Integrated training portal & auto certifications</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </section>
+
+      {/* DECORATIVE DIVIDER */}
+      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
+        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
+      </div>
+
+      {/* SECTION 6: GDPR RISK CALCULATOR */}
+      <section id="risk-calculator" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10 scroll-mt-20">
+        <div className="max-w-4xl mx-auto px-6 py-28">
           
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* The Old Way */}
-            <div className="bg-slate-950/20 border border-slate-900 rounded-xl p-8 sm:p-10 font-mono text-[11px] leading-relaxed">
-              <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-900">
-                <h3 className="text-slate-200 font-sans text-sm font-bold uppercase tracking-wider">Unverified Compliance</h3>
-                <span className="text-red-400 bg-red-500/5 border border-red-500/10 px-2.5 py-0.5 rounded text-[10px] font-sans font-bold">Unchecked Exposure</span>
-              </div>
-              <ul className="space-y-5">
-                {[
-                  'Spreadsheets that are out of date the day they are saved.',
-                  'Paying legal consultants to draft static Word DPAs.',
-                  'Compiling response packages manually when a DSAR arrives.',
-                  'Hoping tracking pixels do not load before the banner accepts.',
-                  'No verifiable audit history of client processing logs.'
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3.5 text-slate-400">
-                    <XCircle className="w-4 h-4 text-red-500/80 shrink-0 mt-0.5" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* The Privaro Way */}
-            <div className="bg-[#0F1626]/40 border border-blue-900/20 rounded-xl p-8 sm:p-10 font-mono text-[11px] leading-relaxed relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-              <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-900">
-                <h3 className="text-white font-sans text-sm font-bold uppercase tracking-wider">Privaro Compliance OS</h3>
-                <span className="text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 px-2.5 py-0.5 rounded text-[10px] font-sans font-bold">Automated Guardrails</span>
-              </div>
-              <ul className="space-y-5">
-                {[
-                  'Article 30 ROPA maps connected directly to your active vendor list.',
-                  'Automated crawler audits scripts and locks trackers prior to consent.',
-                  'Identity-verified portals generate secure DSAR reply vaults.',
-                  'Pre-audited profiles monitor vendor sub-processors for shifts.',
-                  'Continuous logging provides accountability proofs for DPAs.'
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3.5 text-slate-200">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight">Evaluate your GDPR exposure</h2>
+            <p className="text-[#9CA297] max-w-xl mx-auto text-sm sm:text-base">
+              Calculate your organization&apos;s compliance risk profile in 60 seconds. Receive instant recommendations.
+            </p>
           </div>
-        </section>
 
-        {/* Pricing */}
-        <section id="pricing" className="max-w-7xl mx-auto px-6 py-28 border-t border-slate-900/80 scroll-mt-24">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-            <div className="max-w-xl">
-              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">SaaS Licensing</p>
-              <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-white mb-5 tracking-tight">Predictable pricing matrices</h2>
-              <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-                Scale compliance controls as your operations expand. Standard cancel-anytime agreements.
-              </p>
-            </div>
+          <div className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-2xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-[#8BA381]/25 to-transparent" />
             
-            <div className="inline-flex items-center bg-[#0F1626]/60 border border-slate-800 p-1 rounded-xl">
-              <button onClick={() => setAnnualBilling(false)} className={`px-4.5 py-1.5 rounded-lg text-xs font-bold transition-all ${!annualBilling ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>
-                Monthly
+            {calcStep < CALCULATOR_QUESTIONS.length ? (
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <span className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wider">
+                    Question {calcStep + 1} of {CALCULATOR_QUESTIONS.length}
+                  </span>
+                  <div className="flex gap-1">
+                    {CALCULATOR_QUESTIONS.map((_, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`w-5 h-1 rounded-full transition-all ${
+                          idx <= calcStep ? 'bg-[#8BA381]' : 'bg-[#2F362D]'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <h3 className="text-lg sm:text-xl font-bold text-[#F5F3ED] mb-6 leading-snug">
+                  {CALCULATOR_QUESTIONS[calcStep].text}
+                </h3>
+
+                <div className="space-y-3">
+                  {CALCULATOR_QUESTIONS[calcStep].options.map((opt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleCalculatorSelect(CALCULATOR_QUESTIONS[calcStep].id, opt.value, opt.score)}
+                      className="w-full text-left bg-[#141712]/55 hover:bg-[#252B21]/80 border border-[#2F362D]/60 hover:border-[#8BA381]/40 p-4.5 rounded-xl transition-all duration-200 text-xs sm:text-sm text-[#C5C8C1] hover:text-[#F5F3ED] font-semibold flex items-center justify-between group"
+                    >
+                      <span>{opt.text}</span>
+                      <ChevronRight className="w-4 h-4 text-[#5F655A] group-hover:text-[#8BA381] group-hover:translate-x-0.5 transition-all" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.98 }} 
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center"
+              >
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#6E8B60]/10 border border-[#6E8B60]/20 text-[#8BA381] mb-6">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                
+                <h3 className="text-xl sm:text-2xl font-bold text-[#F5F3ED] mb-3">Assessment Diagnostic Complete</h3>
+                
+                <div className={`max-w-md mx-auto border rounded-xl p-5 mb-8 ${riskColor}`}>
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <span className="text-[10px] font-bold tracking-widest uppercase">EXPOSURE LEVEL:</span>
+                    <span className="font-mono font-bold text-xs bg-[#141712]/55 px-2 py-0.5 rounded border border-current">{riskLevel}</span>
+                  </div>
+                  <p className="text-xs leading-relaxed font-semibold">{riskText}</p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link href={prefillUrl} className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 border border-[#8BA381]/20">
+                    Verify Exposure in Assessment <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <button 
+                    onClick={resetCalculator}
+                    className="w-full sm:w-auto bg-[#141712]/50 hover:bg-[#141712] text-[#9CA297] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all"
+                  >
+                    Reset Calculator
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+        </div>
+      </section>
+
+      {/* DECORATIVE DIVIDER */}
+      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
+        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
+      </div>
+
+      {/* SECTION 7: PRICING TIERS */}
+      <section id="pricing" className="w-full bg-[#141712] relative z-10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 py-28">
+          
+          <div className="text-center mb-20">
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Pricing Matrix</p>
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-4 tracking-tight">Structured plans for every agency size</h2>
+            
+            {/* Annual Billing Toggle */}
+            <div className="inline-flex items-center gap-3 bg-[#1F241D] border border-[#2F362D]/80 p-1 rounded-full mt-4">
+              <button 
+                onClick={() => setAnnualBilling(true)}
+                className={`text-[10px] sm:text-xs font-bold py-1.5 px-4 rounded-full transition-all ${
+                  annualBilling ? 'bg-[#6E8B60] text-[#F5F3ED]' : 'text-[#9CA297] hover:text-[#F5F3ED]'
+                }`}
+              >
+                Yearly Billing (Save 20%)
               </button>
-              <button onClick={() => setAnnualBilling(true)} className={`px-4.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${annualBilling ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>
-                Annually <span className="text-[9px] uppercase bg-emerald-950 text-emerald-400 px-1 py-0.5 rounded font-bold">-20%</span>
+              <button 
+                onClick={() => setAnnualBilling(false)}
+                className={`text-[10px] sm:text-xs font-bold py-1.5 px-4 rounded-full transition-all ${
+                  !annualBilling ? 'bg-[#6E8B60] text-[#F5F3ED]' : 'text-[#9CA297] hover:text-[#F5F3ED]'
+                }`}
+              >
+                Monthly Billing
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {PRICING.map((plan, i) => (
-              <div key={i} className={`relative bg-[#0F1626]/30 rounded-xl p-6 sm:p-7 flex flex-col justify-between border ${plan.popular ? 'border-blue-600/60 ring-1 ring-blue-600/30' : 'border-slate-850'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { 
+                name: 'Free Starter', 
+                price: '0', 
+                yearly: '0', 
+                desc: 'Baseline assessment tools.', 
+                features: ['GDPR Gap Assessment', '1 Admin Seat', 'Regulatory News Updates', 'Self-Serve Help Docs'] 
+              },
+              { 
+                name: 'Starter Package', 
+                price: '39', 
+                yearly: '31', 
+                desc: 'Designed for small boutique digital agencies.', 
+                features: ['Activity Register (20 ROPAs)', 'Vendor Tracking (30 processors)', 'Hosted Privacy Policy', '2 Admin Seats', 'Standard Email Support'], 
+                popular: false 
+              },
+              { 
+                name: 'Professional OS', 
+                price: '89', 
+                yearly: '71', 
+                desc: 'Complete compliance management system for growing organizations.', 
+                features: ['Unlimited activity registers', 'Unlimited vendor tracking', 'Hosted Cookie Consent banner', 'Data Request queue', 'DPIA impact assessments', 'Client Portals (up to 10 clients)', '10 Admin Seats', 'Priority Support'], 
+                popular: true 
+              },
+              { 
+                name: 'Enterprise Scale', 
+                price: '179', 
+                yearly: '143', 
+                desc: 'Custom APIs and deep scaling for large networks.', 
+                features: ['Everything in Professional', 'Custom branding for portals', 'Automated Cookie Scanner API', 'Continuous Audit Log exports', 'Employee Training LMS integrations', 'Unlimited Client Dashboards', 'Dedicated Success Representative'], 
+                popular: false 
+              },
+            ].map((plan, i) => (
+              <div 
+                key={i} 
+                className={`border rounded-2xl p-6.5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
+                  plan.popular 
+                    ? 'bg-[#1F241D] border-[#8BA381] shadow-xl shadow-[#6E8B60]/5' 
+                    : 'bg-[#1F241D]/35 border-[#2F362D]/90 hover:border-[#2F362D]'
+                }`}
+              >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-bold uppercase tracking-wider py-1 px-3 rounded-full">
-                    RECOMMENDED OS
+                  <div className="absolute top-0 right-0 bg-[#6E8B60] text-[#F5F3ED] text-[9px] font-bold uppercase tracking-wider py-1.5 px-4 rounded-bl-xl border-l border-b border-[#8BA381]/30">
+                    Recommended Plan
                   </div>
                 )}
+
                 <div>
-                  <h3 className="text-base font-bold text-white mb-1">{plan.name}</h3>
-                  <p className="text-slate-400 text-xs mb-6 min-h-[35px]">{plan.desc}</p>
-                  <div className="mb-6 flex items-baseline gap-1">
-                    <span className="text-3xl font-mono font-bold text-white">€{annualBilling ? plan.yearly : plan.price}</span>
-                    <span className="text-slate-500 text-xs font-medium">/month</span>
+                  <h4 className="text-base font-bold text-[#F5F3ED] mb-1.5">{plan.name}</h4>
+                  <p className="text-[11px] text-[#9CA297] leading-normal min-h-[32px] mb-6">{plan.desc}</p>
+                  
+                  <div className="flex items-baseline gap-1 mb-6">
+                    <span className="text-3xl font-extrabold text-[#F5F3ED] font-mono">
+                      €{annualBilling ? plan.yearly : plan.price}
+                    </span>
+                    <span className="text-xs text-[#9CA297]">/month</span>
                   </div>
-                  <Link href={prefillUrl} className={`w-full py-2.5 rounded-lg text-xs font-bold transition-all mb-6 block text-center ${plan.popular ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'}`}>
-                    {plan.price === '0' ? 'Start Free Assessment' : 'License License Option'}
-                  </Link>
-                  <ul className="space-y-3.5 border-t border-slate-900 pt-5 mt-2">
-                    {plan.features.map((feat, j) => (
-                      <li key={j} className="flex items-start gap-2.5 text-xs text-slate-350">
-                        <Check className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-400" />
-                        <span className="leading-snug">{feat}</span>
+
+                  <ul className="space-y-3.5 border-t border-[#2F362D] pt-6 mb-8 text-xs text-[#9CA297]">
+                    {plan.features.map((feat, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5 leading-normal">
+                        <Check className={`w-4 h-4 shrink-0 mt-0.5 ${plan.popular ? 'text-[#8BA381]' : 'text-[#5F655A]'}`} />
+                        <span>{feat}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
+
+                <Link 
+                  href="/assessment" 
+                  className={`w-full text-center text-xs font-bold py-3 rounded-lg transition-all border ${
+                    plan.popular 
+                      ? 'bg-[#6E8B60] hover:bg-[#596E51] text-[#F5F3ED] border-[#8BA381]/20 shadow-lg shadow-[#6E8B60]/10' 
+                      : 'bg-[#141712]/50 hover:bg-[#141712] text-[#C5C8C1] border-[#2F362D] hover:border-[#8BA381]/20'
+                  }`}
+                >
+                  Get Started
+                </Link>
               </div>
             ))}
           </div>
-        </section>
 
-        {/* Security & Verification Credentials Section (Honest claims) */}
-        <section className="max-w-7xl mx-auto px-6 py-20 border-t border-slate-900/80">
-          <div className="bg-slate-950/20 border border-slate-900 rounded-xl p-8 sm:p-10">
+        </div>
+      </section>
+
+      {/* DECORATIVE DIVIDER */}
+      <div className="relative w-full py-2 flex items-center justify-center pointer-events-none bg-[#141712] z-20">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#2F362D]/40" /></div>
+        <div className="relative z-10 w-2 h-2 rounded-full bg-[#8BA381] shadow-lg shadow-[#8BA381]/50 border border-[#141712]" />
+      </div>
+
+      {/* SECTION 8: TRUST & AUDIT SECURITY CREDENTIALS */}
+      <section className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 py-20">
+          <div className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-2xl p-8 sm:p-10 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#8BA381]/20 to-transparent" />
+            
             <div className="text-center mb-10 max-w-xl mx-auto">
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-2.5">Security & Compliance Architecture</h3>
-              <p className="text-xs text-slate-450 leading-relaxed">
-                Compliance products must process data with complete transparency. Our hosting and encryption standards are documented below.
+              <h3 className="text-sm font-bold text-[#F5F3ED] uppercase tracking-widest mb-2.5">Security & Hosting Architecture</h3>
+              <p className="text-xs text-[#9CA297] leading-relaxed">
+                Compliance products must process data with complete transparency. Our hosting and encryption standards are fully documented below.
               </p>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
               {[
                 { title: 'EU Data Residency', desc: '100% hosted in AWS Dublin (eu-west-1). Customer data never exits EU boundaries.' },
                 { title: 'AES-256 Encryption', desc: 'Strict data encrypt-at-rest pipelines and database sector partitions.' },
@@ -883,26 +1025,17 @@ export default function MarketingSite() {
                 { title: 'SOC 2 Type II Prep', desc: 'Internal security logs mapped to SOC 2 safety guidelines. Readiness audit target Q4 2026.' },
                 { title: 'GDPR Self-Certified', desc: 'Privaro is self-certified compliant under official EU Art. 30 processing standards.' }
               ].map((cred, i) => (
-                <div key={i} className="bg-slate-900/30 border border-slate-900/50 p-4.5 rounded-lg">
-                  <Lock className="w-4 h-4 text-blue-400 mb-3" />
-                  <h4 className="text-xs font-bold text-white mb-1.5">{cred.title}</h4>
-                  <p className="text-[10px] text-slate-400 leading-normal">{cred.desc}</p>
+                <div key={i} className="bg-[#141712]/55 border border-[#2F362D]/60 p-4.5 rounded-xl">
+                  <Lock className="w-4 h-4 text-[#8BA381] mb-3" />
+                  <h4 className="text-xs font-bold text-[#F5F3ED] mb-1.5">{cred.title}</h4>
+                  <p className="text-[10px] text-[#9CA297] leading-normal">{cred.desc}</p>
                 </div>
               ))}
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
     </div>
-  );
-}
-
-// Simple clock icon
-function ClockIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
   );
 }
