@@ -274,7 +274,7 @@ export default function MarketingSite() {
   const prefillUrl = `/assessment?jurisdiction=${calcAnswers.jurisdiction || ''}&ropa=${calcAnswers.ropa || ''}&cookies=${calcAnswers.cookies || ''}&special=${calcAnswers.special || ''}&risk=${riskLevel.toLowerCase()}`;
 
   return (
-    <div className="pt-16">
+    <div className="pt-16 antialiased">
       
       {/* SECTION 1: HERO CONTAINER */}
       <section className="w-full bg-[#141712] relative overflow-hidden">
@@ -294,16 +294,16 @@ export default function MarketingSite() {
             </div>
             
             {/* Headline */}
-            <h1 className="font-sans tracking-tight mb-5 leading-[1.05]">
+            <h1 className="font-sans tracking-tight mb-5 leading-[1.05] text-balance">
               <span className="block text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#9CA297] mb-2">GDPR compliance for your entire agency.</span>
-              <span className="block text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#F5F3ED] bg-clip-text">
+              <span className="inline-block text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#F5F3ED] bg-clip-text">
                 One platform.
               </span>
             </h1>
             
             {/* Subheadline */}
-            <p className="text-xs sm:text-sm text-[#9CA297] max-w-xl mb-6 leading-relaxed font-medium">
-              Document processing activities, map vendors, manage cookie consent, handle data requests, and train employees — all in one place. No expensive legal consultants. No spreadsheets.
+            <p className="text-sm text-[#9CA297] max-w-xl mb-6 leading-relaxed font-medium">
+              Document processing activities, map vendors, manage cookie consent, handle data requests, and train employees {"\u2014"} all in one place. No expensive legal consultants. No spreadsheets.
             </p>
             
             {/* Hero CTAs */}
@@ -353,6 +353,7 @@ export default function MarketingSite() {
                     >
                       <tab.icon className="w-3 h-3" />
                       {tab.label}
+                      <span className="sr-only">{activeTab === tab.id ? '(Active)' : '(Inactive)'}</span>
                     </button>
                   ))}
                 </div>
@@ -383,8 +384,8 @@ export default function MarketingSite() {
                             />
                           </svg>
                           <div className="absolute flex flex-col items-center">
-                            <span className="text-2xl font-bold text-[#1F1B16]">94%</span>
-                            <span className="text-[9px] uppercase font-bold text-[#6E8B60] tracking-wider">Health</span>
+                            <span className="text-2xl font-bold text-[#1F1B16] font-mono">94%</span>
+                            <span className="text-[9px] uppercase font-bold text-[#6E8B60] tracking-wide">Health</span>
                           </div>
                         </div>
                         <h4 className="text-xs font-bold text-[#1F1B16] mt-4">Compliance Status: Solid</h4>
@@ -394,7 +395,7 @@ export default function MarketingSite() {
                       {/* Log Feed */}
                       <div className="md:col-span-2 bg-[#F4EFE6]/60 border border-[#1F1B16]/8 rounded-xl p-5">
                         <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wider flex items-center gap-1.5">
+                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wide flex items-center gap-1.5">
                             <Activity className="w-3.5 h-3.5 text-[#6E8B60]" /> Operational Feed
                           </h4>
                           <span className="text-[10px] font-sans font-semibold text-[#1F1B16]/40">Real-Time Sync</span>
@@ -406,7 +407,7 @@ export default function MarketingSite() {
                               <p className="font-bold text-[#1F1B16]">HubSpot DPA Verified</p>
                               <p className="text-[10px] text-[#1F1B16]/60">Data Protection Agreement verified and logged for HubSpot email marketing.</p>
                             </div>
-                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium">2 hrs ago</span>
+                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium font-mono">2 hrs ago</span>
                           </div>
                           <div className="flex items-start gap-2.5 border-b border-[#1F1B16]/5 pb-2">
                             <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
@@ -414,7 +415,7 @@ export default function MarketingSite() {
                               <p className="font-bold text-[#1F1B16]">Automated Cookie Scan Completed</p>
                               <p className="text-[10px] text-[#1F1B16]/60">14 active cookie scripts audited. Zero unclassified tags detected.</p>
                             </div>
-                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium">1 day ago</span>
+                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium font-mono">1 day ago</span>
                           </div>
                           <div className="flex items-start gap-2.5">
                             <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
@@ -422,7 +423,7 @@ export default function MarketingSite() {
                               <p className="font-bold text-[#1F1B16]">Employee training logs updated</p>
                               <p className="text-[10px] text-[#1F1B16]/60">12 team members completed the annual GDPR awareness module.</p>
                             </div>
-                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium">3 days ago</span>
+                            <span className="ml-auto text-[10px] text-[#1F1B16]/40 whitespace-nowrap font-medium font-mono">3 days ago</span>
                           </div>
                         </div>
                       </div>
@@ -464,27 +465,27 @@ export default function MarketingSite() {
                           </thead>
                           <tbody className="divide-y divide-[#1F1B16]/5 text-[#1F1B16]/80 font-medium">
                             <tr>
-                              <td className="py-2.5 font-bold text-[#1F1B16]">_ga</td>
+                              <td className="py-2.5 font-bold text-[#1F1B16] font-mono">_ga</td>
                               <td className="py-2.5">Google Analytics</td>
                               <td className="py-2.5"><span className="text-[#6E8B60] bg-[#6E8B60]/8 px-2 py-0.5 rounded border border-[#6E8B60]/15 text-[10px] font-bold">Analytics</span></td>
-                              <td className="py-2.5">2 Years</td>
-                              <td className="py-2.5 text-[#6E8B60] font-bold">99.8%</td>
+                              <td className="py-2.5 font-mono">2 Years</td>
+                              <td className="py-2.5 text-[#6E8B60] font-bold font-mono">99.8%</td>
                               <td className="py-2.5 text-[#1F1B16]/60">Blocked prior to consent</td>
                             </tr>
                             <tr>
-                              <td className="py-2.5 font-bold text-[#1F1B16]">_fbp</td>
+                              <td className="py-2.5 font-bold text-[#1F1B16] font-mono">_fbp</td>
                               <td className="py-2.5">Meta Pixel</td>
                               <td className="py-2.5"><span className="text-[#B28247] bg-[#B28247]/8 px-2 py-0.5 rounded border border-[#B28247]/15 text-[10px] font-bold">Marketing</span></td>
-                              <td className="py-2.5">3 Months</td>
-                              <td className="py-2.5 text-[#6E8B60] font-bold">99.5%</td>
+                              <td className="py-2.5 font-mono">3 Months</td>
+                              <td className="py-2.5 text-[#6E8B60] font-bold font-mono">99.5%</td>
                               <td className="py-2.5 text-[#1F1B16]/60">Blocked prior to consent</td>
                             </tr>
                             <tr>
-                              <td className="py-2.5 font-bold text-[#1F1B16]">stripe_mid</td>
+                              <td className="py-2.5 font-bold text-[#1F1B16] font-mono">stripe_mid</td>
                               <td className="py-2.5">Stripe Payments</td>
                               <td className="py-2.5"><span className="text-[#4F779E] bg-[#4F779E]/8 px-2 py-0.5 rounded border border-[#4F779E]/15 text-[10px] font-bold">Necessary</span></td>
-                              <td className="py-2.5">1 Year</td>
-                              <td className="py-2.5 text-[#6E8B60] font-bold">100%</td>
+                              <td className="py-2.5 font-mono">1 Year</td>
+                              <td className="py-2.5 text-[#6E8B60] font-bold font-mono">100%</td>
                               <td className="py-2.5 text-[#6E8B60] font-bold">Always Allowed</td>
                             </tr>
                           </tbody>
@@ -504,10 +505,10 @@ export default function MarketingSite() {
                     >
                       <div className="flex items-center justify-between border-b border-[#1F1B16]/10 pb-3">
                         <div>
-                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wider">Processing Activities Register</h4>
+                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wide">Processing Activities Register</h4>
                           <p className="text-[10px] text-[#1F1B16]/60 mt-0.5">Article 30 records mapped to active vendor pipelines.</p>
                         </div>
-                        <span className="text-[10px] text-[#1F1B16]/40 font-semibold">ROPA Version: v2.4 (Signed)</span>
+                        <span className="text-[10px] text-[#1F1B16]/40 font-semibold">ROPA Version: <span className="font-mono">v2.4</span> (Signed)</span>
                       </div>
 
                       <div className="space-y-2.5 text-[11px] font-medium">
@@ -534,7 +535,7 @@ export default function MarketingSite() {
                             </div>
                             <div className="grid sm:grid-cols-2 gap-2 text-[10px] text-[#1F1B16]/60 pt-1.5 border-t border-[#1F1B16]/5">
                               <p>Data Subjects: <span className="text-[#1F1B16]/80 font-bold">{item.subjects}</span></p>
-                              <p className="sm:text-right">Retention Period: <span className="text-[#1F1B16]/80 font-bold">{item.retention}</span></p>
+                              <p className="sm:text-right">Retention Period: <span className="text-[#1F1B16]/80 font-bold font-mono">{item.retention}</span></p>
                             </div>
                           </div>
                         ))}
@@ -553,7 +554,7 @@ export default function MarketingSite() {
                     >
                       <div className="flex items-center justify-between border-b border-[#1F1B16]/10 pb-3">
                         <div>
-                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wider">Active Data Requests</h4>
+                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wide">Active Data Requests</h4>
                           <p className="text-[10px] text-[#1F1B16]/60 mt-0.5">Secure queue of data access and deletion requests.</p>
                         </div>
                         <span className="text-[10px] text-[#1F1B16]/40 font-semibold">Verification: Email OAuth verified</span>
@@ -591,7 +592,7 @@ export default function MarketingSite() {
                                 {req.status}
                               </span>
                               <span className="text-[10px] text-[#1F1B16]/60 font-semibold">
-                                {req.daysLeft > 0 ? `${req.daysLeft} days remaining` : 'Archive'}
+                                {req.daysLeft > 0 ? <><span className="font-mono">{req.daysLeft}</span> days remaining</> : 'Archive'}
                               </span>
                             </div>
                           </div>
@@ -613,7 +614,7 @@ export default function MarketingSite() {
       <section id="integrations" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="text-center lg:text-left shrink-0">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Active Integrations</p>
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Active Integrations</p>
             <h4 className="text-sm font-bold text-[#F5F3ED] mt-1">Works with the systems you use daily</h4>
           </div>
           <div className="flex flex-wrap justify-center lg:justify-end items-center gap-x-8 gap-y-6 opacity-80">
@@ -632,8 +633,8 @@ export default function MarketingSite() {
         <div className="max-w-7xl mx-auto px-6 pt-14 pb-20">
           
           <div className="mb-10 max-w-2xl">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Compliance Suite</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight">Twelve modules. One compliance core.</h2>
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Compliance Suite</p>
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight text-balance">Twelve modules. One compliance core.</h2>
             <p className="text-sm text-[#9CA297] leading-relaxed">
               Ditch separate compliance trackers and spreadsheet audits. Monitor, track, and protect your entire operation from a single dashboard.
             </p>
@@ -674,8 +675,8 @@ export default function MarketingSite() {
         <div className="max-w-7xl mx-auto px-6 py-20">
           
           <div className="mb-10">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Enforcement Landscape</p>
-            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight">Supervisory Authority alignment</h2>
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Enforcement Landscape</p>
+            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight text-balance">Supervisory Authority alignment</h2>
             <p className="text-[#9CA297] max-w-2xl text-xs sm:text-sm leading-relaxed">
               GDPR is uniform, but enforcement priorities vary by nation. Privaro adapts compliance configurations to map to the audits of your target audiences.
             </p>
@@ -711,8 +712,8 @@ export default function MarketingSite() {
         <div className="max-w-7xl mx-auto px-6 py-20">
           
           <div className="text-center mb-10">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Platform Advantage</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-3 tracking-tight">Structured workflow, no legacy tools</h2>
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Platform Advantage</p>
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-3 tracking-tight text-balance">Structured workflow, no legacy tools</h2>
             <p className="text-[#9CA297] max-w-xl mx-auto text-xs sm:text-sm">
               A comparison of audit-readiness and overhead between manual efforts, consultants, and Privaro.
             </p>
@@ -765,7 +766,7 @@ export default function MarketingSite() {
         <div className="max-w-4xl mx-auto px-6 py-20">
           
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-3 tracking-tight">Evaluate your GDPR exposure</h2>
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-3 tracking-tight text-balance">Evaluate your GDPR exposure</h2>
             <p className="text-[#9CA297] max-w-xl mx-auto text-xs sm:text-sm">
               Calculate your organization&apos;s compliance risk profile in 60 seconds. Receive instant recommendations.
             </p>
@@ -852,8 +853,8 @@ export default function MarketingSite() {
         <div className="max-w-7xl mx-auto px-6 py-20">
           
           <div className="text-center mb-10">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-widest">Pricing Matrix</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-3 tracking-tight">Structured plans for every agency size</h2>
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Pricing Matrix</p>
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-3 tracking-tight text-balance">Structured plans for every agency size</h2>
             
             {/* Annual Billing Toggle */}
             <div className="inline-flex items-center gap-3 bg-[#1F241D] border border-[#2F362D]/80 p-1 rounded-full mt-4">
@@ -969,7 +970,7 @@ export default function MarketingSite() {
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#8BA381]/20 to-transparent" />
             
             <div className="text-center mb-10 max-w-xl mx-auto">
-              <h3 className="text-sm font-bold text-[#F5F3ED] uppercase tracking-widest mb-2.5">Security & Hosting Architecture</h3>
+              <h3 className="text-sm font-bold text-[#F5F3ED] uppercase tracking-wide mb-2.5">Security & Hosting Architecture</h3>
               <p className="text-xs text-[#9CA297] leading-relaxed">
                 Compliance products must process data with complete transparency. Our hosting and encryption standards are fully documented below.
               </p>

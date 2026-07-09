@@ -1,9 +1,32 @@
 import type { Metadata } from "next";
+import { Geist, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "../globals.css";
 import Provider from "../Provider";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  weight: ["400"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "500"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Privaro | GDPR Compliance OS for Agencies",
@@ -19,7 +42,7 @@ export default async function RootLayout({
 }>) {
   const { locale } = await params;
   
-  if (!routing.locales.includes(locale as any)) {
+  if (!routing.locales.includes(locale as typeof routing.locales[number])) {
     // Return early or handle unknown locale. next-intl middleware usually prevents this.
   }
 
@@ -29,14 +52,10 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className="h-full antialiased"
+      className={`h-full antialiased ${geist.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-      </head>
+      <head />
       <body className="min-h-full font-sans" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <Provider>
