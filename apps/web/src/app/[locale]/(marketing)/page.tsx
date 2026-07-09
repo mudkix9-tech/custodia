@@ -308,7 +308,7 @@ export default function MarketingSite() {
             
             {/* Hero CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mb-10">
-              <Link href="/assessment" className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#596E51]/10 border border-[#8BA381]/20">
+              <Link href="/assessment" className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#596E51]/10 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#141712] hover:scale-[1.02] active:scale-[0.98]">
                 Run Free Gap Assessment
               </Link>
               <button 
@@ -316,7 +316,7 @@ export default function MarketingSite() {
                   const el = document.getElementById('risk-calculator');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="w-full sm:w-auto bg-[#1F241D] hover:bg-[#252B21] text-[#C5C8C1] border border-[#2F362D] text-sm font-semibold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-[#1F241D] hover:bg-[#252B21] text-[#C5C8C1] border border-[#2F362D] text-sm font-semibold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#141712] hover:scale-[1.02] active:scale-[0.98]"
               >
                 Test Risk Exposure
               </button>
@@ -345,12 +345,19 @@ export default function MarketingSite() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as 'overview' | 'cookies' | 'ropa' | 'dsar')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold transition-all whitespace-nowrap ${
+                      className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold transition-all whitespace-nowrap z-10 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none ${
                         activeTab === tab.id 
-                          ? 'bg-[#6E8B60]/10 text-[#6E8B60] border border-[#6E8B60]/20' 
-                          : 'text-[#1F1B16]/60 hover:text-[#1F1B16] hover:bg-[#1F1B16]/5 border border-transparent'
+                          ? 'text-[#6E8B60]' 
+                          : 'text-[#1F1B16]/60 hover:text-[#1F1B16] hover:bg-[#1F1B16]/5'
                       }`}
                     >
+                      {activeTab === tab.id && (
+                        <motion.div 
+                          layoutId="activeMockupTab"
+                          className="absolute inset-0 bg-[#6E8B60]/10 border border-[#6E8B60]/20 rounded-md -z-10"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
                       <tab.icon className="w-3 h-3" />
                       {tab.label}
                       <span className="sr-only">{activeTab === tab.id ? '(Active)' : '(Inactive)'}</span>
@@ -617,9 +624,9 @@ export default function MarketingSite() {
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Active Integrations</p>
             <h4 className="text-sm font-bold text-[#F5F3ED] mt-1">Works with the systems you use daily</h4>
           </div>
-          <div className="flex flex-wrap justify-center lg:justify-end items-center gap-x-8 gap-y-6 opacity-80">
+          <div className="flex flex-wrap justify-center lg:justify-end items-center gap-x-8 gap-y-6">
             {INTEGRATIONS.map((int, i) => (
-              <div key={i} className="flex items-center gap-2.5 bg-[#1F241D]/60 border border-[#2F362D]/60 px-4 py-2 rounded-xl text-xs font-semibold text-[#C5C8C1] hover:text-[#F5F3ED] hover:border-[#8BA381]/40 transition-all duration-300">
+              <div key={i} className="flex items-center gap-2.5 bg-[#1F241D]/60 border border-[#2F362D]/60 px-4 py-2 rounded-xl text-xs font-semibold text-[#C5C8C1] opacity-70 hover:opacity-100 hover:shadow-md hover:shadow-[#8BA381]/5 hover:text-[#F5F3ED] hover:border-[#8BA381]/40 transition-all duration-300">
                 {int.logo}
                 <span>{int.name}</span>
               </div>
@@ -648,8 +655,9 @@ export default function MarketingSite() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.35, delay: i * 0.03 }}
-                className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-xl p-5.5 flex flex-col justify-between group hover:bg-[#1F241D]/80 hover:border-[#5F7556]/60 transition-all duration-300 h-full"
+                className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-xl p-5.5 flex flex-col justify-between group hover:bg-[#1F241D]/80 hover:border-[#596E51]/40 transition-all duration-300 h-full relative overflow-hidden"
               >
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(89,110,81,0.08)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                 <div>
                   <div className="flex items-center justify-between mb-5">
                     <span className="text-[9px] font-sans font-bold tracking-wider text-[#8BA381] bg-[#141712]/80 border border-[#2F362D] px-2 py-0.5 rounded">
@@ -690,7 +698,17 @@ export default function MarketingSite() {
               >
                 <div>
                   <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-[#2F362D]/40">
-                    <span className="font-mono font-bold text-[#F5F3ED] text-xs">{auth.code}</span>
+                    <div className="relative group/tooltip flex items-center gap-1.5">
+                      <span className="font-mono font-bold text-[#F5F3ED] text-xs">{auth.code}</span>
+                      <HelpCircle className="w-3.5 h-3.5 text-[#9CA297]/50 hover:text-[#8BA381] cursor-help transition-colors" />
+                      
+                      {/* Tooltip Popover */}
+                      <div className="absolute bottom-full left-0 mb-2 w-52 p-3 bg-[#1F241D]/95 border border-[#2F362D] text-[#C5C8C1] text-[10px] rounded-xl shadow-2xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 z-50 pointer-events-none backdrop-blur-md">
+                        <div className="font-bold text-[#F5F3ED] mb-1 text-[11px]">{auth.name}</div>
+                        <div className="text-[#8BA381] font-mono text-[9px] mb-1">{auth.country} Authority</div>
+                        <p className="text-[#9CA297] leading-relaxed text-[10px] pt-1 border-t border-[#2F362D]/40">{auth.focus}</p>
+                      </div>
+                    </div>
                     <span className="text-[9px] text-[#9CA297]">{auth.country}</span>
                   </div>
                   <p className="text-[#F5F3ED] text-xs font-bold mb-2">{auth.name}</p>
@@ -726,7 +744,7 @@ export default function MarketingSite() {
                   <th className="p-6">Compliance Capability</th>
                   <th className="p-6 bg-[#1F241D]/30">Manual Sheets</th>
                   <th className="p-6 bg-[#1F241D]/30">Legal Consultants</th>
-                  <th className="p-6 text-[#8BA381] bg-[#242A20]/80">Privaro OS</th>
+                  <th className="p-6 text-[#8BA381] bg-[#242A20]/80 border-x border-[#8BA381]/25">Privaro OS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#2F362D]/60 text-[#9CA297] font-medium">
@@ -734,25 +752,25 @@ export default function MarketingSite() {
                   <td className="p-6 font-bold text-[#F5F3ED]">ROPA / Record keeping</td>
                   <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Static spreadsheets (Outdates instantly)</td>
                   <td className="p-6 bg-[#1F241D]/10">Manual document audits (Slow & expensive)</td>
-                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Automated logs matching live code stack</td>
+                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Automated logs matching live code stack</td>
                 </tr>
                 <tr>
                   <td className="p-6 font-bold text-[#F5F3ED]">Consent mode tracking</td>
                   <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Hardcoded scripts (Frequent drifts)</td>
                   <td className="p-6 bg-[#1F241D]/10">Policy outlines, no actual engineering code</td>
-                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Edge blocking scripts synced with logs</td>
+                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Edge blocking scripts synced with logs</td>
                 </tr>
                 <tr>
                   <td className="p-6 font-bold text-[#F5F3ED]">Data subject request queue</td>
                   <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Manual inbox tracking (High human risk)</td>
                   <td className="p-6 bg-[#1F241D]/10">Guidance documents, manual action steps</td>
-                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> OAuth-verified intake and countdowns</td>
+                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> OAuth-verified intake and countdowns</td>
                 </tr>
                 <tr>
                   <td className="p-6 font-bold text-[#F5F3ED]">Employee training & logging</td>
                   <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Omitted or undocumented (Audit failure)</td>
                   <td className="p-6 bg-[#1F241D]/10">External seminars (No centralized logs)</td>
-                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Integrated training portal & auto certifications</td>
+                  <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Integrated training portal & auto certifications</td>
                 </tr>
               </tbody>
             </table>
@@ -802,7 +820,7 @@ export default function MarketingSite() {
                     <button
                       key={idx}
                       onClick={() => handleCalculatorSelect(CALCULATOR_QUESTIONS[calcStep].id, opt.value, opt.score)}
-                      className="w-full text-left bg-[#141712]/55 hover:bg-[#252B21]/80 border border-[#2F362D]/60 hover:border-[#8BA381]/40 p-4.5 rounded-xl transition-all duration-200 text-xs sm:text-sm text-[#C5C8C1] hover:text-[#F5F3ED] font-semibold flex items-center justify-between group"
+                      className="w-full text-left bg-[#141712]/55 hover:bg-[#252B21]/80 border border-[#2F362D]/60 hover:border-[#8BA381]/40 p-4.5 rounded-xl transition-all duration-200 text-xs sm:text-sm text-[#C5C8C1] hover:text-[#F5F3ED] font-semibold flex items-center justify-between group focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.01] active:scale-[0.99]"
                     >
                       <span>{opt.text}</span>
                       <ChevronRight className="w-4 h-4 text-[#5F655A] group-hover:text-[#8BA381] group-hover:translate-x-0.5 transition-all" />
@@ -822,7 +840,7 @@ export default function MarketingSite() {
                 
                 <h3 className="text-xl sm:text-2xl font-bold text-[#F5F3ED] mb-3">Assessment Diagnostic Complete</h3>
                 
-                <div className={`max-w-md mx-auto border rounded-xl p-5 mb-8 ${riskColor}`}>
+                <div className={`max-w-md mx-auto border rounded-xl p-5 mb-6 ${riskColor}`}>
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <span className="text-[10px] font-bold tracking-widest uppercase">EXPOSURE LEVEL:</span>
                     <span className="font-mono font-bold text-xs bg-[#141712]/55 px-2 py-0.5 rounded border border-current">{riskLevel}</span>
@@ -830,13 +848,55 @@ export default function MarketingSite() {
                   <p className="text-xs leading-relaxed font-semibold">{riskText}</p>
                 </div>
 
+                {/* Diagnostic Input Selections Summary Checklist */}
+                <div className="mt-6 text-left border-t border-[#2F362D]/40 pt-5 space-y-3 text-[11px] text-[#9CA297] max-w-md mx-auto mb-8 bg-[#141712]/20 p-4.5 rounded-xl border border-[#2F362D]/40">
+                  <p className="font-bold text-[#F5F3ED] uppercase tracking-wide text-[9px] mb-1">Your Diagnostic Answers:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
+                    <div className="flex items-start gap-2">
+                      <Check className="w-3.5 h-3.5 text-[#8BA381] shrink-0 mt-0.5" />
+                      <span>
+                        <strong className="text-[#F5F3ED]">Audience:</strong> {
+                          calcAnswers.jurisdiction === 'eu' ? 'EU/UK citizens' :
+                          calcAnswers.jurisdiction === 'sub' ? 'Sub-processor' : 'Non-EU only'
+                        }
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Check className="w-3.5 h-3.5 text-[#8BA381] shrink-0 mt-0.5" />
+                      <span>
+                        <strong className="text-[#F5F3ED]">ROPA Status:</strong> {
+                          calcAnswers.ropa === 'yes' ? 'Audited register' :
+                          calcAnswers.ropa === 'no' ? 'Spreadsheets' : 'None maintained'
+                        }
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Check className="w-3.5 h-3.5 text-[#8BA381] shrink-0 mt-0.5" />
+                      <span>
+                        <strong className="text-[#F5F3ED]">Consent logs:</strong> {
+                          calcAnswers.cookies === 'automated' ? 'Pre-consent block' :
+                          calcAnswers.cookies === 'basic' ? 'Basic banner' : 'No blockers'
+                        }
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Check className="w-3.5 h-3.5 text-[#8BA381] shrink-0 mt-0.5" />
+                      <span>
+                        <strong className="text-[#F5F3ED]">Sensitive:</strong> {
+                          calcAnswers.special === 'yes' ? 'Sensitive data' : 'Basic contact info'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <Link href={prefillUrl} className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 border border-[#8BA381]/20">
+                  <Link href={prefillUrl} className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98]">
                     Verify Exposure in Assessment <ArrowRight className="w-4 h-4" />
                   </Link>
                   <button 
                     onClick={resetCalculator}
-                    className="w-full sm:w-auto bg-[#141712]/50 hover:bg-[#141712] text-[#9CA297] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all"
+                    className="w-full sm:w-auto bg-[#141712]/50 hover:bg-[#141712] text-[#9CA297] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Reset Calculator
                   </button>
@@ -948,7 +1008,7 @@ export default function MarketingSite() {
 
                 <Link 
                   href="/assessment" 
-                  className={`w-full text-center text-xs font-bold py-3 rounded-lg transition-all border ${
+                  className={`w-full text-center text-xs font-bold py-3 rounded-lg transition-all border focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] ${
                     plan.popular 
                       ? 'bg-[#6E8B60] hover:bg-[#596E51] text-[#F5F3ED] border-[#8BA381]/20 shadow-lg shadow-[#6E8B60]/10' 
                       : 'bg-[#141712]/50 hover:bg-[#141712] text-[#C5C8C1] border-[#2F362D] hover:border-[#8BA381]/20'

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
 import { useSearchParams } from 'next/navigation';
@@ -27,7 +27,7 @@ function AssessmentResultsContent() {
   
   // TRPC
   const captureEmailMutation = trpc.assessments.captureEmail.useMutation();
-  const { data: resultsData, refetch } = trpc.assessments.getResults.useQuery(
+  const { data: resultsData } = trpc.assessments.getResults.useQuery(
     { assessmentId: id! }, 
     { enabled: !!id }
   );
@@ -58,11 +58,11 @@ function AssessmentResultsContent() {
   const finalScore = resultsData?.assessment?.overallScore || 34;
   const isExpired = resultsData?.assessment?.expiresAt && new Date(resultsData.assessment.expiresAt) < new Date();
   
-  const realActionItems = resultsData?.actionItems || [
+  const realActionItems = (resultsData?.actionItems || [
     { priority: 'High', title: 'Address risk in Vendor Management', gdprArticleReference: 'Article 28 (Processor)', description: 'Missing DPAs with critical sub-processors.' },
     { priority: 'High', title: 'Address risk in Security', gdprArticleReference: 'Article 32 (Security of processing)', description: 'Data is not encrypted at rest.' }
-  ];
-  const highPriorityCount = realActionItems.filter((item: any) => item.priority === 'High').length;
+  ]) as Array<{ priority: string; title: string; gdprArticleReference: string; description: string }>;
+  const highPriorityCount = realActionItems.filter((item) => item.priority === 'High').length;
 
   if (isExpired && !isUnlocked) {
     return (
@@ -92,7 +92,7 @@ function AssessmentResultsContent() {
         </Link>
         
         {currentState === 3 && (
-          <button onClick={handleCopyLink} className="flex items-center gap-2 text-[13px] font-medium text-ink-600 hover:text-ink-900 bg-white border border-ink-900/10 px-3 py-1.5 rounded-lg shadow-sm transition-colors">
+          <button onClick={handleCopyLink} className="flex items-center gap-2 text-[13px] font-medium text-ink-600 hover:text-ink-900 bg-white border border-ink-900/10 px-3 py-1.5 rounded-lg shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white">
             {copiedLink ? <CheckCircle2 className="w-4 h-4 text-sage-600" /> : <Copy className="w-4 h-4" />}
             {copiedLink ? 'Copied URL' : 'Share Results'}
           </button>
@@ -145,10 +145,10 @@ function AssessmentResultsContent() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@agency.com" 
-                    className="w-full bg-bone-50 border border-ink-900/10 rounded-xl py-3.5 pl-12 pr-4 text-ink-900 placeholder-ink-400 focus:outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500/20 transition-all"
+                    className="w-full bg-bone-50 border border-ink-900/10 rounded-xl py-3.5 pl-12 pr-4 text-ink-900 placeholder-ink-400 focus:outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500/20 transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
-                <button type="submit" disabled={captureEmailMutation.isPending} className="bg-sage-700 hover:bg-sage-600 disabled:opacity-50 text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card">
+                <button type="submit" disabled={captureEmailMutation.isPending} className="bg-sage-700 hover:bg-sage-600 disabled:opacity-50 disabled:cursor-not-allowed text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:scale-[1.02] active:scale-[0.98]">
                   {captureEmailMutation.isPending ? 'Processing...' : 'See my results'} <Lock className="w-4 h-4" />
                 </button>
               </form>
@@ -165,11 +165,11 @@ function AssessmentResultsContent() {
             </div>
             <h1 className="text-4xl font-serif text-ink-900 mb-4">Check your email</h1>
             <p className="text-[16px] text-ink-600 mb-8 max-w-md mx-auto">
-              We've sent a magic link to <span className="font-semibold text-ink-900">{email}</span>.<br />
+              We&apos;ve sent a magic link to <span className="font-semibold text-ink-900">{email}</span>.<br />
               Click the link to securely access your complete GDPR gap assessment.
             </p>
             <div className="flex items-center justify-center gap-4">
-              <button onClick={() => handleUnlock({ preventDefault: () => {} } as any)} className="text-[13px] font-medium text-sage-600 hover:text-sage-700 bg-sage-50 px-4 py-2 rounded-lg transition-colors">
+              <button onClick={() => handleUnlock({ preventDefault: () => {} } as React.FormEvent)} className="text-[13px] font-medium text-sage-600 hover:text-sage-700 bg-sage-50 px-4 py-2 rounded-lg transition-colors">
                 Resend Magic Link
               </button>
               <button onClick={() => setIsMagicLinkSent(false)} className="text-[13px] font-medium text-ink-500 hover:text-ink-700 bg-bone-100 px-4 py-2 rounded-lg transition-colors">
@@ -240,7 +240,7 @@ function AssessmentResultsContent() {
             {/* Action Items List */}
             <h2 className="text-2xl font-serif text-ink-900 mb-6">Your Action Plan</h2>
             <div className="space-y-4 mb-12">
-              {realActionItems.map((item: any, i: number) => (
+              {realActionItems.map((item, i) => (
                 <div key={i} className="bg-white border border-ink-900/10 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-start gap-4 shadow-sm">
                   <div className="shrink-0 mt-1">
                     {item.priority === 'High' ? (

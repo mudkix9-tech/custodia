@@ -13,7 +13,7 @@ export default function AssessmentEngine() {
   const router = useRouter();
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(-1); // -1 is intro
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<Record<string, { text: string; riskWeight?: number }>>({});
   const [isResumed, setIsResumed] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   
@@ -37,22 +37,24 @@ export default function AssessmentEngine() {
     }
 
     if (resumeData?.assessment && resumeData.assessment.status === 'in_progress' && questions && !hasStarted) {
-      setAssessmentId(resumeData.assessment.id);
-      setAnswers(resumeData.answers || {});
-      
-      // Determine what step they were on
-      let lastUnansweredIndex = 0;
-      for (let i = 0; i < questions.length; i++) {
-        const q = questions[i];
-        if (!resumeData.answers?.[q.id]) {
-          lastUnansweredIndex = i;
-          break;
+      setTimeout(() => {
+        setAssessmentId(resumeData.assessment.id);
+        setAnswers(resumeData.answers as Record<string, { text: string; riskWeight?: number }> || {});
+        
+        // Determine what step they were on
+        let lastUnansweredIndex = 0;
+        for (let i = 0; i < questions.length; i++) {
+          const q = questions[i];
+          if (!resumeData.answers?.[q.id]) {
+            lastUnansweredIndex = i;
+            break;
+          }
         }
-      }
-      
-      setCurrentStep(lastUnansweredIndex);
-      setIsResumed(true);
-      setHasStarted(true);
+        
+        setCurrentStep(lastUnansweredIndex);
+        setIsResumed(true);
+        setHasStarted(true);
+      }, 0);
     }
   }, [resumeData, questions, hasStarted]);
 
@@ -71,7 +73,10 @@ export default function AssessmentEngine() {
     }
   };
 
-  const handleSelectOption = async (question: any, option: any) => {
+  const handleSelectOption = async (
+    question: { id: string }, 
+    option: { text: string; riskWeight?: number }
+  ) => {
     // Optimistically save locally
     const newAnswers = { ...answers, [question.id]: option };
     setAnswers(newAnswers);
@@ -82,7 +87,7 @@ export default function AssessmentEngine() {
         assessmentId,
         questionId: question.id,
         selectedOption: option.text,
-        riskScore: option.riskWeight,
+        riskScore: option.riskWeight ?? 0,
       });
     }
 
@@ -93,7 +98,7 @@ export default function AssessmentEngine() {
       // Find the next question that satisfies its dependsOn condition
       while (nextStep < questions.length) {
         const nextQ = questions[nextStep];
-        if (evaluateDependsOn(nextQ.dependsOn as any, newAnswers)) {
+        if (evaluateDependsOn(nextQ.dependsOn as Parameters<typeof evaluateDependsOn>[0], newAnswers)) {
           break;
         }
         nextStep++;
@@ -130,7 +135,7 @@ export default function AssessmentEngine() {
   
   if (questions) {
     for (const q of questions) {
-      if (evaluateDependsOn(q.dependsOn as any, answers)) {
+      if (evaluateDependsOn(q.dependsOn as Parameters<typeof evaluateDependsOn>[0], answers)) {
         totalApplicableCount++;
         if (answers[q.id]) {
           answeredCount++;
@@ -196,7 +201,7 @@ export default function AssessmentEngine() {
                 Takes 3 minutes • Actionable Results
               </div>
               <h1 className="text-4xl md:text-5xl font-serif text-ink-900 tracking-tight mb-6">
-                Find out your agency's GDPR risk score.
+                Find out your agency&apos;s GDPR risk score.
               </h1>
               <p className="text-[16px] text-ink-600 mb-10 leading-relaxed max-w-xl mx-auto">
                 Answer a few quick questions to identify compliance gaps in your vendor stack, data workflows, and security posture. Get a free, actionable roadmap immediately.
@@ -204,7 +209,7 @@ export default function AssessmentEngine() {
               <button 
                 onClick={handleStart}
                 disabled={startMutation.isPending}
-                className="bg-sage-700 hover:bg-sage-600 text-bone-50 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 mx-auto shadow-card disabled:opacity-50"
+                className="bg-sage-700 hover:bg-sage-600 text-bone-50 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 mx-auto shadow-card disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white"
               >
                 {startMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Start Assessment <ArrowRight className="w-4 h-4" /></>}
               </button>
@@ -229,13 +234,13 @@ export default function AssessmentEngine() {
               </h2>
 
               <div className="space-y-3">
-                {(displayQuestions[currentStep].options as any[]).map((option: any, i: number) => {
+                {(displayQuestions[currentStep].options as Array<{ text: string; riskWeight?: number }>).map((option, i) => {
                   const isSelected = answers[displayQuestions[currentStep].id]?.text === option.text;
                   return (
                     <button
                       key={i}
                       onClick={() => handleSelectOption(displayQuestions[currentStep], option)}
-                      className={`w-full cursor-pointer text-left p-5 rounded-xl border transition-all duration-200 flex items-center justify-between group ${
+                      className={`w-full cursor-pointer text-left p-5 rounded-xl border transition-all duration-200 flex items-center justify-between group focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
                         isSelected 
                           ? 'border-sage-500 bg-sage-50 shadow-sm' 
                           : 'border-ink-900/10 bg-white hover:border-ink-900/20 hover:bg-bone-50'
@@ -263,7 +268,7 @@ export default function AssessmentEngine() {
                     // Find previous applicable step
                     let prevStep = currentStep - 1;
                     while (prevStep >= 0) {
-                      if (evaluateDependsOn(displayQuestions[prevStep].dependsOn as any, answers)) {
+                      if (evaluateDependsOn(displayQuestions[prevStep].dependsOn as Parameters<typeof evaluateDependsOn>[0], answers)) {
                         break;
                       }
                       prevStep--;

@@ -60,9 +60,9 @@ export function MarketingHeader() {
   };
 
   return (
-    <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b ${isScrolled ? 'bg-[#141712]/85 backdrop-blur-xl border-[#2F362D]/60 py-3.5' : 'bg-transparent border-transparent py-6'}`}>
+    <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-[#141712]/80 backdrop-blur-md border-b border-[#252B21]/60 py-3.5' : 'bg-transparent border-b border-transparent py-6'}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <Logo />
+        <Logo className="focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md" />
         
         <div className="hidden lg:flex items-center gap-8 bg-[#1F241D]/60 border border-[#2F362D]/60 px-6 py-2 rounded-full backdrop-blur-sm">
           {NAV_LINKS.map(link => (
@@ -70,7 +70,7 @@ export function MarketingHeader() {
               key={link.href} 
               href={link.href}
               onClick={(e) => handleScrollTo(e, link.href)}
-              className="text-xs font-semibold text-[#9CA297] hover:text-[#F5F3ED] transition-colors duration-200"
+              className="text-xs font-semibold text-[#9CA297] hover:text-[#F5F3ED] transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded px-1.5 py-0.5"
             >
               {link.name}
             </a>
@@ -78,13 +78,13 @@ export function MarketingHeader() {
         </div>
 
         <div className="hidden lg:flex items-center gap-6">
-          <Link href="/login" className="text-xs font-semibold text-[#C5C8C1] hover:text-[#F5F3ED] transition-colors">Sign In</Link>
-          <Link href="/assessment" className="bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] shadow-lg shadow-[#596E51]/10 text-xs font-bold py-2.5 px-5 rounded-lg transition-all flex items-center gap-2 border border-[#8BA381]/20">
+          <Link href="/login" className="text-xs font-semibold text-[#C5C8C1] hover:text-[#F5F3ED] transition-colors focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md px-1.5 py-0.5">Sign In</Link>
+          <Link href="/assessment" className="bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] shadow-lg shadow-[#596E51]/10 text-xs font-bold py-2.5 px-5 rounded-lg transition-all flex items-center gap-2 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#141712] hover:scale-[1.02] active:scale-[0.98]">
             Start Free Assessment <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-[#9CA297] hover:text-[#F5F3ED] transition-colors">
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-[#9CA297] hover:text-[#F5F3ED] transition-colors focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md p-1">
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
@@ -97,14 +97,14 @@ export function MarketingHeader() {
               key={link.href} 
               href={link.href}
               onClick={(e) => handleScrollTo(e, link.href)}
-              className="text-left text-sm font-semibold text-[#9CA297] hover:text-[#F5F3ED] py-2 border-b border-[#2F362D]/40"
+              className="text-left text-sm font-semibold text-[#9CA297] hover:text-[#F5F3ED] py-2 border-b border-[#2F362D]/40 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded px-1.5"
             >
               {link.name}
             </a>
           ))}
           <div className="flex flex-col gap-4 mt-4">
-            <Link href="/login" className="text-center text-sm font-semibold text-[#C5C8C1] hover:text-[#F5F3ED] py-2">Sign In</Link>
-            <Link href="/assessment" className="bg-gradient-to-r from-[#596E51] to-[#788F6F] text-[#F5F3ED] text-center text-sm font-bold py-3 rounded-lg border border-[#8BA381]/20">
+            <Link href="/login" className="text-center text-sm font-semibold text-[#C5C8C1] hover:text-[#F5F3ED] py-2 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded px-1.5">Sign In</Link>
+            <Link href="/assessment" className="bg-gradient-to-r from-[#596E51] to-[#788F6F] text-[#F5F3ED] text-center text-sm font-bold py-3 rounded-lg border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#141712] hover:scale-[1.01] active:scale-[0.99] transition-all">
               Start Free Assessment
             </Link>
           </div>
