@@ -451,7 +451,7 @@ export default function MarketingSite() {
                       </div>
 
                       <div className="overflow-x-auto">
-                        <table className="w-full text-left text-[11px]">
+                        <table className="w-full text-left text-[11px] min-w-[550px]">
                           <thead>
                             <tr className="border-b border-[#1F1B16]/10 text-[#1F1B16]/50 uppercase tracking-wider text-[10px] font-bold">
                               <th className="pb-2">Cookie ID</th>
