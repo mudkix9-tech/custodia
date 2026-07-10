@@ -1,0 +1,366 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  ArrowLeft, HelpCircle, ShieldCheck, Check, ArrowRight, Copy, ChevronRight 
+} from 'lucide-react';
+import Link from 'next/link';
+
+const CALCULATOR_QUESTIONS = [
+  {
+    id: 'jurisdiction',
+    text: 'Where are your client targets or website visitors located?',
+    options: [
+      { text: 'We regularly process data of EU/UK citizens', value: 'eu', score: 30 },
+      { text: 'We act as a sub-processor of EU datasets', value: 'sub', score: 20 },
+      { text: 'We process only US/non-EU datasets', value: 'us', score: 5 }
+    ]
+  },
+  {
+    id: 'ropa',
+    text: 'Do you maintain an active register of data processing activities?',
+    options: [
+      { text: 'Yes, we have an up-to-date processing ledger', value: 'yes', score: 0 },
+      { text: 'No, we rely on static spreadsheets or have none', value: 'no', score: 35 },
+      { text: 'We do not maintain any structured compliance records', value: 'unknown', score: 40 }
+    ]
+  },
+  {
+    id: 'cookies',
+    text: 'How do you collect and log tracking cookie consent?',
+    options: [
+      { text: 'We audit and block trackers prior to consent', value: 'automated', score: 0 },
+      { text: 'We have a standard banner, but no cookie logs', value: 'basic', score: 20 },
+      { text: 'We load tracking codes without consent triggers', value: 'none', score: 35 }
+    ]
+  },
+  {
+    id: 'special',
+    text: 'Do you handle sensitive data (health, minors, banking, location)?',
+    options: [
+      { text: 'Yes, we handle sensitive client/user datasets', value: 'yes', score: 25 },
+      { text: 'No, we only process basic business contact info', value: 'no', score: 5 }
+    ]
+  }
+];
+
+export default function RiskCalculator() {
+  // Risk Calculator State
+  const [calcStep, setCalcStep] = useState(0);
+  const [calcAnswers, setCalcAnswers] = useState<Record<string, string>>({});
+  const [calcScores, setCalcScores] = useState<Record<string, number>>({});
+
+  // Caching & Prefill Effect
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlJurisdiction = params.get('jurisdiction');
+      const urlRopa = params.get('ropa');
+      const urlCookies = params.get('cookies');
+      const urlSpecial = params.get('special');
+      const urlResults = params.get('results') === 'true';
+
+      if (urlJurisdiction || urlRopa || urlCookies || urlSpecial) {
+        const answers: Record<string, string> = {};
+        const scores: Record<string, number> = {};
+        
+        if (urlJurisdiction) {
+          answers.jurisdiction = urlJurisdiction;
+          scores.jurisdiction = CALCULATOR_QUESTIONS[0].options.find(o => o.value === urlJurisdiction)?.score ?? 0;
+        }
+        if (urlRopa) {
+          answers.ropa = urlRopa;
+          scores.ropa = CALCULATOR_QUESTIONS[1].options.find(o => o.value === urlRopa)?.score ?? 0;
+        }
+        if (urlCookies) {
+          answers.cookies = urlCookies;
+          scores.cookies = CALCULATOR_QUESTIONS[2].options.find(o => o.value === urlCookies)?.score ?? 0;
+        }
+        if (urlSpecial) {
+          answers.special = urlSpecial;
+          scores.special = CALCULATOR_QUESTIONS[3].options.find(o => o.value === urlSpecial)?.score ?? 0;
+        }
+
+        setTimeout(() => {
+          setCalcAnswers(answers);
+          setCalcScores(scores);
+          if (urlResults) {
+            setCalcStep(CALCULATOR_QUESTIONS.length);
+          } else {
+            setCalcStep(0);
+          }
+        }, 0);
+        return;
+      }
+
+      const savedAnswers = localStorage.getItem('pvr_calc_answers');
+      const savedScores = localStorage.getItem('pvr_calc_scores');
+      const savedStep = localStorage.getItem('pvr_calc_step');
+      setTimeout(() => {
+        if (savedAnswers) setCalcAnswers(JSON.parse(savedAnswers));
+        if (savedScores) setCalcScores(JSON.parse(savedScores));
+        if (savedStep) setCalcStep(Number(savedStep));
+      }, 0);
+    } catch (e) {
+      console.error("Failed to load calculator state:", e);
+    }
+  }, []);
+
+  // Sync to localStorage
+  useEffect(() => {
+    if (Object.keys(calcAnswers).length > 0) {
+      try {
+        localStorage.setItem('pvr_calc_answers', JSON.stringify(calcAnswers));
+        localStorage.setItem('pvr_calc_scores', JSON.stringify(calcScores));
+        localStorage.setItem('pvr_calc_step', String(calcStep));
+      } catch (e) {
+        console.error("Failed to save calculator state:", e);
+      }
+    }
+  }, [calcAnswers, calcScores, calcStep]);
+
+  const handleCalculatorSelect = (questionId: string, value: string, score: number) => {
+    setCalcAnswers(prev => ({ ...prev, [questionId]: value }));
+    setCalcScores(prev => ({ ...prev, [questionId]: score }));
+    
+    if (calcStep < CALCULATOR_QUESTIONS.length - 1) {
+      setCalcStep(prev => prev + 1);
+    } else {
+      setCalcStep(CALCULATOR_QUESTIONS.length);
+    }
+  };
+
+  const resetCalculator = () => {
+    setCalcAnswers({});
+    setCalcScores({});
+    setCalcStep(0);
+    try {
+      localStorage.removeItem('pvr_calc_answers');
+      localStorage.removeItem('pvr_calc_scores');
+      localStorage.removeItem('pvr_calc_step');
+    } catch (e) {
+      console.error("Failed to clear localStorage:", e);
+    }
+  };
+
+  const [copiedCalculatorLink, setCopiedCalculatorLink] = useState(false);
+  const handleCopyCalculatorLink = () => {
+    try {
+      const shareUrl = `${window.location.origin}${window.location.pathname}?jurisdiction=${calcAnswers.jurisdiction || ''}&ropa=${calcAnswers.ropa || ''}&cookies=${calcAnswers.cookies || ''}&special=${calcAnswers.special || ''}&results=true`;
+      navigator.clipboard.writeText(shareUrl);
+      setCopiedCalculatorLink(true);
+      setTimeout(() => setCopiedCalculatorLink(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
+  };
+
+  const totalRiskScore = Object.values(calcScores).reduce((a, b) => a + b, 0);
+  let riskLevel = 'LOW';
+  let riskColor = 'text-[#8BA381] border-[#384332] bg-[#242A20]/80';
+  let riskText = 'Your operations indicate low regulatory exposure. Maintain compliance audits regularly to avoid gap drifts.';
+
+  if (totalRiskScore >= 75) {
+    riskLevel = 'CRITICAL';
+    riskColor = 'text-red-400 border-red-950 bg-red-950/20';
+    riskText = 'Extreme regulatory liability detected. Missing processing activity records combined with unconsented tracking poses direct exposure to severe administrative fines.';
+  } else if (totalRiskScore >= 45) {
+    riskLevel = 'HIGH';
+    riskColor = 'text-amber-500 border-amber-950 bg-amber-950/20';
+    riskText = 'Significant compliance gaps detected. Lack of active consent logging or outdated static documentation exposes your agency and clients to audit failures.';
+  } else if (totalRiskScore >= 20) {
+    riskLevel = 'MEDIUM';
+    riskColor = 'text-[#C9C3AC] border-[#444034] bg-[#2A2920]/80';
+    riskText = 'Moderate exposure. Some compliance elements exist, but lack of continuous validation indicates potential compliance degradation.';
+  }
+
+  const prefillUrl = `/assessment?jurisdiction=${calcAnswers.jurisdiction || ''}&ropa=${calcAnswers.ropa || ''}&cookies=${calcAnswers.cookies || ''}&special=${calcAnswers.special || ''}&risk=${riskLevel.toLowerCase()}`;
+
+  return (
+    <section id="risk-calculator" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10 scroll-mt-20">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 md:py-20">
+        
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-3 tracking-tight text-balance">Evaluate your GDPR exposure</h2>
+          <p className="text-[#9CA297] max-w-xl mx-auto text-xs sm:text-sm">
+            Calculate your organization&apos;s compliance risk profile in 60 seconds. Receive instant recommendations.
+          </p>
+        </div>
+
+        <div className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-2xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-[#8BA381]/25 to-transparent" />
+          
+          {calcStep < CALCULATOR_QUESTIONS.length ? (
+            <div>
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  {calcStep > 0 && (
+                    <button 
+                      onClick={() => setCalcStep(prev => prev - 1)}
+                      className="text-[10px] text-[#9CA297] hover:text-[#F5F3ED] flex items-center gap-1 bg-[#141712]/50 border border-[#2F362D] px-2.5 py-1 rounded transition-colors touch-manipulation"
+                    >
+                      <ArrowLeft className="w-3 h-3" /> Back
+                    </button>
+                  )}
+                  <span className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wider">
+                    Question {calcStep + 1} of {CALCULATOR_QUESTIONS.length}
+                  </span>
+                </div>
+                <div className="flex gap-1">
+                  {CALCULATOR_QUESTIONS.map((_, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`w-5 h-1 rounded-full transition-all ${
+                        idx <= calcStep ? 'bg-[#8BA381]' : 'bg-[#2F362D]'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <h3 className="text-lg sm:text-xl font-bold text-[#F5F3ED] mb-6 leading-snug flex items-center gap-2 flex-wrap">
+                <span>{CALCULATOR_QUESTIONS[calcStep].text}</span>
+                {CALCULATOR_QUESTIONS[calcStep].id === 'ropa' && (
+                  <span className="relative group/term inline-block leading-none">
+                    <HelpCircle className="w-3.5 h-3.5 text-[#9CA297]/50 cursor-help hover:text-[#8BA381] transition-colors" />
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3.5 bg-[#1F241D] border border-[#2F362D] text-[#C5C8C1] text-[10.5px] rounded-xl shadow-2xl opacity-0 invisible group-hover/term:opacity-100 group-hover/term:visible transition-all duration-200 z-50 pointer-events-none normal-case font-normal leading-relaxed backdrop-blur-md">
+                      <strong className="text-[#F5F3ED] block mb-1">Record of Processing Activities (ROPA):</strong>
+                      A log required under GDPR Article 30 that documents your agency&apos;s data categories, purposes, and recipients of personal data.
+                    </span>
+                  </span>
+                )}
+                {CALCULATOR_QUESTIONS[calcStep].id === 'cookies' && (
+                  <span className="relative group/term inline-block leading-none">
+                    <HelpCircle className="w-3.5 h-3.5 text-[#9CA297]/50 cursor-help hover:text-[#8BA381] transition-colors" />
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3.5 bg-[#1F241D] border border-[#2F362D] text-[#C5C8C1] text-[10.5px] rounded-xl shadow-2xl opacity-0 invisible group-hover/term:opacity-100 group-hover/term:visible transition-all duration-200 z-50 pointer-events-none normal-case font-normal leading-relaxed backdrop-blur-md">
+                      <strong className="text-[#F5F3ED] block mb-1">ePrivacy & Consent Management:</strong>
+                      GDPR requires blocking marketing pixels and analytic cookies *before* a visitor selects their consent preferences.
+                    </span>
+                  </span>
+                )}
+                {CALCULATOR_QUESTIONS[calcStep].id === 'special' && (
+                  <span className="relative group/term inline-block leading-none">
+                    <HelpCircle className="w-3.5 h-3.5 text-[#9CA297]/50 cursor-help hover:text-[#8BA381] transition-colors" />
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3.5 bg-[#1F241D] border border-[#2F362D] text-[#C5C8C1] text-[10.5px] rounded-xl shadow-2xl opacity-0 invisible group-hover/term:opacity-100 group-hover/term:visible transition-all duration-200 z-50 pointer-events-none normal-case font-normal leading-relaxed backdrop-blur-md">
+                      <strong className="text-[#F5F3ED] block mb-1">Special Category Data (DPIA):</strong>
+                      Sensitive personal data (health, biometric, location, banking) carries high-risk profiles that require a formal Data Protection Impact Assessment (DPIA).
+                    </span>
+                  </span>
+                )}
+              </h3>
+
+              <div className="space-y-3">
+                {CALCULATOR_QUESTIONS[calcStep].options.map((opt, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleCalculatorSelect(CALCULATOR_QUESTIONS[calcStep].id, opt.value, opt.score)}
+                    className="w-full text-left bg-[#141712]/55 hover:bg-[#252B21]/80 border border-[#2F362D]/60 hover:border-[#8BA381]/40 p-4.5 rounded-xl transition-all duration-200 text-xs sm:text-sm text-[#C5C8C1] hover:text-[#F5F3ED] font-semibold flex items-center justify-between group focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.01] active:scale-[0.99]"
+                  >
+                    <span>{opt.text}</span>
+                    <ChevronRight className="w-4 h-4 text-[#5F655A] group-hover:text-[#8BA381] group-hover:translate-x-0.5 transition-all" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }} 
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center"
+              aria-live="polite"
+            >
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#6E8B60]/10 border border-[#6E8B60]/20 text-[#8BA381] mb-6">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              
+              <h3 className="text-xl sm:text-2xl font-bold text-[#F5F3ED] mb-3">Assessment Diagnostic Complete</h3>
+              
+              <div className={`max-w-md mx-auto border rounded-xl p-5 mb-6 ${riskColor}`}>
+                <div className="flex items-center justify-center gap-2.5 mb-2.5">
+                  <span className="text-[10px] font-bold tracking-widest uppercase">EXPOSURE LEVEL:</span>
+                  <span className={`font-mono font-bold text-xs bg-[#141712]/55 px-2.5 py-0.5 rounded border flex items-center gap-1.5 ${
+                    riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? 'text-red-400 border-red-500/50' :
+                    riskLevel === 'MEDIUM' ? 'text-amber-400 border-amber-500/50' : 'text-[#8BA381] border-[#8BA381]/50'
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${
+                      riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? 'bg-red-500 animate-pulse' :
+                      riskLevel === 'MEDIUM' ? 'bg-amber-500' : 'bg-[#8BA381]'
+                    }`} />
+                    {riskLevel}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed font-semibold">{riskText}</p>
+              </div>
+
+              {/* Diagnostic Input Selections Summary Checklist */}
+              <div className="mt-6 text-left border-t border-[#2F362D]/40 pt-5 space-y-3 text-[11px] text-[#9CA297] max-w-md mx-auto mb-8 bg-[#141712]/20 p-4.5 rounded-xl border border-[#2F362D]/40">
+                <p className="font-bold text-[#F5F3ED] uppercase tracking-wide text-[9px] mb-1">Your Diagnostic Answers:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
+                  <div className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-[#8BA381] shrink-0 mt-0.5" />
+                    <span>
+                      <strong className="text-[#F5F3ED]">Audience:</strong> {
+                        calcAnswers.jurisdiction === 'eu' ? 'EU/UK citizens' :
+                        calcAnswers.jurisdiction === 'sub' ? 'Sub-processor' : 'Non-EU only'
+                      }
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-[#8BA381] shrink-0 mt-0.5" />
+                    <span>
+                      <strong className="text-[#F5F3ED]">ROPA Status:</strong> {
+                        calcAnswers.ropa === 'yes' ? 'Audited register' :
+                        calcAnswers.ropa === 'no' ? 'Spreadsheets' : 'None maintained'
+                      }
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-[#8BA381] shrink-0 mt-0.5" />
+                    <span>
+                      <strong className="text-[#F5F3ED]">Consent logs:</strong> {
+                        calcAnswers.cookies === 'automated' ? 'Pre-consent block' :
+                        calcAnswers.cookies === 'basic' ? 'Basic banner' : 'No blockers'
+                      }
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-[#8BA381] shrink-0 mt-0.5" />
+                    <span>
+                      <strong className="text-[#F5F3ED]">Sensitive:</strong> {
+                        calcAnswers.special === 'yes' ? 'Sensitive data' : 'Basic contact info'
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link href={prefillUrl} className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-xs sm:text-sm font-bold py-3.5 px-6 rounded-lg transition-all flex items-center justify-center gap-2 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] touch-manipulation">
+                  Verify Exposure in Assessment <ArrowRight className="w-4 h-4" />
+                </Link>
+                <button 
+                  onClick={handleCopyCalculatorLink}
+                  className="w-full sm:w-auto bg-[#1F241D] hover:bg-[#2A3127] text-[#C5C8C1] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 touch-manipulation"
+                >
+                  {copiedCalculatorLink ? (
+                    <>Copied! <Check className="w-3.5 h-3.5 text-[#8BA381]" /></>
+                  ) : (
+                    <>Share Result Link <Copy className="w-3.5 h-3.5" /></>
+                  )}
+                </button>
+                <button 
+                  onClick={resetCalculator}
+                  className="w-full sm:w-auto bg-[#141712]/50 hover:bg-[#141712] text-[#9CA297] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
+                >
+                  Reset Calculator
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+      </div>
+    </section>
+  );
+}
