@@ -1,7 +1,6 @@
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc.js';
-import { db } from '../db.js';
 import { 
   complianceGaps, 
   complianceReports,
@@ -9,7 +8,7 @@ import {
   processingActivities,
   auditLogs
 } from 'db';
-import { eq, and, desc, inArray, ilike, or } from 'drizzle-orm';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 import * as xlsx from 'xlsx';
 import { paginatedQuery } from '../utils/pagination.js';
 import { PassThrough } from 'stream';

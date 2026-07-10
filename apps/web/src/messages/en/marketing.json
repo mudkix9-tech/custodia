@@ -1,0 +1,20 @@
+{
+  "hero": {
+    "badge": "GDPR Compliance Operating System",
+    "titlePrefix": "GDPR compliance for your entire agency.",
+    "titleMain": "One platform.",
+    "subheadline": "Document processing activities, map vendors, manage cookie consent, handle data requests, and train employees — all in one place. No expensive legal consultants. No spreadsheets.",
+    "ctaAssessment": "Run Free Gap Assessment",
+    "ctaCalculator": "Test Risk Exposure"
+  },
+  "features": {
+    "badge": "Compliance Suite",
+    "title": "Twelve modules. One compliance core.",
+    "subheadline": "Ditch separate compliance trackers and spreadsheet audits. Monitor, track, and protect your entire operation from a single dashboard."
+  },
+  "authorities": {
+    "badge": "Enforcement Landscape",
+    "title": "Supervisory Authority alignment",
+    "subheadline": "GDPR is uniform, but enforcement priorities vary by nation. Privaro adapts compliance configurations to map to the audits of your target audiences."
+  }
+}

@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { db } from '../db.js';
 import { assessmentTemplates, assessments, assessmentAnswers, actionItems, pendingSignups } from 'db';
 import { eq } from 'drizzle-orm';
 import { router, publicProcedure } from '../trpc.js';

@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { router, protectedProcedure, requireRole } from '../trpc.js';
-import { db } from '../db.js';
 import * as schema from '../../../../packages/db/src/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { randomBytes, createHash } from 'crypto';

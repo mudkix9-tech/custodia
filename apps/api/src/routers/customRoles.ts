@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { router, protectedProcedure, requireRole } from '../trpc.js';
-import { db } from '../db.js';
 import { customRoles, users } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';

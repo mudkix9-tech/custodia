@@ -1,0 +1,20 @@
+{
+  "hero": {
+    "badge": "GDPR Compliance-Betriebssystem",
+    "titlePrefix": "GDPR-Compliance für Ihre gesamte Agentur.",
+    "titleMain": "Eine Plattform.",
+    "subheadline": "Dokumentieren Sie Verarbeitungstätigkeiten, weisen Sie Anbieter zu, verwalten Sie Cookie-Einwilligungen, bearbeiten Sie Datenanfragen und schulen Sie Mitarbeiter – alles an einem Ort. Keine teuren Rechtsberater. Keine Tabellen.",
+    "ctaAssessment": "Kostenlosen Gap-Assessment starten",
+    "ctaCalculator": "Risiko-Exposition testen"
+  },
+  "features": {
+    "badge": "Compliance-Suite",
+    "title": "Zwölf Module. Ein Compliance-Kern.",
+    "subheadline": "Verzichten Sie auf separate Compliance-Tracker und Tabellenprüfungen. Überwachen, verfolgen und schützen Sie Ihren gesamten Betrieb von einem einzigen Dashboard aus."
+  },
+  "authorities": {
+    "badge": "Durchsetzungslandschaft",
+    "title": "Abstimmung der Aufsichtsbehörden",
+    "subheadline": "Die DSGVO ist einheitlich, aber die Durchsetzungsprioritäten variieren je nach Land. Privaro passt Compliance-Konfigurationen so an, dass sie den Prüfungen Ihrer Zielgruppen entsprechen."
+  }
+}

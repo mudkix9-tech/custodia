@@ -1,11 +1,7 @@
 import { router, protectedProcedure } from '../trpc.js';
 import { z } from 'zod';
-import { db } from '../db.js';
 import { 
-  documentEmbeddings, 
-  organizationEmbeddings, 
   processingActivities, 
-  complianceGaps, 
   organizations 
 } from 'db';
 import { eq, and, sql } from 'drizzle-orm';

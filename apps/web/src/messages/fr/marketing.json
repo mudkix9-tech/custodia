@@ -1,0 +1,20 @@
+{
+  "hero": {
+    "badge": "Système d'exploitation de conformité RGPD",
+    "titlePrefix": "Conformité RGPD pour toute votre agence.",
+    "titleMain": "Une seule plateforme.",
+    "subheadline": "Documentez les activités de traitement, cartographiez les fournisseurs, gérez le consentement aux cookies, traitez les demandes de données et formez les employés — le tout en un seul endroit. Pas de consultants juridiques coûteux. Pas de tableurs.",
+    "ctaAssessment": "Lancer l'évaluation gratuite",
+    "ctaCalculator": "Tester l'exposition au risque"
+  },
+  "features": {
+    "badge": "Suite de conformité",
+    "title": "Douze modules. Un noyau de conformité.",
+    "subheadline": "Fini les suivis de conformité séparés et les audits sur tableurs. Surveillez, suivez et protégez l'ensemble de vos opérations depuis un tableau de bord unique."
+  },
+  "authorities": {
+    "badge": "Paysage d'application",
+    "title": "Alignement avec les autorités de contrôle",
+    "subheadline": "Le RGPD est uniforme, mais les priorités d'application varient selon les pays. Privaro adapte ses configurations de conformité pour correspondre aux audits de vos publics cibles."
+  }
+}

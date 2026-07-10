@@ -1,5 +1,4 @@
 import { Cluster } from 'puppeteer-cluster';
-import { parse as parseCookie } from 'cookie';
 
 let cluster: Cluster | null = null;
 

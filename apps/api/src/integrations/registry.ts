@@ -84,7 +84,7 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
         accountName: `Salesforce Org ${tokenResponse.id ? tokenResponse.id.split('/').pop() : 'Unknown'}`
       };
     },
-    searchContacts: async (accessToken: string, email: string) => {
+    searchContacts: async (_accessToken: string, _email: string) => {
       // Stub implementation. Salesforce requires the instance_url from the token response
       // For a full implementation, you'd store instanceUrl alongside the token.
       return [];
@@ -101,12 +101,12 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
       'https://www.googleapis.com/auth/gmail.readonly',
     ],
     extraAuthParams: { access_type: 'offline', prompt: 'consent' },
-    extractAccountInfo: (tokenResponse: any) => {
+    extractAccountInfo: (_tokenResponse: any) => {
        // Mocked. Would decode id_token to get email/domain
       return { accountId: 'google-domain', accountName: 'Google Workspace' };
     },
     searchContacts: async () => [],
-    searchDocuments: async (accessToken: string, query: string) => {
+    searchDocuments: async (_accessToken: string, _query: string) => {
       // Stub implementation
       return [];
     }
@@ -122,7 +122,7 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
       // Mailchimp returns a dc (data center) parameter
       return { accountId: tokenResponse.dc || 'unknown_dc', accountName: 'Mailchimp Account' };
     },
-    searchContacts: async (accessToken: string, email: string) => {
+    searchContacts: async (_accessToken: string, _email: string) => {
       // Stub implementation
       return [];
     }

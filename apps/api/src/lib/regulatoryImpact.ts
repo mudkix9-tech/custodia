@@ -1,5 +1,5 @@
 import { db } from '../db.js';
-import { regulatoryUpdates, regulatoryImpactAssessments, organizations, processingActivities, processingTransfers, organizationVendors, vendors } from 'db';
+import { regulatoryUpdates, regulatoryImpactAssessments, organizations, processingActivities, processingTransfers, organizationVendors } from 'db';
 import { eq, inArray, isNull, and } from 'drizzle-orm';
 import { queueNotification } from '../utils/notifications.js';
 

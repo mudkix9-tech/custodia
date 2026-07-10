@@ -1,6 +1,5 @@
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { z } from 'zod';
-import { db } from '../db.js';
 import { consentDomains, consentCookies, consentRecords } from 'db';
 import { eq, count } from 'drizzle-orm';
 import { paginatedQuery } from '../utils/pagination.js';

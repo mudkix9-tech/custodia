@@ -1,9 +1,8 @@
 import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
-import { db } from '../db.js';
-import { breaches, breachNotifications, breachRemediationTasks, auditLogs, organizations, users } from 'db';
-import { eq, and, desc, isNull, inArray } from 'drizzle-orm';
+import { breaches, breachNotifications, breachRemediationTasks, organizations, users } from 'db';
+import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
 const checkOrgContext = (user: any) => {

@@ -11,14 +11,18 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import { LazyObserver } from '@/components/common/LazyObserver';
 import { 
   HubSpotLogo, MailchimpLogo, GA4Logo, StripeLogo, SlackLogo, SalesforceLogo, AWSLogo 
 } from '@/components/icons/BrandLogos';
+import { BentoFeatureCard } from '@/components/ui/BentoFeatureCard';
+import { SupervisoryAuthorityCard } from '@/components/ui/SupervisoryAuthorityCard';
+import { FeatureModule, SupervisoryAuthority } from '@/types/marketing';
 
 // --- Premium Design Constants ---
 
-const MODULES = [
+const MODULES: FeatureModule[] = [
   { 
     tag: "Assessment",
     title: 'Gap Assessment', 
@@ -93,7 +97,7 @@ const MODULES = [
   }
 ];
 
-const AUTHORITIES = [
+const AUTHORITIES: SupervisoryAuthority[] = [
   { 
     code: 'IE DPC', 
     name: 'Data Protection Commission', 
@@ -151,10 +155,10 @@ const RiskCalculator = dynamic(() => import('@/components/marketing/RiskCalculat
 });
 
 export default function MarketingSite() {
+  const t = useTranslations('marketing');
+  const router = useRouter();
   const [annualBilling, setAnnualBilling] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'cookies' | 'ropa' | 'dsar'>('overview');
-
-  const router = useRouter();
 
   return (
     <div className="pt-16 antialiased">
@@ -173,20 +177,20 @@ export default function MarketingSite() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8BA381] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8BA381]"></span>
               </span>
-              GDPR Compliance Operating System
+              {t('hero.badge')}
             </div>
             
             {/* Headline */}
             <h1 className="font-sans tracking-tight mb-5 leading-[1.05] text-balance">
-              <span className="block text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#9CA297] mb-2">GDPR compliance for your entire agency.</span>
+              <span className="block text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#9CA297] mb-2">{t('hero.titlePrefix')}</span>
               <span className="inline-block text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#F5F3ED] bg-clip-text">
-                One platform.
+                {t('hero.titleMain')}
               </span>
             </h1>
             
             {/* Subheadline */}
             <p className="text-sm text-[#9CA297] max-w-xl mb-6 leading-relaxed font-medium">
-              Document processing activities, map vendors, manage cookie consent, handle data requests, and train employees {"\u2014"} all in one place. No expensive legal consultants. No spreadsheets.
+              {t('hero.subheadline')}
             </p>
             
             {/* Hero CTAs */}
@@ -196,7 +200,7 @@ export default function MarketingSite() {
                 onMouseEnter={() => router.prefetch('/assessment')}
                 className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#596E51]/10 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#141712] hover:scale-[1.02] active:scale-[0.98]"
               >
-                Run Free Gap Assessment
+                {t('hero.ctaAssessment')}
               </Link>
               <button 
                 onClick={() => {
@@ -205,7 +209,7 @@ export default function MarketingSite() {
                 }}
                 className="w-full sm:w-auto bg-[#1F241D] hover:bg-[#252B21] text-[#C5C8C1] border border-[#2F362D] text-sm font-semibold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#141712] hover:scale-[1.02] active:scale-[0.98]"
               >
-                Test Risk Exposure
+                {t('hero.ctaCalculator')}
               </button>
             </div>
             
@@ -538,38 +542,16 @@ export default function MarketingSite() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-12 md:pt-14 md:pb-20">
           
           <div className="mb-10 max-w-2xl text-center md:text-left mx-auto md:mx-0">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Compliance Suite</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight text-balance">Twelve modules. One compliance core.</h2>
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">{t('features.badge')}</p>
+            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight text-balance">{t('features.title')}</h2>
             <p className="text-sm text-[#9CA297] leading-relaxed">
-              Ditch separate compliance trackers and spreadsheet audits. Monitor, track, and protect your entire operation from a single dashboard.
+              {t('features.subheadline')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {MODULES.map((mod, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.35, delay: i * 0.03 }}
-                className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-xl p-5.5 flex flex-col justify-between group hover:bg-[#1F241D]/80 hover:border-[#596E51]/40 transition-all duration-300 h-full relative overflow-hidden"
-              >
-                <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(89,110,81,0.08)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                <div>
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="text-[9px] font-sans font-bold tracking-wider text-[#8BA381] bg-[#141712]/80 border border-[#2F362D] px-2 py-0.5 rounded">
-                      {mod.tag}
-                    </span>
-                    <mod.icon aria-hidden="true" className="w-4 h-4 text-[#5F655A] group-hover:text-[#8BA381] transition-colors" />
-                  </div>
-                  <h3 className="text-base font-bold text-[#F5F3ED] mb-2">{mod.title}</h3>
-                  <p className="text-[#9CA297] text-xs leading-relaxed">{mod.desc}</p>
-                </div>
-                <div className="mt-6 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#8BA381]/80 group-hover:text-[#8BA381] transition-colors cursor-pointer">
-                  Manage Module <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </motion.div>
+              <BentoFeatureCard key={i} module={mod} index={i} />
             ))}
           </div>
 
@@ -581,42 +563,16 @@ export default function MarketingSite() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20">
           
           <div className="mb-10">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Enforcement Landscape</p>
-            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight text-balance">Supervisory Authority alignment</h2>
+            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">{t('authorities.badge')}</p>
+            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight text-balance">{t('authorities.title')}</h2>
             <p className="text-[#9CA297] max-w-2xl text-xs sm:text-sm leading-relaxed">
-              GDPR is uniform, but enforcement priorities vary by nation. Privaro adapts compliance configurations to map to the audits of your target audiences.
+              {t('authorities.subheadline')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {AUTHORITIES.map((auth, i) => (
-              <div 
-                key={i}
-                className="bg-[#1F241D]/45 border border-[#2F362D]/90 p-5 rounded-xl hover:border-[#5F7556]/60 transition-all duration-300 flex flex-col justify-between h-full"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-[#2F362D]/40">
-                    <div className="relative group/tooltip flex items-center gap-1.5">
-                      <span className="font-mono font-bold text-[#F5F3ED] text-xs">{auth.code}</span>
-                      <HelpCircle className="w-3.5 h-3.5 text-[#9CA297]/50 hover:text-[#8BA381] cursor-help transition-colors" />
-                      
-                      {/* Tooltip Popover */}
-                      <div className="absolute bottom-full left-0 mb-2 w-52 p-3 bg-[#1F241D]/95 border border-[#2F362D] text-[#C5C8C1] text-[10px] rounded-xl shadow-2xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 z-50 pointer-events-none backdrop-blur-md">
-                        <div className="font-bold text-[#F5F3ED] mb-1 text-[11px]">{auth.name}</div>
-                        <div className="text-[#8BA381] font-mono text-[9px] mb-1">{auth.country} Authority</div>
-                        <p className="text-[#9CA297] leading-relaxed text-[10px] pt-1 border-t border-[#2F362D]/40">{auth.focus}</p>
-                      </div>
-                    </div>
-                    <span className="text-[9px] text-[#9CA297]">{auth.country}</span>
-                  </div>
-                  <p className="text-[#F5F3ED] text-xs font-bold mb-2">{auth.name}</p>
-                  <p className="text-[#9CA297] text-[10.5px] leading-relaxed mb-3">{auth.focus}</p>
-                </div>
-                <div className="text-[10px] font-mono text-[#8BA381] bg-[#6E8B60]/5 border border-[#6E8B60]/15 p-2.5 rounded">
-                  <span className="font-bold text-[#F5F3ED] block mb-0.5 text-[9px]">ENFORCEMENT FOCUS:</span>
-                  {auth.enforcement}
-                </div>
-              </div>
+              <SupervisoryAuthorityCard key={i} auth={auth} />
             ))}
           </div>
 
