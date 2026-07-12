@@ -1,4 +1,5 @@
 // @ts-nocheck
+import 'dotenv/config';
 import fastify, { FastifyRequest } from 'fastify';
 
 declare module 'fastify' {
