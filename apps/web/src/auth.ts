@@ -6,10 +6,15 @@ import Google from 'next-auth/providers/google';
 import MicrosoftEntraID from 'next-auth/providers/microsoft-entra-id';
 import WorkOS from 'next-auth/providers/workos';
 import { eq } from 'drizzle-orm';
-import { users, organizations, pendingSignups, assessments, auditLogs } from 'db';
+import { users, organizations, pendingSignups, assessments, auditLogs, account, session, verificationToken } from 'db';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(db),
+  adapter: DrizzleAdapter(db, {
+    usersTable: users,
+    accountsTable: account,
+    sessionsTable: session,
+    verificationTokensTable: verificationToken,
+  }),
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
