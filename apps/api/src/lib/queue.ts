@@ -1,10 +1,29 @@
 import { Queue, Worker, type ConnectionOptions } from 'bullmq';
 
-export const redisConnection: ConnectionOptions = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD || undefined,
+const getRedisConnectionOptions = (): ConnectionOptions => {
+  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+  try {
+    const parsed = new URL(redisUrl);
+    return {
+      host: parsed.hostname,
+      port: parseInt(parsed.port || '6379', 10),
+      password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+      username: parsed.username ? decodeURIComponent(parsed.username) : undefined,
+      // If using rediss:// (TLS), enable the tls option
+      tls: parsed.protocol === 'rediss:' ? {} : undefined,
+      maxRetriesPerRequest: null,
+    };
+  } catch (error) {
+    console.error('Failed to parse REDIS_URL, falling back to localhost:', error);
+    return {
+      host: 'localhost',
+      port: 6379,
+      maxRetriesPerRequest: null,
+    };
+  }
 };
+
+export const redisConnection = getRedisConnectionOptions();
 
 export function createQueue(name: string) {
   return new Queue(name, { connection: redisConnection });
