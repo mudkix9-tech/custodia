@@ -6,6 +6,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
   const [formData, setFormData] = useState({
     name: '',
     legalName: '',
+    websiteUrl: '',
     countryCode: 'IE',
     industry: 'marketing_agency',
     companySize: '11-25',
@@ -51,6 +52,18 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-md"
             placeholder="Acme Agency"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
+          <input
+            type="url"
+            name="websiteUrl"
+            value={formData.websiteUrl}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-md"
+            placeholder="https://example.com"
           />
         </div>
 

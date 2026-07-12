@@ -13,8 +13,10 @@ import {
   privacyPolicies,
   policyVersions,
   users,
-  auditLogs
+  auditLogs,
+  consentDomains
 } from 'db';
+import { cmpJobsQueue } from '../workers/cmp.js';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
 
 export const ROPA_TEMPLATES = {
@@ -566,21 +568,70 @@ export const onboardingRouter = router({
       companySize: z.string().optional(),
       hasDpo: z.boolean().default(false),
       dpoName: z.string().optional(),
-      dpoEmail: z.string().email().optional(),
+      dpoEmail: z.string().email().optional().or(z.literal('')),
       leadSupervisoryAuthority: z.string().optional(),
       slug: z.string().min(1),
+      websiteUrl: z.string().optional().or(z.literal('')),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { industry, companySize, ...orgData } = input;
+      const { industry, companySize, websiteUrl, ...orgData } = input;
 
       const [org] = await ctx.db.update(organizations)
         .set({
           ...orgData,
-          settings: sql`jsonb_set(jsonb_set(COALESCE(settings, '{}'::jsonb), '{industry}', ${JSON.stringify(industry)}::jsonb, true), '{companySize}', ${JSON.stringify(companySize)}::jsonb, true)`,
+          settings: sql`jsonb_set(
+            jsonb_set(
+              jsonb_set(COALESCE(settings, '{}'::jsonb), '{industry}', ${JSON.stringify(industry)}::jsonb, true),
+              '{companySize}', ${JSON.stringify(companySize)}::jsonb, true
+            ),
+            '{websiteUrl}', ${JSON.stringify(websiteUrl || '')}::jsonb, true
+          )`,
           onboardingStep: 1,
         })
         .where(eq(organizations.id, ctx.user!.orgId))
         .returning();
+
+      // Trigger cookie scan if websiteUrl is provided
+      if (websiteUrl) {
+        try {
+          const getDomainName = (urlStr: string): string => {
+            try {
+              const url = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`);
+              return url.hostname.replace(/^www\./, '');
+            } catch (e) {
+              return urlStr.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+            }
+          };
+
+          const domainName = getDomainName(websiteUrl);
+
+          // Check if domain already exists for this org
+          const [existing] = await ctx.db.select()
+            .from(consentDomains)
+            .where(and(
+              eq(consentDomains.organizationId, ctx.user!.orgId),
+              eq(consentDomains.domain, domainName)
+            ));
+
+          if (!existing) {
+            const scriptId = Math.random().toString(36).substring(2, 10);
+            const [newDomain] = await ctx.db.insert(consentDomains).values({
+              organizationId: ctx.user!.orgId,
+              domain: domainName,
+              scriptId,
+            }).returning();
+
+            // Trigger the cookie scanner background task
+            await cmpJobsQueue.add('cookie-scanner', {
+              domainId: newDomain.id,
+              correlationId: (ctx.req as any).correlationId
+            });
+            console.log(`[Onboarding] Triggered cookie scan for domain: ${domainName}`);
+          }
+        } catch (scanErr: any) {
+          console.error('[Onboarding] Failed to trigger cookie scan:', scanErr.message);
+        }
+      }
 
       return org;
     }),
