@@ -25,8 +25,21 @@ const getRedisConnectionOptions = (): ConnectionOptions => {
 
 export const redisConnection = getRedisConnectionOptions();
 
+import { Redis } from 'ioredis';
+
+let sharedQueueRedis: Redis | null = null;
+function getSharedQueueRedis() {
+  if (!sharedQueueRedis) {
+    sharedQueueRedis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+      maxRetriesPerRequest: null,
+      retryStrategy: (times) => Math.min(times * 50, 2000),
+    });
+  }
+  return sharedQueueRedis;
+}
+
 export function createQueue(name: string) {
-  return new Queue(name, { connection: redisConnection });
+  return new Queue(name, { connection: getSharedQueueRedis() });
 }
 
 export function createWorker(name: string, processor: any, opts?: any) {
