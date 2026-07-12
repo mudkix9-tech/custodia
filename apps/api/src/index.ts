@@ -161,8 +161,9 @@ server.register(fastifyTRPCPlugin, {
 
 const start = async () => {
   try {
-    await server.listen({ port: 4000, host: '0.0.0.0' });
-    console.log('API Server listening on http://localhost:4000');
+    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 4000;
+    await server.listen({ port, host: '0.0.0.0' });
+    console.log(`API Server listening on port ${port}`);
     if (process.env.NODE_ENV !== 'test') {
       console.log('BullMQ Workers initialized');
       // Schedule background workers
