@@ -32,6 +32,7 @@ export default function OnboardingPage() {
   const getTemplates = trpc.onboarding.getTemplates.useQuery({ industry }, { enabled: false });
   const utils = trpc.useUtils();
   const createActivity = trpc.onboarding.createFromTemplate.useMutation();
+  const createCustomActivity = trpc.onboarding.createCustomActivity.useMutation();
   const generatePolicy = trpc.onboarding.generatePolicy.useMutation();
   const publishPolicy = trpc.onboarding.publishPolicy.useMutation();
   const inviteTeam = trpc.onboarding.inviteTeam.useMutation();
@@ -73,14 +74,17 @@ export default function OnboardingPage() {
     setCurrentStep(3);
   };
 
-  const handleStep3 = async (templateIds: string[]) => {
+  const handleStep3 = async (templateIds: string[], customActivities: string[] = []) => {
     for (const id of templateIds) {
       await createActivity.mutateAsync({ templateId: id, industry });
     }
-    setSummary(prev => ({ ...prev, activitiesCount: templateIds.length }));
+    for (const name of customActivities) {
+      await createCustomActivity.mutateAsync({ name });
+    }
+    setSummary(prev => ({ ...prev, activitiesCount: templateIds.length + customActivities.length }));
 
     // Generate draft policy for step 4 preview
-    if (templateIds.length > 0 || summary.vendorsCount > 0) {
+    if (templateIds.length > 0 || customActivities.length > 0 || summary.vendorsCount > 0) {
       const res = await generatePolicy.mutateAsync({});
       setPolicyData(res);
     }

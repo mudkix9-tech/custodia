@@ -252,6 +252,7 @@ export const processingActivities = pgTable('processing_activities', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  source: varchar('source', { length: 50 }).default('template'),
 });
 
 export const clientProcessingActivities = pgTable('client_processing_activities', {

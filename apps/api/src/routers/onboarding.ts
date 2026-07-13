@@ -19,6 +19,129 @@ import {
 import { cmpJobsQueue } from '../workers/cmp.js';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
 
+export const AGNOSTIC_TEMPLATES = [
+  {
+    id: 'hr_management',
+    name: 'Employee HR Management',
+    description: 'Managing employee records, contracts, performance, and contact details',
+    purpose: 'To manage human resources, employment contracts, performance evaluations, and internal employee directories.',
+    lawfulBasis: 'contract',
+    lawfulBasisDetail: 'Necessary for the performance of employment contracts.',
+    dataSubjectCategories: ['employees'],
+    estimatedDataSubjects: '<100',
+    processingType: ['collection', 'storage', 'analysis'],
+    dataCategories: [
+      { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+      { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+      { category: 'phone', categoryGroup: 'contact', source: 'direct_from_subject' },
+      { category: 'address', categoryGroup: 'contact', source: 'direct_from_subject' },
+      { category: 'employment_contracts', categoryGroup: 'employment', source: 'direct_from_subject' },
+    ],
+    suggestedVendorCategories: ['hris'],
+    retentionPeriod: 'Duration of employment + 6 years',
+    securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'access_controls'],
+  },
+  {
+    id: 'payroll_processing',
+    name: 'Payroll & Tax Processing',
+    description: 'Processing employee salaries, tax deductions, and bank payouts',
+    purpose: 'To calculate and disburse salaries, administer benefits, deduct tax contributions, and report to fiscal authorities.',
+    lawfulBasis: 'legal_obligation',
+    lawfulBasisDetail: 'Processing necessary to comply with employment, tax, and social security laws.',
+    dataSubjectCategories: ['employees'],
+    estimatedDataSubjects: '<100',
+    processingType: ['collection', 'storage', 'sharing'],
+    dataCategories: [
+      { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+      { category: 'national_id_ssn', categoryGroup: 'identity', source: 'direct_from_subject' },
+      { category: 'bank_details', categoryGroup: 'financial', source: 'direct_from_subject' },
+      { category: 'salary_information', categoryGroup: 'financial', source: 'direct_from_subject' },
+    ],
+    suggestedVendorCategories: ['payroll_provider'],
+    retentionPeriod: '7 years (statutory requirement for tax audit purposes)',
+    securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'access_controls'],
+  },
+  {
+    id: 'recruitment',
+    name: 'Candidate Recruitment & ATS',
+    description: 'Reviewing job applications, CVs, and scheduling interviews',
+    purpose: 'To assess candidate suitability for open positions and manage the recruiting pipeline.',
+    lawfulBasis: 'legitimate_interests',
+    lawfulBasisDetail: 'Legitimate interest in evaluating candidate qualifications for hiring purposes.',
+    dataSubjectCategories: ['candidates'],
+    estimatedDataSubjects: '<1000',
+    processingType: ['collection', 'storage', 'analysis'],
+    dataCategories: [
+      { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+      { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+      { category: 'phone', categoryGroup: 'contact', source: 'direct_from_subject' },
+      { category: 'resume_cv', categoryGroup: 'employment', source: 'direct_from_subject' },
+    ],
+    suggestedVendorCategories: ['ats'],
+    retentionPeriod: '6 months (unless candidate consents to a longer talent-pool retention)',
+    securityMeasures: ['encryption_in_transit', 'access_controls'],
+  },
+  {
+    id: 'client_billing',
+    name: 'Client Invoicing & Billing',
+    description: 'Managing billing details, payouts, invoices, and accounting',
+    purpose: 'To generate client invoices, process project payments, and log accounting records.',
+    lawfulBasis: 'contract',
+    lawfulBasisDetail: 'Necessary for the performance of client contracts and legal accounting compliance.',
+    dataSubjectCategories: ['customers'],
+    estimatedDataSubjects: '<1000',
+    processingType: ['collection', 'storage', 'sharing'],
+    dataCategories: [
+      { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+      { category: 'billing_address', categoryGroup: 'contact', source: 'direct_from_subject' },
+      { category: 'payment_details', categoryGroup: 'financial', source: 'direct_from_subject' },
+      { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+    ],
+    suggestedVendorCategories: ['billing_software', 'payment_gateway'],
+    retentionPeriod: '7 years for financial and tax audits',
+    securityMeasures: ['encryption_in_transit', 'encryption_at_rest', 'access_controls'],
+  },
+  {
+    id: 'event_registration',
+    name: 'Event Registration & Hosting',
+    description: 'Managing signups, ticketing, and communications for webinars/events',
+    purpose: 'To organize, facilitate, and manage attendee registration and communications for virtual and physical events.',
+    lawfulBasis: 'contract',
+    lawfulBasisDetail: 'Necessary for performing the agreement to host and provide event access.',
+    dataSubjectCategories: ['website_visitors', 'customers'],
+    estimatedDataSubjects: '1000-5000',
+    processingType: ['collection', 'storage', 'sharing'],
+    dataCategories: [
+      { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+      { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+      { category: 'company_name', categoryGroup: 'employment', source: 'direct_from_subject' },
+    ],
+    suggestedVendorCategories: ['event_hosting_platform'],
+    retentionPeriod: '12 months after the event completes',
+    securityMeasures: ['encryption_in_transit', 'access_controls'],
+  },
+  {
+    id: 'lead_generation',
+    name: 'Lead Generation & Web Forms',
+    description: 'Collecting prospective client contact info from landing pages',
+    purpose: 'To capture inbound queries, contact forms, and whitepaper downloads for lead nurturing and sales outreach.',
+    lawfulBasis: 'consent',
+    lawfulBasisDetail: 'Consent obtained via checkbox consent at form submission.',
+    dataSubjectCategories: ['website_visitors', 'prospects'],
+    estimatedDataSubjects: '1000-10000',
+    processingType: ['collection', 'storage'],
+    dataCategories: [
+      { category: 'full_name', categoryGroup: 'identity', source: 'direct_from_subject' },
+      { category: 'email', categoryGroup: 'contact', source: 'direct_from_subject' },
+      { category: 'company_name', categoryGroup: 'employment', source: 'direct_from_subject' },
+      { category: 'industry_preferences', categoryGroup: 'behavioral', source: 'direct_from_subject' },
+    ],
+    suggestedVendorCategories: ['web_forms', 'crm'],
+    retentionPeriod: '24 months of inactivity or until opt-out',
+    securityMeasures: ['encryption_in_transit', 'access_controls'],
+  }
+];
+
 export const ROPA_TEMPLATES = {
   marketing_agency: [
     {
@@ -708,7 +831,9 @@ export const onboardingRouter = router({
     .input(z.object({ industry: z.string().default('generic') }))
     .query(async ({ ctx, input }) => {
       const industry = input.industry as keyof typeof ROPA_TEMPLATES;
-      return ROPA_TEMPLATES[industry] || ROPA_TEMPLATES.generic;
+      const list = ROPA_TEMPLATES[industry] || ROPA_TEMPLATES.generic;
+      const agnosticFiltered = AGNOSTIC_TEMPLATES.filter(a => !list.some(s => s.id === a.id));
+      return [...list, ...agnosticFiltered];
     }),
 
   createFromTemplate: protectedProcedure
@@ -719,7 +844,8 @@ export const onboardingRouter = router({
     .mutation(async ({ ctx, input }) => {
       const industry = input.industry as keyof typeof ROPA_TEMPLATES;
       const templates = ROPA_TEMPLATES[industry] || ROPA_TEMPLATES.generic;
-      const template = templates.find(t => t.id === input.templateId);
+      const allTemplates = [...templates, ...AGNOSTIC_TEMPLATES.filter(a => !templates.some(s => s.id === a.id))];
+      const template = allTemplates.find(t => t.id === input.templateId);
 
       if (!template) {
         throw new Error('Template not found');
@@ -738,7 +864,7 @@ export const onboardingRouter = router({
         processingType: template.processingType,
         retentionPeriod: template.retentionPeriod,
         securityMeasures: template.securityMeasures,
-
+        source: 'template',
       }).returning();
 
       // Insert data categories
@@ -801,6 +927,27 @@ export const onboardingRouter = router({
         .set({ onboardingStep: 3 })
         .where(eq(organizations.id, ctx.user!.orgId));
 
+      return activity;
+    }),
+
+  createCustomActivity: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [activity] = await ctx.db.insert(processingActivities).values({
+        organizationId: ctx.user!.orgId,
+        name: input.name,
+        description: input.description || `Manually created during onboarding.`,
+        purpose: `To perform processing for ${input.name}.`,
+        lawfulBasis: 'legitimate_interests', // Default fallback
+        lawfulBasisDetail: `Lawful basis needs review. Flagged from onboarding.`,
+        dataSubjectCategories: ['general_public'],
+        processingType: ['collection', 'storage'],
+        source: 'onboarding_manual', // Flag it as manually created during onboarding!
+        status: 'draft', // Flag for review
+      }).returning();
       return activity;
     }),
 
