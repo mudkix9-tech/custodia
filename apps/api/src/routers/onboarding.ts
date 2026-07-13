@@ -954,27 +954,82 @@ export const onboardingRouter = router({
   generatePolicy: protectedProcedure
     .input(z.object({}))
     .mutation(async ({ ctx }) => {
-      // Stub for policy generation - creates the draft record
-      // In reality this might call the AI or template engine
-
-      const [org] = await ctx.db.select({ slug: organizations.slug })
+      // Fetch organization info
+      const [org] = await ctx.db.select()
         .from(organizations)
         .where(eq(organizations.id, ctx.user!.orgId));
+
+      // Fetch processing activities
+      const activities = await ctx.db.select({
+        name: processingActivities.name,
+        description: processingActivities.description,
+        lawfulBasis: processingActivities.lawfulBasis,
+      })
+      .from(processingActivities)
+      .where(eq(processingActivities.organizationId, ctx.user!.orgId));
+
+      // Fetch organization vendors
+      const orgVendors = await ctx.db.select({
+        name: vendors.name,
+      })
+      .from(organizationVendors)
+      .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+      .where(eq(organizationVendors.organizationId, ctx.user!.orgId));
+
+      const vendorNames = orgVendors.map((v: any) => v.name);
 
       const [policy] = await ctx.db.insert(privacyPolicies).values({
         organizationId: ctx.user!.orgId,
         name: 'Website Privacy Policy',
-
         type: 'privacy_policy',
         language: 'en',
-
       }).returning();
+
+      // Format custom policy content
+      const formattedDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      const activitiesSection = activities.length > 0
+        ? activities.map((a: any) => `### ${a.name}
+* **Description:** ${a.description || 'Not specified'}
+* **Lawful Basis:** ${a.lawfulBasis.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}`).join('\n\n')
+        : '* No processing activities documented yet.';
+
+      const vendorsSection = vendorNames.length > 0
+        ? vendorNames.map((v: any) => `* **${v}**: Used for business operations and data processing.`).join('\n')
+        : '* No third-party tools or processors are currently linked.';
+
+      const policyBody = `# Privacy Policy for ${org?.name || 'Our Organization'}
+
+**Last updated:** ${formattedDate}
+
+This Privacy Policy describes how we collect, use, and share your personal data. We are committed to protecting your privacy and complying with all applicable data protection regulations, including the General Data Protection Regulation (GDPR).
+
+## 1. Data We Process (Processing Activities)
+
+We process personal data for several business operations, relying on valid lawful bases under GDPR:
+
+${activitiesSection}
+
+## 2. Third-Party Service Providers (Data Processors)
+
+We share personal data with the following third-party vendors to facilitate our business operations:
+
+${vendorsSection}
+
+## 3. Contact Us
+
+If you have questions about this policy, your data rights, or how we handle your personal data, please contact our privacy officer at ${org?.name || 'our offices'}.
+`;
 
       await ctx.db.insert(policyVersions).values({
         policyId: policy!.id,
         versionNumber: 1,
-        contentHtml: '# Privacy Policy\n\nThis policy is auto-generated based on your Processing Activities.', contentMarkdown: '# Privacy Policy\n\nThis policy is auto-generated based on your Processing Activities.',
-
+        contentHtml: policyBody,
+        contentMarkdown: policyBody,
         createdBy: ctx.user!.id,
       });
 
@@ -982,7 +1037,18 @@ export const onboardingRouter = router({
         .set({ onboardingStep: 4 })
         .where(eq(organizations.id, ctx.user!.orgId));
 
-      return { policyId: policy!.id, publicUrlPath: `/legal/${org?.slug}/privacy` };
+      return {
+        policyId: policy!.id,
+        publicUrlPath: `/legal/${org?.slug}/privacy`,
+        orgName: org?.name || 'Our Organization',
+        activities: activities.map((a: any) => ({
+          name: a.name,
+          description: a.description,
+          lawfulBasis: a.lawfulBasis,
+        })),
+        vendors: vendorNames,
+        policyText: policyBody,
+      };
     }),
 
   publishPolicy: protectedProcedure
