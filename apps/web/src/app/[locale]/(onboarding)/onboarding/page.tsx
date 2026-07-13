@@ -113,6 +113,8 @@ export default function OnboardingPage() {
     router.push('/dashboard');
   };
 
+  const companySize = (status?.settings as any)?.companySize || '1-4';
+
   if (loading) {
     return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>;
   }
@@ -125,7 +127,7 @@ export default function OnboardingPage() {
       {currentStep === 2 && <Step2AddTools onNext={handleStep2} industry={industry} />}
       {currentStep === 3 && <Step3CreateActivities templates={templates} onNext={handleStep3} />}
       {currentStep === 4 && <Step4GeneratePolicy policyPreview={policyData} onNext={handleStep4} />}
-      {currentStep === 5 && <Step5InviteTeam onNext={handleStep5} />}
+      {currentStep === 5 && <Step5InviteTeam onNext={handleStep5} companySize={companySize} />}
       {currentStep === 6 && <Step6Complete summary={summary} onComplete={handleComplete} />}
     </>
   );

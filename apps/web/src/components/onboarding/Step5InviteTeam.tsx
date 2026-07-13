@@ -2,17 +2,35 @@
 
 import React, { useState } from 'react';
 
-export function Step5InviteTeam({ onNext }: { onNext: (invites: any[]) => void }) {
-  const [invites, setInvites] = useState([{ email: '', role: 'member' }]);
+interface Step5Props {
+  onNext: (invites: any[]) => void;
+  companySize?: string;
+}
+
+export function Step5InviteTeam({ onNext, companySize }: Step5Props) {
+  const [invites, setInvites] = useState<{ email: string; role: string }[]>(() => {
+    const isLarge = companySize && ['26-50', '51-100', '100+'].includes(companySize);
+    return isLarge
+      ? [
+          { email: '', role: 'member' },
+          { email: '', role: 'member' },
+          { email: '', role: 'member' },
+        ]
+      : [{ email: '', role: 'member' }];
+  });
 
   const handleAdd = () => {
-    if (invites.length < 5) {
+    if (invites.length < 10) {
       setInvites([...invites, { email: '', role: 'member' }]);
     }
   };
 
   const handleRemove = (index: number) => {
-    setInvites(invites.filter((_, i) => i !== index));
+    if (invites.length <= 1) {
+      setInvites([{ email: '', role: 'member' }]);
+    } else {
+      setInvites(invites.filter((_, i) => i !== index));
+    }
   };
 
   const handleChange = (index: number, field: string, value: string) => {
@@ -35,52 +53,61 @@ export function Step5InviteTeam({ onNext }: { onNext: (invites: any[]) => void }
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="space-y-4 mb-6">
+        {/* Workspace Owner Context Indicator */}
+        <div className="mb-6 p-3 bg-gray-50 border border-gray-200/60 rounded-xl text-xs text-gray-600 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+          <span>You are logged in as the <strong>Workspace Owner</strong>. Invites will be sent to the colleagues below.</span>
+        </div>
+
+        <div className="space-y-3 mb-6">
           {invites.map((invite, index) => (
-            <div key={index} className="flex gap-4">
+            <div key={index} className="flex gap-3 items-center">
               <input
                 type="email"
                 placeholder="colleague@example.com"
                 value={invite.email}
                 onChange={(e) => handleChange(index, 'email', e.target.value)}
-                className="flex-1 px-4 py-2 border rounded-md"
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
               <select
                 value={invite.role}
                 onChange={(e) => handleChange(index, 'role', e.target.value)}
-                className="w-32 px-3 py-2 border rounded-md bg-gray-50"
+                className="w-32 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white font-normal text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="admin">Admin</option>
                 <option value="member">Member</option>
                 <option value="viewer">Viewer</option>
               </select>
-              {invites.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => handleRemove(index)}
-                  className="text-gray-400 hover:text-red-500 p-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => handleRemove(index)}
+                className="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0"
+                title={invites.length <= 1 ? 'Clear row' : 'Remove row'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
             </div>
           ))}
         </div>
 
-        {invites.length < 5 && (
+        {invites.length < 10 && (
           <button
             type="button"
             onClick={handleAdd}
-            className="text-blue-600 font-medium text-sm flex items-center hover:text-blue-800 mb-8"
+            className="text-blue-600 font-semibold text-sm flex items-center hover:text-blue-800 mb-8 transition-colors"
           >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
             Add another team member
           </button>
         )}
 
-        <div className="bg-blue-50 p-4 rounded-lg mb-8 text-sm text-blue-800">
-          <p className="font-medium mb-1">Why invite your team?</p>
-          <ul className="list-disc pl-5 space-y-1">
+        <div className="bg-blue-50 p-4 border border-blue-100 rounded-xl mb-8 text-sm text-blue-800">
+          <p className="font-semibold mb-1">Why invite your team?</p>
+          <ul className="list-disc pl-5 space-y-1 text-xs">
             <li>Everyone can report data breaches (72-hour deadline requires fast response)</li>
             <li>Team members can complete mandatory GDPR training</li>
             <li>Audit trail shows individual accountability</li>
@@ -97,9 +124,9 @@ export function Step5InviteTeam({ onNext }: { onNext: (invites: any[]) => void }
           </button>
           <button
             type="submit"
-            className="bg-blue-600 text-white font-medium py-2 px-8 rounded-md hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-lg hover:bg-blue-700 transition"
           >
-            Send invitations
+            Send invitations and continue
           </button>
         </div>
       </form>
