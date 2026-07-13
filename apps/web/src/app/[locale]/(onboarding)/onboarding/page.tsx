@@ -131,7 +131,7 @@ export default function OnboardingPage() {
 
   const handleComplete = async (targetPath?: string) => {
     await completeOnboarding.mutateAsync();
-    router.push(targetPath || '/dashboard');
+    window.location.href = targetPath || '/dashboard';
   };
 
   const companySize = (status?.settings as any)?.companySize || '1-4';
