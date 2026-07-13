@@ -599,7 +599,7 @@ export const onboardingRouter = router({
               const url = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`);
               return url.hostname.replace(/^www\./, '');
             } catch (e) {
-              return urlStr.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+              return urlStr.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0] || '';
             }
           };
 
@@ -638,20 +638,53 @@ export const onboardingRouter = router({
 
   saveVendors: protectedProcedure
     .input(z.object({
-      vendorIds: z.array(z.string()), // Accept string IDs temporarily for mock data
+      vendorIds: z.array(z.string()),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (input.vendorIds.length > 0) {
-        // Find existing vendors to not duplicate
+      const resolvedVendorIds: string[] = [];
+
+      for (const id of input.vendorIds) {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        if (isUuid) {
+          resolvedVendorIds.push(id);
+        } else {
+          // Normalize the name/slug
+          const slug = id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          
+          // Try to find an existing global or local vendor
+          const [found] = await ctx.db.select()
+            .from(vendors)
+            .where(eq(vendors.slug, slug));
+
+          if (found) {
+            resolvedVendorIds.push(found.id);
+          } else {
+            // Create a custom vendor for this organization
+            const name = id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const [newVendor] = await ctx.db.insert(vendors).values({
+              organizationId: ctx.user!.orgId,
+              name,
+              slug,
+              isGlobal: false,
+              description: 'Manually added during onboarding',
+              category: 'Custom Tools',
+            }).returning();
+            resolvedVendorIds.push(newVendor.id);
+          }
+        }
+      }
+
+      if (resolvedVendorIds.length > 0) {
+        // Find existing organization vendors to avoid duplication
         const existing = await ctx.db.select({ vendorId: organizationVendors.vendorId })
           .from(organizationVendors)
           .where(and(
             eq(organizationVendors.organizationId, ctx.user!.orgId),
-            inArray(organizationVendors.vendorId, input.vendorIds)
+            inArray(organizationVendors.vendorId, resolvedVendorIds)
           ));
 
         const existingIds = existing.map((e: any) => e.vendorId);
-        const toAdd = input.vendorIds.filter((id: any) => !existingIds.includes(id));
+        const toAdd = resolvedVendorIds.filter((id: any) => !existingIds.includes(id));
 
         if (toAdd.length > 0) {
           await ctx.db.insert(organizationVendors).values(
