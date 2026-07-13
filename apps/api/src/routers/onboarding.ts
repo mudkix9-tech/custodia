@@ -1,7 +1,7 @@
 import { router, protectedProcedure, requireRole } from '../trpc.js';
 import { z } from 'zod';
 import { db } from '../db.js';
-import { eq, and, inArray, sql } from 'drizzle-orm';
+import { eq, and, inArray, sql, isNull } from 'drizzle-orm';
 import {
   organizations,
   organizationVendors,
@@ -14,7 +14,8 @@ import {
   policyVersions,
   users,
   auditLogs,
-  consentDomains
+  consentDomains,
+  consentCookies
 } from 'db';
 import { cmpJobsQueue } from '../workers/cmp.js';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
@@ -678,7 +679,71 @@ export const onboardingRouter = router({
         settings: organizations.settings,
       }).from(organizations).where(eq(organizations.id, ctx.user!.orgId));
 
-      return org;
+      if (!org) return null;
+
+      // Get vendors count
+      const [vendorsCountRes] = await ctx.db.select({ count: sql<number>`count(*)` })
+        .from(organizationVendors)
+        .where(eq(organizationVendors.organizationId, ctx.user!.orgId));
+
+      // Get activities count
+      const [activitiesCountRes] = await ctx.db.select({ count: sql<number>`count(*)` })
+        .from(processingActivities)
+        .where(and(
+          eq(processingActivities.organizationId, ctx.user!.orgId),
+          isNull(processingActivities.deletedAt)
+        ));
+
+      // Get policies count
+      const [policiesCountRes] = await ctx.db.select({ count: sql<number>`count(*)` })
+        .from(privacyPolicies)
+        .where(eq(privacyPolicies.organizationId, ctx.user!.orgId));
+
+      // Get published policy check
+      const [publishedPolicy] = await ctx.db.select()
+        .from(privacyPolicies)
+        .where(and(
+          eq(privacyPolicies.organizationId, ctx.user!.orgId),
+          sql`published_at is not null`
+        ))
+        .limit(1);
+
+      // Get team invites count (excluding current user)
+      const teamMembers = await ctx.db.select()
+        .from(users)
+        .where(eq(users.organizationId, ctx.user!.orgId));
+      const invitesCount = Math.max(0, teamMembers.length - 1);
+
+      // Get cookie scan details
+      const [domainData] = await ctx.db.select()
+        .from(consentDomains)
+        .where(eq(consentDomains.organizationId, ctx.user!.orgId))
+        .limit(1);
+
+      let cookieCount = 0;
+      let domainName = '';
+      let isScanning = false;
+
+      if (domainData) {
+        domainName = domainData.domain;
+        const [cookiesCountRes] = await ctx.db.select({ count: sql<number>`count(*)` })
+          .from(consentCookies)
+          .where(eq(consentCookies.domainId, domainData.id));
+        cookieCount = Number(cookiesCountRes?.count || 0);
+        isScanning = !domainData.lastScanAt;
+      }
+
+      return {
+        ...org,
+        vendorsCount: Number(vendorsCountRes?.count || 0),
+        activitiesCount: Number(activitiesCountRes?.count || 0),
+        policyPublished: !!publishedPolicy,
+        policyExists: Number(policiesCountRes?.count || 0) > 0,
+        invitesCount,
+        cookieCount,
+        domainName,
+        isScanning,
+      };
     }),
 
   saveOrgProfile: protectedProcedure

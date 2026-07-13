@@ -20,7 +20,11 @@ export default function OnboardingPage() {
     vendorsCount: 0,
     activitiesCount: 0,
     policyPublished: false,
-    invitesCount: 0
+    policyExists: false,
+    invitesCount: 0,
+    cookieCount: 0,
+    domainName: '',
+    isScanning: false,
   });
 
   const { data: status, isLoading: statusLoading } = trpc.onboarding.getStatus.useQuery();
@@ -37,6 +41,12 @@ export default function OnboardingPage() {
   const publishPolicy = trpc.onboarding.publishPolicy.useMutation();
   const inviteTeam = trpc.onboarding.inviteTeam.useMutation();
   const completeOnboarding = trpc.onboarding.complete.useMutation();
+  const dismiss = trpc.onboarding.dismiss.useMutation();
+
+  const handleDismiss = async () => {
+    await dismiss.mutateAsync();
+    window.location.href = '/dashboard';
+  };
 
   const [templates, setTemplates] = useState<any[]>([]);
   const [policyData, setPolicyData] = useState<any>(null);
@@ -52,6 +62,17 @@ export default function OnboardingPage() {
           loadTemplates(industry);
         }
       }
+      setSummary({
+        vendorsCount: (status as any).vendorsCount || 0,
+        activitiesCount: (status as any).activitiesCount || 0,
+        policyPublished: (status as any).policyPublished || false,
+        policyExists: (status as any).policyExists || false,
+        invitesCount: (status as any).invitesCount || 0,
+        cookieCount: (status as any).cookieCount || 0,
+        domainName: (status as any).domainName || '',
+        isScanning: (status as any).isScanning || false,
+      });
+
       setLoading(false);
     }
   }, [status, statusLoading, router]);
@@ -108,9 +129,9 @@ export default function OnboardingPage() {
     setCurrentStep(6);
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async (targetPath?: string) => {
     await completeOnboarding.mutateAsync();
-    router.push('/dashboard');
+    router.push(targetPath || '/dashboard');
   };
 
   const companySize = (status?.settings as any)?.companySize || '1-4';
@@ -121,14 +142,32 @@ export default function OnboardingPage() {
 
   return (
     <>
-      <OnboardingProgress currentStep={currentStep} totalSteps={6} />
+      <header className="bg-white border-b px-6 py-4 flex justify-between items-center w-full shrink-0">
+        <div className="flex items-center">
+          <div className="text-xl font-bold text-gray-900">Privaro</div>
+        </div>
+        {currentStep < 6 ? (
+          <button onClick={handleDismiss} className="text-sm text-gray-500 hover:text-gray-700">
+            Save and exit
+          </button>
+        ) : (
+          <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2.5 py-0.5 rounded-full font-semibold">
+            Setup Complete
+          </span>
+        )}
+      </header>
+      <main className="flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full px-4 py-8">
+        <OnboardingProgress currentStep={currentStep} totalSteps={6} />
 
-      {currentStep === 1 && <Step1OrgProfile onNext={handleStep1} />}
-      {currentStep === 2 && <Step2AddTools onNext={handleStep2} industry={industry} />}
-      {currentStep === 3 && <Step3CreateActivities templates={templates} onNext={handleStep3} />}
-      {currentStep === 4 && <Step4GeneratePolicy policyPreview={policyData} onNext={handleStep4} />}
-      {currentStep === 5 && <Step5InviteTeam onNext={handleStep5} companySize={companySize} />}
-      {currentStep === 6 && <Step6Complete summary={summary} onComplete={handleComplete} />}
+        <div className="mt-8">
+          {currentStep === 1 && <Step1OrgProfile onNext={handleStep1} />}
+          {currentStep === 2 && <Step2AddTools onNext={handleStep2} industry={industry} />}
+          {currentStep === 3 && <Step3CreateActivities templates={templates} onNext={handleStep3} />}
+          {currentStep === 4 && <Step4GeneratePolicy policyPreview={policyData} onNext={handleStep4} />}
+          {currentStep === 5 && <Step5InviteTeam onNext={handleStep5} companySize={companySize} />}
+          {currentStep === 6 && <Step6Complete summary={summary} onComplete={handleComplete} />}
+        </div>
+      </main>
     </>
   );
 }
