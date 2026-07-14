@@ -242,7 +242,7 @@ export function DataGrid<TData, TValue>({
 
       {/* FOOTERS & PAGINATION */}
       {isFull ? (
-        <div className="flex items-center justify-between text-[12.5px] text-ink-500">
+        <div className="flex items-center justify-between text-[12.5px] text-ink-500 px-4 pb-4">
           <div>
             Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
             {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, data.length)} of{' '}
