@@ -238,6 +238,11 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 - Training module per-language content support
 - hreflang tags for SEO
 
+### App Dashboard Layout & Navigation UX (Polished)
+- **Sidebar Locking**: Locked the root app dashboard layout wrapper height to exactly `h-screen overflow-hidden` inside the app router layout `app/[locale]/(app)/layout.tsx`. This secures the left sidebar statically in the viewport on desktop and prevents full browser window double-scrolling.
+- **Scrollable Header**: Repositioned the top `<Header />` inside the scrollable `<main>` content container and updated its layout style to `relative` (from `sticky`). When a user scrolls down dashboard content, the top white bar scrolls up and disappears naturally.
+- **Zero-Error Verification**: Verified all router compilation pathways build cleanly under Next.js Turbopack production targets.
+
 ---
 
 ## 7. Code Review Fixes — All Complete (22 Fixes)
@@ -329,7 +334,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 |---|---|---|
 | 5 training module courses (full slides, scenarios, quizzes) | 3-4 days | Critical |
 | 100+ vendor profiles with real data (DPA URLs, locations, certs) | 3-5 days | Critical |
-| RAG corpus (GDPR articles + EDPB guidelines embedded into pgvector) | ✅ Complete | Critical |
+| RAG corpus (GDPR articles + recitals + EDPB guidelines embedded into pgvector) | ✅ Complete (99 articles, 173 recitals, 1,065 guidelines chunks seeded with 3072-dim gemini-embedding-001) | Critical |
 | Legal pages (own privacy policy, terms, DPA, sub-processor list) | 1-2 days | Critical |
 | Marketing site copy refinement | 1-2 days | Critical |
 | 8 pillar SEO articles | 2 weeks | High |
