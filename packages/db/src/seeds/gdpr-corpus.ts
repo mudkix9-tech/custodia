@@ -57,6 +57,7 @@ export async function seedCorpus() {
   
   const corpusDir = path.join(process.cwd(), 'corpus');
   const gdprPath = path.join(corpusDir, 'gdpr-corpus.json');
+  const recitalsPath = path.join(corpusDir, 'gdpr-recitals-corpus.json');
   const edpbPath = path.join(corpusDir, 'edpb-corpus.json');
   
   try {
@@ -70,6 +71,16 @@ export async function seedCorpus() {
     const gdprDocs: CorpusDocument[] = JSON.parse(gdprData);
     console.log(`Loaded ${gdprDocs.length} GDPR articles.`);
 
+    // Read the scraped GDPR recitals
+    let recitalsDocs: CorpusDocument[] = [];
+    try {
+      const recitalsData = await fs.readFile(recitalsPath, 'utf-8');
+      recitalsDocs = JSON.parse(recitalsData);
+      console.log(`Loaded ${recitalsDocs.length} GDPR recitals.`);
+    } catch {
+      console.warn(`GDPR recitals corpus file not found at ${recitalsPath}. Proceeding without recitals.`);
+    }
+
     // Read the scraped EDPB guidelines
     let edpbDocs: CorpusDocument[] = [];
     try {
@@ -80,7 +91,7 @@ export async function seedCorpus() {
       console.warn(`EDPB corpus file not found at ${edpbPath}. Proceeding with GDPR only.`);
     }
 
-    const allDocs = [...gdprDocs, ...edpbDocs];
+    const allDocs = [...gdprDocs, ...recitalsDocs, ...edpbDocs];
     console.log(`Total documents/chunks to seed: ${allDocs.length}`);
 
     // Clear existing embeddings from database
@@ -88,6 +99,7 @@ export async function seedCorpus() {
     await db.delete(documentEmbeddings).where(
       or(
         eq(documentEmbeddings.sourceType, 'gdpr_article'),
+        eq(documentEmbeddings.sourceType, 'gdpr_recital'),
         eq(documentEmbeddings.sourceType, 'edpb_document')
       )
     );
