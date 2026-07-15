@@ -52,7 +52,7 @@ export function Header() {
   };
 
   return (
-    <div className="sticky top-0 z-20 bg-white border-b border-ink-900/10 px-4 py-3 flex items-center justify-between lg:justify-end">
+    <div className="relative z-20 bg-white border-b border-ink-900/10 px-4 py-3 flex items-center justify-between lg:justify-end">
       {/* Mobile Logo & Menu */}
       <div className="flex items-center gap-2 lg:hidden">
         <button className="p-2 -ml-2 rounded-md hover:bg-bone-100 text-ink-600">

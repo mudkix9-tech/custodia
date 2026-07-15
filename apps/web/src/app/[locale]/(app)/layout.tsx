@@ -15,12 +15,12 @@ export default function AppLayout({
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-white focus:text-ink-900 focus:px-4 focus:py-2 focus:rounded focus:shadow-xl">
         Skip to main content
       </a>
-      <div className="min-h-screen flex">
+      <div className="h-screen flex overflow-hidden">
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-bone-50">
           <OfflineBanner />
-          <Header />
-          <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto bg-bone-50 outline-none">
+          <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto outline-none">
+            <Header />
             {children}
           </main>
         </div>
