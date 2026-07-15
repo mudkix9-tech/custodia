@@ -51,11 +51,11 @@ async function scrapeGdpr() {
         
         // Extract Title
         const titleMatch = html.match(/<span class="dsgvo-title">([^<]+)<\/span>/);
-        const title = titleMatch ? titleMatch[1].trim() : `Article ${artNum}`;
+        const title = (titleMatch && titleMatch[1]) ? titleMatch[1].trim() : `Article ${artNum}`;
         
         // Extract Entry Content
         const contentBlockMatch = html.match(/<div class="entry-content">([\s\S]*?)<\/div>/);
-        if (!contentBlockMatch) {
+        if (!contentBlockMatch || !contentBlockMatch[1]) {
           console.warn(`No content block found for Article ${artNum}`);
           return;
         }

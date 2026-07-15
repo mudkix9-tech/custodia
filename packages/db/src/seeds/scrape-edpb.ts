@@ -23,7 +23,7 @@ interface ScrapedChunk {
   };
 }
 
-async function fetchWithRetry(url: string, retries = 3): Promise<string | Buffer, any> {
+async function fetchWithRetry(url: string, retries = 3): Promise<string | Buffer> {
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url);
