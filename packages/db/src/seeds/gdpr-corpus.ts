@@ -29,8 +29,7 @@ interface CorpusDocument {
 
 async function generateEmbedding(text: string) {
   if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'dummy_key') {
-    // Return dummy embedding for testing if no API key
-    return new Array(1536).fill(0).map(() => Math.random());
+    throw new Error("A valid OPENAI_API_KEY must be provided in the .env file to generate production-ready vector embeddings. DO NOT use dummy keys.");
   }
 
   const response = await openai.embeddings.create({
