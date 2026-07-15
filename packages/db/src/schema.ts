@@ -1070,7 +1070,7 @@ export const documentEmbeddings = pgTable('document_embeddings', {
   id: uuid('id').primaryKey().defaultRandom(),
   
   sourceType: varchar('source_type', { length: 50 }).notNull(),
-  sourceReference: varchar('source_reference', { length: 255 }),
+  sourceReference: text('source_reference'),
   sourceUrl: varchar('source_url', { length: 500 }),
   
   content: text('content').notNull(),

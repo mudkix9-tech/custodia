@@ -8,9 +8,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { GoogleGenAI } from '@google/genai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { TRPCError } from '@trpc/server';
-// @ts-ignore
-import * as pdfParseModule from 'pdf-parse';
-const pdfParse = (pdfParseModule as any).default || pdfParseModule;
+import { PDFParse } from 'pdf-parse';
 
 const ai = new GoogleGenAI({
   vertexai: true,
@@ -191,8 +189,10 @@ If the answer is not in the provided context, inform the user you do not have en
 
       try {
         const buffer = Buffer.from(input.fileBase64, 'base64');
-        const pdfData = await pdfParse(buffer);
-        const dpaText = pdfData.text;
+        const parser = new PDFParse({ data: buffer });
+        const pdfData = await parser.getText();
+        const dpaText = pdfData.text || '';
+        await parser.destroy().catch(() => {});
 
         const systemPrompt = `You are a GDPR expert AI. Analyze the provided Data Processing Agreement (DPA) against Article 28 requirements.
 Return a structured JSON analysis. Do NOT return markdown formatting around the JSON, just the raw JSON object.

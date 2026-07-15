@@ -8,7 +8,7 @@ const { Pool } = pkg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL || 'postgres://privaro:privaro_password@localhost:5432/privaro_db' });
 import * as schema from '../schema.js';
 const db = drizzle(pool, { schema });
-import { eq } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 import { documentEmbeddings } from '../schema.js';
 import { GoogleGenAI } from '@google/genai';
 import * as fs from 'fs/promises';
@@ -35,13 +35,14 @@ async function generateEmbedding(text: string) {
     contents: text,
   });
 
-  if (!response.embeddings || response.embeddings.length === 0) {
+  const firstEmbedding = response.embeddings?.[0];
+  if (!firstEmbedding || !firstEmbedding.values) {
     throw new Error('No embeddings returned from Gemini/Vertex AI');
   }
 
-  const values = response.embeddings[0].values;
-  if (!values || values.length !== 3072) {
-    throw new Error(`Expected 3072 dimensions, got ${values?.length || 0}`);
+  const values = firstEmbedding.values;
+  if (values.length !== 3072) {
+    throw new Error(`Expected 3072 dimensions, got ${values.length}`);
   }
 
   return values;
@@ -52,28 +53,46 @@ function getHash(text: string) {
 }
 
 export async function seedCorpus() {
-  console.log('Starting GDPR Corpus seeding...');
+  console.log('Starting GDPR and EDPB Corpus seeding...');
   
   const corpusDir = path.join(process.cwd(), 'corpus');
-  const corpusPath = path.join(corpusDir, 'gdpr-corpus.json');
+  const gdprPath = path.join(corpusDir, 'gdpr-corpus.json');
+  const edpbPath = path.join(corpusDir, 'edpb-corpus.json');
   
   try {
-    // Read the scraped corpus file
-    let fileData: string;
+    // Read the scraped GDPR articles
+    let gdprData: string;
     try {
-      fileData = await fs.readFile(corpusPath, 'utf-8');
+      gdprData = await fs.readFile(gdprPath, 'utf-8');
     } catch {
-      throw new Error(`Corpus file not found at ${corpusPath}. Please run the scraper first: npx.cmd tsx src/seeds/scrape-gdpr.ts`);
+      throw new Error(`GDPR corpus file not found at ${gdprPath}. Please run the scraper first: npx.cmd tsx src/seeds/scrape-gdpr.ts`);
+    }
+    const gdprDocs: CorpusDocument[] = JSON.parse(gdprData);
+    console.log(`Loaded ${gdprDocs.length} GDPR articles.`);
+
+    // Read the scraped EDPB guidelines
+    let edpbDocs: CorpusDocument[] = [];
+    try {
+      const edpbData = await fs.readFile(edpbPath, 'utf-8');
+      edpbDocs = JSON.parse(edpbData);
+      console.log(`Loaded ${edpbDocs.length} EDPB guidelines chunks.`);
+    } catch {
+      console.warn(`EDPB corpus file not found at ${edpbPath}. Proceeding with GDPR only.`);
     }
 
-    const documents: CorpusDocument[] = JSON.parse(fileData);
-    console.log(`Loaded ${documents.length} articles from corpus JSON.`);
+    const allDocs = [...gdprDocs, ...edpbDocs];
+    console.log(`Total documents/chunks to seed: ${allDocs.length}`);
 
-    // Clear existing GDPR articles first for a clean seed
-    console.log("Clearing existing GDPR article embeddings from database...");
-    await db.delete(documentEmbeddings).where(eq(documentEmbeddings.sourceType, 'gdpr_article'));
+    // Clear existing embeddings from database
+    console.log("Clearing existing GDPR and EDPB embeddings from database...");
+    await db.delete(documentEmbeddings).where(
+      or(
+        eq(documentEmbeddings.sourceType, 'gdpr_article'),
+        eq(documentEmbeddings.sourceType, 'edpb_document')
+      )
+    );
     
-    for (const doc of documents) {
+    for (const doc of allDocs) {
       const hash = getHash(doc.content);
       
       console.log(`Generating embedding for: ${doc.sourceReference}`);
