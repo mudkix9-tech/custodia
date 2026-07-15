@@ -80,7 +80,7 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
 
     const cookies = await db.select().from(consentCookies).where(eq(consentCookies.domainId, domain.id));
     
-    const lang = (request.query as any)?.lang || request.headers['accept-language']?.split(',')[0].split('-')[0] || 'en';
+    const lang = (request.query as any)?.lang || request.headers['accept-language']?.split(',')[0]?.split('-')[0] || 'en';
 
     const translations: Record<string, any> = {
       en: {

@@ -10,12 +10,14 @@ import * as schema from '../schema.js';
 const db = drizzle(pool, { schema });
 import { eq } from 'drizzle-orm';
 import { documentEmbeddings } from '../schema.js';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import * as fs from 'fs/promises';
 import crypto from 'crypto';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'dummy_key',
+const ai = new GoogleGenAI({
+  vertexai: true,
+  project: process.env.GCP_PROJECT_ID || 'privaro',
+  location: process.env.GCP_LOCATION || 'us-central1',
 });
 
 // For demonstration, we assume corpus files are JSON files with a specific structure.
@@ -28,16 +30,21 @@ interface CorpusDocument {
 }
 
 async function generateEmbedding(text: string) {
-  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'dummy_key') {
-    throw new Error("A valid OPENAI_API_KEY must be provided in the .env file to generate production-ready vector embeddings. DO NOT use dummy keys.");
+  const response = await ai.models.embedContent({
+    model: 'gemini-embedding-001',
+    contents: text,
+  });
+
+  if (!response.embeddings || response.embeddings.length === 0) {
+    throw new Error('No embeddings returned from Gemini/Vertex AI');
   }
 
-  const response = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
-    input: text,
-    encoding_format: 'float',
-  });
-  return response.data[0]?.embedding || [];
+  const values = response.embeddings[0].values;
+  if (!values || values.length !== 3072) {
+    throw new Error(`Expected 3072 dimensions, got ${values?.length || 0}`);
+  }
+
+  return values;
 }
 
 function getHash(text: string) {

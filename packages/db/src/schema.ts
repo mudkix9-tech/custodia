@@ -1078,12 +1078,11 @@ export const documentEmbeddings = pgTable('document_embeddings', {
   
   metadata: jsonb('metadata').default({}),
   
-  embedding: vector('embedding', { dimensions: 1536 }),
+  embedding: vector('embedding', { dimensions: 3072 }),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
-  vectorIdx: index('idx_embeddings_vector').using('hnsw', t.embedding.op('vector_cosine_ops')),
   sourceIdx: index('idx_embeddings_source').on(t.sourceType),
   hashIdx: index('idx_embeddings_hash').on(t.contentHash),
 }));
@@ -1096,12 +1095,11 @@ export const organizationEmbeddings = pgTable('organization_embeddings', {
   content: text('content').notNull(),
   contentHash: varchar('content_hash', { length: 64 }),
   metadata: jsonb('metadata').default({}),
-  embedding: vector('embedding', { dimensions: 1536 }),
+  embedding: vector('embedding', { dimensions: 3072 }),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
   orgIdx: index('idx_org_embeddings_org').on(t.organizationId),
-  vectorIdx: index('idx_org_embeddings_vector').using('hnsw', t.embedding.op('vector_cosine_ops')),
 }));
 
 // ============================================================================

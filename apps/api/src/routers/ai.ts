@@ -5,15 +5,17 @@ import {
   organizations 
 } from 'db';
 import { eq, and, sql } from 'drizzle-orm';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { TRPCError } from '@trpc/server';
 // @ts-ignore
 import * as pdfParseModule from 'pdf-parse';
 const pdfParse = (pdfParseModule as any).default || pdfParseModule;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'dummy_key',
+const ai = new GoogleGenAI({
+  vertexai: true,
+  project: process.env.GCP_PROJECT_ID || 'privaro',
+  location: process.env.GCP_LOCATION || 'us-central1',
 });
 
 const anthropic = new Anthropic({
@@ -21,16 +23,22 @@ const anthropic = new Anthropic({
 });
 
 async function generateEmbedding(text: string) {
-  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'dummy_key') {
-    return new Array(1536).fill(0).map(() => Math.random());
+  const response = await ai.models.embedContent({
+    model: 'gemini-embedding-001',
+    contents: text,
+  });
+
+  const firstEmbedding = response.embeddings?.[0];
+  if (!firstEmbedding || !firstEmbedding.values) {
+    throw new Error('No embeddings returned from Gemini/Vertex AI');
   }
 
-  const response = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
-    input: text,
-    encoding_format: 'float',
-  });
-  return response.data[0]?.embedding || [];
+  const values = firstEmbedding.values;
+  if (values.length !== 3072) {
+    throw new Error(`Expected 3072 dimensions, got ${values.length}`);
+  }
+
+  return values;
 }
 
 export const aiRouter = router({
