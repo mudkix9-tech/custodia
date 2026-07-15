@@ -44,6 +44,29 @@ async function fetchWithRetry(url: string, retries = 3): Promise<string | Buffer
   throw new Error("Failed to fetch");
 }
 
+function cleanPdfText(text: string): string {
+  const lines = text.split('\n');
+  const cleanLines = lines
+    .map(line => line.trim())
+    .filter(line => {
+      // 1. Remove table of contents lines (lines with 4 or more consecutive periods)
+      if (/\.{4,}/.test(line)) return false;
+      
+      // 2. Remove page numbers: e.g., "-- 5 of 27 --"
+      if (/^--\s*\d+\s*of\s*\d+\s*--$/i.test(line)) return false;
+      
+      // 3. Remove header/footer markers: e.g., "5 | Adopted"
+      if (/^\d+\s*\|\s*Adopted$/i.test(line)) return false;
+      
+      // 4. Remove empty lines
+      if (!line) return false;
+      
+      return true;
+    });
+  return cleanLines.join('\n');
+}
+
+
 function chunkText(text: string, chunkSize = 1500, overlap = 200): string[] {
   const cleanText = text.replace(/\s+/g, ' ').trim();
   const chunks: string[] = [];
@@ -134,9 +157,9 @@ async function scrapeEdpb() {
       const relativeLink = card.find('a.document-card__link').attr('href') || '';
       const detailUrl = relativeLink.startsWith('http') ? relativeLink : `${BASE_URL}${relativeLink}`;
       
-      const title = card.find('.document-card__title').text().trim();
-      const documentType = card.find('.document-card__document-type').text().trim();
-      const date = card.find('.document-card__date time').text().trim() || card.find('.document-card__date').text().trim();
+      const title = card.find('h3').first().text().replace(/\s+/g, ' ').trim();
+      const documentType = card.find('.document-card__document-type').text().replace(/\s+/g, ' ').trim();
+      const date = (card.find('.document-card__date time').text() || card.find('.document-card__date').text()).replace(/\s+/g, ' ').trim();
 
       // Only parse core regulatory documents (Guidelines, Recommendations, Opinions)
       const allowedTypes = ['Guidelines', 'Recommendations', 'Opinions', 'Opinion', 'Guideline', 'Recommendation'];
@@ -180,7 +203,7 @@ async function scrapeEdpb() {
         console.log("Parsing PDF text...");
         const parser = new PDFParse({ data: pdfBuffer });
         const pdfData = await parser.getText();
-        const pdfText = pdfData.text || '';
+        const pdfText = cleanPdfText(pdfData.text || '');
         await parser.destroy().catch(() => {});
 
         // Chunk text
