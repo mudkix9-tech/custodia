@@ -329,7 +329,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 |---|---|---|
 | 5 training module courses (full slides, scenarios, quizzes) | 3-4 days | Critical |
 | 100+ vendor profiles with real data (DPA URLs, locations, certs) | 3-5 days | Critical |
-| RAG corpus (GDPR articles embedded into pgvector) | ✅ Complete | Critical |
+| RAG corpus (GDPR articles + EDPB guidelines embedded into pgvector) | ✅ Complete | Critical |
 | Legal pages (own privacy policy, terms, DPA, sub-processor list) | 1-2 days | Critical |
 | Marketing site copy refinement | 1-2 days | Critical |
 | 8 pillar SEO articles | 2 weeks | High |
