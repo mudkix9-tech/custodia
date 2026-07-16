@@ -59,6 +59,7 @@ export async function seedCorpus() {
   const gdprPath = path.join(corpusDir, 'gdpr-corpus.json');
   const recitalsPath = path.join(corpusDir, 'gdpr-recitals-corpus.json');
   const edpbPath = path.join(corpusDir, 'edpb-corpus.json');
+  const charterPath = path.join(corpusDir, 'charter-corpus.json');
   
   try {
     // Read the scraped GDPR articles
@@ -91,16 +92,28 @@ export async function seedCorpus() {
       console.warn(`EDPB corpus file not found at ${edpbPath}. Proceeding with GDPR only.`);
     }
 
-    const allDocs = [...gdprDocs, ...recitalsDocs, ...edpbDocs];
+    // Read the scraped EU Charter of Fundamental Rights
+    let charterDocs: CorpusDocument[] = [];
+    try {
+      const charterData = await fs.readFile(charterPath, 'utf-8');
+      charterDocs = JSON.parse(charterData);
+      console.log(`Loaded ${charterDocs.length} EU Charter documents.`);
+    } catch {
+      console.warn(`EU Charter corpus file not found at ${charterPath}. Proceeding without Charter documents.`);
+    }
+
+    const allDocs = [...gdprDocs, ...recitalsDocs, ...edpbDocs, ...charterDocs];
     console.log(`Total documents/chunks to seed: ${allDocs.length}`);
 
     // Clear existing embeddings from database
-    console.log("Clearing existing GDPR and EDPB embeddings from database...");
+    console.log("Clearing existing GDPR, EDPB, and Charter embeddings from database...");
     await db.delete(documentEmbeddings).where(
       or(
         eq(documentEmbeddings.sourceType, 'gdpr_article'),
         eq(documentEmbeddings.sourceType, 'gdpr_recital'),
-        eq(documentEmbeddings.sourceType, 'edpb_document')
+        eq(documentEmbeddings.sourceType, 'edpb_document'),
+        eq(documentEmbeddings.sourceType, 'charter_article'),
+        eq(documentEmbeddings.sourceType, 'charter_explanation')
       )
     );
     

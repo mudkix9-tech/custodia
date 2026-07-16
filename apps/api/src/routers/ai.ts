@@ -109,7 +109,7 @@ export const aiRouter = router({
       // 6. Assemble LLM Prompt
       let systemPrompt = `You are Privaro Co-Pilot, an expert AI GDPR assistant.
 Your goal is to answer questions strictly based on the provided GDPR regulations and the organization's specific context.
-ALWAYS cite the relevant Article, Recital, or EDPB Guideline when providing advice.
+ALWAYS cite the relevant Article, Recital, EDPB Guideline, or Charter Article when providing advice.
 If the answer is not in the provided context, inform the user you do not have enough information, rather than hallucinating.
 `;
 

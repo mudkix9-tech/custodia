@@ -1,0 +1,42 @@
+[
+  {
+    "sourceType": "charter_article",
+    "sourceReference": "Charter Article 7",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:12012P/TXT",
+    "content": "Charter Article 7 - Respect for private and family life\n\nEveryone has the right to respect for his or her private and family life, home and communications.",
+    "metadata": {
+      "articleNumber": 7,
+      "title": "Respect for private and family life"
+    }
+  },
+  {
+    "sourceType": "charter_article",
+    "sourceReference": "Charter Article 8",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:12012P/TXT",
+    "content": "Charter Article 8 - Protection of personal data\n\n1. Everyone has the right to the protection of personal data concerning him or her.\n2. Such data must be processed fairly for specified purposes and on the basis of the consent of the person concerned or some other legitimate basis laid down by law. Everyone has the right of access to data which has been collected concerning him or her, and the right to have it rectified.\n3. Compliance with these rules shall be subject to control by an independent authority.",
+    "metadata": {
+      "articleNumber": 8,
+      "title": "Protection of personal data"
+    }
+  },
+  {
+    "sourceType": "charter_explanation",
+    "sourceReference": "Explanation on Article 7",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32007X1214(01)",
+    "content": "Explanation on Article 7 — Respect for private and family life\n\nThe rights guaranteed in Article 7 correspond to those guaranteed by Article 8 of the ECHR. To take account of developments in technology the word ‘correspondence’ has been replaced by ‘communications’.\nIn accordance with Article 52(3), the meaning and scope of this right are the same as those of the corresponding article of the ECHR. Consequently, the limitations which may legitimately be imposed on this right are the same as those allowed by Article 8 of the ECHR:\n‘1. Everyone has the right to respect for his private and family life, his home and his correspondence.\n2. There shall be no interference by a public authority with the exercise of this right except such as is in accordance with the law and is necessary in a democratic society in the interests of national security, public safety or the economic well-being of the country, for the prevention of disorder or crime, for the protection of health or morals, or for the protection of the rights and freedoms of others.’",
+    "metadata": {
+      "articleNumber": 7,
+      "title": "Explanation on Article 7"
+    }
+  },
+  {
+    "sourceType": "charter_explanation",
+    "sourceReference": "Explanation on Article 8",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32007X1214(01)",
+    "content": "Explanation on Article 8 — Protection of personal data\n\nThis Article has been based on Article 286 of the Treaty establishing the European Community and Directive 95/46/EC of the European Parliament and of the Council on the protection of individuals with regard to the processing of personal data and on the free movement of such data (OJ L 281, 23.11.1995, p. 31) as well as on Article 8 of the ECHR and on the Council of Europe Convention of 28 January 1981 for the Protection of Individuals with regard to Automatic Processing of Personal Data, which has been ratified by all the Member States. Article 286 of the EC Treaty is now replaced by Article 16 of the Treaty on the Functioning of the European Union and Article 39 of the Treaty on European Union. Reference is also made to Regulation (EC) No 45/2001 of the European Parliament and of the Council on the protection of individuals with regard to the processing of personal data by the Community institutions and bodies and on the free movement of such data (OJ L 8, 12.1.2001, p. 1). The above-mentioned Directive and Regulation contain conditions and limitations for the exercise of the right to the protection of personal data.",
+    "metadata": {
+      "articleNumber": 8,
+      "title": "Explanation on Article 8"
+    }
+  }
+]
