@@ -15,9 +15,11 @@ import {
   users,
   auditLogs,
   consentDomains,
-  consentCookies
+  consentCookies,
+  vendorDiscoveries
 } from 'db';
 import { cmpJobsQueue } from '../workers/cmp.js';
+import { vendorJobsQueue } from '../workers/vendors.js';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
 
 export const AGNOSTIC_TEMPLATES = [
@@ -733,6 +735,14 @@ export const onboardingRouter = router({
         isScanning = !domainData.lastScanAt;
       }
 
+      // Count undocumented vendor discoveries
+      const [undocumentedVendorsCountRes] = await ctx.db.select({ count: sql<number>`count(*)` })
+        .from(vendorDiscoveries)
+        .where(and(
+          eq(vendorDiscoveries.organizationId, ctx.user!.orgId),
+          eq(vendorDiscoveries.status, 'undocumented')
+        ));
+
       return {
         ...org,
         vendorsCount: Number(vendorsCountRes?.count || 0),
@@ -743,6 +753,7 @@ export const onboardingRouter = router({
         cookieCount,
         domainName,
         isScanning,
+        undocumentedVendorsCount: Number(undocumentedVendorsCountRes?.count || 0),
       };
     }),
 
@@ -815,6 +826,16 @@ export const onboardingRouter = router({
               correlationId: (ctx.req as any).correlationId
             });
             console.log(`[Onboarding] Triggered cookie scan for domain: ${domainName}`);
+
+            // Trigger the vendor discovery background task
+            if (vendorJobsQueue) {
+              await vendorJobsQueue.add('vendor-discovery', {
+                organizationId: ctx.user!.orgId,
+                domain: domainName,
+                websiteUrl: websiteUrl
+              });
+              console.log(`[Onboarding] Triggered initial vendor discovery for domain: ${domainName}`);
+            }
           }
         } catch (scanErr: any) {
           console.error('[Onboarding] Failed to trigger cookie scan:', scanErr.message);

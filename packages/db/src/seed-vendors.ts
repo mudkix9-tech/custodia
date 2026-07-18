@@ -3,9 +3,13 @@ import { eq } from 'drizzle-orm';
 import postgres from 'postgres';
 import * as schema from './schema';
 import * as dotenv from 'dotenv';
-import { resolve } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
-dotenv.config({ path: resolve(__dirname, '../../apps/api/.env') });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error('DATABASE_URL is not set');
@@ -351,9 +355,59 @@ const VENDORS = [
     category: 'Construction',
     headquartersCountry: 'US',
     suggestedForIndustries: ['construction']
+  },
+  {
+    name: 'Google Analytics',
+    website: 'https://analytics.google.com',
+    category: 'Analytics',
+    suggestedForIndustries: ['generic'],
+    headquartersCountry: 'US',
+    dataProcessingLocations: ['Global'],
+    dpaAvailable: true,
+    dpaUrl: 'https://business.safety.google/adsprocessorterms/',
+    privacyPolicyUrl: 'https://policies.google.com/privacy',
+    euHostingAvailable: false,
+    securityCertifications: ['soc2_type2', 'iso27001'],
+    subProcessorListUrl: 'https://business.safety.google/adssubprocessors/',
+    transferMechanisms: ['standard_contractual_clauses'],
+    isPrivacyFriendly: false
+  },
+  {
+    name: 'Plausible Analytics',
+    website: 'https://plausible.io',
+    category: 'Analytics',
+    suggestedForIndustries: ['generic'],
+    headquartersCountry: 'EE',
+    dataProcessingLocations: ['EU'],
+    dpaAvailable: true,
+    dpaUrl: 'https://plausible.io/dpa',
+    privacyPolicyUrl: 'https://plausible.io/privacy',
+    euHostingAvailable: true,
+    euHostingDetail: '100% hosted in the EU on green energy servers.',
+    securityCertifications: [],
+    subProcessorListUrl: 'https://plausible.io/subprocessors',
+    transferMechanisms: [],
+    isPrivacyFriendly: true
+  },
+  {
+    name: 'Matomo Analytics',
+    website: 'https://matomo.org',
+    category: 'Analytics',
+    suggestedForIndustries: ['generic'],
+    headquartersCountry: 'FR',
+    dataProcessingLocations: ['EU', 'Global'],
+    dpaAvailable: true,
+    dpaUrl: 'https://matomo.org/matomo-cloud-dpa/',
+    privacyPolicyUrl: 'https://matomo.org/privacy-policy/',
+    euHostingAvailable: true,
+    euHostingDetail: 'Cloud version hosted in Germany. Self-hosted version runs entirely on your own infrastructure.',
+    securityCertifications: ['iso27001'],
+    subProcessorListUrl: 'https://matomo.org/subprocessors/',
+    transferMechanisms: [],
+    isPrivacyFriendly: true
   }
 ];
-
+ 
 async function seedVendors() {
   console.log('🌱 Seeding Global Vendors...');
   
@@ -368,10 +422,23 @@ async function seedVendors() {
       });
       console.log(`✅ Inserted ${v.name}`);
     } else {
-      console.log(`⏭️ Skipped ${v.name} (already exists)`);
+      await db.update(schema.vendors)
+        .set({ 
+          isPrivacyFriendly: v.isPrivacyFriendly ?? false,
+          category: v.category,
+          website: v.website,
+          headquartersCountry: v.headquartersCountry,
+          dpaAvailable: v.dpaAvailable,
+          dpaUrl: v.dpaUrl,
+          privacyPolicyUrl: v.privacyPolicyUrl,
+          transferMechanisms: v.transferMechanisms,
+          securityCertifications: v.securityCertifications
+        })
+        .where(eq(schema.vendors.id, existing.id));
+      console.log(`⏭️ Updated ${v.name} (already exists)`);
     }
   }
-
+ 
   console.log('✅ Global Vendors Seeded successfully!');
   process.exit(0);
 }

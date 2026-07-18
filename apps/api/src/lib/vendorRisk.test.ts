@@ -158,7 +158,137 @@ function runTests() {
   if (result4.score !== 10) {
     throw new Error(`Expected score 10, got ${result4.score}`);
   }
-
+ 
+  // Test Case 5: Questionnaire score modifier checks
+  const result5a = calculateVendorRisk(
+    {
+      headquartersCountry: 'DE',
+      securityCertifications: ['soc2_type2', 'iso27001'],
+      transferMechanisms: [],
+      knownIncidents: []
+    },
+    {
+      dpaStatus: 'signed',
+      dpaExpiresAt: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+      dataCategoriesShared: ['name', 'email'],
+      dataSubjectVolume: '<1K',
+      certifications: [],
+      transferMechanisms: [],
+      dpaClauseCoverage: {
+        documentedInstructions: true,
+        confidentiality: true,
+        securityMeasures: true,
+        subProcessorRestrictions: true,
+        dataSubjectRights: true,
+        securityBreachDpia: true,
+        deletionOnTermination: true,
+        auditRights: true
+      }
+    },
+    0,
+    -10 // excellent answers modifier
+  );
+  console.log('Test Case 5a (Excellent modifier -10) score:', result5a.score);
+  if (result5a.score !== 0) { // Base was 0, should stay 0 (clamped)
+    throw new Error(`Expected score 0, got ${result5a.score}`);
+  }
+ 
+  const result5b = calculateVendorRisk(
+    {
+      headquartersCountry: 'DE',
+      securityCertifications: [],
+      transferMechanisms: [],
+      knownIncidents: []
+    },
+    {
+      dpaStatus: 'signed',
+      dataCategoriesShared: ['name', 'email'],
+      dataSubjectVolume: '<1K',
+      certifications: [],
+      transferMechanisms: [],
+      dpaClauseCoverage: {
+        documentedInstructions: true,
+        confidentiality: false,
+        securityMeasures: false,
+        subProcessorRestrictions: false,
+        dataSubjectRights: false,
+        securityBreachDpia: false,
+        deletionOnTermination: false,
+        auditRights: false
+      }
+    },
+    0,
+    15 // severe gaps modifier
+  );
+  // Base: DE (0) + signed DPA 1/8 (15) + standard categories (0) + <1K (0) + 0 subs (0) + no certs (10) + no safeguards (0) + no breach (0) = 25 pts.
+  // Base (25) + Modifier (15) = 40 pts
+  console.log('Test Case 5b (Severe gaps modifier +15) score:', result5b.score);
+  if (result5b.score !== 40) {
+    throw new Error(`Expected score 40, got ${result5b.score}`);
+  }
+  if (result5b.level !== 'medium') {
+    throw new Error(`Expected level medium, got ${result5b.level}`);
+  }
+ 
+  // Test Case 6: Clamping boundaries
+  const result6a = calculateVendorRisk(
+    {
+      headquartersCountry: 'DE',
+      securityCertifications: ['soc2_type2', 'iso27001'],
+      transferMechanisms: [],
+      knownIncidents: []
+    },
+    {
+      dpaStatus: 'signed',
+      dpaExpiresAt: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+      dataCategoriesShared: ['name', 'email'],
+      dataSubjectVolume: '<1K',
+      certifications: [],
+      transferMechanisms: [],
+      dpaClauseCoverage: {
+        documentedInstructions: true,
+        confidentiality: true,
+        securityMeasures: true,
+        subProcessorRestrictions: true,
+        dataSubjectRights: true,
+        securityBreachDpia: true,
+        deletionOnTermination: true,
+        auditRights: true
+      }
+    },
+    0,
+    -20 // underflow modifier
+  );
+  console.log('Test Case 6a (Underflow clamp) score:', result6a.score);
+  if (result6a.score !== 0) {
+    throw new Error(`Expected score 0, got ${result6a.score}`);
+  }
+ 
+  const result6b = calculateVendorRisk(
+    {
+      headquartersCountry: 'US',
+      securityCertifications: [],
+      transferMechanisms: [],
+      knownIncidents: [
+        { date: new Date(Date.now() - 3 * 30 * 24 * 60 * 60 * 1000) }
+      ]
+    },
+    {
+      dpaStatus: 'not_signed',
+      dataCategoriesShared: ['health_records', 'biometric_data'],
+      dataSubjectVolume: '100K+',
+      certifications: [],
+      transferMechanisms: []
+    },
+    5,
+    25 // overflow modifier
+  );
+  // Base 100 + 25 = 125, should clamp at 100
+  console.log('Test Case 6b (Overflow clamp) score:', result6b.score);
+  if (result6b.score !== 100) {
+    throw new Error(`Expected score 100, got ${result6b.score}`);
+  }
+ 
   console.log('All calculateVendorRisk unit tests passed successfully!');
 }
 

@@ -11,8 +11,10 @@ export * from './gapScanner.js';
 export * from './dataExport.js';
 export * from './complianceScore.js';
 export * from './orgEmbeddings.js';
+export * from './incidents.js';
 
 import { createQueue } from '../lib/queue.js';
+import { scheduleIncidentJobs } from './incidents.js';
 
 export const gapScannerQueue = createQueue('gap-scanner');
 export const complianceScoreQueue = createQueue('compliance-score');
@@ -27,4 +29,6 @@ export async function scheduleGlobalJobs() {
     repeat: { pattern: '0 3 * * *', tz: 'UTC' }, // 3am UTC daily
     jobId: 'compliance-score-daily',
   });
+
+  await scheduleIncidentJobs();
 }

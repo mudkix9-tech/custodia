@@ -23,6 +23,8 @@ export const NOTIFICATION_TYPES = {
   'vendor.dpa_expiring_7d': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'high' },
   'vendor.dpa_expired': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'critical' },
   'vendor.breach_detected': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'critical' },
+  'vendor.sub_processor_changed': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'high' },
+  'vendor.incident_detected': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'high' },
   
   // Compliance
   'compliance.gap_detected': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },

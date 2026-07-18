@@ -12,6 +12,7 @@ interface SummaryData {
   cookieCount: number;
   domainName: string;
   isScanning: boolean;
+  undocumentedVendorsCount: number;
 }
 
 export function Step6Complete({ 
@@ -101,7 +102,7 @@ export function Step6Complete({
         </ul>
       </div>
 
-      {/* Background Cookie Scan Result Banner */}
+      {/* Background Cookie & Vendor Scan Result Banner */}
       {summary.domainName && (
         <div className="bg-gray-50 border rounded-lg p-5 mb-8 text-left flex items-start gap-4">
           <div className="bg-blue-100 p-2.5 rounded-lg text-blue-600 shrink-0 mt-0.5">
@@ -112,14 +113,14 @@ export function Step6Complete({
             )}
           </div>
           <div>
-            <h4 className="font-semibold text-gray-900 text-sm">Background Cookie Scan</h4>
+            <h4 className="font-semibold text-gray-900 text-sm">Background Cookie &amp; Vendor Scan</h4>
             {summary.isScanning ? (
               <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                Currently scanning <strong>{summary.domainName}</strong> for third-party trackers and cookies...
+                Currently scanning <strong>{summary.domainName}</strong> for third-party trackers, cookies, and undocumented services...
               </p>
             ) : (
               <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                We scanned your website <strong>{summary.domainName}</strong> and found <strong>{summary.cookieCount}</strong> cookies. You can set up your cookie banner in the consent module to manage them.
+                We scanned your website <strong>{summary.domainName}</strong> and found <strong>{summary.cookieCount}</strong> cookies and <strong>{summary.undocumentedVendorsCount}</strong> undocumented third-party services. Go to <button onClick={() => onComplete('/vendors?tab=discovery')} className="text-blue-600 font-semibold hover:underline">Vendor Discovery</button> to link or dismiss them.
               </p>
             )}
           </div>

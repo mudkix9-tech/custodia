@@ -25,6 +25,7 @@ export default function OnboardingPage() {
     cookieCount: 0,
     domainName: '',
     isScanning: false,
+    undocumentedVendorsCount: 0,
   });
 
   const { data: status, isLoading: statusLoading } = trpc.onboarding.getStatus.useQuery();
@@ -71,6 +72,7 @@ export default function OnboardingPage() {
         cookieCount: (status as any).cookieCount || 0,
         domainName: (status as any).domainName || '',
         isScanning: (status as any).isScanning || false,
+        undocumentedVendorsCount: (status as any).undocumentedVendorsCount || 0,
       });
 
       setLoading(false);

@@ -1,9 +1,10 @@
 import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
 import { orgEmbeddingsQueue } from '../lib/queue.js';
+import { vendorJobsQueue } from '../workers/vendors.js';
 import { db } from '../db.js';
-import { vendors, organizationVendors, users, vendorSubProcessors } from 'db';
-import { eq, and, isNull, inArray } from 'drizzle-orm';
+import { vendors, organizationVendors, users, vendorSubProcessors, vendorSubProcessorChanges, vendorIncidents, organizationVendorIncidentAlerts, vendorQuestionnaires, vendorDiscoveries, organizations, vendorAssessments } from 'db';
+import { eq, and, isNull, inArray, or, sql, desc } from 'drizzle-orm';
 import { router, publicProcedure, protectedProcedure } from '../trpc.js';
 import { TRPCError } from '@trpc/server';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
@@ -26,7 +27,34 @@ export async function updateVendorRiskScore(dbInstance: any, orgId: string, vend
     .where(eq(vendorSubProcessors.parentVendorId, vendorId));
   const subProcessorsCount = subs.length;
 
-  const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount);
+  // Retrieve score modifier from completed/expired vendor assessments
+  const assessments = await dbInstance.select()
+    .from(vendorAssessments)
+    .where(and(
+      eq(vendorAssessments.organizationId, orgId),
+      eq(vendorAssessments.vendorId, orgVendor.id)
+    ))
+    .orderBy(desc(vendorAssessments.completedAt), desc(vendorAssessments.expiresAt));
+
+  let scoreModifier = 0;
+  if (assessments.length > 0) {
+    const latest = assessments[0];
+    if (latest.status === 'completed') {
+      const baseVal = latest.score || 0;
+      const aiAdj = latest.scoreAdjustment || 0;
+      const finalQScore = Math.max(0, Math.min(100, baseVal + aiAdj));
+      
+      if (finalQScore >= 50) {
+        scoreModifier = Math.round(-10 * ((finalQScore - 50) / 50));
+      } else {
+        scoreModifier = Math.round(25 * ((50 - finalQScore) / 50));
+      }
+    } else if (latest.status === 'expired') {
+      scoreModifier = 25;
+    }
+  }
+
+  const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount, scoreModifier);
 
   await dbInstance.update(organizationVendors)
     .set({
@@ -37,12 +65,14 @@ export async function updateVendorRiskScore(dbInstance: any, orgId: string, vend
     })
     .where(eq(organizationVendors.id, orgVendor.id));
 
-  await orgEmbeddingsQueue.add('embed-vendor', {
-    orgId: orgId,
-    entityType: 'vendor',
-    entityId: orgVendor.id,
-    action: 'upsert'
-  });
+  if (orgEmbeddingsQueue) {
+    await orgEmbeddingsQueue.add('embed-vendor', {
+      orgId: orgId,
+      entityType: 'vendor',
+      entityId: orgVendor.id,
+      action: 'upsert'
+    });
+  }
 }
 
 export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId: string) {
@@ -57,7 +87,33 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
   const subProcessorsCount = subs.length;
 
   for (const orgVendor of orgVendors) {
-    const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount);
+    const assessments = await dbInstance.select()
+      .from(vendorAssessments)
+      .where(and(
+        eq(vendorAssessments.organizationId, orgVendor.organizationId),
+        eq(vendorAssessments.vendorId, orgVendor.id)
+      ))
+      .orderBy(desc(vendorAssessments.completedAt), desc(vendorAssessments.expiresAt));
+
+    let scoreModifier = 0;
+    if (assessments.length > 0) {
+      const latest = assessments[0];
+      if (latest.status === 'completed') {
+        const baseVal = latest.score || 0;
+        const aiAdj = latest.scoreAdjustment || 0;
+        const finalQScore = Math.max(0, Math.min(100, baseVal + aiAdj));
+        
+        if (finalQScore >= 50) {
+          scoreModifier = Math.round(-10 * ((finalQScore - 50) / 50));
+        } else {
+          scoreModifier = Math.round(25 * ((50 - finalQScore) / 50));
+        }
+      } else if (latest.status === 'expired') {
+        scoreModifier = 25;
+      }
+    }
+
+    const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount, scoreModifier);
     
     await dbInstance.update(organizationVendors)
       .set({
@@ -68,12 +124,14 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
       })
       .where(eq(organizationVendors.id, orgVendor.id));
 
-    await orgEmbeddingsQueue.add('embed-vendor', {
-      orgId: orgVendor.organizationId,
-      entityType: 'vendor',
-      entityId: orgVendor.id,
-      action: 'upsert'
-    });
+    if (orgEmbeddingsQueue) {
+      await orgEmbeddingsQueue.add('embed-vendor', {
+        orgId: orgVendor.organizationId,
+        entityType: 'vendor',
+        entityId: orgVendor.id,
+        action: 'upsert'
+      });
+    }
   }
 }
 
@@ -410,4 +468,564 @@ export const vendorsRouter = router({
     const medium = list.filter((v: any) => v.riskLevel === 'medium').length;
     return { total, highOrCritical, low, medium };
   }),
+
+  getSubProcessorChanges: protectedProcedure
+    .input(z.object({ orgVendorId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [ov] = await ctx.db.select()
+        .from(organizationVendors)
+        .where(and(
+          eq(organizationVendors.id, input.orgVendorId),
+          eq(organizationVendors.organizationId, ctx.user.orgId)
+        ));
+      if (!ov) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization vendor link not found' });
+
+      const list = await ctx.db.select({
+        change: vendorSubProcessorChanges,
+        reviewerName: users.name
+      })
+      .from(vendorSubProcessorChanges)
+      .leftJoin(users, eq(vendorSubProcessorChanges.reviewedBy, users.id))
+      .where(eq(vendorSubProcessorChanges.orgVendorId, input.orgVendorId))
+      .orderBy(vendorSubProcessorChanges.detectedAt);
+
+      return list.map((item: any) => ({
+        ...item.change,
+        reviewerName: item.reviewerName
+      }));
+    }),
+
+  reviewSubProcessorChange: protectedProcedure
+    .input(z.object({
+      changeId: z.string().uuid(),
+      status: z.enum(['acknowledged', 'objected']),
+      notes: z.string().optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [change] = await ctx.db.select()
+        .from(vendorSubProcessorChanges)
+        .where(and(
+          eq(vendorSubProcessorChanges.id, input.changeId),
+          eq(vendorSubProcessorChanges.organizationId, ctx.user.orgId)
+        ));
+      if (!change) throw new TRPCError({ code: 'NOT_FOUND', message: 'Sub-processor change record not found' });
+
+      const [updated] = await ctx.db.update(vendorSubProcessorChanges)
+        .set({
+          status: input.status,
+          notes: input.notes || null,
+          reviewedBy: ctx.user.id,
+          reviewedAt: new Date()
+        })
+        .where(eq(vendorSubProcessorChanges.id, input.changeId))
+        .returning();
+
+      return updated;
+    }),
+
+  getIncidentsForVendor: protectedProcedure
+    .input(z.object({ vendorId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [v] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
+      if (!v) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor not found' });
+      const slug = v.slug || v.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+      const list = await ctx.db.select({
+        incident: vendorIncidents,
+        alertId: organizationVendorIncidentAlerts.id,
+        alertStatus: organizationVendorIncidentAlerts.status,
+        acknowledgedAt: organizationVendorIncidentAlerts.acknowledgedAt,
+        actionNotes: organizationVendorIncidentAlerts.actionNotes,
+        reviewerName: users.name
+      })
+      .from(vendorIncidents)
+      .leftJoin(
+        organizationVendorIncidentAlerts,
+        and(
+          eq(organizationVendorIncidentAlerts.incidentId, vendorIncidents.id),
+          eq(organizationVendorIncidentAlerts.organizationId, ctx.user.orgId)
+        )
+      )
+      .leftJoin(users, eq(organizationVendorIncidentAlerts.acknowledgedBy, users.id))
+      .where(
+        and(
+          eq(vendorIncidents.vendorSlug, slug),
+          or(
+            eq(vendorIncidents.status, 'published'),
+            sql`organization_vendor_incident_alerts.id IS NOT NULL`
+          )
+        )
+      )
+      .orderBy(vendorIncidents.incidentDate);
+
+      return list.map((item: any) => ({
+        ...item.incident,
+        alertId: item.alertId,
+        alertStatus: item.alertStatus || 'unread',
+        acknowledgedAt: item.acknowledgedAt,
+        actionNotes: item.actionNotes,
+        reviewerName: item.reviewerName
+      }));
+    }),
+
+  getUnreadIncidentAlertsCount: protectedProcedure
+    .query(async ({ ctx }) => {
+      const list = await ctx.db.select()
+        .from(organizationVendorIncidentAlerts)
+        .where(and(
+          eq(organizationVendorIncidentAlerts.organizationId, ctx.user.orgId),
+          eq(organizationVendorIncidentAlerts.status, 'unread')
+        ));
+      return { count: list.length };
+    }),
+
+  reviewIncidentAlert: protectedProcedure
+    .input(z.object({
+      alertId: z.string().uuid(),
+      status: z.enum(['unread', 'acknowledged', 'action_taken', 'dismissed']),
+      actionNotes: z.string().optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db.select()
+        .from(organizationVendorIncidentAlerts)
+        .where(and(
+          eq(organizationVendorIncidentAlerts.id, input.alertId),
+          eq(organizationVendorIncidentAlerts.organizationId, ctx.user.orgId)
+        ));
+      if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Alert not found' });
+
+      const [updated] = await ctx.db.update(organizationVendorIncidentAlerts)
+        .set({
+          status: input.status,
+          actionNotes: input.actionNotes || null,
+          acknowledgedBy: ctx.user.id,
+          acknowledgedAt: new Date()
+        })
+        .where(eq(organizationVendorIncidentAlerts.id, input.alertId))
+        .returning();
+
+      return updated;
+    }),
+
+  publishIncident: protectedProcedure
+    .input(z.object({ incidentId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [incident] = await ctx.db.select().from(vendorIncidents).where(eq(vendorIncidents.id, input.incidentId));
+      if (!incident) throw new TRPCError({ code: 'NOT_FOUND', message: 'Incident not found' });
+      if (incident.status === 'published') return incident;
+
+      const [updated] = await ctx.db.update(vendorIncidents)
+        .set({ status: 'published' })
+        .where(eq(vendorIncidents.id, input.incidentId))
+        .returning();
+
+      const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.slug, incident.vendorSlug));
+      if (vendor) {
+        const { publishIncidentAndAlertOrgs } = await import('../workers/incidents.js');
+        await publishIncidentAndAlertOrgs(input.incidentId, vendor, updated);
+      }
+
+      return updated;
+    }),
+
+  getPrivacyAlternatives: protectedProcedure
+    .input(z.object({ vendorId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
+      if (!vendor) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor not found' });
+      if (!vendor.category) return [];
+
+      // Fetch global vendors in the same category, sorted by risk score ascending
+      const alternatives = await ctx.db.select()
+        .from(vendors)
+        .where(and(
+          eq(vendors.category, vendor.category),
+          eq(vendors.isGlobal, true),
+          sql`${vendors.id} != ${input.vendorId}`
+        ))
+        .orderBy(sql`COALESCE(${vendors.riskScore}, 100) ASC`);
+
+      return alternatives;
+    }),
+
+  confirmDpaAnalysis: protectedProcedure
+    .input(z.object({
+      orgVendorId: z.string().uuid(),
+      dpaClauseCoverage: z.record(z.boolean()),
+      dpaStatus: z.string().optional(),
+      dpaNotes: z.string().optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db.select()
+        .from(organizationVendors)
+        .where(and(
+          eq(organizationVendors.id, input.orgVendorId),
+          eq(organizationVendors.organizationId, ctx.user.orgId)
+        ));
+      if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization vendor link not found' });
+
+      const updates: any = {
+        dpaClauseCoverage: input.dpaClauseCoverage,
+        dpaAnalysisStatus: 'confirmed'
+      };
+      if (input.dpaStatus) updates.dpaStatus = input.dpaStatus;
+      if (input.dpaNotes !== undefined) updates.dpaNotes = input.dpaNotes;
+
+      const [updated] = await ctx.db.update(organizationVendors)
+        .set(updates)
+        .where(eq(organizationVendors.id, input.orgVendorId))
+        .returning();
+
+      // Recalculate risk
+      await updateVendorRiskScore(ctx.db, ctx.user.orgId, existing.vendorId);
+
+      return updated;
+    }),
+
+  saveDpaAnalysisDraft: protectedProcedure
+    .input(z.object({
+      orgVendorId: z.string().uuid(),
+      dpaAiAnalysis: z.any()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db.select()
+        .from(organizationVendors)
+        .where(and(
+          eq(organizationVendors.id, input.orgVendorId),
+          eq(organizationVendors.organizationId, ctx.user.orgId)
+        ));
+      if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization vendor link not found' });
+
+      const [updated] = await ctx.db.update(organizationVendors)
+        .set({
+          dpaAiAnalysis: input.dpaAiAnalysis,
+          dpaAnalysisStatus: 'pending_review'
+        })
+        .where(eq(organizationVendors.id, input.orgVendorId))
+        .returning();
+
+      return updated;
+    }),
+
+  getQuestionnaires: protectedProcedure
+    .input(z.object({ orgVendorId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.select()
+        .from(vendorQuestionnaires)
+        .where(and(
+          eq(vendorQuestionnaires.orgVendorId, input.orgVendorId),
+          eq(vendorQuestionnaires.organizationId, ctx.user.orgId)
+        ))
+        .orderBy(desc(vendorQuestionnaires.createdAt));
+    }),
+
+  createQuestionnaire: protectedProcedure
+    .input(z.object({
+      orgVendorId: z.string().uuid(),
+      questions: z.array(z.object({
+        id: z.string(),
+        text: z.string(),
+        category: z.string(),
+        rationale: z.string()
+      }))
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [orgVendor] = await ctx.db.select()
+        .from(organizationVendors)
+        .where(and(
+          eq(organizationVendors.id, input.orgVendorId),
+          eq(organizationVendors.organizationId, ctx.user.orgId)
+        ));
+      if (!orgVendor) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
+
+      const [newQ] = await ctx.db.insert(vendorQuestionnaires)
+        .values({
+          organizationId: ctx.user.orgId,
+          vendorId: orgVendor.vendorId,
+          orgVendorId: input.orgVendorId,
+          questions: input.questions,
+          status: 'draft',
+          promptVersion: 'v1'
+        })
+        .returning();
+
+      return newQ;
+    }),
+
+  confirmQuestionnaire: protectedProcedure
+    .input(z.object({
+      questionnaireId: z.string().uuid(),
+      scoreModifier: z.number().min(-10).max(25),
+      aiScore: z.number().optional(),
+      aiAnalysis: z.any().optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db.select()
+        .from(vendorQuestionnaires)
+        .where(and(
+          eq(vendorQuestionnaires.id, input.questionnaireId),
+          eq(vendorQuestionnaires.organizationId, ctx.user.orgId)
+        ));
+      if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Questionnaire not found' });
+
+      const updates: any = {
+        scoreModifier: input.scoreModifier,
+        status: 'reviewed',
+        isAiAssisted: false,
+        updatedAt: new Date()
+      };
+      if (input.aiScore !== undefined) updates.aiScore = input.aiScore;
+      if (input.aiAnalysis !== undefined) updates.aiAnalysis = input.aiAnalysis;
+
+      const [updated] = await ctx.db.update(vendorQuestionnaires)
+        .set(updates)
+        .where(eq(vendorQuestionnaires.id, input.questionnaireId))
+        .returning();
+
+      // Recalculate risk score for this vendor
+      await updateVendorRiskScore(ctx.db, ctx.user.orgId, existing.vendorId);
+
+      return updated;
+    }),
+
+  getQuestionnaireByToken: publicProcedure
+    .input(z.object({ token: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const records = await ctx.db.select({
+        questionnaire: vendorQuestionnaires,
+        vendor: vendors
+      })
+      .from(vendorQuestionnaires)
+      .leftJoin(vendors, eq(vendorQuestionnaires.vendorId, vendors.id))
+      .where(eq(vendorQuestionnaires.token, input.token));
+
+      const record = records[0];
+      if (!record) throw new TRPCError({ code: 'NOT_FOUND', message: 'Questionnaire not found' });
+
+      return {
+        id: record.questionnaire.id,
+        status: record.questionnaire.status,
+        vendorName: record.vendor?.name || 'Unknown Vendor',
+        vendorWebsite: record.vendor?.website || '',
+        questions: record.questionnaire.questions,
+        answers: record.questionnaire.answers || []
+      };
+    }),
+
+  submitQuestionnaireAnswers: publicProcedure
+    .input(z.object({
+      token: z.string().uuid(),
+      answers: z.array(z.object({
+        questionId: z.string(),
+        textAnswer: z.string()
+      }))
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db.select()
+        .from(vendorQuestionnaires)
+        .where(eq(vendorQuestionnaires.token, input.token));
+      if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Questionnaire not found' });
+
+      const [updated] = await ctx.db.update(vendorQuestionnaires)
+        .set({
+          answers: input.answers,
+          status: 'submitted',
+          submittedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(vendorQuestionnaires.token, input.token))
+        .returning();
+
+      return { success: true };
+    }),
+
+  getDiscoveries: protectedProcedure
+    .input(z.object({
+      limit: z.number().min(1).max(100).default(25),
+      cursor: z.string().nullish(),
+      status: z.enum(['undocumented', 'added_to_register', 'dismissed', 'false_positive']).optional()
+    }))
+    .query(async ({ ctx, input }) => {
+      const conditions = [eq(vendorDiscoveries.organizationId, ctx.user.orgId)];
+      if (input.status) {
+        conditions.push(eq(vendorDiscoveries.status, input.status));
+      }
+
+      const list = await ctx.db.select({
+        discovery: vendorDiscoveries,
+        matchedVendor: vendors
+      })
+      .from(vendorDiscoveries)
+      .leftJoin(vendors, eq(vendorDiscoveries.matchedVendorId, vendors.id))
+      .where(and(...conditions))
+      .orderBy(desc(vendorDiscoveries.lastDetectedAt))
+      .limit(input.limit);
+
+      return list;
+    }),
+
+  getUndocumentedCount: protectedProcedure
+    .query(async ({ ctx }) => {
+      const [result] = await ctx.db.select({
+        count: sql<number>`count(*)::int`
+      })
+      .from(vendorDiscoveries)
+      .where(and(
+        eq(vendorDiscoveries.organizationId, ctx.user.orgId),
+        eq(vendorDiscoveries.status, 'undocumented')
+      ));
+      return result?.count || 0;
+    }),
+
+  triggerDiscoveryScan: protectedProcedure
+    .input(z.object({
+      websiteUrl: z.string().url().optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, ctx.user.orgId));
+      if (!org) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization not found' });
+
+      const websiteUrl = input.websiteUrl || (org.settings as any)?.websiteUrl || `https://${org.slug}.com`;
+      let domain = '';
+      try {
+        const urlObj = new URL(websiteUrl);
+        domain = urlObj.hostname.replace(/^www\./, '');
+      } catch (e) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid website URL provided' });
+      }
+
+      if (vendorJobsQueue) {
+        await vendorJobsQueue.add('vendor-discovery', {
+          organizationId: ctx.user.orgId,
+          domain,
+          websiteUrl
+        });
+      }
+
+      return { success: true };
+    }),
+
+  dismissDiscovery: protectedProcedure
+    .input(z.object({
+      id: z.string().uuid()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [updated] = await ctx.db.update(vendorDiscoveries)
+        .set({
+          status: 'dismissed',
+          resolvedBy: ctx.user.id,
+          resolvedAt: new Date()
+        })
+        .where(and(
+          eq(vendorDiscoveries.id, input.id),
+          eq(vendorDiscoveries.organizationId, ctx.user.orgId)
+        ))
+        .returning();
+      return updated;
+    }),
+
+  confirmDiscovery: protectedProcedure
+    .input(z.object({
+      id: z.string().uuid(),
+      vendorId: z.string().uuid().optional(),
+      customVendorData: z.object({
+        name: z.string(),
+        website: z.string().optional(),
+        category: z.string().optional()
+      }).optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [discovery] = await ctx.db.select().from(vendorDiscoveries).where(and(
+        eq(vendorDiscoveries.id, input.id),
+        eq(vendorDiscoveries.organizationId, ctx.user.orgId)
+      ));
+      if (!discovery) throw new TRPCError({ code: 'NOT_FOUND', message: 'Discovery record not found' });
+
+      let finalVendorId = input.vendorId;
+
+      if (!finalVendorId && input.customVendorData) {
+        const [newVendor] = await ctx.db.insert(vendors).values({
+          name: input.customVendorData.name,
+          website: input.customVendorData.website || `https://${discovery.detectedDomain}`,
+          category: input.customVendorData.category || 'Other',
+          isGlobal: false,
+          isAutoDiscovered: true,
+          organizationId: ctx.user.orgId
+        }).returning();
+
+        if (!newVendor) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create custom vendor' });
+        finalVendorId = newVendor.id;
+      }
+
+      if (!finalVendorId) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Either vendorId or customVendorData is required' });
+      }
+
+      // Check if already linked
+      const [existingLink] = await ctx.db.select().from(organizationVendors).where(and(
+        eq(organizationVendors.organizationId, ctx.user.orgId),
+        eq(organizationVendors.vendorId, finalVendorId)
+      ));
+
+      if (!existingLink) {
+        const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, finalVendorId));
+        const { score, level, factors } = calculateVendorRisk(
+          vendor,
+          { dpaStatus: 'not_started', dataCategoriesShared: [], dataSubjectVolume: '<1K' },
+          0
+        );
+
+        const [newLink] = await ctx.db.insert(organizationVendors).values({
+          organizationId: ctx.user.orgId,
+          vendorId: finalVendorId,
+          dpaStatus: 'not_started',
+          riskScore: score,
+          riskLevel: level,
+          riskFactors: factors,
+          lastRiskAssessment: new Date(),
+          addedBy: ctx.user.id
+        }).returning();
+
+        if (orgEmbeddingsQueue) {
+          await orgEmbeddingsQueue.add('embed-vendor', {
+            orgId: ctx.user.orgId,
+            entityType: 'vendor',
+            entityId: newLink.id,
+            action: 'upsert'
+          });
+        }
+      }
+
+      const [updated] = await ctx.db.update(vendorDiscoveries)
+        .set({
+          status: 'added_to_register',
+          matchedVendorId: finalVendorId,
+          resolvedBy: ctx.user.id,
+          resolvedAt: new Date()
+        })
+        .where(eq(vendorDiscoveries.id, input.id))
+        .returning();
+
+      return updated;
+    }),
+
+  verifyVendorProfile: protectedProcedure
+    .input(z.object({
+      vendorId: z.string().uuid()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [updated] = await ctx.db.update(vendors)
+        .set({
+          isAutoDiscovered: false,
+          lastVerifiedAt: new Date(),
+          verifiedBy: ctx.user.id
+        })
+        .where(and(
+          eq(vendors.id, input.vendorId),
+          eq(vendors.organizationId, ctx.user.orgId)
+        ))
+        .returning();
+
+      return updated;
+    }),
 });

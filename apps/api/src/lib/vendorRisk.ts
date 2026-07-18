@@ -52,7 +52,8 @@ export interface VendorRiskResult {
 export function calculateVendorRisk(
   vendor: VendorRiskInput,
   orgVendor: OrgVendorRiskInput,
-  subProcessorsCount: number = 0
+  subProcessorsCount: number = 0,
+  scoreModifier: number = 0
 ): VendorRiskResult {
   
   // 1. Headquarters Location (20%)
@@ -253,7 +254,8 @@ export function calculateVendorRisk(
     breachDetail = 'Breach occurred between 12 to 24 months ago (1/5 pts)';
   }
 
-  const score = locationPoints + dpaPoints + categoriesPoints + volumePoints + subProcessorPoints + certsPoints + safeguardsPoints + breachPoints;
+  const baseScore = locationPoints + dpaPoints + categoriesPoints + volumePoints + subProcessorPoints + certsPoints + safeguardsPoints + breachPoints;
+  const score = Math.max(0, Math.min(100, baseScore + scoreModifier));
   
   let level: 'low' | 'medium' | 'high' | 'critical' = 'low';
   if (score <= 25) level = 'low';

@@ -1,4 +1,4 @@
-import { router, protectedProcedure } from '../trpc.js';
+import { router, protectedProcedure, publicProcedure } from '../trpc.js';
 import { z } from 'zod';
 import { 
   processingActivities, 
@@ -11,7 +11,8 @@ import {
   consentDomains,
   consentCookies,
   complianceGaps,
-  aiGuidanceLogs
+  aiGuidanceLogs,
+  vendorQuestionnaires
 } from 'db';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { GoogleGenAI } from '@google/genai';
@@ -812,6 +813,7 @@ You MUST begin your response with the following exact disclaimer:
   analyzeDpa: protectedProcedure
     .input(z.object({
       fileBase64: z.string(),
+      orgVendorId: z.string().uuid().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const orgId = ctx.user!.orgId;
@@ -830,35 +832,80 @@ You MUST begin your response with the following exact disclaimer:
           message: `Monthly DPA analysis limit reached (${limit}/${limit}). Please upgrade your plan.`
         });
       }
-
+ 
       await ctx.db.update(organizations)
         .set({ aiDpasAnalyzed: (org.aiDpasAnalyzed || 0) + 1 })
         .where(eq(organizations.id, orgId));
-
+ 
       try {
         const buffer = Buffer.from(input.fileBase64, 'base64');
         const parser = new PDFParse({ data: buffer });
         const pdfData = await parser.getText();
         const dpaText = pdfData.text || '';
         await parser.destroy().catch(() => {});
-
+ 
         const systemPrompt = `You are a GDPR expert AI. Analyze the provided Data Processing Agreement (DPA) against Article 28 requirements.
+ 
 Return a structured JSON analysis. Do NOT return markdown formatting around the JSON, just the raw JSON object.
+Ensure that every excerpt you pull is an EXACT substring match from the provided document. Do NOT paraphrase or alter the wording of the excerpt.
+ 
 Use this EXACT JSON schema:
 {
   "overall_score": number, // 0 to 100
-  "clauses": [
-    {
-      "id": "subject_matter" | "nature_purpose" | "data_types" | "data_subjects" | "instructions" | "confidentiality" | "security" | "sub_processors" | "data_subject_rights" | "breach_notification" | "deletion" | "audit_rights" | "international_transfers",
+  "potential_special_category": boolean, // check for contextual clues (e.g. food allergies, biometrics)
+  "special_category_rationale": string | null, // explain rationale if potential_special_category is true
+  "checklist": {
+    "documentedInstructions": {
       "status": "present" | "missing" | "weak",
-      "confidence": number, // 0.0 to 1.0
-      "location": string | null, // section or paragraph
-      "excerpt": string | null,
+      "excerpt": string | null, // MUST be an exact substring from the text
       "notes": string | null
+    },
+    "confidentiality": {
+      "status": "present" | "missing" | "weak",
+      "excerpt": string | null, // MUST be an exact substring from the text
+      "notes": string | null
+    },
+    "securityMeasures": {
+      "status": "present" | "missing" | "weak",
+      "excerpt": string | null, // MUST be an exact substring from the text
+      "notes": string | null
+    },
+    "subProcessorRestrictions": {
+      "status": "present" | "missing" | "weak",
+      "excerpt": string | null, // MUST be an exact substring from the text
+      "notes": string | null
+    },
+    "dataSubjectRights": {
+      "status": "present" | "missing" | "weak",
+      "excerpt": string | null, // MUST be an exact substring from the text
+      "notes": string | null
+    },
+    "securityBreachDpia": {
+      "status": "present" | "missing" | "weak",
+      "excerpt": string | null, // MUST be an exact substring from the text
+      "notes": string | null
+    },
+    "deletionOnTermination": {
+      "status": "present" | "missing" | "weak",
+      "excerpt": string | null, // MUST be an exact substring from the text
+      "notes": string | null
+    },
+    "auditRights": {
+      "status": "present" | "missing" | "weak",
+      "excerpt": string | null, // MUST be an exact substring from the text
+      "notes": string | null
+    }
+  },
+  "problematic_language": [
+    {
+      "clauseType": "sub_processors" | "indemnification" | "liability_cap" | "other",
+      "severity": "high" | "medium",
+      "excerpt": string, // MUST be an exact substring from the text
+      "notes": string // explain why it is problematic (e.g. broad indemnification, unilateral subprocessor rights)
     }
   ]
 }`;
-
+ 
         const msg = await anthropic.messages.create({
           model: 'claude-3-5-sonnet-20240620',
           max_tokens: 4096,
@@ -867,24 +914,229 @@ Use this EXACT JSON schema:
             { role: 'user', content: dpaText }
           ]
         });
-
+ 
         const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
         
         let jsonResponse;
         try {
-          // Attempt to parse JSON, sometimes models wrap in \`\`\`json
           const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
           jsonResponse = JSON.parse(cleanedText);
         } catch (e) {
           throw new Error('Failed to parse AI response as JSON');
         }
-
+ 
+        if (input.orgVendorId) {
+          await ctx.db.update(organizationVendors)
+            .set({
+              dpaAiAnalysis: jsonResponse,
+              dpaAnalysisStatus: 'pending_review'
+            })
+            .where(eq(organizationVendors.id, input.orgVendorId));
+        }
+ 
         return jsonResponse;
       } catch (err: any) {
         console.error('DPA Analysis Error:', err);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: err.message || 'Failed to analyze DPA',
+        });
+      }
+    }),
+ 
+  generateVendorQuestionnaire: protectedProcedure
+    .input(z.object({
+      orgVendorId: z.string().uuid(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const orgId = ctx.user!.orgId;
+ 
+      // Query the organization vendor details
+      const orgVendorDetails = await ctx.db.select({
+        orgVendor: organizationVendors,
+        vendor: vendors
+      })
+      .from(organizationVendors)
+      .leftJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+      .where(and(
+        eq(organizationVendors.id, input.orgVendorId),
+        eq(organizationVendors.organizationId, orgId)
+      ));
+ 
+      const record = orgVendorDetails[0];
+      if (!record) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
+ 
+      const { orgVendor, vendor } = record;
+ 
+      const headquarters = vendor?.headquartersCountry || 'unknown';
+      const sharedCategories = (orgVendor.dataCategoriesShared as string[]) || [];
+      const certs = (orgVendor.certifications as string[]) || [];
+      const dpaClauseCoverage = (orgVendor.dpaClauseCoverage as Record<string, boolean>) || {};
+ 
+      const systemPrompt = `You are a vendor risk assessment expert. Based on the provided vendor profile, you need to generate a tailored security and privacy questionnaire (10-15 questions).
+Focus on specific risks:
+- If the vendor is in a non-adequate country (e.g. US) and does not host in the EU: ask about international transfer safeguards (FISA Section 702, EO 14086, encryption key location, government surveillance requests).
+- If the vendor processes sensitive/special category data: ask about access controls, data minimization, and audit logs.
+- If the vendor holds security certifications (e.g. SOC 2, ISO 27001): do NOT ask general questions like "do you have SOC 2?", instead ask about the audit scope, exception reporting, and evidence of controls.
+- Check which Article 28 DPA clauses are already covered. If some are missing/weak (e.g. audit rights), ask for contractual assurances or clarification.
+ 
+Return a JSON array of questions. Do NOT return markdown formatting around the JSON, just the raw JSON object.
+Use this EXACT JSON schema:
+[
+  {
+    "id": "string", // unique slug, e.g. "fisa_702_safeguards"
+    "text": "string", // the question text to be answered by the vendor
+    "category": "string", // e.g. "Security", "Privacy", "International Transfers", "Access Control"
+    "rationale": "string" // why this question is asked based on their profile
+  }
+]`;
+ 
+      const contextText = `Vendor: ${vendor?.name || 'Unknown'}
+Headquarters Country: ${headquarters}
+Data Categories Shared: ${sharedCategories.join(', ') || 'none specified'}
+Security Certifications: ${certs.join(', ') || 'none specified'}
+Existing DPA Clause Coverage: ${JSON.stringify(dpaClauseCoverage)}`;
+ 
+      const msg = await anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20240620',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [
+          { role: 'user', content: contextText }
+        ]
+      });
+ 
+      const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
+      
+      try {
+        const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        return JSON.parse(cleanedText);
+      } catch (e) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to generate questionnaire JSON',
+        });
+      }
+    }),
+ 
+  parseVendorAnswers: publicProcedure
+    .input(z.object({
+      token: z.string().uuid().optional(),
+      questionnaireId: z.string().uuid().optional(),
+      rawAnswersText: z.string().optional(),
+      fileBase64: z.string().optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      let questionnaire;
+      
+      if (input.token) {
+        const [q] = await ctx.db.select()
+          .from(vendorQuestionnaires)
+          .where(eq(vendorQuestionnaires.token, input.token));
+        questionnaire = q;
+      } else if (input.questionnaireId && ctx.user?.orgId) {
+        const [q] = await ctx.db.select()
+          .from(vendorQuestionnaires)
+          .where(and(
+            eq(vendorQuestionnaires.id, input.questionnaireId),
+            eq(vendorQuestionnaires.organizationId, ctx.user.orgId)
+          ));
+        questionnaire = q;
+      }
+ 
+      if (!questionnaire) throw new TRPCError({ code: 'NOT_FOUND', message: 'Questionnaire not found' });
+ 
+      let answersText = input.rawAnswersText || '';
+ 
+      if (input.fileBase64) {
+        try {
+          const buffer = Buffer.from(input.fileBase64, 'base64');
+          const parser = new PDFParse({ data: buffer });
+          const pdfData = await parser.getText();
+          answersText += '\n' + (pdfData.text || '');
+          await parser.destroy().catch(() => {});
+        } catch (e: any) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: `Failed to parse PDF answers: ${e.message}` });
+        }
+      }
+ 
+      if (!answersText.trim()) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'No answers text or PDF provided' });
+      }
+ 
+      const systemPrompt = `You are a vendor risk assessment expert. Evaluate the provided questionnaire answers against security and privacy best practices under the GDPR.
+For each question, evaluate:
+- The score (0 to 100).
+- The status ("satisfactory" | "weak" | "unsatisfactory").
+- Analysis / explanation of their answer.
+- Confidence ("high" | "insufficient_detail"). If the response is vague, evasive, or lacks concrete detail/evidence, set confidence to "insufficient_detail".
+- Gaps identified: string explaining the exact gap, or null.
+ 
+Also calculate:
+- The overall AI score (0 to 100).
+- The overall risk score modifier (must be an integer from -10 to 25):
+  - Excellent practices / verified safeguards: -10 points.
+  - Standard compliance / moderate risks: 0 points.
+  - Severe gaps / missing key information / refusal to answer: up to +25 points.
+- Tier 2 Special Category Check: Scan for contextual possibilities of processing special category data (e.g., medical terms, health data, racial/ethnic terms, political, religious). If detected, set "potential_special_category" to true with a "special_category_rationale".
+ 
+Return a structured JSON object. Do NOT return markdown formatting, just the raw JSON object.
+Use this EXACT JSON schema:
+{
+  "aiScore": number,
+  "scoreModifier": number, // between -10 and 25
+  "potential_special_category": boolean,
+  "special_category_rationale": string | null,
+  "answersReview": [
+    {
+      "questionId": "string",
+      "score": number,
+      "status": "satisfactory" | "weak" | "unsatisfactory",
+      "analysis": "string",
+      "confidence": "high" | "insufficient_detail",
+      "gapIdentified": "string" | null
+    }
+  ]
+}`;
+ 
+      const contextText = `Questions generated:
+${JSON.stringify(questionnaire.questions)}
+ 
+Provided answers / document text:
+${answersText}`;
+ 
+      const msg = await anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20240620',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [
+          { role: 'user', content: contextText }
+        ]
+      });
+ 
+      const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
+      
+      try {
+        const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        const jsonResponse = JSON.parse(cleanedText);
+ 
+        // Save raw parsed data into draft state
+        await ctx.db.update(vendorQuestionnaires)
+          .set({
+            aiScore: jsonResponse.aiScore,
+            aiAnalysis: jsonResponse.answersReview,
+            scoreModifier: jsonResponse.scoreModifier,
+            status: 'submitted',
+            isAiAssisted: true,
+            updatedAt: new Date()
+          })
+          .where(eq(vendorQuestionnaires.id, questionnaire.id));
+ 
+        return jsonResponse;
+      } catch (e) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to evaluate answers JSON',
         });
       }
     }),

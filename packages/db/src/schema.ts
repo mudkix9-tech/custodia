@@ -442,6 +442,9 @@ export const vendors = pgTable('vendors', {
   
   subProcessorListUrl: varchar('sub_processor_list_url', { length: 500 }),
   subProcessorNotification: varchar('sub_processor_notification', { length: 100 }),
+  subProcessorListHash: text('sub_processor_list_hash'),
+  subProcessorListSnapshot: text('sub_processor_list_snapshot'),
+  aliases: text('aliases').array().default(sql`ARRAY[]::text[]`),
   
   typicalDataCategories: jsonb('typical_data_categories').default([]),
   
@@ -454,6 +457,8 @@ export const vendors = pgTable('vendors', {
   
   lastVerifiedAt: timestamp('last_verified_at', { withTimezone: true }),
   verifiedBy: varchar('verified_by', { length: 100 }),
+  isPrivacyFriendly: boolean('is_privacy_friendly').default(false).notNull(),
+  isAutoDiscovered: boolean('is_auto_discovered').default(false).notNull(),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -492,6 +497,8 @@ export const organizationVendors = pgTable('organization_vendors', {
   dpaClauseCoverage: jsonb('dpa_clause_coverage').default({}),
   lastExpiryNotificationTier: varchar('last_expiry_notification_tier', { length: 50 }),
   lastRenewalNotificationTier: varchar('last_renewal_notification_tier', { length: 50 }),
+  dpaAnalysisStatus: varchar('dpa_analysis_status', { length: 50 }).default('not_analyzed').notNull(),
+  dpaAiAnalysis: jsonb('dpa_ai_analysis').default({}),
   
   lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
@@ -499,6 +506,97 @@ export const organizationVendors = pgTable('organization_vendors', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
+
+export const vendorDiscoveries = pgTable('vendor_discoveries', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  discoveryMethod: varchar('discovery_method', { length: 50 }).notNull(), // 'website_scan' | 'dns_analysis'
+  detectedDomain: varchar('detected_domain', { length: 255 }).notNull(),
+  matchedVendorId: uuid('matched_vendor_id').references(() => vendors.id, { onDelete: 'set null' }),
+  detectedServiceName: varchar('detected_service_name', { length: 255 }),
+  firstDetectedAt: timestamp('first_detected_at', { withTimezone: true }).defaultNow(),
+  lastDetectedAt: timestamp('last_detected_at', { withTimezone: true }).defaultNow(),
+  status: varchar('status', { length: 50 }).default('undocumented').notNull(), // 'undocumented' | 'added_to_register' | 'dismissed' | 'false_positive'
+  resolvedBy: uuid('resolved_by').references(() => users.id, { onDelete: 'set null' }),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+});
+
+export const vendorDiscoveriesRelations = relations(vendorDiscoveries, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [vendorDiscoveries.organizationId],
+    references: [organizations.id],
+  }),
+  matchedVendor: one(vendors, {
+    fields: [vendorDiscoveries.matchedVendorId],
+    references: [vendors.id],
+  }),
+  resolvedByUser: one(users, {
+    fields: [vendorDiscoveries.resolvedBy],
+    references: [users.id],
+  }),
+}));
+
+export const vendorAssessmentTemplates = pgTable('vendor_assessment_templates', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }), // null = system template
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  questions: jsonb('questions').notNull(), // array of question objects: { id, text, category, type: 'choice' | 'text', options: [{ text, score }] }
+  isDefault: boolean('is_default').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+export const vendorAssessmentTemplatesRelations = relations(vendorAssessmentTemplates, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [vendorAssessmentTemplates.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const vendorAssessments = pgTable('vendor_assessments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  vendorId: uuid('vendor_id').notNull().references(() => organizationVendors.id, { onDelete: 'cascade' }),
+  templateId: uuid('template_id').notNull().references(() => vendorAssessmentTemplates.id),
+  status: varchar('status', { length: 50 }).default('draft').notNull(), // 'draft' | 'sent' | 'in_progress' | 'completed' | 'expired'
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  recipientEmail: varchar('recipient_email', { length: 255 }).notNull(),
+  recipientName: varchar('recipient_name', { length: 255 }),
+  accessToken: varchar('access_token', { length: 255 }).notNull().unique(), // for unauthenticated vendor access
+  questionsSnapshot: jsonb('questions_snapshot').notNull(), // snapshot of template questions at send time
+  responses: jsonb('responses').default({}).notNull(),
+  score: integer('score'), // 0-100 base score
+  aiSummary: text('ai_summary'),
+  scoreAdjustment: integer('score_adjustment').default(0).notNull(), // bounded modifier (e.g. 0 to -20)
+  reviewedBy: uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  reminderCount: integer('reminder_count').default(0).notNull(), // idempotency reminder counter
+  lastReminderSentAt: timestamp('last_reminder_sent_at', { withTimezone: true }),
+  respondentEmail: varchar('respondent_email', { length: 255 }),
+  respondentIp: varchar('respondent_ip', { length: 45 }), // captured under legitimate interest audit trail
+  submissionLocked: boolean('submission_locked').default(false).notNull(),
+});
+
+export const vendorAssessmentsRelations = relations(vendorAssessments, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [vendorAssessments.organizationId],
+    references: [organizations.id],
+  }),
+  orgVendor: one(organizationVendors, {
+    fields: [vendorAssessments.vendorId],
+    references: [organizationVendors.id],
+  }),
+  template: one(vendorAssessmentTemplates, {
+    fields: [vendorAssessments.templateId],
+    references: [vendorAssessmentTemplates.id],
+  }),
+  reviewer: one(users, {
+    fields: [vendorAssessments.reviewedBy],
+    references: [users.id],
+  }),
+}));
 
 export const vendorSubProcessors = pgTable('vendor_sub_processors', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -519,6 +617,49 @@ export const vendorSubProcessors = pgTable('vendor_sub_processors', {
   notifiedAt: timestamp('notified_at', { withTimezone: true }),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+export const vendorSubProcessorChanges = pgTable('vendor_sub_processor_changes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  orgVendorId: uuid('org_vendor_id').notNull().references(() => organizationVendors.id, { onDelete: 'cascade' }),
+  detectedAt: timestamp('detected_at', { withTimezone: true }).defaultNow().notNull(),
+  previousHash: text('previous_hash').notNull(),
+  newHash: text('new_hash').notNull(),
+  previousSnapshot: text('previous_snapshot'),
+  newSnapshot: text('new_snapshot'),
+  status: varchar('status', { length: 50 }).default('pending_review').notNull(),
+  reviewedBy: uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  notes: text('notes'),
+});
+
+export const vendorIncidents = pgTable('vendor_incidents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  vendorSlug: text('vendor_slug').notNull(),
+  incidentType: varchar('incident_type', { length: 50 }).notNull(), // 'breach' | 'fine' | 'enforcement' | 'investigation'
+  title: text('title').notNull(),
+  summary: text('summary'),
+  sourceUrl: text('source_url'),
+  sourceName: text('source_name'),
+  incidentDate: date('incident_date'),
+  detectedAt: timestamp('detected_at', { withTimezone: true }).defaultNow(),
+  severity: varchar('severity', { length: 50 }).default('medium').notNull(), // 'low' | 'medium' | 'high' | 'critical'
+  affectedDataCategories: text('affected_data_categories').array().default(sql`ARRAY[]::text[]`),
+  fineAmount: numeric('fine_amount'),
+  fineCurrency: varchar('fine_currency', { length: 10 }),
+  status: varchar('status', { length: 50 }).default('published').notNull(), // 'draft' | 'published'
+});
+
+export const organizationVendorIncidentAlerts = pgTable('organization_vendor_incident_alerts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  orgVendorId: uuid('vendor_id').notNull().references(() => organizationVendors.id, { onDelete: 'cascade' }),
+  incidentId: uuid('incident_id').notNull().references(() => vendorIncidents.id, { onDelete: 'cascade' }),
+  status: varchar('status', { length: 50 }).default('unread').notNull(), // 'unread' | 'acknowledged' | 'action_taken' | 'dismissed'
+  acknowledgedBy: uuid('acknowledged_by').references(() => users.id, { onDelete: 'set null' }),
+  acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+  actionNotes: text('action_notes'),
 });
 
 export const transferImpactAssessments = pgTable('transfer_impact_assessments', {
@@ -1420,6 +1561,52 @@ export const webhookDeliveries = pgTable('webhook_deliveries', {
 });
 
 // ============================================================================
+// VENDOR QUESTIONNAIRES (Phase 5)
+// ============================================================================
+
+export const vendorQuestionnaires = pgTable('vendor_questionnaires', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  vendorId: uuid('vendor_id').notNull().references(() => vendors.id, { onDelete: 'cascade' }),
+  orgVendorId: uuid('org_vendor_id').notNull().references(() => organizationVendors.id, { onDelete: 'cascade' }),
+  
+  token: uuid('token').defaultRandom().notNull().unique(),
+  status: varchar('status', { length: 50 }).default('draft').notNull(), // 'draft' | 'sent' | 'submitted' | 'reviewed'
+  promptVersion: varchar('prompt_version', { length: 100 }).default('v1').notNull(),
+  
+  questions: jsonb('questions').notNull(), // array of { id, text, category, rationale }
+  answers: jsonb('answers').default([]), // array of { questionId, textAnswer }
+  aiScore: integer('ai_score'), // score (0 to 100) calculated by Claude
+  aiAnalysis: jsonb('ai_analysis').default({}), // { summary, answersReview: [{ questionId, score, status, analysis, confidence, gapIdentified }] }
+  scoreModifier: integer('score_modifier').default(0).notNull(), // the -10 to +25 adjustment applied
+  
+  submittedAt: timestamp('submitted_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_vq_org').on(table.organizationId),
+    vendorIdx: index('idx_vq_vendor').on(table.vendorId),
+    tokenIdx: index('idx_vq_token').on(table.token),
+  };
+});
+
+export const vendorQuestionnairesRelations = relations(vendorQuestionnaires, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [vendorQuestionnaires.organizationId],
+    references: [organizations.id],
+  }),
+  vendor: one(vendors, {
+    fields: [vendorQuestionnaires.vendorId],
+    references: [vendors.id],
+  }),
+  orgVendor: one(organizationVendors, {
+    fields: [vendorQuestionnaires.orgVendorId],
+    references: [organizationVendors.id],
+  }),
+}));
+
+// ============================================================================
 // RELATIONS
 // ============================================================================
 
@@ -1523,6 +1710,45 @@ export const notificationQueueRelations = relations(notificationQueue, ({ one })
     references: [users.id],
   }),
 }));
+
+export const vendorSubProcessorChangesRelations = relations(vendorSubProcessorChanges, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [vendorSubProcessorChanges.organizationId],
+    references: [organizations.id],
+  }),
+  orgVendor: one(organizationVendors, {
+    fields: [vendorSubProcessorChanges.orgVendorId],
+    references: [organizationVendors.id],
+  }),
+  reviewer: one(users, {
+    fields: [vendorSubProcessorChanges.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+export const vendorIncidentsRelations = relations(vendorIncidents, ({ many }) => ({
+  alerts: many(organizationVendorIncidentAlerts),
+}));
+
+export const organizationVendorIncidentAlertsRelations = relations(organizationVendorIncidentAlerts, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [organizationVendorIncidentAlerts.organizationId],
+    references: [organizations.id],
+  }),
+  orgVendor: one(organizationVendors, {
+    fields: [organizationVendorIncidentAlerts.orgVendorId],
+    references: [organizationVendors.id],
+  }),
+  incident: one(vendorIncidents, {
+    fields: [organizationVendorIncidentAlerts.incidentId],
+    references: [vendorIncidents.id],
+  }),
+  reviewer: one(users, {
+    fields: [organizationVendorIncidentAlerts.acknowledgedBy],
+    references: [users.id],
+  }),
+}));
+
 export const activeSessions = pgTable('active_sessions', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

@@ -661,7 +661,24 @@ Extended DPA tracking beyond binary signed/unsigned status to audit the 8 mandat
 
 ---
 
-## 19. Key Principles Established
+## 19. Sub-Processor Change Monitoring (Phase 3)
+
+### Overview
+Automated weekly change detection engine for tracking vendor sub-processor list updates. Minimizes false positives using whitespace normalization and regex boilerplate removal, providing users with unified line-level differences, email/in-app notifications, and custom webhook events.
+
+### Scraper Worker & Clean-up Engine
+- **Weekly Detector Job**: Runs on BullMQ, scraping up to 50 global vendor sub-processor URLs per run using `puppeteer-cluster`.
+- **Boilerplate Noise Filtration**: Before hashing, filters headers, footers, scripts, styles, and cookie banners from the DOM. Then, cleans copyright notices, cookie policies, and generic footer link patterns line-by-line.
+- **Fail-Safe Processing Order**: Hashes page content and compares it against global baselines. Fans out changes, notifications, and webhooks to all linked customer organizations *before* updating the global vendor hash to prevent crash state skips.
+
+### Frontend Review & Diff Visualizer
+- **Timeline UI**: Placed under the Sub-processors tab, showing all past changes chronologically with badges for review status (`pending_review`, `acknowledged`, `objected`).
+- **Unified Line Diff**: Renders a clean list highlighting exactly which lines were added (green `+`) or removed (red `-`).
+- **Objection Guidance**: Displays legal warnings to users when they choose to "Object" to a change, reminding them of DPA termination rights and links to Phase 2 clause assessments.
+
+---
+
+## 20. Key Principles Established
 
 1. **Don't ship mock/simulated features.** If a scanner is supposed to scan, it scans with real Puppeteer. If an export is supposed to export, it writes a real ZIP to S3.
 2. **Every list endpoint has cursor pagination.** Uses shared `paginatedQuery` utility.
@@ -673,3 +690,67 @@ Extended DPA tracking beyond binary signed/unsigned status to audit the 8 mandat
 8. **"TypeScript compiles" is not verification.** Test end-to-end: trigger mutation → check audit_logs → check email arrived → check webhook fired.
 9. **Content is the product.** Empty training modules, empty vendor database, and an AI copilot with no knowledge base are dealbreakers.
 10. **Don't build features for imaginary customers.** Enterprise features built but documented: sell when real enterprise customer asks with money.
+
+---
+
+## 21. Breach Intelligence (Phase 4)
+
+### Overview
+Automated third-party security incident tracking and alerting system. Monitors global feeds for data breaches, administrative fines, and security alerts involving third-party vendors, triggering immediate in-app and email warnings for organizations using affected services.
+
+### Incident Tracking & Alerts
+- **Database Schema**: Adds the `vendor_incidents` table storing incident dates, types, severity levels, affected data categories, administrative fines (e.g., GDPR enforcement fines), and source URLs.
+- **Organization Alerts**: Implements `organization_vendor_incident_alerts` to map incidents to organizations using the vendor. Tracks unread notifications, acknowledgement audits (timestamp and user ID), and remediation notes.
+- **Incident Feed UI**: Integrates a "Security Incidents" tab on the Vendor profile details view displaying chronological history, severity grades, and fine logs for each vendor.
+
+---
+
+## 22. AI-Powered Vendor Analysis (Phase 5)
+
+### Overview
+Integrates Claude 3.5 Sonnet (with Gemini 2.5 Flash fallback) to automate DPA clause auditing, draft tailored security questionnaires, and suggest GDPR-friendly alternative services.
+
+### DPA Auto-Analysis
+- **PDF Extraction**: Extracts text from uploaded DPA PDFs and processes them against the 8 mandatory GDPR Article 28 clauses.
+- **Risk Detection**: Scans for liability caps, unilateral sub-processor assignment rights, and broad indemnification clauses, extracting exact quote segments from the source text.
+- **Draft Reviews**: Saves AI analysis as a draft, allowing compliance officers to verify, edit, and lock clause checklists.
+
+### Alternatives & Questionnaires
+- **Alternative Recommendations**: Surfaces same-category privacy-focused alternatives (e.g., Plausible instead of Google Analytics) with lower risk scores.
+- **Tailored Questionnaires**: AI writes custom security questions mapped to the vendor's headquarters location, sharing details, and lacking certifications.
+- **AI Document Intake**: Enables external vendors to drag-and-drop security policies (SOC 2, ISO 27001) onto public questionnaire forms to auto-extract answers.
+
+---
+
+## 23. Vendor Discovery & Shadow IT Detection (Phase 6)
+
+### Overview
+Automated website and DNS monitoring service that discovers undocumented third-party sub-processors, analytics tools, trackers, and email services used by the organization. Integrates matching algorithms and a confidence verification queue to highlight blind spots and maintain an accurate vendor register.
+
+### Scanner Engine & Collectors
+- **Puppeteer Network Interceptor**: Orchestrates page loads and intercepting requests (scripts, iframes, pixels, styles). Filters out own-domain networks and standard CDN/font CDNs (e.g., Cloudflare, Google Fonts) to minimize noise.
+- **DNS / Mail / SPF Scanners**: Resolves organization domain records to automatically discover email hosts (MX records), transaction email services (SPF patterns), and SaaS solutions routed through subdomains (CNAME lookups).
+- **Matching & Normalization**: Strips common subdomains to match against known websites. Uses Levenshtein distance on root domains to fuzzy-match custom organization vendors, placing low-confidence discoveries in an approval queue.
+
+### Inbox & Lifecycle Workflows
+- **Discovery Inbox**: Displays discovered services categorized into Undocumented, Tracked, and Dismissed. Provides quick-action buttons to link to existing global registry vendors, create custom vendors, or ignore discoveries.
+- **Auto-Discovered Vendor Banner**: Flags auto-created profiles with warnings prompting compliance teams to input headquarters, EU hosting, and cert data before locking the verified profile.
+- **BullMQ Weekly Jobs**: Deterministically spreads organization scans across weekly windows (Sunday midnight) based on hash UUIDs to manage rate limits.
+
+---
+
+## 24. Vendor Assessment Questionnaires (Phase 7)
+
+### Overview
+Enterprise-grade questionnaire intake and evaluation module. Enables compliance officers to dispatch, track, and score security and privacy assessments sent directly to third-party vendors. Evaluates compliance gaps using AI agents and adjusts vendor risk scores.
+
+### Intake Form & Public Security
+- **Secure Link Intake**: Provides single-use, cryptographically secure URLs mapped to individual tokens (`/public/assessments/[token]`) for vendors to answer questions without authenticated registration.
+- **Submission Locks**: Implements strict write-locks in both the database schema (via a custom PostgreSQL trigger) and the endpoint layers preventing resubmissions once status is marked `'completed'` or `'expired'`.
+- **Expirations & Extensions**: Supports extension requests and displays read-only records once invitations expire.
+
+### tRPC Procedures & AI Review
+- **AI Evaluation Agent**: Integrates Claude 3.5 Sonnet (with Vertex Gemini-2.5-Flash and rules-based fallback) to analyze responses, detect compliance gaps, assign confidence ratings, and generate audit summaries.
+- **Risk Score Adjustment**: Maps questionnaire results (0-100) directly to vendor risk level calculations as a bounded modifier (up to `-10` for verified security, and up to `+25` for severe gaps or expired responses).
+- **Audit Logging & PDF Exports**: Creates Article 30 ROPA compliant provenance reports (`/print` route) detailing timestamps, respondent emails, client IPs, and question details.
+- **BullMQ Reminders Sequence**: A daily cron worker tracks pending questionnaires, dispatching reminders via react-email templates at 7, 14, and 21 days, and marking unanswered assessments as expired at 30 days.

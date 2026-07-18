@@ -4,11 +4,15 @@ import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, ShieldCheck, Globe, Lock, AlertTriangle, FileText, Upload, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Globe, Lock, AlertTriangle, FileText, Upload, CheckCircle2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { SubProcessorList } from '@/components/vendors/SubProcessorList';
 import { TIABuilder } from '@/components/vendors/TIABuilder';
+import { VendorIncidentFeed } from '@/components/vendors/VendorIncidentFeed';
 import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
+import { AlternativesSection } from '@/components/vendors/AlternativesSection';
+import { QuestionnaireTab } from '@/components/vendors/QuestionnaireTab';
+import { DpaAnalysisModal } from '@/components/vendors/DpaAnalysisModal';
 
 export default function VendorDetailsPage() {
   const params = useParams();
@@ -43,7 +47,18 @@ export default function VendorDetailsPage() {
       utils.vendors.getOrgVendorDetails.invalidate({ vendorId: variables.vendorId });
     }
   });
-  const [activeTab, setActiveTab] = useState<'dpa' | 'tia' | 'sub-processors' | 'ropa'>('dpa');
+  const [activeTab, setActiveTab] = useState<'dpa' | 'tia' | 'sub-processors' | 'incidents' | 'questionnaire'>('dpa');
+  
+  // DPA upload and analysis states
+  const [isDpaModalOpen, setIsDpaModalOpen] = useState(false);
+  const [dpaAnalysisData, setDpaAnalysisData] = useState<any>(null);
+  const [isAnalyzingDpa, setIsAnalyzingDpa] = useState(false);
+  const [dpaUploadError, setDpaUploadError] = useState<string | null>(null);
+
+  const analyzeDpaMutation = trpc.ai.analyzeDpa.useMutation();
+  const confirmDpaMutation = trpc.vendors.confirmDpaAnalysis.useMutation();
+  const draftDpaMutation = trpc.vendors.saveDpaAnalysisDraft.useMutation();
+  const verifyProfileMutation = trpc.vendors.verifyVendorProfile.useMutation();
 
   if (isLoading) return <div className="p-8 text-ink-500">Loading vendor intelligence...</div>;
   if (!vendor) return <div className="p-8 text-ink-500">Vendor not found or not linked.</div>;
@@ -78,6 +93,28 @@ export default function VendorDetailsPage() {
       <Link href="/vendors" className="inline-flex items-center gap-2 text-[14px] font-medium text-ink-500 hover:text-ink-900 mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4" /> Back to Vendor Register
       </Link>
+ 
+      {vendor.vendor.isAutoDiscovered && (
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4 text-amber-900">
+          <div className="flex gap-3 leading-relaxed">
+            <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+            <div className="text-xs">
+              <span className="font-bold block mb-0.5 text-amber-950">Auto-Discovered Vendor Profile</span>
+              This vendor profile was auto-created from a website or DNS scan. Please verify and complete their Headquarters country, EU Hosting options, and Security Certifications to ensure correct risk score modeling.
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              await verifyProfileMutation.mutateAsync({ vendorId });
+              utils.vendors.getOrgVendorDetails.invalidate({ vendorId });
+            }}
+            disabled={verifyProfileMutation.isPending}
+            className="bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors shrink-0 shadow-sm self-start sm:self-center"
+          >
+            Verify &amp; Lock Profile
+          </button>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-3 gap-8 items-start">
         {/* Left Column: Global Intelligence */}
@@ -175,6 +212,8 @@ export default function VendorDetailsPage() {
               </div>
             )}
           </div>
+
+          <AlternativesSection vendorId={vendorId} />
         </div>
 
         {/* Right Column: Organization Context */}
@@ -198,6 +237,18 @@ export default function VendorDetailsPage() {
                 className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'sub-processors' ? 'border-sage-600 text-sage-700 bg-white' : 'border-transparent text-ink-500 hover:text-ink-900 hover:bg-bone-50'}`}
               >
                 Sub-processors
+              </button>
+              <button 
+                onClick={() => setActiveTab('incidents')}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'incidents' ? 'border-sage-600 text-sage-700 bg-white' : 'border-transparent text-ink-500 hover:text-ink-900 hover:bg-bone-50'}`}
+              >
+                Incidents &amp; Breaches
+              </button>
+              <button 
+                onClick={() => setActiveTab('questionnaire')}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'questionnaire' ? 'border-sage-600 text-sage-700 bg-white' : 'border-transparent text-ink-500 hover:text-ink-900 hover:bg-bone-50'}`}
+              >
+                Security Questionnaire
               </button>
             </div>
 
@@ -229,9 +280,64 @@ export default function VendorDetailsPage() {
                       </div>
                       <h4 className="font-semibold text-ink-900 mb-1">Upload Signed Document</h4>
                       <p className="text-[13px] text-ink-500 mb-4 max-w-sm">Securely store your executed DPA. This will automatically update your risk score and schedule expiry alerts.</p>
-                      <button className="bg-sage-700 text-white text-[13px] font-medium px-5 py-2.5 rounded-lg hover:bg-sage-600 transition-colors shadow-card">
-                        Select PDF File
-                      </button>
+                      
+                      {isAnalyzingDpa ? (
+                        <div className="flex flex-col items-center">
+                          <Loader2 className="w-8 h-8 text-sage-600 animate-spin mb-2" />
+                          <p className="text-xs text-ink-600 font-semibold animate-pulse">AI is parsing clauses and checking problematic language...</p>
+                        </div>
+                      ) : (
+                        <>
+                          <input
+                            type="file"
+                            id="dpa-upload-input"
+                            className="hidden"
+                            accept=".pdf"
+                            onChange={async (e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                const file = e.target.files[0];
+                                if (!file.name.endsWith('.pdf')) {
+                                  setDpaUploadError("Only PDF documents are supported for AI DPA analysis.");
+                                  return;
+                                }
+                                setDpaUploadError(null);
+                                setIsAnalyzingDpa(true);
+                                try {
+                                  const reader = new FileReader();
+                                  reader.readAsDataURL(file);
+                                  reader.onload = async () => {
+                                    const base64 = (reader.result as string).split(',')[1];
+                                    try {
+                                      const result = await analyzeDpaMutation.mutateAsync({
+                                        fileBase64: base64,
+                                        orgVendorId: vendor.orgVendor.id
+                                      });
+                                      setDpaAnalysisData(result);
+                                      setIsDpaModalOpen(true);
+                                    } catch (err: any) {
+                                      setDpaUploadError(err.message || "Failed to analyze DPA document.");
+                                    } finally {
+                                      setIsAnalyzingDpa(false);
+                                    }
+                                  };
+                                } catch (err: any) {
+                                  setDpaUploadError("Failed to read DPA file.");
+                                  setIsAnalyzingDpa(false);
+                                }
+                              }
+                            }}
+                          />
+                          <button 
+                            onClick={() => document.getElementById('dpa-upload-input')?.click()}
+                            className="bg-sage-700 text-white text-[13px] font-medium px-5 py-2.5 rounded-lg hover:bg-sage-600 transition-colors shadow-card"
+                          >
+                            Select PDF File
+                          </button>
+                        </>
+                      )}
+                      {dpaUploadError && (
+                        <p className="text-xs text-rose-600 mt-2 font-medium">{dpaUploadError}</p>
+                      )}
                     </div>
 
                     {vendor.orgVendor.dpaStatus === 'signed' && (
@@ -440,13 +546,46 @@ export default function VendorDetailsPage() {
 
               {activeTab === 'sub-processors' && (
                 <div className="space-y-8 animate-in fade-in">
-                  <SubProcessorList vendorId={vendorId} />
+                  <SubProcessorList vendorId={vendorId} orgVendorId={vendor.orgVendor.id} />
                 </div>
+              )}
+
+              {activeTab === 'incidents' && (
+                <div className="space-y-8 animate-in fade-in">
+                  <VendorIncidentFeed vendorId={vendorId} />
+                </div>
+              )}
+ 
+              {activeTab === 'questionnaire' && (
+                <QuestionnaireTab orgVendorId={vendor.orgVendor.id} />
               )}
             </div>
           </div>
         </div>
       </div>
+ 
+      <DpaAnalysisModal
+        isOpen={isDpaModalOpen}
+        onClose={() => setIsDpaModalOpen(false)}
+        analysisData={dpaAnalysisData}
+        isSubmitting={confirmDpaMutation.isPending || draftDpaMutation.isPending}
+        onConfirm={async (checklist) => {
+          await confirmDpaMutation.mutateAsync({
+            orgVendorId: vendor.orgVendor.id,
+            dpaClauseCoverage: checklist
+          });
+          setIsDpaModalOpen(false);
+          utils.vendors.getOrgVendorDetails.invalidate({ vendorId });
+        }}
+        onSaveDraft={async (rawAnalysis) => {
+          await draftDpaMutation.mutateAsync({
+            orgVendorId: vendor.orgVendor.id,
+            dpaAiAnalysis: rawAnalysis
+          });
+          setIsDpaModalOpen(false);
+          utils.vendors.getOrgVendorDetails.invalidate({ vendorId });
+        }}
+      />
     </div>
   );
 }

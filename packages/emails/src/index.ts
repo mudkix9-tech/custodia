@@ -27,6 +27,8 @@ export * from './templates/vendor/DpaExpiring7d';
 export * from './templates/vendor/DpaExpired';
 export * from './templates/vendor/VendorBreachAlert';
 export * from './templates/vendor/SubProcessorChanged';
+export * from './templates/vendor/AssessmentInvitation';
+export * from './templates/vendor/AssessmentReminder';
 
 export * from './templates/compliance/GapDetected';
 export * from './templates/compliance/MonthlyReport';

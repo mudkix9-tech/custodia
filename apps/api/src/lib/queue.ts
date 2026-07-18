@@ -29,6 +29,9 @@ import { Redis } from 'ioredis';
 
 let sharedQueueRedis: Redis | null = null;
 function getSharedQueueRedis() {
+  if (process.env.NODE_ENV === 'test') {
+    return null as any;
+  }
   if (!sharedQueueRedis) {
     sharedQueueRedis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
       maxRetriesPerRequest: null,
@@ -39,15 +42,21 @@ function getSharedQueueRedis() {
 }
 
 export function createQueue(name: string) {
+  if (process.env.NODE_ENV === 'test') {
+    return null as any;
+  }
   return new Queue(name, { connection: getSharedQueueRedis() });
 }
 
 export function createWorker(name: string, processor: any, opts?: any) {
+  if (process.env.NODE_ENV === 'test') {
+    return null as any;
+  }
   return new Worker(name, processor, {
     connection: redisConnection,
     ...opts
   });
 }
 
-export const dataExportQueue = createQueue('data-export');
-export const orgEmbeddingsQueue = createQueue('org-embeddings');
+export const dataExportQueue = process.env.NODE_ENV === 'test' ? null as any : createQueue('data-export');
+export const orgEmbeddingsQueue = process.env.NODE_ENV === 'test' ? null as any : createQueue('org-embeddings');

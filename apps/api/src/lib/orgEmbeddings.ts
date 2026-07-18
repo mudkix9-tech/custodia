@@ -13,9 +13,10 @@ import {
   dpias,
   dpiaRisks,
   dpiaMeasures,
-  organizationEmbeddings
+  organizationEmbeddings,
+  vendorQuestionnaires
 } from 'db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { GoogleGenAI } from '@google/genai';
 
 const ai = new GoogleGenAI({
@@ -73,17 +74,38 @@ export async function serializeEntityForEmbedding(entityType: string, entityId: 
       .from(organizationVendors)
       .leftJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
       .where(eq(organizationVendors.id, entityId));
-
+ 
       const record = records[0];
       if (!record) throw new Error(`Organization vendor with ID ${entityId} not found`);
-
+ 
       const { orgVendor, vendor } = record;
       const shared = (orgVendor.dataCategoriesShared as any)?.join(', ') || 'none specified';
       const dpaStatus = orgVendor.dpaStatus || 'not started';
+      const dpaAnalysisStatus = orgVendor.dpaAnalysisStatus || 'not_analyzed';
       const risk = orgVendor.riskScore !== null ? `${orgVendor.riskScore} (risk level: ${orgVendor.riskLevel || 'medium'})` : 'not calculated';
       const country = vendor?.headquartersCountry || 'unknown country';
-
-      return `The organization has linked a third-party vendor named '${vendor?.name || 'unknown'}' for the purpose of ${orgVendor.purpose || 'not specified'}. The Data Processing Agreement (DPA) status is '${dpaStatus}'. The categories of data shared with this vendor are ${shared}. The vendor operates out of ${country} and has a calculated compliance risk score of ${risk}.`;
+      const isFriendly = vendor?.isPrivacyFriendly ? 'This is flagged as a privacy-friendly alternative.' : '';
+ 
+      // Get clause checklist details
+      const coverage = (orgVendor.dpaClauseCoverage as Record<string, boolean>) || {};
+      const clauseKeys = Object.keys(coverage);
+      const verifiedClauses = clauseKeys.filter(k => coverage[k]).join(', ') || 'none';
+ 
+      // Check if there are questionnaires
+      const questionnaires = await db.select()
+        .from(vendorQuestionnaires)
+        .where(and(
+          eq(vendorQuestionnaires.orgVendorId, orgVendor.id),
+          eq(vendorQuestionnaires.status, 'reviewed')
+        ))
+        .orderBy(desc(vendorQuestionnaires.updatedAt));
+      
+      const activeQ = questionnaires[0];
+      const qText = activeQ 
+        ? `A vendor risk questionnaire has been reviewed (score modifier: ${activeQ.scoreModifier}, AI score: ${activeQ.aiScore || 'not scored'}).` 
+        : 'No reviewed questionnaire on file.';
+ 
+      return `The organization has linked a third-party vendor named '${vendor?.name || 'unknown'}' for the purpose of ${orgVendor.purpose || 'not specified'}. The Data Processing Agreement (DPA) status is '${dpaStatus}', and DPA compliance analysis status is '${dpaAnalysisStatus}'. Verified DPA clauses include: ${verifiedClauses}. ${isFriendly} The vendor operates out of ${country} and has a calculated compliance risk score of ${risk}. ${qText} The categories of data shared with this vendor are ${shared}.`;
     }
     case 'policy': {
       const policy = await db.query.privacyPolicies.findFirst({

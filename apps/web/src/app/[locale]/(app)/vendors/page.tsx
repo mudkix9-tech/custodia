@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import { DataGrid } from 'ui';
 import { Plus, Search, FileText, Download, ShieldAlert, CheckCircle2, Clock, Link as LinkIcon, Building2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { DiscoveryTab } from '@/components/vendors/DiscoveryTab';
 
 export default function VendorsPage() {
   const {
@@ -21,6 +23,16 @@ export default function VendorsPage() {
   const vendors = vendorsResp?.pages.flatMap((page: any) => page.data) || [];
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'register' | 'discovery'>('register');
+
+  useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab === 'discovery') {
+      setActiveTab('discovery');
+    }
+  }, [searchParams]);
 
   // Derived metrics
   const totalVendors = vendors.length;
@@ -110,64 +122,86 @@ export default function VendorsPage() {
         </div>
       </div>
 
-      {/* Summary Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm">
-          <div className="text-[13px] font-medium text-ink-500 uppercase tracking-wider mb-2">Total Tracked</div>
-          <div className="text-3xl font-serif text-ink-900">{totalVendors}</div>
-        </div>
-        <div className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm">
-          <div className="text-[13px] font-medium text-ink-500 uppercase tracking-wider mb-2">DPA Coverage</div>
-          <div className="text-3xl font-serif text-ink-900">{dpaCoverage}%</div>
-        </div>
-        <div className={`bg-white border rounded-2xl p-6 shadow-sm ${missingDpas > 0 ? 'border-red-200' : 'border-ink-900/10'}`}>
-          <div className="text-[13px] font-medium text-ink-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-            Missing / Expired DPAs {missingDpas > 0 && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
-          </div>
-          <div className={`text-3xl font-serif ${missingDpas > 0 ? 'text-red-600' : 'text-ink-900'}`}>{missingDpas}</div>
-        </div>
-        <div className={`bg-white border rounded-2xl p-6 shadow-sm ${highRiskVendors > 0 ? 'border-amber-200' : 'border-ink-900/10'}`}>
-          <div className="text-[13px] font-medium text-ink-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-            High / Critical Risk {highRiskVendors > 0 && <span className="w-2 h-2 rounded-full bg-amber-500"></span>}
-          </div>
-          <div className={`text-3xl font-serif ${highRiskVendors > 0 ? 'text-amber-600' : 'text-ink-900'}`}>{highRiskVendors}</div>
-        </div>
+      {/* Tab Navigation */}
+      <div className="flex border-b border-ink-900/10">
+        <button
+          onClick={() => setActiveTab('register')}
+          className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'register' ? 'border-sage-600 text-sage-700 font-semibold' : 'border-transparent text-ink-500 hover:text-ink-950'}`}
+        >
+          Tracked Register ({totalVendors})
+        </button>
+        <button
+          onClick={() => setActiveTab('discovery')}
+          className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'discovery' ? 'border-sage-600 text-sage-700 font-semibold' : 'border-transparent text-ink-500 hover:text-ink-950'}`}
+        >
+          Vendor Discovery &amp; Shadow IT
+        </button>
       </div>
 
-      {/* DataGrid */}
-      <div className="bg-white border border-ink-900/10 rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-ink-900/5 bg-bone-50/50 flex items-center justify-between">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
-            <input 
-              type="text" 
-              placeholder="Filter vendors..."
-              className="w-full bg-white border border-ink-900/10 rounded-lg pl-9 pr-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+      {activeTab === 'register' ? (
+        <>
+          {/* Summary Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm">
+              <div className="text-[13px] font-medium text-ink-500 uppercase tracking-wider mb-2">Total Tracked</div>
+              <div className="text-3xl font-serif text-ink-900">{totalVendors}</div>
+            </div>
+            <div className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm">
+              <div className="text-[13px] font-medium text-ink-500 uppercase tracking-wider mb-2">DPA Coverage</div>
+              <div className="text-3xl font-serif text-ink-900">{dpaCoverage}%</div>
+            </div>
+            <div className={`bg-white border rounded-2xl p-6 shadow-sm ${missingDpas > 0 ? 'border-red-200' : 'border-ink-900/10'}`}>
+              <div className="text-[13px] font-medium text-ink-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                Missing / Expired DPAs {missingDpas > 0 && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
+              </div>
+              <div className={`text-3xl font-serif ${missingDpas > 0 ? 'text-red-600' : 'text-ink-900'}`}>{missingDpas}</div>
+            </div>
+            <div className={`bg-white border rounded-2xl p-6 shadow-sm ${highRiskVendors > 0 ? 'border-amber-200' : 'border-ink-900/10'}`}>
+              <div className="text-[13px] font-medium text-ink-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                High / Critical Risk {highRiskVendors > 0 && <span className="w-2 h-2 rounded-full bg-amber-500"></span>}
+              </div>
+              <div className={`text-3xl font-serif ${highRiskVendors > 0 ? 'text-amber-600' : 'text-ink-900'}`}>{highRiskVendors}</div>
+            </div>
+          </div>
+
+          {/* DataGrid */}
+          <div className="bg-white border border-ink-900/10 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-ink-900/5 bg-bone-50/50 flex items-center justify-between">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
+                <input 
+                  type="text" 
+                  placeholder="Filter vendors..."
+                  className="w-full bg-white border border-ink-900/10 rounded-lg pl-9 pr-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                />
+              </div>
+              <button className="text-[13px] font-medium text-ink-600 hover:text-ink-900 bg-white border border-ink-900/10 px-3 py-1.5 rounded-lg shadow-sm">
+                Add Custom Vendor
+              </button>
+            </div>
+            <DataGrid 
+              mode="full"
+              columns={columns as any}
+              data={vendors}
+              isLoading={isLoading}
+              emptyStateMessage="No vendors tracked yet. Click 'Discover Vendors' to start building your register."
             />
+            {hasNextPage && (
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
+                >
+                  {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+                </button>
+              </div>
+            )}
           </div>
-          <button className="text-[13px] font-medium text-ink-600 hover:text-ink-900 bg-white border border-ink-900/10 px-3 py-1.5 rounded-lg shadow-sm">
-            Add Custom Vendor
-          </button>
-        </div>
-        <DataGrid 
-          mode="full"
-          columns={columns as any}
-          data={vendors}
-          isLoading={isLoading}
-          emptyStateMessage="No vendors tracked yet. Click 'Discover Vendors' to start building your register."
-        />
-        {hasNextPage && (
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-              className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
-            >
-              {isFetchingNextPage ? 'Loading more...' : 'Load More'}
-            </button>
-          </div>
-        )}
-      </div>
+        </>
+      ) : (
+        <DiscoveryTab />
+      )}
 
       <DiscoverModal isOpen={isDiscoverOpen} onClose={() => setIsDiscoverOpen(false)} />
     </div>

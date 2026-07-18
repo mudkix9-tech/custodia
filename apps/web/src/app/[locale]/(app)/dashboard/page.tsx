@@ -3,11 +3,13 @@
 import React from 'react';
 import { RegulatoryWidget } from '@/components/dashboard/RegulatoryWidget';
 import { SetupProgress } from '@/components/dashboard/SetupProgress';
+import { BreachAlertsWidget } from '@/components/dashboard/BreachAlertsWidget';
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
 
 export default function DashboardPage() {
   const { data: riskStats } = trpc.vendors.getRiskStats.useQuery();
+  const { data: undocumentedCount } = trpc.vendors.getUndocumentedCount.useQuery();
 
   return (
     <div className="max-w-5xl mx-auto p-8 fade-up">
@@ -18,12 +20,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <BreachAlertsWidget />
+
       <SetupProgress />
 
       <RegulatoryWidget />
 
       {/* STATS ROW */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
         <div className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm">
           <h3 className="text-ink-500 font-medium text-sm mb-2">Compliance Score</h3>
           <p className="text-3xl font-serif text-ink-900 font-bold">85%</p>
@@ -45,6 +49,17 @@ export default function DashboardPage() {
           </h3>
           <p className={`text-3xl font-serif font-bold ${riskStats && riskStats.highOrCritical > 0 ? 'text-red-600' : 'text-ink-900'}`}>
             {riskStats !== undefined ? riskStats.highOrCritical : '...'}
+          </p>
+        </Link>
+        <Link 
+          href="/vendors?tab=discovery" 
+          className="bg-white border border-ink-900/10 hover:border-indigo-200 rounded-2xl p-6 shadow-sm block transition-all group"
+        >
+          <h3 className="text-ink-500 group-hover:text-indigo-600 font-medium text-sm mb-2 transition-colors">
+            Undocumented Services
+          </h3>
+          <p className={`text-3xl font-serif font-bold ${undocumentedCount !== undefined && undocumentedCount > 0 ? 'text-indigo-600' : 'text-ink-900'}`}>
+            {undocumentedCount !== undefined ? undocumentedCount : '...'}
           </p>
         </Link>
       </div>

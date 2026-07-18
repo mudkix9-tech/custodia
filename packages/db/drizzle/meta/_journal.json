@@ -50,6 +50,41 @@
       "when": 1781020190000,
       "tag": "0017_dpa_clause_coverage",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781020200000,
+      "tag": "0018_sub_processor_changes",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781020210000,
+      "tag": "0019_breach_intelligence",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781020220000,
+      "tag": "0020_phase5_vendor_analysis",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781020230000,
+      "tag": "0021_phase6_vendor_discovery",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1781020240000,
+      "tag": "0022_phase7_vendor_assessments",
+      "breakpoints": true
     }
   ]
 }
