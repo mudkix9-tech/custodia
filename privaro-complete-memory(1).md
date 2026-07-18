@@ -321,7 +321,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 - Bulk inserts into consent_records
 - Rate limited: 100 req/s per scriptId
 
-### RAG Vector Search, Advanced Retrieval & Organization Embeddings (Phase 3 & 4)
+### RAG Vector Search, Advanced Retrieval & Versioning Infrastructure (Phase 3 - 7)
 - **Flagship Model**: Google Vertex AI `gemini-embedding-001` with **3072-dimensional** vector embeddings. Reverted from `text-embedding-004` to eliminate zero-padding and preserve cosine similarity accuracy.
 - **pgvector Indexing and Retrieval**: Vector indexes (ivfflat/hnsw) are dropped in favor of exact flat search to bypass pgvector's 2000-dimension indexing limit. Flat search achieves 100% accuracy and is extremely fast for our corpus sizes (<10k rows).
 - **Global GDPR Corpus**: Exactly **5,928 vector chunks** (including the newly crawled **EDPB Guidelines 05/2020 on consent**) representing:
@@ -371,6 +371,26 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
     - **DSAR**: `submitPublic`, `updateStatus`, `extendDeadline`, `refuse`, `close`
     - **DPIA**: `create`, `update`, and nested risk/measure creations, updates, or deletions.
     - **Gap Scanner**: `scanOrganization` on gap insertions, updates, and resolutions.
+- **Contextual Copilot Integration (Phase 5)**:
+  * **Unified Guidance Drawer**: A slide-out panel implemented globally, rendering contextual suggestions fetched on-demand when the panel expands and cached for the session.
+  * **Per-Module Interactivity**:
+    - **ROPA**: Direct "Help me fill this in" suggestions with clickable "Apply" buttons for data categories, lawful bases, and retention policies.
+    - **Vendors**: Highlights Schrems II third-country transfers and calculates DPA sign-off risk metrics.
+    - **Breaches**: Surfaces Article 33/34 notification checklists and details the 72-hour reporting countdown.
+    - **DSAR**: Drafts template responses and outlines potential legal exemptions.
+    - **Cookie Consent**: Analyzes Planet49 compliance.
+    - **Compliance Scoring**: Maps gaps directly to one-click deep-link action items.
+- **Multi-Language Corpus Support (Phase 6)**:
+  * **Bilingual Scrapes**: Crawlers retain original-language French (`fr`) and German (`de`) chunks in the database alongside their English translations.
+  * **Dual Semantic Search**: Searches execute dual embeddings: query translation to English via Vertex Gemini 2.5 Flash (with Claude fallback) for the English corpus, and matching original queries directly against the local-language corpus.
+  * **Jurisdiction Boost**: Applied a **1.2x boost** to local DPA chunks when user's organization operates in that jurisdiction.
+  * **Locale-Aware Cache Key**: Cache hashing includes the active `locale` string parameter to prevent cross-language cache mix-ups.
+- **Corpus Maintenance & Versioning (Phase 7)**:
+  * **Schema Version Tracking**: `document_embeddings` table tracks `is_current` and `superseded_by` references; `ai_guidance_logs` table logs `top_similarity` metrics.
+  * **Archival Intent Handling**: Retrieval limits matches to active versions (`is_current = true`) by default. If the user query specifies archival intent, older guidelines are included but receive a **20% rerank score penalty**.
+  * **Scraper Fallbacks**: Scheduled BullMQ scraper fallbacks crawl EDPB guideline list pages directly. Auto-detects reference numbers and updates superseded document statuses.
+  * **RAG Quality Alerts**: Worker nightly logs similarity ratings. If >20% of user queries in a 7-day period yield similarity < 70%, a high-priority system alert is queued in `notificationQueue` for admins.
+  * **Admin Dashboard & Override controls**: Settings page features interactive corpus graphs, RAG telemetry helpfulness scores, and a form allowing admins to manually toggle document currency or link superseding files.
 - **RAG Schema Properties**:
   * **`authority` & `documentType`**: Replaced flat `sourceType` with dedicated fields for exact-match and category-boosted retrieval.
   * **`category`**: Each chunk is dynamically assigned to categories like `'consent'`, `'technology'`, `'transfers'`, `'assessment'`, `'security'`, `'employment'`, `'rights'`, `'enforcement'`, or `'general'`.
