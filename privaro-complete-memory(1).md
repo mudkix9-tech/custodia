@@ -1,6 +1,6 @@
 # Privaro — Complete Product Memory
 
-> **Last updated:** July 18, 2026 (Updated RAG schema, advanced retrieval & reranking pipeline, and organization context embeddings)
+> **Last updated:** July 18, 2026 (Updated RAG schema, advanced retrieval & reranking pipeline, organization context embeddings, and vendor risk scoring engine)
 > **Owner:** Nisarg (solo founder, Pune, India)
 > **Domain:** getprivaro.com
 > **Status:** Pre-launch, core product built, polishing for production
@@ -611,15 +611,32 @@ Marketing agency, design agency, web development, e-commerce, SaaS/technology, r
 - [ ] Health check endpoint verified
 - [ ] Secrets in AWS Secrets Manager
 
-### Estimated time to launch: 3-5 weeks
-- Content creation: 2-3 weeks
-- Visual polish + free tools: 1 week
-- Infrastructure setup + deployment: 1 week
-- Testing and bug fixes: overlapping
+---
+
+## 17. Vendor Risk Scoring Engine (Phase 1)
+
+### Overview
+Replaced the simplistic binary DPA/no-DPA status check with a comprehensive, multi-factor risk assessment model that calculates a 0-100 numerical risk score and assigns a risk level (Low, Medium, High, Critical) for every vendor linked to an organization.
+
+### Scoring Factors and Weights (Out of 100)
+1. **Headquarters Location (20%)**: EU/EEA (0 pts), Adequate Country (5 pts), Non-adequate Country (20 pts). Checks conditional US adequacy (DPF only).
+2. **DPA Status (20%)**: Signed and active (0 pts), Expiring in <= 90 days (10 pts), Missing/Expired (20 pts).
+3. **Data Categories Processed (15%)**: Processes Article 9 special categories (15 pts), Standard data (0 pts).
+4. **Data Subject Volume (10%)**: <1K (0 pts), 1K-10K (3 pts), 10K-100K (6 pts), 100K+ (10 pts).
+5. **Sub-processor Chain Depth (10%)**: 0-1 sub-processors (0 pts), 2-3 (5 pts), 4+ (10 pts).
+6. **Security Certifications (10%)**: SOC 2 + ISO 27001 (0 pts), Any one cert (5 pts), None (10 pts).
+7. **Transfer Safeguards (10%)**: EU/Adequate (0 pts), SCCs/BCRs documented (0 pts), No safeguards (10 pts).
+8. **Breach History (5%)**: Decay score: <6 months (5 pts), 6-12 months (3 pts), 12-24 months (1 pt), older (0 pts).
+
+### Architecture & Recalculation
+- **Calculation Library**: Centralized in `apps/api/src/lib/vendorRisk.ts`, fully typed.
+- **Triggers**: Recalculated dynamically on vendor linking, profile updates, and sub-processor adjustments.
+- **Background Worker**: Daily BullMQ workers (`vendor-risk-recalculation` and `dpa-expiry-checker`) scan and recalculate scores to ensure expirations and breach history decay updates.
+- **Automated Gaps**: Appended Article 9 (missing DPA for special category data) and Chapter V (unsecured third-country transfer) compliance gap rules.
 
 ---
 
-## 17. Key Principles Established
+## 18. Key Principles Established
 
 1. **Don't ship mock/simulated features.** If a scanner is supposed to scan, it scans with real Puppeteer. If an export is supposed to export, it writes a real ZIP to S3.
 2. **Every list endpoint has cursor pagination.** Uses shared `paginatedQuery` utility.
