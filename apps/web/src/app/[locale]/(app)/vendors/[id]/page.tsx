@@ -143,9 +143,37 @@ export default function VendorDetailsPage() {
             `}>
               {vendor.orgVendor.riskLevel}
             </div>
-            <p className="text-[12px] text-bone-50/60 leading-relaxed text-left">
+            <p className="text-[12px] text-bone-50/60 leading-relaxed text-left mb-6">
               Score is dynamically calculated based on jurisdiction ({vendor.vendor.headquartersCountry}), DPAs ({vendor.orgVendor.dpaStatus}), security posture, and threat intelligence.
             </p>
+
+            {vendor.orgVendor.riskFactors && (
+              <div className="mt-6 border-t border-bone-50/20 pt-6 text-left space-y-4">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-bone-50/50">Risk Factors Breakdown</div>
+                <div className="space-y-4">
+                  {Object.entries(vendor.orgVendor.riskFactors).map(([key, factor]: [string, any]) => (
+                    <div key={key} className="space-y-1">
+                      <div className="flex justify-between text-xs font-medium">
+                        <span className="text-bone-50/80 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                        <span className={`font-semibold ${factor.points > 0 ? 'text-amber-300' : 'text-sage-300'}`}>
+                          +{factor.points} / {factor.maxPoints} pts
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-bone-50/50 leading-tight">
+                        {factor.detail}
+                      </div>
+                      {/* Visual progress bar */}
+                      <div className="w-full bg-bone-100/10 h-1 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full ${factor.points > (factor.maxPoints / 2) ? 'bg-red-400' : factor.points > 0 ? 'bg-amber-400' : 'bg-sage-400'}`}
+                          style={{ width: `${(factor.points / factor.maxPoints) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -204,6 +232,99 @@ export default function VendorDetailsPage() {
                       <button className="bg-sage-700 text-white text-[13px] font-medium px-5 py-2.5 rounded-lg hover:bg-sage-600 transition-colors shadow-card">
                         Select PDF File
                       </button>
+                    </div>
+
+                    <div className="mt-8 border-t border-ink-900/5 pt-8 space-y-6">
+                      <h4 className="font-semibold text-ink-900 text-sm">Risk Assessment Inputs</h4>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {/* Data Subject Volume */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-medium text-ink-500 uppercase tracking-wider">
+                            Data Subject Volume
+                          </label>
+                          <select
+                            value={vendor.orgVendor.dataSubjectVolume || '<1K'}
+                            onChange={(e) => updateMutation.mutate({ vendorId, dataSubjectVolume: e.target.value as any })}
+                            disabled={updateMutation.isPending}
+                            className="w-full bg-white border border-ink-900/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                          >
+                            <option value="<1K">&lt; 1,000 subjects</option>
+                            <option value="1K-10K">1,000 - 10,000 subjects</option>
+                            <option value="10K-100K">10,000 - 100,000 subjects</option>
+                            <option value="100K+">100,000+ subjects</option>
+                          </select>
+                        </div>
+
+                        {/* Contract Renewal Date */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-medium text-ink-500 uppercase tracking-wider">
+                            Contract Renewal Date
+                          </label>
+                          <input
+                            type="date"
+                            value={vendor.orgVendor.contractRenewalDate ? new Date(vendor.orgVendor.contractRenewalDate).toISOString().split('T')[0] : ''}
+                            onChange={(e) => updateMutation.mutate({ vendorId, contractRenewalDate: e.target.value || null })}
+                            disabled={updateMutation.isPending}
+                            className="w-full bg-white border border-ink-900/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                          />
+                        </div>
+
+                        {/* DPA Expiry Date */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-medium text-ink-500 uppercase tracking-wider">
+                            DPA Expiry Date
+                          </label>
+                          <input
+                            type="date"
+                            value={vendor.orgVendor.dpaExpiresAt ? new Date(vendor.orgVendor.dpaExpiresAt).toISOString().split('T')[0] : ''}
+                            onChange={(e) => updateMutation.mutate({ vendorId, dpaExpiresAt: e.target.value || null })}
+                            disabled={updateMutation.isPending}
+                            className="w-full bg-white border border-ink-900/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                          />
+                        </div>
+
+                        {/* Security Certifications */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-medium text-ink-500 uppercase tracking-wider">
+                            Security Certifications
+                          </label>
+                          <div className="flex gap-4 items-center h-10">
+                            <label className="flex items-center gap-2 text-xs font-medium text-ink-700 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={vendor.orgVendor.certifications?.includes('soc2') || false}
+                                onChange={(e) => {
+                                  const current = vendor.orgVendor.certifications || [];
+                                  const next = e.target.checked 
+                                    ? [...current, 'soc2']
+                                    : current.filter((c: string) => c !== 'soc2');
+                                  updateMutation.mutate({ vendorId, certifications: next });
+                                }}
+                                disabled={updateMutation.isPending}
+                                className="rounded border-ink-300 text-sage-600 focus:ring-sage-600"
+                              />
+                              SOC 2
+                            </label>
+                            <label className="flex items-center gap-2 text-xs font-medium text-ink-700 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={vendor.orgVendor.certifications?.includes('iso27001') || false}
+                                onChange={(e) => {
+                                  const current = vendor.orgVendor.certifications || [];
+                                  const next = e.target.checked 
+                                    ? [...current, 'iso27001']
+                                    : current.filter((c: string) => c !== 'iso27001');
+                                  updateMutation.mutate({ vendorId, certifications: next });
+                                }}
+                                disabled={updateMutation.isPending}
+                                className="rounded border-ink-300 text-sage-600 focus:ring-sage-600"
+                              />
+                              ISO 27001
+                            </label>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

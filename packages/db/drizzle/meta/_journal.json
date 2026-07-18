@@ -36,6 +36,13 @@
       "when": 1781020170000,
       "tag": "0015_corpus_versioning",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781020180000,
+      "tag": "0016_vendor_risk_scoring",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 import { db } from '../db.js';
 import { organizationVendors, vendors, complianceGaps, processingActivities, privacyPolicies, dsarRequests, breaches, trainingModules, trainingCompletions, clientProcessingActivities } from 'db';
 import { and, eq, notInArray, isNull, lt, not, exists, sql } from 'drizzle-orm';
+import { EU_EEA_COUNTRIES, isAdequateDestination } from './transferDestinations.js';
 
 export const DETECTION_RULES = [
   // Vendor gaps
@@ -171,6 +172,83 @@ export const DETECTION_RULES = [
       description: `This Data Subject Access Request has passed its deadline.`,
       severity: 'critical',
       resolutionUrl: `/dsar/${record.id}`,
+    }),
+  },
+  {
+    id: 'missing_dpa_special_category',
+    severity: 'critical',
+    gdprArticles: ['Article 9', 'Article 28'],
+    detect: async (orgId: string) => {
+      const specialCategoryKeywords = [
+        'health', 'biometric', 'genetic', 'racial', 'ethnic', 'political', 
+        'religious', 'union', 'sexual', 'criminal', 'medical', 'philosophical', 
+        'trade_union', 'special'
+      ];
+      const records = await db.query.organizationVendors.findMany({
+        where: and(
+          eq(organizationVendors.organizationId, orgId),
+          not(eq(organizationVendors.dpaStatus, 'signed'))
+        ),
+        with: { vendor: true }
+      });
+      return records.filter((r: any) => {
+        const categories = r.dataCategoriesShared || [];
+        return categories.some((cat: string) => 
+          specialCategoryKeywords.some(keyword => cat.toLowerCase().includes(keyword))
+        );
+      });
+    },
+    buildGap: (record: any) => ({
+      entityType: 'vendor',
+      entityId: record.id,
+      gapType: 'missing_dpa_special_category',
+      title: `Special Category Data: Missing DPA for ${record.vendor?.name || 'Vendor'}`,
+      description: `Vendor ${record.vendor?.name || 'Vendor'} processes special category data (Article 9) but has no signed DPA (Article 28).`,
+      severity: 'critical',
+      resolutionUrl: `/vendors/${record.id}`,
+    }),
+  },
+  {
+    id: 'third_country_transfer_no_safeguards',
+    severity: 'high',
+    gdprArticles: ['Article 44', 'Article 46'],
+    detect: async (orgId: string) => {
+      const records = await db.query.organizationVendors.findMany({
+        where: eq(organizationVendors.organizationId, orgId),
+        with: { vendor: true }
+      });
+      return records.filter((r: any) => {
+        if (!r.vendor?.headquartersCountry) return false;
+        const country = r.vendor.headquartersCountry.toUpperCase();
+        const isEu = EU_EEA_COUNTRIES.includes(country);
+        const isAdequate = isAdequateDestination(country);
+        if (isEu || isAdequate) return false;
+
+        const mechanisms = [
+          ...(r.vendor.transferMechanisms || []),
+          ...(r.transferMechanisms || [])
+        ].map((m: string) => m.toLowerCase());
+
+        const hasSafeguard = mechanisms.some(m => 
+          m.includes('scc') || 
+          m.includes('standard_contractual_clauses') || 
+          m.includes('bcr') || 
+          m.includes('binding_corporate_rules') ||
+          m.includes('adequacy_decision') ||
+          m.includes('data_privacy_framework')
+        );
+
+        return !hasSafeguard;
+      });
+    },
+    buildGap: (record: any) => ({
+      entityType: 'vendor',
+      entityId: record.id,
+      gapType: 'third_country_transfer_no_safeguards',
+      title: `Unsecured Third-Country Transfer: ${record.vendor?.name || 'Vendor'}`,
+      description: `Vendor ${record.vendor?.name || 'Vendor'} is located in a non-adequate third country (${record.vendor?.headquartersCountry}) and has no documented safeguards (e.g. SCCs or BCRs).`,
+      severity: 'high',
+      resolutionUrl: `/vendors/${record.id}`,
     }),
   },
 ];

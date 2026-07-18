@@ -8,60 +8,73 @@ import { router, publicProcedure, protectedProcedure } from '../trpc.js';
 import { TRPCError } from '@trpc/server';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
 
-// Risk Algorithm (as requested)
-export function calculateVendorRisk(vendor: any, orgVendor: any) {
-  let score = 0; // 0 = lowest risk, 100 = highest risk
+import { calculateVendorRisk } from '../lib/vendorRisk.js';
+export { calculateVendorRisk };
 
-  // Jurisdiction (0-25 points)
-  if (['US'].includes(vendor.headquartersCountry)) score += 20;
-  else if (['CN', 'RU'].includes(vendor.headquartersCountry)) score += 25;
-  else if (vendor.headquartersCountry && !isAdequateDestination(vendor.headquartersCountry)) score += 10;
-  // EU-based vendors get 0
+export async function updateVendorRiskScore(dbInstance: any, orgId: string, vendorId: string) {
+  const [vendor] = await dbInstance.select().from(vendors).where(eq(vendors.id, vendorId));
+  if (!vendor) return;
 
-  // EU hosting availability (0-15 points)
-  if (!vendor.euHostingAvailable) score += 15;
-  else if (!orgVendor?.usingEuHosting) score += 5; // available but not confirmed in use
+  const [orgVendor] = await dbInstance.select().from(organizationVendors).where(and(
+    eq(organizationVendors.organizationId, orgId),
+    eq(organizationVendors.vendorId, vendorId)
+  ));
+  if (!orgVendor) return;
 
-  // DPA status (0-20 points)
-  if (orgVendor?.dpaStatus === 'signed') score += 0;
-  else if (orgVendor?.dpaStatus === 'expired') score += 20;
-  else score += 15; // not signed
+  const subs = await dbInstance.select()
+    .from(vendorSubProcessors)
+    .where(eq(vendorSubProcessors.parentVendorId, vendorId));
+  const subProcessorsCount = subs.length;
 
-  // Security certifications (0-15 points)
-  const certs = vendor.securityCertifications || [];
-  if (certs.includes('soc2_type2') && certs.includes('iso27001')) score += 0;
-  else if (certs.length > 0) score += 5;
-  else score += 15;
+  const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount);
 
-  // Transfer mechanism (0-10 points)
-  if (vendor.headquartersCountry && !isAdequateDestination(vendor.headquartersCountry)) {
-    const mechanisms = vendor.transferMechanisms || [];
-    if (mechanisms.includes('adequacy_decision')) score += 0;
-    else if (mechanisms.includes('standard_contractual_clauses')) score += 5;
-    else score += 10;
-  }
+  await dbInstance.update(organizationVendors)
+    .set({
+      riskScore: score,
+      riskLevel: level,
+      riskFactors: factors,
+      lastRiskAssessment: new Date()
+    })
+    .where(eq(organizationVendors.id, orgVendor.id));
 
-  // Breach history (0-15 points)
-  const incidents = vendor.knownIncidents || [];
-  const recentIncidents = incidents.filter((i: any) => {
-    if (!i.date) return false;
-    const diffTime = Math.abs(new Date().getTime() - new Date(i.date).getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays < 365;
+  await orgEmbeddingsQueue.add('embed-vendor', {
+    orgId: orgId,
+    entityType: 'vendor',
+    entityId: orgVendor.id,
+    action: 'upsert'
   });
+}
+
+export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId: string) {
+  const [vendor] = await dbInstance.select().from(vendors).where(eq(vendors.id, vendorId));
+  if (!vendor) return;
+
+  const orgVendors = await dbInstance.select().from(organizationVendors).where(eq(organizationVendors.vendorId, vendorId));
   
-  if (recentIncidents.length === 0) score += 0;
-  else if (recentIncidents.length === 1) score += 8;
-  else score += 15;
+  const subs = await dbInstance.select()
+    .from(vendorSubProcessors)
+    .where(eq(vendorSubProcessors.parentVendorId, vendorId));
+  const subProcessorsCount = subs.length;
 
-  // Derive tier
-  let level = 'low';
-  if (score <= 20) level = 'low';
-  else if (score <= 45) level = 'medium';
-  else if (score <= 70) level = 'high';
-  else level = 'critical';
+  for (const orgVendor of orgVendors) {
+    const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount);
+    
+    await dbInstance.update(organizationVendors)
+      .set({
+        riskScore: score,
+        riskLevel: level,
+        riskFactors: factors,
+        lastRiskAssessment: new Date()
+      })
+      .where(eq(organizationVendors.id, orgVendor.id));
 
-  return { score, level };
+    await orgEmbeddingsQueue.add('embed-vendor', {
+      orgId: orgVendor.organizationId,
+      entityType: 'vendor',
+      entityId: orgVendor.id,
+      action: 'upsert'
+    });
+  }
 }
 
 const paginationInput = z.object({
@@ -150,8 +163,18 @@ export const vendorsRouter = router({
       const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
       if (!vendor) throw new Error("Vendor not found");
 
+      // Fetch sub-processor count
+      const subs = await ctx.db.select()
+        .from(vendorSubProcessors)
+        .where(eq(vendorSubProcessors.parentVendorId, input.vendorId));
+      const subProcessorsCount = subs.length;
+
       // Calculate initial risk
-      const { score, level } = calculateVendorRisk(vendor, { dpaStatus: 'not_started', usingEuHosting: false });
+      const { score, level, factors } = calculateVendorRisk(
+        vendor,
+        { dpaStatus: 'not_started', dataCategoriesShared: [], dataSubjectVolume: '<1K' },
+        subProcessorsCount
+      );
 
       const [newLink] = await ctx.db.insert(organizationVendors).values({
         organizationId: ctx.user.orgId,
@@ -159,6 +182,8 @@ export const vendorsRouter = router({
         dpaStatus: 'not_started',
         riskScore: score,
         riskLevel: level,
+        riskFactors: factors,
+        lastRiskAssessment: new Date(),
         addedBy: ctx.user.id,
       }).returning();
       
@@ -179,7 +204,10 @@ export const vendorsRouter = router({
       dpaExpiresAt: z.string().nullable().optional(),
       usingEuHosting: z.boolean().optional(),
       tiaCompleted: z.boolean().optional(),
-      notes: z.string().optional()
+      notes: z.string().optional(),
+      dataSubjectVolume: z.enum(['<1K', '1K-10K', '10K-100K', '100K+']).optional(),
+      certifications: z.array(z.string()).optional(),
+      contractRenewalDate: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const [orgVendor] = await ctx.db.select().from(organizationVendors).where(and(
@@ -196,12 +224,23 @@ export const vendorsRouter = router({
       if (input.usingEuHosting !== undefined) updates.usingEuHosting = input.usingEuHosting;
       if (input.tiaCompleted !== undefined) updates.tiaCompleted = input.tiaCompleted;
       if (input.notes !== undefined) updates.dpaNotes = input.notes;
+      if (input.dataSubjectVolume !== undefined) updates.dataSubjectVolume = input.dataSubjectVolume;
+      if (input.certifications !== undefined) updates.certifications = input.certifications;
+      if (input.contractRenewalDate !== undefined) updates.contractRenewalDate = input.contractRenewalDate ? new Date(input.contractRenewalDate) : null;
+
+      // Fetch sub-processor count
+      const subs = await ctx.db.select()
+        .from(vendorSubProcessors)
+        .where(eq(vendorSubProcessors.parentVendorId, input.vendorId));
+      const subProcessorsCount = subs.length;
 
       // Recalculate Risk
       const mergedOrgVendor = { ...orgVendor, ...updates };
-      const { score, level } = calculateVendorRisk(vendor, mergedOrgVendor);
+      const { score, level, factors } = calculateVendorRisk(vendor, mergedOrgVendor, subProcessorsCount);
       updates.riskScore = score;
       updates.riskLevel = level;
+      updates.riskFactors = factors;
+      updates.lastRiskAssessment = new Date();
 
       await ctx.db.update(organizationVendors)
         .set(updates)
@@ -226,7 +265,10 @@ export const vendorsRouter = router({
       category: z.string().optional(),
       description: z.string().optional(),
       euHostingAvailable: z.boolean().optional(),
-      securityCertifications: z.array(z.string()).optional()
+      securityCertifications: z.array(z.string()).optional(),
+      dataSubjectVolume: z.enum(['<1K', '1K-10K', '10K-100K', '100K+']).optional(),
+      certifications: z.array(z.string()).optional(),
+      contractRenewalDate: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const [newVendor] = await ctx.db.insert(vendors).values({
@@ -243,8 +285,15 @@ export const vendorsRouter = router({
 
       if (!newVendor) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
 
-      // Link immediately
-      const { score, level } = calculateVendorRisk(newVendor, { dpaStatus: 'not_started', usingEuHosting: input.euHostingAvailable });
+      // Calculate initial risk
+      const initialOrgVendor = {
+        dpaStatus: 'not_started',
+        dataSubjectVolume: input.dataSubjectVolume || '<1K',
+        certifications: input.certifications || [],
+        contractRenewalDate: input.contractRenewalDate ? new Date(input.contractRenewalDate) : null
+      };
+
+      const { score, level, factors } = calculateVendorRisk(newVendor, initialOrgVendor, 0);
 
       const [newLink] = await ctx.db.insert(organizationVendors).values({
         organizationId: ctx.user.orgId,
@@ -252,6 +301,11 @@ export const vendorsRouter = router({
         dpaStatus: 'not_started',
         riskScore: score,
         riskLevel: level,
+        riskFactors: factors,
+        lastRiskAssessment: new Date(),
+        dataSubjectVolume: input.dataSubjectVolume || '<1K',
+        certifications: input.certifications || [],
+        contractRenewalDate: input.contractRenewalDate ? new Date(input.contractRenewalDate) : null,
         addedBy: ctx.user.id,
       }).returning();
 
@@ -297,6 +351,8 @@ export const vendorsRouter = router({
           subProcessorVendorId: input.subProcessorVendorId,
           purpose: input.purpose
         }).returning();
+        
+        await recalculateVendorRiskForAllOrgs(ctx.db, input.parentVendorId);
         return sub;
       }),
 
@@ -314,15 +370,22 @@ export const vendorsRouter = router({
           country: input.country,
           purpose: input.purpose
         }).returning();
+        
+        await recalculateVendorRiskForAllOrgs(ctx.db, input.parentVendorId);
         return sub;
       }),
 
     remove: protectedProcedure
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
+        const [existing] = await ctx.db.select().from(vendorSubProcessors).where(eq(vendorSubProcessors.id, input.id));
+        if (!existing) throw new Error("Sub-processor not found");
+
         const [removed] = await ctx.db.delete(vendorSubProcessors)
           .where(eq(vendorSubProcessors.id, input.id))
           .returning();
+          
+        await recalculateVendorRiskForAllOrgs(ctx.db, existing.parentVendorId);
         return removed;
       }),
       
@@ -335,5 +398,14 @@ export const vendorsRouter = router({
           .returning();
         return updated;
       })
-  })
+  }),
+
+  getRiskStats: protectedProcedure.query(async ({ ctx }) => {
+    const list = await ctx.db.select().from(organizationVendors).where(eq(organizationVendors.organizationId, ctx.user.orgId));
+    const total = list.length;
+    const highOrCritical = list.filter((v: any) => v.riskLevel === 'high' || v.riskLevel === 'critical').length;
+    const low = list.filter((v: any) => v.riskLevel === 'low').length;
+    const medium = list.filter((v: any) => v.riskLevel === 'medium').length;
+    return { total, highOrCritical, low, medium };
+  }),
 });

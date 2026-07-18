@@ -92,6 +92,28 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
       }
     },
     {
+      id: 'riskScore',
+      header: 'Vendor Risk',
+      cell: ({ row }: any) => {
+        const { vendorData } = row.original;
+        if (!vendorData) return <span className="text-ink-400 text-[13px]">-</span>;
+
+        const score = vendorData.riskScore || 0;
+        const level = vendorData.riskLevel || 'low';
+
+        let colorClass = "text-sage-600 bg-sage-50 border-sage-200";
+        if (level === 'critical') colorClass = "text-red-700 bg-red-50 border-red-200 font-bold";
+        else if (level === 'high') colorClass = "text-orange-700 bg-orange-50 border-orange-200 font-semibold";
+        else if (level === 'medium') colorClass = "text-amber-700 bg-amber-50 border-amber-200";
+
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] uppercase tracking-wider border ${colorClass}`}>
+            {level} ({score})
+          </span>
+        );
+      }
+    },
+    {
       id: 'location',
       header: 'Data Processing Locations',
       cell: ({ row }: any) => {

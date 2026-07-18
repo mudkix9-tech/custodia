@@ -482,8 +482,13 @@ export const organizationVendors = pgTable('organization_vendors', {
   purpose: text('purpose'),
   usingEuHosting: boolean('using_eu_hosting').default(false),
   
-  riskScore: integer('risk_score'),
+  riskScore: integer('risk_score').default(0).notNull(),
   riskLevel: varchar('risk_level', { length: 20 }),
+  riskFactors: jsonb('risk_factors').default({}),
+  lastRiskAssessment: timestamp('last_risk_assessment', { withTimezone: true }),
+  certifications: text('certifications').array().default(sql`ARRAY[]::text[]`),
+  contractRenewalDate: date('contract_renewal_date'),
+  dataSubjectVolume: varchar('data_subject_volume', { length: 50 }).default('<1K'), // '<1K' | '1K-10K' | '10K-100K' | '100K+'
   
   lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),

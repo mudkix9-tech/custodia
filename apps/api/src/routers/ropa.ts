@@ -380,6 +380,7 @@ export const ropaRouter = router({
           orgVendor: {
             dpaStatus: organizationVendors.dpaStatus,
             usingEuHosting: organizationVendors.usingEuHosting,
+            riskScore: organizationVendors.riskScore,
             riskLevel: organizationVendors.riskLevel,
           }
         })

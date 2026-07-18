@@ -1,7 +1,7 @@
 import { Worker, Queue, Job } from 'bullmq';
 import { Redis } from 'ioredis';
 import { db } from '../db.js';
-import { vendors, organizationVendors } from 'db';
+import { vendors, organizationVendors, vendorSubProcessors } from 'db';
 import { eq, and, isNotNull, lte, gt } from 'drizzle-orm';
 import { calculateVendorRisk } from '../routers/vendors.js';
 
@@ -56,7 +56,12 @@ export const vendorWorker = new Worker('vendor-intelligence', async (job: Job) =
 
       for (const record of expiringVendors) {
         if (!record.orgVendor.dpaExpiresAt) continue;
-        
+
+        const subs = await db.select()
+          .from(vendorSubProcessors)
+          .where(eq(vendorSubProcessors.parentVendorId, record.vendor.id));
+        const subProcessorsCount = subs.length;
+
         const days = daysUntil(record.orgVendor.dpaExpiresAt);
         
         if (days <= 0) {
@@ -66,9 +71,18 @@ export const vendorWorker = new Worker('vendor-intelligence', async (job: Job) =
             .where(eq(organizationVendors.id, record.orgVendor.id));
             
           // Recalculate risk immediately
-          const { score, level } = calculateVendorRisk(record.vendor, { ...record.orgVendor, dpaStatus: 'expired' });
+          const { score, level, factors } = calculateVendorRisk(
+            record.vendor as any, 
+            { ...record.orgVendor, dpaStatus: 'expired' } as any, 
+            subProcessorsCount
+          );
           await db.update(organizationVendors)
-            .set({ riskScore: score, riskLevel: level })
+            .set({ 
+              riskScore: score, 
+              riskLevel: level, 
+              riskFactors: factors, 
+              lastRiskAssessment: new Date() 
+            })
             .where(eq(organizationVendors.id, record.orgVendor.id));
             
           await createNotification(record.orgVendor.organizationId, 'CRITICAL', `DPA with ${record.vendor.name} has expired.`);
@@ -101,10 +115,20 @@ export const vendorWorker = new Worker('vendor-intelligence', async (job: Job) =
       .where(gt(organizationVendors.updatedAt, yesterday));
 
       for (const record of recentlyChanged) {
-        const { score, level } = calculateVendorRisk(record.vendor, record.orgVendor);
+        const subs = await db.select()
+          .from(vendorSubProcessors)
+          .where(eq(vendorSubProcessors.parentVendorId, record.vendor.id));
+        const subProcessorsCount = subs.length;
+
+        const { score, level, factors } = calculateVendorRisk(record.vendor as any, record.orgVendor as any, subProcessorsCount);
         if (score !== record.orgVendor.riskScore) {
           await db.update(organizationVendors)
-            .set({ riskScore: score, riskLevel: level })
+            .set({ 
+              riskScore: score, 
+              riskLevel: level, 
+              riskFactors: factors, 
+              lastRiskAssessment: new Date() 
+            })
             .where(eq(organizationVendors.id, record.orgVendor.id));
         }
       }

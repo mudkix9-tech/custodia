@@ -61,12 +61,21 @@ export default function VendorsPage() {
     },
     {
       accessorKey: 'riskLevel',
-      header: 'Risk Level',
-      cell: ({ getValue }: any) => {
-        const val = getValue();
-        if (val === 'critical' || val === 'high') return <span className="text-red-600 font-bold uppercase text-[12px] tracking-wider">{val}</span>;
-        if (val === 'medium') return <span className="text-amber-600 font-bold uppercase text-[12px] tracking-wider">{val}</span>;
-        return <span className="text-sage-600 font-bold uppercase text-[12px] tracking-wider">{val || 'LOW'}</span>;
+      header: 'Risk Score & Level',
+      cell: ({ row }: any) => {
+        const level = row.original.riskLevel || 'low';
+        const score = row.original.riskScore || 0;
+        
+        let colorClass = "text-sage-600 bg-sage-50 border-sage-200";
+        if (level === 'critical') colorClass = "text-red-700 bg-red-50 border-red-200 font-bold";
+        else if (level === 'high') colorClass = "text-orange-700 bg-orange-50 border-orange-200 font-semibold";
+        else if (level === 'medium') colorClass = "text-amber-700 bg-amber-50 border-amber-200";
+
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] uppercase tracking-wider border ${colorClass}`}>
+            {level} ({score})
+          </span>
+        );
       }
     },
     {
