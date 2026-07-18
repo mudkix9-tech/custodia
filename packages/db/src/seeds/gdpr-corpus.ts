@@ -22,17 +22,67 @@ const ai = new GoogleGenAI({
 
 // For demonstration, we assume corpus files are JSON files with a specific structure.
 interface CorpusDocument {
-  sourceType: string;
+  authority: string;
+  documentType: string;
   sourceReference: string;
   sourceUrl?: string;
   content: string;
-  metadata?: Record<string, any>;
+  metadata: {
+    document_id: string;
+    source: string;
+    authority: string;
+    title: string;
+    section: string;
+    category: string;
+    articles: number[];
+    date: string;
+    language: string;
+    chunk_index: number;
+    total_chunks: number;
+    url: string;
+    [key: string]: any;
+  };
+}
+
+function getSectionPath(authority: string, documentType: string, reference: string): string {
+  if (authority === 'gdpr' && documentType === 'article') {
+    const match = reference.match(/Article\s+(\d+)/i);
+    if (match && match[1]) {
+      const num = parseInt(match[1], 10);
+      let chapter = '';
+      if (num >= 1 && num <= 4) chapter = 'Chapter I';
+      else if (num >= 5 && num <= 11) chapter = 'Chapter II';
+      else if (num >= 12 && num <= 23) chapter = 'Chapter III';
+      else if (num >= 24 && num <= 43) chapter = 'Chapter IV';
+      else if (num >= 44 && num <= 50) chapter = 'Chapter V';
+      else if (num >= 51 && num <= 59) chapter = 'Chapter VI';
+      else if (num >= 60 && num <= 76) chapter = 'Chapter VII';
+      else if (num >= 77 && num <= 84) chapter = 'Chapter VIII';
+      else if (num >= 85 && num <= 91) chapter = 'Chapter IX';
+      else if (num >= 92 && num <= 98) chapter = 'Chapter X';
+      else if (num === 99) chapter = 'Chapter XI';
+      return `${chapter} > ${reference}`;
+    }
+  }
+  return reference;
+}
+
+function mapSourceAndAuthority(auth: string): { source: string; authority: string } {
+  const source = auth;
+  let authority = auth;
+  if (['gdpr', 'cjeu', 'charter', 'eprivacy'].includes(auth)) {
+    authority = 'eu';
+  }
+  return { source, authority };
 }
 
 async function generateEmbedding(text: string) {
   const response = await ai.models.embedContent({
-    model: 'gemini-embedding-001',
+    model: 'text-embedding-004',
     contents: text,
+    config: {
+      outputDimensionality: 768,
+    },
   });
 
   const firstEmbedding = response.embeddings?.[0];
@@ -41,11 +91,11 @@ async function generateEmbedding(text: string) {
   }
 
   const values = firstEmbedding.values;
-  if (values.length !== 3072) {
-    throw new Error(`Expected 3072 dimensions, got ${values.length}`);
+  if (values.length !== 768) {
+    throw new Error(`Expected 768 dimensions, got ${values.length}`);
   }
 
-  return values;
+  return [...values, ...new Array(768).fill(0)];
 }
 
 function getHash(text: string) {
@@ -61,6 +111,15 @@ export async function seedCorpus() {
   const edpbPath = path.join(corpusDir, 'edpb-corpus.json');
   const charterPath = path.join(corpusDir, 'charter-corpus.json');
   const eprivacyPath = path.join(corpusDir, 'eprivacy-corpus.json');
+  const icoPath = path.join(corpusDir, 'ico-corpus.json');
+  const cnilPath = path.join(corpusDir, 'cnil-corpus.json');
+  const bfdiPath = path.join(corpusDir, 'bfdi-corpus.json');
+  const dpcPath = path.join(corpusDir, 'dpc-corpus.json');
+  const apPath = path.join(corpusDir, 'ap-corpus.json');
+  const aepdPath = path.join(corpusDir, 'aepd-corpus.json');
+  const cjeuPath = path.join(corpusDir, 'cjeu-corpus.json');
+  const edpbFinesPath = path.join(corpusDir, 'edpb-fines-corpus.json');
+  const gdprhubPath = path.join(corpusDir, 'gdprhub-corpus.json');
   
   try {
     // Read the scraped GDPR articles
@@ -113,31 +172,127 @@ export async function seedCorpus() {
       console.warn(`ePrivacy Directive corpus file not found at ${eprivacyPath}. Proceeding without ePrivacy documents.`);
     }
 
-    const allDocs = [...gdprDocs, ...recitalsDocs, ...edpbDocs, ...charterDocs, ...eprivacyDocs];
+    // Read the scraped UK ICO guidelines
+    let icoDocs: CorpusDocument[] = [];
+    try {
+      const icoData = await fs.readFile(icoPath, 'utf-8');
+      icoDocs = JSON.parse(icoData);
+      console.log(`Loaded ${icoDocs.length} UK ICO guidelines chunks.`);
+    } catch {
+      console.warn(`UK ICO corpus file not found at ${icoPath}. Proceeding without ICO documents.`);
+    }
+
+    // Read the scraped CNIL guidelines
+    let cnilDocs: CorpusDocument[] = [];
+    try {
+      const cnilData = await fs.readFile(cnilPath, 'utf-8');
+      cnilDocs = JSON.parse(cnilData);
+      console.log(`Loaded ${cnilDocs.length} CNIL French translated guidelines chunks.`);
+    } catch {
+      console.warn(`CNIL corpus file not found at ${cnilPath}. Proceeding without CNIL documents.`);
+    }
+
+    // Read the scraped BfDI guidelines
+    let bfdiDocs: CorpusDocument[] = [];
+    try {
+      const bfdiData = await fs.readFile(bfdiPath, 'utf-8');
+      bfdiDocs = JSON.parse(bfdiData);
+      console.log(`Loaded ${bfdiDocs.length} BfDI German translated guidelines chunks.`);
+    } catch {
+      console.warn(`BfDI corpus file not found at ${bfdiPath}. Proceeding without BfDI documents.`);
+    }
+
+    // Read the scraped DPC guidelines
+    let dpcDocs: CorpusDocument[] = [];
+    try {
+      const dpcData = await fs.readFile(dpcPath, 'utf-8');
+      dpcDocs = JSON.parse(dpcData);
+      console.log(`Loaded ${dpcDocs.length} DPC Ireland guidelines chunks.`);
+    } catch {
+      console.warn(`DPC corpus file not found at ${dpcPath}. Proceeding without DPC documents.`);
+    }
+
+    // Read the scraped AP Netherlands guidelines
+    let apDocs: CorpusDocument[] = [];
+    try {
+      const apData = await fs.readFile(apPath, 'utf-8');
+      apDocs = JSON.parse(apData);
+      console.log(`Loaded ${apDocs.length} AP Netherlands guidelines chunks.`);
+    } catch {
+      console.warn(`AP Netherlands corpus file not found at ${apPath}. Proceeding without AP Netherlands documents.`);
+    }
+
+    // Read the scraped AEPD Spain guidelines
+    let aepdDocs: CorpusDocument[] = [];
+    try {
+      const aepdData = await fs.readFile(aepdPath, 'utf-8');
+      aepdDocs = JSON.parse(aepdData);
+      console.log(`Loaded ${aepdDocs.length} AEPD Spain guidelines chunks.`);
+    } catch {
+      console.warn(`AEPD Spain corpus file not found at ${aepdPath}. Proceeding without AEPD Spain documents.`);
+    }
+
+    // Read the CJEU rulings
+    let cjeuDocs: CorpusDocument[] = [];
+    try {
+      const cjeuData = await fs.readFile(cjeuPath, 'utf-8');
+      cjeuDocs = JSON.parse(cjeuData);
+      console.log(`Loaded ${cjeuDocs.length} CJEU rulings chunks.`);
+    } catch {
+      console.warn(`CJEU rulings corpus file not found at ${cjeuPath}. Proceeding without CJEU rulings.`);
+    }
+
+    // Read the EDPB enforcement fines
+    let edpbFinesDocs: CorpusDocument[] = [];
+    try {
+      const edpbFinesData = await fs.readFile(edpbFinesPath, 'utf-8');
+      edpbFinesDocs = JSON.parse(edpbFinesData);
+      console.log(`Loaded ${edpbFinesDocs.length} EDPB enforcement fines chunks.`);
+    } catch {
+      console.warn(`EDPB enforcement fines corpus file not found at ${edpbFinesPath}. Proceeding without EDPB fines.`);
+    }
+
+    // Read the GDPRhub decisions
+    let gdprhubDocs: CorpusDocument[] = [];
+    try {
+      const gdprhubData = await fs.readFile(gdprhubPath, 'utf-8');
+      gdprhubDocs = JSON.parse(gdprhubData);
+      console.log(`Loaded ${gdprhubDocs.length} GDPRhub decisions chunks.`);
+    } catch {
+      console.warn(`GDPRhub decisions corpus file not found at ${gdprhubPath}. Proceeding without GDPRhub decisions.`);
+    }
+
+    const allDocs = [
+      ...gdprDocs,
+      ...recitalsDocs,
+      ...edpbDocs,
+      ...charterDocs,
+      ...eprivacyDocs,
+      ...icoDocs,
+      ...cnilDocs,
+      ...bfdiDocs,
+      ...dpcDocs,
+      ...apDocs,
+      ...aepdDocs,
+      ...cjeuDocs,
+      ...edpbFinesDocs,
+      ...gdprhubDocs
+    ];
     console.log(`Total documents/chunks to seed: ${allDocs.length}`);
 
-    // Fetch all existing hashes from the database for the relevant source types
+    // Fetch all existing hashes from the database for the relevant authorities
     console.log("Fetching existing embeddings to check hashes...");
     const existing = await db.select({
       id: documentEmbeddings.id,
-      contentHash: documentEmbeddings.contentHash,
-      sourceReference: documentEmbeddings.sourceReference,
-    }).from(documentEmbeddings).where(
-      or(
-        eq(documentEmbeddings.sourceType, 'gdpr_article'),
-        eq(documentEmbeddings.sourceType, 'gdpr_recital'),
-        eq(documentEmbeddings.sourceType, 'edpb_document'),
-        eq(documentEmbeddings.sourceType, 'charter_article'),
-        eq(documentEmbeddings.sourceType, 'charter_explanation'),
-        eq(documentEmbeddings.sourceType, 'eprivacy_article'),
-        eq(documentEmbeddings.sourceType, 'eprivacy_recital')
-      )
-    );
+      metadata: documentEmbeddings.metadata,
+      title: documentEmbeddings.title,
+    }).from(documentEmbeddings);
 
-    const existingMap = new Map<string, { id: string; sourceReference: string | null }>();
+    const existingMap = new Map<string, { id: string; title: string }>();
     for (const item of existing) {
-      if (item.contentHash) {
-        existingMap.set(item.contentHash, { id: item.id, sourceReference: item.sourceReference });
+      const meta = item.metadata as any;
+      if (meta && meta.content_hash) {
+        existingMap.set(meta.content_hash, { id: item.id, title: item.title });
       }
     }
 
@@ -147,48 +302,109 @@ export async function seedCorpus() {
     let skippedCount = 0;
     let insertedCount = 0;
 
+    const pendingDocs: CorpusDocument[] = [];
     for (const doc of allDocs) {
       const hash = getHash(doc.content);
       currentHashes.add(hash);
-      
       if (existingMap.has(hash)) {
         skippedCount++;
-        continue;
+      } else {
+        pendingDocs.push(doc);
       }
+    }
+
+    console.log(`Found ${pendingDocs.length} new/modified documents to embed.`);
+
+    const BATCH_SIZE = 15;
+    const CONCURRENCY = 10;
+    const batches: CorpusDocument[][] = [];
+    for (let i = 0; i < pendingDocs.length; i += BATCH_SIZE) {
+      batches.push(pendingDocs.slice(i, i + BATCH_SIZE));
+    }
+
+    const processBatch = async (batch: CorpusDocument[], batchIndex: number) => {
+      const offset = batchIndex * BATCH_SIZE;
+      const contents = batch.map(d => d.content);
       
-      console.log(`Generating embedding for: ${doc.sourceReference}`);
-      const embedding = await generateEmbedding(doc.content);
-      
-      await db.insert(documentEmbeddings).values({
-        sourceType: doc.sourceType,
-        sourceReference: doc.sourceReference,
-        sourceUrl: doc.sourceUrl || null,
-        content: doc.content,
-        contentHash: hash,
-        metadata: doc.metadata || {},
-        embedding,
+      const response = await ai.models.embedContent({
+        model: 'gemini-embedding-001',
+        contents,
       });
-      console.log(`Inserted: ${doc.sourceReference}`);
-      insertedCount++;
+
+      const embeddings = response.embeddings;
+      if (!embeddings || embeddings.length !== batch.length) {
+        throw new Error(`Failed to generate embeddings: expected ${batch.length}, got ${embeddings?.length}`);
+      }
+
+      const insertValues = [];
+      for (let j = 0; j < batch.length; j++) {
+        const doc = batch[j];
+        if (!doc) continue;
+        const hash = getHash(doc.content);
+        const values = embeddings[j]?.values;
+        if (!values || values.length !== 3072) {
+          throw new Error(`Expected 3072 dimensions, got ${values?.length}`);
+        }
+        const paddedValues = values;
+
+        const { source, authority } = mapSourceAndAuthority(doc.authority);
+        const section = getSectionPath(doc.authority, doc.documentType, doc.sourceReference);
+        const url = doc.sourceUrl || doc.metadata?.url || '';
+        const title = doc.metadata?.title || doc.sourceReference;
+        const document_id = doc.metadata?.document_id || `${doc.authority}-${doc.documentType}-${doc.sourceReference.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
+        insertValues.push({
+          documentId: document_id,
+          source,
+          authority,
+          title,
+          section,
+          category: doc.metadata?.category || 'general',
+          articles: doc.metadata?.articles || [],
+          content: doc.content,
+          embedding: paddedValues,
+          metadata: {
+            ...doc.metadata,
+            content_hash: hash,
+          },
+          chunkIndex: doc.metadata?.chunk_index ?? 0,
+          totalChunks: doc.metadata?.total_chunks ?? 1,
+          sourceUrl: url,
+          language: doc.metadata?.language || 'en',
+        });
+      }
+
+      if (insertValues.length > 0) {
+        await db.insert(documentEmbeddings).values(insertValues);
+      }
+      console.log(`Successfully processed batch ${batchIndex + 1}/${batches.length} (offset ${offset})`);
+      insertedCount += batch.length;
+    };
+
+    for (let i = 0; i < batches.length; i += CONCURRENCY) {
+      const chunk = batches.slice(i, i + CONCURRENCY);
+      console.log(`Processing concurrent chunk ${Math.floor(i / CONCURRENCY) + 1}/${Math.ceil(batches.length / CONCURRENCY)} (batches ${i + 1}-${i + chunk.length})...`);
+      await Promise.all(chunk.map((batch, idx) => processBatch(batch, i + idx)));
     }
 
     console.log(`Incremental Seeding Summary: Skipped (already exists): ${skippedCount}, Generated & Inserted: ${insertedCount}`);
 
     // Delete any embeddings in the database that are no longer in our corpus files
-    const hashesToDelete: string[] = [];
+    const idsToDelete: string[] = [];
     for (const item of existing) {
-      if (item.contentHash && !currentHashes.has(item.contentHash)) {
-        hashesToDelete.push(item.contentHash);
+      const meta = item.metadata as any;
+      if (meta && meta.content_hash && !currentHashes.has(meta.content_hash)) {
+        idsToDelete.push(item.id);
       }
     }
 
-    if (hashesToDelete.length > 0) {
-      console.log(`Deleting ${hashesToDelete.length} obsolete embeddings from database...`);
+    if (idsToDelete.length > 0) {
+      console.log(`Deleting ${idsToDelete.length} obsolete embeddings from database...`);
       const chunkSize = 100;
-      for (let i = 0; i < hashesToDelete.length; i += chunkSize) {
-        const chunk = hashesToDelete.slice(i, i + chunkSize);
+      for (let i = 0; i < idsToDelete.length; i += chunkSize) {
+        const chunk = idsToDelete.slice(i, i + chunkSize);
         await db.delete(documentEmbeddings).where(
-          or(...chunk.map(hash => eq(documentEmbeddings.contentHash, hash)))
+          or(...chunk.map(id => eq(documentEmbeddings.id, id)))
         );
       }
     }

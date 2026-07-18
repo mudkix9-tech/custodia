@@ -50,3 +50,4 @@ export function createWorker(name: string, processor: any, opts?: any) {
 }
 
 export const dataExportQueue = createQueue('data-export');
+export const orgEmbeddingsQueue = createQueue('org-embeddings');

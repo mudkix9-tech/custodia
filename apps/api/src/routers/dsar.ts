@@ -1,5 +1,6 @@
 import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
+import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { router, publicProcedure, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
 import { 
@@ -326,6 +327,13 @@ export const dsarRouter = router({
 
       if (!newDsar) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
 
+      await orgEmbeddingsQueue.add('embed-dsar', {
+        orgId: org.id,
+        entityType: 'dsar',
+        entityId: newDsar.id,
+        action: 'upsert'
+      });
+
       // Trigger Identity Verification Email
       const token = jwt.sign({ dsarId: newDsar.id, email: input.subjectEmail }, JWT_SECRET, { expiresIn: '7d' });
       const verifyLink = `${process.env.APP_URL || 'http://localhost:3000'}/api/dsar/verify?token=${token}`;
@@ -402,6 +410,14 @@ export const dsarRouter = router({
         .set({ status: input.status, updatedAt: new Date() })
         .where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)))
         .returning();
+
+      await orgEmbeddingsQueue.add('embed-dsar', {
+        orgId: ctx.user!.orgId,
+        entityType: 'dsar',
+        entityId: updated.id,
+        action: 'upsert'
+      });
+
       return updated;
     }),
 
@@ -436,6 +452,13 @@ export const dsarRouter = router({
         .where(eq(dsarRequests.id, dsar.id))
         .returning();
         
+      await orgEmbeddingsQueue.add('embed-dsar', {
+        orgId: ctx.user!.orgId,
+        entityType: 'dsar',
+        entityId: updated.id,
+        action: 'upsert'
+      });
+
       return updated;
     }),
 
@@ -458,6 +481,13 @@ export const dsarRouter = router({
         .where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)))
         .returning();
         
+      await orgEmbeddingsQueue.add('embed-dsar', {
+        orgId: ctx.user!.orgId,
+        entityType: 'dsar',
+        entityId: updated.id,
+        action: 'upsert'
+      });
+
       return updated;
     }),
 
@@ -476,6 +506,14 @@ export const dsarRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       const [updated] = await ctx.db.update(dsarRequests).set({ status: 'completed', completedAt: new Date(), completedBy: ctx.user!.id, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
+      
+      await orgEmbeddingsQueue.add('embed-dsar', {
+        orgId: ctx.user!.orgId,
+        entityType: 'dsar',
+        entityId: updated.id,
+        action: 'upsert'
+      });
+
       return updated;
     }),
 

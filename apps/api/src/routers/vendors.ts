@@ -1,5 +1,6 @@
 import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
+import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { db } from '../db.js';
 import { vendors, organizationVendors, users, vendorSubProcessors } from 'db';
 import { eq, and, isNull, inArray } from 'drizzle-orm';
@@ -161,6 +162,13 @@ export const vendorsRouter = router({
         addedBy: ctx.user.id,
       }).returning();
       
+      await orgEmbeddingsQueue.add('embed-vendor', {
+        orgId: ctx.user.orgId,
+        entityType: 'vendor',
+        entityId: newLink.id,
+        action: 'upsert'
+      });
+
       return newLink;
     }),
 
@@ -199,6 +207,13 @@ export const vendorsRouter = router({
         .set(updates)
         .where(eq(organizationVendors.id, orgVendor.id));
 
+      await orgEmbeddingsQueue.add('embed-vendor', {
+        orgId: ctx.user.orgId,
+        entityType: 'vendor',
+        entityId: orgVendor.id,
+        action: 'upsert'
+      });
+
       return { success: true };
     }),
 
@@ -231,13 +246,20 @@ export const vendorsRouter = router({
       // Link immediately
       const { score, level } = calculateVendorRisk(newVendor, { dpaStatus: 'not_started', usingEuHosting: input.euHostingAvailable });
 
-      await ctx.db.insert(organizationVendors).values({
+      const [newLink] = await ctx.db.insert(organizationVendors).values({
         organizationId: ctx.user.orgId,
         vendorId: newVendor.id,
         dpaStatus: 'not_started',
         riskScore: score,
         riskLevel: level,
         addedBy: ctx.user.id,
+      }).returning();
+
+      await orgEmbeddingsQueue.add('embed-vendor', {
+        orgId: ctx.user.orgId,
+        entityType: 'vendor',
+        entityId: newLink.id,
+        action: 'upsert'
       });
 
       return newVendor;

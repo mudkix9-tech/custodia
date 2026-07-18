@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Building2, Users, Bell, Plug, Code, CreditCard, Shield, Database, User } from 'lucide-react';
+import { Building2, Users, Bell, Plug, Code, CreditCard, Shield, Database, User, Cpu } from 'lucide-react';
 
 const SETTINGS_NAV = [
   { id: 'organization', label: 'Organization', icon: Building2, href: '/settings/organization', roles: ['viewer', 'member', 'admin', 'owner'] },
@@ -15,6 +15,7 @@ const SETTINGS_NAV = [
   { id: 'billing', label: 'Billing', icon: CreditCard, href: '/settings/billing', roles: ['admin', 'owner'] },
   { id: 'security', label: 'Security', icon: Shield, href: '/settings/security', roles: ['viewer', 'member', 'admin', 'owner'] },
   { id: 'data', label: 'Data & Privacy', icon: Database, href: '/settings/data', roles: ['admin', 'owner'] },
+  { id: 'copilot', label: 'AI Copilot', icon: Cpu, href: '/settings/copilot', roles: ['admin', 'owner'] },
 ];
 
 export default function SettingsLayout({

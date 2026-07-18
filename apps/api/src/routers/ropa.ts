@@ -1,4 +1,5 @@
 import { paginatedQuery } from '../utils/pagination.js';
+import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
@@ -84,6 +85,12 @@ export const ropaRouter = router({
 
       if (!newActivity) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
 
+      await orgEmbeddingsQueue.add('embed-ropa', {
+        orgId: ctx.user!.orgId,
+        entityType: 'processing_activity',
+        entityId: newActivity.id,
+        action: 'upsert'
+      });
 
       return newActivity;
     }),
@@ -114,7 +121,14 @@ export const ropaRouter = router({
 
       const newActivities = await ctx.db.insert(processingActivities).values(values).returning();
 
-
+      for (const act of newActivities) {
+        await orgEmbeddingsQueue.add('embed-ropa', {
+          orgId: ctx.user!.orgId,
+          entityType: 'processing_activity',
+          entityId: act.id,
+          action: 'upsert'
+        });
+      }
 
       return newActivities;
     }),
@@ -158,7 +172,12 @@ export const ropaRouter = router({
 
       if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
 
-
+      await orgEmbeddingsQueue.add('embed-ropa', {
+        orgId: ctx.user!.orgId,
+        entityType: 'processing_activity',
+        entityId: updated.id,
+        action: 'upsert'
+      });
 
       return updated;
     }),
@@ -178,6 +197,13 @@ export const ropaRouter = router({
         .returning();
 
       if (!deleted) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      await orgEmbeddingsQueue.add('embed-ropa', {
+        orgId: ctx.user!.orgId,
+        entityType: 'processing_activity',
+        entityId: deleted.id,
+        action: 'delete'
+      });
 
       return deleted;
     }),

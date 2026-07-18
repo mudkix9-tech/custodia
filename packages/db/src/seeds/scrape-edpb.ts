@@ -29,8 +29,14 @@ async function fetchWithRetry(url: string, retries = 3): Promise<string | Buffer
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/pdf')) {
+      const contentType = (response.headers.get('content-type') || '').toLowerCase();
+      const isFile = contentType.includes('application/pdf') || 
+                     contentType.includes('application/octet-stream') ||
+                     url.includes('document.cfm') || 
+                     url.includes('doc_id=') ||
+                     url.includes('redirection/document');
+      
+      if (isFile) {
         const arrayBuffer = await response.arrayBuffer();
         return Buffer.from(arrayBuffer);
       }
@@ -126,7 +132,7 @@ async function scrapeEdpb() {
 
   while (hasMore) {
     console.log(`\nCrawling documents directory page ${page}...`);
-    const pageUrl = `${BASE_URL}/documents_en?page=${page}`;
+    const pageUrl = `${BASE_URL}/documents_en?keys=&type%5Bguidance%7Cguideline%5D=guidance%7Cguideline&date=&page=${page}`;
     let html: string;
     
     try {
@@ -186,13 +192,65 @@ async function scrapeEdpb() {
         const $detail = cheerio.load(detailHtml);
         
         // Find PDF file link
+        let pdfUrl = '';
         const relativePdfLink = $detail('.document-full__files a[href$=".pdf"]').attr('href') || '';
-        if (!relativePdfLink) {
-          console.warn(`No PDF link found on detail page for ${title}`);
+        
+        if (relativePdfLink) {
+          pdfUrl = relativePdfLink.startsWith('http') ? relativePdfLink : `${BASE_URL}${relativePdfLink}`;
+        } else {
+          // Check for European Commission newsroom link
+          const ecLink = $detail('a[href*="ec.europa.eu/newsroom"]').attr('href') || '';
+          if (ecLink) {
+            console.log(`Found EC Newsroom link: ${ecLink}. Fetching actual PDF...`);
+            const ecHtml = await fetchWithRetry(ecLink);
+            if (typeof ecHtml === 'string') {
+              const $ec = cheerio.load(ecHtml);
+              let bestPdfLink = '';
+              $ec('a').each((_, el) => {
+                const href = $ec(el).attr('href') || '';
+                const text = $ec(el).text().toLowerCase();
+                const parentText = $ec(el).parent().text().toLowerCase();
+                
+                const isDocLink = href.includes('document.cfm') || href.includes('doc_id=') || href.includes('redirection/document');
+                if (isDocLink) {
+                  const combinedText = `${text} ${parentText}`;
+                  const isEnglish = combinedText.includes('_en') || combinedText.includes('en.pdf') || combinedText.includes('english') || combinedText.includes('wp');
+                  const isZip = combinedText.includes('.zip') || combinedText.includes('zip file') || combinedText.includes('other');
+                  if (isEnglish && !isZip) {
+                    bestPdfLink = href;
+                  }
+                }
+              });
+              
+              if (bestPdfLink) {
+                // Ensure absolute URL
+                if (bestPdfLink.startsWith('http')) {
+                  pdfUrl = bestPdfLink;
+                } else if (bestPdfLink.startsWith('/')) {
+                  pdfUrl = `https://ec.europa.eu${bestPdfLink}`;
+                } else if (bestPdfLink.startsWith('../')) {
+                  pdfUrl = `https://ec.europa.eu/newsroom/${bestPdfLink.replace(/^\.\.\//, '')}`;
+                } else {
+                  pdfUrl = `https://ec.europa.eu/newsroom/article29/${bestPdfLink}`;
+                }
+                
+                // Clean up double dots or relative parts in url
+                if (pdfUrl.includes('/../')) {
+                  pdfUrl = pdfUrl.replace(/\/article29\/\.\.\//g, '/');
+                }
+                // Clean up double /
+                pdfUrl = pdfUrl.replace(/([^:]\/)\/+/g, '$1');
+                console.log(`Resolved EC Newsroom PDF: ${pdfUrl}`);
+              }
+            }
+          }
+        }
+
+        if (!pdfUrl) {
+          console.warn(`No PDF link found on detail page or EC Newsroom for ${title}`);
           continue;
         }
 
-        const pdfUrl = relativePdfLink.startsWith('http') ? relativePdfLink : `${BASE_URL}${relativePdfLink}`;
         console.log(`Downloading PDF: ${pdfUrl}`);
 
         // Fetch PDF
@@ -243,11 +301,10 @@ async function scrapeEdpb() {
 
     page++;
     
-    // Safety safeguard: let's limit to 10 pages (~100 documents) to keep DB sizes reasonable and complete in a few minutes,
-    // or let the user decide if we want to scrape all 53 pages.
-    // Let's crawl 10 pages by default to fetch the last 1-2 years of guidelines, which covers all key GDPR guidelines.
-    if (page >= 10) {
-      console.log("Reached safety page limit of 10. Stopping crawler.");
+    // Safety safeguard: let's limit to 25 pages to keep DB sizes reasonable and complete in a few minutes,
+    // which covers all key GDPR guidelines.
+    if (page >= 25) {
+      console.log("Reached safety page limit of 25. Stopping crawler.");
       break;
     }
   }

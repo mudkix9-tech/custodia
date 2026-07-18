@@ -1,0 +1,134 @@
+[
+  {
+    "authority": "cnil",
+    "documentType": "guidance",
+    "sourceReference": "CNIL Guidance - Management of your cookie preferences (Part 1)",
+    "sourceUrl": "https://www.cnil.fr/fr/gestion-des-cookies",
+    "content": "CNIL Guidance - Management of your cookie preferences\n\nBack to the previous page Some functionalities of this site rely on the use of cookies (trackers). The cookie banner does not appear on the home page during your browsing because only cookies necessary for the site's operation are placed (you can however object to the use of audience measurement cookies by clicking on the \"Refuse\" button below). Preferences for all services Allow Refuse Audience measurement Audience measurement services are necessary for the site's operation by enabling its proper administration. You do however have the option to object to their use. Piwik (Matomo) > Link to the privacy policy Allow Refuse Learn more about the cookies used and the processing carried out by CNIL Confirm and return to the previous page",
+    "metadata": {
+      "document_id": "cnil-guidance-management-of-your-cookie-preferences",
+      "source": "cnil",
+      "authority": "cnil",
+      "title": "Management of your cookie preferences",
+      "section": "CNIL Guidance - Management of your cookie preferences (Part 1)",
+      "category": "consent",
+      "articles": [],
+      "date": "2026-07-18",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://www.cnil.fr/fr/gestion-des-cookies"
+    }
+  },
+  {
+    "authority": "cnil",
+    "documentType": "guidance",
+    "sourceReference": "CNIL Directives - Gestion de vos préférences sur les cookies (Part 1)",
+    "sourceUrl": "https://www.cnil.fr/fr/gestion-des-cookies",
+    "content": "CNIL Directives - Gestion de vos préférences sur les cookies\n\n< Retour à la page précédente Certaines fonctionnalités de ce site reposent sur l'usage de cookies (traceurs). Le bandeau cookies ne s'affiche pas sur la page d'accueil lors de votre navigation car seuls des cookies nécessaires au fonctionnement du site sont déposés (vous pouvez cependant vous opposer à l'utilisation des cookies de mesure d'audience en cliquant sur le bouton \" Refuser \" ci-dessous). Préférences pour tous les services Autoriser Refuser Mesure d'audience Les services de mesure d'audience sont nécessaires au fonctionnement du site en permettant sa bonne administration. Vous avez cependant la possibilité de vous opposer à leur usage. Piwik (Matomo) > Lien vers la politique de confidentialité Autoriser Refuser En savoir plus sur les cookies utilisés et les traitements mis en œuvre par la CNIL Valider et revenir à la page précédente",
+    "metadata": {
+      "document_id": "cnil-guidance-gestion-de-vos-pr-f-rences-sur-les-cookies",
+      "source": "cnil",
+      "authority": "cnil",
+      "title": "Gestion de vos préférences sur les cookies",
+      "section": "CNIL Directives - Gestion de vos préférences sur les cookies (Part 1)",
+      "category": "consent",
+      "articles": [],
+      "date": "2026-07-18",
+      "language": "fr",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://www.cnil.fr/fr/gestion-des-cookies"
+    }
+  },
+  {
+    "authority": "cnil",
+    "documentType": "guidance",
+    "sourceReference": "CNIL Guidance - Submitting a Data Protection Impact Assessment (DPIA) to the CNIL (Part 1)",
+    "sourceUrl": "https://www.cnil.fr/fr/services-en-ligne/soumettre-une-analyse-dimpact-relative-la-protection-des-donnees-aipd-la-cnil",
+    "content": "CNIL Guidance - Submitting a Data Protection Impact Assessment (DPIA) to the CNIL\n\nThis service allows professionals to submit a Data Protection Impact Assessment (DPIA) to the CNIL as part of a mandatory consultation or the processing of a formality file. In which cases should a DPIA be submitted to the CNIL? You must submit a Data Protection Impact Assessment (DPIA) to the CNIL in the following cases where consultation of the CNIL is mandatory: if the assessment presents high residual risks (Article 36 of the GDPR); in the case of processing operations covered by the \"Police-Justice\" Directive if the assessment presents high residual risks or if the processing, particularly due to the use of new mechanisms, technologies or procedures, presents high initial risks (Article 90 of the Data Protection Act). Or: in the case of the processing of a CNIL formality file (request for opinion, research authorization, health authorization, commitments to comply with certain single regulatory acts (RU-065)). If your impact assessment does not fall into any of these cases, you do not need to submit your DPIA to the CNIL. Required documents and information Your organization's SIREN number is required to complete this process. If your DPIA is linked to a formality file (research authorization, request for opinion, etc.), the formality number is required. This 6 or 7-digit number appears on the acknowledgment of receipt you received by email after submitting your formality. Your DPIA must be in one of the following digital formats: pdf, docx, doc, rtf, txt, json, msg.",
+    "metadata": {
+      "document_id": "cnil-guidance-submitting-a-data-protection-impact-assessment-dpia-to-the-cnil",
+      "source": "cnil",
+      "authority": "cnil",
+      "title": "Submitting a Data Protection Impact Assessment (DPIA) to the CNIL",
+      "section": "CNIL Guidance - Submitting a Data Protection Impact Assessment (DPIA) to the CNIL (Part 1)",
+      "category": "technology",
+      "articles": [
+        36,
+        90
+      ],
+      "date": "2026-07-18",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 2,
+      "url": "https://www.cnil.fr/fr/services-en-ligne/soumettre-une-analyse-dimpact-relative-la-protection-des-donnees-aipd-la-cnil"
+    }
+  },
+  {
+    "authority": "cnil",
+    "documentType": "guidance",
+    "sourceReference": "CNIL Guidance - Submitting a Data Protection Impact Assessment (DPIA) to the CNIL (Part 2)",
+    "sourceUrl": "https://www.cnil.fr/fr/services-en-ligne/soumettre-une-analyse-dimpact-relative-la-protection-des-donnees-aipd-la-cnil",
+    "content": "CNIL Guidance - Submitting a Data Protection Impact Assessment (DPIA) to the CNIL\n\nt number appears on the acknowledgment of receipt you received by email after submitting your formality. Your DPIA must be in one of the following digital formats: pdf, docx, doc, rtf, txt, json, msg. The document must not exceed 20 MB. Start submitting your DPIA File processing by the CNIL Immediately after sending the form, you will receive an automatic email indicating that your request has been received by the CNIL. It includes your file's reference number. The CNIL's compliance tools department verifies that your DPIA falls under the mandatory consultation cases and that your file is complete. You will receive an acknowledgment of receipt within 10 working days, informing you of the status of your file (closure, transmission to the relevant department for processing). Depending on the case, the processing of a DPIA submitted for mandatory consultation can take 8 to 14 weeks. If your DPIA is supplementary to a formality file, it is directly forwarded to the legal department in charge of its processing. The processing times then depend on the complexity and nature of the file to which your DPIA is attached.",
+    "metadata": {
+      "document_id": "cnil-guidance-submitting-a-data-protection-impact-assessment-dpia-to-the-cnil",
+      "source": "cnil",
+      "authority": "cnil",
+      "title": "Submitting a Data Protection Impact Assessment (DPIA) to the CNIL",
+      "section": "CNIL Guidance - Submitting a Data Protection Impact Assessment (DPIA) to the CNIL (Part 2)",
+      "category": "assessment",
+      "articles": [],
+      "date": "2026-07-18",
+      "language": "en",
+      "chunk_index": 1,
+      "total_chunks": 2,
+      "url": "https://www.cnil.fr/fr/services-en-ligne/soumettre-une-analyse-dimpact-relative-la-protection-des-donnees-aipd-la-cnil"
+    }
+  },
+  {
+    "authority": "cnil",
+    "documentType": "guidance",
+    "sourceReference": "CNIL Directives - Soumettre une analyse d’impact relative à la protection des données (AIPD) à la CNIL (Part 1)",
+    "sourceUrl": "https://www.cnil.fr/fr/services-en-ligne/soumettre-une-analyse-dimpact-relative-la-protection-des-donnees-aipd-la-cnil",
+    "content": "CNIL Directives - Soumettre une analyse d’impact relative à la protection des données (AIPD) à la CNIL\n\nCe service permet aux professionnels de soumettre à la CNIL une analyse d'impact relative à protection des données (AIPD) dans le cadre d'une consultation obligatoire ou de l'instruction d'un dossier de formalité. Dans quels cas soumettre une AIPD à la CNIL ? Vous devez soumettre une analyse d'impact relative à la protection des données personnelles (AIPD) à la CNIL dans les cas suivants où la consultation de la CNIL est obligatoire : si l'analyse présente des risques résiduels élevés (article 36 du RGPD) ; dans le cas des traitements relevant de la directive \" Police-Justice \" si l'analyse présente des risques résiduels élevés ou si le traitement, en particulier en raison de l'utilisation de nouveaux mécanismes, technologies ou procédures, présente des risques initiaux élevés (article 90 de la loi Informatique et Libertés). Ou : dans le cas de l'instruction d'un dossier de formalité CNIL (demande d'avis, autorisation-recherche, autorisation santé, engagements de conformité à certains actes réglementaires uniques (RU-065)). Votre analyse d'impact ne correspond à aucun de ces cas ? Vous n'avez pas à soumettre votre AIPD à la CNIL. Documents et informations nécessaires Le numéro SIREN qui identifie votre organisme est nécessaire pour accomplir cette démarche. Si votre AIPD est liée à un dossier de formalité (autorisation recherche, demande d'avis...) le numéro de la formalité est requis.",
+    "metadata": {
+      "document_id": "cnil-guidance-soumettre-une-analyse-d-impact-relative-la-protection-des-donn-es-aipd-la-cnil",
+      "source": "cnil",
+      "authority": "cnil",
+      "title": "Soumettre une analyse d’impact relative à la protection des données (AIPD) à la CNIL",
+      "section": "CNIL Directives - Soumettre une analyse d’impact relative à la protection des données (AIPD) à la CNIL (Part 1)",
+      "category": "technology",
+      "articles": [
+        36,
+        90
+      ],
+      "date": "2026-07-18",
+      "language": "fr",
+      "chunk_index": 0,
+      "total_chunks": 2,
+      "url": "https://www.cnil.fr/fr/services-en-ligne/soumettre-une-analyse-dimpact-relative-la-protection-des-donnees-aipd-la-cnil"
+    }
+  },
+  {
+    "authority": "cnil",
+    "documentType": "guidance",
+    "sourceReference": "CNIL Directives - Soumettre une analyse d’impact relative à la protection des données (AIPD) à la CNIL (Part 2)",
+    "sourceUrl": "https://www.cnil.fr/fr/services-en-ligne/soumettre-une-analyse-dimpact-relative-la-protection-des-donnees-aipd-la-cnil",
+    "content": "CNIL Directives - Soumettre une analyse d’impact relative à la protection des données (AIPD) à la CNIL\n\nentifie votre organisme est nécessaire pour accomplir cette démarche. Si votre AIPD est liée à un dossier de formalité (autorisation recherche, demande d'avis...) le numéro de la formalité est requis. Ce numéro composé de 6 ou 7 chiffres figure sur l'accusé de réception que vous avez reçu par courriel après soumission de votre formalité. Votre AIPD doit être dans l'un des formats numériques suivants : pdf, docx, doc, rtf, txt, json, msg. Le document ne doit pas excéder 20 Mo. Démarrer la soumission de votre AIPD Instruction du dossier par la CNIL Dès l'envoi du formulaire, vous recevez un courriel automatique indiquant que votre demande a bien été reçue par la CNIL. Il comprend le numéro de référence de votre dossier. Le service des outils de la conformité de la CNIL vérifie que votre AIPD relève des cas de consultation obligatoire et que votre dossier est complet. Vous recevez un accusé de réception dans les 10 jours ouvrés, vous informant des suites données à votre dossier (clôture, transmission au service concerné pour instruction). En fonction des cas, le traitement d'une AIPD soumise à consultation obligatoire peut aller de 8 à 14 semaines. Si votre AIPD est un complément de dossier de formalité, elle est directement transmise au service juridique en charge de son instruction. Les délais d'instruction dépendent alors de la complexité et de la nature du dossier auquel votre AIPD est rattachée.",
+    "metadata": {
+      "document_id": "cnil-guidance-soumettre-une-analyse-d-impact-relative-la-protection-des-donn-es-aipd-la-cnil",
+      "source": "cnil",
+      "authority": "cnil",
+      "title": "Soumettre une analyse d’impact relative à la protection des données (AIPD) à la CNIL",
+      "section": "CNIL Directives - Soumettre une analyse d’impact relative à la protection des données (AIPD) à la CNIL (Part 2)",
+      "category": "general",
+      "articles": [],
+      "date": "2026-07-18",
+      "language": "fr",
+      "chunk_index": 1,
+      "total_chunks": 2,
+      "url": "https://www.cnil.fr/fr/services-en-ligne/soumettre-une-analyse-dimpact-relative-la-protection-des-donnees-aipd-la-cnil"
+    }
+  }
+]

@@ -15,6 +15,27 @@
       "when": 1781020149123,
       "tag": "0001_yellow_puma",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781020150000,
+      "tag": "0013_ai_guidance_logs",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781020160000,
+      "tag": "0014_embeddings_language_idx",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781020170000,
+      "tag": "0015_corpus_versioning",
+      "breakpoints": true
     }
   ]
 }

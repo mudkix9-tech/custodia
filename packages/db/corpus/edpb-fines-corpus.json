@@ -1,0 +1,121 @@
+[
+  {
+    "authority": "edpb",
+    "documentType": "fine",
+    "sourceReference": "EDPB Enforcement - Meta Ireland €1.2B Transfer Fine (2023)",
+    "sourceUrl": "https://edpb.europa.eu/our-work-tools/consistency-findings/register-decisions/binding-decision-012023-on-meta_en",
+    "content": "EDPB Enforcement - Meta Ireland €1.2B Transfer Fine (2023)\n\nIn May 2023, the Irish Data Protection Commission (DPC) issued a record-breaking €1.2 billion fine against Meta Platforms Ireland Limited. The enforcement action resulted from an inquiry into Meta's transfers of personal data (specifically Facebook user data) from the EU to the US following the CJEU's Schrems II ruling. The DPC found that Meta transferred data using Standard Contractual Clauses (SCCs) but failed to implement supplementary measures that compensated for the lack of essentially equivalent protections in the US, thereby violating Article 46(1) of the GDPR. Although the Irish DPC did not initially propose a fine, the EDPB adopted Binding Decision 01/2023 under Article 65, instructing the Irish DPC to impose a substantial administrative fine to ensure deterrence, alongside an order to suspend all future EU-US transfers and bring existing data into compliance.",
+    "metadata": {
+      "document_id": "edpb-fine-meta-ireland-1-2b-data-transfer-fine",
+      "source": "edpb",
+      "authority": "edpb",
+      "title": "Meta Ireland €1.2B Data Transfer Fine",
+      "section": "EDPB Enforcement - Meta Ireland €1.2B Transfer Fine (2023)",
+      "category": "transfers",
+      "articles": [
+        46,
+        65
+      ],
+      "date": "2023-05-22",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://edpb.europa.eu/our-work-tools/consistency-findings/register-decisions/binding-decision-012023-on-meta_en"
+    }
+  },
+  {
+    "authority": "edpb",
+    "documentType": "fine",
+    "sourceReference": "EDPB Enforcement - Amazon CNPD €746M Advertising Fine (2021)",
+    "sourceUrl": "https://edpb.europa.eu/our-work-tools/consistency-findings/register-decisions/cnpd-luxembourg-decision-on-amazon-advertising_en",
+    "content": "EDPB Enforcement - Amazon CNPD €746M Advertising Fine (2021)\n\nIn July 2021, Luxembourg's National Commission for Data Protection (CNPD) issued a €746 million fine against Amazon Europe Core S.à r.l. The CNPD's investigation, initiated by a complaint from French privacy rights group La Quadrature du Net, concluded that Amazon's processing of customer personal data for targeted advertising and behavioral profiling was conducted without valid, freely given, specific, and informed consent, violating the core transparency and lawfulness principles of Article 6(1) of the GDPR. Amazon was also ordered to implement system-wide changes to its ad targeting practices. Note: In March 2026, the Administrative Court of Luxembourg annulled the CNPD's €746 million fine on procedural grounds, ruling that the CNPD failed to properly evaluate whether Amazon's actions were deliberate or negligent as required for high-tier administrative penalties, returning the case to the regulator for reassessment.",
+    "metadata": {
+      "document_id": "edpb-fine-amazon-luxembourg-cnpd-746m-advertising-fine",
+      "source": "edpb",
+      "authority": "edpb",
+      "title": "Amazon Luxembourg CNPD €746M Advertising Fine",
+      "section": "EDPB Enforcement - Amazon CNPD €746M Advertising Fine (2021)",
+      "category": "consent",
+      "articles": [
+        6
+      ],
+      "date": "2021-07-16",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://edpb.europa.eu/our-work-tools/consistency-findings/register-decisions/cnpd-luxembourg-decision-on-amazon-advertising_en"
+    }
+  },
+  {
+    "authority": "edpb",
+    "documentType": "fine",
+    "sourceReference": "EDPB Enforcement - Instagram €405M Children's Privacy Fine (2022)",
+    "sourceUrl": "https://edpb.europa.eu/our-work-tools/consistency-findings/register-decisions/binding-decision-022022-on-instagram-children-data_en",
+    "content": "EDPB Enforcement - Instagram €405M Children's Privacy Fine (2022)\n\nIn September 2022, the Irish DPC fined Meta Platforms Ireland Limited €405 million regarding its Instagram service. The inquiry focused on the processing of data belonging to children (aged 13 to 17) who operated 'business accounts' on the platform. The default settings for these accounts made the teenager's email address and phone number public, and children's personal accounts were set to 'public' by default rather than private. The DPC initially did not find violations under Article 6 GDPR regarding the lawful basis for these accounts, but Concerned Supervisory Authorities (CSAs) raised objections. The EDPB adopted Binding Decision 02/2022, instructing the DPC to include a finding of infringement under Article 6(1) (lawfulness of processing) and to recalculate the fine to ensure it was effective and proportionate, resulting in the final €405 million penalty.",
+    "metadata": {
+      "document_id": "edpb-fine-instagram-405m-children-s-privacy-fine",
+      "source": "edpb",
+      "authority": "edpb",
+      "title": "Instagram €405M Children's Privacy Fine",
+      "section": "EDPB Enforcement - Instagram €405M Children's Privacy Fine (2022)",
+      "category": "enforcement",
+      "articles": [
+        6
+      ],
+      "date": "2022-09-05",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://edpb.europa.eu/our-work-tools/consistency-findings/register-decisions/binding-decision-022022-on-instagram-children-data_en"
+    }
+  },
+  {
+    "authority": "edpb",
+    "documentType": "fine",
+    "sourceReference": "EDPB Enforcement - Meta Facebook & Instagram €390M ad-consent fine (2023)",
+    "sourceUrl": "https://edpb.europa.eu/our-work-tools/consistency-findings/register-decisions/binding-decision-032022-and-042022-on-meta-ads_en",
+    "content": "EDPB Enforcement - Meta Facebook & Instagram €390M ad-consent fine (2023)\n\nIn January 2023, the Irish DPC fined Meta Ireland €390 million (€210 million for Facebook and €180 million for Instagram). The enforcement targeted Meta's practice of 'forced consent.' Meta had updated its Terms of Service, requiring users to agree to personal data processing for personalized behavioral advertising as a condition of using the services, claiming it was necessary for the performance of a contract under Article 6(1)(b) of the GDPR. Following objections from CSAs, the EDPB adopted Binding Decisions 03/2022 and 04/2022, ruling that personalized ads are not necessary for the performance of a social network contract, forcing the DPC to reject Article 6(1)(b) as a valid legal basis, find a violation of Article 6(1), and significantly increase the administrative fines.",
+    "metadata": {
+      "document_id": "edpb-fine-meta-facebook-instagram-390m-ad-consent-fine",
+      "source": "edpb",
+      "authority": "edpb",
+      "title": "Meta Facebook & Instagram €390M Ad-Consent Fine",
+      "section": "EDPB Enforcement - Meta Facebook & Instagram €390M ad-consent fine (2023)",
+      "category": "consent",
+      "articles": [
+        6
+      ],
+      "date": "2023-01-12",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://edpb.europa.eu/our-work-tools/consistency-findings/register-decisions/binding-decision-032022-and-042022-on-meta-ads_en"
+    }
+  },
+  {
+    "authority": "edpb",
+    "documentType": "fine",
+    "sourceReference": "EDPB Enforcement - WhatsApp €225M Transparency Fine (2021)",
+    "sourceUrl": "https://edpb.europa.eu/our-work-tools/consistency-findings/register-decisions/binding-decision-012021-on-whatsapp_en",
+    "content": "EDPB Enforcement - WhatsApp €225M Transparency Fine (2021)\n\nIn September 2021, the Irish DPC fined WhatsApp Ireland Limited €225 million for failing to comply with GDPR transparency obligations. The investigation examined whether WhatsApp sufficiently informed users and non-users about how their data was shared and processed between WhatsApp and other Meta (Facebook) companies. The DPC found breaches of Article 12, 13, and 14 of the GDPR. The lead authority initially proposed a fine of €30 million to €50 million. However, following formal objections from other DPAs, the EDPB issued Binding Decision 01/2021, directing the DPC to identify additional violations (including Article 5(1)(a) principle of transparency) and to increase the penalty to a final €225 million.",
+    "metadata": {
+      "document_id": "edpb-fine-whatsapp-225m-transparency-fine",
+      "source": "edpb",
+      "authority": "edpb",
+      "title": "WhatsApp €225M Transparency Fine",
+      "section": "EDPB Enforcement - WhatsApp €225M Transparency Fine (2021)",
+      "category": "security",
+      "articles": [
+        5,
+        12,
+        13,
+        14
+      ],
+      "date": "2021-09-02",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://edpb.europa.eu/our-work-tools/consistency-findings/register-decisions/binding-decision-012021-on-whatsapp_en"
+    }
+  }
+]

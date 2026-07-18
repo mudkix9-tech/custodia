@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
-import { AlertCircle, CheckCircle2, ChevronRight, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronRight, X, Lightbulb } from 'lucide-react';
+import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
 
 export function GapRemediationList() {
   const { data: gaps = [], isLoading } = trpc.audit.listGaps.useQuery({});
   const utils = trpc.useUtils();
   const dismissMutation = trpc.audit.dismissGap.useMutation();
+  const { setContext, openPanel } = useAiGuidanceStore();
   
   const [dismissingId, setDismissingId] = useState<string | null>(null);
   const [dismissReason, setDismissReason] = useState('');
@@ -21,6 +23,31 @@ export function GapRemediationList() {
     utils.audit.listGaps.invalidate({});
     setDismissingId(null);
     setDismissReason('');
+  };
+
+  // Click-only gap context injection (not hover)
+  const handleGapClick = (gap: any) => {
+    setContext({
+      module: 'compliance_scoring',
+      entityId: gap.id,
+      formData: {
+        title: gap.title,
+        description: gap.description,
+        severity: gap.severity,
+        gdprArticles: gap.gdprArticles,
+      }
+    });
+    openPanel();
+  };
+
+  // Determine remediation deep-link based on gap category
+  const getRemediationLink = (gap: any) => {
+    const articles = (gap.gdprArticles || []) as string[];
+    if (articles.some((a: string) => ['5', '6', '13', '14', '30'].includes(String(a)))) return '/ropa';
+    if (articles.some((a: string) => ['28', '44', '45', '46'].includes(String(a)))) return '/vendors';
+    if (articles.some((a: string) => ['33', '34'].includes(String(a)))) return '/breaches';
+    if (articles.some((a: string) => ['12', '15', '16', '17', '18', '20', '21'].includes(String(a)))) return '/dsar';
+    return gap.resolutionUrl || null;
   };
 
   if (openGaps.length === 0) {
@@ -63,9 +90,17 @@ export function GapRemediationList() {
               )}
             </div>
           </div>
-          <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            {gap.resolutionUrl && (
-              <Link href={gap.resolutionUrl} className="bg-sage-50 text-sage-700 hover:bg-sage-100 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors">
+          <div className="flex flex-col gap-2">
+            {/* AI Explain - click-only */}
+            <button
+              onClick={() => handleGapClick(gap)}
+              className="bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
+            >
+              <Lightbulb className="w-3 h-3" /> Explain
+            </button>
+            {/* Remediation deep-link */}
+            {(gap.resolutionUrl || getRemediationLink(gap)) && (
+              <Link href={gap.resolutionUrl || getRemediationLink(gap)} className="bg-sage-50 text-sage-700 hover:bg-sage-100 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors">
                 Resolve <ChevronRight className="w-3 h-3" />
               </Link>
             )}

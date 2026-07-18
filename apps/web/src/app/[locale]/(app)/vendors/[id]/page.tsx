@@ -1,13 +1,14 @@
 "use client";
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, ShieldCheck, Globe, Lock, AlertTriangle, FileText, Upload, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { SubProcessorList } from '@/components/vendors/SubProcessorList';
 import { TIABuilder } from '@/components/vendors/TIABuilder';
+import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
 
 export default function VendorDetailsPage() {
   const params = useParams();
@@ -15,6 +16,7 @@ export default function VendorDetailsPage() {
   const vendorId = params?.id as string;
 
   const { data: vendor, isLoading } = trpc.vendors.getOrgVendorDetails.useQuery({ vendorId }, { enabled: !!vendorId });
+  const { setContext } = useAiGuidanceStore();
   const utils = trpc.useUtils();
   const updateMutation = trpc.vendors.updateOrgVendor.useMutation({
     onMutate: async (newUpdate) => {
@@ -45,6 +47,21 @@ export default function VendorDetailsPage() {
 
   if (isLoading) return <div className="p-8 text-ink-500">Loading vendor intelligence...</div>;
   if (!vendor) return <div className="p-8 text-ink-500">Vendor not found or not linked.</div>;
+
+  // Set AI guidance context when vendor data is available
+  useEffect(() => {
+    if (vendor) {
+      setContext({
+        module: 'vendors',
+        entityId: vendorId,
+        formData: {
+          name: vendor.vendor.name,
+          headquartersCountry: vendor.vendor.headquartersCountry,
+          dpaStatus: vendor.orgVendor.dpaStatus,
+        }
+      });
+    }
+  }, [vendorId, vendor?.orgVendor?.dpaStatus]);
 
   const handleUpdateDpa = async (status: string) => {
     await updateMutation.mutateAsync({ vendorId, dpaStatus: status });

@@ -1,4 +1,4 @@
-import { createWorker } from '../lib/queue.js';
+import { createWorker, orgEmbeddingsQueue } from '../lib/queue.js';
 import { db } from '../db.js';
 import { complianceGaps, organizations } from 'db';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -46,18 +46,37 @@ async function scanOrganization(orgId: string) {
       if (existing?.status === 'dismissed') continue;
 
       if (existing) {
-        await db.update(complianceGaps)
+        const [updated] = await db.update(complianceGaps)
           .set({
             lastDetectedAt: new Date(),
             detectionCount: (existing.detectionCount || 0) + 1,
             severity: escalateSeverityIfStale(existing),
           })
-          .where(eq(complianceGaps.id, existing.id));
+          .where(eq(complianceGaps.id, existing.id))
+          .returning();
+
+        if (updated) {
+          await orgEmbeddingsQueue.add('embed-gap', {
+            orgId,
+            entityType: 'gap',
+            entityId: updated.id,
+            action: 'upsert'
+          });
+        }
       } else {
-        await db.insert(complianceGaps).values({
+        const [inserted] = await db.insert(complianceGaps).values({
           organizationId: orgId,
           ...gap,
-        });
+        }).returning();
+
+        if (inserted) {
+          await orgEmbeddingsQueue.add('embed-gap', {
+            orgId,
+            entityType: 'gap',
+            entityId: inserted.id,
+            action: 'upsert'
+          });
+        }
       }
     }
   }
@@ -73,9 +92,19 @@ async function scanOrganization(orgId: string) {
   for (const gap of openGaps) {
     const fingerprint = `${gap.entityType}:${gap.entityId}:${gap.gapType}`;
     if (!detectedNow.has(fingerprint)) {
-      await db.update(complianceGaps)
+      const [resolved] = await db.update(complianceGaps)
         .set({ status: 'resolved', resolvedAt: new Date() })
-        .where(eq(complianceGaps.id, gap.id));
+        .where(eq(complianceGaps.id, gap.id))
+        .returning();
+
+      if (resolved) {
+        await orgEmbeddingsQueue.add('embed-gap', {
+          orgId,
+          entityType: 'gap',
+          entityId: resolved.id,
+          action: 'upsert'
+        });
+      }
     }
   }
 }

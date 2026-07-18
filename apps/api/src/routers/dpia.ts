@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
+import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { db } from '../db.js';
 import { dpias, dpiaRisks, dpiaMeasures, auditLogs } from 'db';
 import { eq, and, desc } from 'drizzle-orm';
@@ -55,6 +56,12 @@ export const dpiaRouter = router({
 
       if (!newDpia) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
 
+      await orgEmbeddingsQueue.add('embed-dpia', {
+        orgId: ctx.user!.orgId,
+        entityType: 'dpia',
+        entityId: newDpia.id,
+        action: 'upsert'
+      });
 
       return newDpia;
     }),
@@ -72,6 +79,13 @@ export const dpiaRouter = router({
         .set({ ...input.data, updatedAt: new Date() })
         .where(and(eq(dpias.id, input.id), eq(dpias.organizationId, ctx.user!.orgId)))
         .returning();
+
+      await orgEmbeddingsQueue.add('embed-dpia', {
+        orgId: ctx.user!.orgId,
+        entityType: 'dpia',
+        entityId: updated.id,
+        action: 'upsert'
+      });
 
       return updated;
     }),
@@ -99,6 +113,14 @@ export const dpiaRouter = router({
           ...input,
           initialRiskScore,
         }).returning();
+
+        await orgEmbeddingsQueue.add('embed-dpia', {
+          orgId: ctx.user!.orgId,
+          entityType: 'dpia',
+          entityId: inserted.dpiaId,
+          action: 'upsert'
+        });
+
         return inserted;
       }),
       
@@ -114,6 +136,14 @@ export const dpiaRouter = router({
           .set(input.data)
           .where(eq(dpiaRisks.id, input.id))
           .returning();
+
+        await orgEmbeddingsQueue.add('embed-dpia', {
+          orgId: ctx.user!.orgId,
+          entityType: 'dpia',
+          entityId: updated.dpiaId,
+          action: 'upsert'
+        });
+
         return updated;
       }),
       
@@ -122,6 +152,16 @@ export const dpiaRouter = router({
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
         const [deleted] = await ctx.db.delete(dpiaRisks).where(eq(dpiaRisks.id, input.id)).returning();
+
+        if (deleted) {
+          await orgEmbeddingsQueue.add('embed-dpia', {
+            orgId: ctx.user!.orgId,
+            entityType: 'dpia',
+            entityId: deleted.dpiaId,
+            action: 'upsert'
+          });
+        }
+
         return deleted;
       })
   }),
@@ -143,6 +183,17 @@ export const dpiaRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const [inserted] = await ctx.db.insert(dpiaMeasures).values(input).returning();
+
+        const [risk] = await ctx.db.select().from(dpiaRisks).where(eq(dpiaRisks.id, inserted.dpiaRiskId));
+        if (risk) {
+          await orgEmbeddingsQueue.add('embed-dpia', {
+            orgId: ctx.user!.orgId,
+            entityType: 'dpia',
+            entityId: risk.dpiaId,
+            action: 'upsert'
+          });
+        }
+
         return inserted;
       }),
       
@@ -157,6 +208,17 @@ export const dpiaRouter = router({
           .set(input.data)
           .where(eq(dpiaMeasures.id, input.id))
           .returning();
+
+        const [risk] = await ctx.db.select().from(dpiaRisks).where(eq(dpiaRisks.id, updated.dpiaRiskId));
+        if (risk) {
+          await orgEmbeddingsQueue.add('embed-dpia', {
+            orgId: ctx.user!.orgId,
+            entityType: 'dpia',
+            entityId: risk.dpiaId,
+            action: 'upsert'
+          });
+        }
+
         return updated;
       }),
       
@@ -165,6 +227,19 @@ export const dpiaRouter = router({
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
         const [deleted] = await ctx.db.delete(dpiaMeasures).where(eq(dpiaMeasures.id, input.id)).returning();
+
+        if (deleted) {
+          const [risk] = await ctx.db.select().from(dpiaRisks).where(eq(dpiaRisks.id, deleted.dpiaRiskId));
+          if (risk) {
+            await orgEmbeddingsQueue.add('embed-dpia', {
+              orgId: ctx.user!.orgId,
+              entityType: 'dpia',
+              entityId: risk.dpiaId,
+              action: 'upsert'
+            });
+          }
+        }
+
         return deleted;
       })
   })

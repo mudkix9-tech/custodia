@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import { paginatedQuery } from '../utils/pagination.js';
+import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { z } from 'zod';
 import { db } from '../db.js';
@@ -189,6 +190,14 @@ export const policiesRouter = router({
         .set({ currentVersionId: input.versionId, publishedAt: new Date() })
         .where(eq(privacyPolicies.id, input.policyId));
       await dispatchWebhook(ctx.user!.orgId, 'policy.published', { policyId: input.policyId });
+      
+      await orgEmbeddingsQueue.add('embed-policy', {
+        orgId: ctx.user!.orgId,
+        entityType: 'policy',
+        entityId: input.policyId,
+        action: 'upsert'
+      });
+
       return { success: true };
     }),
 });

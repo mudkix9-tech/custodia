@@ -10,6 +10,7 @@ export * from './regulatoryScraper.js';
 export * from './gapScanner.js';
 export * from './dataExport.js';
 export * from './complianceScore.js';
+export * from './orgEmbeddings.js';
 
 import { createQueue } from '../lib/queue.js';
 

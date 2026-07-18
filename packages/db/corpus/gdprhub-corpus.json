@@ -1,0 +1,130 @@
+[
+  {
+    "authority": "gdprhub",
+    "documentType": "decision",
+    "sourceReference": "GDPRhub - Austrian DSB Google Analytics Decision (2022)",
+    "sourceUrl": "https://gdprhub.eu/index.php?title=DSB_(Austria)_-_2021-0.586.220_(D155.125)",
+    "content": "GDPRhub - Austrian DSB Google Analytics Decision (2022)\n\nIn January 2022, the Austrian Data Protection Authority (Datenschutzbehörde or DSB) issued a landmark decision (following a model complaint by noyb) ruling that the use of Google Analytics on a website violates Chapter V (specifically Article 44) of the GDPR. The DSB found that unique user identification numbers, IP addresses, and browser parameters constitute personal data because they allow users to be singled out. Since Google LLC is subject to US surveillance laws (like FISA Section 702), the transfer of this data to Google servers in the US is unlawful because standard contractual clauses (SCCs) and Google's implemented supplementary measures (such as IP anonymization) were insufficient to prevent access or re-identification by US intelligence agencies.",
+    "metadata": {
+      "document_id": "gdprhub-decision-austrian-dsb-google-analytics-invalidation",
+      "source": "gdprhub",
+      "authority": "gdprhub",
+      "title": "Austrian DSB Google Analytics Invalidation",
+      "section": "GDPRhub - Austrian DSB Google Analytics Decision (2022)",
+      "category": "transfers",
+      "articles": [
+        44,
+        45,
+        46,
+        47,
+        48,
+        49
+      ],
+      "date": "2022-01-13",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://gdprhub.eu/index.php?title=DSB_(Austria)_-_2021-0.586.220_(D155.125)"
+    }
+  },
+  {
+    "authority": "gdprhub",
+    "documentType": "decision",
+    "sourceReference": "GDPRhub - French CNIL Google Analytics Compliance Orders (2022)",
+    "sourceUrl": "https://gdprhub.eu/index.php?title=CNIL_(France)_-_Formal_Notice_Google_Analytics",
+    "content": "GDPRhub - French CNIL Google Analytics Compliance Orders (2022)\n\nFollowing the Austrian DSB decision, France's CNIL (Commission Nationale de l'Informatique et des Libertés) issued several formal compliance notices (Mises en demeure) to French website operators using Google Analytics. The CNIL concluded that transfers to the US via Google Analytics violated Article 44 GDPR, as data was transferred to Google in the US without equivalent guarantees. The CNIL noted that the only compliant way to continue using Google Analytics would be through a proxy server architecture that completely truncates IP addresses, strips user identifiers, and prevents any direct data transmission between the user's browser and Google servers.",
+    "metadata": {
+      "document_id": "gdprhub-decision-cnil-google-analytics-compliance-orders",
+      "source": "gdprhub",
+      "authority": "gdprhub",
+      "title": "CNIL Google Analytics Compliance Orders",
+      "section": "GDPRhub - French CNIL Google Analytics Compliance Orders (2022)",
+      "category": "transfers",
+      "articles": [
+        44
+      ],
+      "date": "2022-02-10",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://gdprhub.eu/index.php?title=CNIL_(France)_-_Formal_Notice_Google_Analytics"
+    }
+  },
+  {
+    "authority": "gdprhub",
+    "documentType": "decision",
+    "sourceReference": "GDPRhub - Belgian APD IAB Europe TCF Decision (2022)",
+    "sourceUrl": "https://gdprhub.eu/index.php?title=APD_(Belgium)_-_DOS-2019-01377",
+    "content": "GDPRhub - Belgian APD IAB Europe TCF Decision (2022)\n\nIn February 2022, the Belgian Data Protection Authority (Autorité de protection des données or APD) ruled that the Transparency and Consent Framework (TCF) developed by IAB Europe failed to comply with multiple GDPR requirements. The APD found that the 'TC String' (a structured character string capturing user consent preferences) combined with a cookie (euconsent-v2) constitutes personal data because it uniquely identifies the user. Furthermore, IAB Europe was designated a data controller for the TCF. The APD ruled that IAB Europe lacked a valid lawful basis (Article 6) for processing consent preferences, failed to implement data protection by design and default (Article 25), and failed to ensure adequate security of processing (Article 32). This holding was subsequently referred to the CJEU, which upheld the controller status and personal data classification in 2024.",
+    "metadata": {
+      "document_id": "gdprhub-decision-belgian-apd-iab-europe-tcf-invalidation",
+      "source": "gdprhub",
+      "authority": "gdprhub",
+      "title": "Belgian APD IAB Europe TCF Invalidation",
+      "section": "GDPRhub - Belgian APD IAB Europe TCF Decision (2022)",
+      "category": "consent",
+      "articles": [
+        6,
+        25,
+        32
+      ],
+      "date": "2022-02-02",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://gdprhub.eu/index.php?title=APD_(Belgium)_-_DOS-2019-01377"
+    }
+  },
+  {
+    "authority": "gdprhub",
+    "documentType": "decision",
+    "sourceReference": "GDPRhub - Swedish IMY Spotify Right of Access Fine (2023)",
+    "sourceUrl": "https://gdprhub.eu/index.php?title=IMY_(Sweden)_-_DI-2019-2537",
+    "content": "GDPRhub - Swedish IMY Spotify Right of Access Fine (2023)\n\nIn June 2023, the Swedish Authority for Privacy Protection (Integritetsskyddsmyndigheten or IMY) fined Spotify AB SEK 58 million (approximately €5 million) for failing to fully comply with Article 15 GDPR (Right of Access). The IMY concluded that while Spotify did provide personal data upon request, it failed to present the information in a sufficiently clear and transparent manner. Spotify was criticized for failing to explain the meaning and purpose of technical log files provided to users, failing to clearly specify the retention periods for different categories of processed data, and failing to provide translations of the access file's metadata for users residing in countries other than Sweden, violating Article 12(1) and Article 15(1) GDPR.",
+    "metadata": {
+      "document_id": "gdprhub-decision-swedish-imy-spotify-right-of-access-fine",
+      "source": "gdprhub",
+      "authority": "gdprhub",
+      "title": "Swedish IMY Spotify Right of Access Fine",
+      "section": "GDPRhub - Swedish IMY Spotify Right of Access Fine (2023)",
+      "category": "rights",
+      "articles": [
+        12,
+        15
+      ],
+      "date": "2023-06-13",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://gdprhub.eu/index.php?title=IMY_(Sweden)_-_DI-2019-2537"
+    }
+  },
+  {
+    "authority": "gdprhub",
+    "documentType": "decision",
+    "sourceReference": "GDPRhub - Austrian DSB Meta Pixel Decision (2023)",
+    "sourceUrl": "https://gdprhub.eu/index.php?title=DSB_(Austria)_-_2023-0.177.303",
+    "content": "GDPRhub - Austrian DSB Meta Pixel Decision (2023)\n\nIn March 2023, the Austrian DSB ruled that a website operator's use of the Meta (Facebook) Tracking Pixel violated Chapter V (Article 44) of the GDPR. The DSB found that the Meta Pixel automatically collects and transmits personal data (such as IP addresses, unique cookie IDs, browser metadata, and custom conversion events) to Meta Platforms Inc. in the US. Relying on its Google Analytics precedent, the DSB determined that Meta is subject to US surveillance laws (FISA Section 702), making the transfer unlawful because the standard contractual clauses and supplementary measures implemented by Meta could not guarantee protection against access by US public authorities, rendering the website's data transfers invalid.",
+    "metadata": {
+      "document_id": "gdprhub-decision-austrian-dsb-meta-pixel-invalidation",
+      "source": "gdprhub",
+      "authority": "gdprhub",
+      "title": "Austrian DSB Meta Pixel Invalidation",
+      "section": "GDPRhub - Austrian DSB Meta Pixel Decision (2023)",
+      "category": "consent",
+      "articles": [
+        44,
+        45,
+        46,
+        47,
+        48,
+        49
+      ],
+      "date": "2023-03-09",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://gdprhub.eu/index.php?title=DSB_(Austria)_-_2023-0.177.303"
+    }
+  }
+]

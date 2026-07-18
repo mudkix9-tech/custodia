@@ -1,10 +1,11 @@
 "use client";
 import DOMPurify from 'dompurify';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import { differenceInDays, format } from 'date-fns';
 import { Clock, CheckCircle2, AlertCircle, FileText, Send, Mail, Download, History, User, Paperclip } from 'lucide-react';
+import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
 
 export function DsarWorkspace({ dsarId }: { dsarId: string }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'comms' | 'package' | 'timeline'>('overview');
@@ -18,6 +19,24 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
   const { data: commsResp } = trpc.dsar.comms.list.useQuery({ dsarId, limit: 100 });
   const comms = commsResp?.data || [];
   
+  const { setContext } = useAiGuidanceStore();
+
+  // Set AI guidance context when DSAR data loads
+  useEffect(() => {
+    if (dsar) {
+      setContext({
+        module: 'dsar',
+        entityId: dsarId,
+        formData: {
+          referenceNumber: dsar.referenceNumber,
+          requestType: dsar.requestType,
+          originalMessage: dsar.originalMessage,
+          receivedAt: dsar.receivedAt,
+        }
+      });
+    }
+  }, [dsarId, dsar?.status]);
+
   const generateTasksMutation = trpc.dsar.tasks.generateFromRopa.useMutation({
     onSuccess: () => utils.dsar.tasks.list.invalidate({ dsarId })
   });

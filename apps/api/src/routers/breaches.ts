@@ -1,5 +1,6 @@
 import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
+import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { breaches, breachNotifications, breachRemediationTasks, organizations, users } from 'db';
 import { eq, and } from 'drizzle-orm';
@@ -217,6 +218,13 @@ export const breachesRouter = router({
 
       if (!breach) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
 
+      await orgEmbeddingsQueue.add('embed-breach', {
+        orgId: ctx.user!.orgId,
+        entityType: 'breach',
+        entityId: breach.id,
+        action: 'upsert'
+      });
+
       return breach;
     }),
 
@@ -278,6 +286,13 @@ export const breachesRouter = router({
         updatedAt: new Date()
       }).where(and(eq(breaches.id, input.id), eq(breaches.organizationId, ctx.user!.orgId))).returning();
       
+      await orgEmbeddingsQueue.add('embed-breach', {
+        orgId: ctx.user!.orgId,
+        entityType: 'breach',
+        entityId: updated.id,
+        action: 'upsert'
+      });
+
       return updated;
     }),
 
@@ -287,6 +302,14 @@ export const breachesRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       const [updated] = await ctx.db.update(breaches).set({ status: input.status, updatedAt: new Date() }).where(and(eq(breaches.id, input.id), eq(breaches.organizationId, ctx.user!.orgId))).returning();
+      
+      await orgEmbeddingsQueue.add('embed-breach', {
+        orgId: ctx.user!.orgId,
+        entityType: 'breach',
+        entityId: updated.id,
+        action: 'upsert'
+      });
+
       return updated;
     }),
 
@@ -302,6 +325,14 @@ export const breachesRouter = router({
         resolvedAt: new Date(),
         updatedAt: new Date() 
       }).where(and(eq(breaches.id, input.id), eq(breaches.organizationId, ctx.user!.orgId))).returning();
+      
+      await orgEmbeddingsQueue.add('embed-breach', {
+        orgId: ctx.user!.orgId,
+        entityType: 'breach',
+        entityId: updated.id,
+        action: 'upsert'
+      });
+
       return updated;
     }),
 });

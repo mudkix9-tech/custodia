@@ -1,0 +1,179 @@
+[
+  {
+    "authority": "aepd",
+    "documentType": "guidance",
+    "sourceReference": "AEPD Spain - Manages GDPR (Part 1)",
+    "sourceUrl": "https://www.aepd.es/guias-y-herramientas/herramientas/gestiona2",
+    "content": "AEPD Spain - Manages GDPR\n\nThis tool is aimed at controllers and processors, as well as DPOs, regarding basic aspects that must be considered prior to performing adequate risk management for rights and freedoms in relation to personal data protection. Gestiona RGPD allows for the integrated management of an entity's entire Record of Processing Activities, with up to 500 processing operations. It even allows for managing the RoPA of different entities. In turn, it incorporates the functionalities of the Evalua_Riesgo2 tool to perform risk analysis and assess the obligation (or convenience) of conducting a DPIA. In the case of Gestiona RGPD, the functionalities extend to allow risk management with privacy measures suggested by the tool for each specific risk factor identified, measures for managing personal data breaches and security, and organizational measures and data protection policies. In turn, for DPIAs, it allows for documenting assessments of suitability, necessity, and proportionality. All risk management information is associated with each processing operation. Furthermore, Gestiona RGPD allows for generating reports on the RoPA, the RoPA with additional risk management information, and also, for Public Administrations, the mandatory publication inventory. Reports can be generated in \"doc\" and \"html\" formats, as well as \"csv\" for export and use in other tools.",
+    "metadata": {
+      "document_id": "aepd-guidance-manages-gdpr",
+      "source": "aepd",
+      "authority": "aepd",
+      "title": "Manages GDPR",
+      "section": "AEPD Spain - Manages GDPR (Part 1)",
+      "category": "assessment",
+      "articles": [],
+      "date": "2026-07-17",
+      "language": "es",
+      "chunk_index": 0,
+      "total_chunks": 5,
+      "url": "https://www.aepd.es/guias-y-herramientas/herramientas/gestiona2"
+    }
+  },
+  {
+    "authority": "aepd",
+    "documentType": "guidance",
+    "sourceReference": "AEPD Spain - Manages GDPR (Part 2)",
+    "sourceUrl": "https://www.aepd.es/guias-y-herramientas/herramientas/gestiona2",
+    "content": "AEPD Spain - Manages GDPR\n\ngement information, and also, for Public Administrations, the mandatory publication inventory. Reports can be generated in \"doc\" and \"html\" formats, as well as \"csv\" for export and use in other tools. The management of processing operations is carried out in the user's own browser, without any data transmission to the AEPD and with total confidentiality. The information can be stored in a file on the user's computer and retrieved after each session, allowing for different versions of the management information. The use of this tool must be carried out without prejudice to the guidelines established in the Guide for Risk Management and Impact Assessment in Personal Data Processing and the Checklist for Determining the Formal Adequacy of a DPIA and the Submission of Prior Consultation. In no case does the use of this tool constitute a complete risk management process or a DPIA. Gestiona RGPD, in its current state of evolution, is the starting point for commencing risk management. The mere obtaining of documents provided by AEPD tools does not, in any case, imply automatic fulfillment of the obligations that the GDPR and the LOPDGDD establish for controllers and processors of personal data, particularly regarding the principle of accountability developed in Chapter IV of the GDPR. These are initial support documents intended to facilitate the understanding of said obligations and to address them, initially, appropriately.",
+    "metadata": {
+      "document_id": "aepd-guidance-manages-gdpr",
+      "source": "aepd",
+      "authority": "aepd",
+      "title": "Manages GDPR",
+      "section": "AEPD Spain - Manages GDPR (Part 2)",
+      "category": "transfers",
+      "articles": [],
+      "date": "2026-07-17",
+      "language": "es",
+      "chunk_index": 1,
+      "total_chunks": 5,
+      "url": "https://www.aepd.es/guias-y-herramientas/herramientas/gestiona2"
+    }
+  },
+  {
+    "authority": "aepd",
+    "documentType": "guidance",
+    "sourceReference": "AEPD Spain - Manages GDPR (Part 3)",
+    "sourceUrl": "https://www.aepd.es/guias-y-herramientas/herramientas/gestiona2",
+    "content": "AEPD Spain - Manages GDPR\n\ne of accountability developed in Chapter IV of the GDPR. These are initial support documents intended to facilitate the understanding of said obligations and to address them, initially, appropriately. Based on the documents obtained, controllers and processors of personal data must carry out any necessary adaptations specifically for each personal data processing operation; taking into account the risks to the rights and freedoms of natural persons that could derive from such processing based on its nature, scope, context, and purposes (Recital 76 and Article 35.1 of the GDPR). In no case can this tool be understood as a way to apply the security measures required by Article 32 of the GDPR; for this purpose, well-known standards already existing in the market must be used. In general, the General Data Protection Regulation (GDPR) requires personnel responsible for managing personal data processing operations to carry out risk analyses and impact assessments in order to manage risks to the rights and freedoms of natural persons. Furthermore, the AEPD has published the list of personal data processing operations that require an impact assessment in accordance with Article 35.4 of the GDPR.",
+    "metadata": {
+      "document_id": "aepd-guidance-manages-gdpr",
+      "source": "aepd",
+      "authority": "aepd",
+      "title": "Manages GDPR",
+      "section": "AEPD Spain - Manages GDPR (Part 3)",
+      "category": "assessment",
+      "articles": [
+        32,
+        35
+      ],
+      "date": "2026-07-17",
+      "language": "es",
+      "chunk_index": 2,
+      "total_chunks": 5,
+      "url": "https://www.aepd.es/guias-y-herramientas/herramientas/gestiona2"
+    }
+  },
+  {
+    "authority": "aepd",
+    "documentType": "guidance",
+    "sourceReference": "AEPD Spain - Manages GDPR (Part 4)",
+    "sourceUrl": "https://www.aepd.es/guias-y-herramientas/herramientas/gestiona2",
+    "content": "AEPD Spain - Manages GDPR\n\nghts and freedoms of natural persons. Furthermore, the AEPD has published the list of personal data processing operations that require an impact assessment in accordance with Article 35.4 of the GDPR. Please note that neither the lists of processing operations nor the result of the tool limit the obligations of the controller who, in cases where there is no obligation to conduct a DPIA, may determine the need to carry it out based on the specificities of each particular processing operation. GESTIONA_RGPD is a free tool that guides the user through the basic elements that must be taken into account prior to performing risk management for processing operations and in impact assessments. GESTIONA_RGPD is more than a closed list of elements to consider, and it provides controllers with the basis to initiate risk analysis and management activities within the scope of the GDPR. Please note that, in no case, can compliance requirements be replaced by alternative technical or organizational measures; for more information, you can consult the List of Elements for GDPR Regulatory Compliance. In this regard, the DPIA should not be understood as an opportunity to carry out personal data processing operations that do not pass the proportionality and necessity analysis or are contrary to any of the data protection principles.",
+    "metadata": {
+      "document_id": "aepd-guidance-manages-gdpr",
+      "source": "aepd",
+      "authority": "aepd",
+      "title": "Manages GDPR",
+      "section": "AEPD Spain - Manages GDPR (Part 4)",
+      "category": "assessment",
+      "articles": [
+        35
+      ],
+      "date": "2026-07-17",
+      "language": "es",
+      "chunk_index": 3,
+      "total_chunks": 5,
+      "url": "https://www.aepd.es/guias-y-herramientas/herramientas/gestiona2"
+    }
+  },
+  {
+    "authority": "aepd",
+    "documentType": "guidance",
+    "sourceReference": "AEPD Spain - Manages GDPR (Part 5)",
+    "sourceUrl": "https://www.aepd.es/guias-y-herramientas/herramientas/gestiona2",
+    "content": "AEPD Spain - Manages GDPR\n\nt be understood as an opportunity to carry out personal data processing operations that do not pass the proportionality and necessity analysis or are contrary to any of the data protection principles. Therefore, GESTIONA_RGPD is a decision-support tool whose use generates basic, and in no case exhaustive, documentation upon which an analysis and risk management must be performed by controllers and processors to comply with the provisions of the GDPR and the LOPDGDD. This basic documentation will be a starting point that must be completed and analyzed by the controller's personnel and, where applicable, the processor, following the guidelines established in the Guide for Risk Management and Impact Assessment in Personal Data Processing, in order to demonstrate at all times that processing operations are carried out in accordance with the requirements established by the GDPR and the LOPDGDD. Link to the tool User manual",
+    "metadata": {
+      "document_id": "aepd-guidance-manages-gdpr",
+      "source": "aepd",
+      "authority": "aepd",
+      "title": "Manages GDPR",
+      "section": "AEPD Spain - Manages GDPR (Part 5)",
+      "category": "assessment",
+      "articles": [],
+      "date": "2026-07-17",
+      "language": "es",
+      "chunk_index": 4,
+      "total_chunks": 5,
+      "url": "https://www.aepd.es/guias-y-herramientas/herramientas/gestiona2"
+    }
+  },
+  {
+    "authority": "aepd",
+    "documentType": "guidance",
+    "sourceReference": "AEPD Spain - GDPR Risk Assessment v2 (Part 1)",
+    "sourceUrl": "https://www.aepd.es/guias-y-herramientas/herramientas/evalua-riesgo-rgpd",
+    "content": "AEPD Spain - GDPR Risk Assessment v2\n\nThe mere obtaining of the documents provided by the AEPD's tools does not, in any case, imply automatic compliance with the obligations that the GDPR and LOPDGDD establish for data controllers and processors, particularly with regard to the principle of accountability developed by the GDPR in its Chapter IV. These are initial aid documents aimed at facilitating the understanding of these obligations and addressing them, initially, in an appropriate manner. Based on the documents obtained, data controllers and processors must carry out all necessary adaptations specifically for each personal data processing operation; taking into account the risks to the rights and freedoms of natural persons that may arise from such processing operations depending on their nature, scope, context, and purposes (Recital 76 and Article 35.1 of the GDPR). The purpose of this tool is to support controllers and processors in their risk management process for rights and freedoms and, where applicable, the performance of the DPIA, in line with the guide \"Risk management and impact assessment in personal data processing\" published by the AEPD. The risk factors presented in this tool are not exhaustive, but constitute a minimum set, and the controller must identify those specific to the processing and include them in their assessment.",
+    "metadata": {
+      "document_id": "aepd-guidance-gdpr-risk-assessment-v2",
+      "source": "aepd",
+      "authority": "aepd",
+      "title": "GDPR Risk Assessment v2",
+      "section": "AEPD Spain - GDPR Risk Assessment v2 (Part 1)",
+      "category": "assessment",
+      "articles": [
+        35
+      ],
+      "date": "2026-07-17",
+      "language": "es",
+      "chunk_index": 0,
+      "total_chunks": 2,
+      "url": "https://www.aepd.es/guias-y-herramientas/herramientas/evalua-riesgo-rgpd"
+    }
+  },
+  {
+    "authority": "aepd",
+    "documentType": "guidance",
+    "sourceReference": "AEPD Spain - GDPR Risk Assessment v2 (Part 2)",
+    "sourceUrl": "https://www.aepd.es/guias-y-herramientas/herramientas/evalua-riesgo-rgpd",
+    "content": "AEPD Spain - GDPR Risk Assessment v2\n\nAEPD. The risk factors presented in this tool are not exhaustive, but constitute a minimum set, and the controller must identify those specific to the processing and include them in their assessment. The assessment of the risk level for each factor performed by the tool, as well as the final calculation of the risk level, is general in nature and represents a minimum assessment which, where appropriate, will have to be adjusted by the controller to precisely determine the risk level of the processing. Link to the tool",
+    "metadata": {
+      "document_id": "aepd-guidance-gdpr-risk-assessment-v2",
+      "source": "aepd",
+      "authority": "aepd",
+      "title": "GDPR Risk Assessment v2",
+      "section": "AEPD Spain - GDPR Risk Assessment v2 (Part 2)",
+      "category": "assessment",
+      "articles": [],
+      "date": "2026-07-17",
+      "language": "es",
+      "chunk_index": 1,
+      "total_chunks": 2,
+      "url": "https://www.aepd.es/guias-y-herramientas/herramientas/evalua-riesgo-rgpd"
+    }
+  },
+  {
+    "authority": "aepd",
+    "documentType": "guidance",
+    "sourceReference": "AEPD Spain - Conducting data protection impact assessments (Part 1)",
+    "sourceUrl": "https://www.aepd.es/derechos-y-deberes/cumple-tus-deberes/medidas-de-cumplimiento/realizacion-de-evaluaciones-de",
+    "content": "AEPD Spain - Conducting data protection impact assessments\n\nThe GDPR introduces the concept of a Data Protection Impact Assessment (DPIA) and obliges Supervisory Authorities to establish indicative lists of processing operations that do not require a DPIA, as well as processing operations that do require its completion. You can consult the indicative lists of processing operations that do not require a DPIA published by the AEPD and approved by the EDPB here: Indicative list of types of data processing operations that do not require a data protection impact assessment (Art. 35.5) You can consult the indicative list of processing operations that require a DPIA published by the AEPD and approved by the EDPB here: Lists of types of data processing operations that require a data protection impact assessment (Art. 35.4) In general, there is an obligation to carry out a DPIA whenever the processing involves a high risk to the rights and freedoms of natural persons. However, irrespective of this obligation, the controller may carry out the DPIA when they deem it necessary; these lists are indicative and not restrictive. You can consult the guidance resources published by the AEPD for conducting the risk assessment and the DPIA in the innovation and technology section of our website.",
+    "metadata": {
+      "document_id": "aepd-guidance-conducting-data-protection-impact-assessments",
+      "source": "aepd",
+      "authority": "aepd",
+      "title": "Conducting data protection impact assessments",
+      "section": "AEPD Spain - Conducting data protection impact assessments (Part 1)",
+      "category": "technology",
+      "articles": [
+        35
+      ],
+      "date": "2026-07-17",
+      "language": "es",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://www.aepd.es/derechos-y-deberes/cumple-tus-deberes/medidas-de-cumplimiento/realizacion-de-evaluaciones-de"
+    }
+  }
+]

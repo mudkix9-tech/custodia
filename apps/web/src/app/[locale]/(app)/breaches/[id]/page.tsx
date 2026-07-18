@@ -1,14 +1,16 @@
 'use client';
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { trpc } from '@/utils/trpc';
 import { Tab } from '@headlessui/react';
+import { Clock } from 'lucide-react';
 import BreachCountdown from '@/components/breaches/BreachCountdown';
 import RiskAssessmentMatrix from '@/components/breaches/RiskAssessmentMatrix';
 import BreachNotificationDraft from '@/components/breaches/BreachNotificationDraft';
 import BreachTasks from '@/components/breaches/BreachTasks';
+import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -19,14 +21,69 @@ export default function BreachWorkspace() {
   const breachId = id as string;
 
   const { data: breach, isLoading, refetch } = trpc.breaches.getById.useQuery({ id: breachId });
+  const { setContext } = useAiGuidanceStore();
 
   const [activeTab, setActiveTab] = useState(0);
+
+  // Set AI guidance context when breach data loads
+  useEffect(() => {
+    if (breach) {
+      setContext({
+        module: 'breaches',
+        entityId: breachId,
+        formData: {
+          title: breach.title,
+          description: breach.description,
+          discoveredAt: breach.discoveredAt,
+          dataCategoriesAffected: breach.dataCategoriesAffected,
+          estimatedRecordsAffected: breach.estimatedRecordsAffected,
+        }
+      });
+    }
+  }, [breachId, breach?.status]);
+
+  // Calculate remaining hours for Article 33 banner
+  const remainingHours = useMemo(() => {
+    if (!breach?.notificationDeadline) return null;
+    const deadlineMs = new Date(breach.notificationDeadline).getTime();
+    const nowMs = Date.now();
+    const diffMs = deadlineMs - nowMs;
+    return Math.max(0, Math.round(diffMs / (1000 * 60 * 60)));
+  }, [breach?.notificationDeadline]);
 
   if (isLoading) return <GenericWorkspaceSkeleton />;
   if (!breach) return <div className="p-6">Breach not found.</div>;
 
+  const isNotified = breach.status === 'notified_authority' || breach.status === 'closed' || !!breach.authorityNotifiedAt;
+  const isUrgent = remainingHours !== null && remainingHours <= 24 && !isNotified;
+  const showBanner = remainingHours !== null && !isNotified && (breach.status === 'detected' || breach.status === 'assessing');
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
+
+      {/* Article 33 Critical Countdown Banner */}
+      {showBanner && (
+        <div className={`rounded-xl p-4 flex items-center gap-4 ${
+          isUrgent 
+            ? 'bg-red-50 border-2 border-red-300 animate-pulse' 
+            : 'bg-amber-50 border border-amber-200'
+        }`}>
+          <div className={`p-2 rounded-full ${isUrgent ? 'bg-red-100' : 'bg-amber-100'}`}>
+            <Clock className={`w-5 h-5 ${isUrgent ? 'text-red-600' : 'text-amber-600'}`} />
+          </div>
+          <div className="flex-1">
+            <h3 className={`text-[14px] font-bold ${isUrgent ? 'text-red-800' : 'text-amber-800'}`}>
+              Article 33 Notification Deadline: {remainingHours} hour{remainingHours !== 1 ? 's' : ''} remaining
+            </h3>
+            <p className={`text-[12.5px] ${isUrgent ? 'text-red-600' : 'text-amber-600'}`}>
+              {isUrgent 
+                ? 'CRITICAL: You must notify the supervisory authority without undue delay and within 72 hours of becoming aware of a personal data breach.'
+                : 'Under GDPR Article 33, the supervisory authority must be notified within 72 hours unless the breach is unlikely to result in a risk to individuals.'
+              }
+            </p>
+          </div>
+        </div>
+      )}
       
       {/* Critical Header / Countdown */}
       <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 ring-1 ring-black ring-opacity-5 flex justify-between items-center relative overflow-hidden">

@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/Header";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { Announcer } from "@/components/layout/Announcer";
+import { AiGuidancePanel } from "@/components/layout/AiGuidancePanel";
 
 export default function AppLayout({
   children,
@@ -24,6 +25,7 @@ export default function AppLayout({
             {children}
           </main>
         </div>
+        <AiGuidancePanel />
         <CommandPalette />
       </div>
     </>

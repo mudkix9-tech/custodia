@@ -1,6 +1,6 @@
 # Privaro — Complete Product Memory
 
-> **Last updated:** July 13, 2026
+> **Last updated:** July 18, 2026 (Updated RAG schema, advanced retrieval & reranking pipeline, and organization context embeddings)
 > **Owner:** Nisarg (solo founder, Pune, India)
 > **Domain:** getprivaro.com
 > **Status:** Pre-launch, core product built, polishing for production
@@ -320,6 +320,66 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 - Batch worker reads from Redis every 5 seconds
 - Bulk inserts into consent_records
 - Rate limited: 100 req/s per scriptId
+
+### RAG Vector Search, Advanced Retrieval & Organization Embeddings (Phase 3 & 4)
+- **Flagship Model**: Google Vertex AI `gemini-embedding-001` with **3072-dimensional** vector embeddings. Reverted from `text-embedding-004` to eliminate zero-padding and preserve cosine similarity accuracy.
+- **pgvector Indexing and Retrieval**: Vector indexes (ivfflat/hnsw) are dropped in favor of exact flat search to bypass pgvector's 2000-dimension indexing limit. Flat search achieves 100% accuracy and is extremely fast for our corpus sizes (<10k rows).
+- **Global GDPR Corpus**: Exactly **5,928 vector chunks** (including the newly crawled **EDPB Guidelines 05/2020 on consent**) representing:
+  * 99 GDPR Articles
+  * 173 GDPR Recitals
+  * 4,554 EDPB Guidelines/Recommendations chunks (including the newly added 90 chunks from the Guidelines 05/2020 on consent)
+  * 4 EU Charter of Fundamental Rights documents
+  * 72 ePrivacy Directive documents
+  * 512 UK ICO Guidelines chunks (utilizes nested selector de-duplication)
+  * 108 CNIL (France) translated guidelines chunks (cookie guidance, DPIA methodology, and AI guidelines translated from French to English on-the-fly)
+  * 55 BfDI (Germany) translated guidelines chunks (employee data and technical measures translated from German to English on-the-fly, respecting HTML base-href page resolutions)
+  * 244 DPC (Ireland) guidelines/decisions chunks (covering big tech enforcement decisions and data transfers)
+  * 79 AP Netherlands translated guidelines chunks (cookie wall decisions and legitimate interest guidance translated from Dutch to English on-the-fly)
+  * 8 AEPD Spain translated guidelines/tools chunks (covering Evalúa-Riesgo risk assessment tools and DPIA guides translated from Spanish to English on-the-fly)
+  * 10 CJEU rulings chunks (covering landmark case decisions including Schrems I & II, Planet49 cookie consent, Fashion ID joint controllership, and Meta Platforms advertising lawful bases)
+  * 5 EDPB enforcement fines chunks (covering record-setting administrative fines and Article 65 binding decisions for Meta €1.2B, Amazon €746M, Instagram €405M, Meta €390M, and WhatsApp €225M)
+  * 5 GDPRhub decisions chunks (covering landmark DPA decisions curated by GDPRhub including Austrian DSB Google Analytics, French CNIL GA orders, Belgian APD TCF, Swedish IMY Spotify access fine, and Austrian DSB Facebook Tracking Pixel)
+- **Advanced Retrieval & Reranking (Phase 3)**:
+  * **Intent Classification**: Natural language queries are classified via fast rule-based regex patterns into `regulatory`, `guidance`, `organization_specific`, and `comparison` intents to avoid expensive API calls.
+  * **Query Expansion**: Informal terms (e.g. `DSAR`, `DPO`, `cookies`, `transfers`) are expanded to regulatory counterparts to boost keyword relevance.
+  * **Reranking Criteria**: similarity scores are adjusted by:
+    - **Authority Weights**: GDPR regulations (1.0) > EDPB guidelines (0.9) > CJEU rulings (0.85) > national DPAs (0.75) > general commentaries/documents (0.7).
+    - **Recency Decay**: Adjusts scores downwards by **1.5% per year of age** relative to 2026.
+    - **Article Match**: Queries matching specific articles (e.g. `Article 6`) receive a **25% boost** on chunks containing the article in metadata.
+    - **Category Coherence**: Dominant categories (out of top 3) penalize category outliers by **10%**.
+    - **Source Diversity**: Chunks from the same document receive a **20% compound penalty** to prevent returning redundant results.
+  * **Adjacent Chunk Retrieval**: Automatically fetches the neighboring chunks (`chunkIndex ± 1`) for the top 3 results to ensure Claude receives complete context.
+  * **Context Window Budget**: Capped at **12,000 tokens** to prevent context pollution and context window overflow.
+  * **Citation Formatting**: Robust multi-pass regex parsing resolves single indices (`[Source 1]`), ranges (`[Sources 1-3]`), commas (`[Source 1, 2]`), and `and` separators, turning them into clean clickable markdown links.
+  * **Gated Insights**: Insights warnings (DPO status, vendor count, etc.) are tightly gated to the `organization_specific` intent.
+- **Organization Context Embeddings (Phase 4)**:
+  * **Entity Serialization**: Formats organization records into coherent natural-language sentences for all 7 entity types:
+    - `processing_activity` (ROPA activities, data categories, and recipients)
+    - `vendor` (linked/custom vendors, purpose, DPA status, risk scores, country)
+    - `policy` (published markdown policy text)
+    - `breach` (reference number, breach description, affected subjects, status, risk assessment)
+    - `dsar` (reference, subject details, request type, messages, deadlines)
+    - `gap` (gap titles, status, severity, scanned entities, GDPR articles)
+    - `dpia` (title, status, descriptions, risks, mitigations)
+  * **Manual Joins**: Serialization falls back to manual database left/inner joins to avoid Drizzle query builder relation inference issues.
+  * **Background BullMQ Queue**: Implemented BullMQ worker and queue to process organization embedding upserts/deletions asynchronously in the background.
+  * **Mutation triggers**: Automated hooks trigger embedding queue jobs on all modifications:
+    - **ROPA**: `create`, `bulkCreate`, `update`, `delete`
+    - **Vendors**: `linkVendor`, `updateOrgVendor`, `createCustom`
+    - **Policies**: `publishVersion`
+    - **Breaches**: `report`, `updateAssessment`, `updateStatus`, `close`
+    - **DSAR**: `submitPublic`, `updateStatus`, `extendDeadline`, `refuse`, `close`
+    - **DPIA**: `create`, `update`, and nested risk/measure creations, updates, or deletions.
+    - **Gap Scanner**: `scanOrganization` on gap insertions, updates, and resolutions.
+- **RAG Schema Properties**:
+  * **`authority` & `documentType`**: Replaced flat `sourceType` with dedicated fields for exact-match and category-boosted retrieval.
+  * **`category`**: Each chunk is dynamically assigned to categories like `'consent'`, `'technology'`, `'transfers'`, `'assessment'`, `'security'`, `'employment'`, `'rights'`, `'enforcement'`, or `'general'`.
+  * **`language`**: Standardized to ISO 639-1 language codes (e.g. `'en'`, `'de'`, `'fr'`, `'es'`, `'nl'`) instead of full-word strings across all scrapers, corpus files, and database entries.
+  * **`articles`**: Compiled dynamically based on regex-extracted article mentions, with support for ranges (e.g. "Articles 44 to 49"), sequences/lists (e.g. "Articles 44, 45 and 46"), and auto-inclusion of Chapter V transfer articles when "Chapter V" is mentioned.
+  * **`chunkIndex` & `totalChunks`**: Embedded within metadata to allow adjacent chunk retrieval.
+- **Incremental & High-Concurrency Seeder**: The database seeder (`gdpr-corpus.ts`) uses SHA-256 content hashes to detect and skip unchanged entries in under 4 seconds. When full seeding is executed, it processes batches of 50 documents with a concurrency limit of 10 in parallel, reducing the total generation and seeding time from ~30 minutes to under 40 seconds.
+- **EC Newsroom Redirection Scraper**: The crawler handles redirects for older WP29 documents (DPO, DPIA, consent, breach, etc.) hosted on the European Commission's Newsroom by parsing sibling HTML elements and downloading the English PDF binary streams.
+- **DPA Scraping Mechanics (SSL & WAF Bypass)**: Scrapers target national DPAs with robust fallback mechanisms. Uses `node-fetch` and user-agent modifications to bypass Web Application Firewalls (e.g., Cloudflare on AP Netherlands and AEPD Spain) and configures `NODE_TLS_REJECT_UNAUTHORIZED = '0'` to crawl sites with incomplete certificate chains (e.g., DPC Ireland, AP Netherlands, and AEPD Spain).
 
 ---
 

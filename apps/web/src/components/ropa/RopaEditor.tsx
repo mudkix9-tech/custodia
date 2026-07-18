@@ -4,12 +4,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/utils/trpc';
-import { Save, ArrowLeft, AlertCircle, Info, ExternalLink, X } from 'lucide-react';
+import { Save, ArrowLeft, AlertCircle, Info, ExternalLink, X, Lightbulb } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { FieldError } from '@/components/ui/FieldError';
 import { announce } from '@/components/layout/Announcer';
+import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
 
 import { DataCategoriesTab } from './tabs/DataCategoriesTab';
 import { RecipientsTab } from './tabs/RecipientsTab';
@@ -71,8 +72,58 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
   });
   const formData = watch();
 
+  const { setContext, openPanel, registerApplyCallback, unregisterApplyCallback } = useAiGuidanceStore();
+
   const handleFieldChange = (field: any, value: any) => {
     setValue(field, value, { shouldDirty: true });
+  };
+
+  // Register AI apply callback so the sidebar can inject values into this form
+  useEffect(() => {
+    registerApplyCallback((field: string, value: any) => {
+      if (field === 'lawfulBasis') {
+        setValue('lawfulBasis', value, { shouldDirty: true });
+      } else if (field === 'retention') {
+        handleFieldChange('retentionPeriod', value);
+      } else if (field === 'dataCategories') {
+        // Data categories are managed via a sub-tab; store them for later application
+        // For now, just announce the suggestion
+        announce(`AI suggested ${(value || []).length} data categories. Apply them in the Data Categories tab.`);
+      }
+    });
+    return () => unregisterApplyCallback();
+  }, []);
+
+  // Set AI guidance context when the form loads or activity data changes
+  useEffect(() => {
+    if (initialData?.id || formData.name) {
+      setContext({
+        module: 'ropa',
+        entityId: initialData?.id || undefined,
+        formData: {
+          name: formData.name,
+          purpose: formData.purpose,
+          description: formData.description,
+          lawfulBasis: formData.lawfulBasis,
+          retentionPeriod: formData.retentionPeriod,
+        }
+      });
+    }
+  }, [initialData?.id]);
+
+  const handleAiAssist = () => {
+    setContext({
+      module: 'ropa',
+      entityId: initialData?.id || undefined,
+      formData: {
+        name: formData.name,
+        purpose: formData.purpose,
+        description: formData.description,
+        lawfulBasis: formData.lawfulBasis,
+        retentionPeriod: formData.retentionPeriod,
+      }
+    });
+    openPanel();
   };
 
   const [assignedClientIds, setAssignedClientIds] = useState<string[]>(
@@ -207,15 +258,26 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
             </div>
           </div>
           
-          {isNew && (
-            <button 
-              onClick={handleCreate}
-              disabled={!formData.name || !formData.purpose}
-              className="px-3 py-2 bg-sage-700 hover:bg-sage-600 disabled:opacity-50 text-bone-50 text-[13px] font-medium rounded-lg shadow-card transition-colors flex items-center gap-1.5"
-            >
-              <Save className="w-4 h-4" /> Create Activity
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {!isNew && (
+              <button
+                type="button"
+                onClick={handleAiAssist}
+                className="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-[13px] font-medium rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <Lightbulb className="w-4 h-4" /> Help me fill this in
+              </button>
+            )}
+            {isNew && (
+              <button 
+                onClick={handleCreate}
+                disabled={!formData.name || !formData.purpose}
+                className="px-3 py-2 bg-sage-700 hover:bg-sage-600 disabled:opacity-50 text-bone-50 text-[13px] font-medium rounded-lg shadow-card transition-colors flex items-center gap-1.5"
+              >
+                <Save className="w-4 h-4" /> Create Activity
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Tabs Navigation */}

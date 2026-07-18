@@ -1,12 +1,13 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ArrowLeft, Code, Settings, Cookie, BarChart3, Globe, Copy, Check, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
 
 export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
   const searchParams = useSearchParams();
@@ -17,6 +18,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
   
   const utils = trpc.useContext();
   const { data, isLoading } = trpc.consent.getDomain.useQuery({ id: domainId });
+  const { setContext } = useAiGuidanceStore();
   const scanMutation = trpc.consent.scanCookies.useMutation({
     onSuccess: () => alert('Scan queued successfully! Check back in a few minutes.')
   });
@@ -24,6 +26,25 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
   if (isLoading || !data) return <div className="text-ink-500">Loading CMP Workspace...</div>;
 
   const { domain, cookies, stats } = data;
+
+  // Set AI guidance context when consent data is available
+  useEffect(() => {
+    if (domain) {
+      setContext({
+        module: 'consent',
+        entityId: domainId,
+        formData: {
+          domain: domain.domain,
+          cookies: cookies?.map((c: any) => ({
+            cookieName: c.cookieName,
+            cookieDomain: c.cookieDomain,
+            category: c.category,
+            provider: c.provider,
+          })) || [],
+        }
+      });
+    }
+  }, [domainId, cookies?.length]);
 
   const scriptTag = `<script src="https://api.privaro.io/api/cmp/${domain.scriptId}/banner.js" async></script>`;
 

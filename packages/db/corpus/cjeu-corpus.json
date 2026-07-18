@@ -1,0 +1,228 @@
+[
+  {
+    "authority": "cjeu",
+    "documentType": "ruling",
+    "sourceReference": "CJEU Case C-362/14 - Schrems I (Safe Harbor Invalidation)",
+    "sourceUrl": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=169195&doclang=EN",
+    "content": "CJEU Case C-362/14 - Schrems I (Safe Harbor Invalidation)\n\nIn its landmark judgment of October 6, 2015, the Court of Justice of the European Union (CJEU) declared the European Commission's Decision 2000/520/EC (the 'Safe Harbour Decision') invalid. The Safe Harbour framework had previously allowed for the transfer of personal data from EU Member States to organizations in the United States that self-certified under the scheme. The Court found that the framework did not prevent US public authorities from accessing transferred personal data in a manner that interfered with the fundamental rights of EU citizens. Specifically, the Court noted that mass surveillance programs (such as PRISM) went beyond what was strictly necessary and proportionate, thereby violating the fundamental rights to privacy and data protection guaranteed by Articles 7 and 8 of the EU Charter of Fundamental Rights. Consequently, transatlantic data transfers could no longer rely on Safe Harbour.",
+    "metadata": {
+      "document_id": "cjeu-ruling-schrems-i-safe-harbor-invalidation",
+      "source": "cjeu",
+      "authority": "eu",
+      "title": "Schrems I - Safe Harbor Invalidation",
+      "section": "CJEU Case C-362/14 - Schrems I (Safe Harbor Invalidation)",
+      "category": "transfers",
+      "articles": [
+        7,
+        8
+      ],
+      "date": "2015-10-06",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=169195&doclang=EN"
+    }
+  },
+  {
+    "authority": "cjeu",
+    "documentType": "ruling",
+    "sourceReference": "CJEU Case C-362/14 - Schrems I (Powers of National DPAs)",
+    "sourceUrl": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=169195&doclang=EN",
+    "content": "CJEU Case C-362/14 - Schrems I (Powers of National DPAs)\n\nThe CJEU ruled that national supervisory authorities (Data Protection Authorities or DPAs) retain their complete independence and investigatory powers under Article 28 of Directive 95/46/EC (now Article 57/58 of the GDPR). The Court held that even when the European Commission has issued an adequacy decision (such as the Safe Harbour framework), national DPAs are not precluded from examining complaints concerning the level of protection guaranteed in a third country. If a national DPA finds that a data transfer to a third country does not ensure an 'essentially equivalent' level of protection as guaranteed within the EU under the Charter of Fundamental Rights, it has the authority and the duty to suspend or prohibit the transfer, independently of any Commission adequacy decision.",
+    "metadata": {
+      "document_id": "cjeu-ruling-schrems-i-powers-of-national-dpas",
+      "source": "cjeu",
+      "authority": "eu",
+      "title": "Schrems I - Powers of National DPAs",
+      "section": "CJEU Case C-362/14 - Schrems I (Powers of National DPAs)",
+      "category": "transfers",
+      "articles": [
+        28,
+        57
+      ],
+      "date": "2015-10-06",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=169195&doclang=EN"
+    }
+  },
+  {
+    "authority": "cjeu",
+    "documentType": "ruling",
+    "sourceReference": "CJEU Case C-311/18 - Schrems II (Privacy Shield Invalidation)",
+    "sourceUrl": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=177421&doclang=EN",
+    "content": "CJEU Case C-311/18 - Schrems II (Privacy Shield Invalidation)\n\nIn its judgment of July 16, 2020, the CJEU declared the European Commission's Decision 2016/1250 on the adequacy of the protection provided by the EU-US Privacy Shield invalid. Similar to its findings in Schrems I, the Court ruled that US domestic law and surveillance programs (specifically Section 702 of the Foreign Intelligence Surveillance Act (FISA) and Executive Order 12333) allow US public authorities to access personal data transferred from the EU for national security purposes in ways that are not limited to what is strictly necessary and proportionate. Furthermore, the Court found that the Privacy Shield Ombudsman mechanism did not provide EU data subjects with actionable judicial redress before a court that is essentially equivalent to that required under Article 47 of the Charter of Fundamental Rights.",
+    "metadata": {
+      "document_id": "cjeu-ruling-schrems-ii-privacy-shield-invalidation",
+      "source": "cjeu",
+      "authority": "eu",
+      "title": "Schrems II - Privacy Shield Invalidation",
+      "section": "CJEU Case C-311/18 - Schrems II (Privacy Shield Invalidation)",
+      "category": "transfers",
+      "articles": [
+        47
+      ],
+      "date": "2020-07-16",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=177421&doclang=EN"
+    }
+  },
+  {
+    "authority": "cjeu",
+    "documentType": "ruling",
+    "sourceReference": "CJEU Case C-311/18 - Schrems II (Standard Contractual Clauses & Assessments)",
+    "sourceUrl": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=177421&doclang=EN",
+    "content": "CJEU Case C-311/18 - Schrems II (Standard Contractual Clauses & Assessments)\n\nWhile invalidating the Privacy Shield, the CJEU upheld the validity of the European Commission's Standard Contractual Clauses (SCCs) (Decision 2010/87/EU). However, the Court established that organizations relying on SCCs for international data transfers must conduct a case-by-case pre-transfer risk assessment (Transfer Impact Assessment or TIA). The data exporter, in cooperation with the data importer, must evaluate whether the laws of the third country offer an adequate level of protection. If the recipient country's laws conflict with the SCCs or compromise data protection, the exporter must implement 'supplementary measures' (technical, contractual, or organizational—such as strong end-to-end encryption). If no supplementary measures can guarantee an essentially equivalent level of protection, the transfer must be suspended.",
+    "metadata": {
+      "document_id": "cjeu-ruling-schrems-ii-standard-contractual-clauses-assessments",
+      "source": "cjeu",
+      "authority": "eu",
+      "title": "Schrems II - Standard Contractual Clauses & Assessments",
+      "section": "CJEU Case C-311/18 - Schrems II (Standard Contractual Clauses & Assessments)",
+      "category": "transfers",
+      "articles": [],
+      "date": "2020-07-16",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=177421&doclang=EN"
+    }
+  },
+  {
+    "authority": "cjeu",
+    "documentType": "ruling",
+    "sourceReference": "CJEU Case C-673/17 - Planet49 (Active Cookie Consent)",
+    "sourceUrl": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=218462&doclang=EN",
+    "content": "CJEU Case C-673/17 - Planet49 (Active Cookie Consent)\n\nIn its judgment of October 1, 2019, the CJEU ruled that cookie consent is not validly given if obtained through a pre-ticked checkbox that users must uncheck to refuse consent. The Court clarified that consent must be given by a clear affirmative act. Passive behavior, such as failing to deselect a pre-ticked box, does not demonstrate unambiguous, freely given, specific, and informed consent as required under Article 5(3) of the ePrivacy Directive (Directive 2002/58/EC) read in conjunction with the GDPR's consent standards. Active cookie consent must be obtained before storing or accessing cookies on a user's terminal equipment, regardless of whether the information accessed constitutes personal data.",
+    "metadata": {
+      "document_id": "cjeu-ruling-planet49-active-cookie-consent",
+      "source": "cjeu",
+      "authority": "eu",
+      "title": "Planet49 - Active Cookie Consent",
+      "section": "CJEU Case C-673/17 - Planet49 (Active Cookie Consent)",
+      "category": "consent",
+      "articles": [
+        5
+      ],
+      "date": "2019-10-01",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=218462&doclang=EN"
+    }
+  },
+  {
+    "authority": "cjeu",
+    "documentType": "ruling",
+    "sourceReference": "CJEU Case C-673/17 - Planet49 (Informational Duties and Scope)",
+    "sourceUrl": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=218462&doclang=EN",
+    "content": "CJEU Case C-673/17 - Planet49 (Informational Duties and Scope)\n\nThe CJEU ruled that under Article 5(3) of the ePrivacy Directive, service providers must provide users with clear and comprehensive information regarding cookie operations. Specifically, this information must include the duration of the cookies' operation (how long the cookie will remain active on the device) and whether third parties will have access to or be able to read those cookies. The Court also confirmed that these cookie rules apply to any information stored or accessed on a user's terminal equipment, meaning the regulatory scope is not restricted to personal data; it covers any data, files, or identifiers stored on the user's device.",
+    "metadata": {
+      "document_id": "cjeu-ruling-planet49-informational-duties-and-scope",
+      "source": "cjeu",
+      "authority": "eu",
+      "title": "Planet49 - Informational Duties and Scope",
+      "section": "CJEU Case C-673/17 - Planet49 (Informational Duties and Scope)",
+      "category": "consent",
+      "articles": [
+        5
+      ],
+      "date": "2019-10-01",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=218462&doclang=EN"
+    }
+  },
+  {
+    "authority": "cjeu",
+    "documentType": "ruling",
+    "sourceReference": "CJEU Case C-40/17 - Fashion ID (Joint Controllership)",
+    "sourceUrl": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=216555&doclang=EN",
+    "content": "CJEU Case C-40/17 - Fashion ID (Joint Controllership)\n\nIn its judgment of July 29, 2019, the CJEU ruled that a website operator that embeds a third-party social plugin (such as the Facebook 'Like' button) on its site is a joint controller with the social plugin provider (Facebook) for the phase of processing that it co-determines. The Court established that because embedding the plugin allows personal data of website visitors to be collected and transmitted to the social network, the website operator decisively influences the collection and transmission stage. Therefore, the website operator is jointly responsible for the initial collection and transmission of data, even if the operator itself does not have access to or control over the data subsequently processed by the social network.",
+    "metadata": {
+      "document_id": "cjeu-ruling-fashion-id-joint-controllership",
+      "source": "cjeu",
+      "authority": "eu",
+      "title": "Fashion ID - Joint Controllership",
+      "section": "CJEU Case C-40/17 - Fashion ID (Joint Controllership)",
+      "category": "rights",
+      "articles": [],
+      "date": "2019-07-29",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=216555&doclang=EN"
+    }
+  },
+  {
+    "authority": "cjeu",
+    "documentType": "ruling",
+    "sourceReference": "CJEU Case C-40/17 - Fashion ID (Consent and Information Obligations)",
+    "sourceUrl": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=216555&doclang=EN",
+    "content": "CJEU Case C-40/17 - Fashion ID (Consent and Information Obligations)\n\nFollowing its joint controllership ruling, the CJEU held that the website operator embedding a social plugin must satisfy the information and consent requirements for the data-collection phase it initiates. Specifically, the website operator is responsible for informing visitors about the collection and transmission of their personal data to the third-party plugin provider and, if consent is the applicable legal basis, obtaining that consent from users before the data collection and transmission begins. The website operator's information and consent obligations are limited to the phase of processing (collection and transmission) that it actually co-determines.",
+    "metadata": {
+      "document_id": "cjeu-ruling-fashion-id-consent-and-information-obligations",
+      "source": "cjeu",
+      "authority": "eu",
+      "title": "Fashion ID - Consent and Information Obligations",
+      "section": "CJEU Case C-40/17 - Fashion ID (Consent and Information Obligations)",
+      "category": "consent",
+      "articles": [],
+      "date": "2019-07-29",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=216555&doclang=EN"
+    }
+  },
+  {
+    "authority": "cjeu",
+    "documentType": "ruling",
+    "sourceReference": "CJEU Case C-252/21 - Meta Platforms (Lawful Bases for Profiling)",
+    "sourceUrl": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=275125&doclang=EN",
+    "content": "CJEU Case C-252/21 - Meta Platforms (Lawful Bases for Profiling)\n\nIn its judgment of July 4, 2023, the CJEU ruled that a social network operator (such as Meta) cannot rely on contractual necessity (Article 6(1)(b) of the GDPR) or legitimate interests (Article 6(1)(f) of the GDPR) to justify the systematic tracking and profiling of users for personalized advertising without consent. The Court held that personalized advertising is not indispensable to the performance of a social media contract. It further ruled that the commercial interests of the platform do not override the fundamental rights of users, meaning freely given consent (Article 6(1)(a)) is the only viable legal basis for cross-site tracking and behavioral profiling.",
+    "metadata": {
+      "document_id": "cjeu-ruling-meta-platforms-lawful-bases-for-profiling",
+      "source": "cjeu",
+      "authority": "eu",
+      "title": "Meta Platforms - Lawful Bases for Profiling",
+      "section": "CJEU Case C-252/21 - Meta Platforms (Lawful Bases for Profiling)",
+      "category": "consent",
+      "articles": [
+        6
+      ],
+      "date": "2023-07-04",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=275125&doclang=EN"
+    }
+  },
+  {
+    "authority": "cjeu",
+    "documentType": "ruling",
+    "sourceReference": "CJEU Case C-252/21 - Meta Platforms (Sensitive Data & Competition Powers)",
+    "sourceUrl": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=275125&doclang=EN",
+    "content": "CJEU Case C-252/21 - Meta Platforms (Sensitive Data & Competition Powers)\n\nThe CJEU ruled that national competition authorities can evaluate a company's GDPR compliance in determining whether a dominant market position was abused, provided they consult and cooperate with the competent data protection supervisory authority. Additionally, the Court addressed sensitive data (Article 9 GDPR), ruling that visiting apps or websites that reveal sensitive attributes (political views, health data, sexual orientation, etc.) and linking that activity to user profiles falls under the strict prohibition of Article 9. Merely visiting a page does not make that data 'manifestly public' by the data subject, and processing it requires explicit consent.",
+    "metadata": {
+      "document_id": "cjeu-ruling-meta-platforms-sensitive-data-competition-powers",
+      "source": "cjeu",
+      "authority": "eu",
+      "title": "Meta Platforms - Sensitive Data & Competition Powers",
+      "section": "CJEU Case C-252/21 - Meta Platforms (Sensitive Data & Competition Powers)",
+      "category": "consent",
+      "articles": [
+        9
+      ],
+      "date": "2023-07-04",
+      "language": "en",
+      "chunk_index": 0,
+      "total_chunks": 1,
+      "url": "https://curia.europa.eu/juris/document/document.jsf?text=&docid=275125&doclang=EN"
+    }
+  }
+]

@@ -14,7 +14,8 @@ import {
   index,
   unique,
   date,
-  pgEnum
+  pgEnum,
+  real
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
@@ -1068,39 +1069,66 @@ export const complianceReports = pgTable('compliance_reports', {
 
 export const documentEmbeddings = pgTable('document_embeddings', {
   id: uuid('id').primaryKey().defaultRandom(),
-  
-  sourceType: varchar('source_type', { length: 50 }).notNull(),
-  sourceReference: text('source_reference'),
-  sourceUrl: varchar('source_url', { length: 500 }),
-  
+  documentId: text('document_id').notNull(),
+  source: text('source').notNull(),
+  authority: text('authority').notNull(),
+  title: text('title').notNull(),
+  section: text('section'),
+  category: text('category').notNull(),
+  articles: integer('articles').array().notNull().default(sql`'{}'::integer[]`),
   content: text('content').notNull(),
-  contentHash: varchar('content_hash', { length: 64 }),
-  
+  embedding: vector('embedding', { dimensions: 3072 }).notNull(),
   metadata: jsonb('metadata').default({}),
-  
-  embedding: vector('embedding', { dimensions: 3072 }),
-  
+  chunkIndex: integer('chunk_index').notNull(),
+  totalChunks: integer('total_chunks').notNull(),
+  sourceUrl: text('source_url'),
+  language: text('language').default('en'),
+  isCurrent: boolean('is_current').default(true).notNull(),
+  supersededBy: text('superseded_by'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
-  sourceIdx: index('idx_embeddings_source').on(t.sourceType),
-  hashIdx: index('idx_embeddings_hash').on(t.contentHash),
+  categoryIdx: index('idx_embeddings_category').on(t.category),
+  sourceIdx: index('idx_embeddings_source').on(t.source),
+  articlesIdx: index('idx_embeddings_articles').using('gin', t.articles),
+  languageIdx: index('idx_embeddings_language').on(t.language),
+  isCurrentIdx: index('idx_embeddings_is_current').on(t.isCurrent),
 }));
 
 export const organizationEmbeddings = pgTable('organization_embeddings', {
   id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-  documentId: uuid('document_id').references(() => documents.id),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  entityType: text('entity_type').notNull(),
+  entityId: uuid('entity_id').notNull(),
   
   content: text('content').notNull(),
   contentHash: varchar('content_hash', { length: 64 }),
   metadata: jsonb('metadata').default({}),
-  embedding: vector('embedding', { dimensions: 3072 }),
+  embedding: vector('embedding', { dimensions: 3072 }).notNull(),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
   orgIdx: index('idx_org_embeddings_org').on(t.organizationId),
+  typeIdx: index('idx_org_embeddings_type').on(t.entityType),
+  uniqueConstraint: unique('org_embeddings_entity_unique').on(t.organizationId, t.entityType, t.entityId),
 }));
+
+export const aiGuidanceLogs = pgTable('ai_guidance_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  module: varchar('module', { length: 50 }).notNull(),
+  entityId: uuid('entity_id'),
+  query: text('query'),
+  response: text('response').notNull(),
+  sources: jsonb('sources').default([]),
+  confidence: varchar('confidence', { length: 20 }).notNull(), // 'high' | 'medium' | 'advisory'
+  feedback: varchar('feedback', { length: 15 }), // 'helpful' | 'not_helpful'
+  feedbackAt: timestamp('feedback_at', { withTimezone: true }),
+  topSimilarity: real('top_similarity'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
 
 // ============================================================================
 // TRAINING
