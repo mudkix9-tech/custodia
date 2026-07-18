@@ -36,6 +36,7 @@ coverage
 # IDEs and Editors
 .idea/
 .vscode/
+.gemini/
 *.swp
 *.swo
 .DS_Store
