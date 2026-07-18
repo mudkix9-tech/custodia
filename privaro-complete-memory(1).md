@@ -1,6 +1,6 @@
 # Privaro — Complete Product Memory
 
-> **Last updated:** July 18, 2026 (Updated RAG schema, advanced retrieval & reranking pipeline, organization context embeddings, and vendor risk scoring engine)
+> **Last updated:** July 18, 2026 (Updated RAG schema, advanced retrieval & reranking pipeline, organization context embeddings, vendor risk scoring, and DPA clause analysis)
 > **Owner:** Nisarg (solo founder, Pune, India)
 > **Domain:** getprivaro.com
 > **Status:** Pre-launch, core product built, polishing for production
@@ -636,7 +636,32 @@ Replaced the simplistic binary DPA/no-DPA status check with a comprehensive, mul
 
 ---
 
-## 18. Key Principles Established
+## 18. DPA Clause Analysis & Monitoring (Phase 2)
+
+### Overview
+Extended DPA tracking beyond binary signed/unsigned status to audit the 8 mandatory GDPR Article 28(3) clauses. Includes an interactive checklist, sliding risk score penalty scale, stateful expiry and renewal date alerts, and automated compliance gaps.
+
+### Clause Checklist & Key Mappings
+1. **Documented Instructions** (`documentedInstructions` - Art. 28(3)(a))
+2. **Personnel Confidentiality** (`confidentiality` - Art. 28(3)(b))
+3. **Security Measures** (`securityMeasures` - Art. 28(3)(c))
+4. **Sub-processor Restrictions** (`subProcessorRestrictions` - Art. 28(3)(d))
+5. **Data Subject Rights Assistance** (`dataSubjectRights` - Art. 28(3)(e))
+6. **Breach & DPIA Assistance** (`securityBreachDpia` - Art. 28(3)(f))
+7. **Deletion or Return of Data** (`deletionOnTermination` - Art. 28(3)(g))
+8. **Audits and Inspections** (`auditRights` - Art. 28(3)(h))
+
+### Stateful Alerting & Deduplication
+- **Checkers**: Scheduled daily workers check DPA Expiry and Contract Renewal dates at 90, 60, 30, and 7-day thresholds.
+- **Deduplication**: Uses `lastExpiryNotificationTier` and `lastRenewalNotificationTier` in the database to log sent status. Only sends one alert per threshold; automatically resets if dates are extended.
+
+### Compliance Gaps
+- **Missing Sub-processor Clause (High Severity)**: Triggers if a signed DPA lacks the sub-processor restrictions clause.
+- **Incomplete DPA (Medium Severity)**: Triggers if a signed DPA covers fewer than 6 out of 8 required clauses.
+
+---
+
+## 19. Key Principles Established
 
 1. **Don't ship mock/simulated features.** If a scanner is supposed to scan, it scans with real Puppeteer. If an export is supposed to export, it writes a real ZIP to S3.
 2. **Every list endpoint has cursor pagination.** Uses shared `paginatedQuery` utility.
