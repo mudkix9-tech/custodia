@@ -251,4 +251,87 @@ export const DETECTION_RULES = [
       resolutionUrl: `/vendors/${record.id}`,
     }),
   },
+  {
+    id: 'dpa_missing_subprocessor_clause',
+    severity: 'high',
+    gdprArticles: ['Article 28(3)(d)'],
+    detect: async (orgId: string) => {
+      const list = await db.select({
+        id: organizationVendors.id,
+        vendorName: vendors.name,
+        dpaClauseCoverage: organizationVendors.dpaClauseCoverage
+      })
+      .from(organizationVendors)
+      .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+      .where(and(
+        eq(organizationVendors.organizationId, orgId),
+        eq(organizationVendors.dpaStatus, 'signed')
+      ));
+
+      return list.filter((ov: any) => {
+        const coverage = ov.dpaClauseCoverage || {};
+        return !coverage.subProcessorRestrictions;
+      });
+    },
+    buildGap: (record: any) => ({
+      entityType: 'vendor',
+      entityId: record.id,
+      gapType: 'dpa_missing_subprocessor_clause',
+      title: `Missing Sub-processor Clause: ${record.vendorName}`,
+      description: `The Data Processing Agreement with ${record.vendorName} does not include the mandatory Article 28(3)(d) clause regulating sub-processor notification and restrictions.`,
+      severity: 'high',
+      resolutionUrl: `/vendors/${record.id}`,
+    }),
+  },
+  {
+    id: 'dpa_incomplete_clauses',
+    severity: 'medium',
+    gdprArticles: ['Article 28(3)'],
+    detect: async (orgId: string) => {
+      const list = await db.select({
+        id: organizationVendors.id,
+        vendorName: vendors.name,
+        dpaClauseCoverage: organizationVendors.dpaClauseCoverage
+      })
+      .from(organizationVendors)
+      .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+      .where(and(
+        eq(organizationVendors.organizationId, orgId),
+        eq(organizationVendors.dpaStatus, 'signed')
+      ));
+
+      const clauseKeys = [
+        'documentedInstructions',
+        'confidentiality',
+        'securityMeasures',
+        'subProcessorRestrictions',
+        'dataSubjectRights',
+        'securityBreachDpia',
+        'deletionOnTermination',
+        'auditRights'
+      ];
+
+      return list.filter((ov: any) => {
+        const coverage = ov.dpaClauseCoverage || {};
+        const coveredCount = clauseKeys.filter(k => !!(coverage as any)[k]).length;
+        return coveredCount < 6;
+      }).map((ov: any) => {
+        const coverage = ov.dpaClauseCoverage || {};
+        const coveredCount = clauseKeys.filter(k => !!(coverage as any)[k]).length;
+        return {
+          ...ov,
+          coveredCount
+        };
+      });
+    },
+    buildGap: (record: any) => ({
+      entityType: 'vendor',
+      entityId: record.id,
+      gapType: 'dpa_incomplete_clauses',
+      title: `Incomplete DPA Clauses: ${record.vendorName}`,
+      description: `The Data Processing Agreement with ${record.vendorName} covers only ${record.coveredCount}/8 required Article 28 clauses, which poses a medium compliance risk.`,
+      severity: 'medium',
+      resolutionUrl: `/vendors/${record.id}`,
+    }),
+  },
 ];

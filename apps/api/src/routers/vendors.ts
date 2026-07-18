@@ -208,6 +208,7 @@ export const vendorsRouter = router({
       dataSubjectVolume: z.enum(['<1K', '1K-10K', '10K-100K', '100K+']).optional(),
       certifications: z.array(z.string()).optional(),
       contractRenewalDate: z.string().nullable().optional(),
+      dpaClauseCoverage: z.record(z.boolean()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const [orgVendor] = await ctx.db.select().from(organizationVendors).where(and(
@@ -227,6 +228,7 @@ export const vendorsRouter = router({
       if (input.dataSubjectVolume !== undefined) updates.dataSubjectVolume = input.dataSubjectVolume;
       if (input.certifications !== undefined) updates.certifications = input.certifications;
       if (input.contractRenewalDate !== undefined) updates.contractRenewalDate = input.contractRenewalDate ? new Date(input.contractRenewalDate) : null;
+      if (input.dpaClauseCoverage !== undefined) updates.dpaClauseCoverage = input.dpaClauseCoverage;
 
       // Fetch sub-processor count
       const subs = await ctx.db.select()

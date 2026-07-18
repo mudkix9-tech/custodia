@@ -41,7 +41,7 @@ export const vendorWorker = new Worker('vendor-intelligence', async (job: Job) =
       break;
 
     case 'dpa-expiry-checker':
-      console.log('Running DPA Expiry Checker...');
+      console.log('Running DPA Expiry & Contract Renewal Checker...');
       
       const expiringVendors = await db.select({
         orgVendor: organizationVendors,
@@ -54,6 +54,15 @@ export const vendorWorker = new Worker('vendor-intelligence', async (job: Job) =
         eq(organizationVendors.dpaStatus, 'signed')
       ));
 
+      const getNotificationTier = (days: number): string | null => {
+        if (days <= 0) return 'expired';
+        if (days <= 7) return '7';
+        if (days <= 30) return '30';
+        if (days <= 60) return '60';
+        if (days <= 90) return '90';
+        return null;
+      };
+
       for (const record of expiringVendors) {
         if (!record.orgVendor.dpaExpiresAt) continue;
 
@@ -63,37 +72,102 @@ export const vendorWorker = new Worker('vendor-intelligence', async (job: Job) =
         const subProcessorsCount = subs.length;
 
         const days = daysUntil(record.orgVendor.dpaExpiresAt);
-        
-        if (days <= 0) {
-          // Expired
+        const currentTier = getNotificationTier(days);
+        const lastTier = record.orgVendor.lastExpiryNotificationTier;
+
+        if (currentTier && currentTier !== lastTier) {
+          if (currentTier === 'expired') {
+            // Expired
+            await db.update(organizationVendors)
+              .set({ 
+                dpaStatus: 'expired',
+                lastExpiryNotificationTier: 'expired'
+              })
+              .where(eq(organizationVendors.id, record.orgVendor.id));
+              
+            // Recalculate risk immediately
+            const { score, level, factors } = calculateVendorRisk(
+              record.vendor as any, 
+              { ...record.orgVendor, dpaStatus: 'expired' } as any, 
+              subProcessorsCount
+            );
+            await db.update(organizationVendors)
+              .set({ 
+                riskScore: score, 
+                riskLevel: level, 
+                riskFactors: factors, 
+                lastRiskAssessment: new Date() 
+              })
+              .where(eq(organizationVendors.id, record.orgVendor.id));
+              
+            await createNotification(record.orgVendor.organizationId, 'CRITICAL', `DPA with ${record.vendor.name} has expired.`);
+          } else {
+            // Alert intervals: 90, 60, 30, 7 days
+            await db.update(organizationVendors)
+              .set({ lastExpiryNotificationTier: currentTier })
+              .where(eq(organizationVendors.id, record.orgVendor.id));
+
+            await createNotification(
+              record.orgVendor.organizationId, 
+              currentTier === '7' ? 'HIGH' : 'MEDIUM', 
+              `DPA with ${record.vendor.name} will expire in ${days} days.`
+            );
+          }
+        } else if (currentTier === null && lastTier !== null) {
+          // Reset tier if expiry date was pushed out
           await db.update(organizationVendors)
-            .set({ dpaStatus: 'expired' })
+            .set({ lastExpiryNotificationTier: null })
             .where(eq(organizationVendors.id, record.orgVendor.id));
-            
-          // Recalculate risk immediately
-          const { score, level, factors } = calculateVendorRisk(
-            record.vendor as any, 
-            { ...record.orgVendor, dpaStatus: 'expired' } as any, 
-            subProcessorsCount
-          );
+        }
+      }
+
+      // 2. Contract renewal date checker
+      const renewalVendors = await db.select({
+        orgVendor: organizationVendors,
+        vendor: vendors
+      })
+      .from(organizationVendors)
+      .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+      .where(and(
+        eq(organizationVendors.status, 'active'),
+        isNotNull(organizationVendors.contractRenewalDate)
+      ));
+
+      for (const record of renewalVendors) {
+        if (!record.orgVendor.contractRenewalDate) continue;
+
+        const dateVal = new Date(record.orgVendor.contractRenewalDate);
+        const days = daysUntil(dateVal);
+        const currentTier = getNotificationTier(days);
+        const lastTier = record.orgVendor.lastRenewalNotificationTier;
+
+        if (currentTier && currentTier !== lastTier) {
+          if (currentTier === 'expired') {
+            await db.update(organizationVendors)
+              .set({ lastRenewalNotificationTier: 'expired' })
+              .where(eq(organizationVendors.id, record.orgVendor.id));
+              
+            await createNotification(
+              record.orgVendor.organizationId, 
+              'HIGH', 
+              `Contract for vendor ${record.vendor.name} has reached its renewal date (${record.orgVendor.contractRenewalDate}).`
+            );
+          } else {
+            await db.update(organizationVendors)
+              .set({ lastRenewalNotificationTier: currentTier })
+              .where(eq(organizationVendors.id, record.orgVendor.id));
+
+            await createNotification(
+              record.orgVendor.organizationId, 
+              'MEDIUM', 
+              `Contract renewal for vendor ${record.vendor.name} is in ${days} days (Date: ${record.orgVendor.contractRenewalDate}).`
+            );
+          }
+        } else if (currentTier === null && lastTier !== null) {
+          // Reset tier if contract renewal was extended
           await db.update(organizationVendors)
-            .set({ 
-              riskScore: score, 
-              riskLevel: level, 
-              riskFactors: factors, 
-              lastRiskAssessment: new Date() 
-            })
+            .set({ lastRenewalNotificationTier: null })
             .where(eq(organizationVendors.id, record.orgVendor.id));
-            
-          await createNotification(record.orgVendor.organizationId, 'CRITICAL', `DPA with ${record.vendor.name} has expired.`);
-        } 
-        else if (days === 1 || days === 7 || days === 14 || days === 30) {
-          // Alert intervals
-          await createNotification(
-            record.orgVendor.organizationId, 
-            days === 1 ? 'HIGH' : 'MEDIUM', 
-            `DPA with ${record.vendor.name} will expire in ${days} day(s).`
-          );
         }
       }
       break;

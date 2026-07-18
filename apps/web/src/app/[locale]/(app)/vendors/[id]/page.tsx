@@ -234,6 +234,95 @@ export default function VendorDetailsPage() {
                       </button>
                     </div>
 
+                    {vendor.orgVendor.dpaStatus === 'signed' && (
+                      <div className="mt-8 border-t border-ink-900/5 pt-8 space-y-6 animate-in fade-in">
+                        <div>
+                          <h4 className="font-semibold text-ink-900 text-sm mb-1">Article 28 Clause Review</h4>
+                          <p className="text-[13px] text-ink-500">
+                            Verify that your contract covers all mandatory processor requirements under GDPR Article 28(3).
+                          </p>
+                        </div>
+
+                        {/* Progress Indicator */}
+                        {(() => {
+                          const coverage = (vendor.orgVendor.dpaClauseCoverage || {}) as any;
+                          const keys = [
+                            'documentedInstructions',
+                            'confidentiality',
+                            'securityMeasures',
+                            'subProcessorRestrictions',
+                            'dataSubjectRights',
+                            'securityBreachDpia',
+                            'deletionOnTermination',
+                            'auditRights'
+                          ];
+                          const covered = keys.filter(k => !!coverage[k]).length;
+                          const pct = Math.round((covered / keys.length) * 100);
+
+                          return (
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center text-xs font-semibold text-ink-700">
+                                <span>COMPLETENESS</span>
+                                <span>{covered} / 8 CLAUSES ({pct}%)</span>
+                              </div>
+                              <div className="w-full bg-bone-100 h-2.5 rounded-full overflow-hidden border border-ink-900/5">
+                                <div 
+                                  className={`h-full transition-all duration-300 ${covered === 8 ? 'bg-sage-600' : covered >= 6 ? 'bg-indigo-500' : covered >= 4 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Checklist */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {[
+                            { key: 'documentedInstructions', label: 'Documented Instructions', citation: 'Art. 28(3)(a)', desc: 'Process data only on written instructions from the controller.' },
+                            { key: 'confidentiality', label: 'Personnel Confidentiality', citation: 'Art. 28(3)(b)', desc: 'Ensure staff authorized to process data are committed to confidentiality.' },
+                            { key: 'securityMeasures', label: 'Security Measures', citation: 'Art. 28(3)(c)', desc: 'Implement technical and organizational security measures (Art. 32).' },
+                            { key: 'subProcessorRestrictions', label: 'Sub-processor Restrictions', citation: 'Art. 28(3)(d)', desc: 'Engage sub-processors only with prior specific or general authorization.' },
+                            { key: 'dataSubjectRights', label: 'Data Subject Rights Assistance', citation: 'Art. 28(3)(e)', desc: 'Assist controller in responding to data subjects exercising their rights.' },
+                            { key: 'securityBreachDpia', label: 'Breach & DPIA Assistance', citation: 'Art. 28(3)(f)', desc: 'Assist controller with breach notifications, security audits, and DPIAs.' },
+                            { key: 'deletionOnTermination', label: 'Deletion or Return of Data', citation: 'Art. 28(3)(g)', desc: 'Delete or return all personal data at the choice of the controller after processing ends.' },
+                            { key: 'auditRights', label: 'Audits and Inspections', citation: 'Art. 28(3)(h)', desc: 'Allow for and contribute to audits and inspections conducted by the controller.' }
+                          ].map(({ key, label, citation, desc }) => {
+                            const isChecked = !!(vendor.orgVendor.dpaClauseCoverage as any)?.[key];
+                            return (
+                              <label 
+                                key={key}
+                                className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer select-none
+                                  ${isChecked 
+                                    ? 'bg-sage-50/30 border-sage-200 hover:border-sage-300' 
+                                    : 'bg-white border-ink-900/10 hover:border-ink-900/20'}`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    const nextCoverage = {
+                                      ...((vendor.orgVendor.dpaClauseCoverage as any) || {}),
+                                      [key]: e.target.checked
+                                    };
+                                    updateMutation.mutate({ vendorId, dpaClauseCoverage: nextCoverage });
+                                  }}
+                                  disabled={updateMutation.isPending}
+                                  className="rounded border-ink-300 text-sage-600 focus:ring-sage-600 mt-1"
+                                />
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-ink-900 text-[13px] leading-tight">{label}</span>
+                                    <span className="text-[10px] font-bold text-sage-600 bg-sage-50 border border-sage-200/50 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{citation}</span>
+                                  </div>
+                                  <p className="text-[11px] text-ink-500 leading-tight">{desc}</p>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="mt-8 border-t border-ink-900/5 pt-8 space-y-6">
                       <h4 className="font-semibold text-ink-900 text-sm">Risk Assessment Inputs</h4>
                       

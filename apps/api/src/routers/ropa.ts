@@ -382,6 +382,7 @@ export const ropaRouter = router({
             usingEuHosting: organizationVendors.usingEuHosting,
             riskScore: organizationVendors.riskScore,
             riskLevel: organizationVendors.riskLevel,
+            dpaClauseCoverage: organizationVendors.dpaClauseCoverage,
           }
         })
         .from(processingRecipients)

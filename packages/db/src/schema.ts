@@ -489,6 +489,9 @@ export const organizationVendors = pgTable('organization_vendors', {
   certifications: text('certifications').array().default(sql`ARRAY[]::text[]`),
   contractRenewalDate: date('contract_renewal_date'),
   dataSubjectVolume: varchar('data_subject_volume', { length: 50 }).default('<1K'), // '<1K' | '1K-10K' | '10K-100K' | '100K+'
+  dpaClauseCoverage: jsonb('dpa_clause_coverage').default({}),
+  lastExpiryNotificationTier: varchar('last_expiry_notification_tier', { length: 50 }),
+  lastRenewalNotificationTier: varchar('last_renewal_notification_tier', { length: 50 }),
   
   lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),

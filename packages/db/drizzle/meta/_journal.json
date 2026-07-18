@@ -43,6 +43,13 @@
       "when": 1781020180000,
       "tag": "0016_vendor_risk_scoring",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781020190000,
+      "tag": "0017_dpa_clause_coverage",
+      "breakpoints": true
     }
   ]
 }

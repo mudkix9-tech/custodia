@@ -1,5 +1,16 @@
 import { EU_EEA_COUNTRIES, isAdequateDestination } from '../constants/transferDestinations.js';
 
+export interface DpaClauseCoverage {
+  documentedInstructions: boolean;    // Art. 28(3)(a)
+  confidentiality: boolean;           // Art. 28(3)(b)
+  securityMeasures: boolean;          // Art. 28(3)(c)
+  subProcessorRestrictions: boolean;  // Art. 28(3)(d)
+  dataSubjectRights: boolean;         // Art. 28(3)(e)
+  securityBreachDpia: boolean;        // Art. 28(3)(f)
+  deletionOnTermination: boolean;     // Art. 28(3)(g)
+  auditRights: boolean;               // Art. 28(3)(h)
+}
+
 export interface VendorRiskInput {
   headquartersCountry?: string | null;
   securityCertifications?: string[] | null;
@@ -14,6 +25,7 @@ export interface OrgVendorRiskInput {
   dataSubjectVolume?: '<1K' | '1K-10K' | '10K-100K' | '100K+' | null;
   certifications?: string[] | null;
   transferMechanisms?: string[] | null;
+  dpaClauseCoverage?: DpaClauseCoverage | null;
 }
 
 export interface RiskFactorDetail {
@@ -76,15 +88,44 @@ export function calculateVendorRisk(
   let dpaDetail = 'DPA missing or expired (20/20 pts)';
   
   if (orgVendor.dpaStatus === 'signed') {
-    dpaPoints = 0;
-    dpaDetail = 'DPA signed and active (0/20 pts)';
+    const coverage = orgVendor.dpaClauseCoverage || {};
+    const clauseKeys = [
+      'documentedInstructions',
+      'confidentiality',
+      'securityMeasures',
+      'subProcessorRestrictions',
+      'dataSubjectRights',
+      'securityBreachDpia',
+      'deletionOnTermination',
+      'auditRights'
+    ];
+    const coveredCount = clauseKeys.filter(k => !!(coverage as any)[k]).length;
+    const completenessFraction = coveredCount / clauseKeys.length;
+    const percent = Math.round(completenessFraction * 100);
+
+    if (coveredCount === 8) {
+      dpaPoints = 0;
+      dpaDetail = 'DPA signed and covers all 8 Article 28 clauses (0/20 pts)';
+    } else if (coveredCount >= 6) { // 75%+
+      dpaPoints = 5;
+      dpaDetail = `DPA signed but missing ${8 - coveredCount} mandatory clauses (${percent}% covered) (5/20 pts)`;
+    } else if (coveredCount >= 4) { // 50%+
+      dpaPoints = 10;
+      dpaDetail = `DPA signed but missing ${8 - coveredCount} mandatory clauses (${percent}% covered) (10/20 pts)`;
+    } else if (coveredCount > 0) { // 1%-49%
+      dpaPoints = 15;
+      dpaDetail = `DPA signed but missing ${8 - coveredCount} mandatory clauses (${percent}% covered) (15/20 pts)`;
+    } else {
+      dpaPoints = 20;
+      dpaDetail = 'DPA signed but no Article 28 clause compliance has been verified (20/20 pts)';
+    }
     
     if (orgVendor.dpaExpiresAt) {
       const expiry = new Date(orgVendor.dpaExpiresAt);
       const daysToExpiry = Math.ceil((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
       if (daysToExpiry > 0 && daysToExpiry <= 90) {
-        dpaPoints = 10;
-        dpaDetail = `DPA expiring soon in ${daysToExpiry} days (10/20 pts)`;
+        dpaPoints = Math.max(dpaPoints, 10);
+        dpaDetail += ` | DPA expiring soon in ${daysToExpiry} days`;
       } else if (daysToExpiry <= 0) {
         dpaPoints = 20;
         dpaDetail = 'DPA has expired (20/20 pts)';

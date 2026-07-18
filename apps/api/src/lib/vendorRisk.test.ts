@@ -17,7 +17,17 @@ function runTests() {
       dataCategoriesShared: ['name', 'email'],
       dataSubjectVolume: '<1K',
       certifications: [],
-      transferMechanisms: []
+      transferMechanisms: [],
+      dpaClauseCoverage: {
+        documentedInstructions: true,
+        confidentiality: true,
+        securityMeasures: true,
+        subProcessorRestrictions: true,
+        dataSubjectRights: true,
+        securityBreachDpia: true,
+        deletionOnTermination: true,
+        auditRights: true
+      }
     },
     0 // 0 sub-processors
   );
@@ -83,7 +93,17 @@ function runTests() {
       dataCategoriesShared: ['name', 'email'],
       dataSubjectVolume: '1K-10K',
       certifications: [],
-      transferMechanisms: []
+      transferMechanisms: [],
+      dpaClauseCoverage: {
+        documentedInstructions: true,
+        confidentiality: true,
+        securityMeasures: true,
+        subProcessorRestrictions: true,
+        dataSubjectRights: true,
+        securityBreachDpia: true,
+        deletionOnTermination: true,
+        auditRights: true
+      }
     },
     2 // 2 sub-processors
   );
@@ -104,6 +124,39 @@ function runTests() {
   }
   if (result3.level !== 'medium') {
     throw new Error(`Expected level medium, got ${result3.level}`);
+  }
+
+  // Test Case 4: Incomplete DPA Clause Coverage (EU-based, standard categories, signed DPA but only 4/8 clauses, certs, 0 sub-processors)
+  const result4 = calculateVendorRisk(
+    {
+      headquartersCountry: 'DE',
+      securityCertifications: ['soc2_type2', 'iso27001'],
+      transferMechanisms: [],
+      knownIncidents: []
+    },
+    {
+      dpaStatus: 'signed',
+      dataCategoriesShared: ['name', 'email'],
+      dataSubjectVolume: '<1K',
+      certifications: [],
+      transferMechanisms: [],
+      dpaClauseCoverage: {
+        documentedInstructions: true,
+        confidentiality: true,
+        securityMeasures: true,
+        subProcessorRestrictions: true,
+        dataSubjectRights: false,
+        securityBreachDpia: false,
+        deletionOnTermination: false,
+        auditRights: false
+      }
+    },
+    0
+  );
+
+  console.log('Test Case 4 (Incomplete DPA) score:', result4.score);
+  if (result4.score !== 10) {
+    throw new Error(`Expected score 10, got ${result4.score}`);
   }
 
   console.log('All calculateVendorRisk unit tests passed successfully!');
