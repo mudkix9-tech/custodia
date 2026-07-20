@@ -33,7 +33,7 @@ export const reconsentRouter = router({
       .where(whereClause)
       .orderBy(desc(reconsentFlags.detectedAt));
 
-      return flags.map(f => ({
+      return flags.map((f: any) => ({
         ...f.flag,
         activity: f.activity
       }));
