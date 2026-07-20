@@ -2,7 +2,7 @@ import { Worker, Job, Queue } from 'bullmq';
 import { Redis } from 'ioredis';
 import { db } from '../db.js';
 import { complianceGaps, complianceReports, organizations, organizationVendors, processingActivities, dpias, clients, clientProcessingActivities, users, trainingCompletions } from 'db';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
@@ -183,9 +183,12 @@ export const complianceWorker = new Worker('compliance', async (job: Job) => {
         }
       }
 
-      // Process Deduplication and Escalation
+      // Process Deduplication and Escalation (only for scanner-sourced gaps)
       const existingGaps = await db.query.complianceGaps.findMany({
-        where: eq(complianceGaps.organizationId, org.id)
+        where: and(
+          eq(complianceGaps.organizationId, org.id),
+          eq(complianceGaps.source, 'gap_scanner')
+        )
       });
 
       for (const gap of detectedGaps) {

@@ -6,7 +6,7 @@ import { Queue, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
 import { GoogleGenAI } from '@google/genai';
 import { queueNotification } from '../utils/notifications.js';
-
+import { matchRegulatoryUpdateToOrganizations } from '../lib/regulatoryImpact.js';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const connection = new Redis(REDIS_URL, { maxRetriesPerRequest: null });
 
@@ -199,6 +199,10 @@ export async function scrapeRegulatoryUpdates() {
               .where(eq(documentEmbeddings.id, oldChunk.id));
           }
         }
+
+        // 4. Run semantic matching against orgs
+        console.log(`[RegulatoryScraper] Running semantic matching for document ${documentId}...`);
+        await matchRegulatoryUpdateToOrganizations(documentId);
       }
       
     } catch (error) {

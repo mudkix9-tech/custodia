@@ -1,9 +1,10 @@
 "use client";
 
-import React from 'react';
-import { RegulatoryWidget } from '@/components/dashboard/RegulatoryWidget';
+import React, { Suspense } from 'react';
+import { RegulatoryImpactWidget } from '@/components/dashboard/RegulatoryImpactWidget';
 import { SetupProgress } from '@/components/dashboard/SetupProgress';
 import { BreachAlertsWidget } from '@/components/dashboard/BreachAlertsWidget';
+import { OverdueDpiaRemediationWidget } from '@/components/dashboard/OverdueDpiaRemediationWidget';
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
 
@@ -20,11 +21,19 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <BreachAlertsWidget />
+      <Suspense fallback={null}>
+        <BreachAlertsWidget />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <OverdueDpiaRemediationWidget />
+      </Suspense>
 
       <SetupProgress />
 
-      <RegulatoryWidget />
+      <Suspense fallback={null}>
+        <RegulatoryImpactWidget />
+      </Suspense>
 
       {/* STATS ROW */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">

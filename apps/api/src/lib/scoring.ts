@@ -1,5 +1,5 @@
 import { db } from '../db.js';
-import { processingActivities, organizationVendors, privacyPolicies, dpias, dsarRequests, breaches, trainingModules, trainingCompletions, processingTransfers, complianceReports } from 'db';
+import { processingActivities, organizationVendors, privacyPolicies, dpias, dsarRequests, breaches, trainingModules, trainingCompletions, processingTransfers, complianceReports, complianceGaps } from 'db';
 import { and, eq, isNull, inArray } from 'drizzle-orm';
 import { users } from 'db';
 
@@ -87,22 +87,42 @@ async function calculateDpiaScore(orgId: string) {
       isNull(processingActivities.deletedAt),
     ),
   });
-  if (activities.length === 0) return 100;
 
   let completed = 0;
-  for (const a of activities) {
+  if (activities.length > 0) {
     const records = await db.query.dpias.findMany({
       where: eq(dpias.organizationId, orgId),
     });
-    // Assuming processingActivityIds is a JSON array
-    const hasCompletedDpia = records.some((d: any) =>
-      d.status === 'completed' &&
-      Array.isArray(d.processingActivityIds) &&
-      d.processingActivityIds.includes(a.id)
-    );
-    if (hasCompletedDpia) completed++;
+    for (const a of activities) {
+      const hasCompletedDpia = records.some((d: any) =>
+        d.status === 'completed' &&
+        Array.isArray(d.processingActivityIds) &&
+        d.processingActivityIds.includes(a.id)
+      );
+      if (hasCompletedDpia) completed++;
+    }
   }
-  return Math.round((completed / activities.length) * 100);
+
+  const baseDpiaScore = activities.length > 0 ? (completed / activities.length) * 100 : 100;
+
+  // Apply percentage-based penalties for unmitigated DPIA residual risk gaps
+  const openDpiaGaps = await db.query.complianceGaps.findMany({
+    where: and(
+      eq(complianceGaps.organizationId, orgId),
+      eq(complianceGaps.source, 'dpia'),
+      inArray(complianceGaps.status, ['open', 'in_progress'])
+    )
+  });
+
+  let multiplier = 1.0;
+  for (const gap of openDpiaGaps) {
+    if (gap.severity === 'critical') multiplier *= 0.70;
+    else if (gap.severity === 'high') multiplier *= 0.80;
+    else if (gap.severity === 'medium') multiplier *= 0.90;
+    else if (gap.severity === 'low') multiplier *= 0.95;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(baseDpiaScore * multiplier)));
 }
 
 async function calculatePolicyScore(orgId: string) {

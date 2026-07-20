@@ -1,6 +1,6 @@
 import { db } from '../db.js';
-import { regulatoryUpdates, regulatoryImpactAssessments, organizations, processingActivities, processingTransfers, organizationVendors } from 'db';
-import { eq, inArray, isNull, and } from 'drizzle-orm';
+import { regulatoryUpdates, regulatoryImpactAssessments, organizations, processingActivities, processingTransfers, organizationVendors, users } from 'db';
+import { eq, inArray, isNull, and, sql } from 'drizzle-orm';
 import { queueNotification } from '../utils/notifications.js';
 
 export async function generateImpactAssessments(updateId: string) {
@@ -99,5 +99,39 @@ async function matchOrgAgainstRules(orgId: string, rules: any[]) {
     }
   }
 
+
   return { affectedActivities, affectedVendors, affectedTransfers, recommendedActions };
+}
+
+export async function matchRegulatoryUpdateToOrganizations(documentId: string) {
+  // Find organizations that have had at least one user login in the last 30 days
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  
+  const activeOrgs = await db.selectDistinct({ id: organizations.id })
+    .from(organizations)
+    .innerJoin(users, eq(users.organizationId, organizations.id))
+    .where(
+      and(
+        isNull(organizations.deletedAt),
+        sql`${users.lastLoginAt} >= ${thirtyDaysAgo}`
+      )
+    );
+
+  // Import the queue here to avoid circular dependency if possible, or just add it to the top.
+  // Actually, let's use the impactAssessmentQueue exported from impactAssessmentWorker.
+  const { impactAssessmentQueue } = await import('../workers/impactAssessmentWorker.js');
+  
+  if (!impactAssessmentQueue) {
+    console.warn('[RegulatoryImpact] Queue not available, unable to dispatch match jobs');
+    return;
+  }
+
+  console.log(`[RegulatoryImpact] Dispatching semantic match jobs for ${activeOrgs.length} active orgs...`);
+
+  for (const org of activeOrgs) {
+    await impactAssessmentQueue.add('match-org-semantic', { 
+      documentId, 
+      organizationId: org.id 
+    });
+  }
 }

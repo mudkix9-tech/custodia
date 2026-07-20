@@ -43,7 +43,6 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'Domain not found' });
       }
 
-      // Prepare record
       const record = {
         domainId: domain.id,
         consentId,
@@ -55,6 +54,7 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
         bannerVersion,
         interactionType: interaction,
         gcmState,
+        isResubmission: payload.isResubmission === true,
       };
 
       // Push to Redis buffer for batch insertion
@@ -202,6 +202,7 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
       categoriesRejected: rejected,
       interaction: interaction,
       bannerVersion: '1.0',
+      isResubmission: !!getCookie('pvr_consent_id'),
       gcmState: {
         analytics_storage: accepted.includes('analytics') ? 'granted' : 'denied',
         ad_storage: accepted.includes('marketing') ? 'granted' : 'denied',

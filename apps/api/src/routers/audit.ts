@@ -6,11 +6,12 @@ import {
   complianceReports,
   organizations,
   processingActivities,
-  auditLogs
+  auditLogs,
+  dpias
 } from 'db';
-import { eq, and, desc, inArray } from 'drizzle-orm';
+import { eq, and, desc, inArray, lt, or } from 'drizzle-orm';
 import * as xlsx from 'xlsx';
-import { paginatedQuery } from '../utils/pagination.js';
+import { paginatedQuery, decodeCursor, encodeCursor } from '../utils/pagination.js';
 import { PassThrough } from 'stream';
 import { format as csvFormat } from 'fast-csv';
 import { Upload } from '@aws-sdk/lib-storage';
@@ -179,13 +180,59 @@ export const auditRouter = router({
       cursor: z.string().nullish(),
     }))
     .query(async ({ ctx, input }) => {
-      return paginatedQuery(
-        complianceGaps,
-        ctx.user!.orgId,
-        { limit: input.limit, after: input.cursor || undefined },
-        'createdAt',
-        'desc'
-      );
+      const limit = Math.min(input.limit || 25, 100);
+      let whereConditions: any[] = [eq(complianceGaps.organizationId, ctx.user!.orgId)];
+
+      if (input.cursor) {
+        try {
+          const cursor = decodeCursor(input.cursor);
+          const val = new Date(cursor.sortValue);
+
+          whereConditions.push(
+            or(
+              lt(complianceGaps.createdAt, val),
+              and(
+                eq(complianceGaps.createdAt, val),
+                lt(complianceGaps.id, cursor.id)
+              )
+            )
+          );
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      const rows = await ctx.db
+        .select({
+          gap: complianceGaps,
+          dpiaTitle: dpias.title,
+        })
+        .from(complianceGaps)
+        .leftJoin(dpias, eq(complianceGaps.dpiaId, dpias.id))
+        .where(and(...whereConditions))
+        .orderBy(desc(complianceGaps.createdAt), desc(complianceGaps.id))
+        .limit(limit + 1);
+
+      const hasMore = rows.length > limit;
+      const dataRows = hasMore ? rows.slice(0, limit) : rows;
+
+      const nextCursor = hasMore && dataRows.length > 0
+        ? encodeCursor(dataRows[dataRows.length - 1].gap.createdAt, dataRows[dataRows.length - 1].gap.id)
+        : null;
+
+      const mappedData = dataRows.map((row: any) => ({
+        ...row.gap,
+        dpiaTitle: row.dpiaTitle
+      }));
+
+      return {
+        data: mappedData,
+        pagination: {
+          has_more: hasMore,
+          next_cursor: nextCursor,
+          previous_cursor: null
+        }
+      };
     }),
 
   dismissGap: protectedProcedure

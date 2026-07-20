@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { trpc } from '@/utils/trpc';
 import { Save, ArrowLeft, AlertCircle, Info, ExternalLink, X, Lightbulb } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -49,8 +49,16 @@ const ropaSchema = z.object({
 
 export function RopaEditor({ initialData = null }: { initialData?: any }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isNew = !initialData;
   const [activeTab, setActiveTab] = useState('general');
+
+  useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab && TABS.some(t => t.id === tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
     resolver: zodResolver(ropaSchema),
     defaultValues: initialData || {

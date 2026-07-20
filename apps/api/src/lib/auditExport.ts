@@ -28,10 +28,12 @@ import { renderTrainingReportHtml } from './auditTemplates/training.js';
 import { renderConsentReportHtml } from './auditTemplates/consent.js';
 import { renderComplianceReportHtml } from './auditTemplates/compliance.js';
 import { renderDpiaReportHtml } from './auditTemplates/dpias.js';
+import { renderGroupExecutiveSummaryHtml } from './auditTemplates/group.js';
+import { computeGroupComplianceScores, computeGroupVendorConsistency } from './groupMetrics.js';
 
-export async function generateAuditFile(orgId: string): Promise<string> {
+export async function generateGroupAuditArchive(parentOrgId: string, childOrgIds: string[], requestedBy: string): Promise<string> {
   const org = await db.query.organizations.findFirst({
-    where: eq(organizations.id, orgId),
+    where: eq(organizations.id, parentOrgId),
   });
   if (!org) throw new Error('Organization not found');
 
@@ -42,6 +44,87 @@ export async function generateAuditFile(orgId: string): Promise<string> {
   const archive = archiver('zip', { zlib: { level: 9 } });
   const passThrough = new PassThrough();
   archive.pipe(passThrough);
+
+  const generatedAt = new Date();
+  const logoUrl = (org.branding as any)?.logoUrl;
+
+  // 1. Generate Group Executive Summary using shared groupMetrics
+  const complianceScores = await computeGroupComplianceScores(db, parentOrgId, childOrgIds);
+  const vendorConsistency = await computeGroupVendorConsistency(db, parentOrgId, childOrgIds);
+  
+  const groupHtml = renderGroupExecutiveSummaryHtml({
+    orgName: org.name,
+    logoUrl,
+    generatedAt,
+    complianceScores,
+    vendorConsistency
+  });
+  const groupPdf = await renderHtmlToPdf(groupHtml);
+  archive.append(groupPdf, { name: 'Group Executive Summary.pdf' });
+
+  // 2. Generate per-entity audits and bundle them into child_entities/
+  for (const childOrgId of childOrgIds) {
+    const childOrg = await db.query.organizations.findFirst({ where: eq(organizations.id, childOrgId) });
+    if (!childOrg) continue;
+    
+    try {
+      const childSlug = childOrg.slug || childOrgId;
+      await generateAuditFile(childOrgId, archive, `child_entities/${childSlug}/`);
+    } catch (e) {
+      console.error(`Failed to generate child audit for ${childOrgId}`, e);
+    }
+  }
+  
+  archive.finalize();
+
+  const exportKey = `exports/${parentOrgId}/group_${Date.now()}.zip`;
+  const upload = new Upload({
+    client: s3Client,
+    params: {
+      Bucket: S3_BUCKET,
+      Key: exportKey,
+      Body: passThrough,
+      ContentType: 'application/zip',
+    }
+  });
+
+  await upload.done();
+
+  return await getSignedUrl(s3Client, new GetObjectCommand({
+    Bucket: S3_BUCKET,
+    Key: exportKey,
+  }), { expiresIn: 7 * 24 * 60 * 60 });
+}
+
+export async function generateAuditFile(
+  orgId: string, 
+  providedArchive?: any,
+  basePath: string = ''
+): Promise<string | void> {
+  const org = await db.query.organizations.findFirst({
+    where: eq(organizations.id, orgId),
+  });
+  if (!org) throw new Error('Organization not found');
+
+  const dataRegion = org.dataRegion || 'eu-west-1';
+  const s3Client = getS3ClientForRegion(dataRegion);
+  const S3_BUCKET = getS3BucketForOrg(dataRegion);
+
+  const archive = providedArchive || archiver('zip', { zlib: { level: 9 } });
+  let passThrough: PassThrough | null = null;
+  if (!providedArchive) {
+    passThrough = new PassThrough();
+    archive.pipe(passThrough);
+  }
+
+  // Monkey-patch append to prepend basePath
+  const originalAppend = archive.append.bind(archive);
+  archive.append = (source: any, data: any) => {
+    if (basePath && data && data.name) {
+      data.name = basePath + data.name;
+    }
+    return originalAppend(source, data);
+  };
 
   const generatedAt = new Date();
   const logoUrl = (org.branding as any)?.logoUrl;
@@ -568,27 +651,36 @@ export async function generateAuditFile(orgId: string): Promise<string> {
   archive.append(gapCsv, { name: 'compliance/gap-history.csv' });
 
   // ── Finalize and upload ───────────────────────────────────
-  archive.finalize();
+  if (!providedArchive) {
+    archive.finalize();
 
-  const exportKey = `audit-files/${orgId}/${Date.now()}-audit-file.zip`;
-  const upload = new Upload({
-    client: s3Client,
-    params: {
+    const exportKey = `audit-files/${orgId}/${Date.now()}-audit-file.zip`;
+    const upload = new Upload({
+      client: s3Client,
+      params: {
+        Bucket: S3_BUCKET,
+        Key: exportKey,
+        Body: passThrough,
+        ContentType: 'application/zip',
+      },
+    });
+
+    await upload.done();
+
+    const downloadUrl = await getSignedUrl(s3Client, new GetObjectCommand({
       Bucket: S3_BUCKET,
       Key: exportKey,
-      Body: passThrough,
-      ContentType: 'application/zip',
-    },
-  });
+    }), { expiresIn: 7 * 24 * 60 * 60 }); // 7 days
 
-  await upload.done();
+    // Restore original append if we monkey-patched it (good practice)
+    archive.append = originalAppend;
 
-  const downloadUrl = await getSignedUrl(s3Client, new GetObjectCommand({
-    Bucket: S3_BUCKET,
-    Key: exportKey,
-  }), { expiresIn: 7 * 24 * 60 * 60 }); // 7 days
-
-  return downloadUrl;
+    return downloadUrl;
+  } else {
+    // Restore original append
+    archive.append = originalAppend;
+    return;
+  }
 }
 
 // ── CSV Helper ──────────────────────────────────────────────

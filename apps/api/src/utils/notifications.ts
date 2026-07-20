@@ -26,12 +26,18 @@ export const NOTIFICATION_TYPES = {
   'vendor.sub_processor_changed': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'high' },
   'vendor.incident_detected': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'high' },
   
+  // DPIA
+  'dpia.mitigation_due_14d': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
+  'dpia.mitigation_due_today': { defaultChannels: ['email', 'in_app'], urgency: 'high' },
+  'dpia.mitigation_overdue': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'high' },
+  
   // Compliance
   'compliance.gap_detected': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
   'compliance.gap_critical': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'high' },
   'compliance.score_dropped': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'high' },
   'policy.out_of_sync': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
   'regulatory.update': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
+  'regulatory_update.impact_detected': { defaultChannels: ['email', 'in_app'], urgency: 'high' },
   
   // Training
   'training.assigned': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },

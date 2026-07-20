@@ -1,0 +1,1 @@
+-- ALTER TABLE "consent_records" ADD COLUMN "event_type" varchar(20) DEFAULT 'initial';

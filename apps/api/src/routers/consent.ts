@@ -83,4 +83,63 @@ export const consentRouter = router({
       });
       return { success: true, message: 'Scan queued' };
     }),
+
+  getAnalytics: protectedProcedure
+    .use(requirePermission('ropa', 'view'))
+    .input(z.object({
+      startDate: z.string().datetime(),
+      endDate: z.string().datetime(),
+      domainId: z.string().uuid().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      checkOrgContext(ctx.user);
+
+      // Validate access bounds
+      const orgDomains = await ctx.db.select({ id: consentDomains.id }).from(consentDomains).where(eq(consentDomains.organizationId, ctx.user!.orgId));
+      const orgDomainIds = orgDomains.map((d: any) => d.id);
+
+      let targetDomainIds = orgDomainIds;
+
+      if (input.domainId) {
+        if (!orgDomainIds.includes(input.domainId)) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Domain does not belong to organization' });
+        }
+        targetDomainIds = [input.domainId];
+      }
+
+      if (targetDomainIds.length === 0) {
+         // Return empty structures if no domains
+         return {
+           optInRateOverTime: [],
+           interactionBreakdown: { acceptAll: 0, rejectAll: 0, customizedWithAcceptance: 0, customizedAllRejected: 0 },
+           domainBreakdown: [],
+           categoryRejection: { analyticsRejected: 0, marketingRejected: 0, functionalRejected: 0 },
+           withdrawalMetrics: { withdrawalTrend: [], withdrawalVolume: 0, relativeVolumePercent: 0, avgTimeToWithdrawalHours: null },
+           granularCategoryDistribution: []
+         };
+      }
+
+      const { getOptInRateOverTime, getInteractionBreakdown, getDomainBreakdown, getCategoryRejection, getWithdrawalMetrics, getGranularCategoryDistribution } = await import('../lib/consentAnalytics.js');
+
+      const start = new Date(input.startDate);
+      const end = new Date(input.endDate);
+
+      const [optInRateOverTime, interactionBreakdown, domainBreakdown, categoryRejection, withdrawalMetrics, granularCategoryDistribution] = await Promise.all([
+        getOptInRateOverTime(ctx.db, targetDomainIds, start, end),
+        getInteractionBreakdown(ctx.db, targetDomainIds, start, end),
+        getDomainBreakdown(ctx.db, targetDomainIds, start, end),
+        getCategoryRejection(ctx.db, targetDomainIds, start, end),
+        getWithdrawalMetrics(ctx.db, targetDomainIds, start, end),
+        getGranularCategoryDistribution(ctx.db, targetDomainIds, start, end)
+      ]);
+
+      return {
+        optInRateOverTime,
+        interactionBreakdown,
+        domainBreakdown,
+        categoryRejection,
+        withdrawalMetrics,
+        granularCategoryDistribution
+      };
+    }),
 });

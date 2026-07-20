@@ -8,21 +8,44 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import stream from 'stream';
-import { generateAuditFile } from '../lib/auditExport.js';
+import { generateAuditFile, generateGroupAuditArchive } from '../lib/auditExport.js';
+import { verifyGroupScopeAndLog } from '../trpc.js';
 
 import { getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
 
 export const dataExportWorker = createWorker('data-export', async (job: any) => {
-    const { organizationId, requestedBy, isFullAudit } = job.data;
+    const { organizationId, requestedBy, isFullAudit, isGroupAudit } = job.data;
 
     console.log(`Starting data export for org ${organizationId}`);
 
-    let signedUrl;
-    let notificationTitle;
-    let notificationBody;
+    let signedUrl: string = '';
+    let notificationTitle = '';
+    let notificationBody = '';
 
-    if (isFullAudit) {
-      signedUrl = await generateAuditFile(organizationId);
+    if (isGroupAudit) {
+      // Re-verify the child organizations at execution time to ensure validity
+      const user = await db.query.users.findFirst({ where: eq(users.id, requestedBy) });
+      if (!user) throw new Error('User not found');
+      
+      const childOrgs = await db.select({ id: organizations.id })
+        .from(organizations)
+        .where(eq(organizations.parentOrganizationId, organizationId));
+      const childOrgIds = childOrgs.map((o: any) => o.id);
+
+      // Verify scope and log the actual export generation event
+      await verifyGroupScopeAndLog(
+        requestedBy,
+        organizationId,
+        childOrgIds,
+        (user as any).entityScope,
+        'query'
+      );
+
+      signedUrl = await generateGroupAuditArchive(organizationId, childOrgIds, requestedBy);
+      notificationTitle = 'Your Group Audit export is ready';
+      notificationBody = 'Your consolidated cross-entity compliance audit file has been generated and is ready for download.';
+    } else if (isFullAudit) {
+      signedUrl = (await generateAuditFile(organizationId)) as string;
       notificationTitle = 'Your audit file is ready';
       notificationBody = 'Your complete compliance audit file has been generated and is ready for download.';
     } else {

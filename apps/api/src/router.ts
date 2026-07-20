@@ -8,6 +8,7 @@ import { teamRouter } from './routers/team.js';
 import { dsarRouter } from './routers/dsar.js';
 import { policiesRouter } from './routers/policies.js';
 import { consentRouter } from './routers/consent.js';
+import { reconsentRouter } from './routers/reconsent.js';
 import { breachesRouter } from './routers/breaches.js';
 import { auditRouter } from './routers/audit.js';
 import { portalRouter } from './routers/portal.js';
@@ -44,6 +45,7 @@ export const appRouter = router({
   dpia: dpiaRouter,
   export: exportRouter,
   team: teamRouter,
+  reconsent: reconsentRouter,
   dsar: dsarRouter,
   policies: policiesRouter,
   consent: consentRouter,

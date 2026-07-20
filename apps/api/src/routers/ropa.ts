@@ -3,11 +3,12 @@ import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
-import { processingActivities, legitimateInterestAssessments, processingDataCategories, processingRecipients, processingTransfers, auditLogs, vendors, organizationVendors, clientProcessingActivities } from 'db';
+import { processingActivities, legitimateInterestAssessments, processingDataCategories, processingRecipients, processingTransfers, auditLogs, vendors, organizationVendors, clientProcessingActivities, reconsentFlags } from 'db';
 import { eq, and, desc, inArray, not } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import DOMPurify from 'isomorphic-dompurify';
 import { queueNotification } from '../utils/notifications.js';
+import { reconsentQueue } from '../workers/index.js';
 
 const sanitize = (text?: string) => {
   if (!text) return text;
@@ -178,6 +179,31 @@ export const ropaRouter = router({
         entityId: updated.id,
         action: 'upsert'
       });
+
+      if (activity.lawfulBasis === 'consent' && activity.purpose !== updated.purpose) {
+        // Fetch context for Claude
+        const dataCats = await ctx.db.select().from(processingDataCategories).where(eq(processingDataCategories.processingActivityId, activity.id));
+        const recipients = await ctx.db.select({ vendorName: vendors.name, purpose: processingRecipients.purpose })
+          .from(processingRecipients)
+          .leftJoin(vendors, eq(processingRecipients.vendorId, vendors.id))
+          .where(eq(processingRecipients.processingActivityId, activity.id));
+
+        // Use a Redis-based debounce trick: setting the jobId to include a time-block (e.g. per 5-minute window) 
+        // to prevent rapid back-to-back checks for the same activity in a single edit session.
+        const timeBlock = Math.floor(Date.now() / (5 * 60 * 1000)); 
+        await reconsentQueue.add('evaluate-material-change', {
+          activityId: updated.id,
+          organizationId: ctx.user!.orgId,
+          oldPurpose: activity.purpose,
+          newPurpose: updated.purpose,
+          lawfulBasis: activity.lawfulBasis,
+          dataCategories: dataCats.map(d => d.category),
+          vendorList: recipients.map(r => ({ name: r.vendorName || 'Unknown', purpose: r.purpose }))
+        }, {
+          jobId: `reconsent-${updated.id}-${timeBlock}`,
+          delay: 5000 // wait 5 seconds before processing, allows final edit to settle
+        });
+      }
 
       return updated;
     }),
@@ -441,6 +467,18 @@ export const ropaRouter = router({
           }
         }
 
+        // Check if activity is consent-based to flag for re-consent on vendor addition
+        const [activity] = await ctx.db.select().from(processingActivities).where(eq(processingActivities.id, input.processingActivityId));
+        if (activity && activity.lawfulBasis === 'consent') {
+          await ctx.db.insert(reconsentFlags).values({
+            organizationId: ctx.user!.orgId,
+            processingActivityId: input.processingActivityId,
+            reason: `Vendor '${input.name}' was added to this consent-based processing activity.`,
+            confidence: 'high',
+            status: 'flagged'
+          });
+        }
+
         return inserted;
       }),
     update: protectedProcedure
@@ -463,6 +501,20 @@ export const ropaRouter = router({
         const [deleted] = await ctx.db.delete(processingRecipients)
           .where(eq(processingRecipients.id, input.id))
           .returning();
+
+        if (deleted) {
+          const [activity] = await ctx.db.select().from(processingActivities).where(eq(processingActivities.id, deleted.processingActivityId));
+          if (activity && activity.lawfulBasis === 'consent') {
+            await ctx.db.insert(reconsentFlags).values({
+              organizationId: ctx.user!.orgId,
+              processingActivityId: deleted.processingActivityId,
+              reason: `A vendor was removed from this consent-based processing activity.`,
+              confidence: 'high',
+              status: 'flagged'
+            });
+          }
+        }
+
         return deleted;
       })
   }),

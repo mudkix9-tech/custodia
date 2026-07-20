@@ -1,6 +1,6 @@
 # Privaro — Complete Product Memory
 
-> **Last updated:** July 18, 2026 (Updated RAG schema, advanced retrieval & reranking pipeline, organization context embeddings, vendor risk scoring, and DPA clause analysis)
+> **Last updated:** July 19, 2026 (Updated Regulatory Change Impact Analysis, Catch-up patterns, Cost Dashboards, and schema recoveries)
 > **Owner:** Nisarg (solo founder, Pune, India)
 > **Domain:** getprivaro.com
 > **Status:** Pre-launch, core product built, polishing for production
@@ -754,3 +754,30 @@ Enterprise-grade questionnaire intake and evaluation module. Enables compliance 
 - **Risk Score Adjustment**: Maps questionnaire results (0-100) directly to vendor risk level calculations as a bounded modifier (up to `-10` for verified security, and up to `+25` for severe gaps or expired responses).
 - **Audit Logging & PDF Exports**: Creates Article 30 ROPA compliant provenance reports (`/print` route) detailing timestamps, respondent emails, client IPs, and question details.
 - **BullMQ Reminders Sequence**: A daily cron worker tracks pending questionnaires, dispatching reminders via react-email templates at 7, 14, and 21 days, and marking unanswered assessments as expired at 30 days.
+
+---
+
+## 25. Regulatory Change Impact Analysis (Phase 8/RAG Extension)
+
+### Overview
+Semantic AI tracking system for mapping regulatory documents (e.g., EDPB Guidelines, DPAs) directly to an organization's specific processing activities, vendors, and risk scores using pgvector and RAG.
+
+### Components
+- **Semantic Matching**: Uses `pgvector` operators (`cosine_distance`) to match new regulatory update embeddings against pre-embedded organization contexts (ROPA activities, vendors).
+- **Asynchronous Processing**: Scalable `BullMQ` dispatcher. Uses `match-org-semantic` for active orgs and a `match-catchup` mechanism hooked into NextAuth `signIn` to lazily process matches for dormant organizations without dropping notifications.
+- **Claude Synthesis**: Uses Claude (via Anthropic API) to translate raw semantic matches into human-readable impact assessments explaining *why* the update affects the organization and suggesting remediation actions.
+- **Cost Metrics**: A cost tracking dashboard under AI Copilot Settings (`settings/copilot/page.tsx`) tracks exact `prompt_tokens` and `completion_tokens` to surface Estimated USD Costs and Token Usage dynamically based on API pricing environment variables.
+- **Schema Recovery & Integrity**: Reconstructed the lost Drizzle schema types (`0028_regulatory_update_matches.sql` and fixed index syncing in `meta/_journal.json` where redundant prefixes 0018/0019 were remapped to 0029/0030) ensuring type safety for `regulatory_update_matches` and avoiding any git reset regressions.
+
+---
+
+## 26. DPIA-to-Remediation Pipeline Automation
+
+### Overview
+Closes the loop on DPIAs by turning them from static documents into living risk assessments. Automatically feeds residual risks identified during a DPIA into the global compliance gaps system for active tracking and remediation.
+
+### Components
+- **Schema Enhancements**: Extended `dpias` to store structured `residualRisks` (JSONB) and `lastMitigationReminderSentAt`. Added `dpia_id`, `dpia_risk_id`, and `mitigation_due_date` to `compliance_gaps`.
+- **Automated Gap Syncing**: A background worker/logic layer automatically maps high and medium DPIA residual risks into `compliance_gaps`, mapping severities appropriately.
+- **Mitigation Reminders**: A cron worker (`dpia-mitigation-reminders`) scans for unresolved DPIA gaps approaching their due date and dispatches warning notifications.
+- **Unified Dashboard Visibility**: DPIA risks now appear seamlessly alongside standard compliance gaps (e.g. missing DPAs, incomplete ROPAs), giving compliance officers a single pane of glass for all required remediation actions.

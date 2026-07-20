@@ -12,7 +12,8 @@ import {
   consentCookies,
   complianceGaps,
   aiGuidanceLogs,
-  vendorQuestionnaires
+  vendorQuestionnaires,
+  dpias
 } from 'db';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { GoogleGenAI } from '@google/genai';
@@ -1263,11 +1264,26 @@ Cookies Discovered:\n${cookiesStr || 'None'}`;
         if (gapRecord) {
           entityName = gapRecord.title;
           const arts = (gapRecord.gdprArticles || []) as any[];
-          RAGQuery = `GDPR compliance gap enforcement administrative fines GDPR Article ${arts.join(', ')} EDPB guidelines`;
-          contextDataString = `Compliance Gap Title: "${gapRecord.title}"
+          if (gapRecord.source === 'dpia' && gapRecord.dpiaId) {
+            const dpiaRecord = await ctx.db.query.dpias.findFirst({ where: eq(dpias.id, gapRecord.dpiaId) });
+            const dpiaTitleStr = dpiaRecord ? dpiaRecord.title : 'DPIA';
+            RAGQuery = `GDPR Article 35 DPIA risk mitigation EDPB guidelines wp248rev.01 compliance gap GDPR Article ${arts.join(', ')}`;
+            contextDataString = `Compliance Gap Title: "${gapRecord.title}"
+Description: "${gapRecord.description || ''}"
+Severity: "${gapRecord.severity}"
+Source: DPIA
+DPIA Title: "${dpiaTitleStr}"
+DPIA Risk ID: "${gapRecord.dpiaRiskId || ''}"
+GDPR Articles referenced: ${arts.join(', ')}
+
+Please provide a contextual explanation referring specifically to the DPIA titled "${dpiaTitleStr}" and suggestions citing the EDPB DPIA guidelines (wp248rev.01) for concrete mitigation options.`;
+          } else {
+            RAGQuery = `GDPR compliance gap enforcement administrative fines GDPR Article ${arts.join(', ')} EDPB guidelines`;
+            contextDataString = `Compliance Gap Title: "${gapRecord.title}"
 Description: "${gapRecord.description || ''}"
 Severity: "${gapRecord.severity}"
 GDPR Articles referenced: ${arts.join(', ')}`;
+          }
         } else {
           RAGQuery = 'GDPR compliance gaps Article 5 Article 24 Article 32 administrative fines';
           contextDataString = `Compliance Gaps analysis.`;
@@ -1402,6 +1418,16 @@ ${contextStr}
           if (!ropaInput.retentionPeriod && (!jsonResponse.warnings || !jsonResponse.warnings.includes("This activity is missing a retention period. Under Article 5(1)(e), you need to specify storage limitations."))) {
             jsonResponse.warnings = jsonResponse.warnings || [];
             jsonResponse.warnings.unshift("This activity is missing a retention period. Under Article 5(1)(e), you need to specify storage limitations.");
+          }
+        }
+
+        if (module === 'compliance_scoring') {
+          const gapRecord = entityId ? await ctx.db.query.complianceGaps.findFirst({ where: eq(complianceGaps.id, entityId) }) : null;
+          if (gapRecord && gapRecord.source === 'dpia') {
+            const actId = gapRecord.entityId;
+            if (actId) {
+              jsonResponse.remediationLink = `/ropa/${actId}?tab=dpia#risk-${gapRecord.dpiaRiskId || ''}`;
+            }
           }
         }
 
@@ -1626,5 +1652,55 @@ ${contextStr}
         WHERE document_id = ${input.documentId}
       `);
       return { success: true };
+    }),
+
+  getAssessmentCostMetrics: protectedProcedure
+    .input(z.object({
+      startDate: z.date().optional(),
+      endDate: z.date().optional(),
+    }).optional())
+    .query(async ({ ctx, input }) => {
+      // In a real implementation, we would use the actual cost per token.
+      // E.g. Claude 3 Haiku: $0.25 / 1M input, $1.25 / 1M output
+      const CLAUDE_INPUT_COST_PER_M = parseFloat(process.env.CLAUDE_INPUT_COST_PER_M || '0.25');
+      const CLAUDE_OUTPUT_COST_PER_M = parseFloat(process.env.CLAUDE_OUTPUT_COST_PER_M || '1.25');
+
+      const conditions = [];
+      if (input?.startDate) conditions.push(sql`assessed_at >= ${input.startDate}`);
+      if (input?.endDate) conditions.push(sql`assessed_at <= ${input.endDate}`);
+      // Filter by org if they are not an admin/superadmin, otherwise they can see their own
+      if (ctx.user?.role !== 'admin' && ctx.user?.role !== 'superadmin' && ctx.user?.orgId) {
+         conditions.push(sql`organization_id = ${ctx.user.orgId}`);
+      }
+
+      const whereClause = conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)} AND prompt_tokens IS NOT NULL` : sql`WHERE prompt_tokens IS NOT NULL`;
+
+      const result = await ctx.db.execute(sql`
+        SELECT 
+          SUM(prompt_tokens) as total_prompt_tokens,
+          SUM(completion_tokens) as total_completion_tokens,
+          COUNT(*) as total_assessments
+        FROM regulatory_update_matches
+        ${whereClause}
+      `);
+
+      const row = result.rows[0] as any;
+      const totalPromptTokens = Number(row?.total_prompt_tokens || 0);
+      const totalCompletionTokens = Number(row?.total_completion_tokens || 0);
+      const totalAssessments = Number(row?.total_assessments || 0);
+
+      const promptCost = (totalPromptTokens / 1_000_000) * CLAUDE_INPUT_COST_PER_M;
+      const completionCost = (totalCompletionTokens / 1_000_000) * CLAUDE_OUTPUT_COST_PER_M;
+
+      return {
+        totalPromptTokens,
+        totalCompletionTokens,
+        totalAssessments,
+        estimatedCostUsd: promptCost + completionCost,
+        breakdown: {
+          promptCost,
+          completionCost
+        }
+      };
     }),
 });

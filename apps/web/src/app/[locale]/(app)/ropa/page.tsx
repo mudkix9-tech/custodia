@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
-import { FileText, Plus, Download, Upload } from 'lucide-react';
+import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X } from 'lucide-react';
 
 export default function RopaListPage() {
   const router = useRouter();
   const [globalFilter, setGlobalFilter] = useState('');
+  const [flagsTab, setFlagsTab] = useState<'flagged'|'dismissed'>('flagged');
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -41,6 +42,11 @@ export default function RopaListPage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const { data: reconsentFlags, refetch: refetchFlags } = trpc.reconsent.list.useQuery({ status: flagsTab });
+  const dismissFlagMutation = trpc.reconsent.dismiss.useMutation({
+    onSuccess: () => refetchFlags()
+  });
 
   const handleExportCSV = () => {
     if (!processingActivities || processingActivities.length === 0) return;
@@ -238,6 +244,89 @@ export default function RopaListPage() {
             </button>
           </div>
         </div>
+
+        {/* Re-Consent Flags Section */}
+        {(reconsentFlags?.length || 0) > 0 || flagsTab === 'dismissed' ? (
+          <div className="bg-white rounded-2xl border border-ink-900/10 shadow-sm overflow-hidden fade-up">
+            <div className="p-4 border-b border-ink-900/5 flex items-center justify-between bg-amber-50/30">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+                <h3 className="font-semibold text-ink-900">Re-Consent Triggers</h3>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setFlagsTab('flagged')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${flagsTab === 'flagged' ? 'bg-white text-amber-700 shadow-sm border border-amber-500/20' : 'text-ink-500 hover:text-ink-700'}`}
+                >
+                  Active Flags
+                </button>
+                <button
+                  onClick={() => setFlagsTab('dismissed')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${flagsTab === 'dismissed' ? 'bg-white text-ink-700 shadow-sm border border-ink-900/10' : 'text-ink-500 hover:text-ink-700'}`}
+                >
+                  Dismissed
+                </button>
+              </div>
+            </div>
+            <div className="divide-y divide-ink-900/5 max-h-[300px] overflow-y-auto">
+              {reconsentFlags?.length === 0 ? (
+                <div className="p-8 text-center text-ink-500 text-sm">
+                  No {flagsTab} re-consent triggers found.
+                </div>
+              ) : (
+                reconsentFlags?.map((flag: any) => (
+                  <div key={flag.id} className="p-4 hover:bg-bone-50/50 transition-colors flex items-start gap-4">
+                    <div className="mt-1">
+                      {flag.confidence === 'ambiguous' ? (
+                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 tooltip" data-tip="Human review recommended">
+                          <AlertCircle className="w-4 h-4" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                          <AlertCircle className="w-4 h-4" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-medium text-ink-900 text-sm">
+                          Activity Changed: {flag.activity.name}
+                        </h4>
+                        <div className="text-xs text-ink-400">
+                          {new Date(flag.detectedAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <p className="text-sm text-ink-600 mb-2">{flag.reason}</p>
+                      
+                      <div className="flex items-center gap-4 mt-3">
+                        <button 
+                          onClick={() => router.push(`/ropa/${flag.activity.id}`)}
+                          className="text-xs font-medium text-sage-600 hover:text-sage-700 flex items-center gap-1"
+                        >
+                          Review Activity <ChevronRight className="w-3 h-3" />
+                        </button>
+                        {flagsTab === 'flagged' && (
+                          <button
+                            onClick={() => dismissFlagMutation.mutate({ id: flag.id })}
+                            disabled={dismissFlagMutation.isPending}
+                            className="text-xs font-medium text-ink-500 hover:text-ink-700 flex items-center gap-1"
+                          >
+                            <X className="w-3 h-3" /> Dismiss
+                          </button>
+                        )}
+                        {flagsTab === 'dismissed' && (
+                          <span className="text-xs text-ink-400 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Dismissed
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ) : null}
 
         {/* Data Grid */}
         <div className="w-full">

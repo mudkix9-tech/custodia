@@ -21,6 +21,7 @@ export const customRolesRouter = router({
       name: z.string().min(1),
       description: z.string().optional(),
       permissions: z.record(z.string(), z.any()),
+      entityScope: z.enum(['own', 'group']).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
@@ -30,6 +31,7 @@ export const customRolesRouter = router({
         name: input.name,
         description: input.description || null,
         permissions: input.permissions,
+        entityScope: input.entityScope || 'own',
       } as any).returning();
 
       return newRole;
@@ -42,6 +44,7 @@ export const customRolesRouter = router({
       name: z.string().min(1).optional(),
       description: z.string().optional(),
       permissions: z.record(z.string(), z.any()).optional(),
+      entityScope: z.enum(['own', 'group']).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);

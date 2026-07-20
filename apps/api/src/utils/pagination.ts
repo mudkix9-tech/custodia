@@ -1,6 +1,6 @@
 import { db } from '../db.js';
 import * as schema from '../db.js';
-import { eq, or, and, lt, gt, desc, asc } from 'drizzle-orm';
+import { eq, or, and, lt, gt, desc, asc, inArray } from 'drizzle-orm';
 
 export type PaginationParams = {
   limit?: number;
@@ -30,7 +30,7 @@ export function decodeCursor(cursor: string): { sortValue: string; id: string } 
 
 export async function paginatedQuery<T>(
   table: any,
-  orgId: string,
+  orgId: string | string[],
   params: PaginationParams,
   sortField: string = 'createdAt',
   sortOrder: 'asc' | 'desc' = 'desc',
@@ -38,7 +38,9 @@ export async function paginatedQuery<T>(
 ): Promise<PaginatedResponse<T>> {
   const limit = Math.min(params.limit || 25, 100);
 
-  let whereConditions: any[] = [eq(table.organizationId, orgId)];
+  let whereConditions: any[] = [
+    Array.isArray(orgId) ? inArray(table.organizationId, orgId) : eq(table.organizationId, orgId)
+  ];
   if (additionalWhere) whereConditions.push(...additionalWhere);
 
   if (params.after) {

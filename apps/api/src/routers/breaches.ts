@@ -1,7 +1,7 @@
 import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
 import { orgEmbeddingsQueue } from '../lib/queue.js';
-import { router, protectedProcedure, requirePermission } from '../trpc.js';
+import { router, protectedProcedure, requirePermission, verifyGroupScopeAndLog } from '../trpc.js';
 import { breaches, breachNotifications, breachRemediationTasks, organizations, users } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
@@ -230,16 +230,53 @@ export const breachesRouter = router({
 
   list: protectedProcedure
     .use(requirePermission('breach', 'view'))
-    .input(paginationInput)
+    .input(paginationInput.extend({ includeChildEntities: z.boolean().optional() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      return paginatedQuery(
+
+      let targetOrgs: string | string[] = ctx.user!.orgId;
+      let orgMap = new Map<string, string>();
+
+      if (input.includeChildEntities) {
+        if (ctx.user!.entityScope !== 'group') throw new TRPCError({ code: 'FORBIDDEN' });
+        
+        const childOrgs = await ctx.db.select({ id: organizations.id, name: organizations.name })
+          .from(organizations)
+          .where(eq(organizations.parentOrganizationId, ctx.user!.orgId));
+          
+        const parentOrg = await ctx.db.select({ id: organizations.id, name: organizations.name })
+          .from(organizations)
+          .where(eq(organizations.id, ctx.user!.orgId));
+          
+        const allOrgs = [...parentOrg, ...childOrgs];
+        targetOrgs = allOrgs.map((o: any) => o.id);
+        allOrgs.forEach((o: any) => orgMap.set(o.id, o.name));
+        
+        await verifyGroupScopeAndLog(
+          ctx.user!.id,
+          ctx.user!.orgId,
+          targetOrgs,
+          ctx.user!.entityScope,
+          'query'
+        );
+      }
+
+      const result = await paginatedQuery(
         breaches,
-        ctx.user!.orgId,
+        targetOrgs,
         { limit: input.limit, after: input.cursor || undefined },
         'createdAt',
         'desc'
       );
+
+      if (input.includeChildEntities) {
+        result.data = result.data.map((b: any) => ({
+          ...b,
+          organizationName: orgMap.get(b.organizationId) || 'Unknown'
+        }));
+      }
+
+      return result;
     }),
 
   register: protectedProcedure

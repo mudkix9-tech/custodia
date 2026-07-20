@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { router, protectedProcedure, requireRole } from '../trpc.js';
 import { db } from '../db.js';
-import { regulatoryUpdates, regulatoryImpactAssessments, processingActivities } from 'db';
-import { eq, and, desc } from 'drizzle-orm';
+import { regulatoryUpdates, regulatoryUpdateMatches, processingActivities } from 'db';
+import { eq, and, desc, isNull } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { generateImpactAssessments } from '../lib/regulatoryImpact.js';
 
@@ -19,60 +19,97 @@ export const regulatoryRouter = router({
       const updates = await ctx.db.select()
         .from(regulatoryUpdates)
         .where(eq(regulatoryUpdates.status, 'published'))
-        .orderBy(desc(regulatoryUpdates.publishedAt))
-        .limit(limit)
-        .offset(offset);
+        .orderBy(desc(regulatoryUpdates.publishedAt));
         
-      return updates;
+      if (!ctx.user?.orgId) return updates.slice(offset, offset + limit);
+
+      const matches = await ctx.db.select()
+        .from(regulatoryUpdateMatches)
+        .where(
+          and(
+            eq(regulatoryUpdateMatches.organizationId, ctx.user.orgId),
+            eq(regulatoryUpdateMatches.status, 'assessed')
+          )
+        );
+
+      const updatesWithMatches = updates.map((update: any) => {
+        const updateMatches = matches.filter((m: any) => m.regulatoryUpdateId === update.id);
+        return {
+          ...update,
+          matches: updateMatches
+        };
+      });
+
+      // Sort updates with *unacknowledged* matches to the top
+      updatesWithMatches.sort((a: any, b: any) => {
+        const aHasUnacknowledged = a.matches.some((m: any) => m.acknowledgedAt === null);
+        const bHasUnacknowledged = b.matches.some((m: any) => m.acknowledgedAt === null);
+        if (aHasUnacknowledged && !bHasUnacknowledged) return -1;
+        if (!aHasUnacknowledged && bHasUnacknowledged) return 1;
+        // Fall back to chronological
+        return new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime();
+      });
+
+      return updatesWithMatches.slice(offset, offset + limit);
     }),
 
   listUnacknowledgedImpacts: protectedProcedure
     .query(async ({ ctx }) => {
       if (!ctx.user?.orgId) throw new TRPCError({ code: 'FORBIDDEN' });
       
-      const impacts = await ctx.db.select({
-        assessment: regulatoryImpactAssessments,
+      // Fetch distinct updates that have unacknowledged matches for this org
+      const matches = await ctx.db.select({
+        match: regulatoryUpdateMatches,
         update: regulatoryUpdates
       })
-      .from(regulatoryImpactAssessments)
-      .innerJoin(regulatoryUpdates, eq(regulatoryImpactAssessments.regulatoryUpdateId, regulatoryUpdates.id))
+      .from(regulatoryUpdateMatches)
+      .innerJoin(regulatoryUpdates, eq(regulatoryUpdateMatches.regulatoryUpdateId, regulatoryUpdates.id))
       .where(
         and(
-          eq(regulatoryImpactAssessments.organizationId, ctx.user.orgId),
-          eq(regulatoryImpactAssessments.status, 'unread')
+          eq(regulatoryUpdateMatches.organizationId, ctx.user.orgId),
+          eq(regulatoryUpdateMatches.status, 'assessed'),
+          isNull(regulatoryUpdateMatches.acknowledgedAt)
         )
       )
       .orderBy(desc(regulatoryUpdates.publishedAt));
       
-      return impacts.map((row: any) => ({
-        ...row.assessment,
-        update: row.update
-      }));
+      // Group by update
+      const grouped = new Map<string, any>();
+      for (const row of matches) {
+        if (!grouped.has(row.update.id)) {
+          grouped.set(row.update.id, {
+            update: row.update,
+            matches: []
+          });
+        }
+        grouped.get(row.update.id).matches.push(row.match);
+      }
+      
+      return Array.from(grouped.values());
     }),
 
   acknowledgeImpact: protectedProcedure
     .input(z.object({
-      assessmentId: z.string().uuid(),
+      updateId: z.string().uuid(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user?.orgId) throw new TRPCError({ code: 'FORBIDDEN' });
       
-      const [updated] = await ctx.db.update(regulatoryImpactAssessments)
+      // Acknowledge all matches for this org and this update
+      await ctx.db.update(regulatoryUpdateMatches)
         .set({ 
-          status: 'acknowledged',
           acknowledgedBy: ctx.user.id,
           acknowledgedAt: new Date()
         })
         .where(
           and(
-            eq(regulatoryImpactAssessments.id, input.assessmentId),
-            eq(regulatoryImpactAssessments.organizationId, ctx.user.orgId)
+            eq(regulatoryUpdateMatches.regulatoryUpdateId, input.updateId),
+            eq(regulatoryUpdateMatches.organizationId, ctx.user.orgId),
+            isNull(regulatoryUpdateMatches.acknowledgedAt)
           )
-        )
-        .returning();
+        );
         
-      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
-      return updated;
+      return { success: true };
     }),
 
   // Admin Routes

@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 
-export default function BreachList({ breaches, isLoading }: { breaches: any[], isLoading: boolean }) {
+export default function BreachList({ breaches, isLoading, isGroupContext }: { breaches: any[], isLoading: boolean, isGroupContext?: boolean }) {
   if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-12 bg-gray-200 rounded"></div></div>;
 
   if (breaches.length === 0) {
@@ -38,6 +38,7 @@ export default function BreachList({ breaches, isLoading }: { breaches: any[], i
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-900/50">
           <tr>
+            {isGroupContext && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entity</th>}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Incident</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -49,6 +50,11 @@ export default function BreachList({ breaches, isLoading }: { breaches: any[], i
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {breaches.map((b) => (
             <tr key={b.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+              {isGroupContext && (
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                  {b.organizationName || 'Unknown'}
+                </td>
+              )}
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                 {b.referenceNumber}
               </td>
@@ -70,7 +76,7 @@ export default function BreachList({ breaches, isLoading }: { breaches: any[], i
                 {new Date(b.discoveredAt).toLocaleDateString()}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <Link href={`/breaches/${b.id}`} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+                <Link href={isGroupContext ? `/group/breaches/${b.id}` : `/breaches/${b.id}`} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
                   Manage →
                 </Link>
               </td>

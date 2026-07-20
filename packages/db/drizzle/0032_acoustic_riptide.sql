@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS "idx_consent_records_cat_acc" ON "consent_records" USING gin ("categories_accepted");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_consent_records_cat_rej" ON "consent_records" USING gin ("categories_rejected");

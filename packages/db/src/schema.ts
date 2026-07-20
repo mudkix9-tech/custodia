@@ -15,7 +15,8 @@ import {
   unique,
   date,
   pgEnum,
-  real
+  real,
+  uniqueIndex
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
@@ -109,6 +110,7 @@ export const customRoles = pgTable('custom_roles', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   permissions: jsonb('permissions').default({}),
+  entityScope: varchar('entity_scope', { length: 20 }).default('own'), // 'own' | 'group'
   isDefault: boolean('is_default').default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -256,6 +258,18 @@ export const processingActivities = pgTable('processing_activities', {
   source: varchar('source', { length: 50 }).default('template'),
 });
 
+export const reconsentFlags = pgTable('reconsent_flags', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+  reason: text('reason').notNull(),
+  confidence: varchar('confidence', { length: 20 }), // 'high', 'medium', 'advisory', 'ambiguous'
+  detectedAt: timestamp('detected_at', { withTimezone: true }).defaultNow(),
+  status: varchar('status', { length: 50 }).default('flagged'), // 'flagged' | 'dismissed' | 'campaign_launched'
+  dismissedBy: uuid('dismissed_by').references(() => users.id),
+  dismissedAt: timestamp('dismissed_at', { withTimezone: true }),
+});
+
 export const clientProcessingActivities = pgTable('client_processing_activities', {
   id: uuid('id').defaultRandom().primaryKey(),
   clientId: uuid('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
@@ -382,6 +396,8 @@ export const dpias = pgTable('dpias', {
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  residualRisks: jsonb('residual_risks').default([]),
+  lastMitigationReminderSentAt: timestamp('last_mitigation_reminder_sent_at', { withTimezone: true }),
 });
 
 export const dpiaRisks = pgTable('dpia_risks', {
@@ -1056,6 +1072,7 @@ export const consentRecords = pgTable('consent_records', {
   
   tcfString: text('tcf_string'),
   gcmConsentState: jsonb('gcm_consent_state'),
+  eventType: varchar('event_type', { length: 20 }).default('initial'),
   
   givenAt: timestamp('given_at', { withTimezone: true }).defaultNow(),
   withdrawnAt: timestamp('withdrawn_at', { withTimezone: true }),
@@ -1065,6 +1082,8 @@ export const consentRecords = pgTable('consent_records', {
   return {
     domainIdx: index('idx_consent_records_domain').on(table.domainId),
     givenAtIdx: index('idx_consent_records_given_at').on(table.givenAt),
+    catAccIdx: index('idx_consent_records_cat_acc').using('gin', table.categoriesAccepted),
+    catRejIdx: index('idx_consent_records_cat_rej').using('gin', table.categoriesRejected),
   };
 });
 
@@ -1161,6 +1180,9 @@ export const breachRemediationTasks = pgTable('breach_remediation_tasks', {
 // COMPLIANCE REPORTING
 // ============================================================================
 
+export const complianceGapSources = ['gap_scanner', 'dpia', 'group_vendor_inconsistency'] as const;
+export type ComplianceGapSource = typeof complianceGapSources[number];
+
 export const complianceGaps = pgTable('compliance_gaps', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id),
@@ -1189,8 +1211,20 @@ export const complianceGaps = pgTable('compliance_gaps', {
   lastDetectedAt: timestamp('last_detected_at', { withTimezone: true }).defaultNow(),
   detectionCount: integer('detection_count').default(1),
   
+  dpiaId: uuid('dpia_id').references(() => dpias.id, { onDelete: 'set null' }),
+  dpiaRiskId: uuid('dpia_risk_id'),
+  source: varchar('source', { length: 50 }).$type<ComplianceGapSource>().default('gap_scanner'),
+  resolvedReason: varchar('resolved_reason', { length: 100 }),
+  metadata: jsonb('metadata').default({}),
+  mitigationDueDate: timestamp('mitigation_due_date', { withTimezone: true }),
+  
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    dpiaIdx: index('idx_gaps_dpia').on(table.dpiaId),
+    dpiaRiskIdx: index('idx_gaps_dpia_risk').on(table.dpiaId, table.dpiaRiskId),
+  };
 });
 
 export const complianceReports = pgTable('compliance_reports', {
@@ -1641,6 +1675,7 @@ export const processingActivitiesRelations = relations(processingActivities, ({ 
   dataCategories: many(processingDataCategories),
   recipients: many(processingRecipients),
   clients: many(clientProcessingActivities),
+  reconsentFlags: many(reconsentFlags),
 }));
 
 export const processingRecipientsRelations = relations(processingRecipients, ({ one }) => ({
@@ -1651,6 +1686,21 @@ export const processingRecipientsRelations = relations(processingRecipients, ({ 
   vendor: one(vendors, {
     fields: [processingRecipients.vendorId],
     references: [vendors.id],
+  }),
+}));
+
+export const reconsentFlagsRelations = relations(reconsentFlags, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [reconsentFlags.organizationId],
+    references: [organizations.id],
+  }),
+  activity: one(processingActivities, {
+    fields: [reconsentFlags.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  dismissedByUser: one(users, {
+    fields: [reconsentFlags.dismissedBy],
+    references: [users.id],
   }),
 }));
 
@@ -1773,6 +1823,7 @@ export const organizationsRelations = relations(organizations, ({ one, many }) =
     relationName: 'parentOrganization'
   }),
   children: many(organizations, { relationName: 'parentOrganization' }),
+  reconsentFlags: many(reconsentFlags),
 }));
 
 export const account = pgTable('account', {
@@ -1812,3 +1863,62 @@ export const verificationToken = pgTable('verificationToken', {
     }),
   };
 });
+
+export const regulatoryUpdateMatches = pgTable('regulatory_update_matches', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  regulatoryUpdateId: uuid('regulatory_update_id').notNull().references(() => regulatoryUpdates.id, { onDelete: 'cascade' }),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  matchedEntityType: text('matched_entity_type').notNull(),
+  matchedEntityId: uuid('matched_entity_id').notNull(),
+  matchedChunkId: uuid('matched_chunk_id').references(() => documentEmbeddings.id, { onDelete: 'set null' }),
+  similarityScore: real('similarity_score').notNull(),
+  detectedAt: timestamp('detected_at', { withTimezone: true }).defaultNow(),
+  status: text('status').default('pending_assessment'),
+  aiExplanation: text('ai_explanation'),
+  recommendedAction: text('recommended_action'),
+  confidence: varchar('confidence', { length: 50 }),
+  matchStrength: varchar('match_strength', { length: 50 }),
+  promptTokens: integer('prompt_tokens'),
+  completionTokens: integer('completion_tokens'),
+  notifiedAt: timestamp('notified_at', { withTimezone: true }),
+  acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+  acknowledgedBy: uuid('acknowledged_by').references(() => users.id, { onDelete: 'set null' }),
+  assessedAt: timestamp('assessed_at', { withTimezone: true }),
+}, (table) => {
+  return {
+    orgIdx: index('idx_reg_matches_org').on(table.organizationId),
+    updateIdx: index('idx_reg_matches_update').on(table.regulatoryUpdateId),
+    similarityIdx: index('idx_reg_matches_similarity').on(table.similarityScore),
+  };
+});
+
+// ============================================================================
+// PHASE 2 - ROLLUP PERFORMANCE LAYER
+// ============================================================================
+
+export const consentDailySummary = pgTable('consent_daily_summary', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  domainId: uuid('domain_id').notNull().references(() => consentDomains.id, { onDelete: 'cascade' }),
+  date: date('date').notNull(),
+  
+  category: varchar('category', { length: 50 }),
+  acceptedSessions: integer('accepted_sessions').default(0),
+  rejectedSessions: integer('rejected_sessions').default(0),
+  totalSessions: integer('total_sessions').default(0),
+  
+  acceptAllCount: integer('accept_all_count').default(0),
+  rejectAllCount: integer('reject_all_count').default(0),
+  customizedWithAcceptanceCount: integer('customized_with_acceptance_count').default(0),
+  customizedAllRejectedCount: integer('customized_all_rejected_count').default(0),
+  
+  categoryCombination: text('category_combination'),
+  categoryCombinationCount: integer('category_combination_count').default(0),
+}, (table) => {
+  return {
+    uniqueCategory: uniqueIndex('idx_consent_daily_summary_category').on(table.domainId, table.date, table.category),
+    uniqueCombination: uniqueIndex('idx_consent_daily_summary_combination').on(table.domainId, table.date, table.categoryCombination),
+    orgDateIdx: index('idx_consent_daily_summary_org_date').on(table.organizationId, table.date),
+  };
+});
+

@@ -1,10 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
 import { AlertCircle, CheckCircle2, ChevronRight, X, Lightbulb } from 'lucide-react';
 import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
+import { useSearchParams } from 'next/navigation';
 
 export function GapRemediationList() {
+  const searchParams = useSearchParams();
+  const sourceParam = searchParams?.get('source');
+  const [filterSource, setFilterSource] = useState<'all' | 'scanner' | 'dpia'>('all');
+
+  useEffect(() => {
+    if (sourceParam === 'dpia') {
+      setFilterSource('dpia');
+    } else if (sourceParam === 'scanner') {
+      setFilterSource('scanner');
+    } else {
+      setFilterSource('all');
+    }
+  }, [sourceParam]);
+
   const { data: gaps = [], isLoading } = trpc.audit.listGaps.useQuery({});
   const utils = trpc.useUtils();
   const dismissMutation = trpc.audit.dismissGap.useMutation();
@@ -15,7 +30,12 @@ export function GapRemediationList() {
 
   if (isLoading) return <div className="text-sm text-ink-500 p-8">Scanning for compliance gaps...</div>;
 
-  const openGaps = ((gaps as any)?.data || gaps || []).filter((g: any) => g.status === 'open' || g.status === 'in_progress');
+  const activeAndRemovedGaps = ((gaps as any)?.data || gaps || []).filter((g: any) => 
+    (g.status === 'open' || g.status === 'in_progress' || g.resolvedReason === 'dpia_risk_removed') &&
+    (filterSource === 'all' || 
+     (filterSource === 'scanner' && g.source !== 'dpia') ||
+     (filterSource === 'dpia' && g.source === 'dpia'))
+  );
 
   const handleDismiss = async () => {
     if (!dismissingId || dismissReason.length < 10) return;
@@ -50,69 +70,141 @@ export function GapRemediationList() {
     return gap.resolutionUrl || null;
   };
 
-  if (openGaps.length === 0) {
-    return (
-      <div className="p-8 text-center bg-sage-50/50 rounded-2xl border border-sage-100">
-        <CheckCircle2 className="w-12 h-12 text-sage-500 mx-auto mb-3" />
-        <h3 className="text-lg font-medium text-sage-900">No Compliance Gaps Detected</h3>
-        <p className="text-sage-600 mt-1">Your organization is fully compliant based on the latest automated scan.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-3">
-      {openGaps.map((gap: any) => (
-        <div key={gap.id} className="bg-white border border-ink-900/10 rounded-xl p-4 flex items-start gap-4 hover:shadow-sm transition-shadow group">
-          <div className="mt-1">
-            <AlertCircle className={`w-5 h-5 ${
-              gap.severity === 'critical' ? 'text-red-600' :
-              gap.severity === 'high' ? 'text-amber-600' :
-              'text-blue-600'
-            }`} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
-                gap.severity === 'critical' ? 'bg-red-100 text-red-700' :
-                gap.severity === 'high' ? 'bg-amber-100 text-amber-700' :
-                'bg-blue-100 text-blue-700'
-              }`}>{gap.severity}</span>
-              <h4 className="text-[14px] font-semibold text-ink-900 truncate">{gap.title}</h4>
-            </div>
-            <p className="text-[13px] text-ink-600">{gap.description}</p>
-            <div className="mt-2 flex items-center gap-4 text-[11px] font-medium text-ink-500">
-              <span>Detected: {new Date(gap.firstDetectedAt).toLocaleDateString()}</span>
-              {gap.gdprArticles?.length > 0 && (
-                <span className="flex items-center gap-1">
-                  &bull; {gap.gdprArticles.join(', ')}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            {/* AI Explain - click-only */}
-            <button
-              onClick={() => handleGapClick(gap)}
-              className="bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
-            >
-              <Lightbulb className="w-3 h-3" /> Explain
-            </button>
-            {/* Remediation deep-link */}
-            {(gap.resolutionUrl || getRemediationLink(gap)) && (
-              <Link href={gap.resolutionUrl || getRemediationLink(gap)} className="bg-sage-50 text-sage-700 hover:bg-sage-100 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors">
-                Resolve <ChevronRight className="w-3 h-3" />
-              </Link>
-            )}
-            <button 
-              onClick={() => setDismissingId(gap.id)}
-              className="text-ink-400 hover:text-ink-600 text-xs font-medium px-3 py-1.5"
-            >
-              Dismiss
-            </button>
-          </div>
+    <div className="space-y-4">
+      {/* Source Filters Tab Bar */}
+      <div className="flex border-b border-ink-900/10 text-[12.5px] font-medium gap-2 pb-1 mb-2">
+        <button
+          onClick={() => setFilterSource('all')}
+          className={`pb-2 px-3 border-b-2 transition-colors ${
+            filterSource === 'all' ? 'border-sage-600 text-sage-700 font-semibold' : 'border-transparent text-ink-500 hover:text-ink-900'
+          }`}
+        >
+          All Gaps
+        </button>
+        <button
+          onClick={() => setFilterSource('scanner')}
+          className={`pb-2 px-3 border-b-2 transition-colors ${
+            filterSource === 'scanner' ? 'border-sage-600 text-sage-700 font-semibold' : 'border-transparent text-ink-500 hover:text-ink-900'
+          }`}
+        >
+          Scanner Detected
+        </button>
+        <button
+          onClick={() => setFilterSource('dpia')}
+          className={`pb-2 px-3 border-b-2 transition-colors ${
+            filterSource === 'dpia' ? 'border-sage-600 text-sage-700 font-semibold' : 'border-transparent text-ink-500 hover:text-ink-900'
+          }`}
+        >
+          DPIA Identified
+        </button>
+      </div>
+
+      {activeAndRemovedGaps.length === 0 ? (
+        <div className="p-8 text-center bg-sage-50/50 rounded-2xl border border-sage-100/50">
+          <CheckCircle2 className="w-10 h-10 text-sage-500 mx-auto mb-3" />
+          <h3 className="text-[14.5px] font-semibold text-sage-900">No Compliance Gaps</h3>
+          <p className="text-sage-600 mt-1 text-[13px]">No active compliance gaps found under the selected filter.</p>
         </div>
-      ))}
+      ) : (
+        <div className="space-y-3">
+          {activeAndRemovedGaps.map((gap: any) => {
+            const isRemoved = gap.resolvedReason === 'dpia_risk_removed';
+            return (
+              <div 
+                key={gap.id} 
+                className={`bg-white border rounded-xl p-4 flex items-start gap-4 hover:shadow-sm transition-shadow group ${
+                  isRemoved 
+                    ? 'border-sage-200 bg-sage-50/10 opacity-80' 
+                    : 'border-ink-900/10'
+                }`}
+              >
+                <div className="mt-1">
+                  {isRemoved ? (
+                    <CheckCircle2 className="w-5 h-5 text-sage-600" />
+                  ) : (
+                    <AlertCircle className={`w-5 h-5 ${
+                      gap.severity === 'critical' ? 'text-red-600' :
+                      gap.severity === 'high' ? 'text-amber-600' :
+                      'text-blue-600'
+                    }`} />
+                  )}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {isRemoved ? (
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-sage-100 text-sage-800">
+                        Resolved
+                      </span>
+                    ) : (
+                      <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
+                        gap.severity === 'critical' ? 'bg-red-100 text-red-700' :
+                        gap.severity === 'high' ? 'bg-amber-100 text-amber-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>{gap.severity}</span>
+                    )}
+                    <h4 className={`text-[14px] font-semibold text-ink-900 truncate ${isRemoved ? 'line-through text-ink-500' : ''}`}>
+                      {gap.title}
+                    </h4>
+                  </div>
+                  
+                  <p className="text-[13px] text-ink-600">{gap.description}</p>
+                  
+                  {/* DPIA Source Badge */}
+                  {gap.source === 'dpia' && gap.dpiaTitle && (
+                    <div className="mt-2">
+                      <span className="inline-flex items-center bg-sage-50 text-sage-800 border border-sage-200/50 text-[10px] px-2.5 py-1 rounded-md font-medium">
+                        From DPIA: <Link href={gap.resolutionUrl || '/ropa'} className="underline hover:text-sage-950 font-bold ml-1">{gap.dpiaTitle}</Link>
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Special notice for removed DPIA risks */}
+                  {isRemoved && (
+                    <p className="text-[12px] text-sage-700 mt-2 bg-sage-50 border border-sage-200/50 rounded-lg p-2.5 font-medium leading-relaxed">
+                      💡 This compliance gap was automatically resolved because the underlying risk was removed or reassessed in the DPIA.
+                    </p>
+                  )}
+
+                  <div className="mt-2 flex items-center gap-4 text-[11px] font-medium text-ink-500">
+                    <span>Detected: {new Date(gap.firstDetectedAt).toLocaleDateString()}</span>
+                    {gap.gdprArticles?.length > 0 && (
+                      <span className="flex items-center gap-1">
+                        &bull; {gap.gdprArticles.join(', ')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                {!isRemoved && (
+                  <div className="flex flex-col gap-2">
+                    {/* AI Explain - click-only */}
+                    <button
+                      onClick={() => handleGapClick(gap)}
+                      className="bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
+                    >
+                      <Lightbulb className="w-3 h-3" /> Explain
+                    </button>
+                    {/* Remediation deep-link */}
+                    {(gap.resolutionUrl || getRemediationLink(gap)) && (
+                      <Link href={gap.resolutionUrl || getRemediationLink(gap)} className="bg-sage-50 text-sage-700 hover:bg-sage-100 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors">
+                        Resolve <ChevronRight className="w-3 h-3" />
+                      </Link>
+                    )}
+                    <button 
+                      onClick={() => setDismissingId(gap.id)}
+                      className="text-ink-400 hover:text-ink-600 text-xs font-medium px-3 py-1.5"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Dismissal Modal */}
       {dismissingId && (

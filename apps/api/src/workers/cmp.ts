@@ -91,8 +91,42 @@ const cmpWorker = new Worker('cmp-automation', async job => {
     
     if (!records || records.length === 0) return;
 
-    const valuesToInsert = records.map((recordStr: string) => {
-      const record = JSON.parse(recordStr);
+    // Filter and query prior state for resubmissions
+    const parsedRecords = records.map((recordStr: string) => JSON.parse(recordStr));
+    const resubmissionIds = parsedRecords.filter((r: any) => r.isResubmission).map((r: any) => r.consentId);
+    
+    let previousStates: Record<string, string[]> = {};
+    if (resubmissionIds.length > 0) {
+      // Find the most recent record for each consentId
+      const priors = await db.select({
+        consentId: consentRecords.consentId,
+        categoriesAccepted: consentRecords.categoriesAccepted
+      }).from(consentRecords)
+        .where(sql`${consentRecords.consentId} IN (${sql.join(resubmissionIds, sql`, `)})`)
+        .orderBy(sql`${consentRecords.givenAt} DESC`); // Need custom logic to get latest, or we just group by in JS
+      
+      // Keep only the first (most recent) for each consentId
+      for (const p of priors) {
+        if (!previousStates[p.consentId]) {
+          previousStates[p.consentId] = p.categoriesAccepted as string[];
+        }
+      }
+    }
+
+    const valuesToInsert = parsedRecords.map((record: any) => {
+      let eventType = 'initial';
+      if (record.isResubmission) {
+        const priorAccepted = previousStates[record.consentId] || [];
+        const priorOptionalCount = priorAccepted.filter(c => c !== 'necessary').length;
+        const newOptionalCount = record.categoriesAccepted.filter((c: string) => c !== 'necessary').length;
+        
+        if (priorOptionalCount > 0 && newOptionalCount === 0) {
+          eventType = 'withdrawal';
+        } else {
+          eventType = 'update';
+        }
+      }
+
       return {
         domainId: record.domainId, // Extracted earlier from scriptId
         consentId: record.consentId,
@@ -104,6 +138,7 @@ const cmpWorker = new Worker('cmp-automation', async job => {
         bannerVersion: record.bannerVersion,
         interactionType: record.interactionType,
         gcmConsentState: record.gcmState,
+        eventType,
       };
     });
 

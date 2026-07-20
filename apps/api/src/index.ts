@@ -26,7 +26,14 @@ import { scheduleBreachesJobs } from './workers/breaches.js';
 import { scheduleComplianceJobs } from './workers/compliance.js';
 import { scheduleNotificationJobs } from './workers/notifications.js';
 import { scheduleRegulatoryJobs } from './workers/regulatoryScraper.js';
+import { emailSenderWorker } from './workers/emailSenderWorker.js';
+import { vendorAssessmentWorker } from './workers/vendorAssessmentWorker.js';
+import { impactAssessmentWorker } from './workers/impactAssessmentWorker.js';
+import { regulatoryNotificationWorker, scheduleRegulatoryNotificationJobs } from './workers/regulatoryNotificationWorker.js';
+import './cron.js';
+import { scheduleImpactAssessmentJobs } from './workers/impactAssessmentWorker.js';
 import { scheduleGlobalJobs } from './workers/index.js';
+import { scheduleDpiaReminderJobs } from './workers/dpiaReminders.js';
 import cmpRoutes from './routes/cmp.js';
 import { ssoRoutes } from './routes/sso.js';
 import { complianceWorker } from './workers/compliance.js';
@@ -175,7 +182,10 @@ const start = async () => {
       await scheduleComplianceJobs();
       await scheduleNotificationJobs();
       await scheduleRegulatoryJobs();
+      await scheduleImpactAssessmentJobs();
       await scheduleGlobalJobs();
+      await scheduleDpiaReminderJobs();
+      await scheduleRegulatoryNotificationJobs();
     }
   } catch (err) {
     server.log.error(err);

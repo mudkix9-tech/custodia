@@ -5,8 +5,8 @@ import { decode } from '@auth/core/jwt';
 import { db } from './db.js';
 import { getDbForOrg, getPrimaryDb } from './lib/dbRouter.js';
 
-import { users } from 'db';
-import { eq, sql } from 'drizzle-orm';
+import { users, customRoles } from 'db';
+import { eq, sql, inArray } from 'drizzle-orm';
 import { 
   sanitizeForAuditLog, 
   calculateDiff, 
@@ -26,15 +26,68 @@ export interface Context {
     id: string;
     orgId: string;
     role: string;
-    customRoleId?: string | null;
+    customRoleId: string | null;
     customRolePermissions?: any;
     permissions: string[];
+    entityScope: 'own' | 'group';
+    targetOrgId?: string;
   };
 }
 
+export async function verifyGroupScopeAndLog(
+  userId: string,
+  parentOrgId: string,
+  targetOrgIds: string[],
+  entityScope: 'own' | 'group',
+  type: 'query' | 'mutation' | 'subscription'
+) {
+  if (targetOrgIds.length === 0) return;
+
+  if (entityScope !== 'group') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Missing group entity scope' });
+  }
+  if (type === 'mutation') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Cross-entity write access is strictly forbidden' });
+  }
+
+  const targetOrgs = await db.select({ id: organizations.id, parentOrganizationId: organizations.parentOrganizationId })
+    .from(organizations).where(inArray(organizations.id, targetOrgIds));
+
+  if (targetOrgs.length !== targetOrgIds.length || targetOrgs.some((org: any) => org.parentOrganizationId !== parentOrgId)) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'One or more target organizations are not direct children' });
+  }
+
+  // Audit Log
+  const logsToInsert = targetOrgIds.map(targetOrgId => ({
+    organizationId: targetOrgId,
+    userId: userId,
+    action: 'cross_entity_read',
+    resourceType: 'organization',
+    resourceId: targetOrgId,
+    description: `User from parent org ${parentOrgId} accessed child org ${targetOrgId} data via group scope`,
+  }));
+  
+  if (targetOrgIds.length > 1) {
+    logsToInsert.push({
+      organizationId: parentOrgId,
+      userId: userId,
+      action: 'cross_entity_read',
+      resourceType: 'organization',
+      resourceId: parentOrgId,
+      description: `User from parent org ${parentOrgId} accessed child orgs [${targetOrgIds.join(', ')}] data via group scope`,
+    });
+  }
+
+  await db.insert(auditLogs).values(logsToInsert);
+}
+
+export const createContext = async ({ req, res }: { req: FastifyRequest; res: FastifyReply }): Promise<Context> => {
+  return { req, res, db, primaryDb: getPrimaryDb() };
+};
+
 const t = initTRPC.context<Context>().create();
 
-const isAuthed = t.middleware(async ({ ctx, next }) => {
+export const isAuthed = t.middleware(async ({ ctx, type, next }) => {
   const cookieName = process.env.NODE_ENV === 'production' ? '__Secure-authjs.session-token' : 'authjs.session-token';
   let tokenStr = (ctx.req as any).cookies?.[cookieName];
   
@@ -52,7 +105,7 @@ const isAuthed = t.middleware(async ({ ctx, next }) => {
     salt: cookieName,
   });
 
-  if (!decoded || !decoded.sub) {
+  if (!decoded || !decoded.sub || !decoded.org) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
   }
 
@@ -64,8 +117,31 @@ const isAuthed = t.middleware(async ({ ctx, next }) => {
     throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Token invalidated' });
   }
 
-  const orgId = decoded.org as string;
-  const userDb = orgId ? await getDbForOrg(orgId) : db;
+  let entityScope: 'own' | 'group' = 'own';
+  if (decoded.customRoleId) {
+    const [roleRec] = await db.select({ entityScope: customRoles.entityScope })
+      .from(customRoles).where(eq(customRoles.id, decoded.customRoleId as string));
+    if (roleRec && roleRec.entityScope === 'group') {
+      entityScope = 'group';
+    }
+  }
+
+  let effectiveOrgId = decoded.org as string;
+  const targetOrgId = ctx.req.headers['x-target-org-id'] as string | undefined;
+
+  // Global Cross-Entity Access Enforcement
+  if (targetOrgId && targetOrgId !== effectiveOrgId) {
+    await verifyGroupScopeAndLog(
+      decoded.sub,
+      effectiveOrgId,
+      [targetOrgId],
+      entityScope,
+      type
+    );
+    effectiveOrgId = targetOrgId; // Masquerade as the child org for all downstream queries
+  }
+
+  const userDb = effectiveOrgId ? await getDbForOrg(effectiveOrgId) : db;
 
   return next({
     ctx: {
@@ -74,14 +150,18 @@ const isAuthed = t.middleware(async ({ ctx, next }) => {
       primaryDb: getPrimaryDb(),
       user: {
         id: decoded.sub,
-        orgId: decoded.org as string,
+        orgId: effectiveOrgId, // Replaced with effectiveOrgId
         role: decoded.role as string,
         customRoleId: decoded.customRoleId as string | null,
         permissions: (decoded.permissions as string[]) || [],
+        entityScope,
+        targetOrgId,
       }
     }
   });
 });
+
+
 
 export const requireRole = (minimumRole: 'viewer' | 'member' | 'admin' | 'owner') => {
   return t.middleware(async ({ ctx, next }) => {

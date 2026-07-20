@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { vendorJobsQueue } from '../workers/vendors.js';
 import { db } from '../db.js';
-import { vendors, organizationVendors, users, vendorSubProcessors, vendorSubProcessorChanges, vendorIncidents, organizationVendorIncidentAlerts, vendorQuestionnaires, vendorDiscoveries, organizations, vendorAssessments } from 'db';
+import { vendors, organizationVendors, users, vendorSubProcessors, vendorSubProcessorChanges, vendorIncidents, organizationVendorIncidentAlerts, vendorQuestionnaires, vendorDiscoveries, organizations, vendorAssessments, complianceGaps } from 'db';
 import { eq, and, isNull, inArray, or, sql, desc } from 'drizzle-orm';
 import { router, publicProcedure, protectedProcedure } from '../trpc.js';
 import { TRPCError } from '@trpc/server';
@@ -54,7 +54,15 @@ export async function updateVendorRiskScore(dbInstance: any, orgId: string, vend
     }
   }
 
-  const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount, scoreModifier);
+  // Retrieve DPIA compliance gaps for this vendor
+  const dpiaGaps = await dbInstance.select().from(complianceGaps).where(and(
+    eq(complianceGaps.organizationId, orgId),
+    eq(complianceGaps.entityType, 'vendor'),
+    eq(complianceGaps.entityId, orgVendor.id),
+    eq(complianceGaps.source, 'dpia')
+  ));
+
+  const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount, scoreModifier, dpiaGaps);
 
   await dbInstance.update(organizationVendors)
     .set({
@@ -86,6 +94,17 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
     .where(eq(vendorSubProcessors.parentVendorId, vendorId));
   const subProcessorsCount = subs.length;
 
+  // Retrieve DPIA compliance gaps for all matched organization vendors at once to avoid N+1 queries
+  const orgIds: string[] = Array.from(new Set(orgVendors.map((ov: any) => ov.organizationId as string)));
+  let allDpiaGaps: any[] = [];
+  if (orgIds.length > 0) {
+    allDpiaGaps = await dbInstance.select().from(complianceGaps).where(and(
+      inArray(complianceGaps.organizationId, orgIds),
+      eq(complianceGaps.entityType, 'vendor'),
+      eq(complianceGaps.source, 'dpia')
+    ));
+  }
+
   for (const orgVendor of orgVendors) {
     const assessments = await dbInstance.select()
       .from(vendorAssessments)
@@ -113,7 +132,12 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
       }
     }
 
-    const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount, scoreModifier);
+    const vendorGaps = allDpiaGaps.filter((gap: any) => 
+      gap.organizationId === orgVendor.organizationId && 
+      gap.entityId === orgVendor.id
+    );
+
+    const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount, scoreModifier, vendorGaps);
     
     await dbInstance.update(organizationVendors)
       .set({

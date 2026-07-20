@@ -16,7 +16,7 @@ const COLUMNS = [
   { id: 'completed', label: 'Completed' },
 ];
 
-export function DsarDashboardClient() {
+export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boolean }) {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const {
     data: requestsResp,
@@ -25,7 +25,7 @@ export function DsarDashboardClient() {
     hasNextPage,
     isFetchingNextPage
   } = trpc.dsar.list.useInfiniteQuery(
-    { limit: 25 },
+    { limit: 25, includeChildEntities: isGroupContext },
     { getNextPageParam: (lastPage: any) => lastPage.pagination?.next_cursor }
   );
 
@@ -75,7 +75,7 @@ export function DsarDashboardClient() {
 
                     return (
                       <Link 
-                        href={`/dsar/${request.id}`} 
+                        href={isGroupContext ? `/group/dsar/${request.id}` : `/dsar/${request.id}`} 
                         key={request.id}
                         className="block bg-white p-4 rounded-xl border border-ink-900/10 shadow-sm hover:shadow-md transition-shadow group"
                       >
@@ -87,6 +87,9 @@ export function DsarDashboardClient() {
                           </span>
                         </div>
                         <h4 className="font-medium text-ink-900 text-sm mb-1">{request.subjectName.split(' ')[0]}</h4>
+                        {isGroupContext && (
+                          <div className="text-[11px] text-ink-600 font-medium mb-1 truncate">{request.organizationName || 'Unknown'}</div>
+                        )}
                         <div className="text-xs text-ink-500 capitalize">{request.requestType}</div>
                         {!request.subjectVerified && (
                           <div className="mt-3 flex items-center gap-1 text-[11px] text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
@@ -106,6 +109,7 @@ export function DsarDashboardClient() {
           <table className="w-full text-left text-sm">
             <thead className="bg-bone-50 border-b border-ink-900/10 text-ink-500 text-[11px] uppercase tracking-wider font-semibold">
               <tr>
+                {isGroupContext && <th className="px-6 py-4">Entity</th>}
                 <th className="px-6 py-4">Reference</th>
                 <th className="px-6 py-4">Subject</th>
                 <th className="px-6 py-4">Type</th>
@@ -118,6 +122,11 @@ export function DsarDashboardClient() {
             <tbody className="divide-y divide-ink-900/5">
               {((requests as any)?.data || [])?.map((request: any) => (
                 <tr key={request.id} className="hover:bg-bone-50/50">
+                  {isGroupContext && (
+                    <td className="px-6 py-4 text-[13px] text-ink-600 font-medium">
+                      {request.organizationName || 'Unknown'}
+                    </td>
+                  )}
                   <td className="px-6 py-4 font-mono text-[13px]">{request.referenceNumber}</td>
                   <td className="px-6 py-4 font-medium text-ink-900">{request.subjectName}</td>
                   <td className="px-6 py-4 capitalize">{request.requestType}</td>
@@ -133,7 +142,7 @@ export function DsarDashboardClient() {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <Link href={`/dsar/${request.id}`} className="text-sage-600 hover:text-sage-700 font-medium text-[13px]">
+                    <Link href={isGroupContext ? `/group/dsar/${request.id}` : `/dsar/${request.id}`} className="text-sage-600 hover:text-sage-700 font-medium text-[13px]">
                       View
                     </Link>
                   </td>

@@ -111,6 +111,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }).where(eq(assessments.anonymousSessionId, pending.anonymousSessionId));
       }
     },
+    async signIn({ user }) {
+      if (!user || !user.id) return;
+      
+      const [dbUser] = await db.select().from(users).where(eq(users.id, user.id));
+      if (dbUser) {
+        const lastLoginAt = dbUser.lastLoginAt;
+        await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
+        
+        if (dbUser.organizationId && lastLoginAt) {
+          // Push to BullMQ for catch-up semantic matching
+          try {
+            const { Queue } = await import('bullmq');
+            const { Redis } = await import('ioredis');
+            const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+            const queue = new Queue('impact-assessment', { connection });
+            
+            await queue.add('match-catchup', {
+              organizationId: dbUser.organizationId,
+              lastLoginAt: lastLoginAt.toISOString()
+            });
+            await connection.quit();
+          } catch (err) {
+            console.error('[NextAuth] Failed to queue match-catchup job', err);
+          }
+        }
+      }
+    },
     async signOut(message: any) {
       const token = message.token;
       if (token && token.sub) {

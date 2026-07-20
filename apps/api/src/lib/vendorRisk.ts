@@ -34,6 +34,15 @@ export interface RiskFactorDetail {
   detail: string;
 }
 
+export interface VendorRiskGap {
+  id: string;
+  status: string | null;
+  severity: string;
+  metadata?: {
+    alreadyReflectedInBaseScore?: boolean;
+  } | null;
+}
+
 export interface VendorRiskResult {
   score: number;
   level: 'low' | 'medium' | 'high' | 'critical';
@@ -46,6 +55,7 @@ export interface VendorRiskResult {
     certifications: RiskFactorDetail;
     safeguards: RiskFactorDetail;
     breach: RiskFactorDetail;
+    dpia?: RiskFactorDetail;
   };
 }
 
@@ -53,7 +63,8 @@ export function calculateVendorRisk(
   vendor: VendorRiskInput,
   orgVendor: OrgVendorRiskInput,
   subProcessorsCount: number = 0,
-  scoreModifier: number = 0
+  scoreModifier: number = 0,
+  dpiaGaps: VendorRiskGap[] = []
 ): VendorRiskResult {
   
   // 1. Headquarters Location (20%)
@@ -254,8 +265,23 @@ export function calculateVendorRisk(
     breachDetail = 'Breach occurred between 12 to 24 months ago (1/5 pts)';
   }
 
+  // 9. DPIA Residual Risks Modifier
+  const qualifyingGaps = dpiaGaps.filter(gap => 
+    (gap.status === 'open' || gap.status === 'in_progress') &&
+    (gap.severity === 'high' || gap.severity === 'critical') &&
+    gap.metadata?.alreadyReflectedInBaseScore !== true
+  );
+  
+  const dpiaModifier = Math.min(30, qualifyingGaps.length * 10);
+  const dpiaDetail = qualifyingGaps.length > 0
+    ? `Unmitigated high/critical DPIA risks (+${dpiaModifier} pts)`
+    : 'No unmitigated high/critical DPIA risks (0 pts)';
+
   const baseScore = locationPoints + dpaPoints + categoriesPoints + volumePoints + subProcessorPoints + certsPoints + safeguardsPoints + breachPoints;
-  const score = Math.max(0, Math.min(100, baseScore + scoreModifier));
+  
+  // Combined modifier ceiling: questionnaire scoreModifier + DPIA modifier, capped between -10 and +25
+  const totalModifier = Math.max(-10, Math.min(25, scoreModifier + dpiaModifier));
+  const score = Math.max(0, Math.min(100, baseScore + totalModifier));
   
   let level: 'low' | 'medium' | 'high' | 'critical' = 'low';
   if (score <= 25) level = 'low';
@@ -274,7 +300,8 @@ export function calculateVendorRisk(
       subProcessors: { points: subProcessorPoints, maxPoints: 10, detail: subProcessorDetail },
       certifications: { points: certsPoints, maxPoints: 10, detail: certsDetail },
       safeguards: { points: safeguardsPoints, maxPoints: 10, detail: safeguardsDetail },
-      breach: { points: breachPoints, maxPoints: 5, detail: breachDetail }
+      breach: { points: breachPoints, maxPoints: 5, detail: breachDetail },
+      dpia: { points: dpiaModifier, maxPoints: 30, detail: dpiaDetail }
     }
   };
 }

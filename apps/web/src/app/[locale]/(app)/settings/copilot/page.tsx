@@ -14,7 +14,9 @@ import {
   RefreshCw, 
   Sliders, 
   Clock, 
-  Globe 
+  Globe,
+  DollarSign,
+  LineChart
 } from 'lucide-react';
 
 export default function AiCopilotSettingsPage() {
@@ -24,6 +26,7 @@ export default function AiCopilotSettingsPage() {
   // Queries
   const { data: stats, refetch: refetchStats, isLoading: statsLoading } = trpc.ai.getCorpusStats.useQuery();
   const { data: metrics, refetch: refetchMetrics, isLoading: metricsLoading } = trpc.ai.getQualityMetrics.useQuery();
+  const { data: costMetrics, refetch: refetchCostMetrics, isLoading: costLoading } = trpc.ai.getAssessmentCostMetrics.useQuery();
   const { data: documents, refetch: refetchDocs, isLoading: docsLoading } = trpc.ai.listDocuments.useQuery({
     query: searchQuery || undefined,
     authority: selectedAuthority || undefined
@@ -65,12 +68,13 @@ export default function AiCopilotSettingsPage() {
     }
   };
 
-  const isRefreshing = statsLoading || metricsLoading || docsLoading;
+  const isRefreshing = statsLoading || metricsLoading || docsLoading || costLoading;
 
   const triggerRefresh = () => {
     refetchStats();
     refetchMetrics();
     refetchDocs();
+    refetchCostMetrics();
   };
 
   return (
@@ -156,6 +160,46 @@ export default function AiCopilotSettingsPage() {
           </p>
           <span className="text-[10px] text-ink-400">
             {metrics ? `${metrics.lowSimilarityCount} low match (<70%)` : ''}
+          </span>
+        </div>
+      </div>
+
+      {/* Assessment Cost Metrics */}
+      <h2 className="text-lg font-serif text-ink-900 mb-4 mt-2">Impact Assessment Costs</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-5 rounded-2xl border border-ink-900/10 shadow-sm">
+          <div className="text-ink-500 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <DollarSign className="w-4 h-4 text-emerald-600" /> Estimated Cost (All Time)
+          </div>
+          <p className="text-2xl font-serif text-ink-900 font-medium">
+            ${costMetrics?.estimatedCostUsd.toFixed(4) || '0.0000'}
+          </p>
+          <span className="text-[10px] text-ink-400">
+            ${costMetrics?.breakdown.promptCost.toFixed(4) || '0.00'} input / ${costMetrics?.breakdown.completionCost.toFixed(4) || '0.00'} output
+          </span>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-ink-900/10 shadow-sm">
+          <div className="text-ink-500 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <LineChart className="w-4 h-4 text-indigo-500" /> Token Usage
+          </div>
+          <p className="text-2xl font-serif text-ink-900 font-medium">
+            {( (costMetrics?.totalPromptTokens || 0) + (costMetrics?.totalCompletionTokens || 0) ).toLocaleString()}
+          </p>
+          <span className="text-[10px] text-ink-400">
+            {(costMetrics?.totalPromptTokens || 0).toLocaleString()} input / {(costMetrics?.totalCompletionTokens || 0).toLocaleString()} output
+          </span>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-ink-900/10 shadow-sm">
+          <div className="text-ink-500 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Database className="w-4 h-4 text-amber-500" /> Total Assessments
+          </div>
+          <p className="text-2xl font-serif text-ink-900 font-medium">
+            {costMetrics?.totalAssessments?.toLocaleString() || 0}
+          </p>
+          <span className="text-[10px] text-ink-400">
+            Automated impact analyses performed
           </span>
         </div>
       </div>
