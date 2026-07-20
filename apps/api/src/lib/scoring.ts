@@ -15,15 +15,24 @@ const PILLAR_WEIGHTS = {
 };
 
 export async function calculateComplianceScore(orgId: string) {
+  // Optimization: Pre-fetch all non-deleted processing activities once for this organization,
+  // reducing database roundtrips for ROPA, DPIA, and Transfer scoring pillars.
+  const activities = await db.query.processingActivities.findMany({
+    where: and(
+      eq(processingActivities.organizationId, orgId),
+      isNull(processingActivities.deletedAt),
+    ),
+  });
+
   const [ropa, vendors, dpia, policies, dsar, breach, training, transfers] = await Promise.all([
-    calculateRopaScore(orgId),
+    calculateRopaScore(activities),
     calculateVendorScore(orgId),
-    calculateDpiaScore(orgId),
+    calculateDpiaScore(orgId, activities),
     calculatePolicyScore(orgId),
     calculateDsarScore(orgId),
     calculateBreachScore(orgId),
     calculateTrainingScore(orgId),
-    calculateTransferScore(orgId),
+    calculateTransferScore(activities),
   ]);
 
   const total = Math.round(
@@ -43,14 +52,9 @@ export async function calculateComplianceScore(orgId: string) {
   };
 }
 
-async function calculateRopaScore(orgId: string) {
-  const activities = await db.query.processingActivities.findMany({
-    where: and(
-      eq(processingActivities.organizationId, orgId),
-      eq(processingActivities.status, 'active'),
-      isNull(processingActivities.deletedAt),
-    ),
-  });
+async function calculateRopaScore(allActivities: any[]) {
+  // Filter active activities in memory from the pre-fetched activities array
+  const activities = allActivities.filter(a => a.status === 'active');
   if (activities.length === 0) return 100; // No data, no issues
 
   const getCompleteness = (a: any) => {
@@ -79,14 +83,9 @@ async function calculateVendorScore(orgId: string) {
   return Math.round(totalScore / vendorsList.length);
 }
 
-async function calculateDpiaScore(orgId: string) {
-  const activities = await db.query.processingActivities.findMany({
-    where: and(
-      eq(processingActivities.organizationId, orgId),
-      eq(processingActivities.requiresDpia, true),
-      isNull(processingActivities.deletedAt),
-    ),
-  });
+async function calculateDpiaScore(orgId: string, allActivities: any[]) {
+  // Filter activities requiring a DPIA in memory from the pre-fetched activities array
+  const activities = allActivities.filter(a => a.requiresDpia === true);
 
   let completed = 0;
   if (activities.length > 0) {
@@ -171,7 +170,11 @@ async function calculateTrainingScore(orgId: string) {
     where: eq(trainingCompletions.organizationId, orgId),
   });
 
+  // Optimization: Only select the `id` column instead of fetching heavy user rows (with password hashes, credentials, MFA secrets, etc.)
   const usersCountResult = await db.query.users.findMany({
+    columns: {
+      id: true,
+    },
     where: eq(users.organizationId, orgId),
   });
 
@@ -183,19 +186,10 @@ async function calculateTrainingScore(orgId: string) {
   return Math.max(0, Math.min(100, score));
 }
 
-async function calculateTransferScore(orgId: string) {
-  // A simplistic transfer score:
-  // If transfers exist, ensure they have mechanisms or TIA completed
-  const transfers = await db.query.processingTransfers.findMany({
-    // Fetch transfers manually via join if needed or assume we query activities first
-  });
-
-  const activities = await db.query.processingActivities.findMany({
-    where: and(
-      eq(processingActivities.organizationId, orgId),
-      isNull(processingActivities.deletedAt),
-    ),
-  });
+async function calculateTransferScore(activities: any[]) {
+  // Optimization: Removed completely unconstrained/unused global query:
+  // "const transfers = await db.query.processingTransfers.findMany({});"
+  // which used to load all processing transfers in the entire database.
 
   if (activities.length === 0) return 100;
 
