@@ -78,7 +78,8 @@ JSON format only:`;
         messages: [{ role: 'user', content: prompt }]
       });
 
-      const messageContent = response.content[0].type === 'text' ? response.content[0].text : '';
+      const firstContent = response.content[0];
+      const messageContent = firstContent?.type === 'text' ? firstContent.text : '';
       
       let parsed: { isMaterial: boolean; confidence: string; reasoning: string };
       try {
