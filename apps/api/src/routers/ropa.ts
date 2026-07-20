@@ -197,8 +197,8 @@ export const ropaRouter = router({
           oldPurpose: activity.purpose,
           newPurpose: updated.purpose,
           lawfulBasis: activity.lawfulBasis,
-          dataCategories: dataCats.map(d => d.category),
-          vendorList: recipients.map(r => ({ name: r.vendorName || 'Unknown', purpose: r.purpose }))
+          dataCategories: dataCats.map((d: any) => d.category),
+          vendorList: recipients.map((r: any) => ({ name: r.vendorName || 'Unknown', purpose: r.purpose }))
         }, {
           jobId: `reconsent-${updated.id}-${timeBlock}`,
           delay: 5000 // wait 5 seconds before processing, allows final edit to settle
