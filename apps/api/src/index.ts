@@ -30,7 +30,7 @@ import { emailSenderWorker } from './workers/emailSenderWorker.js';
 import { vendorAssessmentWorker } from './workers/vendorAssessmentWorker.js';
 import { impactAssessmentWorker } from './workers/impactAssessmentWorker.js';
 import { regulatoryNotificationWorker, scheduleRegulatoryNotificationJobs } from './workers/regulatoryNotificationWorker.js';
-import './cron.js';
+
 import { scheduleImpactAssessmentJobs } from './workers/impactAssessmentWorker.js';
 import { scheduleGlobalJobs } from './workers/index.js';
 import { scheduleDpiaReminderJobs } from './workers/dpiaReminders.js';

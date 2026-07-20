@@ -781,3 +781,27 @@ Closes the loop on DPIAs by turning them from static documents into living risk 
 - **Automated Gap Syncing**: A background worker/logic layer automatically maps high and medium DPIA residual risks into `compliance_gaps`, mapping severities appropriately.
 - **Mitigation Reminders**: A cron worker (`dpia-mitigation-reminders`) scans for unresolved DPIA gaps approaching their due date and dispatches warning notifications.
 - **Unified Dashboard Visibility**: DPIA risks now appear seamlessly alongside standard compliance gaps (e.g. missing DPAs, incomplete ROPAs), giving compliance officers a single pane of glass for all required remediation actions.
+
+---
+
+## 27. Consent Lifecycle & Preference Center Analytics
+
+### Overview
+A comprehensive suite for managing user consent records, analyzing preference center interactions, and ensuring high-performance querying without degrading the database, alongside automated triggers for re-consent campaigns when processing conditions materially change.
+
+### Components
+- **Analytics Rollup & Data Reconciliation**: A pre-aggregated performance layer (`consent_daily_summary` table) improves historical analytics speed. A daily BullMQ worker (`consentRollup`) processes raw records into domain/date/category totals. A split-and-merge routing strategy dynamically queries recent data (last 7 days) from raw records and historical data from the rollup table. A weekly worker (`consentRollupDriftCheck`) compares rollup totals against raw records to detect and log drift.
+- **Re-Consent Trigger System**: Hooks into the ROPA activity update mutations. When a processing activity relying on `consent` undergoes material changes (e.g., adding a new vendor/sub-processor, or materially changing the purpose description), the system automatically flags the activity. It evaluates changes (passing context like data categories and lawful basis history to the AI) and generates a `reconsent_flag`, prompting compliance officers to initiate a re-consent campaign rather than relying on manual awareness.
+- **Granular Preference Analytics (Deferred)**: We explicitly adhered to the "don't build speculative complexity" principle. While the architecture supports deep granular category combination analytics, we deferred building the UI for this until production metrics prove customers actually engage with category-by-category settings rather than just wholesale "Accept All" or "Reject All".
+
+---
+
+## 28. Multi-Entity Compliance Rollup (Enterprise Group Layer)
+
+### Overview
+An enterprise-grade cross-entity tracking system designed for parent organizations and agencies to monitor compliance posture across all child entities or client workspaces from a single unified group dashboard.
+
+### Components
+- **Group Dashboards & Metrics**: Dedicated views (`/group/breaches`, `/group/dsar`, `/group/vendors`) allow parent admins to instantly view aggregate metrics and drill down into individual entity performance. The `groupMetrics.ts` library standardizes rollups across the workspace hierarchy.
+- **Consolidated Reporting**: Surfaces macro-level risk exposure by aggregating high-severity compliance gaps, overdue DSARs, and unmitigated breach risks across all child tenants.
+- **Idempotent Migrations & Safe Iteration**: Built safely on top of existing schemas. When out-of-sync environments caused Drizzle migration collisions, manual curations (skipping existing relations via `IF NOT EXISTS` or commenting out conflicting blocks in `0032`, `0033`, `0034`) were employed to deploy these structural changes safely without risking data loss.
