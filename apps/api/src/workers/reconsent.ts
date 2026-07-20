@@ -1,6 +1,7 @@
 import { Worker, type Job } from 'bullmq';
 import { Queue } from 'bullmq';
-import { db, reconsentFlags, processingActivities } from 'db';
+import { reconsentFlags, processingActivities } from 'db';
+import { db } from '../db.js';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { eq, sql } from 'drizzle-orm';
 import { createQueue } from '../lib/queue.js';
