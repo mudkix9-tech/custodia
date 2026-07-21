@@ -5,6 +5,7 @@ import { eq, count } from 'drizzle-orm';
 import { paginatedQuery } from '../utils/pagination.js';
 import { TRPCError } from '@trpc/server';
 import { cmpJobsQueue } from '../workers/cmp.js';
+import { enforceLimit } from '../lib/billing.js';
 
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
@@ -50,6 +51,7 @@ export const consentRouter = router({
     .input(z.object({ domain: z.string() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await enforceLimit(ctx.db, ctx.user!.orgId, 'domains', 1);
       const scriptId = Math.random().toString(36).substring(2, 10);
       const [domain] = await ctx.db.insert(consentDomains).values({
         organizationId: ctx.user!.orgId,

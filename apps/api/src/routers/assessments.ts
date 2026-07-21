@@ -23,6 +23,7 @@ import { Anthropic } from '@anthropic-ai/sdk';
 import { sendEmail, AssessmentInvitation, AssessmentReminder } from 'emails';
 import { updateVendorRiskScore } from './vendors.js';
 import { scheduleEmailSequence } from '../workers/emails.js';
+import { trackAiUsage } from '../lib/billing.js';
 
 const ai = new GoogleGenAI({
   vertexai: true,
@@ -465,6 +466,8 @@ Only return valid JSON, nothing else.`;
       let aiSummary = "Assessment completed. AI evaluation completed successfully.";
 
       try {
+        await trackAiUsage(record.organizationId, 1);
+
         let responseText = "";
         if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'mock-key') {
           const msg = await anthropic.messages.create({

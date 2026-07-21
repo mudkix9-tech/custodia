@@ -9,6 +9,7 @@ import { TRPCError } from '@trpc/server';
 import DOMPurify from 'isomorphic-dompurify';
 import { queueNotification } from '../utils/notifications.js';
 import { reconsentQueue } from '../workers/index.js';
+import { enforceLimit } from '../lib/billing.js';
 
 const sanitize = (text?: string) => {
   if (!text) return text;
@@ -74,6 +75,7 @@ export const ropaRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await enforceLimit(ctx.db, ctx.user!.orgId, 'ropa', 1);
       
       const [newActivity] = await ctx.db.insert(processingActivities).values({
         organizationId: ctx.user!.orgId,
@@ -110,6 +112,7 @@ export const ropaRouter = router({
       checkOrgContext(ctx.user);
       
       if (input.length === 0) return [];
+      await enforceLimit(ctx.db, ctx.user!.orgId, 'ropa', input.length);
 
       const values = input.map((item: any) => ({
         ...item,

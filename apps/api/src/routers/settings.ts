@@ -37,7 +37,7 @@ export const settingsRouter = router({
 
       if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
       if (org.subscriptionTier !== 'enterprise') {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Enterprise plan required' });
+        throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Enterprise plan required' });
       }
 
       await db.update(organizations)
@@ -107,6 +107,11 @@ export const settingsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+
+      const org = await ctx.db.query.organizations.findFirst({ where: eq(organizations.id, ctx.user!.orgId) });
+      if (!org || org.subscriptionTier !== 'enterprise') {
+        throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Enterprise plan required for SIEM integration' });
+      }
 
       const [updated] = await ctx.db.update(organizations)
         .set({

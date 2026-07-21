@@ -6,6 +6,7 @@ import { dpias, dpiaRisks, dpiaMeasures, auditLogs, processingRecipients, organi
 import { eq, and, desc, inArray, lt } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { syncDpiaGaps } from '../lib/dpiaGapSync.js';
+import { enforceLimit } from '../lib/billing.js';
 
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
@@ -65,6 +66,7 @@ export const dpiaRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await enforceLimit(ctx.db, ctx.user!.orgId, 'dpia', 1);
       
       const prePopulatedRisks: any[] = [];
       

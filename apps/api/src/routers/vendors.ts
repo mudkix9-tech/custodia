@@ -10,6 +10,7 @@ import { TRPCError } from '@trpc/server';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
 
 import { calculateVendorRisk } from '../lib/vendorRisk.js';
+import { enforceLimit } from '../lib/billing.js';
 export { calculateVendorRisk };
 
 export async function updateVendorRiskScore(dbInstance: any, orgId: string, vendorId: string) {
@@ -242,6 +243,7 @@ export const vendorsRouter = router({
   linkVendor: protectedProcedure
     .input(z.object({ vendorId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
+      await enforceLimit(ctx.db, ctx.user.orgId, 'vendors', 1);
       const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
       if (!vendor) throw new Error("Vendor not found");
 
@@ -355,6 +357,7 @@ export const vendorsRouter = router({
       contractRenewalDate: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      await enforceLimit(ctx.db, ctx.user.orgId, 'vendors', 1);
       const [newVendor] = await ctx.db.insert(vendors).values({
         name: input.name,
         website: input.website,

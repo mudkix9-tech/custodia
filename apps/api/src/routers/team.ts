@@ -5,6 +5,7 @@ import { db } from '../db.js';
 import { users } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import { enforceLimit } from '../lib/billing.js';
 
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
@@ -26,6 +27,7 @@ export const teamRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await enforceLimit(ctx.db, ctx.user!.orgId, 'users', 1);
 
       const existing = await ctx.db.query.users.findFirst({
         where: eq(users.email, input.email)
@@ -57,6 +59,22 @@ export const teamRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      
+      // Calculate how many new users are actually going to be inserted
+      const existingUsersRes = await ctx.db.query.users.findMany({
+        where: and(
+          eq(users.organizationId, ctx.user!.orgId)
+        )
+      });
+      const existingEmails = new Set(existingUsersRes.map((u: any) => u.email));
+      let newCount = 0;
+      for (const email of input.emails) {
+        if (!existingEmails.has(email)) newCount++;
+      }
+      
+      if (newCount > 0) {
+        await enforceLimit(ctx.db, ctx.user!.orgId, 'users', newCount);
+      }
 
       const newUsers = [];
       for (const email of input.emails) {

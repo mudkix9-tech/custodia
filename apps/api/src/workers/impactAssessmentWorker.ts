@@ -4,6 +4,7 @@ import { db } from '../db.js';
 import { regulatoryUpdateMatches, organizations, processingActivities, vendors, dpias, documentEmbeddings } from 'db';
 import { eq, and, sql } from 'drizzle-orm';
 import { Anthropic } from '@anthropic-ai/sdk';
+import { trackAiUsage } from '../lib/billing.js';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
@@ -174,6 +175,8 @@ RECOMMENDED ACTIONS: <your recommended actions>`;
     let completionTokens = 0;
 
     try {
+      await trackAiUsage(match.organizationId, 1);
+
       const msg = await anthropic.messages.create({
         model: 'claude-3-5-sonnet-20240620',
         max_tokens: isLightweight ? 100 : 500,

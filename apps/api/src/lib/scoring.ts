@@ -15,15 +15,29 @@ const PILLAR_WEIGHTS = {
 };
 
 export async function calculateComplianceScore(orgId: string) {
+  const activities = await db.query.processingActivities.findMany({
+    where: and(
+      eq(processingActivities.organizationId, orgId),
+      isNull(processingActivities.deletedAt),
+    ),
+    columns: {
+      id: true,
+      status: true,
+      requiresDpia: true,
+      lawfulBasis: true,
+      purpose: true,
+    }
+  });
+
   const [ropa, vendors, dpia, policies, dsar, breach, training, transfers] = await Promise.all([
-    calculateRopaScore(orgId),
+    calculateRopaScore(activities),
     calculateVendorScore(orgId),
-    calculateDpiaScore(orgId),
+    calculateDpiaScore(orgId, activities),
     calculatePolicyScore(orgId),
     calculateDsarScore(orgId),
     calculateBreachScore(orgId),
     calculateTrainingScore(orgId),
-    calculateTransferScore(orgId),
+    calculateTransferScore(activities),
   ]);
 
   const total = Math.round(
@@ -43,15 +57,9 @@ export async function calculateComplianceScore(orgId: string) {
   };
 }
 
-async function calculateRopaScore(orgId: string) {
-  const activities = await db.query.processingActivities.findMany({
-    where: and(
-      eq(processingActivities.organizationId, orgId),
-      eq(processingActivities.status, 'active'),
-      isNull(processingActivities.deletedAt),
-    ),
-  });
-  if (activities.length === 0) return 100; // No data, no issues
+async function calculateRopaScore(activities: any[]) {
+  const activeActivities = activities.filter(a => a.status === 'active');
+  if (activeActivities.length === 0) return 100; // No data, no issues
 
   const getCompleteness = (a: any) => {
     let score = 100;
@@ -60,7 +68,7 @@ async function calculateRopaScore(orgId: string) {
     return Math.max(0, score);
   };
 
-  const avgCompleteness = activities.reduce((sum, a) => sum + getCompleteness(a), 0) / activities.length;
+  const avgCompleteness = activeActivities.reduce((sum, a) => sum + getCompleteness(a), 0) / activeActivities.length;
   return Math.round(avgCompleteness);
 }
 
@@ -79,21 +87,15 @@ async function calculateVendorScore(orgId: string) {
   return Math.round(totalScore / vendorsList.length);
 }
 
-async function calculateDpiaScore(orgId: string) {
-  const activities = await db.query.processingActivities.findMany({
-    where: and(
-      eq(processingActivities.organizationId, orgId),
-      eq(processingActivities.requiresDpia, true),
-      isNull(processingActivities.deletedAt),
-    ),
-  });
+async function calculateDpiaScore(orgId: string, activities: any[]) {
+  const dpiaActivities = activities.filter(a => a.requiresDpia === true);
 
   let completed = 0;
-  if (activities.length > 0) {
+  if (dpiaActivities.length > 0) {
     const records = await db.query.dpias.findMany({
       where: eq(dpias.organizationId, orgId),
     });
-    for (const a of activities) {
+    for (const a of dpiaActivities) {
       const hasCompletedDpia = records.some((d: any) =>
         d.status === 'completed' &&
         Array.isArray(d.processingActivityIds) &&
@@ -103,7 +105,7 @@ async function calculateDpiaScore(orgId: string) {
     }
   }
 
-  const baseDpiaScore = activities.length > 0 ? (completed / activities.length) * 100 : 100;
+  const baseDpiaScore = dpiaActivities.length > 0 ? (completed / dpiaActivities.length) * 100 : 100;
 
   // Apply percentage-based penalties for unmitigated DPIA residual risk gaps
   const openDpiaGaps = await db.query.complianceGaps.findMany({
@@ -173,6 +175,7 @@ async function calculateTrainingScore(orgId: string) {
 
   const usersCountResult = await db.query.users.findMany({
     where: eq(users.organizationId, orgId),
+    columns: { id: true },
   });
 
   if (usersCountResult.length === 0 || completions.length === 0) return 100;
@@ -183,20 +186,7 @@ async function calculateTrainingScore(orgId: string) {
   return Math.max(0, Math.min(100, score));
 }
 
-async function calculateTransferScore(orgId: string) {
-  // A simplistic transfer score:
-  // If transfers exist, ensure they have mechanisms or TIA completed
-  const transfers = await db.query.processingTransfers.findMany({
-    // Fetch transfers manually via join if needed or assume we query activities first
-  });
-
-  const activities = await db.query.processingActivities.findMany({
-    where: and(
-      eq(processingActivities.organizationId, orgId),
-      isNull(processingActivities.deletedAt),
-    ),
-  });
-
+async function calculateTransferScore(activities: any[]) {
   if (activities.length === 0) return 100;
 
   const orgTransfers = await db.query.processingTransfers.findMany({

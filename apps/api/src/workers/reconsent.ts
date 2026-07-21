@@ -8,6 +8,7 @@ import { createQueue } from '../lib/queue.js';
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { trackAiUsage } from '../lib/billing.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,6 +70,8 @@ Respond in strict JSON format with exactly three fields:
 3. "reasoning": A 1-2 sentence explanation of why.
 
 JSON format only:`;
+
+      await trackAiUsage(organizationId, 1);
 
       const response = await anthropic.messages.create({
         model: 'claude-3-5-sonnet-20240620',

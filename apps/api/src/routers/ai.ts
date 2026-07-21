@@ -22,6 +22,7 @@ import { TRPCError } from '@trpc/server';
 import { PDFParse } from 'pdf-parse';
 import crypto from 'crypto';
 import { calculateVendorRisk } from './vendors.js';
+import { trackAiUsage } from '../lib/billing.js';
 
 const ai = new GoogleGenAI({
   vertexai: true,
@@ -534,28 +535,9 @@ export const aiRouter = router({
       const orgId = ctx.user!.orgId;
       const { locale } = input;
       
+      
       // 1. Rate Limiting Check
-      const org = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.id, orgId)
-      });
-      
-      if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
-      
-      // Reset logic could be run via cron, or checked here
-      let limit = 10;
-      if (org.subscriptionTier === 'professional') limit = 50;
-      if (org.subscriptionTier === 'agency') limit = 200;
-      
-      if ((org.aiQueriesUsed || 0) >= limit) {
-        throw new TRPCError({ 
-          code: 'TOO_MANY_REQUESTS', 
-          message: `Daily AI limit reached (${limit}/${limit}). Please upgrade your plan.`
-        });
-      }
-      
-      await ctx.db.update(organizations)
-        .set({ aiQueriesUsed: (org.aiQueriesUsed || 0) + 1 })
-        .where(eq(organizations.id, orgId));
+      await trackAiUsage(orgId, 1);
  
       // 2. Topic Shift & Context Retrieval
       let RAGQuery = input.question;
@@ -602,6 +584,11 @@ export const aiRouter = router({
       `);
       const vendorCount = Number(vendorsCountResult.rows?.[0]?.count || 0);
  
+      const org = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, orgId)
+      });
+      if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
+
       const orgContext = {
         orgName: org.name,
         industry: org.industry || 'general',

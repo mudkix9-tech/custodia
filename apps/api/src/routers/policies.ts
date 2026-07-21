@@ -10,6 +10,7 @@ import { eq, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { diffWords } from 'diff';
 import { Anthropic } from '@anthropic-ai/sdk';
+import { trackAiUsage } from '../lib/billing.js';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
@@ -20,7 +21,7 @@ const checkOrgContext = (user: any) => {
 };
 
 // Policy Generation Template Engine
-export async function generatePolicyMarkdown(orgId: string, previousMarkdown?: string) {
+export async function generatePolicyMarkdown(ctx: any, orgId: string, previousMarkdown?: string) {
   const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, orgId));
   if (!org) return { markdown: '', diffs: null, hasChanges: false };
   
@@ -63,6 +64,8 @@ ${previousMarkdown || '(No current policy)'}
 === CURRENT ROPA & VENDORS ===
 ${currentRopaState}
 `;
+
+    await trackAiUsage(orgId, 1);
 
     const msg = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20240620',
@@ -164,7 +167,7 @@ export const policiesRouter = router({
         ? await ctx.db.select().from(policyVersions).where(eq(policyVersions.id, policy.currentVersionId))
         : [null];
 
-      const { markdown, diffs } = await generatePolicyMarkdown(ctx.user!.orgId, currentVersion?.contentMarkdown);
+      const { markdown, diffs } = await generatePolicyMarkdown(ctx, ctx.user!.orgId, currentVersion?.contentMarkdown);
       
       const [newVersion] = await ctx.db.insert(policyVersions).values({
         policyId: policy!.id,
