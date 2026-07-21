@@ -21,13 +21,13 @@ const checkOrgContext = (user: any) => {
 };
 
 // Policy Generation Template Engine
-export async function generatePolicyMarkdown(ctx: any, orgId: string, previousMarkdown?: string) {
-  const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, orgId));
+export async function generatePolicyMarkdown(orgId: string, previousMarkdown?: string) {
+  const [org] = await db.select().from(organizations).where(eq(organizations.id, orgId));
   if (!org) return { markdown: '', diffs: null, hasChanges: false };
   
   // Fetch ROPA data
-  const activities = await ctx.db.select().from(processingActivities).where(eq(processingActivities.organizationId, orgId));
-  const orgVends = await ctx.db.select({
+  const activities = await db.select().from(processingActivities).where(eq(processingActivities.organizationId, orgId));
+  const orgVends = await db.select({
     orgVendor: organizationVendors,
     vendor: vendors
   }).from(organizationVendors)
@@ -167,7 +167,7 @@ export const policiesRouter = router({
         ? await ctx.db.select().from(policyVersions).where(eq(policyVersions.id, policy.currentVersionId))
         : [null];
 
-      const { markdown, diffs } = await generatePolicyMarkdown(ctx, ctx.user!.orgId, currentVersion?.contentMarkdown);
+      const { markdown, diffs } = await generatePolicyMarkdown(ctx.user!.orgId, currentVersion?.contentMarkdown);
       
       const [newVersion] = await ctx.db.insert(policyVersions).values({
         policyId: policy!.id,
