@@ -10,7 +10,8 @@
   "scripts": {
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
-    "migrate": "tsx src/migrate.ts"
+    "migrate": "tsx src/migrate.ts",
+    "gather:vendors": "tsx src/scripts/gather-vendors.ts"
   },
   "keywords": [],
   "author": "",
@@ -29,7 +30,7 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "openai": "^6.37.0",
-    "pdf-parse": "^2.4.5",
+    "pdf-parse": "^1.1.1",
     "pg": "^8.20.0",
     "postgres": "^3.4.9"
   }

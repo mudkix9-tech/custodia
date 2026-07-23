@@ -8,17 +8,49 @@
     "description": "Cloud productivity and collaboration tools including Gmail, Drive, Docs, and Meet.",
     "category": "productivity",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "IE", "NL", "FI", "BE"],
+    "dataProcessingLocations": [
+      "US",
+      "IE",
+      "NL",
+      "FI",
+      "BE"
+    ],
     "dpaUrl": "https://workspace.google.com/terms/dpa_terms.html",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://policies.google.com/privacy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["iso27001", "iso27017", "iso27018", "soc2", "soc3"],
+    "securityCertifications": [
+      "iso27001",
+      "iso27017",
+      "iso27018",
+      "soc2",
+      "soc3"
+    ],
     "subProcessorListUrl": "https://workspace.google.com/intl/en/terms/subprocessors.html",
-    "aliases": ["G Suite", "Gmail", "Google Drive", "Google Docs"],
-    "typicalDataCategories": ["name", "email", "ip_address", "documents", "calendar_events"],
-    "suggestedForIndustries": ["software", "marketing", "healthcare", "finance", "education"]
+    "aliases": [
+      "G Suite",
+      "Gmail",
+      "Google Drive",
+      "Google Docs"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "ip_address",
+      "documents",
+      "calendar_events"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "marketing",
+      "healthcare",
+      "finance",
+      "education"
+    ]
   },
   {
     "isGlobal": true,
@@ -29,17 +61,49 @@
     "description": "Comprehensive, evolving cloud computing platform provided by Amazon.",
     "category": "cloud_infrastructure",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "IE", "DE", "FR", "SE", "IT"],
+    "dataProcessingLocations": [
+      "US",
+      "IE",
+      "DE",
+      "FR",
+      "SE",
+      "IT"
+    ],
     "dpaUrl": "https://d1.awsstatic.com/legal/aws-gdpr/AWS_GDPR_DPA.pdf",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://aws.amazon.com/privacy/",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["iso27001", "iso27017", "iso27018", "soc1", "soc2", "soc3"],
+    "securityCertifications": [
+      "iso27001",
+      "iso27017",
+      "iso27018",
+      "soc1",
+      "soc2",
+      "soc3"
+    ],
     "subProcessorListUrl": "https://aws.amazon.com/compliance/sub-processors/",
-    "aliases": ["AWS", "Amazon S3", "Amazon EC2", "AWS Lambda"],
-    "typicalDataCategories": ["ip_address", "server_logs", "user_content", "customer_data"],
-    "suggestedForIndustries": ["software", "ecommerce", "finance", "healthcare"]
+    "aliases": [
+      "AWS",
+      "Amazon S3",
+      "Amazon EC2",
+      "AWS Lambda"
+    ],
+    "typicalDataCategories": [
+      "ip_address",
+      "server_logs",
+      "user_content",
+      "customer_data"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "ecommerce",
+      "finance",
+      "healthcare"
+    ]
   },
   {
     "isGlobal": true,
@@ -50,17 +114,45 @@
     "description": "Cloud computing service created by Microsoft for building, testing, deploying, and managing applications.",
     "category": "cloud_infrastructure",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "IE", "NL", "FR", "DE"],
+    "dataProcessingLocations": [
+      "US",
+      "IE",
+      "NL",
+      "FR",
+      "DE"
+    ],
     "dpaUrl": "https://www.microsoft.com/licensing/docs/view/Microsoft-Products-and-Services-Data-Protection-Addendum-DPA",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://privacy.microsoft.com/en-us/privacystatement",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["iso27001", "iso27018", "soc1", "soc2", "soc3"],
+    "securityCertifications": [
+      "iso27001",
+      "iso27018",
+      "soc1",
+      "soc2",
+      "soc3"
+    ],
     "subProcessorListUrl": "https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE2H1D6",
-    "aliases": ["Azure", "Microsoft Cloud"],
-    "typicalDataCategories": ["ip_address", "server_logs", "user_content", "customer_data"],
-    "suggestedForIndustries": ["software", "finance", "enterprise", "healthcare"]
+    "aliases": [
+      "Azure",
+      "Microsoft Cloud"
+    ],
+    "typicalDataCategories": [
+      "ip_address",
+      "server_logs",
+      "user_content",
+      "customer_data"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "finance",
+      "enterprise",
+      "healthcare"
+    ]
   },
   {
     "isGlobal": true,
@@ -71,17 +163,42 @@
     "description": "Business communication platform offering chat rooms, private groups, and direct messaging.",
     "category": "communication",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "DE"],
+    "dataProcessingLocations": [
+      "US",
+      "DE"
+    ],
     "dpaUrl": "https://slack.com/terms-of-service/data-processing",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://slack.com/trust/privacy/privacy-policy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["iso27001", "iso27018", "soc2", "soc3"],
+    "securityCertifications": [
+      "iso27001",
+      "iso27018",
+      "soc2",
+      "soc3"
+    ],
     "subProcessorListUrl": "https://slack.com/trust/privacy/subprocessors",
-    "aliases": ["Slack Technologies", "Slack by Salesforce"],
-    "typicalDataCategories": ["name", "email", "chat_messages", "ip_address", "files"],
-    "suggestedForIndustries": ["software", "marketing", "media", "agency"]
+    "aliases": [
+      "Slack Technologies",
+      "Slack by Salesforce"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "chat_messages",
+      "ip_address",
+      "files"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "marketing",
+      "media",
+      "agency"
+    ]
   },
   {
     "isGlobal": true,
@@ -92,17 +209,41 @@
     "description": "Online payment processing for internet businesses.",
     "category": "payments",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "IE"],
+    "dataProcessingLocations": [
+      "US",
+      "IE"
+    ],
     "dpaUrl": "https://stripe.com/legal/dpa",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://stripe.com/privacy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["pci_dss_level_1", "soc1", "soc2"],
+    "securityCertifications": [
+      "pci_dss_level_1",
+      "soc1",
+      "soc2"
+    ],
     "subProcessorListUrl": "https://stripe.com/legal/subprocessors",
-    "aliases": ["Stripe Inc", "Stripe Payments"],
-    "typicalDataCategories": ["name", "email", "billing_address", "credit_card_data", "ip_address"],
-    "suggestedForIndustries": ["ecommerce", "software", "retail", "services"]
+    "aliases": [
+      "Stripe Inc",
+      "Stripe Payments"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "billing_address",
+      "credit_card_data",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "ecommerce",
+      "software",
+      "retail",
+      "services"
+    ]
   },
   {
     "isGlobal": true,
@@ -113,17 +254,39 @@
     "description": "Provider of Internet hosting for software development and version control using Git.",
     "category": "engineering",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US"],
+    "dataProcessingLocations": [
+      "US"
+    ],
     "dpaUrl": "https://docs.github.com/en/site-policy/privacy-policies/github-data-protection-agreement",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": false,
-    "securityCertifications": ["soc1", "soc2", "iso27001"],
+    "securityCertifications": [
+      "soc1",
+      "soc2",
+      "iso27001"
+    ],
     "subProcessorListUrl": "https://docs.github.com/en/site-policy/privacy-policies/github-subprocessors-and-cookies",
-    "aliases": ["GitHub Enterprise", "GitHub Inc", "Microsoft GitHub"],
-    "typicalDataCategories": ["name", "email", "source_code", "ip_address"],
-    "suggestedForIndustries": ["software", "engineering_agency", "enterprise"]
+    "aliases": [
+      "GitHub Enterprise",
+      "GitHub Inc",
+      "Microsoft GitHub"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "source_code",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "engineering_agency",
+      "enterprise"
+    ]
   },
   {
     "isGlobal": true,
@@ -134,17 +297,41 @@
     "description": "Developer and marketer of software products for inbound marketing, sales, and customer service.",
     "category": "crm",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "DE"],
+    "dataProcessingLocations": [
+      "US",
+      "DE"
+    ],
     "dpaUrl": "https://legal.hubspot.com/dpa",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://legal.hubspot.com/privacy-policy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "soc3", "iso27001"],
+    "securityCertifications": [
+      "soc2",
+      "soc3",
+      "iso27001"
+    ],
     "subProcessorListUrl": "https://legal.hubspot.com/sub-processors-page",
-    "aliases": ["HubSpot CRM", "HubSpot Marketing"],
-    "typicalDataCategories": ["name", "email", "phone_number", "company_name", "web_tracking_data"],
-    "suggestedForIndustries": ["marketing", "sales", "agency", "ecommerce"]
+    "aliases": [
+      "HubSpot CRM",
+      "HubSpot Marketing"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "phone_number",
+      "company_name",
+      "web_tracking_data"
+    ],
+    "suggestedForIndustries": [
+      "marketing",
+      "sales",
+      "agency",
+      "ecommerce"
+    ]
   },
   {
     "isGlobal": true,
@@ -155,17 +342,45 @@
     "description": "Cloud-based software company providing customer relationship management (CRM) software and applications.",
     "category": "crm",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "DE", "FR", "UK"],
+    "dataProcessingLocations": [
+      "US",
+      "DE",
+      "FR",
+      "UK"
+    ],
     "dpaUrl": "https://www.salesforce.com/content/dam/web/en_us/www/documents/legal/Agreements/data-processing-addendum.pdf",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.salesforce.com/company/privacy/",
-    "transferMechanisms": ["dpf", "bcr"],
+    "transferMechanisms": [
+      "dpf",
+      "bcr"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["iso27001", "iso27018", "soc2", "soc3"],
+    "securityCertifications": [
+      "iso27001",
+      "iso27018",
+      "soc2",
+      "soc3"
+    ],
     "subProcessorListUrl": "https://www.salesforce.com/company/legal/trust-and-compliance-documentation/",
-    "aliases": ["Sales Cloud", "Service Cloud", "Salesforce CRM"],
-    "typicalDataCategories": ["name", "email", "phone_number", "company_name", "job_title"],
-    "suggestedForIndustries": ["enterprise", "sales", "finance", "healthcare"]
+    "aliases": [
+      "Sales Cloud",
+      "Service Cloud",
+      "Salesforce CRM"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "phone_number",
+      "company_name",
+      "job_title"
+    ],
+    "suggestedForIndustries": [
+      "enterprise",
+      "sales",
+      "finance",
+      "healthcare"
+    ]
   },
   {
     "isGlobal": true,
@@ -176,17 +391,41 @@
     "description": "Communications platform that allows users to connect with video, audio, phone, and chat.",
     "category": "communication",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "DE", "NL"],
+    "dataProcessingLocations": [
+      "US",
+      "DE",
+      "NL"
+    ],
     "dpaUrl": "https://explore.zoom.us/en/privacy-and-legal/zoom-global-dpa/",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://explore.zoom.us/en/privacy/",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "iso27001"],
+    "securityCertifications": [
+      "soc2",
+      "iso27001"
+    ],
     "subProcessorListUrl": "https://explore.zoom.us/en/subprocessors/",
-    "aliases": ["Zoom Video Communications", "Zoom Meetings"],
-    "typicalDataCategories": ["name", "email", "ip_address", "voice_audio", "video_feed"],
-    "suggestedForIndustries": ["software", "education", "finance", "healthcare"]
+    "aliases": [
+      "Zoom Video Communications",
+      "Zoom Meetings"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "ip_address",
+      "voice_audio",
+      "video_feed"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "education",
+      "finance",
+      "healthcare"
+    ]
   },
   {
     "isGlobal": true,
@@ -197,17 +436,37 @@
     "description": "Productivity and note-taking web application offering organizational tools including task management, project tracking, to-do lists, bookmarking.",
     "category": "productivity",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US"],
+    "dataProcessingLocations": [
+      "US"
+    ],
     "dpaUrl": "https://www.notion.so/Data-Processing-Addendum-842245b0a3994ef5824cff0fc5fec323",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.notion.so/Privacy-Policy-3468d120cf614d4c9014c09d6adc9091",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": false,
-    "securityCertifications": ["soc2", "iso27001"],
+    "securityCertifications": [
+      "soc2",
+      "iso27001"
+    ],
     "subProcessorListUrl": "https://www.notion.so/Sub-processors-60dc9ee930514107b32c66d217ed176d",
-    "aliases": ["Notion Labs"],
-    "typicalDataCategories": ["name", "email", "documents", "ip_address"],
-    "suggestedForIndustries": ["software", "agency", "education", "media"]
+    "aliases": [
+      "Notion Labs"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "documents",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "agency",
+      "education",
+      "media"
+    ]
   },
   {
     "isGlobal": true,
@@ -218,17 +477,38 @@
     "description": "Marketing automation platform and email marketing service.",
     "category": "marketing",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US"],
+    "dataProcessingLocations": [
+      "US"
+    ],
     "dpaUrl": "https://mailchimp.com/legal/data-processing-addendum/",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://mailchimp.com/legal/privacy/",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": false,
-    "securityCertifications": ["soc2", "iso27001"],
+    "securityCertifications": [
+      "soc2",
+      "iso27001"
+    ],
     "subProcessorListUrl": "https://mailchimp.com/legal/subprocessors/",
-    "aliases": ["Intuit Mailchimp", "Mandrill"],
-    "typicalDataCategories": ["name", "email", "ip_address", "web_tracking_data"],
-    "suggestedForIndustries": ["ecommerce", "marketing", "media", "retail"]
+    "aliases": [
+      "Intuit Mailchimp",
+      "Mandrill"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "ip_address",
+      "web_tracking_data"
+    ],
+    "suggestedForIndustries": [
+      "ecommerce",
+      "marketing",
+      "media",
+      "retail"
+    ]
   },
   {
     "isGlobal": true,
@@ -239,17 +519,42 @@
     "description": "Customer service software and support ticketing system.",
     "category": "support",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "IE", "DE"],
+    "dataProcessingLocations": [
+      "US",
+      "IE",
+      "DE"
+    ],
     "dpaUrl": "https://www.zendesk.com/company/privacy-and-data-protection/data-processing-agreement/",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.zendesk.com/company/agreements-and-terms/privacy-notice/",
-    "transferMechanisms": ["dpf", "bcr"],
+    "transferMechanisms": [
+      "dpf",
+      "bcr"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "iso27001", "iso27018"],
+    "securityCertifications": [
+      "soc2",
+      "iso27001",
+      "iso27018"
+    ],
     "subProcessorListUrl": "https://www.zendesk.com/company/privacy-and-data-protection/sub-processors/",
-    "aliases": ["Zendesk Support", "Zendesk Chat"],
-    "typicalDataCategories": ["name", "email", "chat_messages", "support_tickets", "ip_address"],
-    "suggestedForIndustries": ["ecommerce", "software", "retail", "services"]
+    "aliases": [
+      "Zendesk Support",
+      "Zendesk Chat"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "chat_messages",
+      "support_tickets",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "ecommerce",
+      "software",
+      "retail",
+      "services"
+    ]
   },
   {
     "isGlobal": true,
@@ -260,17 +565,39 @@
     "description": "Customer communications platform that shows you who is using your product and makes it easy to personally communicate with them.",
     "category": "support",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "IE", "AU"],
+    "dataProcessingLocations": [
+      "US",
+      "IE",
+      "AU"
+    ],
     "dpaUrl": "https://www.intercom.com/legal/data-processing-agreement",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.intercom.com/legal/privacy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "iso27001"],
+    "securityCertifications": [
+      "soc2",
+      "iso27001"
+    ],
     "subProcessorListUrl": "https://www.intercom.com/legal/sub-processors",
-    "aliases": ["Intercom Inc"],
-    "typicalDataCategories": ["name", "email", "ip_address", "chat_messages", "browser_fingerprint"],
-    "suggestedForIndustries": ["software", "ecommerce", "saas"]
+    "aliases": [
+      "Intercom Inc"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "ip_address",
+      "chat_messages",
+      "browser_fingerprint"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "ecommerce",
+      "saas"
+    ]
   },
   {
     "isGlobal": true,
@@ -281,17 +608,40 @@
     "description": "Web analytics service offered by Google that tracks and reports website traffic.",
     "category": "analytics",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "IE"],
+    "dataProcessingLocations": [
+      "US",
+      "IE"
+    ],
     "dpaUrl": "https://business.safety.google/adsprocessorterms/",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://policies.google.com/privacy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["iso27001", "soc2", "soc3"],
+    "securityCertifications": [
+      "iso27001",
+      "soc2",
+      "soc3"
+    ],
     "subProcessorListUrl": "https://business.safety.google/adssubprocessors/",
-    "aliases": ["GA4", "Universal Analytics"],
-    "typicalDataCategories": ["ip_address", "web_tracking_data", "device_identifiers", "location_data"],
-    "suggestedForIndustries": ["marketing", "ecommerce", "media", "software"]
+    "aliases": [
+      "GA4",
+      "Universal Analytics"
+    ],
+    "typicalDataCategories": [
+      "ip_address",
+      "web_tracking_data",
+      "device_identifiers",
+      "location_data"
+    ],
+    "suggestedForIndustries": [
+      "marketing",
+      "ecommerce",
+      "media",
+      "software"
+    ]
   },
   {
     "isGlobal": true,
@@ -302,17 +652,38 @@
     "description": "Collaborative web application for interface design.",
     "category": "design",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US"],
+    "dataProcessingLocations": [
+      "US"
+    ],
     "dpaUrl": "https://www.figma.com/dpa/",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.figma.com/privacy/",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": false,
-    "securityCertifications": ["soc2", "soc3", "iso27001"],
+    "securityCertifications": [
+      "soc2",
+      "soc3",
+      "iso27001"
+    ],
     "subProcessorListUrl": "https://www.figma.com/subprocessors/",
-    "aliases": ["Figma Inc"],
-    "typicalDataCategories": ["name", "email", "design_files", "ip_address"],
-    "suggestedForIndustries": ["software", "agency", "media", "design"]
+    "aliases": [
+      "Figma Inc"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "design_files",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "agency",
+      "media",
+      "design"
+    ]
   },
   {
     "isGlobal": true,
@@ -323,17 +694,44 @@
     "description": "Software company that develops products for software developers, project managers, and content management.",
     "category": "productivity",
     "headquartersCountry": "AU",
-    "dataProcessingLocations": ["US", "AU", "DE", "IE"],
+    "dataProcessingLocations": [
+      "US",
+      "AU",
+      "DE",
+      "IE"
+    ],
     "dpaUrl": "https://www.atlassian.com/legal/data-processing-addendum",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.atlassian.com/legal/privacy-policy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "soc3", "iso27001", "iso27018"],
+    "securityCertifications": [
+      "soc2",
+      "soc3",
+      "iso27001",
+      "iso27018"
+    ],
     "subProcessorListUrl": "https://www.atlassian.com/legal/sub-processors",
-    "aliases": ["Jira", "Confluence", "Trello", "Bitbucket"],
-    "typicalDataCategories": ["name", "email", "documents", "ip_address"],
-    "suggestedForIndustries": ["software", "enterprise", "agency"]
+    "aliases": [
+      "Jira",
+      "Confluence",
+      "Trello",
+      "Bitbucket"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "documents",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "enterprise",
+      "agency"
+    ]
   },
   {
     "isGlobal": true,
@@ -344,17 +742,36 @@
     "description": "Business analytics service company that tracks user interactions with web and mobile applications.",
     "category": "analytics",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "NL"],
+    "dataProcessingLocations": [
+      "US",
+      "NL"
+    ],
     "dpaUrl": "https://mixpanel.com/legal/dpa/",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://mixpanel.com/legal/privacy-policy/",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2"],
+    "securityCertifications": [
+      "soc2"
+    ],
     "subProcessorListUrl": "https://mixpanel.com/legal/subprocessors/",
-    "aliases": ["Mixpanel Inc"],
-    "typicalDataCategories": ["user_identifiers", "web_tracking_data", "device_identifiers", "ip_address"],
-    "suggestedForIndustries": ["software", "mobile_apps", "ecommerce"]
+    "aliases": [
+      "Mixpanel Inc"
+    ],
+    "typicalDataCategories": [
+      "user_identifiers",
+      "web_tracking_data",
+      "device_identifiers",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "mobile_apps",
+      "ecommerce"
+    ]
   },
   {
     "isGlobal": true,
@@ -365,17 +782,31 @@
     "description": "Lightweight and open-source web analytics tool. No cookies and fully compliant with GDPR, CCPA and PECR.",
     "category": "analytics",
     "headquartersCountry": "EE",
-    "dataProcessingLocations": ["DE"],
+    "dataProcessingLocations": [
+      "DE"
+    ],
     "dpaUrl": "https://plausible.io/data-processing-agreement",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://plausible.io/privacy",
-    "transferMechanisms": ["adequacy"],
+    "transferMechanisms": [
+      "adequacy"
+    ],
     "euHostingAvailable": true,
     "securityCertifications": [],
     "subProcessorListUrl": "https://plausible.io/privacy#subprocessors",
-    "aliases": ["Plausible Analytics OÜ"],
-    "typicalDataCategories": ["anonymous_web_tracking_data", "country_location"],
-    "suggestedForIndustries": ["software", "marketing", "ecommerce", "media"]
+    "aliases": [
+      "Plausible Analytics OÜ"
+    ],
+    "typicalDataCategories": [
+      "anonymous_web_tracking_data",
+      "country_location"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "marketing",
+      "ecommerce",
+      "media"
+    ]
   },
   {
     "isGlobal": true,
@@ -386,17 +817,38 @@
     "description": "Application monitoring and error tracking software.",
     "category": "engineering",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US"],
+    "dataProcessingLocations": [
+      "US"
+    ],
     "dpaUrl": "https://sentry.io/legal/dpa/",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://sentry.io/privacy/",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": false,
-    "securityCertifications": ["soc2", "iso27001", "pci_dss"],
+    "securityCertifications": [
+      "soc2",
+      "iso27001",
+      "pci_dss"
+    ],
     "subProcessorListUrl": "https://sentry.io/legal/subprocessors/",
-    "aliases": ["Functional Software, Inc.", "Sentry.io"],
-    "typicalDataCategories": ["ip_address", "error_logs", "user_identifiers", "device_identifiers"],
-    "suggestedForIndustries": ["software", "mobile_apps", "enterprise"]
+    "aliases": [
+      "Functional Software, Inc.",
+      "Sentry.io"
+    ],
+    "typicalDataCategories": [
+      "ip_address",
+      "error_logs",
+      "user_identifiers",
+      "device_identifiers"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "mobile_apps",
+      "enterprise"
+    ]
   },
   {
     "isGlobal": true,
@@ -407,17 +859,39 @@
     "description": "Observability service for cloud-scale applications, providing monitoring of servers, databases, tools, and services.",
     "category": "engineering",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "IE"],
+    "dataProcessingLocations": [
+      "US",
+      "IE"
+    ],
     "dpaUrl": "https://www.datadoghq.com/legal/dataprocessingaddendum/",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.datadoghq.com/legal/privacy/",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "iso27001", "iso27017", "iso27018", "pci_dss"],
+    "securityCertifications": [
+      "soc2",
+      "iso27001",
+      "iso27017",
+      "iso27018",
+      "pci_dss"
+    ],
     "subProcessorListUrl": "https://www.datadoghq.com/legal/subprocessors/",
-    "aliases": ["Datadog Inc"],
-    "typicalDataCategories": ["ip_address", "server_logs", "performance_metrics"],
-    "suggestedForIndustries": ["software", "enterprise", "finance"]
+    "aliases": [
+      "Datadog Inc"
+    ],
+    "typicalDataCategories": [
+      "ip_address",
+      "server_logs",
+      "performance_metrics"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "enterprise",
+      "finance"
+    ]
   },
   {
     "isGlobal": true,
@@ -428,17 +902,40 @@
     "description": "Web performance and security company that provides content delivery network services, DDoS mitigation, internet security.",
     "category": "cloud_infrastructure",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US"],
+    "dataProcessingLocations": [
+      "US"
+    ],
     "dpaUrl": "https://www.cloudflare.com/cloudflare-customer-dpa/",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.cloudflare.com/privacypolicy/",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "soc3", "iso27001", "iso27701", "pci_dss"],
+    "securityCertifications": [
+      "soc2",
+      "soc3",
+      "iso27001",
+      "iso27701",
+      "pci_dss"
+    ],
     "subProcessorListUrl": "https://www.cloudflare.com/cloudflare-subprocessors/",
-    "aliases": ["Cloudflare Inc"],
-    "typicalDataCategories": ["ip_address", "web_traffic", "device_identifiers", "location_data"],
-    "suggestedForIndustries": ["software", "ecommerce", "media", "enterprise"]
+    "aliases": [
+      "Cloudflare Inc"
+    ],
+    "typicalDataCategories": [
+      "ip_address",
+      "web_traffic",
+      "device_identifiers",
+      "location_data"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "ecommerce",
+      "media",
+      "enterprise"
+    ]
   },
   {
     "isGlobal": true,
@@ -449,17 +946,36 @@
     "description": "Cloud platform for static sites and Serverless Functions that fits perfectly with your workflow.",
     "category": "cloud_infrastructure",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US"],
+    "dataProcessingLocations": [
+      "US"
+    ],
     "dpaUrl": "https://vercel.com/legal/dpa",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://vercel.com/legal/privacy-policy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": false,
-    "securityCertifications": ["soc2", "soc3"],
+    "securityCertifications": [
+      "soc2",
+      "soc3"
+    ],
     "subProcessorListUrl": "https://vercel.com/legal/subprocessors",
-    "aliases": ["Vercel Inc", "Next.js"],
-    "typicalDataCategories": ["ip_address", "server_logs", "source_code"],
-    "suggestedForIndustries": ["software", "marketing", "ecommerce"]
+    "aliases": [
+      "Vercel Inc",
+      "Next.js"
+    ],
+    "typicalDataCategories": [
+      "ip_address",
+      "server_logs",
+      "source_code"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "marketing",
+      "ecommerce"
+    ]
   },
   {
     "isGlobal": true,
@@ -470,17 +986,41 @@
     "description": "Cloud communications platform as a service company allowing software developers to programmatically make and receive phone calls.",
     "category": "communication",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "IE"],
+    "dataProcessingLocations": [
+      "US",
+      "IE"
+    ],
     "dpaUrl": "https://www.twilio.com/legal/data-protection-addendum",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.twilio.com/legal/privacy",
-    "transferMechanisms": ["dpf", "bcr"],
+    "transferMechanisms": [
+      "dpf",
+      "bcr"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "iso27001", "pci_dss"],
+    "securityCertifications": [
+      "soc2",
+      "iso27001",
+      "pci_dss"
+    ],
     "subProcessorListUrl": "https://www.twilio.com/legal/sub-processors",
-    "aliases": ["Twilio Inc", "SendGrid"],
-    "typicalDataCategories": ["phone_number", "email", "sms_messages", "voice_audio", "ip_address"],
-    "suggestedForIndustries": ["software", "ecommerce", "healthcare", "logistics"]
+    "aliases": [
+      "Twilio Inc",
+      "SendGrid"
+    ],
+    "typicalDataCategories": [
+      "phone_number",
+      "email",
+      "sms_messages",
+      "voice_audio",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "ecommerce",
+      "healthcare",
+      "logistics"
+    ]
   },
   {
     "isGlobal": true,
@@ -491,17 +1031,36 @@
     "description": "Open-source product analytics built for developers.",
     "category": "analytics",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "DE"],
+    "dataProcessingLocations": [
+      "US",
+      "DE"
+    ],
     "dpaUrl": "https://posthog.com/terms/dpa",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://posthog.com/privacy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2"],
+    "securityCertifications": [
+      "soc2"
+    ],
     "subProcessorListUrl": "https://posthog.com/privacy/subprocessors",
-    "aliases": ["PostHog Inc"],
-    "typicalDataCategories": ["user_identifiers", "web_tracking_data", "device_identifiers", "ip_address"],
-    "suggestedForIndustries": ["software", "mobile_apps", "ecommerce"]
+    "aliases": [
+      "PostHog Inc"
+    ],
+    "typicalDataCategories": [
+      "user_identifiers",
+      "web_tracking_data",
+      "device_identifiers",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "mobile_apps",
+      "ecommerce"
+    ]
   },
   {
     "isGlobal": true,
@@ -512,17 +1071,35 @@
     "description": "Issue tracking tool for software teams.",
     "category": "productivity",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US"],
+    "dataProcessingLocations": [
+      "US"
+    ],
     "dpaUrl": "https://linear.app/dpa",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://linear.app/privacy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": false,
-    "securityCertifications": ["soc2"],
+    "securityCertifications": [
+      "soc2"
+    ],
     "subProcessorListUrl": "https://linear.app/subprocessors",
-    "aliases": ["LinearOrbit", "Linear App"],
-    "typicalDataCategories": ["name", "email", "documents", "ip_address"],
-    "suggestedForIndustries": ["software", "agency"]
+    "aliases": [
+      "LinearOrbit",
+      "Linear App"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "documents",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "agency"
+    ]
   },
   {
     "isGlobal": true,
@@ -533,17 +1110,42 @@
     "description": "File hosting service that offers cloud storage, file synchronization, personal cloud, and client software.",
     "category": "productivity",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "DE"],
+    "dataProcessingLocations": [
+      "US",
+      "DE"
+    ],
     "dpaUrl": "https://www.dropbox.com/privacy#business_agreement",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.dropbox.com/privacy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["iso27001", "iso27018", "soc2", "soc3"],
+    "securityCertifications": [
+      "iso27001",
+      "iso27018",
+      "soc2",
+      "soc3"
+    ],
     "subProcessorListUrl": "https://www.dropbox.com/business/trust/compliance/subprocessors",
-    "aliases": ["Dropbox Inc", "Dropbox Sign"],
-    "typicalDataCategories": ["name", "email", "documents", "ip_address", "files"],
-    "suggestedForIndustries": ["software", "agency", "education", "enterprise"]
+    "aliases": [
+      "Dropbox Inc",
+      "Dropbox Sign"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "documents",
+      "ip_address",
+      "files"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "agency",
+      "education",
+      "enterprise"
+    ]
   },
   {
     "isGlobal": true,
@@ -554,17 +1156,38 @@
     "description": "Provides a cloud-based payroll, benefits, and human resource management software for businesses.",
     "category": "hr",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US"],
+    "dataProcessingLocations": [
+      "US"
+    ],
     "dpaUrl": "https://gusto.com/about/terms/data-processing-addendum",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://gusto.com/about/privacy",
-    "transferMechanisms": ["scc"],
+    "transferMechanisms": [
+      "scc"
+    ],
     "euHostingAvailable": false,
-    "securityCertifications": ["soc2", "iso27001"],
+    "securityCertifications": [
+      "soc2",
+      "iso27001"
+    ],
     "subProcessorListUrl": "https://gusto.com/about/terms/subprocessors",
-    "aliases": ["ZenPayroll"],
-    "typicalDataCategories": ["name", "email", "ssn", "financial_data", "health_data", "home_address"],
-    "suggestedForIndustries": ["software", "retail", "services", "finance"]
+    "aliases": [
+      "ZenPayroll"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "ssn",
+      "financial_data",
+      "health_data",
+      "home_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "retail",
+      "services",
+      "finance"
+    ]
   },
   {
     "isGlobal": true,
@@ -575,17 +1198,39 @@
     "description": "Global payroll and compliance platform built to help businesses hire anyone, anywhere.",
     "category": "hr",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "DE"],
+    "dataProcessingLocations": [
+      "US",
+      "DE"
+    ],
     "dpaUrl": "https://www.deel.com/data-processing-agreement",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.deel.com/privacy-policy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "iso27001"],
+    "securityCertifications": [
+      "soc2",
+      "iso27001"
+    ],
     "subProcessorListUrl": "https://www.deel.com/subprocessors",
-    "aliases": ["Deel Inc"],
-    "typicalDataCategories": ["name", "email", "financial_data", "identification_documents", "home_address"],
-    "suggestedForIndustries": ["software", "agency", "services", "enterprise"]
+    "aliases": [
+      "Deel Inc"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "financial_data",
+      "identification_documents",
+      "home_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "agency",
+      "services",
+      "enterprise"
+    ]
   },
   {
     "isGlobal": true,
@@ -596,17 +1241,40 @@
     "description": "Web and mobile application designed to help teams organize, track, and manage their work.",
     "category": "productivity",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "DE"],
+    "dataProcessingLocations": [
+      "US",
+      "DE"
+    ],
     "dpaUrl": "https://asana.com/terms/data-processing-terms",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://asana.com/terms/privacy-statement",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "soc3", "iso27001", "iso27018"],
+    "securityCertifications": [
+      "soc2",
+      "soc3",
+      "iso27001",
+      "iso27018"
+    ],
     "subProcessorListUrl": "https://asana.com/terms/subprocessors",
-    "aliases": ["Asana Inc"],
-    "typicalDataCategories": ["name", "email", "documents", "ip_address"],
-    "suggestedForIndustries": ["software", "marketing", "agency", "media"]
+    "aliases": [
+      "Asana Inc"
+    ],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "documents",
+      "ip_address"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "marketing",
+      "agency",
+      "media"
+    ]
   },
   {
     "isGlobal": true,
@@ -617,16 +1285,235 @@
     "description": "Unified data analytics platform for massive scale data engineering, data science and machine learning.",
     "category": "engineering",
     "headquartersCountry": "US",
-    "dataProcessingLocations": ["US", "IE", "DE"],
+    "dataProcessingLocations": [
+      "US",
+      "IE",
+      "DE"
+    ],
     "dpaUrl": "https://www.databricks.com/dpa",
     "dpaAvailable": true,
     "privacyPolicyUrl": "https://www.databricks.com/privacypolicy",
-    "transferMechanisms": ["dpf", "scc"],
+    "transferMechanisms": [
+      "dpf",
+      "scc"
+    ],
     "euHostingAvailable": true,
-    "securityCertifications": ["soc2", "iso27001", "iso27018", "pci_dss"],
-    "subProcessorListUrl": "https://www.databricks.com/subprocessors",
-    "aliases": ["Databricks Inc"],
-    "typicalDataCategories": ["customer_data", "ip_address", "server_logs"],
-    "suggestedForIndustries": ["software", "enterprise", "finance", "healthcare"]
+    "securityCertifications": [
+      "soc2",
+      "iso27001",
+      "iso27018",
+      "pci_dss"
+    ],
+    "subProcessorListUrl": "https://www.databricks.com  /subprocessors",
+    "aliases": [
+      "Databricks Inc"
+    ],
+    "typicalDataCategories": [
+      "customer_data",
+      "ip_address",
+      "server_logs"
+    ],
+    "suggestedForIndustries": [
+      "software",
+      "enterprise",
+      "finance",
+      "healthcare"
+    ]
+  },
+  {
+    "isGlobal": true,
+    "name": "ClickUp",
+    "slug": "clickup",
+    "website": "https://www.clickup.com",
+    "logoUrl": null,
+    "description": "ClickUp is a project management software company that provides an all-in-one platform to improve workplace efficiency and collaboration.",
+    "category": "productivity",
+    "headquartersCountry": "US",
+    "dataProcessingLocations": [
+      "US",
+      "IE",
+      "AU",
+      "SG"
+    ],
+    "dpaUrl": "https://clickup.com/terms/dpa",
+    "dpaAvailable": true,
+    "privacyPolicyUrl": "https://clickup.com/terms/privacy",
+    "transferMechanisms": [
+      "scc"
+    ],
+    "euHostingAvailable": true,
+    "securityCertifications": [
+      "soc2",
+      "iso27001",
+      "iso27017",
+      "iso27018",
+      "iso27701",
+      "iso42001",
+      "pci dss"
+    ],
+    "subProcessorListUrl": "https://clickup.com/terms/dpa/subprocessors",
+    "aliases": [],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "IP address"
+    ],
+    "suggestedForIndustries": [
+      "productivity"
+    ],
+    "provenance": {
+      "source": "automated_rag_search",
+      "generatedAt": "2026-07-22T06:49:18.179Z",
+      "verificationStatus": "verified_probed_success",
+      "verifiedUrls": {
+        "dpaUrl": "verified_probed_success",
+        "privacyPolicyUrl": "verified_probed_success",
+        "subProcessorListUrl": "verified_probed_success"
+      },
+      "domainVerification": {
+        "dpaUrl": true,
+        "privacyPolicyUrl": true,
+        "subProcessorListUrl": true
+      }
+    }
+  },
+  {
+    "isGlobal": true,
+    "name": "OneTrust",
+    "slug": "onetrust",
+    "website": "https://www.onetrust.com",
+    "logoUrl": null,
+    "description": "OneTrust is an American software company that develops governance, risk, and compliance (GRC) software with a focus on privacy, security, data protection, and AI governance.",
+    "category": "software",
+    "headquartersCountry": "US",
+    "dataProcessingLocations": [
+      "US",
+      "CA",
+      "BR",
+      "GB",
+      "DE",
+      "FR",
+      "CH",
+      "AU",
+      "SG",
+      "JP",
+      "IN",
+      "AE"
+    ],
+    "dpaUrl": "https://legal.onetrust.com/",
+    "dpaAvailable": true,
+    "privacyPolicyUrl": "https://www.onetrust.com/error-pages/404/",
+    "transferMechanisms": [
+      "scc",
+      "dpf"
+    ],
+    "euHostingAvailable": true,
+    "securityCertifications": [
+      "iso27001",
+      "iso27701",
+      "iso27017",
+      "soc2",
+      "pcipss",
+      "hitrust",
+      "iso9001",
+      "fedramp",
+      "tisax",
+      "ecovadis",
+      "caiq",
+      "ens"
+    ],
+    "subProcessorListUrl": "https://my.onetrust.com/s/article/List-of-Subprocessors?language=en_US",
+    "aliases": [],
+    "typicalDataCategories": [
+      "name",
+      "email"
+    ],
+    "suggestedForIndustries": [
+      "software"
+    ],
+    "provenance": {
+      "source": "automated_rag_search",
+      "generatedAt": "2026-07-22T06:51:50.834Z",
+      "verificationStatus": "verified_probed_success",
+      "verifiedUrls": {
+        "dpaUrl": "verified_probed_success",
+        "privacyPolicyUrl": "verified_probed_success",
+        "subProcessorListUrl": "partially_probed"
+      },
+      "domainVerification": {
+        "dpaUrl": true,
+        "privacyPolicyUrl": true,
+        "subProcessorListUrl": true
+      }
+    }
+  },
+  {
+    "isGlobal": true,
+    "name": "Okta",
+    "slug": "okta",
+    "website": "https://www.okta.com",
+    "logoUrl": null,
+    "description": "Okta, Inc. is an American identity and access management company that provides cloud software to help organizations manage and secure user authentication into applications, and for developers to build identity controls into applications, websites, web services, and devices.",
+    "category": "software",
+    "headquartersCountry": "US",
+    "dataProcessingLocations": [
+      "US",
+      "DE",
+      "IE",
+      "GB",
+      "SG",
+      "AU",
+      "JP",
+      "CA",
+      "IN"
+    ],
+    "dpaUrl": "https://www.okta.com/legal/trustandcompliance/",
+    "dpaAvailable": true,
+    "privacyPolicyUrl": "https://www.okta.com/legal/privacy-policy/",
+    "transferMechanisms": [
+      "scc",
+      "dpf"
+    ],
+    "euHostingAvailable": true,
+    "securityCertifications": [
+      "iso27001",
+      "iso27017",
+      "iso27018",
+      "soc1",
+      "soc2",
+      "soc3",
+      "fedramp",
+      "pci dss"
+    ],
+    "subProcessorListUrl": "https://www.okta.com/legal/trustandcompliance/",
+    "aliases": [],
+    "typicalDataCategories": [
+      "name",
+      "email",
+      "attributes",
+      "groups",
+      "passwords",
+      "ip address",
+      "usage data",
+      "device data"
+    ],
+    "suggestedForIndustries": [
+      "software"
+    ],
+    "provenance": {
+      "source": "automated_rag_search",
+      "generatedAt": "2026-07-22T06:52:15.809Z",
+      "verificationStatus": "verified_probed_success",
+      "verifiedUrls": {
+        "dpaUrl": "verified_probed_success",
+        "privacyPolicyUrl": "verified_probed_success",
+        "subProcessorListUrl": "verified_probed_success"
+      },
+      "domainVerification": {
+        "dpaUrl": true,
+        "privacyPolicyUrl": true,
+        "subProcessorListUrl": true
+      }
+    }
   }
 ]

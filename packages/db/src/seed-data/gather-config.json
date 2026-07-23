@@ -1,0 +1,26 @@
+{
+  "trustPlatforms": [
+    "safebase.us",
+    "safebase.io",
+    "vanta.com",
+    "whistic.com",
+    "drata.com",
+    "trustpage.com",
+    "trust.page"
+  ],
+  "parentCompanies": {
+    "slack.com": "salesforce.com",
+    "github.com": "microsoft.com",
+    "instagram.com": "facebook.com",
+    "whatsapp.com": "facebook.com",
+    "trello.com": "atlassian.com",
+    "jira.com": "atlassian.com",
+    "confluence.net": "atlassian.com",
+    "auth0.com": "okta.com",
+    "mailchimp.com": "intuit.com",
+    "turbotax.com": "intuit.com",
+    "quickbooks.com": "intuit.com",
+    "postmarkapp.com": "activecampaign.com",
+    "doctolib.fr": "doctolib.com"
+  }
+}
