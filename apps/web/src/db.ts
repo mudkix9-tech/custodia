@@ -4,8 +4,12 @@ import * as schema from 'db';
 
 const { Pool } = pkg;
 
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not set');
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://privaro:privaro_password@localhost:5432/privaro_db',
+  connectionString: process.env.DATABASE_URL,
 });
 
 export const db = drizzle(pool, { schema });
