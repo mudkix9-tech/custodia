@@ -17,6 +17,7 @@ import { eq, and, desc, isNull, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { Resend } from 'resend';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev';
@@ -309,7 +310,7 @@ export const dsarRouter = router({
       const [org] = await ctx.db.select().from(organizations).where(eq(organizations.slug, input.orgSlug));
       if (!org) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization not found' });
 
-      const referenceNumber = `DSAR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const referenceNumber = `DSAR-${new Date().getFullYear()}-${crypto.randomInt(1000, 10000)}`;
       const deadlineAt = new Date();
       deadlineAt.setDate(deadlineAt.getDate() + 30); // 30 days deadline
 
