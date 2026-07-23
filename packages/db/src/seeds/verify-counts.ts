@@ -6,7 +6,10 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 
 async function main() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL || 'postgres://privaro:privaro_password@localhost:5432/privaro_db' });
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL environment variable is required");
+  }
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const db = drizzle(pool);
   
   console.log("Verifying document embeddings counts by authority...");

@@ -5,8 +5,11 @@ import pg from 'pg';
 async function main() {
   console.log('Adding canonicalize_category_array function...');
   
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL environment variable is required");
+  }
   const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL || 'postgres://privaro:privaro_password@localhost:5432/privaro_db',
+    connectionString: process.env.DATABASE_URL,
   });
 
   await pool.query(`

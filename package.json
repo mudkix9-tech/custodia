@@ -18,5 +18,8 @@
     "react-hook-form": "^7.76.1",
     "recharts": "^3.8.1",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "next-intl": "^4.13.4"
   }
 }

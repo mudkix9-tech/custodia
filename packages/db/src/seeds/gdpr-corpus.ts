@@ -5,7 +5,10 @@ dotenv.config({ path: '../../.env' });
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pkg from 'pg';
 const { Pool } = pkg;
-const pool = new Pool({ connectionString: process.env.DATABASE_URL || 'postgres://privaro:privaro_password@localhost:5432/privaro_db' });
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable is required");
+}
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 import * as schema from '../schema.js';
 const db = drizzle(pool, { schema });
 import { eq, or } from 'drizzle-orm';
