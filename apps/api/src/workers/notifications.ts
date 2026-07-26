@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Worker, Queue } from 'bullmq';
 import { db } from '../db.js';
 import { notificationQueue, organizations, users , createRedisClient } from 'db';
@@ -318,7 +319,7 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
   },
 };
 
-export const notificationWorker = new Worker('notifications', async (job) => {
+export const notificationWorker = createWorker('notifications', async (job) => {
   console.log(`[NotificationWorker] Running queue processor...`);
 
   // 1. Fetch pending notifications or those that are scheduled for retry
@@ -365,7 +366,7 @@ export const notificationWorker = new Worker('notifications', async (job) => {
   }
 
   return { processed: pendingNotifications.length };
-}, { connection });
+}, { drainDelay: 15 });
 
 export async function scheduleNotificationJobs() {
   // Using enqueuePendingNotifications to fill the process-queue

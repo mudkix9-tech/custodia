@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Worker, Queue, Job } from 'bullmq';
 import { db } from '../db.js';
 import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates , createRedisClient } from 'db';
@@ -37,7 +38,7 @@ const daysUntil = (date: Date) => {
   return Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 };
 
-export const vendorWorker = new Worker('vendor-intelligence', async (job: Job) => {
+export const vendorWorker = createWorker('vendor-intelligence', async (job: Job) => {
   console.log(`[Vendor Worker] Processing job ${job.name} (ID: ${job.id})`);
 
   switch (job.name) {
@@ -597,7 +598,7 @@ export const vendorWorker = new Worker('vendor-intelligence', async (job: Job) =
     default:
       console.warn(`Unknown job: ${job.name}`);
   }
-}, process.env.NODE_ENV === 'test' ? { connection: null as any } : { connection });
+}, { drainDelay: 60 });
 
 if (vendorWorker) {
   vendorWorker.on('completed', job => {

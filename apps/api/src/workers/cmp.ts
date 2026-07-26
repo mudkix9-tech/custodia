@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Queue, Worker } from 'bullmq';
 import { db } from '../db.js';
 import { consentCookies, consentDomains, consentRecords , createRedisClient } from 'db';
@@ -32,7 +33,7 @@ function classifyCookie(name: string) {
   return { category: 'uncategorized', provider: 'Unknown' };
 }
 
-const cmpWorker = new Worker('cmp-automation', async job => {
+const cmpWorker = createWorker('cmp-automation', async job => {
   
   if (job.name === 'cookie-scanner') {
     const { domainId } = job.data;
@@ -175,7 +176,7 @@ const cmpWorker = new Worker('cmp-automation', async job => {
     }
   }
 
-}, { connection });
+}, { drainDelay: 60 });
 
 cmpWorker.on('error', (err) => console.warn('[CMP Worker] Error:', err.message));
 

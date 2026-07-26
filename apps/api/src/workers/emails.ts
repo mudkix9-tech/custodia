@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Queue, Worker, Job } from 'bullmq';
 import { Resend } from 'resend';
 import { db } from '../db.js';
@@ -26,7 +27,7 @@ type EmailJobData = {
 };
 
 // Start Worker
-export const emailWorker = new Worker<EmailJobData>('email-sequences', async (job: Job<EmailJobData>) => {
+export const emailWorker = createWorker<EmailJobData>('email-sequences', async (job: Job<EmailJobData>) => {
   console.log(`[Email Worker] Processing job ${job.id} of type ${job.data.type} for ${job.data.email}`);
   
   const { type, assessmentId, email } = job.data;
@@ -113,7 +114,7 @@ export const emailWorker = new Worker<EmailJobData>('email-sequences', async (jo
     console.error(`[Email Worker] Failed to send email to ${email}`, err);
     throw err;
   }
-}, { connection });
+}, { drainDelay: 15 });
 
 emailWorker.on('error', (err) => {
   console.warn('[Email Worker] Error:', err.message);

@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 // @ts-nocheck
 import { Worker, Queue } from 'bullmq';
 import { RDSClient, CreateDBInstanceCommand, DescribeDBInstancesCommand } from '@aws-sdk/client-rds';
@@ -35,7 +36,7 @@ async function runMigrations(connectionString: string) {
   pool.end();
 }
 
-export const residencyProvisioningWorker = new Worker('residency-provisioning', async job => {
+export const residencyProvisioningWorker = createWorker('residency-provisioning', async job => {
   const { orgId, region, orgSlug } = job.data;
 
   try {
@@ -86,4 +87,4 @@ export const residencyProvisioningWorker = new Worker('residency-provisioning', 
       .where(eq(organizations.id, orgId));
     throw error;
   }
-}, { connection });
+}, { drainDelay: 60 });

@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Worker } from 'bullmq';
 import { db } from '../db.js';
 import { regulatoryUpdateMatches, organizations, users } from 'db';
@@ -9,7 +10,7 @@ const connection = {
   port: parseInt(process.env.REDIS_PORT || '6379'),
 };
 
-export const regulatoryNotificationWorker = new Worker(
+export const regulatoryNotificationWorker = createWorker(
   'regulatory-notification-queue',
   async (job) => {
     // Note: the job payload doesn't need data since we're polling all un-notified matches
@@ -69,9 +70,7 @@ export const regulatoryNotificationWorker = new Worker(
     }
 
     return { status: 'success', matchesNotified: unnotifiedMatches.length, orgsNotified: matchesByOrg.size };
-  },
-  { connection }
-);
+  }, { drainDelay: 60 });
 
 import { Queue } from 'bullmq';
 const regulatoryNotificationQueue = new Queue('regulatory-notification-queue', { connection });

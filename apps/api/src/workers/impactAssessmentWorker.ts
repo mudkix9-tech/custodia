@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Worker, Queue, Job } from 'bullmq';
 import { db } from '../db.js';
 import { regulatoryUpdateMatches, organizations, processingActivities, vendors, dpias, documentEmbeddings , createRedisClient } from 'db';
@@ -29,7 +30,7 @@ export const impactAssessmentQueue = process.env.NODE_ENV === 'test'
   ? null as any
   : new Queue('impact-assessment', { connection });
 
-export const impactAssessmentWorker = new Worker('impact-assessment', async (job: Job) => {
+export const impactAssessmentWorker = createWorker('impact-assessment', async (job: Job) => {
   console.log(`[Impact Assessment Worker] Processing job ${job.name} (ID: ${job.id})`);
 
   if (job.name === 'impact-assessment-dispatcher') {
@@ -230,7 +231,7 @@ RECOMMENDED ACTIONS: <your recommended actions>`;
       })
       .where(eq(regulatoryUpdateMatches.id, matchId));
   }
-}, { connection: connection || undefined });
+}, { drainDelay: 15 });
 
 export async function scheduleImpactAssessmentJobs() {
   try {

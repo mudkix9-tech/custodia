@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { db } from '../db.js';
 import { vendors, organizationVendors, vendorIncidents, organizationVendorIncidentAlerts , createRedisClient } from 'db';
 import { eq, and, sql, or } from 'drizzle-orm';
@@ -306,12 +307,12 @@ export async function scrapeBreachFeeds() {
 // BullMQ Worker Initialization
 export const incidentWorker = process.env.NODE_ENV === 'test'
   ? null as any
-  : new Worker('vendor-incidents-ingest', async (job) => {
+  : createWorker('vendor-incidents-ingest', async (job) => {
       console.log(`[Incident Worker] Processing job ${job.name} (ID: ${job.id})`);
       if (job.name === 'ingest-daily') {
         await scrapeBreachFeeds();
       }
-    }, { connection });
+    }, { drainDelay: 60 });
 
 if (incidentWorker) {
   incidentWorker.on('completed', (job: any) => {

@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Worker, Queue, Job } from 'bullmq';
 import { db } from '../db.js';
 import { dpias, organizations, users , createRedisClient } from 'db';
@@ -34,7 +35,7 @@ const isUUID = (str: string) => {
   return uuidRegex.test(str);
 };
 
-export const dpiaRemindersWorker = new Worker('dpia-reminders', async (job: Job) => {
+export const dpiaRemindersWorker = createWorker('dpia-reminders', async (job: Job) => {
   console.log(`[DPIA Reminders Worker] Processing job ${job.name} (ID: ${job.id})`);
 
   if (job.name === 'dpia-mitigation-reminder-checker') {
@@ -146,7 +147,7 @@ export const dpiaRemindersWorker = new Worker('dpia-reminders', async (job: Job)
       }
     }
   }
-}, { connection: connection || undefined });
+}, { drainDelay: 60 });
 
 // Helper to queue org jobs
 export async function scheduleDpiaReminderJobs() {
@@ -168,7 +169,7 @@ export async function scheduleDpiaReminderJobs() {
 }
 
 // Another worker for the dispatcher
-export const dpiaDispatcherWorker = new Worker('dpia-reminders', async (job: Job) => {
+export const dpiaDispatcherWorker = createWorker('dpia-reminders', async (job: Job) => {
   if (job.name === 'dpia-dispatcher') {
     console.log('[DPIA Reminders] Dispatching per-org jobs...');
     const allOrgs = await db.select({ id: organizations.id }).from(organizations);
@@ -177,4 +178,4 @@ export const dpiaDispatcherWorker = new Worker('dpia-reminders', async (job: Job
       await dpiaRemindersQueue.add('dpia-mitigation-reminder-checker', { organizationId: org.id });
     }
   }
-}, { connection: connection || undefined });
+}, { drainDelay: 60 });

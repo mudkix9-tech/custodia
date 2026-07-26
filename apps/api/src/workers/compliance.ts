@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Worker, Job, Queue } from 'bullmq';
 import { db } from '../db.js';
 import { complianceGaps, complianceReports, organizations, organizationVendors, processingActivities, dpias, clients, clientProcessingActivities, users, trainingCompletions , createRedisClient } from 'db';
@@ -19,7 +20,7 @@ interface GapDetection {
   resolutionUrl: string;
 }
 
-export const complianceWorker = new Worker('compliance', async (job: Job) => {
+export const complianceWorker = createWorker('compliance', async (job: Job) => {
   if (job.name === 'gap-scanner') {
     const orgs = await db.query.organizations.findMany();
     
@@ -282,7 +283,7 @@ export const complianceWorker = new Worker('compliance', async (job: Job) => {
       });
     }
   }
-}, { connection });
+}, { drainDelay: 60 });
 
 export async function scheduleComplianceJobs() {
   await complianceQueue.add('gap-scanner', {}, {

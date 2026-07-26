@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { db } from '../db.js';
 import { regulatoryUpdates, documentEmbeddings, organizations , createRedisClient } from 'db';
 import { eq, and, sql, like } from 'drizzle-orm';
@@ -251,13 +252,13 @@ export async function runQualityCheckAlerts() {
 }
 
 // Worker to process the regulatory jobs
-export const regulatoryWorker = new Worker('regulatory-jobs', async (job) => {
+export const regulatoryWorker = createWorker('regulatory-jobs', async (job) => {
   if (job.name === 'scrape') {
     await scrapeRegulatoryUpdates();
   } else if (job.name === 'quality-check') {
     await runQualityCheckAlerts();
   }
-}, { connection });
+}, { drainDelay: 60 });
 
 export async function scheduleRegulatoryJobs() {
   try {

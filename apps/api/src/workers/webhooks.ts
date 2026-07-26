@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Worker } from 'bullmq';
 import { db } from '../db.js';
 import { createRedisClient } from 'db';
@@ -11,7 +12,7 @@ function signWebhookPayload(payload: string, secret: string): string {
   return createHmac('sha256', secret).update(payload).digest('hex');
 }
 
-export const webhookWorker = new Worker('webhook-deliveries', async (job) => {
+export const webhookWorker = createWorker('webhook-deliveries', async (job) => {
   const { deliveryId } = job.data;
 
   const [delivery] = await db.query.webhookDeliveries.findMany({
@@ -87,7 +88,7 @@ export const webhookWorker = new Worker('webhook-deliveries', async (job) => {
 
     throw error; // Let BullMQ handle retry mechanism
   }
-}, { connection: redis });
+}, { drainDelay: 15 });
 
 webhookWorker.on('failed', (job, err) => {
   console.error(`Webhook job ${job?.id} failed:`, err);

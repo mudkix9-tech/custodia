@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Queue, Worker } from 'bullmq';
 import { db } from '../db.js';
 import { privacyPolicies, policyVersions, users, organizations , createRedisClient } from 'db';
@@ -10,7 +11,7 @@ const connection = createRedisClient({
 });
 export const policiesQueue = new Queue('policies-automation', { connection });
 
-const policiesWorker = new Worker('policies-automation', async job => {
+const policiesWorker = createWorker('policies-automation', async job => {
   if (job.name === 'policy-ropa-sync') {
     console.log('[Policies Worker] Running ROPA sync...');
     
@@ -56,7 +57,7 @@ const policiesWorker = new Worker('policies-automation', async job => {
       }
     }
   }
-}, { connection });
+}, { drainDelay: 60 });
 
 policiesWorker.on('error', (err) => console.warn('[Policies Worker] Error:', err.message));
 

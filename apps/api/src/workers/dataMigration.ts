@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Worker, Queue } from 'bullmq';
 import { db as primaryDb } from '../db.js';
 import { getDbForOrg } from '../lib/dbRouter.js';
@@ -9,7 +10,7 @@ import { S3Client, CopyObjectCommand, ListObjectsV2Command } from '@aws-sdk/clie
 const connection = createRedisClient({ maxRetriesPerRequest: null });
 export const dataMigrationQueue = new Queue('data-migration', { connection });
 
-export const dataMigrationWorker = new Worker('data-migration', async job => {
+export const dataMigrationWorker = createWorker('data-migration', async job => {
   const { orgId } = job.data;
 
   try {
@@ -74,4 +75,4 @@ export const dataMigrationWorker = new Worker('data-migration', async job => {
     console.error('Data migration failed:', error);
     throw error;
   }
-}, { connection });
+}, { drainDelay: 60 });

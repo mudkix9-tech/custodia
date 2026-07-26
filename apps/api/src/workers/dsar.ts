@@ -1,3 +1,4 @@
+import { createWorker } from '../lib/queue.js';
 import { Queue, Worker } from 'bullmq';
 import { db } from '../db.js';
 import { eq, and, lt, lte, ne } from 'drizzle-orm';
@@ -24,7 +25,7 @@ async function notifyUser(userId: string, orgId: string, type: NotificationType,
   }
 }
 
-const dsarWorker = new Worker('dsar-automation', async job => {
+const dsarWorker = createWorker('dsar-automation', async job => {
   
   // 1. Deadline Monitor
   if (job.name === 'dsar-deadline-monitor') {
@@ -120,7 +121,7 @@ const dsarWorker = new Worker('dsar-automation', async job => {
     }
   }
 
-}, { connection });
+}, { drainDelay: 15 });
 
 dsarWorker.on('error', (err) => {
   console.warn('[DSAR Worker] Error:', err.message);
