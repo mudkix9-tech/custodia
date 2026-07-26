@@ -1,6 +1,6 @@
 # Privaro — Complete Product Memory
 
-> **Last updated:** July 19, 2026 (Updated Regulatory Change Impact Analysis, Catch-up patterns, Cost Dashboards, and schema recoveries)
+> **Last updated:** July 26, 2026 (Migrated architecture from BullMQ/Redis to pg-boss)
 > **Owner:** Nisarg (solo founder, Pune, India)
 > **Domain:** getprivaro.com
 > **Status:** Pre-launch, core product built, polishing for production
@@ -60,7 +60,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 | Frontend | Next.js 14 App Router, Tailwind, Radix UI, Zustand + TanStack Query, TanStack Table |
 | Backend | Fastify + tRPC, Drizzle ORM, NextAuth.js v5 |
 | Database | PostgreSQL 16 on AWS RDS eu-west-1 (Dublin), pgvector for RAG |
-| Cache/Queue | Redis (ElastiCache), BullMQ |
+| Queue | pg-boss (PostgreSQL-backed) |
 | Storage | AWS S3 (eu-west-1), regional buckets for enterprise data residency |
 | Email | Resend SDK + React Email templates |
 | AI | Claude API (claude-sonnet-4-20250514), Vertex AI gemini-embedding-001 (3072 dimensions) for embeddings |
@@ -276,9 +276,9 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 
 ## 8. Key Technical Decisions & Patterns
 
-### Shared BullMQ connection module
+### Shared pg-boss connection module
 - All queues and workers import from `apps/api/src/lib/queue.ts`
-- Single Redis connection config
+- Centralized PostgreSQL connection for jobs (zero Redis dependency)
 - `createQueue()` and `createWorker()` factory functions
 
 ### Scheduled jobs registry (all in workers/index.ts)
@@ -312,12 +312,12 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 
 ### Consent records partitioning
 - Monthly range partitioning on `created_at`
-- BullMQ job auto-creates next month's partition on the 25th
+- pg-boss cron job auto-creates next month's partition on the 25th
 - Old partitions detached after 24-month retention
 
 ### Consent log endpoint high throughput
-- `POST /api/cmp/log` validates payload and pushes to Redis list (LPUSH)
-- Batch worker reads from Redis every 5 seconds
+- `POST /api/cmp/log` validates payload and enqueues to pg-boss
+- pg-boss worker processes consent jobs asynchronously
 - Bulk inserts into consent_records
 - Rate limited: 100 req/s per scriptId
 
@@ -362,7 +362,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
     - `gap` (gap titles, status, severity, scanned entities, GDPR articles)
     - `dpia` (title, status, descriptions, risks, mitigations)
   * **Manual Joins**: Serialization falls back to manual database left/inner joins to avoid Drizzle query builder relation inference issues.
-  * **Background BullMQ Queue**: Implemented BullMQ worker and queue to process organization embedding upserts/deletions asynchronously in the background.
+  * **Background pg-boss Queue**: Implemented pg-boss worker and queue to process organization embedding upserts/deletions asynchronously in the background.
   * **Mutation triggers**: Automated hooks trigger embedding queue jobs on all modifications:
     - **ROPA**: `create`, `bulkCreate`, `update`, `delete`
     - **Vendors**: `linkVendor`, `updateOrgVendor`, `createCustom`
@@ -388,7 +388,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 - **Corpus Maintenance & Versioning (Phase 7)**:
   * **Schema Version Tracking**: `document_embeddings` table tracks `is_current` and `superseded_by` references; `ai_guidance_logs` table logs `top_similarity` metrics.
   * **Archival Intent Handling**: Retrieval limits matches to active versions (`is_current = true`) by default. If the user query specifies archival intent, older guidelines are included but receive a **20% rerank score penalty**.
-  * **Scraper Fallbacks**: Scheduled BullMQ scraper fallbacks crawl EDPB guideline list pages directly. Auto-detects reference numbers and updates superseded document statuses.
+  * **Scraper Fallbacks**: Scheduled pg-boss scraper fallbacks crawl EDPB guideline list pages directly. Auto-detects reference numbers and updates superseded document statuses.
   * **RAG Quality Alerts**: Worker nightly logs similarity ratings. If >20% of user queries in a 7-day period yield similarity < 70%, a high-priority system alert is queued in `notificationQueue` for admins.
   * **Admin Dashboard & Override controls**: Settings page features interactive corpus graphs, RAG telemetry helpfulness scores, and a form allowing admins to manually toggle document currency or link superseding files.
 - **RAG Schema Properties**:
@@ -603,7 +603,7 @@ Marketing agency, design agency, web development, e-commerce, SaaS/technology, r
 ### Infrastructure tasks
 - [ ] AWS ECS Fargate deployment configured
 - [ ] RDS Multi-AZ provisioned in eu-west-1
-- [ ] ElastiCache Redis provisioned
+- [x] Eliminated Redis dependency entirely (using pg-boss)
 - [ ] S3 buckets created (primary + regional for enterprise)
 - [ ] Cloudflare DNS + WAF configured
 - [ ] GitHub Actions CI/CD pipeline
@@ -631,7 +631,7 @@ Replaced the simplistic binary DPA/no-DPA status check with a comprehensive, mul
 ### Architecture & Recalculation
 - **Calculation Library**: Centralized in `apps/api/src/lib/vendorRisk.ts`, fully typed.
 - **Triggers**: Recalculated dynamically on vendor linking, profile updates, and sub-processor adjustments.
-- **Background Worker**: Daily BullMQ workers (`vendor-risk-recalculation` and `dpa-expiry-checker`) scan and recalculate scores to ensure expirations and breach history decay updates.
+- **Background Worker**: Daily pg-boss workers (`vendor-risk-recalculation` and `dpa-expiry-checker`) scan and recalculate scores to ensure expirations and breach history decay updates.
 - **Automated Gaps**: Appended Article 9 (missing DPA for special category data) and Chapter V (unsecured third-country transfer) compliance gap rules.
 
 ---
@@ -667,7 +667,7 @@ Extended DPA tracking beyond binary signed/unsigned status to audit the 8 mandat
 Automated weekly change detection engine for tracking vendor sub-processor list updates. Minimizes false positives using whitespace normalization and regex boilerplate removal, providing users with unified line-level differences, email/in-app notifications, and custom webhook events.
 
 ### Scraper Worker & Clean-up Engine
-- **Weekly Detector Job**: Runs on BullMQ, scraping up to 50 global vendor sub-processor URLs per run using `puppeteer-cluster`.
+- **Weekly Detector Job**: Runs on pg-boss, scraping up to 50 global vendor sub-processor URLs per run using `puppeteer-cluster`.
 - **Boilerplate Noise Filtration**: Before hashing, filters headers, footers, scripts, styles, and cookie banners from the DOM. Then, cleans copyright notices, cookie policies, and generic footer link patterns line-by-line.
 - **Fail-Safe Processing Order**: Hashes page content and compares it against global baselines. Fans out changes, notifications, and webhooks to all linked customer organizations *before* updating the global vendor hash to prevent crash state skips.
 
@@ -735,7 +735,7 @@ Automated website and DNS monitoring service that discovers undocumented third-p
 ### Inbox & Lifecycle Workflows
 - **Discovery Inbox**: Displays discovered services categorized into Undocumented, Tracked, and Dismissed. Provides quick-action buttons to link to existing global registry vendors, create custom vendors, or ignore discoveries.
 - **Auto-Discovered Vendor Banner**: Flags auto-created profiles with warnings prompting compliance teams to input headquarters, EU hosting, and cert data before locking the verified profile.
-- **BullMQ Weekly Jobs**: Deterministically spreads organization scans across weekly windows (Sunday midnight) based on hash UUIDs to manage rate limits.
+- **pg-boss Weekly Jobs**: Deterministically spreads organization scans across weekly windows (Sunday midnight) based on hash UUIDs to manage rate limits.
 
 ---
 
@@ -753,7 +753,7 @@ Enterprise-grade questionnaire intake and evaluation module. Enables compliance 
 - **AI Evaluation Agent**: Integrates Claude 3.5 Sonnet (with Vertex Gemini-2.5-Flash and rules-based fallback) to analyze responses, detect compliance gaps, assign confidence ratings, and generate audit summaries.
 - **Risk Score Adjustment**: Maps questionnaire results (0-100) directly to vendor risk level calculations as a bounded modifier (up to `-10` for verified security, and up to `+25` for severe gaps or expired responses).
 - **Audit Logging & PDF Exports**: Creates Article 30 ROPA compliant provenance reports (`/print` route) detailing timestamps, respondent emails, client IPs, and question details.
-- **BullMQ Reminders Sequence**: A daily cron worker tracks pending questionnaires, dispatching reminders via react-email templates at 7, 14, and 21 days, and marking unanswered assessments as expired at 30 days.
+- **pg-boss Reminders Sequence**: A daily cron worker tracks pending questionnaires, dispatching reminders via react-email templates at 7, 14, and 21 days, and marking unanswered assessments as expired at 30 days.
 
 ---
 
@@ -764,7 +764,7 @@ Semantic AI tracking system for mapping regulatory documents (e.g., EDPB Guideli
 
 ### Components
 - **Semantic Matching**: Uses `pgvector` operators (`cosine_distance`) to match new regulatory update embeddings against pre-embedded organization contexts (ROPA activities, vendors).
-- **Asynchronous Processing**: Scalable `BullMQ` dispatcher. Uses `match-org-semantic` for active orgs and a `match-catchup` mechanism hooked into NextAuth `signIn` to lazily process matches for dormant organizations without dropping notifications.
+- **Asynchronous Processing**: Scalable `pg-boss` dispatcher. Uses `match-org-semantic` for active orgs and a `match-catchup` mechanism hooked into NextAuth `signIn` to lazily process matches for dormant organizations without dropping notifications.
 - **Claude Synthesis**: Uses Claude (via Anthropic API) to translate raw semantic matches into human-readable impact assessments explaining *why* the update affects the organization and suggesting remediation actions.
 - **Cost Metrics**: A cost tracking dashboard under AI Copilot Settings (`settings/copilot/page.tsx`) tracks exact `prompt_tokens` and `completion_tokens` to surface Estimated USD Costs and Token Usage dynamically based on API pricing environment variables.
 - **Schema Recovery & Integrity**: Reconstructed the lost Drizzle schema types (`0028_regulatory_update_matches.sql` and fixed index syncing in `meta/_journal.json` where redundant prefixes 0018/0019 were remapped to 0029/0030) ensuring type safety for `regulatory_update_matches` and avoiding any git reset regressions.
@@ -790,7 +790,7 @@ Closes the loop on DPIAs by turning them from static documents into living risk 
 A comprehensive suite for managing user consent records, analyzing preference center interactions, and ensuring high-performance querying without degrading the database, alongside automated triggers for re-consent campaigns when processing conditions materially change.
 
 ### Components
-- **Analytics Rollup & Data Reconciliation**: A pre-aggregated performance layer (`consent_daily_summary` table) improves historical analytics speed. A daily BullMQ worker (`consentRollup`) processes raw records into domain/date/category totals. A split-and-merge routing strategy dynamically queries recent data (last 7 days) from raw records and historical data from the rollup table. A weekly worker (`consentRollupDriftCheck`) compares rollup totals against raw records to detect and log drift.
+- **Analytics Rollup & Data Reconciliation**: A pre-aggregated performance layer (`consent_daily_summary` table) improves historical analytics speed. A daily pg-boss worker (`consentRollup`) processes raw records into domain/date/category totals. A split-and-merge routing strategy dynamically queries recent data (last 7 days) from raw records and historical data from the rollup table. A weekly worker (`consentRollupDriftCheck`) compares rollup totals against raw records to detect and log drift.
 - **Re-Consent Trigger System**: Hooks into the ROPA activity update mutations. When a processing activity relying on `consent` undergoes material changes (e.g., adding a new vendor/sub-processor, or materially changing the purpose description), the system automatically flags the activity. It evaluates changes (passing context like data categories and lawful basis history to the AI) and generates a `reconsent_flag`, prompting compliance officers to initiate a re-consent campaign rather than relying on manual awareness.
 - **Granular Preference Analytics (Deferred)**: We explicitly adhered to the "don't build speculative complexity" principle. While the architecture supports deep granular category combination analytics, we deferred building the UI for this until production metrics prove customers actually engage with category-by-category settings rather than just wholesale "Accept All" or "Reject All".
 
