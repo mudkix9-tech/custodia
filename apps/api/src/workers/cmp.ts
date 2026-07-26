@@ -178,7 +178,7 @@ const cmpWorker = createWorker('cmp-automation', async job => {
 
 }, { drainDelay: 60 });
 
-cmpWorker.on('error', (err) => console.warn('[CMP Worker] Error:', err.message));
+cmpWorker.on('error', (err: Error) => console.warn('[CMP Worker] Error:', err.message));
 
 export async function scheduleCmpJobs() {
   try {

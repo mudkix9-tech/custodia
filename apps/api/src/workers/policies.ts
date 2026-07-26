@@ -59,7 +59,7 @@ const policiesWorker = createWorker('policies-automation', async job => {
   }
 }, { drainDelay: 60 });
 
-policiesWorker.on('error', (err) => console.warn('[Policies Worker] Error:', err.message));
+policiesWorker.on('error', (err: Error) => console.warn('[Policies Worker] Error:', err.message));
 
 export async function schedulePoliciesJobs() {
   try {

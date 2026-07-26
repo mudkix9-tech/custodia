@@ -123,7 +123,7 @@ const dsarWorker = createWorker('dsar-automation', async job => {
 
 }, { drainDelay: 15 });
 
-dsarWorker.on('error', (err) => {
+dsarWorker.on('error', (err: Error) => {
   console.warn('[DSAR Worker] Error:', err.message);
 });
 

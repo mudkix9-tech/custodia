@@ -601,15 +601,15 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
 }, { drainDelay: 60 });
 
 if (vendorWorker) {
-  vendorWorker.on('completed', job => {
+  vendorWorker.on('completed', (job: any) => {
     console.log(`[Vendor Worker] Job ${job.id} has completed!`);
   });
 
-  vendorWorker.on('failed', (job, err) => {
+  vendorWorker.on('failed', (job: any, err: any) => {
     console.error(`[Vendor Worker] Job ${job?.id} has failed with ${err.message}`);
   });
 
-  vendorWorker.on('error', (err) => {
+  vendorWorker.on('error', (err: Error) => {
     // Suppress unhandled worker errors (like connection drops)
     console.warn('[Vendor Worker] Error:', err.message);
   });

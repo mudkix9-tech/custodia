@@ -14,21 +14,6 @@ export const residencyProvisioningQueue = new Queue('residency-provisioning', { 
 
 function generateSecurePassword() {
   return crypto.randomBytes(16).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
-}
-
-async function pollUntilAvailable(rds: RDSClient, instanceId: string) {
-  let available = false;
-  while (!available) {
-    const { DBInstances } = await rds.send(new DescribeDBInstancesCommand({ DBInstanceIdentifier: instanceId }));
-    if (DBInstances && DBInstances[0].DBInstanceStatus === 'available') {
-      available = true;
-      return DBInstances[0].Endpoint;
-    }
-    await new Promise(r => setTimeout(r, 30000)); // poll every 30s
-  }
-}
-
-async function runMigrations(connectionString: string) {
   // In a real implementation we would run drizzle-kit or raw migration SQL
   // For the purpose of this implementation we'll run a simple check
   const pool = new pg.Pool({ connectionString, ssl: { rejectUnauthorized: false } });
