@@ -116,7 +116,7 @@ export const emailWorker = createWorker<EmailJobData>('email-sequences', async (
   }
 }, { drainDelay: 15 });
 
-emailWorker.on('error', (err) => {
+emailWorker.on('error', (err: Error) => {
   console.warn('[Email Worker] Error:', err.message);
 });
 
