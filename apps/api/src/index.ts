@@ -31,7 +31,7 @@ import { vendorAssessmentWorker } from './workers/vendorAssessmentWorker.js';
 import { impactAssessmentWorker } from './workers/impactAssessmentWorker.js';
 import { regulatoryNotificationWorker, scheduleRegulatoryNotificationJobs } from './workers/regulatoryNotificationWorker.js';
 
-import { scheduleImpactAssessmentJobs } from './workers/impactAssessmentWorker.js';
+
 import { scheduleGlobalJobs } from './workers/index.js';
 import { scheduleDpiaReminderJobs } from './workers/dpiaReminders.js';
 import cmpRoutes from './routes/cmp.js';
@@ -57,7 +57,7 @@ Sentry.init({
 
 
 // Validate essential environment variables
-const requiredEnvVars = ['DATABASE_URL', 'REDIS_URL'];
+const requiredEnvVars = ['DATABASE_URL'];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     console.error(`FATAL: Missing required environment variable: ${envVar}`);
@@ -173,7 +173,7 @@ const start = async () => {
       await scheduleComplianceJobs();
       await scheduleNotificationJobs();
       await scheduleRegulatoryJobs();
-      await scheduleImpactAssessmentJobs();
+
       await scheduleGlobalJobs();
       await scheduleDpiaReminderJobs();
       await scheduleRegulatoryNotificationJobs();
