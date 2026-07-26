@@ -123,8 +123,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // Push to BullMQ for catch-up semantic matching
           try {
             const { Queue } = await import('bullmq');
-            const { Redis } = await import('ioredis');
-            const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+            const { createRedisClient } = await import('db');
+            const connection = createRedisClient();
             const queue = new Queue('impact-assessment', { connection });
             
             await queue.add('match-catchup', {

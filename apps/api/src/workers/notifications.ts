@@ -1,7 +1,6 @@
 import { Worker, Queue } from 'bullmq';
-import { Redis } from 'ioredis';
 import { db } from '../db.js';
-import { notificationQueue, organizations, users } from 'db';
+import { notificationQueue, organizations, users , createRedisClient } from 'db';
 import { eq, and, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 import React from 'react';
@@ -48,7 +47,7 @@ import {
   } from 'emails';
 import { formatSiemPayload } from '../lib/siemFormatters.js';
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
+const connection = createRedisClient({ maxRetriesPerRequest: null });
 export const notificationsJobQueue = new Queue('notifications', { connection });
 
 const EMAIL_TEMPLATES: Record<string, (data: any) => React.ReactElement> = {

@@ -1,14 +1,13 @@
 import { Queue, Worker, Job } from 'bullmq';
-import { Redis } from 'ioredis';
 import { Resend } from 'resend';
 import { db } from '../db.js';
-import { assessments, users, pendingSignups, organizations } from 'db';
+import { assessments, users, pendingSignups, organizations , createRedisClient } from 'db';
 import { eq } from 'drizzle-orm';
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
 
 // Connect to local redis. If no redis is running, this will fail gracefully during dev.
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const connection = createRedisClient({
   maxRetriesPerRequest: null,
   retryStrategy: (times: number) => {
     // Stop retrying after 3 attempts in dev to avoid spamming the console

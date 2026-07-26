@@ -1,11 +1,10 @@
 import { db } from '../db.js';
-import { webhooks, webhookDeliveries } from 'db';
+import { webhooks, webhookDeliveries , createRedisClient } from 'db';
 import { eq, and, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 import { Queue } from 'bullmq';
-import { Redis } from 'ioredis';
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const connection = createRedisClient({
   maxRetriesPerRequest: null,
 });
 

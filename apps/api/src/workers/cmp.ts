@@ -1,11 +1,10 @@
 import { Queue, Worker } from 'bullmq';
-import { Redis } from 'ioredis';
 import { db } from '../db.js';
-import { consentCookies, consentDomains, consentRecords } from 'db';
+import { consentCookies, consentDomains, consentRecords , createRedisClient } from 'db';
 import { eq, sql } from 'drizzle-orm';
 import { scanDomain } from '../lib/browserPool.js';
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const connection = createRedisClient({
   maxRetriesPerRequest: null,
 });
 

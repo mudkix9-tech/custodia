@@ -1,11 +1,10 @@
 import { Worker, Job, Queue } from 'bullmq';
-import { Redis } from 'ioredis';
 import { db } from '../db.js';
-import { complianceGaps, complianceReports, organizations, organizationVendors, processingActivities, dpias, clients, clientProcessingActivities, users, trainingCompletions } from 'db';
+import { complianceGaps, complianceReports, organizations, organizationVendors, processingActivities, dpias, clients, clientProcessingActivities, users, trainingCompletions , createRedisClient } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
+const connection = createRedisClient({ maxRetriesPerRequest: null });
 
 export const complianceQueue = new Queue('compliance', { connection });
 

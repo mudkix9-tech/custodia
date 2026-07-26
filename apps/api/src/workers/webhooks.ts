@@ -1,11 +1,11 @@
 import { Worker } from 'bullmq';
-import Redis from 'ioredis';
 import { db } from '../db.js';
+import { createRedisClient } from 'db';
 import * as schema from 'db';
 import { eq } from 'drizzle-orm';
 import { createHmac } from 'crypto';
 
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const redis = createRedisClient();
 
 function signWebhookPayload(payload: string, secret: string): string {
   return createHmac('sha256', secret).update(payload).digest('hex');

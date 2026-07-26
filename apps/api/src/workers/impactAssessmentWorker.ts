@@ -1,7 +1,6 @@
 import { Worker, Queue, Job } from 'bullmq';
-import { Redis } from 'ioredis';
 import { db } from '../db.js';
-import { regulatoryUpdateMatches, organizations, processingActivities, vendors, dpias, documentEmbeddings } from 'db';
+import { regulatoryUpdateMatches, organizations, processingActivities, vendors, dpias, documentEmbeddings , createRedisClient } from 'db';
 import { eq, and, sql } from 'drizzle-orm';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { trackAiUsage } from '../lib/billing.js';
@@ -12,7 +11,7 @@ const anthropic = new Anthropic({
 
 const connection = process.env.NODE_ENV === 'test'
   ? null as any
-  : new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+  : createRedisClient({
       maxRetriesPerRequest: null,
       retryStrategy: (times: number) => {
         if (times > 3) return null;

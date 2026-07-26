@@ -1,7 +1,7 @@
+import { createRedisClient } from 'db';
 import fp from 'fastify-plugin';
 import fastifyRateLimit from '@fastify/rate-limit';
 import { FastifyInstance } from 'fastify';
-import Redis from 'ioredis';
 
 const TIER_LIMITS: Record<string, number> = {
   starter: 100,
@@ -11,7 +11,7 @@ const TIER_LIMITS: Record<string, number> = {
 };
 
 export default fp(async function (fastify: FastifyInstance) {
-  const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+  const redis = createRedisClient();
 
   await fastify.register(fastifyRateLimit, {
     redis,

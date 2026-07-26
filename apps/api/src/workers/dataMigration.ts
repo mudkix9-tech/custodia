@@ -1,13 +1,12 @@
 import { Worker, Queue } from 'bullmq';
-import { Redis } from 'ioredis';
 import { db as primaryDb } from '../db.js';
 import { getDbForOrg } from '../lib/dbRouter.js';
-import { organizations } from 'db';
+import { organizations , createRedisClient } from 'db';
 import { eq } from 'drizzle-orm';
 import { getS3BucketForOrg } from '../lib/s3.js';
 import { S3Client, CopyObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', { maxRetriesPerRequest: null });
+const connection = createRedisClient({ maxRetriesPerRequest: null });
 export const dataMigrationQueue = new Queue('data-migration', { connection });
 
 export const dataMigrationWorker = new Worker('data-migration', async job => {
@@ -31,7 +30,7 @@ export const dataMigrationWorker = new Worker('data-migration', async job => {
     // For this scope, we just mock the process.
 
     // Redis progress
-    const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+    const redis = createRedisClient();
 
     for (let i = 0; i < tables.length; i++) {
       const tableName = tables[i];

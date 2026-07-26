@@ -1,12 +1,11 @@
 import { Queue, Worker } from 'bullmq';
-import Redis from 'ioredis';
 import { db } from '../db.js';
-import { privacyPolicies, policyVersions, users, organizations } from 'db';
+import { privacyPolicies, policyVersions, users, organizations , createRedisClient } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { queueNotification } from '../utils/notifications.js';
 import { generatePolicyMarkdown } from '../routers/policies.js';
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const connection = createRedisClient({
   maxRetriesPerRequest: null,
 });
 export const policiesQueue = new Queue('policies-automation', { connection });

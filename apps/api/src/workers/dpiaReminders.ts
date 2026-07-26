@@ -1,13 +1,12 @@
 import { Worker, Queue, Job } from 'bullmq';
-import { Redis } from 'ioredis';
 import { db } from '../db.js';
-import { dpias, organizations, users } from 'db';
+import { dpias, organizations, users , createRedisClient } from 'db';
 import { eq, sql } from 'drizzle-orm';
 import { queueNotification } from '../utils/notifications.js';
 
 const connection = process.env.NODE_ENV === 'test'
   ? null as any
-  : new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+  : createRedisClient({
       maxRetriesPerRequest: null,
       retryStrategy: (times: number) => {
         if (times > 3) return null;

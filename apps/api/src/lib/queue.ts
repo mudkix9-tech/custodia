@@ -1,3 +1,4 @@
+import { createRedisClient } from 'db';
 import { Queue, Worker, type ConnectionOptions } from 'bullmq';
 
 const getRedisConnectionOptions = (): ConnectionOptions => {
@@ -25,7 +26,7 @@ const getRedisConnectionOptions = (): ConnectionOptions => {
 
 export const redisConnection = getRedisConnectionOptions();
 
-import { Redis } from 'ioredis';
+import type { Redis } from 'ioredis';
 
 let sharedQueueRedis: Redis | null = null;
 function getSharedQueueRedis() {
@@ -33,7 +34,7 @@ function getSharedQueueRedis() {
     return null as any;
   }
   if (!sharedQueueRedis) {
-    sharedQueueRedis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+    sharedQueueRedis = createRedisClient({
       maxRetriesPerRequest: null,
       retryStrategy: (times) => Math.min(times * 50, 2000),
     });

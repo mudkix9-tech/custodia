@@ -1,7 +1,6 @@
 import { Worker, Queue, Job } from 'bullmq';
-import { Redis } from 'ioredis';
 import { db } from '../db.js';
-import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates } from 'db';
+import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates , createRedisClient } from 'db';
 import { eq, and, isNotNull, lte, gt } from 'drizzle-orm';
 import { calculateVendorRisk } from '../routers/vendors.js';
 import { getBrowserCluster, scanDomainForThirdParties } from '../lib/browserPool.js';
@@ -14,7 +13,7 @@ import { sendEmail, AssessmentReminder } from 'emails';
 
 const connection = process.env.NODE_ENV === 'test'
   ? null as any
-  : new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+  : createRedisClient({
       maxRetriesPerRequest: null,
       retryStrategy: (times: number) => {
         if (times > 3) return null;

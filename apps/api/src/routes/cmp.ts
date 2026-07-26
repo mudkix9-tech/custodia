@@ -1,10 +1,9 @@
 import { FastifyInstance } from 'fastify';
 import { db } from '../db.js';
-import { consentDomains, consentCookies } from 'db';
+import { consentDomains, consentCookies , createRedisClient } from 'db';
 import { eq } from 'drizzle-orm';
-import Redis from 'ioredis';
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const connection = createRedisClient({
   maxRetriesPerRequest: null,
 });
 

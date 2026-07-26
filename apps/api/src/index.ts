@@ -139,7 +139,7 @@ server.get('/api/health', async (request, reply) => {
 
   try {
     const Redis = (await import('ioredis')).default;
-    const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+    const redis = createRedisClient();
     await redis.ping();
     checks.checks.redis = 'ok';
     redis.disconnect();
@@ -186,6 +186,21 @@ const start = async () => {
       await scheduleGlobalJobs();
       await scheduleDpiaReminderJobs();
       await scheduleRegulatoryNotificationJobs();
+
+      // Render Keep-Alive: Ping self randomly every 1-9 minutes to prevent sleep
+      const pingKeepAlive = () => {
+        const timeoutMs = Math.floor(Math.random() * (9 * 60000 - 60000 + 1)) + 60000;
+        setTimeout(async () => {
+          const targetUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${port}`;
+          try {
+            await fetch(`${targetUrl}/api/health/ready`);
+          } catch (e) {
+            // Silently ignore ping errors
+          }
+          pingKeepAlive();
+        }, timeoutMs);
+      };
+      pingKeepAlive();
     }
   } catch (err) {
     server.log.error(err);
