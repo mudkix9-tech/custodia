@@ -134,23 +134,7 @@ export const dpiaRemindersWorker = createWorker('dpia-reminders', async (job: Jo
 }, { drainDelay: 60 });
 
 // Helper to queue org jobs
-export async function scheduleDpiaReminderJobs() {
-  try {
-    // Clear existing repeatable jobs
-    if (!dpiaRemindersQueue) return;
-    
-    const repeatableJobs = await dpiaRemindersQueue.getRepeatableJobs();
-    for (const job of repeatableJobs) {
-      await dpiaRemindersQueue.removeRepeatableByKey(job.key);
-    }
 
-    // Schedule a single dispatcher job that will fan out to per-org jobs
-    await dpiaRemindersQueue.add('dpia-dispatcher', {}, { repeat: { pattern: '0 4 * * *' } });
-    console.log('✅ DPIA reminders recurring jobs scheduled');
-  } catch (err: any) {
-    console.warn('⚠️ Could not schedule DPIA reminder jobs. Is Redis running? Error:', err.message);
-  }
-}
 
 // Another worker for the dispatcher
 export const dpiaDispatcherWorker = createWorker('dpia-reminders', async (job: Job) => {

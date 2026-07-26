@@ -57,16 +57,4 @@ const policiesWorker = createWorker('policies-automation', async job => {
 
 policiesWorker.on('error', (err: Error) => console.warn('[Policies Worker] Error:', err.message));
 
-export async function schedulePoliciesJobs() {
-  try {
-    const repeatableJobs = await policiesQueue.getRepeatableJobs();
-    for (const job of repeatableJobs) {
-      await policiesQueue.removeRepeatableByKey(job.key);
-    }
-    // Run daily
-    await policiesQueue.add('policy-ropa-sync', {}, { repeat: { pattern: '0 3 * * *' } });
-    console.log('✅ Policies background jobs scheduled');
-  } catch (err: any) {
-    console.warn('⚠️ Could not schedule Policies jobs:', err.message);
-  }
-}
+

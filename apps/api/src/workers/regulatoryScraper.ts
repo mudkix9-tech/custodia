@@ -258,21 +258,4 @@ export const regulatoryWorker = createWorker('regulatory-jobs', async (job) => {
   }
 }, { drainDelay: 60 });
 
-export async function scheduleRegulatoryJobs() {
-  try {
-    // Run daily scraper at 3:00 AM
-    await regulatoryQueue.add('scrape', null, {
-      repeat: { pattern: '0 3 * * *' },
-      jobId: 'regulatory-scraper-cron'
-    });
 
-    // Run daily quality check alert at 4:00 AM
-    await regulatoryQueue.add('quality-check', null, {
-      repeat: { pattern: '0 4 * * *' },
-      jobId: 'regulatory-quality-cron'
-    });
-    console.log('✅ Regulatory Scraper and Quality background jobs scheduled');
-  } catch (err: any) {
-    console.warn('⚠️ Could not schedule Regulatory jobs:', err.message);
-  }
-}

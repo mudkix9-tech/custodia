@@ -603,29 +603,7 @@ async function createNotification(orgId: string, urgency: string, message: strin
 }
 
 // Function to schedule recurring jobs
-export async function scheduleVendorJobs() {
-  try {
-    // Clear existing repeatable jobs to avoid duplicates on restart
-    const repeatableJobs = await vendorJobsQueue.getRepeatableJobs();
-    for (const job of repeatableJobs) {
-      await vendorJobsQueue.removeRepeatableByKey(job.key);
-    }
 
-    // Schedule daily jobs (midnight UTC)
-    await vendorJobsQueue.add('sub-processor-change-detector', {}, { repeat: { pattern: '0 0 * * *' } });
-    await vendorJobsQueue.add('dpa-expiry-checker', {}, { repeat: { pattern: '0 0 * * *' } });
-    await vendorJobsQueue.add('vendor-risk-recalculation', {}, { repeat: { pattern: '0 1 * * *' } }); // 1 AM
-    await vendorJobsQueue.add('assessment-reminder-checker', {}, { repeat: { pattern: '0 2 * * *' } }); // 2 AM
-
-    // Schedule weekly jobs (Sunday midnight)
-    await vendorJobsQueue.add('dpa-page-change-detector', {}, { repeat: { pattern: '0 0 * * 0' } });
-    await vendorJobsQueue.add('weekly-organization-discovery-trigger', {}, { repeat: { pattern: '0 0 * * 0' } });
-    
-    console.log('✅ Vendor intelligence recurring jobs scheduled');
-  } catch (err: any) {
-    console.warn('⚠️ Could not schedule vendor jobs. Is Redis running? Error:', err.message);
-  }
-}
 
 function getLevenshteinDistance(a: string, b: string): number {
   const distance = Array.from({ length: b.length + 1 }, (_, i) => i);

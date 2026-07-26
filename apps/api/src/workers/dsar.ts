@@ -125,22 +125,4 @@ dsarWorker.on('error', (err: Error) => {
   console.warn('[DSAR Worker] Error:', err.message);
 });
 
-export async function scheduleDsarJobs() {
-  try {
-    const repeatableJobs = await dsarJobsQueue.getRepeatableJobs();
-    for (const job of repeatableJobs) {
-      await dsarJobsQueue.removeRepeatableByKey(job.key);
-    }
 
-    // Daily at 1am UTC
-    await dsarJobsQueue.add('dsar-deadline-monitor', {}, { repeat: { pattern: '0 1 * * *' } });
-    await dsarJobsQueue.add('dsar-verification-reminder', {}, { repeat: { pattern: '0 1 * * *' } });
-    
-    // Weekly on Sunday
-    await dsarJobsQueue.add('dsar-package-cleanup', {}, { repeat: { pattern: '0 2 * * 0' } });
-    
-    console.log('✅ DSAR Automation recurring jobs scheduled');
-  } catch (err: any) {
-    console.warn('⚠️ Could not schedule DSAR jobs. Is Redis running? Error:', err.message);
-  }
-}

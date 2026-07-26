@@ -310,17 +310,4 @@ if (incidentWorker) {
   });
 }
 
-export async function scheduleIncidentJobs() {
-  if (process.env.NODE_ENV === 'test') return;
-  try {
-    const repeatable = await incidentJobsQueue.getRepeatableJobs();
-    for (const job of repeatable) {
-      await incidentJobsQueue.removeRepeatableByKey(job.key);
-    }
 
-    await incidentJobsQueue.add('ingest-daily', {}, { repeat: { pattern: '0 3 * * *' } });
-    console.log('✅ Vendor incident feed background jobs scheduled');
-  } catch (err: any) {
-    console.warn('⚠️ Could not schedule vendor incident jobs:', err.message);
-  }
-}

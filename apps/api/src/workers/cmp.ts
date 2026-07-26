@@ -179,28 +179,4 @@ const cmpWorker = createWorker('cmp-automation', async job => {
 
 cmpWorker.on('error', (err: Error) => console.warn('[CMP Worker] Error:', err.message));
 
-export async function scheduleCmpJobs() {
-  try {
-    const boss = await getBoss();
-    
-    // pg-boss schedule takes cron expressions
-    // Batch insert runs every 5 seconds
-    // Note: pg-boss cron resolution is typically 1 minute.
-    // For 5 seconds, it's better to just use a recurring setTimeout or schedule a regular job.
-    // However, pg-boss supports scheduling via schedule(). 
-    // Wait, pg-boss schedules only run once a minute. If we need 5-second intervals, 
-    // we can either keep it as a setInterval in memory, or use pg-boss with a tight loop,
-    // or just let the worker process messages immediately instead of buffering for 5 seconds.
-    // Since we're migrating, we can just use setInterval to enqueue the batch processor job every 5 seconds.
-    setInterval(async () => {
-      await boss.send('cmp-automation', { name: 'consent-batch-insert', data: {} });
-    }, 5000);
-    
-    // Partition manager runs on the 25th of every month
-    await boss.schedule('cmp-automation', '0 0 25 * *', { name: 'partition-manager', data: {} });
-    
-    console.log('✅ CMP background jobs scheduled');
-  } catch (err: any) {
-    console.warn('⚠️ Could not schedule CMP jobs:', err.message);
-  }
-}
+

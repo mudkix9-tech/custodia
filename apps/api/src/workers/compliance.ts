@@ -283,13 +283,4 @@ export const complianceWorker = createWorker('compliance', async (job: any) => {
   }
 }, { drainDelay: 60 });
 
-export async function scheduleComplianceJobs() {
-  await complianceQueue.add('gap-scanner', {}, {
-    repeat: { pattern: '0 2 * * *' } // Every day at 2 AM
-  });
-  
-  // Note: For multi-timezone support, you would dynamically schedule these per-org
-  await complianceQueue.add('scheduled-reports', {}, {
-    repeat: { pattern: '0 0 1 * *' } // 1st of every month
-  });
-}
+

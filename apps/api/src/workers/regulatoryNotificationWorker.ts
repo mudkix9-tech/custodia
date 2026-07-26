@@ -73,11 +73,4 @@ export const regulatoryNotificationWorker = createWorker(
 
 const regulatoryNotificationQueue = createQueue('regulatory-notification-queue');
 
-export async function scheduleRegulatoryNotificationJobs() {
-  await regulatoryNotificationQueue.add('check-regulatory-notifications', {}, {
-    repeat: {
-      pattern: '0 * * * *', // Run every hour at the top of the hour
-    },
-  });
-  console.log('Scheduled regulatory notification checks');
-}
+

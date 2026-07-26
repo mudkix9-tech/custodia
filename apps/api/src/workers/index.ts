@@ -19,7 +19,7 @@ export * from './consentRollupDriftCheck.js';
 export * from './rateLimitCleanup.js';
 
 import { createQueue } from '../lib/queue.js';
-import { scheduleIncidentJobs } from './incidents.js';
+
 import { getBoss } from '../lib/queue.js';
 
 export const gapScannerQueue = createQueue('gap-scanner');
@@ -38,6 +38,6 @@ export async function scheduleGlobalJobs() {
   
   // Rate limit cleanup every hour
   await boss.schedule('maintenance-jobs', '0 * * * *', { name: 'rate-limit-cleanup', data: {} });
-
-  await scheduleIncidentJobs();
 }
+
+

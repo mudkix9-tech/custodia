@@ -366,18 +366,4 @@ export const notificationWorker = createWorker('notifications', async (job) => {
   return { processed: pendingNotifications.length };
 }, { drainDelay: 15 });
 
-export async function scheduleNotificationJobs() {
-  // Using enqueuePendingNotifications to fill the process-queue
-  await notificationsJobQueue.add('enqueue-pending', {}, {
-    repeat: { pattern: '* * * * *' }
-  });
 
-  // Using enqueuePendingNotifications to fill the process-queue
-  await notificationsJobQueue.add('enqueue-pending', {}, {
-    repeat: { pattern: '* * * * *' }
-  });
-
-  await notificationsJobQueue.add('process-queue', {}, {
-    repeat: { pattern: '* * * * *' } // Run every minute to drain the queue
-  });
-}

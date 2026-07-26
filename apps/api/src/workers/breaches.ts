@@ -103,12 +103,4 @@ export const breachTaskTracker = createWorker(
 const breachMonitorQueue = createQueue('breach-deadline-monitor');
 const breachTaskQueue = createQueue('breach-task-tracker');
 
-export async function scheduleBreachesJobs() {
-  await breachMonitorQueue.add('check-deadlines', {}, {
-    repeat: { pattern: '*/30 * * * *' } // Every 30 minutes
-  });
 
-  await breachTaskQueue.add('check-tasks', {}, {
-    repeat: { pattern: '0 8 * * *' } // Daily at 8am
-  });
-}

@@ -18,22 +18,12 @@ import fastifyCookie from '@fastify/cookie';
 import { Context } from './trpc.js';
 import { appRouter } from './router.js';
 import { emailWorker } from './workers/emails.js';
-import { scheduleVendorJobs } from './workers/vendors.js';
-import { scheduleDsarJobs } from './workers/dsar.js';
-import { scheduleCmpJobs } from './workers/cmp.js';
-import { schedulePoliciesJobs } from './workers/policies.js';
-import { scheduleBreachesJobs } from './workers/breaches.js';
-import { scheduleComplianceJobs } from './workers/compliance.js';
-import { scheduleNotificationJobs } from './workers/notifications.js';
-import { scheduleRegulatoryJobs } from './workers/regulatoryScraper.js';
 import { emailSenderWorker } from './workers/emailSenderWorker.js';
 import { vendorAssessmentWorker } from './workers/vendorAssessmentWorker.js';
 import { impactAssessmentWorker } from './workers/impactAssessmentWorker.js';
-import { regulatoryNotificationWorker, scheduleRegulatoryNotificationJobs } from './workers/regulatoryNotificationWorker.js';
-
+import { regulatoryNotificationWorker } from './workers/regulatoryNotificationWorker.js';
 
 import { scheduleGlobalJobs } from './workers/index.js';
-import { scheduleDpiaReminderJobs } from './workers/dpiaReminders.js';
 import cmpRoutes from './routes/cmp.js';
 import { ssoRoutes } from './routes/sso.js';
 import { complianceWorker } from './workers/compliance.js';
@@ -164,21 +154,8 @@ const start = async () => {
     console.log(`API Server listening on port ${port}`);
     if (process.env.NODE_ENV !== 'test') {
       console.log('Workers initialized');
-      // Schedule background workers
-      await scheduleVendorJobs();
-      await scheduleDsarJobs();
-      await scheduleCmpJobs();
-      await schedulePoliciesJobs();
-      await scheduleBreachesJobs();
-      await scheduleComplianceJobs();
-      await scheduleNotificationJobs();
-      await scheduleRegulatoryJobs();
-
+      // Schedule all background workers centrally
       await scheduleGlobalJobs();
-      await scheduleDpiaReminderJobs();
-      await scheduleRegulatoryNotificationJobs();
-
-
     }
   } catch (err) {
     server.log.error(err);
