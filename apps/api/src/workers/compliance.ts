@@ -1,13 +1,11 @@
-import { createWorker } from '../lib/queue.js';
-import { Worker, Job, Queue } from 'bullmq';
+import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
-import { complianceGaps, complianceReports, organizations, organizationVendors, processingActivities, dpias, clients, clientProcessingActivities, users, trainingCompletions , createRedisClient } from 'db';
+import { complianceGaps, complianceReports, organizations, organizationVendors, processingActivities, dpias, clients, clientProcessingActivities, users, trainingCompletions } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
-const connection = createRedisClient({ maxRetriesPerRequest: null });
 
-export const complianceQueue = new Queue('compliance', { connection });
+export const complianceQueue = createQueue('compliance');
 
 interface GapDetection {
   entityType: string;
@@ -20,7 +18,7 @@ interface GapDetection {
   resolutionUrl: string;
 }
 
-export const complianceWorker = createWorker('compliance', async (job: Job) => {
+export const complianceWorker = createWorker('compliance', async (job: any) => {
   if (job.name === 'gap-scanner') {
     const orgs = await db.query.organizations.findMany();
     

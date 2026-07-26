@@ -1,14 +1,12 @@
-import { createWorker } from '../lib/queue.js';
-import { Queue, Worker } from 'bullmq';
+import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
 import { eq, and, lt, lte, ne } from 'drizzle-orm';
-import { dsarRequests, users, organizations, notificationQueue , createRedisClient } from 'db';
+import { dsarRequests, users, organizations, notificationQueue } from 'db';
 import { queueNotification, NotificationType } from '../utils/notifications.js';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-const connection = createRedisClient({ maxRetriesPerRequest: null });
 
-export const dsarJobsQueue = new Queue('dsar-automation', { connection });
+export const dsarJobsQueue = createQueue('dsar-automation');
 
 async function notifyUser(userId: string, orgId: string, type: NotificationType, subject: string, html: string) {
   try {

@@ -1,16 +1,14 @@
-import { createWorker } from '../lib/queue.js';
-import { Worker, Job } from 'bullmq';
+import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
-import { breaches, breachRemediationTasks, users, organizations , createRedisClient } from 'db';
+import { breaches, breachRemediationTasks, users, organizations } from 'db';
 import { eq, and, lt, isNull } from 'drizzle-orm';
 import { queueNotification, NotificationType } from '../utils/notifications.js';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-const connection = createRedisClient({ maxRetriesPerRequest: null });
 
 export const breachDeadlineMonitor = createWorker(
   'breach-deadline-monitor',
-  async (job: Job) => {
+  async (job: any) => {
     // 1. Fetch active breaches that haven't notified authority
     const activeBreaches = await db.query.breaches.findMany({
       where: and(
@@ -69,7 +67,7 @@ export const breachDeadlineMonitor = createWorker(
 
 export const breachTaskTracker = createWorker(
   'breach-task-tracker',
-  async (job: Job) => {
+  async (job: any) => {
     const now = new Date();
     const overdueTasks = await db.query.breachRemediationTasks.findMany({
       where: and(
@@ -101,10 +99,9 @@ export const breachTaskTracker = createWorker(
     }
   }, { drainDelay: 60 });
 
-import { Queue } from 'bullmq';
 
-const breachMonitorQueue = new Queue('breach-deadline-monitor', { connection });
-const breachTaskQueue = new Queue('breach-task-tracker', { connection });
+const breachMonitorQueue = createQueue('breach-deadline-monitor');
+const breachTaskQueue = createQueue('breach-task-tracker');
 
 export async function scheduleBreachesJobs() {
   await breachMonitorQueue.add('check-deadlines', {}, {

@@ -120,18 +120,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
         
         if (dbUser.organizationId && lastLoginAt) {
-          // Push to BullMQ for catch-up semantic matching
+          // Push to pg-boss for catch-up semantic matching
           try {
-            const { Queue } = await import('bullmq');
-            const { createRedisClient } = await import('db');
-            const connection = createRedisClient();
-            const queue = new Queue('impact-assessment', { connection });
+            const { default: PgBoss } = await import('pg-boss');
+            const connectionString = process.env.DIRECT_URL || (process.env.DATABASE_URL || '').replace(':6543/', ':5432/');
+            const boss = new PgBoss(connectionString);
             
-            await queue.add('match-catchup', {
-              organizationId: dbUser.organizationId,
-              lastLoginAt: lastLoginAt.toISOString()
+            // Connect and send
+            await boss.start();
+            await boss.send('impact-assessment', {
+              name: 'match-catchup',
+              data: {
+                organizationId: dbUser.organizationId,
+                lastLoginAt: lastLoginAt.toISOString()
+              }
             });
-            await connection.quit();
+            await boss.stop();
           } catch (err) {
             console.error('[NextAuth] Failed to queue match-catchup job', err);
           }

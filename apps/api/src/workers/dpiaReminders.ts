@@ -1,29 +1,13 @@
 import { createWorker } from '../lib/queue.js';
-import { Worker, Queue, Job } from 'bullmq';
+import { Job, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
-import { dpias, organizations, users , createRedisClient } from 'db';
+import { dpias, organizations, users } from 'db';
 import { eq, sql } from 'drizzle-orm';
 import { queueNotification } from '../utils/notifications.js';
 
-const connection = process.env.NODE_ENV === 'test'
-  ? null as any
-  : createRedisClient({
-      maxRetriesPerRequest: null,
-      retryStrategy: (times: number) => {
-        if (times > 3) return null;
-        return Math.min(times * 50, 2000);
-      }
-    });
-
-if (connection && connection.on) {
-  connection.on('error', (err: any) => {
-    console.warn('[Redis] Connection error in dpia reminder jobs:', err.message);
-  });
-}
-
 export const dpiaRemindersQueue = process.env.NODE_ENV === 'test'
   ? null as any
-  : new Queue('dpia-reminders', { connection });
+  : createQueue('dpia-reminders');
 
 // Helper to calculate days until a date (positive if in the future, negative if in the past)
 const daysUntil = (date: Date) => {

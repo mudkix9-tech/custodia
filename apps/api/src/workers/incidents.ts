@@ -1,33 +1,15 @@
-import { createWorker } from '../lib/queue.js';
+import { createWorker, createQueue, getBoss } from '../lib/queue.js';
 import { db } from '../db.js';
-import { vendors, organizationVendors, vendorIncidents, organizationVendorIncidentAlerts , createRedisClient } from 'db';
+import { vendors, organizationVendors, vendorIncidents, organizationVendorIncidentAlerts } from 'db';
 import { eq, and, sql, or } from 'drizzle-orm';
 import crypto from 'crypto';
-import { Queue, Worker } from 'bullmq';
 import { queueNotification } from '../utils/notifications.js';
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import { recalculateVendorRiskForAllOrgs } from '../routers/vendors.js';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-const connection = process.env.NODE_ENV === 'test'
-  ? null as any
-  : createRedisClient({
-      maxRetriesPerRequest: null,
-      retryStrategy: (times: number) => {
-        if (times > 3) return null;
-        return Math.min(times * 50, 2000);
-      }
-    });
-
-if (connection && connection.on) {
-  connection.on('error', (err: any) => {
-    console.warn('[Redis] Connection error in incident jobs:', err.message);
-  });
-}
-
 export const incidentJobsQueue = process.env.NODE_ENV === 'test'
   ? null as any
-  : new Queue('vendor-incidents-ingest', { connection });
+  : createQueue('vendor-incidents-ingest');
 
 // Helper to extract root domain from a URL
 export function getDomain(urlStr: string): string {

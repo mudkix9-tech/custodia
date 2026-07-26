@@ -1,34 +1,18 @@
-import { createWorker } from '../lib/queue.js';
-import { Worker, Queue, Job } from 'bullmq';
+import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
-import { regulatoryUpdateMatches, organizations, processingActivities, vendors, dpias, documentEmbeddings , createRedisClient } from 'db';
+import { regulatoryUpdateMatches, organizations, processingActivities, vendors, dpias, documentEmbeddings } from 'db';
 import { eq, and, sql } from 'drizzle-orm';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { trackAiUsage } from '../lib/billing.js';
+import { Job } from '../lib/queue.js';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
 });
 
-const connection = process.env.NODE_ENV === 'test'
-  ? null as any
-  : createRedisClient({
-      maxRetriesPerRequest: null,
-      retryStrategy: (times: number) => {
-        if (times > 3) return null;
-        return Math.min(times * 50, 2000);
-      }
-    });
-
-if (connection && connection.on) {
-  connection.on('error', (err: any) => {
-    console.warn('[Redis] Connection error in impact assessment worker:', err.message);
-  });
-}
-
 export const impactAssessmentQueue = process.env.NODE_ENV === 'test'
   ? null as any
-  : new Queue('impact-assessment', { connection });
+  : createQueue('impact-assessment');
 
 export const impactAssessmentWorker = createWorker('impact-assessment', async (job: Job) => {
   console.log(`[Impact Assessment Worker] Processing job ${job.name} (ID: ${job.id})`);
@@ -233,19 +217,3 @@ RECOMMENDED ACTIONS: <your recommended actions>`;
   }
 }, { drainDelay: 15 });
 
-export async function scheduleImpactAssessmentJobs() {
-  try {
-    if (!impactAssessmentQueue) return;
-    
-    const repeatableJobs = await impactAssessmentQueue.getRepeatableJobs();
-    for (const job of repeatableJobs) {
-      await impactAssessmentQueue.removeRepeatableByKey(job.key);
-    }
-
-    // Schedule every 15 minutes
-    await impactAssessmentQueue.add('impact-assessment-dispatcher', {}, { repeat: { pattern: '*/15 * * * *' } });
-    console.log('✅ Impact Assessment recurring jobs scheduled');
-  } catch (err: any) {
-    console.warn('⚠️ Could not schedule Impact Assessment jobs. Is Redis running? Error:', err.message);
-  }
-}

@@ -1,16 +1,14 @@
-import { createWorker } from '../lib/queue.js';
+import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
-import { regulatoryUpdates, documentEmbeddings, organizations , createRedisClient } from 'db';
+import { regulatoryUpdates, documentEmbeddings, organizations } from 'db';
 import { eq, and, sql, like } from 'drizzle-orm';
 import crypto from 'crypto';
-import { Queue, Worker } from 'bullmq';
 import { GoogleGenAI } from '@google/genai';
 import { queueNotification } from '../utils/notifications.js';
 import { matchRegulatoryUpdateToOrganizations } from '../lib/regulatoryImpact.js';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-const connection = createRedisClient({ maxRetriesPerRequest: null });
 
-export const regulatoryQueue = new Queue('regulatory-jobs', { connection });
+export const regulatoryQueue = createQueue('regulatory-jobs');
 
 const ai = new GoogleGenAI({
   vertexai: true,

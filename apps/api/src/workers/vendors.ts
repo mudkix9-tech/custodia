@@ -1,7 +1,6 @@
-import { createWorker } from '../lib/queue.js';
-import { Worker, Queue, Job } from 'bullmq';
+import { createWorker, createQueue, Job } from '../lib/queue.js';
 import { db } from '../db.js';
-import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates , createRedisClient } from 'db';
+import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates } from 'db';
 import { eq, and, isNotNull, lte, gt } from 'drizzle-orm';
 import { calculateVendorRisk } from '../routers/vendors.js';
 import { getBrowserCluster, scanDomainForThirdParties } from '../lib/browserPool.js';
@@ -12,26 +11,7 @@ import dns from 'dns/promises';
 import React from 'react';
 import { sendEmail, AssessmentReminder } from 'emails';
 
-const connection = process.env.NODE_ENV === 'test'
-  ? null as any
-  : createRedisClient({
-      maxRetriesPerRequest: null,
-      retryStrategy: (times: number) => {
-        if (times > 3) return null;
-        return Math.min(times * 50, 2000);
-      }
-    });
-
-if (connection && connection.on) {
-  connection.on('error', (err: any) => {
-    // Suppress unhandled redis connection errors so the server doesn't crash
-    console.warn('[Redis] Connection error in vendor jobs:', err.message);
-  });
-}
-
-export const vendorJobsQueue = process.env.NODE_ENV === 'test'
-  ? null as any
-  : new Queue('vendor-intelligence', { connection });
+export const vendorJobsQueue = createQueue('vendor-intelligence');
 
 // Helper to calculate days until expiry
 const daysUntil = (date: Date) => {
@@ -598,15 +578,15 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
     default:
       console.warn(`Unknown job: ${job.name}`);
   }
-}, { drainDelay: 60 });
+}, { drainDelay: 15 });
 
 if (vendorWorker) {
   vendorWorker.on('completed', (job: any) => {
-    console.log(`[Vendor Worker] Job ${job.id} has completed!`);
+    console.log(`[Vendor Worker] Job ${job.id} completed successfully`);
   });
 
-  vendorWorker.on('failed', (job: any, err: any) => {
-    console.error(`[Vendor Worker] Job ${job?.id} has failed with ${err.message}`);
+  vendorWorker.on('failed', (job: Job | undefined, err: Error) => {
+    console.error(`[Vendor Worker] Job ${job?.id} failed:`, err.message);
   });
 
   vendorWorker.on('error', (err: Error) => {

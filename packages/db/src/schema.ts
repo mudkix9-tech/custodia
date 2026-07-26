@@ -1922,3 +1922,5 @@ export const consentDailySummary = pgTable('consent_daily_summary', {
   };
 });
 
+
+export const rateLimits = pgTable('rate_limits', { key: varchar('key', { length: 255 }).primaryKey(), hits: integer('hits').default(1), expiresAt: timestamp('expires_at', { withTimezone: true }).notNull() });

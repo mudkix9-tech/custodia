@@ -1,23 +1,12 @@
-import { createWorker } from '../lib/queue.js';
-import { Queue, Worker, Job } from 'bullmq';
+import { createWorker, createQueue } from '../lib/queue.js';
 import { Resend } from 'resend';
 import { db } from '../db.js';
-import { assessments, users, pendingSignups, organizations , createRedisClient } from 'db';
+import { assessments, users, pendingSignups, organizations } from 'db';
 import { eq } from 'drizzle-orm';
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
 
-// Connect to local redis. If no redis is running, this will fail gracefully during dev.
-const connection = createRedisClient({
-  maxRetriesPerRequest: null,
-  retryStrategy: (times: number) => {
-    // Stop retrying after 3 attempts in dev to avoid spamming the console
-    if (times > 3) return null;
-    return Math.min(times * 50, 2000);
-  }
-});
-
-export const emailQueue = new Queue('email-sequences', { connection });
+export const emailQueue = createQueue('email-sequences');
 
 // Define Job Payload
 type EmailJobData = {
@@ -27,10 +16,10 @@ type EmailJobData = {
 };
 
 // Start Worker
-export const emailWorker = createWorker<EmailJobData>('email-sequences', async (job: Job<EmailJobData>) => {
+export const emailWorker = createWorker('email-sequences', async (job: any) => {
   console.log(`[Email Worker] Processing job ${job.id} of type ${job.data.type} for ${job.data.email}`);
   
-  const { type, assessmentId, email } = job.data;
+  const { type, assessmentId, email } = job.data as EmailJobData;
   
   // Verify assessment exists
   const [assessment] = await db.select().from(assessments).where(eq(assessments.id, assessmentId));
@@ -116,9 +105,11 @@ export const emailWorker = createWorker<EmailJobData>('email-sequences', async (
   }
 }, { drainDelay: 15 });
 
-emailWorker.on('error', (err: Error) => {
-  console.warn('[Email Worker] Error:', err.message);
-});
+if (emailWorker) {
+  emailWorker.on('error', (err: Error) => {
+    console.warn('[Email Worker] Error:', err.message);
+  });
+}
 
 export const scheduleEmailSequence = async (assessmentId: string, email: string) => {
   // 1. Immediate (delay 5 seconds just to ensure DB is committed)

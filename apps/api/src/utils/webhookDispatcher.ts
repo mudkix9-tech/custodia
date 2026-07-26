@@ -1,14 +1,11 @@
+import { createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
-import { webhooks, webhookDeliveries , createRedisClient } from 'db';
+import { webhooks, webhookDeliveries } from 'db';
 import { eq, and, sql } from 'drizzle-orm';
 import crypto from 'crypto';
-import { Queue } from 'bullmq';
 
-const connection = createRedisClient({
-  maxRetriesPerRequest: null,
-});
 
-export const webhookQueue = new Queue('webhooks', { connection });
+export const webhookQueue = createQueue('webhooks');
 
 export async function dispatchWebhook(organizationId: string, eventType: string, payload: any, specificWebhookId?: string) {
   // 1. Find active webhooks for this org that subscribe to this event

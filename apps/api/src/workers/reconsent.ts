@@ -1,24 +1,25 @@
-import { Worker, type Job } from 'bullmq';
-import { Queue } from 'bullmq';
 import { reconsentFlags, processingActivities } from 'db';
 import { db } from '../db.js';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { eq, sql } from 'drizzle-orm';
-import { createQueue } from '../lib/queue.js';
+import { createQueue, createWorker } from '../lib/queue.js';
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { trackAiUsage } from '../lib/billing.js';
+import { queueNotification } from '../utils/notifications.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
 });
 
-export const reconsentQueue = createQueue('reconsent-material-change');
+export const reconsentQueue = process.env.NODE_ENV === 'test'
+  ? null as any
+  : createQueue('reconsent-material-change');
 
 interface ReconsentJobData {
   activityId: string;
@@ -30,9 +31,9 @@ interface ReconsentJobData {
   vendorList: { name: string; purpose?: string | null }[];
 }
 
-export const reconsentWorker = new Worker<ReconsentJobData>(
+export const reconsentWorker = createWorker(
   'reconsent-material-change',
-  async (job: Job<ReconsentJobData>) => {
+  async (job: any) => {
     try {
       const { 
         activityId, 
@@ -59,7 +60,7 @@ New Purpose Description:
 
 Additional Context for the Activity:
 - Data Categories Processed: ${dataCategories.length > 0 ? dataCategories.join(', ') : 'None specified'}
-- Linked Vendors: ${vendorList.map(v => `${v.name} (${v.purpose || 'No purpose specified'})`).join(', ') || 'None'}
+- Linked Vendors: ${vendorList.map((v: any) => `${v.name} (${v.purpose || 'No purpose specified'})`).join(', ') || 'None'}
 
 Under GDPR, consent is specific and informed. Does this change in the purpose description constitute a *material change* that would require obtaining fresh consent from data subjects? 
 A material change significantly alters the nature, scope, context, or purposes of processing (e.g., adding personalized marketing, expanding data sharing). Minor wording adjustments, typo fixes, or stylistic changes are NOT material.

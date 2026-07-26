@@ -8,23 +8,23 @@ async function main() {
   // 1. Get or create a domain
   let [org] = await db.select().from(organizations).limit(1);
   if (!org) {
-    [org] = await db.insert(organizations).values({ name: 'Test Org', slug: 'test-org' }).returning();
+    [org] = await db.insert(organizations).values({ name: 'Test Org', slug: 'test-org', countryCode: 'US' }).returning();
   }
 
-  let [domain] = await db.select().from(consentDomains).where(sql`${consentDomains.organizationId} = ${org.id}`).limit(1);
+  let [domain] = await db.select().from(consentDomains).where(sql`${consentDomains.organizationId} = ${org!.id}`).limit(1);
   if (!domain) {
     [domain] = await db.insert(consentDomains).values({
-      organizationId: org.id,
+      organizationId: org!.id,
       domain: 'example.com',
       scriptId: 'testscript'
     }).returning();
   }
   
-  const domainId = domain.id;
+  const domainId = domain!.id;
   
   console.log('Checking current record count...');
   const countResult = await db.execute(sql`SELECT COUNT(*) FROM ${consentRecords} WHERE domain_id = ${domainId}`);
-  const count = Number(countResult.rows[0].count);
+  const count = Number((countResult.rows[0] as any).count);
   console.log(`Current records: ${count}`);
   
   if (count < 10000) {
@@ -57,8 +57,10 @@ async function main() {
           domainId: domainId,
           consentId: 'test-' + Math.random(),
           interactionType: interaction,
-          categoriesAccepted: JSON.parse(accepted),
-          categoriesRejected: JSON.parse(rejected),
+          eventType: 'interaction',
+          country: 'US',
+          categoriesAccepted: JSON.parse(accepted) as any,
+          categoriesRejected: JSON.parse(rejected) as any,
           givenAt: new Date(),
         });
       }

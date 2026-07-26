@@ -1,5 +1,4 @@
-import { createWorker } from '../lib/queue.js';
-import { Worker } from 'bullmq';
+import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
 import { regulatoryUpdateMatches, organizations, users } from 'db';
 import { eq, isNull, inArray, and } from 'drizzle-orm';
@@ -72,8 +71,7 @@ export const regulatoryNotificationWorker = createWorker(
     return { status: 'success', matchesNotified: unnotifiedMatches.length, orgsNotified: matchesByOrg.size };
   }, { drainDelay: 60 });
 
-import { Queue } from 'bullmq';
-const regulatoryNotificationQueue = new Queue('regulatory-notification-queue', { connection });
+const regulatoryNotificationQueue = createQueue('regulatory-notification-queue');
 
 export async function scheduleRegulatoryNotificationJobs() {
   await regulatoryNotificationQueue.add('check-regulatory-notifications', {}, {

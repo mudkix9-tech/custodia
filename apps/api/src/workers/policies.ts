@@ -1,15 +1,11 @@
-import { createWorker } from '../lib/queue.js';
-import { Queue, Worker } from 'bullmq';
+import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
-import { privacyPolicies, policyVersions, users, organizations , createRedisClient } from 'db';
+import { privacyPolicies, policyVersions, users, organizations } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { queueNotification } from '../utils/notifications.js';
 import { generatePolicyMarkdown } from '../routers/policies.js';
 
-const connection = createRedisClient({
-  maxRetriesPerRequest: null,
-});
-export const policiesQueue = new Queue('policies-automation', { connection });
+export const policiesQueue = createQueue('policies-automation');
 
 const policiesWorker = createWorker('policies-automation', async job => {
   if (job.name === 'policy-ropa-sync') {

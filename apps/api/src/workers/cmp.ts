@@ -1,15 +1,10 @@
-import { createWorker } from '../lib/queue.js';
-import { Queue, Worker } from 'bullmq';
+import { createWorker, createQueue, getBoss } from '../lib/queue.js';
 import { db } from '../db.js';
-import { consentCookies, consentDomains, consentRecords , createRedisClient } from 'db';
+import { consentCookies, consentDomains, consentRecords } from 'db';
 import { eq, sql } from 'drizzle-orm';
 import { scanDomain } from '../lib/browserPool.js';
 
-const connection = createRedisClient({
-  maxRetriesPerRequest: null,
-});
-
-export const cmpJobsQueue = new Queue('cmp-automation', { connection });
+export const cmpJobsQueue = createQueue('cmp-automation');
 
 // Known cookie database for rule-based classification
 const KNOWN_COOKIES: Record<string, { category: string, provider: string }> = {
@@ -85,14 +80,15 @@ const cmpWorker = createWorker('cmp-automation', async job => {
   }
 
   else if (job.name === 'consent-batch-insert') {
-    // Read from Redis List
+    const boss = await getBoss();
     const batchSize = 1000;
-    const records = await connection.lpop('cmp:consent_logs', batchSize);
     
+    // Fetch buffered consent records
+    const records = await boss.fetch('consent-batch-buffer', batchSize);
     if (!records || records.length === 0) return;
 
     // Filter and query prior state for resubmissions
-    const parsedRecords = records.map((recordStr: string) => JSON.parse(recordStr));
+    const parsedRecords = records.map((r: any) => r.data);
     const resubmissionIds = parsedRecords.filter((r: any) => r.isResubmission).map((r: any) => r.consentId);
     
     let previousStates: Record<string, string[]> = {};
@@ -103,7 +99,7 @@ const cmpWorker = createWorker('cmp-automation', async job => {
         categoriesAccepted: consentRecords.categoriesAccepted
       }).from(consentRecords)
         .where(sql`${consentRecords.consentId} IN (${sql.join(resubmissionIds, sql`, `)})`)
-        .orderBy(sql`${consentRecords.givenAt} DESC`); // Need custom logic to get latest, or we just group by in JS
+        .orderBy(sql`${consentRecords.givenAt} DESC`); 
       
       // Keep only the first (most recent) for each consentId
       for (const p of priors) {
@@ -146,6 +142,9 @@ const cmpWorker = createWorker('cmp-automation', async job => {
       await db.insert(consentRecords).values(valuesToInsert);
       console.log(`[CMP Worker] Batch inserted ${valuesToInsert.length} consent records.`);
     }
+
+    // Complete the buffered jobs
+    await boss.complete(records.map((r: any) => r.id));
   }
 
   else if (job.name === 'partition-manager') {
@@ -176,22 +175,29 @@ const cmpWorker = createWorker('cmp-automation', async job => {
     }
   }
 
-}, { drainDelay: 60 });
+}, { teamSize: 1 });
 
 cmpWorker.on('error', (err: Error) => console.warn('[CMP Worker] Error:', err.message));
 
 export async function scheduleCmpJobs() {
   try {
-    const repeatableJobs = await cmpJobsQueue.getRepeatableJobs();
-    for (const job of repeatableJobs) {
-      await cmpJobsQueue.removeRepeatableByKey(job.key);
-    }
-
+    const boss = await getBoss();
+    
+    // pg-boss schedule takes cron expressions
     // Batch insert runs every 5 seconds
-    await cmpJobsQueue.add('consent-batch-insert', {}, { repeat: { every: 5000 } });
+    // Note: pg-boss cron resolution is typically 1 minute.
+    // For 5 seconds, it's better to just use a recurring setTimeout or schedule a regular job.
+    // However, pg-boss supports scheduling via schedule(). 
+    // Wait, pg-boss schedules only run once a minute. If we need 5-second intervals, 
+    // we can either keep it as a setInterval in memory, or use pg-boss with a tight loop,
+    // or just let the worker process messages immediately instead of buffering for 5 seconds.
+    // Since we're migrating, we can just use setInterval to enqueue the batch processor job every 5 seconds.
+    setInterval(async () => {
+      await boss.send('cmp-automation', { name: 'consent-batch-insert', data: {} });
+    }, 5000);
     
     // Partition manager runs on the 25th of every month
-    await cmpJobsQueue.add('partition-manager', {}, { repeat: { pattern: '0 0 25 * *' } });
+    await boss.schedule('cmp-automation', '0 0 25 * *', { name: 'partition-manager', data: {} });
     
     console.log('✅ CMP background jobs scheduled');
   } catch (err: any) {

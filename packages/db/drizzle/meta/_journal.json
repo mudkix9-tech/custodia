@@ -169,6 +169,13 @@
       "when": 1784549661814,
       "tag": "0034_broad_nekra",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1785083591059,
+      "tag": "0035_slim_moira_mactaggert",
+      "breakpoints": true
     }
   ]
 }

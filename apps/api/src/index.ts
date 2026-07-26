@@ -137,16 +137,7 @@ server.get('/api/health', async (request, reply) => {
     checks.status = 'degraded';
   }
 
-  try {
-    const Redis = (await import('ioredis')).default;
-    const redis = createRedisClient();
-    await redis.ping();
-    checks.checks.redis = 'ok';
-    redis.disconnect();
-  } catch (e) {
-    checks.checks.redis = 'error';
-    checks.status = 'degraded';
-  }
+
 
   const httpStatus = checks.status === 'ok' ? 200 : 503;
   return reply.code(httpStatus).send(checks);
@@ -172,7 +163,7 @@ const start = async () => {
     await server.listen({ port, host: '0.0.0.0' });
     console.log(`API Server listening on port ${port}`);
     if (process.env.NODE_ENV !== 'test') {
-      console.log('BullMQ Workers initialized');
+      console.log('Workers initialized');
       // Schedule background workers
       await scheduleVendorJobs();
       await scheduleDsarJobs();

@@ -1,16 +1,14 @@
-import { createWorker } from '../lib/queue.js';
+import { createWorker, createQueue } from '../lib/queue.js';
 // @ts-nocheck
-import { Worker, Queue } from 'bullmq';
 import { RDSClient, CreateDBInstanceCommand, DescribeDBInstancesCommand } from '@aws-sdk/client-rds';
 import { db as primaryDb } from '../db.js';
-import { organizations , createRedisClient } from 'db';
+import { organizations } from 'db';
 import { eq } from 'drizzle-orm';
 import { encryptToken } from '../lib/encryption.js';
 import crypto from 'crypto';
 import pg from 'pg';
 
-const connection = createRedisClient({ maxRetriesPerRequest: null });
-export const residencyProvisioningQueue = new Queue('residency-provisioning', { connection });
+export const residencyProvisioningQueue = createQueue('residency-provisioning');
 
 function generateSecurePassword() {
   return crypto.randomBytes(16).toString('base64').replace(/[^a-zA-Z0-9]/g, '');

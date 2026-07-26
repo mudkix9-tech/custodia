@@ -1,7 +1,6 @@
-import { createWorker } from '../lib/queue.js';
-import { Worker, Queue } from 'bullmq';
+import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
-import { notificationQueue, organizations, users , createRedisClient } from 'db';
+import { notificationQueue, organizations, users } from 'db';
 import { eq, and, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 import React from 'react';
@@ -48,8 +47,7 @@ import {
   } from 'emails';
 import { formatSiemPayload } from '../lib/siemFormatters.js';
 
-const connection = createRedisClient({ maxRetriesPerRequest: null });
-export const notificationsJobQueue = new Queue('notifications', { connection });
+export const notificationsJobQueue = createQueue('notifications');
 
 const EMAIL_TEMPLATES: Record<string, (data: any) => React.ReactElement> = {
   'auth.magic_link': (data) => React.createElement(MagicLink, data),

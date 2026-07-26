@@ -1,11 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { db } from '../db.js';
-import { consentDomains, consentCookies , createRedisClient } from 'db';
+import { consentDomains, consentCookies } from 'db';
 import { eq } from 'drizzle-orm';
-
-const connection = createRedisClient({
-  maxRetriesPerRequest: null,
-});
+import { getBoss } from '../lib/queue.js';
 
 export default async function cmpRoutes(fastify: FastifyInstance) {
   
@@ -56,8 +53,9 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
         isResubmission: payload.isResubmission === true,
       };
 
-      // Push to Redis buffer for batch insertion
-      await connection.rpush('cmp:consent_logs', JSON.stringify(record));
+      // Enqueue for batch insertion via pg-boss
+      const boss = await getBoss();
+      await boss.send('consent-batch-buffer', record);
       
       // Fast response
       reply.code(204).send();
