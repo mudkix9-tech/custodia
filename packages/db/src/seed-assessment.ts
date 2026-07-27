@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pkg from 'pg';
-import { assessmentTemplates } from './schema.js';
+import { assessmentTemplates, assessments, assessmentAnswers } from './schema.js';
 
 const { Pool } = pkg;
 
@@ -14,6 +14,9 @@ const pool = new Pool({
 });
 
 const db = drizzle(pool);
+
+const healthQId = '11111111-1111-4111-a111-111111111111';
+const paymentQId = '22222222-2222-4222-a222-222222222222';
 
 const questions = [
   // Data Mapping
@@ -109,8 +112,18 @@ const questions = [
     ],
     dependsOn: null,
   },
+  {
+    category: 'Lawful Basis',
+    questionText: 'Does your privacy notice clearly specify the lawful basis you rely on for each processing purpose (e.g., consent, contract, legitimate interest)?',
+    options: [
+      { text: 'Yes', riskWeight: 0 },
+      { text: 'Partially', riskWeight: 5 },
+      { text: 'No', riskWeight: 10 },
+    ],
+    dependsOn: null,
+  },
 
-  // Vendor Management
+  // Vendor Management & Transfers
   {
     category: 'Vendor Management',
     questionText: 'Do you have a signed Data Processing Agreement with every SaaS tool that handles personal data?',
@@ -133,11 +146,21 @@ const questions = [
   },
   {
     category: 'Vendor Management',
-    questionText: 'Have you assessed the privacy risks of your US-based tools (Google, Meta, HubSpot, etc.)?',
+    questionText: 'Have you assessed the privacy risks of your vendors and tools based outside the EU/EEA?',
     options: [
       { text: 'Yes, via TIA (Transfer Impact Assessment)', riskWeight: 0 },
       { text: 'No', riskWeight: 8 },
-      { text: 'We don\'t use US-based tools', riskWeight: 0 },
+      { text: 'We don\'t use vendors outside the EU/EEA', riskWeight: 0 },
+    ],
+    dependsOn: null,
+  },
+  {
+    category: 'Vendor Management',
+    questionText: 'Do you transfer personal data internationally through your own operations (e.g., remote workers, international branches accessing EU data)?',
+    options: [
+      { text: 'Yes, with appropriate safeguards like SCCs', riskWeight: 0 },
+      { text: 'Yes, without safeguards', riskWeight: 10 },
+      { text: 'No', riskWeight: 0 },
     ],
     dependsOn: null,
   },
@@ -199,6 +222,26 @@ const questions = [
     ],
     dependsOn: null,
   },
+  {
+    category: 'Data Subject Rights',
+    questionText: 'Do you inform data subjects of their right to object to processing, particularly for direct marketing?',
+    options: [
+      { text: 'Yes', riskWeight: 0 },
+      { text: 'No, but we do direct marketing', riskWeight: 10 },
+      { text: 'We don\'t do direct marketing', riskWeight: 0 },
+    ],
+    dependsOn: null,
+  },
+  {
+    category: 'Data Subject Rights',
+    questionText: 'Do you use automated decision-making or profiling (e.g., AI lead scoring, algorithmic hiring)?',
+    options: [
+      { text: 'Yes, with human oversight and opt-outs', riskWeight: 0 },
+      { text: 'Yes, fully automated without opt-outs', riskWeight: 10 },
+      { text: 'No', riskWeight: 0 },
+    ],
+    dependsOn: null,
+  },
 
   // Security
   {
@@ -222,7 +265,17 @@ const questions = [
   },
   {
     category: 'Security',
-    questionText: 'Do you have a documented process for handling a data breach within 72 hours?',
+    questionText: 'Do you regularly test, assess, and evaluate the effectiveness of your security measures (e.g., penetration testing, vulnerability scans)?',
+    options: [
+      { text: 'Yes, regularly', riskWeight: 0 },
+      { text: 'Rarely or ad-hoc', riskWeight: 5 },
+      { text: 'No', riskWeight: 10 },
+    ],
+    dependsOn: null,
+  },
+  {
+    category: 'Security',
+    questionText: 'Do you have a documented process for notifying the supervisory authority within 72 hours for breaches that are likely to result in a risk to people\'s rights and freedoms?',
     options: [
       { text: 'Yes, tested incident response plan', riskWeight: 0 },
       { text: 'Yes, but untested', riskWeight: 3 },
@@ -292,6 +345,16 @@ const questions = [
   },
   {
     category: 'Cookie Consent',
+    questionText: 'Do you block non-essential cookies and tracking scripts from firing until the user gives explicit consent?',
+    options: [
+      { text: 'Yes, they are blocked until consent', riskWeight: 0 },
+      { text: 'Not sure', riskWeight: 5 },
+      { text: 'No, they fire immediately', riskWeight: 10 },
+    ],
+    dependsOn: null,
+  },
+  {
+    category: 'Cookie Consent',
     questionText: 'Do you have a record of cookie consents given by visitors?',
     options: [
       { text: 'Yes, stored securely', riskWeight: 0 },
@@ -300,34 +363,99 @@ const questions = [
     dependsOn: null,
   },
 
+  // Governance (New Structural Gaps)
+  {
+    category: 'Governance',
+    questionText: 'Have you appointed a Data Protection Officer (DPO) as required by Article 37?',
+    options: [
+      { text: 'Yes', riskWeight: 0 },
+      { text: 'No, but we process large-scale sensitive data/monitor users', riskWeight: 10 },
+      { text: 'No, we are not required to', riskWeight: 0 },
+    ],
+    dependsOn: null,
+  },
+  {
+    category: 'Governance',
+    questionText: 'Have you conducted Data Protection Impact Assessments (DPIAs) for your high-risk processing activities?',
+    options: [
+      { text: 'Yes', riskWeight: 0 },
+      { text: 'No, but we do high-risk processing', riskWeight: 10 },
+      { text: 'We don\'t have high-risk activities', riskWeight: 0 },
+    ],
+    dependsOn: null,
+  },
+  {
+    category: 'Governance',
+    questionText: 'Do you maintain a formal Record of Processing Activities (ROPA) mapping out what data you process, why, and where it goes?',
+    options: [
+      { text: 'Yes, fully up-to-date', riskWeight: 0 },
+      { text: 'Partially or outdated', riskWeight: 5 },
+      { text: 'No', riskWeight: 10 },
+    ],
+    dependsOn: null,
+  },
+
   // Client Compliance
   {
+    id: healthQId,
     category: 'Client Compliance',
     questionText: 'Do you process patient health records?',
     options: [
-      { text: 'Yes, fully documented', riskWeight: 0 },
-      { text: 'Partially', riskWeight: 5 },
+      { text: 'Yes', riskWeight: 0 },
+      { text: 'No', riskWeight: 0 },
+    ],
+    dependsOn: null,
+  },
+  {
+    category: 'Client Compliance',
+    questionText: 'Have you identified a valid Article 9(2) basis (e.g., explicit consent, medical diagnosis) for processing this special category data?',
+    options: [
+      { text: 'Yes', riskWeight: 0 },
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: {
       conditions: [
-        { questionId: 'q_industry', answerIn: ['healthcare', 'medical'] }
+        { questionId: healthQId, answerEquals: 'Yes' }
       ],
       logic: 'AND'
     },
   },
   {
     category: 'Client Compliance',
+    questionText: 'Have you conducted a Data Protection Impact Assessment (DPIA) for this health data processing?',
+    options: [
+      { text: 'Yes', riskWeight: 0 },
+      { text: 'No', riskWeight: 10 },
+    ],
+    dependsOn: {
+      conditions: [
+        { questionId: healthQId, answerEquals: 'Yes' }
+      ],
+      logic: 'AND'
+    },
+  },
+  {
+    id: paymentQId,
+    category: 'Client Compliance',
     questionText: 'Do you process payment card data?',
     options: [
       { text: 'Yes', riskWeight: 0 },
       { text: 'No', riskWeight: 0 },
     ],
+    dependsOn: null,
+  },
+  {
+    category: 'Client Compliance',
+    questionText: 'Have you implemented enhanced security measures (e.g., PCI-DSS compliance) to protect this financial data?',
+    options: [
+      { text: 'Yes', riskWeight: 0 },
+      { text: 'No', riskWeight: 10 },
+    ],
     dependsOn: {
       conditions: [
-        { questionId: 'q_industry', answerIn: ['ecommerce', 'saas'] }
+        { questionId: paymentQId, answerEquals: 'Yes' }
       ],
-      logic: 'OR'
+      logic: 'AND'
     },
   },
   {
@@ -338,12 +466,7 @@ const questions = [
       { text: 'Some clients', riskWeight: 5 },
       { text: 'No', riskWeight: 10 },
     ],
-    dependsOn: {
-      conditions: [
-        { questionId: 'q_industry', answerIn: ['marketing_agency', 'design_agency', 'consulting', 'recruitment', 'web_development'] }
-      ],
-      logic: 'OR'
-    },
+    dependsOn: null,
   },
   {
     category: 'Client Compliance',
@@ -358,17 +481,24 @@ const questions = [
 ];
 
 async function seed() {
-  console.log('Clearing existing assessment templates...');
+  console.log('Clearing existing assessment data to prevent FK violations...');
+  await db.delete(assessmentAnswers);
+  await db.delete(assessments);
   await db.delete(assessmentTemplates);
 
-  console.log('Seeding 30 GDPR Gap Assessment Questions...');
+  console.log(`Seeding ${questions.length} GDPR Gap Assessment Questions...`);
   for (const q of questions) {
-    await db.insert(assessmentTemplates).values({
+    const values: any = {
       questionText: q.questionText,
       category: q.category,
       options: q.options,
       dependsOn: q.dependsOn,
-    });
+    };
+    if ((q as any).id) {
+      values.id = (q as any).id;
+    }
+    
+    await db.insert(assessmentTemplates).values(values);
   }
 
   console.log('Seeding complete!');

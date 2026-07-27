@@ -53,6 +53,10 @@
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
   }
+
+  button {
+    cursor: pointer;
+  }
 }
 
 @layer utilities {
