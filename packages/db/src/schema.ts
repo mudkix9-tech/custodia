@@ -746,6 +746,8 @@ export const assessmentTemplates = pgTable('assessment_templates', {
   options: jsonb('options').notNull(),
   dependsOn: jsonb('depends_on'),
   translations: jsonb('translations').$type<Record<string, any>>().default({}),
+  maxRiskWeight: integer('max_risk_weight').default(10),
+  gdprArticles: integer('gdpr_articles').array(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
@@ -777,6 +779,7 @@ export const actionItems = pgTable('action_items', {
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   gdprArticleReference: varchar('gdpr_article_reference', { length: 255 }),
+  gdprArticles: integer('gdpr_articles').array(),
   priority: varchar('priority', { length: 50 }).notNull(),
   status: varchar('status', { length: 50 }).default('open'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),

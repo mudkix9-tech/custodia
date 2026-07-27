@@ -1,7 +1,8 @@
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '../../.env' });
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pkg from 'pg';
-import { assessmentTemplates, assessments, assessmentAnswers } from './schema.js';
+import { assessmentTemplates, assessments, assessmentAnswers, actionItems } from './schema.js';
 
 const { Pool } = pkg;
 
@@ -29,6 +30,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [30],
   },
   {
     category: 'Data Mapping',
@@ -39,6 +41,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [30],
   },
   {
     category: 'Data Mapping',
@@ -49,6 +52,7 @@ const questions = [
       { text: 'We don\'t process special categories', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [9],
   },
   {
     category: 'Data Mapping',
@@ -59,6 +63,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [28, 30],
   },
   {
     category: 'Data Mapping',
@@ -69,6 +74,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [5],
   },
   
   // Lawful Basis
@@ -81,6 +87,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [6],
   },
   {
     category: 'Lawful Basis',
@@ -91,6 +98,7 @@ const questions = [
       { text: 'We don\'t rely on consent', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [7],
   },
   {
     category: 'Lawful Basis',
@@ -101,6 +109,7 @@ const questions = [
       { text: 'We don\'t rely on legitimate interest', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [6],
   },
   {
     category: 'Lawful Basis',
@@ -108,9 +117,10 @@ const questions = [
     options: [
       { text: 'Yes, opt-in only', riskWeight: 0 },
       { text: 'No, we use pre-ticked boxes/implied consent', riskWeight: 10 },
-      { text: 'Not sure', riskWeight: 10 },
+      { text: 'Not sure', riskWeight: 8 }, // Decreased from 10 to 8
     ],
     dependsOn: null,
+    gdprArticles: [7],
   },
   {
     category: 'Lawful Basis',
@@ -121,6 +131,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [13, 14],
   },
 
   // Vendor Management & Transfers
@@ -133,6 +144,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [28],
   },
   {
     category: 'Vendor Management',
@@ -143,6 +155,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [44, 45, 46],
   },
   {
     category: 'Vendor Management',
@@ -153,6 +166,7 @@ const questions = [
       { text: 'We don\'t use vendors outside the EU/EEA', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [44, 45, 46],
   },
   {
     category: 'Vendor Management',
@@ -163,6 +177,7 @@ const questions = [
       { text: 'No', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [44, 45, 46],
   },
   {
     category: 'Vendor Management',
@@ -172,6 +187,7 @@ const questions = [
       { text: 'No', riskWeight: 5 },
     ],
     dependsOn: null,
+    gdprArticles: [28],
   },
   {
     category: 'Vendor Management',
@@ -181,6 +197,7 @@ const questions = [
       { text: 'No', riskWeight: 5 },
     ],
     dependsOn: null,
+    gdprArticles: [28, 32],
   },
 
   // Data Subject Rights
@@ -193,6 +210,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [15],
   },
   {
     category: 'Data Subject Rights',
@@ -203,15 +221,17 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [17],
   },
   {
     category: 'Data Subject Rights',
     questionText: 'Do you have a process for data portability requests?',
     options: [
       { text: 'Yes, we can export CSV/JSON', riskWeight: 0 },
-      { text: 'No', riskWeight: 5 },
+      { text: 'No', riskWeight: 8 }, // Increased from 5 to 8
     ],
     dependsOn: null,
+    gdprArticles: [20],
   },
   {
     category: 'Data Subject Rights',
@@ -221,6 +241,7 @@ const questions = [
       { text: 'No', riskWeight: 5 },
     ],
     dependsOn: null,
+    gdprArticles: [12],
   },
   {
     category: 'Data Subject Rights',
@@ -231,6 +252,7 @@ const questions = [
       { text: 'We don\'t do direct marketing', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [21],
   },
   {
     category: 'Data Subject Rights',
@@ -241,6 +263,7 @@ const questions = [
       { text: 'No', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [22],
   },
 
   // Security
@@ -253,15 +276,18 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [32],
   },
   {
     category: 'Security',
     questionText: 'Do you have access controls limiting who on your team can see personal data?',
     options: [
       { text: 'Yes, role-based access', riskWeight: 0 },
+      { text: 'Partial — some systems have controls, others don\'t', riskWeight: 5 }, // Added middle option
       { text: 'Everyone has access', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [32],
   },
   {
     category: 'Security',
@@ -272,6 +298,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [32],
   },
   {
     category: 'Security',
@@ -282,6 +309,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [33, 34],
   },
   {
     category: 'Security',
@@ -291,6 +319,7 @@ const questions = [
       { text: 'No', riskWeight: 5 },
     ],
     dependsOn: null,
+    gdprArticles: [39],
   },
 
   // Privacy Notices
@@ -303,6 +332,7 @@ const questions = [
       { text: 'No privacy policy at all', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [13, 14],
   },
   {
     category: 'Privacy Notices',
@@ -313,6 +343,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [13, 14],
   },
   {
     category: 'Privacy Notices',
@@ -322,6 +353,7 @@ const questions = [
       { text: 'No, one policy for everything', riskWeight: 5 },
     ],
     dependsOn: null,
+    gdprArticles: [13, 14],
   },
 
   // Cookie Consent
@@ -333,6 +365,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [7],
   },
   {
     category: 'Cookie Consent',
@@ -342,6 +375,7 @@ const questions = [
       { text: 'No, reject is hidden or requires multiple clicks', riskWeight: 8 },
     ],
     dependsOn: null,
+    gdprArticles: [7],
   },
   {
     category: 'Cookie Consent',
@@ -352,6 +386,7 @@ const questions = [
       { text: 'No, they fire immediately', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [7],
   },
   {
     category: 'Cookie Consent',
@@ -361,6 +396,7 @@ const questions = [
       { text: 'No', riskWeight: 8 },
     ],
     dependsOn: null,
+    gdprArticles: [7],
   },
 
   // Governance (New Structural Gaps)
@@ -373,6 +409,7 @@ const questions = [
       { text: 'No, we are not required to', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [37],
   },
   {
     category: 'Governance',
@@ -383,6 +420,7 @@ const questions = [
       { text: 'We don\'t have high-risk activities', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [35],
   },
   {
     category: 'Governance',
@@ -393,6 +431,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [30],
   },
 
   // Client Compliance
@@ -405,6 +444,7 @@ const questions = [
       { text: 'No', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [9],
   },
   {
     category: 'Client Compliance',
@@ -419,6 +459,7 @@ const questions = [
       ],
       logic: 'AND'
     },
+    gdprArticles: [9],
   },
   {
     category: 'Client Compliance',
@@ -433,6 +474,7 @@ const questions = [
       ],
       logic: 'AND'
     },
+    gdprArticles: [35],
   },
   {
     id: paymentQId,
@@ -443,6 +485,7 @@ const questions = [
       { text: 'No', riskWeight: 0 },
     ],
     dependsOn: null,
+    gdprArticles: [32],
   },
   {
     category: 'Client Compliance',
@@ -457,6 +500,7 @@ const questions = [
       ],
       logic: 'AND'
     },
+    gdprArticles: [32],
   },
   {
     category: 'Client Compliance',
@@ -467,6 +511,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [28],
   },
   {
     category: 'Client Compliance',
@@ -477,22 +522,27 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    gdprArticles: [5], // Accountability principle
   },
 ];
 
 async function seed() {
   console.log('Clearing existing assessment data to prevent FK violations...');
+  await db.delete(actionItems); // Clear action items too just in case
   await db.delete(assessmentAnswers);
   await db.delete(assessments);
   await db.delete(assessmentTemplates);
 
   console.log(`Seeding ${questions.length} GDPR Gap Assessment Questions...`);
   for (const q of questions) {
+    const maxRiskWeight = Math.max(...q.options.map((o: any) => o.riskWeight));
     const values: any = {
       questionText: q.questionText,
       category: q.category,
       options: q.options,
       dependsOn: q.dependsOn,
+      maxRiskWeight: maxRiskWeight,
+      gdprArticles: q.gdprArticles,
     };
     if ((q as any).id) {
       values.id = (q as any).id;
@@ -500,12 +550,11 @@ async function seed() {
     
     await db.insert(assessmentTemplates).values(values);
   }
-
-  console.log('Seeding complete!');
+  console.log('Seeding complete.');
   process.exit(0);
 }
 
 seed().catch((err) => {
-  console.error('Seeding failed:', err);
+  console.error(err);
   process.exit(1);
 });

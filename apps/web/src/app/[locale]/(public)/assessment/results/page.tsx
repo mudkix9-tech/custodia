@@ -129,6 +129,7 @@ function AssessmentResultsContent() {
     { priority: 'High', title: 'Address risk in Security', gdprArticleReference: 'Article 32 (Security of processing)', description: 'Data is not encrypted at rest.' }
   ]) as Array<{ priority: string; title: string; gdprArticleReference: string; description: string }>;
   const highPriorityCount = realActionItems.filter((item) => item.priority === 'High').length;
+  const totalActionItems = realActionItems.length;
 
   if (isExpired && !isUnlocked) {
     return (
@@ -209,7 +210,7 @@ function AssessmentResultsContent() {
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="45" fill="transparent" stroke="#EAE8E4" strokeWidth="8" />
                   <motion.circle 
-                    cx="50" cy="50" r="45" fill="transparent" stroke={finalScore > 70 ? "#00A67E" : "#EF4444"} strokeWidth="8"
+                    cx="50" cy="50" r="45" fill="transparent" stroke={finalScore < 50 ? "#EF4444" : finalScore <= 75 ? "#F59E0B" : "#00A67E"} strokeWidth="8"
                     strokeDasharray={`${finalScore * 2.82} 282`}
                     initial={{ strokeDasharray: "0 282" }}
                     animate={{ strokeDasharray: `${finalScore * 2.82} 282` }}
@@ -218,13 +219,13 @@ function AssessmentResultsContent() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-5xl font-black text-ink-900">{finalScore}%</span>
-                  <span className={`text-[11px] font-bold uppercase tracking-widest mt-1 ${finalScore > 70 ? 'text-sage-600' : 'text-red-500'}`}>
-                    {finalScore > 70 ? 'Moderate Risk' : 'High Risk'}
+                  <span className={`text-[11px] font-bold uppercase tracking-widest mt-1 ${finalScore < 50 ? 'text-red-500' : finalScore <= 75 ? 'text-amber-500' : 'text-sage-600'}`}>
+                    {finalScore < 50 ? 'High Risk' : finalScore <= 75 ? 'Moderate Risk' : 'Low Risk'}
                   </span>
                 </div>
               </div>
               
-              <h2 className="text-2xl font-bold text-ink-900 mb-3">{highPriorityCount} critical issues found.</h2>
+              <h2 className="text-2xl font-bold text-ink-900 mb-3">{totalActionItems} recommendations to review.</h2>
               <p className="text-[15px] text-ink-600 mb-8 max-w-lg mx-auto">Enter your email to see your full breakdown, action plan, and GDPR article references.</p>
 
               <form onSubmit={handleUnlock} className="flex flex-col gap-4 max-w-md mx-auto">
@@ -297,14 +298,14 @@ function AssessmentResultsContent() {
                 <div className="relative w-32 h-32 mb-6 max-w-xs md:max-w-none">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="45" fill="transparent" stroke="#EAE8E4" strokeWidth="8" />
-                    <circle cx="50" cy="50" r="45" fill="transparent" stroke={finalScore > 70 ? "#00A67E" : "#EF4444"} strokeWidth="8" strokeDasharray={`${finalScore * 2.82} 282`} />
+                    <circle cx="50" cy="50" r="45" fill="transparent" stroke={finalScore < 50 ? "#EF4444" : finalScore <= 75 ? "#F59E0B" : "#00A67E"} strokeWidth="8" strokeDasharray={`${finalScore * 2.82} 282`} />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-3xl font-black text-ink-900">{finalScore}%</span>
                   </div>
                 </div>
-                <div className={`px-4 py-1.5 rounded-full text-[12px] font-bold uppercase tracking-wider ${finalScore > 70 ? 'bg-sage-50 text-sage-700' : 'bg-red-50 text-red-600'}`}>
-                  {finalScore > 70 ? 'Moderate Risk' : 'High Risk'}
+                <div className={`px-4 py-1.5 rounded-full text-[12px] font-bold uppercase tracking-wider ${finalScore < 50 ? 'bg-red-50 text-red-600' : finalScore <= 75 ? 'bg-amber-50 text-amber-600' : 'bg-sage-50 text-sage-700'}`}>
+                  {finalScore < 50 ? 'High Risk' : finalScore <= 75 ? 'Moderate Risk' : 'Low Risk'}
                 </div>
               </div>
 

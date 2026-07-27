@@ -14,7 +14,7 @@ import {
   actionItems,
   pendingSignups
 } from 'db';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import React from 'react';
@@ -109,7 +109,14 @@ export const assessmentsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const answers = await db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, input.assessmentId));
       
-      const totalPossibleRisk = answers.length * 10;
+      const answerIds = answers.map(a => a.questionId);
+      let templates: any[] = [];
+      if (answerIds.length > 0) {
+        templates = await db.select().from(assessmentTemplates).where(inArray(assessmentTemplates.id, answerIds));
+      }
+
+      // Calculate the denominator using maxRiskWeight
+      const totalPossibleRisk = templates.reduce((acc: number, t: any) => acc + (t.maxRiskWeight || 10), 0);
       const actualRisk = answers.reduce((acc: number, curr: any) => acc + curr.riskScore, 0);
       
       let score = 100;
@@ -127,24 +134,39 @@ export const assessmentsRouter = router({
       await db.delete(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
 
       for (const ans of answers) {
-        if (ans.riskScore >= 5) {
-          const [question] = await db.select().from(assessmentTemplates).where(eq(assessmentTemplates.id, ans.questionId));
+        if (ans.riskScore >= 3) {
+          const question = templates.find((t: any) => t.id === ans.questionId);
           
           if (question) {
-            let gdprRef = 'Article 5 (Principles relating to processing of personal data)';
             let title = `Address risk in ${question.category}`;
             let desc = `You answered "${ans.selectedOption}" to the question: "${question.questionText}". This poses a significant GDPR compliance risk.`;
 
-            if (question.category === 'Vendor Management') gdprRef = 'Article 28 (Processor)';
-            if (question.category === 'Data Subject Rights') gdprRef = 'Articles 15-22 (Rights of the data subject)';
-            if (question.category === 'Security') gdprRef = 'Article 32 (Security of processing)';
-            if (question.category === 'Lawful Basis') gdprRef = 'Article 6 (Lawfulness of processing)';
+            let gdprRef = 'Article 5 (Principles relating to processing of personal data)';
+            if (question.gdprArticles && question.gdprArticles.length > 0) {
+              const refs = question.gdprArticles.map((art: number) => {
+                if (art >= 15 && art <= 22) return `Article ${art} (Data Subject Rights)`;
+                if (art === 28) return 'Article 28 (Processor)';
+                if (art === 32) return 'Article 32 (Security of processing)';
+                if (art === 6) return 'Article 6 (Lawfulness of processing)';
+                if (art === 7) return 'Article 7 (Conditions for consent)';
+                if (art === 9) return 'Article 9 (Processing of special categories of personal data)';
+                if (art === 13 || art === 14) return `Article ${art} (Information to be provided)`;
+                if (art === 30) return 'Article 30 (Records of processing activities)';
+                if (art === 33 || art === 34) return `Article ${art} (Data breach notification)`;
+                if (art === 35) return 'Article 35 (Data protection impact assessment)';
+                if (art === 37) return 'Article 37 (Designation of the data protection officer)';
+                if (art === 44 || art === 45 || art === 46) return `Article ${art} (Transfers of personal data to third countries)`;
+                return `Article ${art}`;
+              });
+              gdprRef = Array.from(new Set(refs)).join(', ');
+            }
 
             await db.insert(actionItems).values({
               assessmentId: input.assessmentId,
               title: title,
               description: desc,
               gdprArticleReference: gdprRef,
+              gdprArticles: question.gdprArticles,
               priority: ans.riskScore >= 8 ? 'High' : 'Medium',
             });
           }

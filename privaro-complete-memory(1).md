@@ -805,3 +805,15 @@ An enterprise-grade cross-entity tracking system designed for parent organizatio
 - **Group Dashboards & Metrics**: Dedicated views (`/group/breaches`, `/group/dsar`, `/group/vendors`) allow parent admins to instantly view aggregate metrics and drill down into individual entity performance. The `groupMetrics.ts` library standardizes rollups across the workspace hierarchy.
 - **Consolidated Reporting**: Surfaces macro-level risk exposure by aggregating high-severity compliance gaps, overdue DSARs, and unmitigated breach risks across all child tenants.
 - **Idempotent Migrations & Safe Iteration**: Built safely on top of existing schemas. When out-of-sync environments caused Drizzle migration collisions, manual curations (skipping existing relations via `IF NOT EXISTS` or commenting out conflicting blocks in `0032`, `0033`, `0034`) were employed to deploy these structural changes safely without risking data loss.
+
+---
+
+## 29. GDPR Assessment & Scoring Overhaul
+
+### Overview
+Refactored the initial lead-magnet GDPR Gap Assessment module to support dynamic risk weighting and structured GDPR article cross-referencing. This ensures accurate scoring and lays the foundation for linking assessment gaps to the broader compliance monitoring (RAG/DPIA) system.
+
+### Components
+- **Dynamic Denominator (`maxRiskWeight`)**: Fixed a mathematical bug where diagnostic/conditional questions (like "Do you process health data?") artificially inflated the maximum possible risk score. The schema (`assessmentTemplates`) now stores `maxRiskWeight`, ensuring the score denominator only sums the maximum severity of *answered* questions.
+- **Structured Article Mapping (`gdprArticles`)**: Replaced hardcoded string references with `gdprArticles: integer[]` in both `assessmentTemplates` and `actionItems`. This enables programmatic correlations (e.g., mapping a gap to Article 28) while dynamically generating human-readable labels for the frontend.
+- **Actionable UI Tiers**: Updated the `/assessment/results` page dial and styling to a 3-tier risk system (< 50% Red, 51-75% Amber, > 75% Green) providing clearer, actionable thresholds for potential clients.
