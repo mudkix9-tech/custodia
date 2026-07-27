@@ -94,11 +94,11 @@ export default function EnterpriseSupportPage() {
             </div>
             <div>
               <div className="font-medium text-ink-900">Jane Smith</div>
-              <div className="text-sm text-ink-500">jane.smith@privaro.com</div>
+              <div className="text-sm text-ink-500">jane.smith@trycustodia.online</div>
             </div>
           </div>
           <a
-            href="mailto:jane.smith@privaro.com"
+            href="mailto:jane.smith@trycustodia.online"
             className="w-full flex items-center justify-center gap-2 bg-bone-50 text-ink-700 hover:bg-bone-100 border border-ink-900/10 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             Email Jane

@@ -29,7 +29,7 @@ export default function EnterprisePage() {
         </ul>
       </div>
 
-      <Link href="mailto:sales@privaro.com" className="bg-sage-600 text-bone-50 py-3 px-8 rounded-xl font-semibold">Talk to sales</Link>
+      <Link href="mailto:sales@trycustodia.online" className="bg-sage-600 text-bone-50 py-3 px-8 rounded-xl font-semibold">Talk to sales</Link>
     </div>
   );
 }

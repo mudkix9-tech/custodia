@@ -29,15 +29,15 @@ export async function inboundEmailWebhookHandler(fastify: FastifyInstance) {
       const toAddress = payload.to || '';
       const emailText = payload.text || payload.html || '';
       
-      // Extract the token: dsar-[token]@inbound.privaro.io
-      const match = toAddress.match(/dsar-([a-zA-Z0-9]+)@inbound\.privaro\.io/);
+      // Extract the token: dsar-[token]@inbound.trycustodia.online
+      const match = toAddress.match(/dsar-([a-zA-Z0-9-]+)@inbound\.trycustodia\.online/);
       if (!match) {
         fastify.log.info('Received inbound email not matching DSAR format');
         return reply.status(200).send({ received: true });
       }
 
       const token = match[1];
-      const inboundAddress = `dsar-${token}@inbound.privaro.io`;
+      const inboundAddress = `dsar-${token}@inbound.trycustodia.online`;
 
       const [dsar] = await db.select().from(dsarRequests).where(eq(dsarRequests.inboundEmailAddress, inboundAddress));
       
