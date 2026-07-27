@@ -138,6 +138,7 @@ export const users = pgTable('users', {
   permissions: jsonb('permissions').default([]),
   
   tokenInvalidatedAt: timestamp('token_invalidated_at', { withTimezone: true }),
+  marketingConsent: boolean('marketing_consent').default(false),
   
   lastTrainingCompletedAt: timestamp('last_training_completed_at', { withTimezone: true }),
   policyAcknowledgedAt: timestamp('policy_acknowledged_at', { withTimezone: true }),
@@ -771,7 +772,9 @@ export const assessmentAnswers = pgTable('assessment_answers', {
   selectedOption: text('selected_option').notNull(),
   riskScore: integer('risk_score').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  unq: unique().on(table.assessmentId, table.questionId)
+}));
 
 export const actionItems = pgTable('action_items', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -839,6 +842,7 @@ export const pendingSignups = pgTable("pending_signups", {
   email: varchar("email", { length: 255 }).notNull(),
   anonymousSessionId: varchar("anonymous_session_id", { length: 255 }),
   assessmentId: uuid("assessment_id").references(() => assessments.id),
+  marketingConsent: boolean("marketing_consent").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });

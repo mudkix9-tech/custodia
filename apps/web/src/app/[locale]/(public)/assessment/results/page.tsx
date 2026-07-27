@@ -80,6 +80,7 @@ function AssessmentResultsContent() {
   const { data: session, status } = useSession();
   
   const [email, setEmail] = useState('');
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [isMagicLinkSent, setIsMagicLinkSent] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   
@@ -104,7 +105,7 @@ function AssessmentResultsContent() {
 
     try {
       if (id && id !== "mock-id") {
-        await captureEmailMutation.mutateAsync({ assessmentId: id, email });
+        await captureEmailMutation.mutateAsync({ assessmentId: id, email, marketingConsent });
       }
       
       await signIn('resend', { email, redirect: false, callbackUrl: window.location.href });
@@ -242,9 +243,25 @@ function AssessmentResultsContent() {
                        placeholder="name@agency.com" 
                        className="w-full bg-bone-50 border border-ink-900/10 rounded-xl py-3.5 pl-12 pr-4 text-ink-900 placeholder-ink-400 focus:outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500/20 transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50"
                      />
+                     </div>
                    </div>
-                 </div>
-                 <button type="submit" disabled={captureEmailMutation.isPending} className="w-full bg-sage-700 hover:bg-sage-600 disabled:opacity-50 disabled:cursor-not-allowed text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:scale-[1.02] active:scale-[0.98] touch-manipulation">
+                   
+                   <label className="flex items-start gap-3 mt-2 cursor-pointer group">
+                     <div className="relative flex items-center justify-center mt-0.5">
+                       <input 
+                         type="checkbox" 
+                         checked={marketingConsent}
+                         onChange={(e) => setMarketingConsent(e.target.checked)}
+                         className="peer appearance-none w-5 h-5 border border-ink-900/20 rounded-md bg-white checked:bg-sage-600 checked:border-sage-600 focus:outline-none focus:ring-2 focus:ring-sage-500/30 transition-all cursor-pointer"
+                       />
+                       <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" viewBox="0 0 14 10" fill="none">
+                         <path d="M1 5L4.5 8.5L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                       </svg>
+                     </div>
+                     <span className="text-sm text-ink-600 leading-tight">Keep me updated about Custodia, including product news and offers</span>
+                   </label>
+                   
+                   <button type="submit" disabled={captureEmailMutation.isPending} className="w-full bg-sage-700 hover:bg-sage-600 disabled:opacity-50 disabled:cursor-not-allowed text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:scale-[1.02] active:scale-[0.98] touch-manipulation mt-2">
                    {captureEmailMutation.isPending ? 'Processing...' : 'See my results'} <Lock className="w-4 h-4" />
                  </button>
               </form>

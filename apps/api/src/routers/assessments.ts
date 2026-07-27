@@ -98,7 +98,15 @@ export const assessmentsRouter = router({
         questionId: input.questionId,
         selectedOption: input.selectedOption,
         riskScore: input.riskScore,
-      }).returning();
+      })
+      .onConflictDoUpdate({
+        target: [assessmentAnswers.assessmentId, assessmentAnswers.questionId],
+        set: {
+          selectedOption: input.selectedOption,
+          riskScore: input.riskScore
+        }
+      })
+      .returning();
       return answer;
     }),
 
@@ -173,13 +181,16 @@ export const assessmentsRouter = router({
         }
       }
 
-      return { score, status: 'calculated' };
+      const generatedActionItems = await db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
+
+      return { score, status: 'calculated', actionItems: generatedActionItems };
     }),
 
   captureEmail: publicProcedure
     .input(z.object({
       assessmentId: z.string().uuid(),
       email: z.string().email(),
+      marketingConsent: z.boolean().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
       const anonSessionId = (ctx.req as any).cookies?.pvr_anon_session || null;
@@ -192,6 +203,7 @@ export const assessmentsRouter = router({
         anonymousSessionId: anonSessionId,
         assessmentId: input.assessmentId,
         expiresAt: expiresAt,
+        marketingConsent: input.marketingConsent,
       });
 
       await db.update(assessments)

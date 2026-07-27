@@ -19,6 +19,7 @@ function AssessmentEngineContent() {
   const [hasStarted, setHasStarted] = useState(false);
   
   // TRPC Hooks
+  const trpcUtils = trpc.useUtils();
   const { data: questions, isLoading: isLoadingQuestions } = trpc.assessments.getQuestions.useQuery();
   const { data: resumeData, isLoading: isLoadingResume } = trpc.assessments.resumeAssessment.useQuery(undefined, {
     retry: false,
@@ -129,9 +130,9 @@ function AssessmentEngineContent() {
     const newAnswers = { ...answers, [question.id]: option };
     setAnswers(newAnswers);
     
-    // Save to backend immediately
+    // Save to backend immediately and wait for it to commit to ensure consistency
     if (assessmentId && assessmentId !== "mock-id") {
-      submitAnswerMutation.mutate({
+      await submitAnswerMutation.mutateAsync({
         assessmentId,
         questionId: question.id,
         selectedOption: option.text,
@@ -158,7 +159,15 @@ function AssessmentEngineContent() {
         } else {
           // Finished! Calculate results and redirect
           if (assessmentId && assessmentId !== "mock-id") {
-            await calculateMutation.mutateAsync({ assessmentId });
+            const result = await calculateMutation.mutateAsync({ assessmentId });
+            // Pre-populate the cache to prevent read-replica race conditions
+            trpcUtils.assessments.getResults.setData(
+              { assessmentId },
+              { 
+                assessment: { overallScore: result.score, id: assessmentId, status: 'calculated' } as any, 
+                actionItems: result.actionItems 
+              }
+            );
           }
           router.push(`/assessment/results?id=${assessmentId}`);
         }

@@ -95,16 +95,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         countryCode: 'US', // Default required by schema
       }).returning();
       
-      // 2. Set user as owner
-      await db.update(users).set({
-        organizationId: newOrg.id,
-        role: 'owner'
-      }).where(eq(users.id, user.id));
-      
-      // 3. Migrate assessments
+      // 2. Fetch pending signups to check for marketing consent and anonymous sessions
       const [pending] = await db.select().from(pendingSignups)
         .where(eq(pendingSignups.email, user.email));
         
+      // 3. Set user as owner and apply marketing consent
+      await db.update(users).set({
+        organizationId: newOrg.id,
+        role: 'owner',
+        marketingConsent: pending?.marketingConsent ?? false,
+      }).where(eq(users.id, user.id));
+      
+      // 4. Migrate assessments
       if (pending && pending.anonymousSessionId) {
         await db.update(assessments).set({
           organizationId: newOrg.id,
