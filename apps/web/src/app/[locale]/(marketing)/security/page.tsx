@@ -73,7 +73,7 @@ export default function SecurityPage() {
             <p className="text-lg text-ink-500 leading-relaxed mb-6">
                If you have specific security questions, require our DPA, or want to report a vulnerability, our security team is ready to assist.
             </p>
-            <a href="mailto:security@privaro.io" className="inline-flex bg-bone-100 hover:bg-bone-200 text-ink-900 text-sm font-semibold py-3 px-6 rounded-xl transition-all items-center justify-center border border-ink-900/5 shadow-sm">
+            <a href="mailto:security@trycustodia.online" className="inline-flex bg-bone-100 hover:bg-bone-200 text-ink-900 text-sm font-semibold py-3 px-6 rounded-xl transition-all items-center justify-center border border-ink-900/5 shadow-sm">
                Contact Security Team
             </a>
          </div>

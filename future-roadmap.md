@@ -47,7 +47,7 @@ A full LMS (Learning Management System) built into Privaro to handle mandatory G
 Centralizing notifications and tracking two-way communication for DSARs.
 - **New Tables**: `dsar_communications`, `notification_queue`.
 - **Backend Implementation**:
-  - Setup Inbound/Outbound email parsing for DSARs (e.g., `dsar-1234@privaro.io` routes directly to the specific DSAR ticket).
+  - Setup Inbound/Outbound email parsing for DSARs (e.g., `dsar-1234@trycustodia.online` routes directly to the specific DSAR ticket).
   - Background worker to process the `notification_queue` and dispatch via Postmark (Email) or Slack based on user preferences.
 - **Frontend Implementation**:
   - An email-client-like interface inside the DSAR detailed view to message the data subject directly.

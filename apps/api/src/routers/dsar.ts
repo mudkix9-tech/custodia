@@ -341,7 +341,7 @@ export const dsarRouter = router({
       try {
         await resend.emails.send({
           from: `${org.name} via Custodia <noreply@trycustodia.online>`,
-          replyTo: org.dpoEmail || 'support@privaro.io',
+          replyTo: org.dpoEmail || 'support@trycustodia.online',
           to: input.subjectEmail,
           subject: `Action Required: Verify your data request to ${org.name}`,
           html: `

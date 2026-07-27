@@ -32,7 +32,7 @@ export const breachDeadlineMonitor = createWorker(
       // We only alert if it hasn't been assessed as 'unlikely'
       if (breach.riskToIndividuals === 'unlikely') continue;
 
-      const dpoEmail = breach.organization.dpoEmail || 'support@privaro.io';
+      const dpoEmail = breach.organization.dpoEmail || 'support@trycustodia.online';
 
       let alertLevel = null;
 
@@ -85,7 +85,7 @@ export const breachTaskTracker = createWorker(
       if (task.assignedTo && task.breach?.organization) {
         const [assignedUser] = await db.select().from(users).where(eq(users.id, task.assignedTo));
         if (assignedUser) {
-          const dpoEmail = task.breach.organization.dpoEmail || 'support@privaro.io';
+          const dpoEmail = task.breach.organization.dpoEmail || 'support@trycustodia.online';
           await queueNotification({
             organizationId: task.breach.organizationId,
             userId: assignedUser.id,
