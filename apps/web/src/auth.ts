@@ -21,7 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   providers: [
     Resend({
-      from: 'auth@privaro.io',
+      from: 'noreply@trycustodia.online',
     }),
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,

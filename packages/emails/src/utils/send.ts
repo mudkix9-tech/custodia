@@ -17,7 +17,7 @@ export async function sendEmail({ to, subject, template, from, replyTo, tags }: 
   const html = await render(template);
 
   const result = await resend.emails.send({
-    from: from || 'Privaro <notifications@privaro.io>',
+    from: from || 'Custodia <noreply@trycustodia.online>',
     to: Array.isArray(to) ? to : [to],
     subject,
     html,

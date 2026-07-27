@@ -93,7 +93,7 @@ export const emailWorker = createWorker('email-sequences', async (job: any) => {
 
   try {
     await resend.emails.send({
-      from: 'Privaro <hello@privaro.io>',
+      from: 'Custodia <noreply@trycustodia.online>',
       to: email,
       subject,
       html,

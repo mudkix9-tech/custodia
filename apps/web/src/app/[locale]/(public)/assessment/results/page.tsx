@@ -258,7 +258,7 @@ function AssessmentResultsContent() {
                          <path d="M1 5L4.5 8.5L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                        </svg>
                      </div>
-                     <span className="text-sm text-ink-600 leading-tight">Keep me updated about Custodia, including product news and offers</span>
+                     <span className="text-sm text-left text-ink-600 leading-tight">Keep me updated about Custodia, including product news and offers</span>
                    </label>
                    
                    <button type="submit" disabled={captureEmailMutation.isPending} className="w-full bg-sage-700 hover:bg-sage-600 disabled:opacity-50 disabled:cursor-not-allowed text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:scale-[1.02] active:scale-[0.98] touch-manipulation mt-2">
