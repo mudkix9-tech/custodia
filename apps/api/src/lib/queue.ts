@@ -11,7 +11,7 @@ export async function getBoss() {
     return null as any;
   }
   if (!boss) {
-    boss = new PgBoss(connectionString);
+    boss = new PgBoss({ connectionString, max: 2 });
     boss.on('error', (error) => console.error('pg-boss error:', error));
     await boss.start();
   }

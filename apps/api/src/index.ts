@@ -29,6 +29,8 @@ import { ssoRoutes } from './routes/sso.js';
 import { complianceWorker } from './workers/compliance.js';
 import { paddleWebhookHandler } from './webhooks/paddle.js';
 import { inboundEmailWebhookHandler } from './webhooks/inbound.js';
+import { pool } from './db.js';
+import { getBoss } from './lib/queue.js';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -172,6 +174,18 @@ signals.forEach((signal) => {
     try {
       await server.close();
       console.log('Server closed.');
+      
+      const boss = await getBoss();
+      if (boss) {
+        console.log('Stopping pg-boss...');
+        await boss.stop({ graceful: true, timeout: 10000 });
+        console.log('pg-boss stopped.');
+      }
+      
+      console.log('Closing database pool...');
+      await pool.end();
+      console.log('Database pool closed.');
+
       process.exit(0);
     } catch (err) {
       console.error('Error during shutdown', err);

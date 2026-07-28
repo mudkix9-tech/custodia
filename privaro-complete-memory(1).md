@@ -240,7 +240,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 
 ---
 
-## 7. Code Review Fixes — All Complete (22 Fixes)
+## 7. Code Review Fixes — All Complete (23 Fixes)
 
 ### Critical infrastructure fixes (Fixes 1-7)
 1. ✅ DSAR router connected in router.ts
@@ -263,7 +263,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 14. ✅ Audit log export streams to S3 (no more 10K record memory load)
 15. ✅ Pagination on all list endpoints using shared `paginatedQuery` utility with cursor-based pagination
 
-### UX fixes (Fixes 16-22)
+### UX fixes (Fixes 16-23)
 16. ✅ Skeleton loaders on every page (Skeleton component + per-page skeleton compositions)
 17. ✅ Error boundaries on every route (Sentry capture + friendly error page)
 18. ✅ Confirmation dialogs on all destructive actions (useConfirm hook + ConfirmDialogModal, including "type to confirm" for account deletion)
@@ -271,6 +271,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 20. ✅ Inline form validation with react-hook-form + @hookform/resolvers/zod + FieldError component
 21. ✅ Accessibility pass (WAI-ARIA combobox pattern on CommandPalette, focus traps on modals, screen reader live regions, skip-to-content link, aria labels throughout)
 22. ✅ Mobile DataGrid responsiveness (card layout on mobile, hamburger sidebar)
+23. ✅ Gap Assessment Dynamic Routing (action items explicitly store their structural category in DB to ensure robust routing, replacing fragile keyword string matching on titles)
 
 ---
 
