@@ -780,6 +780,7 @@ export const actionItems = pgTable('action_items', {
   id: uuid('id').defaultRandom().primaryKey(),
   assessmentId: uuid('assessment_id').notNull().references(() => assessments.id, { onDelete: 'cascade' }),
   title: varchar('title', { length: 255 }).notNull(),
+  category: varchar('category', { length: 100 }),
   description: text('description').notNull(),
   gdprArticleReference: varchar('gdpr_article_reference', { length: 255 }),
   gdprArticles: integer('gdpr_articles').array(),

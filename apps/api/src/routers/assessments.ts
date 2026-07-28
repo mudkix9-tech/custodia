@@ -172,6 +172,7 @@ export const assessmentsRouter = router({
             await db.insert(actionItems).values({
               assessmentId: input.assessmentId,
               title: title,
+              category: question.category,
               description: desc,
               gdprArticleReference: gdprRef,
               gdprArticles: question.gdprArticles,

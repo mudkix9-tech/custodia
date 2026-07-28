@@ -8,6 +8,21 @@ import { ShieldCheck, Mail, AlertCircle, CheckCircle2, AlertTriangle, Lock, Send
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 
+const categoryRouteMap: Record<string, string> = {
+  'Data Mapping': '/ropa',
+  'Lawful Basis': '/ropa',
+  'Vendor Management': '/vendors',
+  'Data Subject Rights': '/dsar',
+  'Security': '/settings/security',
+  'Privacy Notices': '/policies',
+  'Cookie Consent': '/consent',
+  'Client Compliance': '/ropa',
+  'Governance': '/settings',
+};
+
+function getFixIssueLink(category?: string | null): string {
+  return (category && categoryRouteMap[category]) ? categoryRouteMap[category] : '/ropa';
+}
 function ConfettiEffect() {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   
@@ -216,9 +231,9 @@ function AssessmentResultsContent() {
   const isExpired = resultsData?.assessment?.expiresAt && new Date(resultsData.assessment.expiresAt) < new Date();
   
   const realActionItems = (id === "mock-id" ? [
-    { priority: 'High', title: 'Address risk in Vendor Management', gdprArticleReference: 'Article 28 (Processor)', description: 'Missing DPAs with critical sub-processors.' },
-    { priority: 'High', title: 'Address risk in Security', gdprArticleReference: 'Article 32 (Security of processing)', description: 'Data is not encrypted at rest.' }
-  ] : (resultsData?.actionItems || [])) as Array<{ priority: string; title: string; gdprArticleReference: string; description: string }>;
+    { priority: 'High', title: 'Address risk in Vendor Management', category: 'Vendor Management', gdprArticleReference: 'Article 28 (Processor)', description: 'Missing DPAs with critical sub-processors.' },
+    { priority: 'High', title: 'Address risk in Security', category: 'Security', gdprArticleReference: 'Article 32 (Security of processing)', description: 'Data is not encrypted at rest.' }
+  ] : (resultsData?.actionItems || [])) as Array<{ priority: string; title: string; category?: string; gdprArticleReference: string; description: string }>;
   const highPriorityCount = realActionItems.filter((item) => item.priority === 'High').length;
   const totalActionItems = realActionItems.length;
 
@@ -479,7 +494,7 @@ function AssessmentResultsContent() {
                     </p>
                   </div>
                   <div className="sm:text-right sm:self-center shrink-0">
-                    <Link href="/ropa" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-sage-600 hover:text-sage-700 bg-sage-50 px-3 py-1.5 rounded-lg transition-colors touch-manipulation">
+                    <Link href={getFixIssueLink(item.category)} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-sage-600 hover:text-sage-700 bg-sage-50 px-3 py-1.5 rounded-lg transition-colors touch-manipulation">
                       Fix Issue <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
