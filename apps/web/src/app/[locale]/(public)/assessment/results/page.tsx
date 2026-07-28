@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ShieldCheck, Mail, AlertCircle, CheckCircle2, AlertTriangle, Lock, Send, Copy, ArrowRight, Clock, Download } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
@@ -76,6 +76,7 @@ function ConfettiEffect() {
 
 function AssessmentResultsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const id = searchParams?.get('id');
   const { data: session, status } = useSession();
   
@@ -94,10 +95,99 @@ function AssessmentResultsContent() {
   
   // TRPC
   const captureEmailMutation = trpc.assessments.captureEmail.useMutation();
-  const { data: resultsData } = trpc.assessments.getResults.useQuery(
+  const { data: resultsData, isLoading, isError } = trpc.assessments.getResults.useQuery(
     { assessmentId: id! }, 
-    { enabled: !!id }
+    { enabled: !!id && id !== "mock-id" }
   );
+
+  useEffect(() => {
+    if (!isLoading && id !== "mock-id") {
+      if (!id || isError || !resultsData || typeof resultsData.assessment?.overallScore !== 'number') {
+        router.push('/assessment?error=not_found');
+      }
+    }
+  }, [isLoading, isError, resultsData, id, router]);
+
+  if (isLoading && id !== "mock-id") {
+    return (
+      <div className="min-h-screen bg-bone-50 py-12 px-4 sm:px-6 relative">
+        <div className="max-w-4xl mx-auto">
+          <header className="p-6 border-b border-ink-900/5 flex justify-between items-center bg-bone-50">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-sage-700/20 rounded-lg animate-pulse" />
+              <div className="w-24 h-6 bg-ink-900/10 rounded animate-pulse" />
+            </div>
+          </header>
+          <main className="max-w-4xl mx-auto px-6 py-16">
+            {currentState === 3 ? (
+              <div className="animate-pulse">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 pb-6 border-b border-ink-900/10">
+                  <div>
+                    <div className="w-64 h-8 bg-ink-900/10 rounded mb-2" />
+                    <div className="w-48 h-4 bg-ink-900/5 rounded" />
+                  </div>
+                  <div className="w-48 h-10 bg-ink-900/10 rounded-xl" />
+                </div>
+                <div className="grid md:grid-cols-3 gap-8 mb-12">
+                  <div className="md:col-span-1 bg-white border border-ink-900/10 rounded-3xl p-8 flex flex-col items-center justify-center shadow-card">
+                    <div className="w-24 h-4 bg-ink-900/10 rounded mb-6" />
+                    <div className="w-32 h-32 rounded-full border-8 border-ink-900/5 mb-6" />
+                    <div className="w-24 h-6 bg-ink-900/10 rounded-full" />
+                  </div>
+                  <div className="md:col-span-2 bg-sage-700/10 rounded-3xl p-10 flex flex-col justify-center shadow-card">
+                    <div className="w-48 h-8 bg-sage-700/20 rounded mb-8" />
+                    <div className="space-y-6">
+                      {[1, 2, 3].map(i => (
+                        <div key={i}>
+                          <div className="flex justify-between mb-2">
+                            <div className="w-32 h-4 bg-sage-700/20 rounded" />
+                            <div className="w-8 h-4 bg-sage-700/20 rounded" />
+                          </div>
+                          <div className="w-full h-2 bg-sage-700/10 rounded-full" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="w-48 h-8 bg-ink-900/10 rounded mb-6" />
+                <div className="space-y-4 mb-12">
+                  {[1, 2].map(i => (
+                    <div key={i} className="bg-white border border-ink-900/10 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-start gap-4 shadow-sm">
+                      <div className="w-6 h-6 bg-ink-900/10 rounded-full shrink-0 mt-1" />
+                      <div className="flex-1 w-full">
+                        <div className="w-64 h-6 bg-ink-900/10 rounded mb-2" />
+                        <div className="w-32 h-5 bg-ink-900/5 rounded mb-3" />
+                        <div className="w-full h-4 bg-ink-900/5 rounded mb-2" />
+                        <div className="w-3/4 h-4 bg-ink-900/5 rounded" />
+                      </div>
+                      <div className="w-24 h-8 bg-ink-900/10 rounded-lg shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center animate-pulse">
+                <div className="w-64 h-10 bg-ink-900/10 rounded-lg mx-auto mb-12" />
+                <div className="bg-white border border-ink-900/10 rounded-3xl p-10 max-w-2xl mx-auto shadow-card relative overflow-hidden mb-12">
+                  <div className="w-64 h-4 bg-ink-900/10 rounded mx-auto mb-6" />
+                  <div className="w-48 h-48 rounded-full border-8 border-ink-900/5 mx-auto mb-8" />
+                  <div className="w-64 h-8 bg-ink-900/10 rounded mx-auto mb-3" />
+                  <div className="w-96 h-4 bg-ink-900/10 rounded mx-auto mb-8" />
+                  <div className="w-full max-w-md mx-auto h-12 bg-ink-900/5 rounded-xl mb-4" />
+                  <div className="w-full max-w-md mx-auto h-12 bg-ink-900/10 rounded-xl" />
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Prevent rendering if redirecting
+  if (!isLoading && id !== "mock-id" && (!id || isError || !resultsData || typeof resultsData.assessment?.overallScore !== 'number')) {
+    return null;
+  }
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,13 +212,13 @@ function AssessmentResultsContent() {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const finalScore = resultsData?.assessment?.overallScore || 34;
+  const finalScore = id === "mock-id" ? 34 : (resultsData?.assessment?.overallScore ?? 0);
   const isExpired = resultsData?.assessment?.expiresAt && new Date(resultsData.assessment.expiresAt) < new Date();
   
-  const realActionItems = (resultsData?.actionItems || [
+  const realActionItems = (id === "mock-id" ? [
     { priority: 'High', title: 'Address risk in Vendor Management', gdprArticleReference: 'Article 28 (Processor)', description: 'Missing DPAs with critical sub-processors.' },
     { priority: 'High', title: 'Address risk in Security', gdprArticleReference: 'Article 32 (Security of processing)', description: 'Data is not encrypted at rest.' }
-  ]) as Array<{ priority: string; title: string; gdprArticleReference: string; description: string }>;
+  ] : (resultsData?.actionItems || [])) as Array<{ priority: string; title: string; gdprArticleReference: string; description: string }>;
   const highPriorityCount = realActionItems.filter((item) => item.priority === 'High').length;
   const totalActionItems = realActionItems.length;
 
