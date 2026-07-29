@@ -4,8 +4,9 @@ import { db } from '../db.js';
 import { leadAssessments } from 'db';
 import { eq } from 'drizzle-orm';
 import { AssessmentReport } from '../lib/auditTemplates/assessmentReport.js';
-import { renderReactToPdf } from '../lib/pdfRenderer.js';
-import { generateUploadUrl, generateDownloadUrl } from '../lib/s3.js';
+import { renderReactToPdf, renderReactToPdfStream } from '../lib/pdfRenderer.js';
+import { generateUploadUrl, generateDownloadUrl, getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
+import { Upload } from '@aws-sdk/lib-storage';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
@@ -46,23 +47,30 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
     };
 
     const element = React.createElement(AssessmentReport, { data: reportData });
-    const pdfBuffer = await renderReactToPdf(element);
+    const pdfStream = await renderReactToPdfStream(element);
 
     const fileKey = `leads/${leadId}/report_${Date.now()}.pdf`;
-    const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', 'eu-central-1');
+    const dataRegion = 'eu-central-1';
     
-    const blob = new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' });
-    const res = await fetch(uploadUrl, {
-      method: 'PUT',
-      body: blob,
-      headers: { 'Content-Type': 'application/pdf' }
+    const abortController = new AbortController();
+    
+    pdfStream.on('error', (err) => {
+      console.error("PDF generation stream emitted error in worker:", err);
+      abortController.abort(err);
     });
-    
-    if (!res.ok) {
-      const text = await res.text();
-      console.error('S3 Upload Error:', text);
-      throw new Error('Failed to upload Lead PDF to S3: ' + text);
-    }
+
+    const upload = new Upload({
+      client: getS3ClientForRegion(dataRegion),
+      params: {
+        Bucket: getS3BucketForOrg(dataRegion),
+        Key: fileKey,
+        Body: pdfStream,
+        ContentType: 'application/pdf',
+      },
+      abortController
+    });
+
+    await upload.done();
     
     // Generate 48-hour presigned URL (48 * 3600 = 172800)
     const downloadUrl = await generateDownloadUrl(fileKey, 'eu-central-1', 7 * 24 * 3600, `Lead_Report_${leadId.split('-')[0]}.pdf`);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { renderToBuffer, Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { renderToBuffer, renderToStream, Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import * as Sentry from '@sentry/node';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -141,5 +141,23 @@ export async function renderReactToPdf(element: React.ReactElement<any>): Promis
       tags: { service: 'pdf-renderer' }
     });
     throw new Error('Failed to generate PDF document');
+  }
+}
+
+/**
+ * Safely renders a React element to a PDF Node.js stream.
+ * This is preferred over renderReactToPdf for large documents to avoid blocking the event loop
+ * and spiking memory usage.
+ */
+export async function renderReactToPdfStream(element: React.ReactElement<any>): Promise<NodeJS.ReadableStream> {
+  try {
+    const stream = await renderToStream(element);
+    return stream;
+  } catch (error) {
+    console.error('Failed to render React component to PDF stream', error);
+    Sentry.captureException(error, {
+      tags: { service: 'pdf-renderer-stream' }
+    });
+    throw new Error('Failed to generate PDF document stream');
   }
 }

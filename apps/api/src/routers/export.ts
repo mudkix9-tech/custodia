@@ -219,8 +219,8 @@ export const exportRouter = router({
       checkOrgContext(ctx.user);
       
       const { AssessmentReport } = await import('../lib/auditTemplates/assessmentReport.js');
-      const { renderReactToPdf } = await import('../lib/pdfRenderer.js');
-      const { generateUploadUrl, generateDownloadUrl } = await import('../lib/s3.js');
+      const { renderReactToPdfStream } = await import('../lib/pdfRenderer.js');
+      const { generateDownloadUrl, getS3ClientForRegion, getS3BucketForOrg } = await import('../lib/s3.js');
       const { assessments, assessmentAnswers, actionItems, auditLogs, organizations } = await import('db');
       
       // 1. Fetch data
@@ -285,23 +285,33 @@ export const exportRouter = router({
       
       try {
         const element = React.createElement(AssessmentReport, { data: reportData });
-        const pdfBuffer = await renderReactToPdf(element);
+        const pdfStream = await renderReactToPdfStream(element);
         
         const fileKey = `assessments/${ctx.user!.orgId}/${input.assessmentId}/report_${Date.now()}.pdf`;
-        const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', org?.dataRegion || 'eu-central-1');
+        const dataRegion = org?.dataRegion || 'eu-central-1';
         
-        const blob = new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' });
-        const res = await fetch(uploadUrl, {
-          method: 'PUT',
-          body: blob,
-          headers: { 'Content-Type': 'application/pdf' }
+        const { Upload } = await import('@aws-sdk/lib-storage');
+        const abortController = new AbortController();
+        
+        // Listen to stream errors to abort the AWS S3 multipart upload
+        pdfStream.on('error', (err) => {
+          console.error("PDF generation stream emitted error:", err);
+          abortController.abort(err);
         });
-        
-        if (!res.ok) {
-          const text = await res.text();
-          console.error('S3 Upload Error:', text);
-          throw new Error('Failed to upload PDF to S3: ' + text);
-        }
+
+        const upload = new Upload({
+          client: getS3ClientForRegion(dataRegion),
+          params: {
+            Bucket: getS3BucketForOrg(dataRegion),
+            Key: fileKey,
+            Body: pdfStream,
+            ContentType: 'application/pdf',
+          },
+          abortController
+        });
+
+        // If the stream aborts, the upload will throw here
+        await upload.done();
         
         await ctx.db.insert(auditLogs).values({
           action: 'assessment_report_exported',
