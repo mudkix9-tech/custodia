@@ -16,7 +16,7 @@ export function getS3BucketForOrg(dataRegion: string): string {
 
 export function getS3ClientForRegion(region: string): S3Client {
   if (!s3Clients.has(region)) {
-    s3Clients.set(region, new S3Client({ region, forcePathStyle: true })); // use forcePathStyle for dev/testing often
+    s3Clients.set(region, new S3Client({ region })); 
   }
   return s3Clients.get(region)!;
 }
