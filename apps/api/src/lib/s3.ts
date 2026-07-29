@@ -16,7 +16,8 @@ export function getS3BucketForOrg(dataRegion: string): string {
 
 export function getS3ClientForRegion(region: string): S3Client {
   if (!s3Clients.has(region)) {
-    s3Clients.set(region, new S3Client({ region })); 
+    // The bucket was created in us-east-1 despite the name
+    s3Clients.set(region, new S3Client({ region: 'us-east-1' })); 
   }
   return s3Clients.get(region)!;
 }
