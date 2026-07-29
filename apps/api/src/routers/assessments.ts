@@ -237,7 +237,7 @@ export const assessmentsRouter = router({
            
            if (Array.isArray(lead.snapshot)) {
              items = lead.snapshot.filter((s: any) => s.score > 0).map((s: any) => ({
-                id: `mock-${s.questionId}`,
+                id: crypto.randomUUID(),
                 assessmentId: lead.id,
                 title: s.questionText ? `Address risk regarding: ${s.questionText}` : `Address risk regarding: ${s.questionId}`,
                 description: `Your answer "${s.selectedOption || s.selectedText || s.selectedValue || 'Unknown'}" indicates a compliance gap.`,
