@@ -65,7 +65,7 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
     }
     
     // Generate 48-hour presigned URL (48 * 3600 = 172800)
-    const downloadUrl = await generateDownloadUrl(fileKey, 'eu-central-1', 7 * 24 * 3600);
+    const downloadUrl = await generateDownloadUrl(fileKey, 'eu-central-1', 7 * 24 * 3600, `Lead_Report_${leadId.split('-')[0]}.pdf`);
 
     await resend.emails.send({
       from: 'Privaro <hello@privaro.com>',
