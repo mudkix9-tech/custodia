@@ -8,7 +8,7 @@ export async function getBrowserCluster() {
 
   cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT, // Each task gets a fresh page in shared browser
-    maxConcurrency: 4, // 4 simultaneous renders
+    maxConcurrency: 1, // Reduced to 1 to fit within Render's 512MB free tier limit
     puppeteerOptions: {
       headless: true,
       executablePath: puppeteer.executablePath(),
