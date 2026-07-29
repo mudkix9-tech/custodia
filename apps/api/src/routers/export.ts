@@ -290,13 +290,18 @@ export const exportRouter = router({
         const fileKey = `assessments/${ctx.user!.orgId}/${assessment.id}/report_${Date.now()}.pdf`;
         const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', org?.dataRegion || 'eu-west-1');
         
+        const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
         const res = await fetch(uploadUrl, {
           method: 'PUT',
-          body: pdfBuffer as any,
+          body: blob,
           headers: { 'Content-Type': 'application/pdf' }
         });
         
-        if (!res.ok) throw new Error('Failed to upload PDF to S3');
+        if (!res.ok) {
+          const text = await res.text();
+          console.error('S3 Upload Error:', text);
+          throw new Error('Failed to upload PDF to S3: ' + text);
+        }
         
         await ctx.db.insert(auditLogs).values({
           action: 'assessment_report_exported',

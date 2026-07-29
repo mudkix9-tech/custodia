@@ -51,13 +51,18 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
     const fileKey = `leads/${leadId}/report_${Date.now()}.pdf`;
     const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', 'eu-west-1');
     
+    const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
     const res = await fetch(uploadUrl, {
       method: 'PUT',
-      body: pdfBuffer as any,
+      body: blob,
       headers: { 'Content-Type': 'application/pdf' }
     });
     
-    if (!res.ok) throw new Error('Failed to upload Lead PDF to S3');
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('S3 Upload Error:', text);
+      throw new Error('Failed to upload Lead PDF to S3: ' + text);
+    }
     
     // Generate 48-hour presigned URL (48 * 3600 = 172800)
     const downloadUrl = await generateDownloadUrl(fileKey, 'eu-west-1', 172800);
