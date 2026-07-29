@@ -1,4 +1,5 @@
 import { Cluster } from 'puppeteer-cluster';
+import puppeteer from 'puppeteer';
 
 let cluster: Cluster | null = null;
 
@@ -10,6 +11,7 @@ export async function getBrowserCluster() {
     maxConcurrency: 4, // 4 simultaneous renders
     puppeteerOptions: {
       headless: true,
+      executablePath: puppeteer.executablePath(),
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     },
     timeout: 60000,
