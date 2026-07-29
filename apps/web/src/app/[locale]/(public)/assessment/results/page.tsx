@@ -101,6 +101,7 @@ function AssessmentResultsContent() {
   const [isMagicLinkSent, setIsMagicLinkSent] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   
   const generatePdfMutation = trpc.export.generateAssessmentReportPdf.useMutation();
   
@@ -206,8 +207,6 @@ function AssessmentResultsContent() {
   if (!isLoading && id !== "mock-id" && (!id || isError || !resultsData || typeof resultsData.assessment?.overallScore !== 'number')) {
     return null;
   }
-
-  const [isCapturing, setIsCapturing] = useState(false);
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
