@@ -219,8 +219,35 @@ export const assessmentsRouter = router({
   getResults: publicProcedure
     .input(z.object({ assessmentId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const [assessment] = await db.select().from(assessments).where(eq(assessments.id, input.assessmentId));
-      const items = await db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
+      let [assessment] = await db.select().from(assessments).where(eq(assessments.id, input.assessmentId));
+      let items = await db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
+      
+      // Fallback for lead assessments
+      if (!assessment) {
+        const { leadAssessments } = await import('db');
+        const [lead] = await db.select().from(leadAssessments).where(eq(leadAssessments.id, input.assessmentId));
+        if (lead) {
+           assessment = {
+             id: lead.id,
+             organizationId: lead.convertedToOrgId,
+             status: 'calculated',
+             overallScore: lead.totalScore,
+             completedAt: lead.createdAt
+           } as any;
+           
+           if (Array.isArray(lead.snapshot)) {
+             items = lead.snapshot.filter((s: any) => s.score > 0).map((s: any) => ({
+                id: 'mock',
+                assessmentId: lead.id,
+                title: `Address risk regarding: ${s.questionId}`,
+                description: `Your answer "${s.selectedValue}" indicates a compliance gap.`,
+                severity: s.score > 5 ? 'High' : 'Medium',
+                status: 'open',
+                createdAt: lead.createdAt
+             })) as any;
+           }
+        }
+      }
       
       return { assessment, actionItems: items };
     }),

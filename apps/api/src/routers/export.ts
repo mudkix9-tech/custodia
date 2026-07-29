@@ -226,21 +226,51 @@ export const exportRouter = router({
         where: eq(organizations.id, ctx.user!.orgId)
       });
       
-      const [assessment] = await ctx.db.select().from(assessments)
+      let assessment = undefined;
+      let answers: any[] = [];
+      let items: any[] = [];
+      
+      const [foundAssessment] = await ctx.db.select().from(assessments)
         .where(and(eq(assessments.id, input.assessmentId), eq(assessments.organizationId, ctx.user!.orgId)));
         
-      if (!assessment) throw new TRPCError({ code: 'NOT_FOUND', message: 'Assessment not found' });
-      
-      const answers = await ctx.db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, input.assessmentId));
-      const items = await ctx.db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
+      if (foundAssessment) {
+        assessment = foundAssessment;
+        answers = await ctx.db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, input.assessmentId));
+        items = await ctx.db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
+      } else {
+        const { leadAssessments } = await import('db');
+        const [lead] = await ctx.db.select().from(leadAssessments).where(eq(leadAssessments.id, input.assessmentId));
+        
+        // Ensure they either converted it to their org, or they just happen to be logged in and requesting it
+        if (!lead || (lead.convertedToOrgId && lead.convertedToOrgId !== ctx.user!.orgId)) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Assessment not found' });
+        }
+        
+        assessment = {
+          overallScore: lead.totalScore
+        };
+        
+        const snapshot = Array.isArray(lead.snapshot) ? lead.snapshot : [];
+        answers = snapshot.map((s: any) => ({
+           questionId: s.questionId,
+           selectedOption: s.selectedValue || s.selectedOption,
+           riskScore: s.score || s.riskScore
+        }));
+        
+        items = snapshot.filter((s: any) => (s.score || s.riskScore) > 0).map((s: any) => ({
+           title: `Address risk regarding: ${s.questionId}`,
+           description: `Your answer "${s.selectedValue || s.selectedOption}" indicates a compliance gap.`,
+           severity: (s.score || s.riskScore) > 5 ? 'High' : 'Medium'
+        }));
+      }
       
       const reportData = {
         organizationName: org?.name || 'Organization',
         reportDate: new Date().toLocaleDateString(),
         overallScore: assessment.overallScore || 0,
-        riskLevel: assessment.overallScore < 50 ? 'High' : assessment.overallScore <= 75 ? 'Medium' : 'Low',
+        riskLevel: (assessment.overallScore || 0) < 50 ? 'High' : (assessment.overallScore || 0) <= 75 ? 'Medium' : 'Low',
         answers: answers.map(a => ({
-          questionText: a.questionId, // Fallback since we don't store question text locally here without join, but ideally it's joined.
+          questionText: a.questionId,
           selectedOption: a.selectedOption,
           riskScore: a.riskScore
         })),
