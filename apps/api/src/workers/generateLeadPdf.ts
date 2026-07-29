@@ -51,7 +51,7 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
     const fileKey = `leads/${leadId}/report_${Date.now()}.pdf`;
     const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', 'eu-west-1');
     
-    const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
+    const blob = new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' });
     const res = await fetch(uploadUrl, {
       method: 'PUT',
       body: blob,

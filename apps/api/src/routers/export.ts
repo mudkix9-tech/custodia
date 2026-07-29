@@ -290,7 +290,7 @@ export const exportRouter = router({
         const fileKey = `assessments/${ctx.user!.orgId}/${assessment.id}/report_${Date.now()}.pdf`;
         const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', org?.dataRegion || 'eu-west-1');
         
-        const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
+        const blob = new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' });
         const res = await fetch(uploadUrl, {
           method: 'PUT',
           body: blob,
