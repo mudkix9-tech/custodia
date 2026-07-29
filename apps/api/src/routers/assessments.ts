@@ -18,6 +18,27 @@ import { eq, and, desc, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import React from 'react';
+
+function getGdprArticleReference(articles: number[] | null | undefined): string {
+  if (!articles || articles.length === 0) return 'Article 5 (Principles relating to processing of personal data)';
+  
+  const refs = articles.map((art: number) => {
+    if (art >= 15 && art <= 22) return `Article ${art} (Data Subject Rights)`;
+    if (art === 28) return 'Article 28 (Processor)';
+    if (art === 32) return 'Article 32 (Security of processing)';
+    if (art === 6) return 'Article 6 (Lawfulness of processing)';
+    if (art === 7) return 'Article 7 (Conditions for consent)';
+    if (art === 9) return 'Article 9 (Processing of special categories of personal data)';
+    if (art === 13 || art === 14) return `Article ${art} (Information to be provided)`;
+    if (art === 30) return 'Article 30 (Records of processing activities)';
+    if (art === 33 || art === 34) return `Article ${art} (Data breach notification)`;
+    if (art === 35) return 'Article 35 (Data protection impact assessment)';
+    if (art === 37) return 'Article 37 (Designation of the data protection officer)';
+    if (art === 44 || art === 45 || art === 46) return `Article ${art} (Transfers of personal data to third countries)`;
+    return `Article ${art}`;
+  });
+  return Array.from(new Set(refs)).join(', ');
+}
 import { GoogleGenAI } from '@google/genai';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { sendEmail, AssessmentInvitation, AssessmentReminder } from 'emails';
@@ -149,25 +170,7 @@ export const assessmentsRouter = router({
             let title = `Address risk in ${question.category}`;
             let desc = `You answered "${ans.selectedOption}" to the question: "${question.questionText}". This poses a significant GDPR compliance risk.`;
 
-            let gdprRef = 'Article 5 (Principles relating to processing of personal data)';
-            if (question.gdprArticles && question.gdprArticles.length > 0) {
-              const refs = question.gdprArticles.map((art: number) => {
-                if (art >= 15 && art <= 22) return `Article ${art} (Data Subject Rights)`;
-                if (art === 28) return 'Article 28 (Processor)';
-                if (art === 32) return 'Article 32 (Security of processing)';
-                if (art === 6) return 'Article 6 (Lawfulness of processing)';
-                if (art === 7) return 'Article 7 (Conditions for consent)';
-                if (art === 9) return 'Article 9 (Processing of special categories of personal data)';
-                if (art === 13 || art === 14) return `Article ${art} (Information to be provided)`;
-                if (art === 30) return 'Article 30 (Records of processing activities)';
-                if (art === 33 || art === 34) return `Article ${art} (Data breach notification)`;
-                if (art === 35) return 'Article 35 (Data protection impact assessment)';
-                if (art === 37) return 'Article 37 (Designation of the data protection officer)';
-                if (art === 44 || art === 45 || art === 46) return `Article ${art} (Transfers of personal data to third countries)`;
-                return `Article ${art}`;
-              });
-              gdprRef = Array.from(new Set(refs)).join(', ');
-            }
+            let gdprRef = getGdprArticleReference(question.gdprArticles);
 
             await db.insert(actionItems).values({
               assessmentId: input.assessmentId,
@@ -236,15 +239,22 @@ export const assessmentsRouter = router({
            } as any;
            
            if (Array.isArray(lead.snapshot)) {
-             items = lead.snapshot.filter((s: any) => s.score > 0).map((s: any) => ({
-                id: crypto.randomUUID(),
-                assessmentId: lead.id,
-                title: s.questionText ? `Address risk regarding: ${s.questionText}` : `Address risk regarding: ${s.questionId}`,
-                description: `Your answer "${s.selectedOption || s.selectedText || s.selectedValue || 'Unknown'}" indicates a compliance gap.`,
-                severity: s.score > 5 ? 'High' : 'Medium',
-                status: 'open',
-                createdAt: lead.createdAt
-             })) as any;
+             const templates = await db.select().from(assessmentTemplates);
+             items = lead.snapshot.filter((s: any) => s.score > 0).map((s: any) => {
+                const template = templates.find(t => t.id === s.questionId);
+                return {
+                 id: crypto.randomUUID(),
+                 assessmentId: lead.id,
+                 title: s.questionText ? `Address risk regarding: ${s.questionText}` : `Address risk regarding: ${s.questionId}`,
+                 description: `Your answer "${s.selectedOption || s.selectedText || s.selectedValue || 'Unknown'}" indicates a compliance gap.`,
+                 severity: s.score > 5 ? 'High' : 'Medium',
+                 status: 'open',
+                 createdAt: lead.createdAt,
+                 category: template?.category || 'General',
+                 gdprArticles: template?.gdprArticles || null,
+                 gdprArticleReference: template ? getGdprArticleReference(template.gdprArticles) : getGdprArticleReference(null)
+                };
+             }) as any;
            }
         }
       }
