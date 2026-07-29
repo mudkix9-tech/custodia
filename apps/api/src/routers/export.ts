@@ -288,7 +288,7 @@ export const exportRouter = router({
         const pdfBuffer = await renderReactToPdf(element);
         
         const fileKey = `assessments/${ctx.user!.orgId}/${assessment.id}/report_${Date.now()}.pdf`;
-        const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', org?.dataRegion || 'eu-west-1');
+        const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', org?.dataRegion || 'eu-central-1');
         
         const blob = new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' });
         const res = await fetch(uploadUrl, {
@@ -310,7 +310,7 @@ export const exportRouter = router({
           newValue: { assessmentId: assessment.id }
         } as any);
         
-        const downloadUrl = await generateDownloadUrl(fileKey, org?.dataRegion || 'eu-west-1', 3600);
+        const downloadUrl = await generateDownloadUrl(fileKey, org?.dataRegion || 'eu-central-1', 3600);
         return { success: true, url: downloadUrl };
       } catch (err) {
         console.error("Failed to generate/upload Assessment PDF:", err);

@@ -49,7 +49,7 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
     const pdfBuffer = await renderReactToPdf(element);
 
     const fileKey = `leads/${leadId}/report_${Date.now()}.pdf`;
-    const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', 'eu-west-1');
+    const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', 'eu-central-1');
     
     const blob = new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' });
     const res = await fetch(uploadUrl, {
@@ -65,7 +65,7 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
     }
     
     // Generate 48-hour presigned URL (48 * 3600 = 172800)
-    const downloadUrl = await generateDownloadUrl(fileKey, 'eu-west-1', 172800);
+    const downloadUrl = await generateDownloadUrl(fileKey, 'eu-central-1', 7 * 24 * 3600);
 
     await resend.emails.send({
       from: 'Privaro <hello@privaro.com>',

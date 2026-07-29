@@ -11,7 +11,7 @@ export function getS3BucketForOrg(dataRegion: string): string {
     'eu-west-3': 'privaro-documents-eu-west-3',
     'eu-north-1': 'privaro-documents-eu-north-1',
   };
-  return bucketMap[dataRegion] || bucketMap['eu-west-1'];
+  return bucketMap[dataRegion] || bucketMap['eu-central-1'];
 }
 
 export function getS3ClientForRegion(region: string): S3Client {
@@ -21,8 +21,8 @@ export function getS3ClientForRegion(region: string): S3Client {
   return s3Clients.get(region)!;
 }
 
-export async function generateUploadUrl(key: string, contentType: string, dataRegion: string = 'eu-west-1'): Promise<string> {
-  const region = dataRegion || 'eu-west-1';
+export async function generateUploadUrl(key: string, contentType: string, dataRegion: string = 'eu-central-1'): Promise<string> {
+  const region = dataRegion || 'eu-central-1';
   const client = getS3ClientForRegion(region);
   const bucket = getS3BucketForOrg(region);
 
@@ -35,8 +35,8 @@ export async function generateUploadUrl(key: string, contentType: string, dataRe
   return getSignedUrl(client, command, { expiresIn: 3600 });
 }
 
-export async function generateDownloadUrl(key: string, dataRegion: string = 'eu-west-1', expiresIn: number = 3600): Promise<string> {
-  const region = dataRegion || 'eu-west-1';
+export async function generateDownloadUrl(key: string, dataRegion: string = 'eu-central-1', expiresIn: number = 3600): Promise<string> {
+  const region = dataRegion || 'eu-central-1';
   const client = getS3ClientForRegion(region);
   const bucket = getS3BucketForOrg(region);
 
