@@ -4,75 +4,53 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ShieldCheck, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { ShieldCheck, ArrowRight, ArrowLeft, Loader2, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { evaluateDependsOn } from '@/utils/assessment';
-import { setCookie, getCookie } from 'cookies-next';
+import { saveLeadAssessment } from '@/actions/lead-assessment';
 
 function AssessmentEngineContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(-1); // -1 is intro
-  const [answers, setAnswers] = useState<Record<string, { text: string; riskWeight?: number }>>({});
+  const [answers, setAnswers] = useState<Record<string, { text: string }>>({});
   const [isResumed, setIsResumed] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const [savedSessionExists, setSavedSessionExists] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // TRPC Hooks
-  const trpcUtils = trpc.useUtils();
   const { data: questions, isLoading: isLoadingQuestions } = trpc.assessments.getQuestions.useQuery();
-  const { data: resumeData, isLoading: isLoadingResume } = trpc.assessments.resumeAssessment.useQuery(undefined, {
-    retry: false,
-    staleTime: 0,
-  });
   
-  const startMutation = trpc.assessments.startAssessment.useMutation();
-  const submitAnswerMutation = trpc.assessments.submitAnswer.useMutation();
-  const calculateMutation = trpc.assessments.calculateResults.useMutation();
-
   useEffect(() => {
-    // Generate anon session ID if it doesn't exist
-    let sessionId = getCookie('pvr_anon_session');
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
-      setCookie('pvr_anon_session', sessionId, { maxAge: 60 * 60 * 24 * 30 }); // 30 days
+    // Check local storage for existing session
+    const saved = localStorage.getItem('pvr_assessment_answers');
+    if (saved && !hasStarted) {
+      setSavedSessionExists(true);
     }
+  }, [hasStarted]);
 
-    if (resumeData?.assessment && resumeData.assessment.status === 'in_progress' && questions && !hasStarted) {
-      setTimeout(() => {
-        setAssessmentId(resumeData.assessment.id);
-        setAnswers(resumeData.answers as Record<string, { text: string; riskWeight?: number }> || {});
-        
-        // Determine what step they were on
-        let lastUnansweredIndex = 0;
-        for (let i = 0; i < questions.length; i++) {
-          const q = questions[i];
-          if (!resumeData.answers?.[q.id]) {
-            lastUnansweredIndex = i;
-            break;
-          }
-        }
-        
-        setCurrentStep(lastUnansweredIndex);
-        setIsResumed(true);
-        setHasStarted(true);
-      }, 0);
+  // Save to local storage whenever answers change (if started)
+  useEffect(() => {
+    if (hasStarted) {
+      localStorage.setItem('pvr_assessment_answers', JSON.stringify(answers));
     }
-  }, [resumeData, questions, hasStarted]);
+  }, [answers, hasStarted]);
 
   // Prefill from URL Search Parameters
   useEffect(() => {
-    if (questions && !hasStarted) {
+    if (questions && !hasStarted && !savedSessionExists) {
       const jurisdiction = searchParams?.get('jurisdiction');
       const ropa = searchParams?.get('ropa');
       const cookies = searchParams?.get('cookies');
       const special = searchParams?.get('special');
       
       if (jurisdiction || ropa || cookies || special) {
-        const prefilled: Record<string, { text: string; riskWeight?: number }> = {};
+        const prefilled: Record<string, { text: string }> = {};
         
         for (const q of questions) {
-          const typedOptions = q.options as Array<{ text: string; riskWeight?: number }>;
+          const typedOptions = q.options as Array<{ text: string }>;
           
           if (special && q.questionText.includes('special categories')) {
             const option = typedOptions.find(o => special === 'yes' ? o.text.includes('Yes') : o.text.includes('We don\'t process'));
@@ -105,40 +83,52 @@ function AssessmentEngineContent() {
         }
       }
     }
-  }, [questions, searchParams, hasStarted]);
+  }, [questions, searchParams, hasStarted, savedSessionExists]);
 
-  const handleStart = async () => {
-    try {
-      const result = await startMutation.mutateAsync();
-      setAssessmentId(result.id);
-      setCurrentStep(0);
-      setHasStarted(true);
-    } catch (err) {
-      console.error("Failed to start assessment:", err);
-      // Fallback for development if DB is not running
-      setAssessmentId("mock-id");
-      setCurrentStep(0);
-      setHasStarted(true);
+  const handleStartFresh = () => {
+    localStorage.removeItem('pvr_assessment_answers');
+    setAnswers({});
+    setCurrentStep(0);
+    setHasStarted(true);
+    setSavedSessionExists(false);
+  };
+
+  const handleResume = () => {
+    const saved = localStorage.getItem('pvr_assessment_answers');
+    if (saved && questions) {
+      try {
+        const parsed = JSON.parse(saved);
+        setAnswers(parsed);
+        // Determine what step they were on
+        let lastUnansweredIndex = 0;
+        for (let i = 0; i < questions.length; i++) {
+          const q = questions[i];
+          if (!parsed[q.id]) {
+            lastUnansweredIndex = i;
+            break;
+          }
+        }
+        setCurrentStep(lastUnansweredIndex);
+        setIsResumed(true);
+        setHasStarted(true);
+        setSavedSessionExists(false);
+      } catch (e) {
+        handleStartFresh();
+      }
+    } else {
+      handleStartFresh();
     }
   };
 
   const handleSelectOption = async (
     question: { id: string }, 
-    option: { text: string; riskWeight?: number }
+    option: { text: string }
   ) => {
-    // Optimistically save locally
+    if (isAdvancing || isSubmitting) return;
+    setIsAdvancing(true);
+
     const newAnswers = { ...answers, [question.id]: option };
     setAnswers(newAnswers);
-    
-    // Save to backend immediately and wait for it to commit to ensure consistency
-    if (assessmentId && assessmentId !== "mock-id") {
-      await submitAnswerMutation.mutateAsync({
-        assessmentId,
-        questionId: question.id,
-        selectedOption: option.text,
-        riskScore: option.riskWeight ?? 0,
-      });
-    }
 
     // Auto-advance logic with dependsOn
     if (questions) {
@@ -156,26 +146,37 @@ function AssessmentEngineContent() {
       setTimeout(async () => {
         if (nextStep < questions.length) {
           setCurrentStep(nextStep);
+          setIsAdvancing(false);
         } else {
-          // Finished! Calculate results and redirect
-          if (assessmentId && assessmentId !== "mock-id") {
-            const result = await calculateMutation.mutateAsync({ assessmentId });
-            // Pre-populate the cache to prevent read-replica race conditions
-            trpcUtils.assessments.getResults.setData(
-              { assessmentId },
-              { 
-                assessment: { overallScore: result.score, id: assessmentId, status: 'calculated' } as any, 
-                actionItems: result.actionItems 
-              }
-            );
+          // Finished! Submit to Server Action
+          setIsSubmitting(true);
+          try {
+            const finalPayload = Object.entries(newAnswers).map(([qId, opt]) => ({
+              questionId: qId,
+              selectedOption: opt.text
+            }));
+            
+            const result = await saveLeadAssessment({
+              answers: finalPayload,
+              utmSource: searchParams?.get('utm_source') || undefined,
+              utmMedium: searchParams?.get('utm_medium') || undefined,
+              utmCampaign: searchParams?.get('utm_campaign') || undefined,
+            });
+            
+            localStorage.removeItem('pvr_assessment_answers');
+            router.push(`/assessment/results?id=${result.leadId}`);
+          } catch (error) {
+            console.error("Failed to save assessment:", error);
+            alert("Failed to submit assessment. Please try again.");
+            setIsSubmitting(false);
+            setIsAdvancing(false);
           }
-          router.push(`/assessment/results?id=${assessmentId}`);
         }
       }, 400);
     }
   };
 
-  if (isLoadingQuestions || isLoadingResume) {
+  if (isLoadingQuestions) {
     return (
       <div className="min-h-screen bg-bone-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-sage-600" />
@@ -263,13 +264,32 @@ function AssessmentEngineContent() {
               <p className="text-[16px] text-ink-600 mb-10 leading-relaxed max-w-xl mx-auto">
                 Answer a few quick questions to identify compliance gaps in your vendor stack, data workflows, and security posture. Get a free, actionable roadmap immediately.
               </p>
-              <button 
-                onClick={handleStart}
-                disabled={startMutation.isPending}
-                className="bg-sage-700 hover:bg-sage-600 text-bone-50 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 mx-auto shadow-card disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white touch-manipulation"
-              >
-                {startMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Start Assessment <ArrowRight className="w-4 h-4" /></>}
-              </button>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                {savedSessionExists ? (
+                  <>
+                    <button 
+                      onClick={handleResume}
+                      className="bg-sage-700 hover:bg-sage-600 text-bone-50 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white w-full sm:w-auto"
+                    >
+                      Resume Assessment <ArrowRight className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={handleStartFresh}
+                      className="bg-white hover:bg-bone-50 border border-ink-200 text-ink-700 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white w-full sm:w-auto"
+                    >
+                      Start Fresh <RotateCcw className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={handleStartFresh}
+                    className="bg-sage-700 hover:bg-sage-600 text-bone-50 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white w-full sm:w-auto"
+                  >
+                    Start Assessment <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -291,13 +311,14 @@ function AssessmentEngineContent() {
               </h2>
 
               <div className="space-y-3">
-                {(displayQuestions[currentStep].options as Array<{ text: string; riskWeight?: number }>).map((option, i) => {
+                {(displayQuestions[currentStep].options as Array<{ text: string }>).map((option, i) => {
                   const isSelected = answers[displayQuestions[currentStep].id]?.text === option.text;
                   return (
                     <button
                       key={i}
+                      disabled={isAdvancing || isSubmitting}
                       onClick={() => handleSelectOption(displayQuestions[currentStep], option)}
-                      className={`w-full cursor-pointer text-left p-5 rounded-xl border transition-all duration-200 flex items-center justify-between group focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white touch-manipulation ${
+                      className={`w-full cursor-pointer text-left p-5 rounded-xl border transition-all duration-200 flex items-center justify-between group focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white touch-manipulation disabled:opacity-70 disabled:cursor-not-allowed ${
                         isSelected 
                           ? 'border-sage-500 bg-sage-50 shadow-sm' 
                           : 'border-ink-900/10 bg-white hover:border-ink-900/20 hover:bg-bone-50'
@@ -308,9 +329,13 @@ function AssessmentEngineContent() {
                       </span>
                       {isSelected && (
                         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                          <div className="w-6 h-6 rounded-full bg-sage-600 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                          </div>
+                          {isSubmitting ? (
+                             <Loader2 className="w-5 h-5 text-sage-600 animate-spin" />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-sage-600 flex items-center justify-center">
+                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                          )}
                         </motion.div>
                       )}
                     </button>
@@ -332,8 +357,8 @@ function AssessmentEngineContent() {
                     }
                     setCurrentStep(Math.max(0, prevStep));
                   }}
-                  disabled={currentStep === 0}
-                  className={`flex items-center gap-2 text-[13.5px] font-medium transition-colors ${currentStep === 0 ? 'opacity-0 pointer-events-none' : 'text-ink-500 hover:text-ink-900'}`}
+                  disabled={currentStep === 0 || isAdvancing || isSubmitting}
+                  className={`flex items-center gap-2 text-[13.5px] font-medium transition-colors ${currentStep === 0 ? 'opacity-0 pointer-events-none' : 'text-ink-500 hover:text-ink-900 disabled:opacity-50 disabled:cursor-not-allowed'}`}
                 >
                   <ArrowLeft className="w-4 h-4" /> Previous Question
                 </button>

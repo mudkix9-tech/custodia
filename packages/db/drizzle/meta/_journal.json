@@ -183,6 +183,13 @@
       "when": 1785244451314,
       "tag": "0036_naive_vector",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1785304711025,
+      "tag": "0037_dashing_invaders",
+      "breakpoints": true
     }
   ]
 }

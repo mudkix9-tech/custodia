@@ -54,7 +54,7 @@ export const assessmentsRouter = router({
     return await db.select().from(assessmentTemplates);
   }),
 
-  startAssessment: publicProcedure.mutation(async ({ ctx }) => {
+  startAssessment: protectedProcedure.mutation(async ({ ctx }) => {
     const anonSessionId = (ctx.req as any).cookies?.pvr_anon_session;
     const [assessment] = await db.insert(assessments).values({
       status: 'in_progress',
@@ -63,7 +63,7 @@ export const assessmentsRouter = router({
     return assessment;
   }),
 
-  resumeAssessment: publicProcedure.query(async ({ ctx }) => {
+  resumeAssessment: protectedProcedure.query(async ({ ctx }) => {
     const anonSessionId = (ctx.req as any).cookies?.pvr_anon_session;
     if (!anonSessionId) return null;
 
@@ -85,7 +85,7 @@ export const assessmentsRouter = router({
     return { assessment, answers: answersMap };
   }),
 
-  submitAnswer: publicProcedure
+  submitAnswer: protectedProcedure
     .input(z.object({
       assessmentId: z.string().uuid(),
       questionId: z.string().uuid(),
@@ -110,7 +110,7 @@ export const assessmentsRouter = router({
       return answer;
     }),
 
-  calculateResults: publicProcedure
+  calculateResults: protectedProcedure
     .input(z.object({
       assessmentId: z.string().uuid(),
     }))
