@@ -239,8 +239,8 @@ export const assessmentsRouter = router({
              items = lead.snapshot.filter((s: any) => s.score > 0).map((s: any) => ({
                 id: 'mock',
                 assessmentId: lead.id,
-                title: `Address risk regarding: ${s.questionId}`,
-                description: `Your answer "${s.selectedValue}" indicates a compliance gap.`,
+                title: s.questionText ? `Address risk regarding: ${s.questionText}` : `Address risk regarding: ${s.questionId}`,
+                description: `Your answer "${s.selectedOption || s.selectedText || s.selectedValue || 'Unknown'}" indicates a compliance gap.`,
                 severity: s.score > 5 ? 'High' : 'Medium',
                 status: 'open',
                 createdAt: lead.createdAt
