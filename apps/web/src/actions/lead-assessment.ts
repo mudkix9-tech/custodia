@@ -97,13 +97,44 @@ export async function requestLeadPdf(leadId: string, email: string) {
   await db.update(leadAssessments).set({ email }).where(eq(leadAssessments.id, leadId));
   
   const PgBoss = (await import('pg-boss')).default;
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = process.env.DIRECT_URL || (process.env.DATABASE_URL || '').replace(':6543/', ':5432/');
   if (connectionString) {
     const boss = new PgBoss(connectionString);
     await boss.start();
     await boss.send('generate-lead-pdf', { leadId, email });
     await boss.stop();
     console.log(`[Queue] Enqueued PDF generation for lead ${leadId} to ${email}`);
+  } else {
+    console.error("Missing DATABASE_URL to start pg-boss");
+  }
+  
+  return { success: true };
+}
+
+export async function captureLeadEmail(leadId: string, email: string, marketingConsent: boolean) {
+  await db.update(leadAssessments)
+    .set({ email, marketingConsent })
+    .where(eq(leadAssessments.id, leadId));
+    
+  const PgBoss = (await import('pg-boss')).default;
+  const connectionString = process.env.DIRECT_URL || (process.env.DATABASE_URL || '').replace(':6543/', ':5432/');
+  
+  if (connectionString) {
+    const boss = new PgBoss(connectionString);
+    await boss.start();
+    
+    // Queue PDF generation
+    await boss.send('generate-lead-pdf', { leadId, email });
+    
+    // Queue email sequences
+    const payload = { type: 'lead', leadId, email };
+    await boss.send('email-sequences', { sequence: 'immediate_score', ...payload }, { startAfter: 5 });
+    await boss.send('email-sequences', { sequence: 'day_3_reminder', ...payload }, { startAfter: 3 * 24 * 60 * 60 });
+    await boss.send('email-sequences', { sequence: 'day_7_push', ...payload }, { startAfter: 7 * 24 * 60 * 60 });
+    await boss.send('email-sequences', { sequence: 'day_14_expiry', ...payload }, { startAfter: 14 * 24 * 60 * 60 });
+    
+    await boss.stop();
+    console.log(`[Queue] Enqueued PDF generation and email sequence for lead ${leadId} to ${email}`);
   } else {
     console.error("Missing DATABASE_URL to start pg-boss");
   }

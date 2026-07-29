@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { ShieldCheck, Mail, AlertCircle, CheckCircle2, AlertTriangle, Lock, Send, Copy, ArrowRight, Clock, Download, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
+import { captureLeadEmail } from '@/actions/lead-assessment';
 
 const categoryRouteMap: Record<string, string> = {
   'Data Mapping': '/ropa',
@@ -112,7 +113,6 @@ function AssessmentResultsContent() {
   const currentState = isUnlocked ? 3 : (isMagicLinkSent ? 2 : 1);
   
   // TRPC
-  const captureEmailMutation = trpc.assessments.captureEmail.useMutation();
   const { data: resultsData, isLoading, isError } = trpc.assessments.getResults.useQuery(
     { assessmentId: id! }, 
     { enabled: !!id && id !== "mock-id" }
@@ -207,13 +207,16 @@ function AssessmentResultsContent() {
     return null;
   }
 
+  const [isCapturing, setIsCapturing] = useState(false);
+
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
     try {
+      setIsCapturing(true);
       if (id && id !== "mock-id") {
-        await captureEmailMutation.mutateAsync({ assessmentId: id, email, marketingConsent });
+        await captureLeadEmail(id, email, marketingConsent);
       }
       
       await signIn('resend', { email, redirect: false, callbackUrl: window.location.href });
@@ -221,6 +224,8 @@ function AssessmentResultsContent() {
     } catch (err) {
       console.error(err);
       if (process.env.NODE_ENV === 'development') setIsMagicLinkSent(true);
+    } finally {
+      setIsCapturing(false);
     }
   };
 
@@ -369,8 +374,8 @@ function AssessmentResultsContent() {
                      <span className="text-sm text-left text-ink-600 leading-tight">Keep me updated about Custodia, including product news and offers</span>
                    </label>
                    
-                   <button type="submit" disabled={captureEmailMutation.isPending} className="w-full bg-sage-700 hover:bg-sage-600 disabled:opacity-50 disabled:cursor-not-allowed text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:scale-[1.02] active:scale-[0.98] touch-manipulation mt-2">
-                   {captureEmailMutation.isPending ? 'Processing...' : 'See my results'} <Lock className="w-4 h-4" />
+                   <button type="submit" disabled={isCapturing} className="w-full bg-sage-700 hover:bg-sage-600 disabled:opacity-50 disabled:cursor-not-allowed text-bone-50 font-medium py-3.5 px-6 rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:scale-[1.02] active:scale-[0.98] touch-manipulation mt-2">
+                   {isCapturing ? 'Processing...' : 'See my results'} <Lock className="w-4 h-4" />
                  </button>
               </form>
               <p className="text-[12px] font-medium text-ink-400 mt-5">We will email you a secure magic link. No password required.</p>

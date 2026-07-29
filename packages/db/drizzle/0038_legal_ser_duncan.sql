@@ -1,0 +1,1 @@
+ALTER TABLE "lead_assessments" ADD COLUMN "marketing_consent" boolean DEFAULT false;

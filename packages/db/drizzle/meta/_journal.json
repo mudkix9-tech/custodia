@@ -190,6 +190,13 @@
       "when": 1785304711025,
       "tag": "0037_dashing_invaders",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1785327187592,
+      "tag": "0038_legal_ser_duncan",
+      "breakpoints": true
     }
   ]
 }

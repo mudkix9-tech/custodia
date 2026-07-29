@@ -190,34 +190,7 @@ export const assessmentsRouter = router({
       return { score, status: 'calculated', actionItems: generatedActionItems };
     }),
 
-  captureEmail: publicProcedure
-    .input(z.object({
-      assessmentId: z.string().uuid(),
-      email: z.string().email(),
-      marketingConsent: z.boolean().default(false),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const anonSessionId = (ctx.req as any).cookies?.pvr_anon_session || null;
-      
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
 
-      await db.insert(pendingSignups).values({
-        email: input.email,
-        anonymousSessionId: anonSessionId,
-        assessmentId: input.assessmentId,
-        expiresAt: expiresAt,
-        marketingConsent: input.marketingConsent,
-      });
-
-      await db.update(assessments)
-        .set({ status: 'completed', email: input.email })
-        .where(eq(assessments.id, input.assessmentId));
-        
-      await scheduleEmailSequence(input.assessmentId, input.email).catch(console.error);
-        
-      return { success: true };
-    }),
 
   getResults: publicProcedure
     .input(z.object({ assessmentId: z.string().uuid() }))

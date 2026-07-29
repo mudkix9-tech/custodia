@@ -797,6 +797,7 @@ export const actionItems = pgTable('action_items', {
 export const leadAssessments = pgTable('lead_assessments', {
   id: uuid('id').defaultRandom().primaryKey(),
   email: varchar('email', { length: 255 }),
+  marketingConsent: boolean('marketing_consent').default(false),
   totalScore: integer('total_score').notNull(),
   riskLevel: varchar('risk_level', { length: 50 }).notNull(),
   snapshot: jsonb('snapshot').notNull(),
