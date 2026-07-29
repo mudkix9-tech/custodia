@@ -1,4 +1,5 @@
 // @ts-nocheck
+import React from 'react';
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
@@ -217,7 +218,8 @@ export const exportRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       
-      const { generateAssessmentReportHtml } = await import('../lib/auditTemplates/assessmentReport.js');
+      const { AssessmentReport } = await import('../lib/auditTemplates/assessmentReport.js');
+      const { renderReactToPdf } = await import('../lib/pdfRenderer.js');
       const { generateUploadUrl, generateDownloadUrl } = await import('../lib/s3.js');
       const { assessments, assessmentAnswers, actionItems, auditLogs, organizations } = await import('db');
       
@@ -281,15 +283,9 @@ export const exportRouter = router({
         }))
       };
       
-      const htmlContent = generateAssessmentReportHtml(reportData);
-      
       try {
-        const pdfBuffer = await renderHtmlToPdf(htmlContent, {
-          margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
-          displayHeaderFooter: true,
-          headerTemplate: '<div></div>',
-          footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%; color: #78716c;">Privaro OS - Assessment Report</div>'
-        });
+        const element = React.createElement(AssessmentReport, { data: reportData });
+        const pdfBuffer = await renderReactToPdf(element);
         
         const fileKey = `assessments/${ctx.user!.orgId}/${assessment.id}/report_${Date.now()}.pdf`;
         const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', org?.dataRegion || 'eu-west-1');
