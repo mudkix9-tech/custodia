@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { ShieldCheck, Mail, AlertCircle, CheckCircle2, AlertTriangle, Lock, Send, Copy, ArrowRight, Clock, Download } from 'lucide-react';
+import { ShieldCheck, Mail, AlertCircle, CheckCircle2, AlertTriangle, Lock, Send, Copy, ArrowRight, Clock, Download, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 
@@ -99,6 +99,9 @@ function AssessmentResultsContent() {
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [isMagicLinkSent, setIsMagicLinkSent] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  
+  const generatePdfMutation = trpc.export.generateAssessmentReportPdf.useMutation();
   
   // States:
   // State 1: Anonymous just finished (show email capture)
@@ -406,10 +409,33 @@ function AssessmentResultsContent() {
                 <p className="text-xs text-ink-500 mt-1">Generated dynamically for your digital agency</p>
               </div>
               <button 
-                onClick={() => window.print()} 
-                className="inline-flex items-center justify-center gap-2 bg-[#596E51] text-white px-5 py-2.5 rounded-xl text-xs font-semibold hover:bg-sage-600 transition-colors shadow-md hover:scale-[1.01] active:scale-[0.99] touch-manipulation focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none shrink-0"
+                onClick={async () => {
+                  if (id) {
+                    try {
+                      setIsDownloading(true);
+                      const result = await generatePdfMutation.mutateAsync({ assessmentId: id });
+                      if (result.success && result.url) {
+                        const a = document.createElement('a');
+                        a.href = result.url;
+                        a.target = '_blank';
+                        a.download = `assessment-report.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                      }
+                    } catch (err) {
+                      console.error("Failed to download PDF", err);
+                      // Fallback or error toast
+                    } finally {
+                      setIsDownloading(false);
+                    }
+                  }
+                }} 
+                disabled={isDownloading || !id}
+                className="inline-flex items-center justify-center gap-2 bg-[#596E51] text-white px-5 py-2.5 rounded-xl text-xs font-semibold hover:bg-sage-600 transition-colors shadow-md hover:scale-[1.01] active:scale-[0.99] touch-manipulation focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none shrink-0 disabled:opacity-70 disabled:pointer-events-none"
               >
-                <Download className="w-4 h-4" /> Download PDF Report
+                {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} 
+                {isDownloading ? 'Generating...' : 'Download PDF Report'}
               </button>
             </div>
             

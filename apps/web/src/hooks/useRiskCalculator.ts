@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { CalculatorQuestion } from '@/types/marketing';
+import { saveLeadAssessment } from '@/actions/lead-assessment';
 
 export function useRiskCalculator(questions: CalculatorQuestion[]) {
   const [calcStep, setCalcStep] = useState(0);
   const [calcAnswers, setCalcAnswers] = useState<Record<string, string>>({});
   const [calcScores, setCalcScores] = useState<Record<string, number>>({});
   const [copiedCalculatorLink, setCopiedCalculatorLink] = useState(false);
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Load from URL/localStorage
   useEffect(() => {
@@ -53,10 +56,13 @@ export function useRiskCalculator(questions: CalculatorQuestion[]) {
       const savedAnswers = localStorage.getItem('pvr_calc_answers');
       const savedScores = localStorage.getItem('pvr_calc_scores');
       const savedStep = localStorage.getItem('pvr_calc_step');
+      const savedLeadId = localStorage.getItem('pvr_calc_leadId');
+      
       setTimeout(() => {
         if (savedAnswers) setCalcAnswers(JSON.parse(savedAnswers));
         if (savedScores) setCalcScores(JSON.parse(savedScores));
         if (savedStep) setCalcStep(Number(savedStep));
+        if (savedLeadId) setLeadId(savedLeadId);
       }, 0);
     } catch (e) {
       console.error("Failed to load calculator state:", e);
@@ -70,20 +76,64 @@ export function useRiskCalculator(questions: CalculatorQuestion[]) {
         localStorage.setItem('pvr_calc_answers', JSON.stringify(calcAnswers));
         localStorage.setItem('pvr_calc_scores', JSON.stringify(calcScores));
         localStorage.setItem('pvr_calc_step', String(calcStep));
+        if (leadId) localStorage.setItem('pvr_calc_leadId', leadId);
       } catch (e) {
         console.error("Failed to save calculator state:", e);
       }
     }
-  }, [calcAnswers, calcScores, calcStep]);
+  }, [calcAnswers, calcScores, calcStep, leadId]);
 
-  const handleCalculatorSelect = (questionId: string, value: string, score: number) => {
-    setCalcAnswers(prev => ({ ...prev, [questionId]: value }));
-    setCalcScores(prev => ({ ...prev, [questionId]: score }));
+  const handleCalculatorSelect = async (questionId: string, value: string, score: number) => {
+    const newAnswers = { ...calcAnswers, [questionId]: value };
+    const newScores = { ...calcScores, [questionId]: score };
+    
+    setCalcAnswers(newAnswers);
+    setCalcScores(newScores);
     
     if (calcStep < questions.length - 1) {
       setCalcStep(prev => prev + 1);
     } else {
       setCalcStep(questions.length);
+      setIsSaving(true);
+      try {
+        const totalScore = Object.values(newScores).reduce((a, b) => a + b, 0);
+        let riskLevel = 'LOW';
+        if (totalScore >= 75) riskLevel = 'CRITICAL';
+        else if (totalScore >= 45) riskLevel = 'HIGH';
+        else if (totalScore >= 20) riskLevel = 'MEDIUM';
+        
+        const snapshot = questions.map(q => {
+          const selectedValue = newAnswers[q.id];
+          const selectedOpt = q.options.find(o => o.value === selectedValue);
+          return {
+            questionId: q.id,
+            questionText: q.text,
+            selectedValue,
+            selectedText: selectedOpt?.text || '',
+            score: newScores[q.id] || 0,
+            questionVersion: 1
+          };
+        });
+        
+        const params = new URLSearchParams(window.location.search);
+        
+        const result = await saveLeadAssessment({
+           totalScore,
+           riskLevel,
+           snapshot,
+           utmSource: params.get('utm_source') || undefined,
+           utmMedium: params.get('utm_medium') || undefined,
+           utmCampaign: params.get('utm_campaign') || undefined,
+        });
+        
+        if (result.leadId) {
+          setLeadId(result.leadId);
+        }
+      } catch (err) {
+        console.error("Failed to save lead", err);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -91,10 +141,12 @@ export function useRiskCalculator(questions: CalculatorQuestion[]) {
     setCalcAnswers({});
     setCalcScores({});
     setCalcStep(0);
+    setLeadId(null);
     try {
       localStorage.removeItem('pvr_calc_answers');
       localStorage.removeItem('pvr_calc_scores');
       localStorage.removeItem('pvr_calc_step');
+      localStorage.removeItem('pvr_calc_leadId');
     } catch (e) {
       console.error("Failed to clear localStorage:", e);
     }
@@ -130,7 +182,9 @@ export function useRiskCalculator(questions: CalculatorQuestion[]) {
     riskText = 'Moderate exposure. Some compliance elements exist, but lack of continuous validation indicates potential compliance degradation.';
   }
 
-  const prefillUrl = `/assessment?jurisdiction=${calcAnswers.jurisdiction || ''}&ropa=${calcAnswers.ropa || ''}&cookies=${calcAnswers.cookies || ''}&special=${calcAnswers.special || ''}&risk=${riskLevel.toLowerCase()}`;
+  const prefillUrl = leadId 
+    ? `/signup?leadId=${leadId}` 
+    : `/signup?jurisdiction=${calcAnswers.jurisdiction || ''}&ropa=${calcAnswers.ropa || ''}&cookies=${calcAnswers.cookies || ''}&special=${calcAnswers.special || ''}&risk=${riskLevel.toLowerCase()}`;
 
   return {
     calcStep,
@@ -146,5 +200,7 @@ export function useRiskCalculator(questions: CalculatorQuestion[]) {
     riskColor,
     riskText,
     prefillUrl,
+    leadId,
+    isSaving,
   };
 }

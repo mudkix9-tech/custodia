@@ -208,4 +208,82 @@ export const exportRouter = router({
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to generate PDF' });
       }
     }),
+
+  generateAssessmentReportPdf: protectedProcedure
+    .use(requirePermission('assessments', 'view'))
+    .input(z.object({
+      assessmentId: z.string().uuid()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      checkOrgContext(ctx.user);
+      
+      const { generateAssessmentReportHtml } = await import('../lib/auditTemplates/assessmentReport.js');
+      const { generateUploadUrl, generateDownloadUrl } = await import('../lib/s3.js');
+      const { assessments, assessmentAnswers, actionItems, auditLogs, organizations } = await import('db');
+      
+      // 1. Fetch data
+      const org = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, ctx.user!.orgId)
+      });
+      
+      const [assessment] = await ctx.db.select().from(assessments)
+        .where(and(eq(assessments.id, input.assessmentId), eq(assessments.organizationId, ctx.user!.orgId)));
+        
+      if (!assessment) throw new TRPCError({ code: 'NOT_FOUND', message: 'Assessment not found' });
+      
+      const answers = await ctx.db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, input.assessmentId));
+      const items = await ctx.db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
+      
+      const reportData = {
+        organizationName: org?.name || 'Organization',
+        reportDate: new Date().toLocaleDateString(),
+        overallScore: assessment.overallScore || 0,
+        riskLevel: assessment.overallScore < 50 ? 'High' : assessment.overallScore <= 75 ? 'Medium' : 'Low',
+        answers: answers.map(a => ({
+          questionText: a.questionId, // Fallback since we don't store question text locally here without join, but ideally it's joined.
+          selectedOption: a.selectedOption,
+          riskScore: a.riskScore
+        })),
+        actionItems: items.map(i => ({
+          title: i.title,
+          description: i.description || '',
+          severity: i.severity
+        }))
+      };
+      
+      const htmlContent = generateAssessmentReportHtml(reportData);
+      
+      try {
+        const pdfBuffer = await renderHtmlToPdf(htmlContent, {
+          margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
+          displayHeaderFooter: true,
+          headerTemplate: '<div></div>',
+          footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%; color: #78716c;">Privaro OS - Assessment Report</div>'
+        });
+        
+        const fileKey = `assessments/${ctx.user!.orgId}/${assessment.id}/report_${Date.now()}.pdf`;
+        const uploadUrl = await generateUploadUrl(fileKey, 'application/pdf', org?.dataRegion || 'eu-west-1');
+        
+        const res = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: pdfBuffer as any,
+          headers: { 'Content-Type': 'application/pdf' }
+        });
+        
+        if (!res.ok) throw new Error('Failed to upload PDF to S3');
+        
+        await ctx.db.insert(auditLogs).values({
+          action: 'assessment_report_exported',
+          organizationId: ctx.user!.orgId,
+          userId: ctx.user!.id,
+          newValue: { assessmentId: assessment.id }
+        } as any);
+        
+        const downloadUrl = await generateDownloadUrl(fileKey, org?.dataRegion || 'eu-west-1', 3600);
+        return { success: true, url: downloadUrl };
+      } catch (err) {
+        console.error("Failed to generate/upload Assessment PDF:", err);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to generate PDF' });
+      }
+    }),
 });

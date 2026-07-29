@@ -10,7 +10,7 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 6, // explicitly limit pool size so we don't blow past Supabase's 15-connection limit
+  max: 3, // explicitly limit pool size so we don't blow past Supabase's 15-connection limit (Vercel edge functions might spin up multiple pools)
 });
 
 export const db = drizzle(pool, { schema });

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { Mail, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
@@ -11,6 +11,14 @@ function SignupPageContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get('callbackUrl') || '/ropa';
   const error = searchParams?.get('error');
+
+  // Handle leadId from marketing site
+  useEffect(() => {
+    const leadId = searchParams?.get('leadId');
+    if (leadId) {
+      document.cookie = `pvr_lead_id=${leadId}; path=/; max-age=86400`; // 24 hours
+    }
+  }, [searchParams]);
 
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState<string | null>(null);

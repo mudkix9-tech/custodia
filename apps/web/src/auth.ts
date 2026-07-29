@@ -106,11 +106,96 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         marketingConsent: pending?.marketingConsent ?? false,
       }).where(eq(users.id, user.id));
       
-      // 4. Migrate assessments
+      // 4. Migrate pending signups (legacy)
       if (pending && pending.anonymousSessionId) {
         await db.update(assessments).set({
           organizationId: newOrg.id,
         }).where(eq(assessments.anonymousSessionId, pending.anonymousSessionId));
+      }
+
+      // 5. Migrate Lead Assessments
+      try {
+        const { leadAssessments, assessmentAnswers, actionItems } = await import('db');
+        const { desc } = await import('drizzle-orm');
+        
+        let lead;
+        let leadIdFromCookie: string | undefined;
+
+        try {
+          const { cookies } = await import('next/headers');
+          const cookieStore = await cookies();
+          leadIdFromCookie = cookieStore.get('pvr_lead_id')?.value;
+        } catch (e) {
+          // ignore cookie errors
+        }
+
+        if (leadIdFromCookie) {
+          const [found] = await db.select().from(leadAssessments).where(eq(leadAssessments.id, leadIdFromCookie));
+          if (found) lead = found;
+        }
+
+        if (!lead && user.email) {
+          const [found] = await db.select().from(leadAssessments)
+            .where(eq(leadAssessments.email, user.email))
+            .orderBy(desc(leadAssessments.createdAt))
+            .limit(1);
+          if (found) lead = found;
+        }
+
+        if (lead) {
+          // Create an assessment record
+          const [newAssessment] = await db.insert(assessments).values({
+            organizationId: newOrg.id,
+            status: 'calculated', // Mark as complete
+            overallScore: lead.totalScore,
+            completedAt: new Date(),
+          }).returning();
+
+          // Map snapshot to assessment_answers
+          if (Array.isArray(lead.snapshot)) {
+            for (const snap of lead.snapshot) {
+              await db.insert(assessmentAnswers).values({
+                assessmentId: newAssessment.id,
+                questionId: snap.questionId,
+                selectedOption: snap.selectedValue,
+                riskScore: snap.score,
+              });
+            }
+          }
+
+          // Link the lead
+          await db.update(leadAssessments)
+            .set({ convertedToOrgId: newOrg.id })
+            .where(eq(leadAssessments.id, lead.id));
+
+          // Audit Trail
+          await db.insert(auditLogs).values({
+            action: 'lead_assessment_imported',
+            organizationId: newOrg.id,
+            userId: user.id,
+            newValue: { 
+               source: 'lead_assessment', 
+               originalTimestamp: lead.createdAt 
+            }
+          } as any);
+          
+          // Push compliance score calculation and action items job
+          try {
+            const { default: PgBoss } = await import('pg-boss');
+            const connectionString = process.env.DIRECT_URL || (process.env.DATABASE_URL || '').replace(':6543/', ':5432/');
+            const boss = new PgBoss(connectionString);
+            await boss.start();
+            
+            await boss.send('compliance-score', { organizationId: newOrg.id });
+            await boss.send('gap-scanner', { organizationId: newOrg.id });
+            
+            await boss.stop();
+          } catch (err) {
+            console.error('[NextAuth] Failed to queue post-lead-migration jobs', err);
+          }
+        }
+      } catch (err) {
+        console.error('[NextAuth] Failed to migrate lead assessment', err);
       }
     },
     async signIn({ user }) {

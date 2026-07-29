@@ -791,6 +791,26 @@ export const actionItems = pgTable('action_items', {
 });
 
 // ============================================================================
+// LEAD ASSESSMENTS
+// ============================================================================
+
+export const leadAssessments = pgTable('lead_assessments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  email: varchar('email', { length: 255 }),
+  totalScore: integer('total_score').notNull(),
+  riskLevel: varchar('risk_level', { length: 50 }).notNull(),
+  snapshot: jsonb('snapshot').notNull(),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  utmSource: varchar('utm_source', { length: 255 }),
+  utmMedium: varchar('utm_medium', { length: 255 }),
+  utmCampaign: varchar('utm_campaign', { length: 255 }),
+  convertedToOrgId: uuid('converted_to_org_id').references(() => organizations.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+// ============================================================================
 // AUTH.JS TABLES
 // ============================================================================
 

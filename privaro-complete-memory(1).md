@@ -240,9 +240,9 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 
 ---
 
-## 7. Code Review Fixes — All Complete (23 Fixes)
+## 7. Code Review Fixes — All Complete (24 Fixes)
 
-### Critical infrastructure fixes (Fixes 1-7)
+### Critical infrastructure fixes (Fixes 1-8)
 1. ✅ DSAR router connected in router.ts
 2. ✅ Global audit logging middleware (writes to audit_logs on every mutation, with sanitization and diff calculation)
 3. ✅ Notification queue worker (processes pending notifications, routes to email/Slack/in-app/webhook channels, retry with exponential backoff)
@@ -250,28 +250,29 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 5. ✅ Data export worker (queries all tables, fetches S3 documents, generates ZIP, emails download link)
 6. ✅ Webhook dispatcher middleware (auto-dispatches on all mutations via TRPC_PATH_TO_EVENT mapping)
 7. ✅ AI fallback fixed (mock only in development, throws + Sentry capture in production)
+8. ✅ Deployment Postgres pool overlap limit (drizzle `max: 3` and pgboss `max: 2` with SIGTERM graceful shutdown of both pools to prevent Render overlap exhaustion)
 
-### Cross-module fixes (Fixes 8-12)
-8. ✅ Special category data auto-flags requiresDpia and escalates riskLevel
-9. ✅ Hardcoded EU_COUNTRIES replaced with `isAdequateDestination()` from `constants/transferDestinations.ts` (includes UK, Japan, Switzerland, etc.) — applied across ropa.ts, tia.ts, gapRules.ts, gapScanner.ts, vendors.ts
-10. ✅ Compliance score calculation engine (8-pillar scoring, daily worker at 3am UTC, handles "no data" = 100%, stores in compliance_reports)
-11. ✅ Full audit file export (PDF + CSV for every module: ROPA Article 30, vendor register, DSAR register, breach register, training report, consent analytics, compliance summary, DPIAs, policies, gap history, score history — uses Puppeteer browser pool)
-12. ✅ Regulatory update impact assessment generation (runs on publish, matches impact_rules against each org's ROPA, generates per-org impact assessments)
+### Cross-module fixes (Fixes 9-13)
+9. ✅ Special category data auto-flags requiresDpia and escalates riskLevel
+10. ✅ Hardcoded EU_COUNTRIES replaced with `isAdequateDestination()` from `constants/transferDestinations.ts` (includes UK, Japan, Switzerland, etc.) — applied across ropa.ts, tia.ts, gapRules.ts, gapScanner.ts, vendors.ts
+11. ✅ Compliance score calculation engine (8-pillar scoring, daily worker at 3am UTC, handles "no data" = 100%, stores in compliance_reports)
+12. ✅ Full audit file export (PDF + CSV for every module: ROPA Article 30, vendor register, DSAR register, breach register, training report, consent analytics, compliance summary, DPIAs, policies, gap history, score history — uses Puppeteer browser pool)
+13. ✅ Regulatory update impact assessment generation (runs on publish, matches impact_rules against each org's ROPA, generates per-org impact assessments)
 
-### Performance fixes (Fixes 13-15)
-13. ✅ Puppeteer browser pool via puppeteer-cluster (shared across PDF generation and cookie scanning)
-14. ✅ Audit log export streams to S3 (no more 10K record memory load)
-15. ✅ Pagination on all list endpoints using shared `paginatedQuery` utility with cursor-based pagination
+### Performance fixes (Fixes 14-16)
+14. ✅ Puppeteer browser pool via puppeteer-cluster (shared across PDF generation and cookie scanning)
+15. ✅ Audit log export streams to S3 (no more 10K record memory load)
+16. ✅ Pagination on all list endpoints using shared `paginatedQuery` utility with cursor-based pagination
 
-### UX fixes (Fixes 16-23)
-16. ✅ Skeleton loaders on every page (Skeleton component + per-page skeleton compositions)
-17. ✅ Error boundaries on every route (Sentry capture + friendly error page)
-18. ✅ Confirmation dialogs on all destructive actions (useConfirm hook + ConfirmDialogModal, including "type to confirm" for account deletion)
-19. ✅ Optimistic updates on hot mutations (ROPA editor, vendor edits, breach tasks, notification mark-as-read, training progress, DSAR tasks)
-20. ✅ Inline form validation with react-hook-form + @hookform/resolvers/zod + FieldError component
-21. ✅ Accessibility pass (WAI-ARIA combobox pattern on CommandPalette, focus traps on modals, screen reader live regions, skip-to-content link, aria labels throughout)
-22. ✅ Mobile DataGrid responsiveness (card layout on mobile, hamburger sidebar)
-23. ✅ Gap Assessment Dynamic Routing (action items explicitly store their structural category in DB to ensure robust routing, replacing fragile keyword string matching on titles)
+### UX fixes (Fixes 17-24)
+17. ✅ Skeleton loaders on every page (Skeleton component + per-page skeleton compositions)
+18. ✅ Error boundaries on every route (Sentry capture + friendly error page)
+19. ✅ Confirmation dialogs on all destructive actions (useConfirm hook + ConfirmDialogModal, including "type to confirm" for account deletion)
+20. ✅ Optimistic updates on hot mutations (ROPA editor, vendor edits, breach tasks, notification mark-as-read, training progress, DSAR tasks)
+21. ✅ Inline form validation with react-hook-form + @hookform/resolvers/zod + FieldError component
+22. ✅ Accessibility pass (WAI-ARIA combobox pattern on CommandPalette, focus traps on modals, screen reader live regions, skip-to-content link, aria labels throughout)
+23. ✅ Mobile DataGrid responsiveness (card layout on mobile, hamburger sidebar)
+24. ✅ Gap Assessment Dynamic Routing (action items explicitly store their structural category in DB to ensure robust routing, replacing fragile keyword string matching on titles)
 
 ---
 

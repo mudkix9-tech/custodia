@@ -1,13 +1,15 @@
 "use client";
 
+import { useState } from 'react';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-  ArrowLeft, HelpCircle, ShieldCheck, Check, ArrowRight, Copy, ChevronRight 
+  ArrowLeft, HelpCircle, ShieldCheck, Check, ArrowRight, Copy, ChevronRight, Calculator, Loader2 
 } from 'lucide-react';
 import Link from 'next/link';
 
 import { useRiskCalculator } from '@/hooks/useRiskCalculator';
+import { requestLeadPdf } from '@/actions/lead-assessment';
 
 const CALCULATOR_QUESTIONS = [
   {
@@ -61,7 +63,27 @@ export default function RiskCalculator() {
     riskColor,
     riskText,
     prefillUrl,
+    leadId,
+    isSaving,
   } = useRiskCalculator(CALCULATOR_QUESTIONS);
+
+  const [email, setEmail] = useState('');
+  const [pdfRequested, setPdfRequested] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+
+  const handlePdfRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !leadId) return;
+    setIsPdfLoading(true);
+    try {
+      await requestLeadPdf(leadId, email);
+      setPdfRequested(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
 
   return (
     <section id="risk-calculator" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10 scroll-mt-20">
@@ -220,6 +242,42 @@ export default function RiskCalculator() {
                   </div>
                 </div>
               </div>
+
+              {/* PDF Request Form */}
+              {isSaving ? (
+                <div className="mt-6 flex items-center justify-center gap-2 mb-8 text-[#8BA381] text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Saving diagnostic...
+                </div>
+              ) : leadId && !pdfRequested ? (
+                <form onSubmit={handlePdfRequest} className="mt-6 text-left border-t border-[#2F362D]/40 pt-6 space-y-3 max-w-md mx-auto mb-8">
+                  <p className="font-bold text-[#F5F3ED] text-sm mb-2 text-center">Get Your Detailed Exposure Report</p>
+                  <p className="text-[#9CA297] text-xs text-center mb-4">We'll email you a full PDF breakdown of your gap analysis.</p>
+                  <div className="flex gap-2">
+                    <input 
+                      type="email" 
+                      required 
+                      placeholder="work@email.com" 
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      className="flex-1 bg-[#141712] border border-[#2F362D] rounded-lg px-4 py-2 text-sm text-[#F5F3ED] focus:outline-none focus:border-[#8BA381] placeholder-[#484E43]"
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={isPdfLoading}
+                      className="bg-[#2A2920] hover:bg-[#38372D] border border-[#444034] text-[#C9C3AC] px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap disabled:opacity-50"
+                    >
+                      {isPdfLoading ? 'Sending...' : 'Send PDF'}
+                    </button>
+                  </div>
+                </form>
+              ) : pdfRequested ? (
+                <div className="mt-6 text-center border-t border-[#2F362D]/40 pt-6 space-y-2 max-w-md mx-auto mb-8">
+                  <p className="text-[#8BA381] text-sm font-bold flex items-center justify-center gap-2">
+                    <Check className="w-4 h-4" /> PDF Report Sent!
+                  </p>
+                  <p className="text-[#9CA297] text-xs">Check your inbox at {email}.</p>
+                </div>
+              ) : null}
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link href={prefillUrl} className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-xs sm:text-sm font-bold py-3.5 px-6 rounded-lg transition-all flex items-center justify-center gap-2 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] touch-manipulation">

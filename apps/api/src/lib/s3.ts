@@ -35,7 +35,7 @@ export async function generateUploadUrl(key: string, contentType: string, dataRe
   return getSignedUrl(client, command, { expiresIn: 3600 });
 }
 
-export async function generateDownloadUrl(key: string, dataRegion: string = 'eu-west-1'): Promise<string> {
+export async function generateDownloadUrl(key: string, dataRegion: string = 'eu-west-1', expiresIn: number = 3600): Promise<string> {
   const region = dataRegion || 'eu-west-1';
   const client = getS3ClientForRegion(region);
   const bucket = getS3BucketForOrg(region);
@@ -45,5 +45,5 @@ export async function generateDownloadUrl(key: string, dataRegion: string = 'eu-
     Key: key,
   });
 
-  return getSignedUrl(client, command, { expiresIn: 3600 });
+  return getSignedUrl(client, command, { expiresIn });
 }
