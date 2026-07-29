@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CalculatorQuestion } from '@/types/marketing';
-import { saveLeadAssessment } from '@/actions/lead-assessment';
+import { saveQuickLeadAssessment } from '@/actions/lead-assessment';
 
 export function useRiskCalculator(questions: CalculatorQuestion[]) {
   const [calcStep, setCalcStep] = useState(0);
@@ -117,7 +117,7 @@ export function useRiskCalculator(questions: CalculatorQuestion[]) {
         
         const params = new URLSearchParams(window.location.search);
         
-        const result = await saveLeadAssessment({
+        const result = await saveQuickLeadAssessment({
            totalScore,
            riskLevel,
            snapshot,
