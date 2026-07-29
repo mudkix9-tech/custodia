@@ -305,10 +305,11 @@ export const exportRouter = router({
         
         await ctx.db.insert(auditLogs).values({
           action: 'assessment_report_exported',
+          description: 'Exported assessment report PDF',
           organizationId: ctx.user!.orgId,
           userId: ctx.user!.id,
           newValue: { assessmentId: assessment.id }
-        } as any);
+        });
         
         const downloadUrl = await generateDownloadUrl(fileKey, org?.dataRegion || 'eu-central-1', 3600);
         return { success: true, url: downloadUrl };
