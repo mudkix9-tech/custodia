@@ -219,8 +219,9 @@ export const exportRouter = router({
       checkOrgContext(ctx.user);
       
       const { AssessmentReport } = await import('../lib/auditTemplates/assessmentReport.js');
-      const { renderReactToPdfStream } = await import('../lib/pdfRenderer.js');
+      const { renderReactToPdf } = await import('../lib/pdfRenderer.js');
       const { generateDownloadUrl, getS3ClientForRegion, getS3BucketForOrg } = await import('../lib/s3.js');
+      const { PutObjectCommand } = await import('@aws-sdk/client-s3');
       const { assessments, assessmentAnswers, actionItems, auditLogs, organizations } = await import('db');
       
       // 1. Fetch data
@@ -293,33 +294,18 @@ export const exportRouter = router({
       
       try {
         const element = React.createElement(AssessmentReport, { data: reportData });
-        const pdfStream = await renderReactToPdfStream(element);
+        const pdfBuffer = await renderReactToPdf(element);
         
         const fileKey = `assessments/${ctx.user!.orgId}/${input.assessmentId}/report_${Date.now()}.pdf`;
         const dataRegion = org?.dataRegion || 'eu-central-1';
         
-        const { Upload } = await import('@aws-sdk/lib-storage');
-        const abortController = new AbortController();
-        
-        // Listen to stream errors to abort the AWS S3 multipart upload
-        pdfStream.on('error', (err) => {
-          console.error("PDF generation stream emitted error:", err);
-          abortController.abort(err);
-        });
-
-        const upload = new Upload({
-          client: getS3ClientForRegion(dataRegion),
-          params: {
-            Bucket: getS3BucketForOrg(dataRegion),
-            Key: fileKey,
-            Body: pdfStream as any,
-            ContentType: 'application/pdf',
-          },
-          abortController
-        });
-
-        // If the stream aborts, the upload will throw here
-        await upload.done();
+        const s3Client = getS3ClientForRegion(dataRegion);
+        await s3Client.send(new PutObjectCommand({
+          Bucket: getS3BucketForOrg(dataRegion),
+          Key: fileKey,
+          Body: pdfBuffer,
+          ContentType: 'application/pdf'
+        }));
         
         await ctx.db.insert(auditLogs).values({
           action: 'assessment_report_exported',
