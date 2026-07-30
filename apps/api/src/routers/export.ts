@@ -218,13 +218,116 @@ export const exportRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       
-      const { assessmentPdfQueue } = await import('../lib/queue.js');
-      await assessmentPdfQueue.add('assessment-pdf', {
-        assessmentId: input.assessmentId,
-        orgId: ctx.user!.orgId,
-        userId: ctx.user!.id
+      const { assessmentId } = input;
+      const orgId = ctx.user!.orgId;
+
+      const org = await ctx.db.query.organizations.findFirst({
+        where: eq(organizations.id, orgId)
+      });
+
+      const { assessments, assessmentAnswers, assessmentTemplates, auditLogs } = await import('db');
+      
+      let [foundAssessment] = await ctx.db.select().from(assessments)
+        .where(and(eq(assessments.id, assessmentId), eq(assessments.organizationId, orgId)));
+        
+      let isLead = false;
+      let foundLead: any = null;
+
+      if (!foundAssessment) {
+        const { leadAssessments } = await import('db');
+        const [lead] = await ctx.db.select().from(leadAssessments)
+          .where(eq(leadAssessments.id, assessmentId));
+        if (lead) {
+          isLead = true;
+          foundLead = lead;
+        } else {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Assessment not found' });
+        }
+      }
+
+      let answersWithTemplates: any[] = [];
+      
+      if (isLead) {
+        const snapshot = Array.isArray(foundLead.snapshot) ? (foundLead.snapshot as any[]) : [];
+        const { inArray } = await import('drizzle-orm');
+        const questionIds = snapshot.map(s => s.questionId);
+        
+        let templatesMap = new Map();
+        if (questionIds.length > 0) {
+          const templates = await ctx.db.select().from(assessmentTemplates).where(
+            inArray(assessmentTemplates.id, questionIds)
+          );
+          templates.forEach(t => templatesMap.set(t.id, t));
+        }
+
+        answersWithTemplates = snapshot.map((s: any) => {
+          const t = templatesMap.get(s.questionId) || {};
+          return {
+             questionId: s.questionId,
+             selectedOption: s.selectedValue || s.selectedOption,
+             riskScore: s.score || s.riskScore || 0,
+             category: t.category || 'General',
+             questionText: t.questionText || s.questionId,
+             gdprArticles: t.gdprArticles || []
+          };
+        });
+      } else {
+        answersWithTemplates = await ctx.db.select({
+            questionId: assessmentAnswers.questionId,
+            selectedOption: assessmentAnswers.selectedOption,
+            riskScore: assessmentAnswers.riskScore,
+            category: assessmentTemplates.category,
+            questionText: assessmentTemplates.questionText,
+            gdprArticles: assessmentTemplates.gdprArticles
+        })
+        .from(assessmentAnswers)
+        .innerJoin(assessmentTemplates, eq(assessmentAnswers.questionId, assessmentTemplates.id))
+        .where(eq(assessmentAnswers.assessmentId, assessmentId));
+      }
+
+      const { buildAssessmentReportData } = await import('../lib/assessmentFormat.js');
+      const reportData = buildAssessmentReportData(
+        org?.name || 'Organization',
+        isLead ? (foundLead.totalScore || 0) : (foundAssessment?.overallScore || 0),
+        answersWithTemplates
+      );
+
+      const frontendUrl = process.env.FRONTEND_INTERNAL_URL || 'http://localhost:3000';
+      const apiKey = process.env.INTERNAL_API_KEY || 'development_key';
+      
+      const response = await fetch(`${frontendUrl}/api/internal/pdf/assessment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'INTERNAL_API_KEY': apiKey,
+        },
+        body: JSON.stringify({ reportData }),
+        signal: AbortSignal.timeout(15000), // 15-second timeout
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Vercel PDF error:", errText);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to generate PDF' });
+      }
+
+      const pdfBuffer = await response.arrayBuffer();
+      
+      await ctx.db.insert(auditLogs).values({
+        organizationId: orgId,
+        userId: ctx.user!.id,
+        action: 'pdf.download',
+        entityType: 'assessment',
+        entityId: assessmentId,
+        metadata: { assessmentId }
       });
       
-      return { success: true, message: "Generating your report, we'll notify you when it's ready" };
+      const base64Pdf = Buffer.from(pdfBuffer).toString('base64');
+
+      return { 
+        success: true, 
+        pdfData: base64Pdf,
+        filename: `Assessment_Report_${assessmentId.split('-')[0]}.pdf` 
+      };
     }),
 });

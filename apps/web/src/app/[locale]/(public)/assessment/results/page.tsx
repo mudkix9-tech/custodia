@@ -418,8 +418,12 @@ function AssessmentResultsContent() {
                     try {
                       setIsDownloading(true);
                       const result = await generatePdfMutation.mutateAsync({ assessmentId: id });
-                      if (result.success) {
-                        alert(result.message || "Generating your report, we'll notify you when it's ready.");
+                      if (result.success && result.pdfData) {
+                        const linkSource = `data:application/pdf;base64,${result.pdfData}`;
+                        const downloadLink = document.createElement("a");
+                        downloadLink.href = linkSource;
+                        downloadLink.download = result.filename || 'Assessment_Report.pdf';
+                        downloadLink.click();
                       }
                     } catch (err) {
                       console.error("Failed to download PDF", err);
