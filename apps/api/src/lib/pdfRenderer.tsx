@@ -7,13 +7,23 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Register Inter font
 Font.register({
   family: 'Inter',
   fonts: [
     { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Inter-Regular.ttf'), fontWeight: 400 },
     { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Inter-SemiBold.ttf'), fontWeight: 600 },
     { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Inter-Bold.ttf'), fontWeight: 700 },
+  ]
+});
+
+// Register Geist font
+Font.register({
+  family: 'Geist',
+  fonts: [
+    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Geist-Regular.ttf'), fontWeight: 400 },
+    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Geist-Medium.ttf'), fontWeight: 500 },
+    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Geist-SemiBold.ttf'), fontWeight: 600 },
+    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Geist-Bold.ttf'), fontWeight: 700 },
   ]
 });
 

@@ -229,59 +229,67 @@ export const exportRouter = router({
       });
       
       let assessment = undefined;
-      let answers: any[] = [];
-      let items: any[] = [];
+      let answersWithTemplates: any[] = [];
       
       const [foundAssessment] = await ctx.db.select().from(assessments)
         .where(and(eq(assessments.id, input.assessmentId), eq(assessments.organizationId, ctx.user!.orgId)));
         
       if (foundAssessment) {
         assessment = foundAssessment;
-        answers = await ctx.db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, input.assessmentId));
-        items = await ctx.db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
+        const { assessmentTemplates } = await import('db');
+        answersWithTemplates = await ctx.db.select({
+            questionId: assessmentAnswers.questionId,
+            selectedOption: assessmentAnswers.selectedOption,
+            riskScore: assessmentAnswers.riskScore,
+            category: assessmentTemplates.category,
+            questionText: assessmentTemplates.questionText,
+            gdprArticles: assessmentTemplates.gdprArticles
+        })
+        .from(assessmentAnswers)
+        .innerJoin(assessmentTemplates, eq(assessmentAnswers.questionId, assessmentTemplates.id))
+        .where(eq(assessmentAnswers.assessmentId, input.assessmentId));
       } else {
-        const { leadAssessments } = await import('db');
+        const { leadAssessments, assessmentTemplates } = await import('db');
         const [lead] = await ctx.db.select().from(leadAssessments).where(eq(leadAssessments.id, input.assessmentId));
         
-        // Ensure they either converted it to their org, or they just happen to be logged in and requesting it
         if (!lead || (lead.convertedToOrgId && lead.convertedToOrgId !== ctx.user!.orgId)) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Assessment not found' });
         }
         
-        assessment = {
-          overallScore: lead.totalScore
-        };
+        assessment = { overallScore: lead.totalScore || 0 };
         
         const snapshot = Array.isArray(lead.snapshot) ? lead.snapshot : [];
-        answers = snapshot.map((s: any) => ({
-           questionId: s.questionId,
-           selectedOption: s.selectedValue || s.selectedOption,
-           riskScore: s.score || s.riskScore
-        }));
+        const questionIds = snapshot.map((s: any) => s.questionId);
         
-        items = snapshot.filter((s: any) => (s.score || s.riskScore) > 0).map((s: any) => ({
-           title: `Address risk regarding: ${s.questionId}`,
-           description: `Your answer "${s.selectedValue || s.selectedOption}" indicates a compliance gap.`,
-           severity: (s.score || s.riskScore) > 5 ? 'High' : 'Medium'
-        }));
+        // Fetch the templates to get accurate categories and articles for lead answers
+        let templatesMap = new Map();
+        if (questionIds.length > 0) {
+          const { inArray } = await import('drizzle-orm');
+          const templates = await ctx.db.select().from(assessmentTemplates).where(
+            inArray(assessmentTemplates.id, questionIds)
+          );
+          templates.forEach(t => templatesMap.set(t.id, t));
+        }
+
+        answersWithTemplates = snapshot.map((s: any) => {
+          const t = templatesMap.get(s.questionId) || {};
+          return {
+             questionId: s.questionId,
+             selectedOption: s.selectedValue || s.selectedOption,
+             riskScore: s.score || s.riskScore || 0,
+             category: t.category || 'General',
+             questionText: t.questionText || s.questionId,
+             gdprArticles: t.gdprArticles || []
+          };
+        });
       }
       
-      const reportData = {
-        organizationName: org?.name || 'Organization',
-        reportDate: new Date().toLocaleDateString(),
-        overallScore: assessment.overallScore || 0,
-        riskLevel: (assessment.overallScore || 0) < 50 ? 'High' : (assessment.overallScore || 0) <= 75 ? 'Medium' : 'Low',
-        answers: answers.map(a => ({
-          questionText: a.questionId,
-          selectedOption: a.selectedOption,
-          riskScore: a.riskScore
-        })),
-        actionItems: items.map(i => ({
-          title: i.title,
-          description: i.description || '',
-          severity: i.severity
-        }))
-      };
+      const { buildAssessmentReportData } = await import('../lib/assessmentFormat.js');
+      const reportData = buildAssessmentReportData(
+        org?.name || 'Organization',
+        assessment.overallScore || 0,
+        answersWithTemplates
+      );
       
       try {
         const element = React.createElement(AssessmentReport, { data: reportData });
@@ -304,7 +312,7 @@ export const exportRouter = router({
           params: {
             Bucket: getS3BucketForOrg(dataRegion),
             Key: fileKey,
-            Body: pdfStream,
+            Body: pdfStream as any,
             ContentType: 'application/pdf',
           },
           abortController

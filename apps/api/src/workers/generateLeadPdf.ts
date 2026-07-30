@@ -22,29 +22,38 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
       throw new Error(`Lead or snapshot not found for leadId: ${leadId}`);
     }
 
-    // Process snapshot into ReportData format
-    const snapshot = lead.snapshot as any[];
+    // Fetch templates to get true categories and GDPR articles
+    const snapshot = Array.isArray(lead.snapshot) ? (lead.snapshot as any[]) : [];
+    const { assessmentTemplates } = await import('db');
+    const { inArray } = await import('drizzle-orm');
+    const questionIds = snapshot.map(s => s.questionId);
     
-    const actionItems = snapshot
-      .filter(s => s.riskScore > 0)
-      .map(s => ({
-        title: `Address risk regarding: ${s.questionId}`,
-        description: `Your answer "${s.selectedOption}" indicates a compliance gap.`,
-        severity: s.riskScore > 5 ? 'High' : 'Medium'
-      }));
+    let templatesMap = new Map();
+    if (questionIds.length > 0) {
+      const templates = await db.select().from(assessmentTemplates).where(
+        inArray(assessmentTemplates.id, questionIds)
+      );
+      templates.forEach(t => templatesMap.set(t.id, t));
+    }
 
-    const reportData = {
-      organizationName: 'Your Digital Agency',
-      reportDate: new Date().toLocaleDateString(),
-      overallScore: lead.totalScore || 0,
-      riskLevel: lead.riskLevel || 'Medium',
-      answers: snapshot.map(s => ({
-        questionText: s.questionId, // Snapshot contains questionId or text
-        selectedOption: s.selectedOption,
-        riskScore: s.riskScore
-      })),
-      actionItems
-    };
+    const answersWithTemplates = snapshot.map((s: any) => {
+      const t = templatesMap.get(s.questionId) || {};
+      return {
+         questionId: s.questionId,
+         selectedOption: s.selectedValue || s.selectedOption,
+         riskScore: s.score || s.riskScore || 0,
+         category: t.category || 'General',
+         questionText: t.questionText || s.questionId,
+         gdprArticles: t.gdprArticles || []
+      };
+    });
+
+    const { buildAssessmentReportData } = await import('../lib/assessmentFormat.js');
+    const reportData = buildAssessmentReportData(
+      'Your Digital Agency',
+      lead.totalScore || 0,
+      answersWithTemplates
+    );
 
     const element = React.createElement(AssessmentReport, { data: reportData });
     const pdfStream = await renderReactToPdfStream(element);
@@ -64,7 +73,7 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
       params: {
         Bucket: getS3BucketForOrg(dataRegion),
         Key: fileKey,
-        Body: pdfStream,
+        Body: pdfStream as any,
         ContentType: 'application/pdf',
       },
       abortController
