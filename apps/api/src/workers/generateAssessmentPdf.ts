@@ -80,7 +80,7 @@ export const generateAssessmentPdfWorker = createWorker('assessment-pdf', async 
       description: 'Exported assessment report PDF',
       organizationId: orgId,
       userId: userId,
-      newValue: { assessmentId }
+      metadata: { assessmentId }
     });
     
     const downloadUrl = await generateDownloadUrl(fileKey, dataRegion, 3600 * 24 * 7, `Assessment_Report_${assessmentId.split('-')[0]}.pdf`);
