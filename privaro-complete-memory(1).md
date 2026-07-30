@@ -264,7 +264,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 15. ✅ Audit log export streams to S3 (no more 10K record memory load)
 16. ✅ Pagination on all list endpoints using shared `paginatedQuery` utility with cursor-based pagination
 
-### UX fixes (Fixes 17-24)
+### UX fixes (Fixes 17-25)
 17. ✅ Skeleton loaders on every page (Skeleton component + per-page skeleton compositions)
 18. ✅ Error boundaries on every route (Sentry capture + friendly error page)
 19. ✅ Confirmation dialogs on all destructive actions (useConfirm hook + ConfirmDialogModal, including "type to confirm" for account deletion)
@@ -273,6 +273,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 22. ✅ Accessibility pass (WAI-ARIA combobox pattern on CommandPalette, focus traps on modals, screen reader live regions, skip-to-content link, aria labels throughout)
 23. ✅ Mobile DataGrid responsiveness (card layout on mobile, hamburger sidebar)
 24. ✅ Gap Assessment Dynamic Routing (action items explicitly store their structural category in DB to ensure robust routing, replacing fragile keyword string matching on titles)
+25. ✅ Data-Driven PDF Generation & UI Polish (Assessment templates seeded with `remediationGuidance` and `dependsOn` logic; engine dynamically calculates counts, wraps long text, suppresses voided questions, and dynamically maps high-priority gaps to specific module names in CTAs)
 
 ---
 
@@ -583,7 +584,7 @@ Marketing agency, design agency, web development, e-commerce, SaaS/technology, r
 - [x] Settings pages
 - [x] Email templates
 - [x] Marketing site
-- [x] All 22 code review fixes
+- [x] All 25 code review fixes
 - [x] Enterprise features (SSO, multi-entity, custom roles, data residency L2, SIEM, advanced reporting)
 - [x] Multi-language support
 - [x] Onboarding UX review and polish decisions (all 6 steps reviewed, fixes specified)

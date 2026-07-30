@@ -152,9 +152,10 @@ server.register(fastifyTRPCPlugin, {
 
 const start = async () => {
   try {
-    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 4000;
-    await server.listen({ port, host: '0.0.0.0' });
-    console.log(`API Server listening on port ${port}`);
+    const port = parseInt(process.env.PORT || '4000', 10);
+    const host = process.env.HOST || '0.0.0.0';
+    const address = await server.listen({ port, host });
+    console.log(`API Server listening on ${address}`);
     if (process.env.NODE_ENV !== 'test') {
       console.log('Workers initialized');
       // Schedule all background workers centrally
