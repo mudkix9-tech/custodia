@@ -645,16 +645,38 @@ export const AssessmentReport: React.FC<{ data: AssessmentReportData }> = ({ dat
         <Text style={styles.findingDesc}>Responses as submitted, grouped by category. The indicator reflects the residual risk associated with each response.</Text>
 
         {data.findings.map((group, groupIdx) => (
-          <View key={groupIdx} style={styles.findingGroup} wrap={false}>
-            <View style={styles.findingGroupHeader}>
-              <Text style={styles.findingGroupName}>{group.categoryName}</Text>
-              <Text style={styles.findingGroupMeta}>{group.items.length} QUESTIONS</Text>
+          <View key={groupIdx} style={styles.findingGroup}>
+            {/* Wrap header and first item together to prevent orphaned headers */}
+            <View wrap={false}>
+              <View style={styles.findingGroupHeader}>
+                <Text style={styles.findingGroupName}>{group.categoryName}</Text>
+                <Text style={styles.findingGroupMeta}>{group.items.length} QUESTIONS</Text>
+              </View>
+              {group.items.length > 0 && (() => {
+                const q = group.items[0]!;
+                const qColor = getRiskColor(q.riskScore);
+                return (
+                  <View style={styles.findingItem}>
+                    <Text style={styles.findingNum}>01</Text>
+                    <View style={styles.findingContent}>
+                      <Text style={styles.findingQ}>{q.question}</Text>
+                      <Text style={styles.findingA}><Text style={styles.findingALabel}>RESPONSE  </Text>{q.answer}</Text>
+                    </View>
+                    <View style={styles.findingRiskArea}>
+                      <View style={[styles.findingRiskDot, { backgroundColor: qColor }]} />
+                      <Text style={[styles.findingRiskText, { color: qColor }]}>{q.risk}</Text>
+                    </View>
+                  </View>
+                );
+              })()}
             </View>
-            {group.items.map((q, qIdx) => {
+            {/* Render the remaining items, individually preventing page breaks inside them */}
+            {group.items.slice(1).map((q, qIdx) => {
+              const actualIdx = qIdx + 1;
               const qColor = getRiskColor(q.riskScore);
               return (
-                <View key={qIdx} style={styles.findingItem}>
-                  <Text style={styles.findingNum}>0{qIdx + 1}</Text>
+                <View key={actualIdx} style={styles.findingItem} wrap={false}>
+                  <Text style={styles.findingNum}>{actualIdx + 1 < 10 ? `0${actualIdx + 1}` : actualIdx + 1}</Text>
                   <View style={styles.findingContent}>
                     <Text style={styles.findingQ}>{q.question}</Text>
                     <Text style={styles.findingA}><Text style={styles.findingALabel}>RESPONSE  </Text>{q.answer}</Text>

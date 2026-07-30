@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+doc-page:not(:defined){visibility:hidden}
+body{margin:0}
+a{color:#3F5B3C;text-decoration:none}
+a:hover{color:#2B3F29}
+</style>
+<script src="./doc-page.js"></script>
+</helmet>
+<doc-page size="a4">
+
+<section class="page" data-screen-label="01 Cover" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <div style="position:absolute;top:0;left:0;right:0;height:4mm;background:#3F5B3C"></div>
+  <div style="position:absolute;top:18mm;left:18mm;right:18mm;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:3mm">
+      <div style="width:7mm;height:7mm;background:#3F5B3C;display:flex;align-items:center;justify-content:center">
+        <div style="width:2.4mm;height:2.4mm;background:#F7F5EF"></div>
+      </div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:0.16em;color:#16181A">PRIVARO</div>
+    </div>
+    <div style="font-size:8pt;letter-spacing:0.1em;text-transform:uppercase;color:#5A5F57">GDPR Compliance Platform</div>
+  </div>
+
+  <div style="position:absolute;top:64mm;left:18mm;right:18mm">
+    <div style="font-size:8.5pt;letter-spacing:0.16em;text-transform:uppercase;color:#5A5F57;margin-bottom:7mm">Gap Assessment · Confidential</div>
+    <div style="font-family:Geist,sans-serif;font-weight:600;font-size:31pt;line-height:1.12;letter-spacing:-0.01em;max-width:130mm;text-wrap:balance">GDPR Compliance Assessment Report</div>
+    <div style="height:0.8pt;background:#16181A;margin:10mm 0 8mm 0;width:32mm"></div>
+    <div style="display:grid;grid-template-columns:repeat(3,auto);gap:0 14mm;justify-content:start">
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:2mm">Organization</div>
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:11.5pt">{{ orgName }}</div>
+      </div>
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:2mm;white-space:nowrap">Assessment date</div>
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:11.5pt">{{ assessmentDate }}</div>
+      </div>
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:2mm">Report ID</div>
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:11.5pt">PRV-GA-2026-0413</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;top:150mm;left:18mm;right:18mm;border-top:0.8pt solid #D8D6CE;border-bottom:0.8pt solid #D8D6CE;padding:12mm 0;display:flex;align-items:flex-end;justify-content:space-between">
+    <div>
+      <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:4mm">Overall compliance score</div>
+      <div style="display:flex;align-items:baseline;gap:2mm;color:{{ riskColor }}">
+        <div style="font-family:Geist,sans-serif;font-weight:600;font-size:64pt;line-height:0.86;letter-spacing:-0.03em">{{ scoreText }}</div>
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:22pt">%</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="display:inline-flex;align-items:center;gap:2.5mm;border:1pt solid {{ riskColor }};padding:2.5mm 4mm;color:{{ riskColor }}">
+        <div style="width:2.6mm;height:2.6mm;border-radius:50%;background:{{ riskColor }}"></div>
+        <div style="font-family:Geist,sans-serif;font-weight:600;font-size:10pt;letter-spacing:0.1em;text-transform:uppercase">{{ riskLabel }}</div>
+      </div>
+      <div style="font-size:8.5pt;color:#3D4142;margin-top:4mm;max-width:62mm;line-height:1.5">24 questions assessed across 6 compliance categories. Scoring model v3.2 (Art. 5–35 weighted).</div>
+    </div>
+  </div>
+
+  <div style="position:absolute;bottom:28mm;left:18mm;right:18mm;font-size:8.5pt;line-height:1.6;color:#3D4142;max-width:120mm">
+    This report reflects self-reported responses and is intended to support internal compliance planning. It does not constitute legal advice or certification of compliance with Regulation (EU) 2016/679.
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Privaro | getprivaro.com | Confidential</span><span>Page 1 of 7</span>
+  </div>
+</section>
+
+<section class="page" data-screen-label="02 Summary &amp; scores" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <div style="position:absolute;top:14mm;left:18mm;right:18mm;display:flex;justify-content:space-between;border-bottom:0.5pt solid #D8D6CE;padding-bottom:3mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+    <span style="font-family:Geist,sans-serif;font-weight:600;letter-spacing:0.16em">PRIVARO</span><span>GDPR Compliance Assessment Report · {{ orgName }}</span>
+  </div>
+
+  <div style="position:absolute;top:30mm;left:18mm;right:18mm">
+    <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:6mm">
+      <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">01</div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Executive summary</div>
+    </div>
+    <div style="font-size:10.5pt;line-height:1.65;color:#22262A;max-width:150mm;text-wrap:pretty">
+      Nordwind Logistik GmbH achieved an overall compliance score of <strong style="font-weight:600">68%</strong>, placing the organization at <strong style="font-weight:600">moderate risk</strong> of non-compliance with the GDPR. Core documentation and data subject rights handling are largely in place, but material gaps remain in breach preparedness, where no tested 72-hour notification procedure exists, and in vendor management, where processor agreements are incomplete for 4 of 11 active sub-processors. Addressing the five high-priority actions listed in Section 04 would raise the projected score above the 75% low-risk threshold.
+    </div>
+  </div>
+
+  <div style="position:absolute;top:98mm;left:18mm;right:18mm">
+    <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:2mm">
+      <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">02</div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Score breakdown by category</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;border-bottom:0.8pt solid #16181A;padding-bottom:2mm;margin-bottom:1mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+      <span>Category</span>
+      <div style="display:flex;gap:0"><span style="width:62mm">Score</span><span style="width:26mm;text-align:right">Risk level</span></div>
+    </div>
+
+    <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="6">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.5pt solid #E4E2DA;padding:4.5mm 0">
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:10.5pt">{{ cat.name }}</div>
+        <div style="display:flex;align-items:center;gap:0">
+          <div style="width:62mm;display:flex;align-items:center;gap:3mm">
+            <div style="width:44mm;height:4pt;background:#E8E6DE">
+              <div style="height:4pt;background:{{ cat.color }};width:{{ cat.pct }}"></div>
+            </div>
+            <div style="font-family:Geist,sans-serif;font-weight:600;font-size:10pt;width:11mm">{{ cat.scoreText }}%</div>
+          </div>
+          <div style="width:26mm;display:flex;align-items:center;justify-content:flex-end;gap:2mm">
+            <div style="width:2.2mm;height:2.2mm;border-radius:50%;background:{{ cat.color }}"></div>
+            <span style="font-size:9pt;color:{{ cat.color }};font-weight:500">{{ cat.risk }}</span>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+
+    <div style="display:flex;gap:8mm;margin-top:6mm;font-size:8pt;color:#3D4142">
+      <div style="display:flex;align-items:center;gap:2mm"><div style="width:2.2mm;height:2.2mm;border-radius:50%;background:#2E7D4F"></div>Low risk — 76–100%</div>
+      <div style="display:flex;align-items:center;gap:2mm"><div style="width:2.2mm;height:2.2mm;border-radius:50%;background:#B06A00"></div>Moderate risk — 51–75%</div>
+      <div style="display:flex;align-items:center;gap:2mm"><div style="width:2.2mm;height:2.2mm;border-radius:50%;background:#B02A20"></div>High risk — 0–50%</div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Privaro | getprivaro.com | Confidential</span><span>Page 2 of 7</span>
+  </div>
+</section>
+
+<section class="page" data-screen-label="03 Findings I" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <div style="position:absolute;top:14mm;left:18mm;right:18mm;display:flex;justify-content:space-between;border-bottom:0.5pt solid #D8D6CE;padding-bottom:3mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+    <span style="font-family:Geist,sans-serif;font-weight:600;letter-spacing:0.16em">PRIVARO</span><span>GDPR Compliance Assessment Report · {{ orgName }}</span>
+  </div>
+
+  <div style="position:absolute;top:28mm;left:18mm;right:18mm">
+    <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:3mm">
+      <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">03</div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Detailed findings</div>
+    </div>
+    <div style="font-size:9pt;color:#3D4142;margin-bottom:7mm;max-width:140mm">Responses as submitted, grouped by category. The indicator reflects the residual risk associated with each response.</div>
+
+    <sc-for list="{{ findingsA }}" as="group" hint-placeholder-count="3">
+      <div style="margin-bottom:7mm">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.8pt solid #16181A;padding-bottom:2mm;margin-bottom:1mm">
+          <div style="font-family:Geist,sans-serif;font-weight:600;font-size:11pt">{{ group.name }}</div>
+          <div style="font-size:8pt;letter-spacing:0.08em;text-transform:uppercase;color:#4C5150">{{ group.meta }}</div>
+        </div>
+        <sc-for list="{{ group.items }}" as="q" hint-placeholder-count="4">
+          <div style="display:flex;align-items:flex-start;gap:5mm;border-bottom:0.5pt solid #E4E2DA;padding:3.2mm 0">
+            <div style="font-family:Geist,sans-serif;font-size:8.5pt;color:#5A5F57;width:8mm;padding-top:0.6mm">{{ q.num }}</div>
+            <div style="flex:1">
+              <div style="font-size:9.5pt;line-height:1.45;color:#16181A;margin-bottom:1.4mm">{{ q.question }}</div>
+              <div style="font-size:9pt;color:#3D4142"><span style="letter-spacing:0.06em;text-transform:uppercase;font-size:7.5pt;color:#5A5F57;margin-right:2mm">Response</span>{{ q.answer }}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:2mm;width:24mm;justify-content:flex-end;padding-top:0.4mm">
+              <div style="width:2.2mm;height:2.2mm;border-radius:50%;background:{{ q.color }}"></div>
+              <span style="font-size:8.5pt;font-weight:500;color:{{ q.color }}">{{ q.risk }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Privaro | getprivaro.com | Confidential</span><span>Page 3 of 7</span>
+  </div>
+</section>
+
+<section class="page" data-screen-label="04 Findings II" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <div style="position:absolute;top:14mm;left:18mm;right:18mm;display:flex;justify-content:space-between;border-bottom:0.5pt solid #D8D6CE;padding-bottom:3mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+    <span style="font-family:Geist,sans-serif;font-weight:600;letter-spacing:0.16em">PRIVARO</span><span>GDPR Compliance Assessment Report · {{ orgName }}</span>
+  </div>
+
+  <div style="position:absolute;top:28mm;left:18mm;right:18mm">
+    <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:7mm">
+      <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">03</div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Detailed findings <span style="font-weight:400;color:#5A5F57;font-size:11pt">(continued)</span></div>
+    </div>
+
+    <sc-for list="{{ findingsB }}" as="group" hint-placeholder-count="3">
+      <div style="margin-bottom:7mm">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.8pt solid #16181A;padding-bottom:2mm;margin-bottom:1mm">
+          <div style="font-family:Geist,sans-serif;font-weight:600;font-size:11pt">{{ group.name }}</div>
+          <div style="font-size:8pt;letter-spacing:0.08em;text-transform:uppercase;color:#4C5150">{{ group.meta }}</div>
+        </div>
+        <sc-for list="{{ group.items }}" as="q" hint-placeholder-count="4">
+          <div style="display:flex;align-items:flex-start;gap:5mm;border-bottom:0.5pt solid #E4E2DA;padding:3.2mm 0">
+            <div style="font-family:Geist,sans-serif;font-size:8.5pt;color:#5A5F57;width:8mm;padding-top:0.6mm">{{ q.num }}</div>
+            <div style="flex:1">
+              <div style="font-size:9.5pt;line-height:1.45;color:#16181A;margin-bottom:1.4mm">{{ q.question }}</div>
+              <div style="font-size:9pt;color:#3D4142"><span style="letter-spacing:0.06em;text-transform:uppercase;font-size:7.5pt;color:#5A5F57;margin-right:2mm">Response</span>{{ q.answer }}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:2mm;width:24mm;justify-content:flex-end;padding-top:0.4mm">
+              <div style="width:2.2mm;height:2.2mm;border-radius:50%;background:{{ q.color }}"></div>
+              <span style="font-size:8.5pt;font-weight:500;color:{{ q.color }}">{{ q.risk }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Privaro | getprivaro.com | Confidential</span><span>Page 4 of 7</span>
+  </div>
+</section>
+
+<section class="page" data-screen-label="05 Findings III" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <div style="position:absolute;top:14mm;left:18mm;right:18mm;display:flex;justify-content:space-between;border-bottom:0.5pt solid #D8D6CE;padding-bottom:3mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+    <span style="font-family:Geist,sans-serif;font-weight:600;letter-spacing:0.16em">PRIVARO</span><span>GDPR Compliance Assessment Report · {{ orgName }}</span>
+  </div>
+
+  <div style="position:absolute;top:28mm;left:18mm;right:18mm">
+    <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:7mm">
+      <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">03</div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Detailed findings <span style="font-weight:400;color:#5A5F57;font-size:11pt">(continued)</span></div>
+    </div>
+
+    <sc-for list="{{ findingsC }}" as="group" hint-placeholder-count="3">
+      <div style="margin-bottom:7mm">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:0.8pt solid #16181A;padding-bottom:2mm;margin-bottom:1mm">
+          <div style="font-family:Geist,sans-serif;font-weight:600;font-size:11pt">{{ group.name }}</div>
+          <div style="font-size:8pt;letter-spacing:0.08em;text-transform:uppercase;color:#4C5150">{{ group.meta }}</div>
+        </div>
+        <sc-for list="{{ group.items }}" as="q" hint-placeholder-count="4">
+          <div style="display:flex;align-items:flex-start;gap:5mm;border-bottom:0.5pt solid #E4E2DA;padding:3.2mm 0">
+            <div style="font-family:Geist,sans-serif;font-size:8.5pt;color:#5A5F57;width:8mm;padding-top:0.6mm">{{ q.num }}</div>
+            <div style="flex:1">
+              <div style="font-size:9.5pt;line-height:1.45;color:#16181A;margin-bottom:1.4mm">{{ q.question }}</div>
+              <div style="font-size:9pt;color:#3D4142"><span style="letter-spacing:0.06em;text-transform:uppercase;font-size:7.5pt;color:#5A5F57;margin-right:2mm">Response</span>{{ q.answer }}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:2mm;width:24mm;justify-content:flex-end;padding-top:0.4mm">
+              <div style="width:2.2mm;height:2.2mm;border-radius:50%;background:{{ q.color }}"></div>
+              <span style="font-size:8.5pt;font-weight:500;color:{{ q.color }}">{{ q.risk }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Privaro | getprivaro.com | Confidential</span><span>Page 5 of 7</span>
+  </div>
+</section>
+
+<section class="page" data-screen-label="06 Action items" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <div style="position:absolute;top:14mm;left:18mm;right:18mm;display:flex;justify-content:space-between;border-bottom:0.5pt solid #D8D6CE;padding-bottom:3mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+    <span style="font-family:Geist,sans-serif;font-weight:600;letter-spacing:0.16em">PRIVARO</span><span>GDPR Compliance Assessment Report · {{ orgName }}</span>
+  </div>
+
+  <div style="position:absolute;top:28mm;left:18mm;right:18mm">
+    <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:3mm">
+      <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">04</div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Recommended action items</div>
+    </div>
+    <div style="font-size:9pt;color:#3D4142;margin-bottom:7mm;max-width:140mm">Twelve actions generated from the gaps identified above, ordered by priority. Article references indicate the primary obligation addressed.</div>
+
+    <div style="display:flex;border-bottom:0.8pt solid #16181A;padding-bottom:2mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+      <div style="width:24mm">Priority</div>
+      <div style="flex:1">Action</div>
+      <div style="width:30mm;text-align:right">GDPR article</div>
+    </div>
+    <sc-for list="{{ actions }}" as="a" hint-placeholder-count="12">
+      <div style="display:flex;align-items:flex-start;border-bottom:0.5pt solid #E4E2DA;padding:3.4mm 0">
+        <div style="width:24mm">
+          <span style="display:inline-block;border:0.8pt solid {{ a.color }};color:{{ a.color }};font-family:Geist,sans-serif;font-weight:600;font-size:7.5pt;letter-spacing:0.08em;text-transform:uppercase;padding:1mm 2.2mm">{{ a.priority }}</span>
+        </div>
+        <div style="flex:1;font-size:9.5pt;line-height:1.45;padding-right:6mm">{{ a.text }}</div>
+        <div style="width:30mm;text-align:right;font-family:Geist,sans-serif;font-size:9pt;color:#22262A">{{ a.article }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Privaro | getprivaro.com | Confidential</span><span>Page 6 of 7</span>
+  </div>
+</section>
+
+<section class="page" data-screen-label="07 Next steps" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <div style="position:absolute;top:14mm;left:18mm;right:18mm;display:flex;justify-content:space-between;border-bottom:0.5pt solid #D8D6CE;padding-bottom:3mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+    <span style="font-family:Geist,sans-serif;font-weight:600;letter-spacing:0.16em">PRIVARO</span><span>GDPR Compliance Assessment Report · {{ orgName }}</span>
+  </div>
+
+  <div style="position:absolute;top:30mm;left:18mm;right:18mm">
+    <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:6mm">
+      <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">05</div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Next steps</div>
+    </div>
+    <div style="font-size:10.5pt;line-height:1.65;color:#22262A;max-width:150mm;text-wrap:pretty">
+      The five high-priority actions above account for the majority of the current score deficit. Privaro tracks each of them as a remediation task with owners, deadlines and evidence attachments, and re-scores the assessment automatically as tasks are closed.
+    </div>
+
+    <div style="margin-top:12mm;border:1pt solid #3F5B3C;background:#F7F5EF;padding:12mm">
+      <div style="font-size:7.5pt;letter-spacing:0.14em;text-transform:uppercase;color:#3F5B3C;margin-bottom:5mm">Close the gaps</div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:19pt;line-height:1.25;letter-spacing:-0.01em;max-width:120mm;margin-bottom:5mm">Start a 14-day free trial and remediate these findings with guided workflows.</div>
+      <div style="font-size:10pt;line-height:1.6;color:#22262A;max-width:130mm;margin-bottom:8mm">Your responses are already imported. Privaro pre-fills your record of processing activities, generates the missing processor agreements, and sets up a tested breach notification workflow.</div>
+      <div style="display:flex;align-items:center;gap:5mm">
+        <div style="background:#3F5B3C;color:#F7F5EF;font-family:Geist,sans-serif;font-weight:600;font-size:11pt;padding:4mm 7mm">getprivaro.com</div>
+        <div style="font-size:9pt;color:#3D4142;line-height:1.5;max-width:70mm">No card required. SOC 2 Type II hosting in Frankfurt (eu-central-1).</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12mm;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8mm;border-top:0.5pt solid #D8D6CE;padding-top:6mm">
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:2.5mm">Related exports</div>
+        <div style="font-size:9pt;line-height:1.6;color:#22262A">Record of Processing Activities · Breach Register · Vendor Audit Log</div>
+      </div>
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:2.5mm">Reassessment due</div>
+        <div style="font-size:9pt;line-height:1.6;color:#22262A">13 October 2026 (quarterly cadence)</div>
+      </div>
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:2.5mm">Questions</div>
+        <div style="font-size:9pt;line-height:1.6;color:#22262A">compliance@getprivaro.com</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Privaro | getprivaro.com | Confidential</span><span>Page 7 of 7</span>
+  </div>
+</section>
+
+</doc-page>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;orgName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Nordwind Logistik GmbH&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;assessmentDate&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;13 July 2026&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;overallScore&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:68,&quot;min&quot;:0,&quot;max&quot;:100,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Scoring&quot;}}">
+const GREEN = "#2E7D4F", AMBER = "#B06A00", RED = "#B02A20";
+
+function band(score) {
+  if (score > 75) return { color: GREEN, label: "Low risk", short: "Low" };
+  if (score > 50) return { color: AMBER, label: "Moderate risk", short: "Moderate" };
+  return { color: RED, label: "High risk", short: "High" };
+}
+
+const CATS = [
+  ["Data Mapping & Records", 74],
+  ["Vendor Management", 52],
+  ["Data Subject Rights", 81],
+  ["Breach Preparedness", 45],
+  ["Cookie Consent", 63],
+  ["Training & Awareness", 58]
+];
+
+const R = { g: GREEN, a: AMBER, r: RED };
+const LBL = { g: "Low", a: "Moderate", r: "High" };
+
+const GROUPS = [
+  ["Data Mapping & Records", "4 questions · 74%", [
+    ["Q1", "Does your organization maintain a record of processing activities (ROPA) covering all processing operations?", "Yes — maintained, but last reviewed more than 12 months ago", "a"],
+    ["Q2", "Have you documented a lawful basis for each processing activity?", "Yes — documented for all activities", "g"],
+    ["Q3", "Are international transfers outside the EEA mapped with a valid transfer mechanism?", "Partially — two transfers rely on SCCs without a transfer impact assessment", "a"],
+    ["Q4", "Do you have defined retention periods for each category of personal data?", "Yes — retention schedule approved and applied", "g"]
+  ]],
+  ["Vendor Management", "4 questions · 52%", [
+    ["Q5", "Do you hold a signed Article 28 data processing agreement with every processor?", "No — agreements missing for 4 of 11 active sub-processors", "r"],
+    ["Q6", "Are processors assessed for security and privacy before onboarding?", "Sometimes — informal review, no documented criteria", "a"],
+    ["Q7", "Do you maintain an up-to-date register of sub-processors?", "Yes — register maintained in a spreadsheet", "a"],
+    ["Q8", "Are processor audits or attestations reviewed at least annually?", "No — no recurring review process in place", "r"]
+  ]],
+  ["Data Subject Rights", "4 questions · 81%", [
+    ["Q9", "Do you have a documented process for handling access requests within one month?", "Yes — documented and tested within the last 6 months", "g"],
+    ["Q10", "Can you fulfil erasure requests across all systems, including backups?", "Partially — backups require a manual, unlogged procedure", "a"],
+    ["Q11", "Is your privacy notice accessible and written in plain language?", "Yes — reviewed by counsel in the last 12 months", "g"],
+    ["Q12", "Do you log all data subject requests and their outcomes?", "Yes — logged in the ticketing system", "g"]
+  ]],
+  ["Breach Preparedness", "4 questions · 45%", [
+    ["Q13", "Do you have an incident response plan that defines the 72-hour notification path?", "No — plan drafted but not approved or communicated", "r"],
+    ["Q14", "Has the plan been tested or rehearsed in the last 12 months?", "No — never tested", "r"],
+    ["Q15", "Do you maintain an internal breach register for all incidents, including non-notifiable ones?", "Partially — only notifiable incidents recorded", "a"],
+    ["Q16", "Are staff able to escalate a suspected breach through a known channel?", "Yes — a shared mailbox is monitored during business hours", "a"]
+  ]],
+  ["Cookie Consent", "4 questions · 63%", [
+    ["Q17", "Is non-essential tracking blocked until the user gives consent?", "Partially — analytics fires before consent on two subdomains", "r"],
+    ["Q18", "Can users withdraw consent as easily as they gave it?", "Yes — persistent preferences link in the footer", "g"],
+    ["Q19", "Do you retain consent records with timestamp and scope?", "Yes — retained for 24 months", "g"],
+    ["Q20", "Is your cookie inventory reviewed after site or tag changes?", "Sometimes — no defined trigger or owner", "a"]
+  ]],
+  ["Training & Awareness", "4 questions · 58%", [
+    ["Q21", "Do all staff handling personal data receive GDPR training at onboarding?", "Partially — engineering and support only", "a"],
+    ["Q22", "Is refresher training delivered at least annually?", "No — no recurring training cycle", "r"],
+    ["Q23", "Have you appointed and published a DPO or privacy contact?", "Yes — external DPO appointed and published", "g"],
+    ["Q24", "Are role-specific procedures documented for teams handling sensitive data?", "Partially — documented for HR, not for marketing", "a"]
+  ]]
+];
+
+const ACTIONS = [
+  ["High", "Execute Article 28 data processing agreements with the four sub-processors currently operating without one; suspend transfers where terms cannot be agreed.", "Art. 28(3)"],
+  ["High", "Approve, publish and rehearse an incident response plan defining the 72-hour supervisory authority notification path and decision owners.", "Art. 33(1)"],
+  ["High", "Complete transfer impact assessments for the two SCC-based transfers to the United States and document supplementary measures.", "Art. 46 · Ch. V"],
+  ["High", "Block analytics and marketing tags on the two subdomains where they fire before consent is captured.", "Art. 6(1)(a)"],
+  ["High", "Establish an annual GDPR refresher training cycle covering all staff who process personal data.", "Art. 39(1)(b)"],
+  ["Medium", "Extend the internal breach register to capture all incidents, including those assessed as non-notifiable, with rationale.", "Art. 33(5)"],
+  ["Medium", "Define and document processor selection criteria, with a security and privacy review recorded before onboarding.", "Art. 28(1)"],
+  ["Medium", "Introduce an annual review of processor audit reports and certifications, with an accountable owner.", "Art. 28(3)(h)"],
+  ["Medium", "Document and log the erasure procedure for backup systems, including maximum time to full deletion.", "Art. 17(1)"],
+  ["Medium", "Assign an owner and a change trigger for cookie inventory reviews following site or tag releases.", "Art. 5(2)"],
+  ["Low", "Complete the annual ROPA review and record the review date and approver.", "Art. 30(1)"],
+  ["Low", "Extend role-specific data handling procedures to the marketing function.", "Art. 24(2)"]
+];
+
+class Component extends DCLogic {
+  renderVals() {
+    const score = this.props.overallScore ?? 68;
+    const b = band(score);
+    const groups = GROUPS.map(([name, meta, items]) => ({
+      name, meta,
+      items: items.map(([num, question, answer, k]) => ({ num, question, answer, color: R[k], risk: LBL[k] }))
+    }));
+    return {
+      orgName: this.props.orgName ?? "Nordwind Logistik GmbH",
+      assessmentDate: this.props.assessmentDate ?? "13 July 2026",
+      scoreText: String(score),
+      riskColor: b.color,
+      riskLabel: b.label,
+      categories: CATS.map(([name, s]) => {
+        const cb = band(s);
+        return { name, scoreText: String(s), pct: s + "%", color: cb.color, risk: cb.short };
+      }),
+      findingsA: groups.slice(0, 2),
+      findingsB: groups.slice(2, 4),
+      findingsC: groups.slice(4),
+      actions: ACTIONS.map(([priority, text, article]) => ({
+        priority, text, article,
+        color: priority === "High" ? RED : priority === "Medium" ? AMBER : "#4C5150"
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
