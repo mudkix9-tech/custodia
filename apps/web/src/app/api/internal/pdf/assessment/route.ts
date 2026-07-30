@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const element = React.createElement(AssessmentReport, { data: reportData });
     const pdfBuffer = await renderReactToPdf(element);
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as unknown as BodyInit, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
