@@ -747,6 +747,7 @@ export const assessmentTemplates = pgTable('assessment_templates', {
   options: jsonb('options').notNull(),
   dependsOn: jsonb('depends_on'),
   translations: jsonb('translations').$type<Record<string, any>>().default({}),
+  remediationGuidance: text('remediation_guidance'),
   maxRiskWeight: integer('max_risk_weight').default(10),
   gdprArticles: integer('gdpr_articles').array(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),

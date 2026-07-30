@@ -268,7 +268,9 @@ export const exportRouter = router({
              riskScore: s.score || s.riskScore || 0,
              category: t.category || 'General',
              questionText: t.questionText || s.questionId,
-             gdprArticles: t.gdprArticles || []
+             gdprArticles: t.gdprArticles || [],
+             dependsOn: t.dependsOn,
+             remediationGuidance: t.remediationGuidance
           };
         });
       } else {
@@ -278,7 +280,9 @@ export const exportRouter = router({
             riskScore: assessmentAnswers.riskScore,
             category: assessmentTemplates.category,
             questionText: assessmentTemplates.questionText,
-            gdprArticles: assessmentTemplates.gdprArticles
+            gdprArticles: assessmentTemplates.gdprArticles,
+            dependsOn: assessmentTemplates.dependsOn,
+            remediationGuidance: assessmentTemplates.remediationGuidance
         })
         .from(assessmentAnswers)
         .innerJoin(assessmentTemplates, eq(assessmentAnswers.questionId, assessmentTemplates.id))

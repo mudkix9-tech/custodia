@@ -117,7 +117,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start'
   },
   metaCol: {
-    marginRight: 40
+    marginRight: 40,
+    maxWidth: 180,
+    flexWrap: 'wrap'
   },
   metaLabel: {
     fontSize: 7.5,
@@ -507,6 +509,7 @@ const Footer = () => (
 
 export const AssessmentReport: React.FC<{ data: AssessmentReportData }> = ({ data }) => {
   const overallRiskColor = getRiskColor(data.overallScore);
+  const totalQuestions = data.findings.reduce((sum, group) => sum + group.items.length, 0);
 
   return (
     <Document>
@@ -557,7 +560,7 @@ export const AssessmentReport: React.FC<{ data: AssessmentReportData }> = ({ dat
               <Text style={[styles.riskBadgeText, { color: overallRiskColor }]}>{data.riskLevel}</Text>
             </View>
             <Text style={styles.scoreDesc}>
-              {data.categories.length * 4} questions assessed across {data.categories.length} compliance categories.
+              {totalQuestions} questions assessed across {data.categories.length} compliance categories.
             </Text>
           </View>
         </View>
@@ -579,7 +582,7 @@ export const AssessmentReport: React.FC<{ data: AssessmentReportData }> = ({ dat
           </View>
           
           <Text style={styles.summaryText}>
-            {data.organizationName} achieved an overall compliance score of {data.overallScore}%, placing the organization at {data.riskLevel.toLowerCase()} of non-compliance with the GDPR.
+            {data.organizationName} achieved an overall compliance score of {data.overallScore}%, placing the organization at {data.riskLevel.toLowerCase()} risk of non-compliance with the GDPR.
           </Text>
 
           <View style={styles.sectionTitleFlex}>
@@ -735,9 +738,34 @@ export const AssessmentReport: React.FC<{ data: AssessmentReportData }> = ({ dat
           <Text style={styles.sectionNum}>05</Text>
           <Text style={styles.sectionTitleText}>Next steps</Text>
         </View>
-        <Text style={styles.summaryText}>
-          The high-priority actions above account for the majority of the current score deficit. Privaro tracks each of them as a remediation task with owners, deadlines and evidence attachments, and re-scores the assessment automatically as tasks are closed.
-        </Text>
+        
+        {(() => {
+          const highPriorityCount = data.actionItems.filter(a => a.severity === 'High').length;
+          
+          const categories = new Set(data.actionItems.filter(a => a.severity === 'High').map((a: any) => a.category));
+          const modules: string[] = [];
+          if (categories.has('Data Mapping')) modules.push("ROPA engine");
+          if (categories.has('Cookie Consent')) modules.push("cookie consent manager");
+          if (categories.has('Vendor Management')) modules.push("vendor risk tracking");
+          if (categories.has('Data Subject Rights')) modules.push("DSAR automation");
+          if (categories.has('Security')) modules.push("Security & Breach module");
+          
+          let moduleText = "Privaro's automated compliance modules";
+          if (modules.length === 1) moduleText = `Privaro's ${modules[0]}`;
+          else if (modules.length === 2) moduleText = `Privaro's ${modules[0]} and ${modules[1]}`;
+          else if (modules.length > 2) moduleText = `Privaro's ${modules.slice(0, -1).join(', ')}, and ${modules[modules.length - 1]}`;
+
+          return (
+            <>
+              <Text style={styles.summaryText}>
+                You have {highPriorityCount} high-priority gaps. {moduleText} can address {Math.min(highPriorityCount, modules.length * 2)} of these automatically.
+              </Text>
+              <Text style={[styles.summaryText, { marginTop: 10, color: '#3F5B3C', fontWeight: 600 }]}>
+                Start a free trial at getprivaro.com to resolve these issues and generate a compliance certificate.
+              </Text>
+            </>
+          );
+        })()}
         <Footer />
       </Page>
     </Document>

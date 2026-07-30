@@ -14,10 +14,21 @@ export function buildAssessmentReportData(
 ): AssessmentReportData {
   const riskLevel = overallScore < 50 ? 'High' : overallScore <= 75 ? 'Moderate' : 'Low';
   
-  // Group findings by category
   const categoriesMap = new Map<string, { scoreTotal: number; count: number; items: any[] }>();
+  
+  // Pre-processing filter: Evaluate dependsOn conditions
+  const answerMap = new Map(answersWithTemplates.map(a => [a.questionId, a.selectedOption]));
+  const validAnswers = answersWithTemplates.filter(a => {
+    if (!a.dependsOn || !a.dependsOn.conditions || !Array.isArray(a.dependsOn.conditions)) return true;
+    
+    // Check all conditions
+    return a.dependsOn.conditions.every((cond: any) => {
+      const dependentAnswer = answerMap.get(cond.questionId);
+      return dependentAnswer === cond.answerEquals;
+    });
+  });
 
-  answersWithTemplates.forEach(a => {
+  validAnswers.forEach(a => {
     const cat = a.category || 'General';
     if (!categoriesMap.has(cat)) {
       categoriesMap.set(cat, { scoreTotal: 0, count: 0, items: [] });
@@ -56,14 +67,15 @@ export function buildAssessmentReportData(
   });
 
   // Action Items (derived from high risk answers)
-  const actionItems = answersWithTemplates
+  const actionItems = validAnswers
     .filter(a => a.riskScore > 0)
     .sort((a, b) => b.riskScore - a.riskScore) // Sort by highest risk
     .map(a => {
       return {
         title: `Address gap in ${a.category || 'General'}`,
-        description: `Response "${a.selectedOption}" to "${a.questionText || a.questionId}" indicates a compliance gap.`,
+        description: a.remediationGuidance || `Response "${a.selectedOption}" to "${a.questionText || a.questionId}" indicates a compliance gap.`,
         severity: a.riskScore >= 7 ? 'High' : a.riskScore >= 4 ? 'Medium' : 'Low',
+        category: a.category,
         article: Array.isArray(a.gdprArticles) && a.gdprArticles.length > 0 
           ? `Art. ${a.gdprArticles.join(', ')}` 
           : '-'

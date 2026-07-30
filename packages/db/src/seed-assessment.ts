@@ -2,7 +2,8 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: '../../.env' });
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pkg from 'pg';
-import { assessmentTemplates, assessments, assessmentAnswers, actionItems } from './schema.js';
+import crypto from 'crypto';
+import { assessmentTemplates, assessments, assessmentAnswers, actionItems, pendingSignups } from './schema.js';
 
 const { Pool } = pkg;
 
@@ -30,6 +31,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Conduct a data mapping exercise and populate your Record of Processing Activities (ROPA).',
     gdprArticles: [30],
   },
   {
@@ -41,6 +43,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [30],
   },
   {
@@ -52,6 +55,7 @@ const questions = [
       { text: 'We don\'t process special categories', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Identify all processing of special category data and ensure an Article 9 exception applies (e.g. explicit consent).',
     gdprArticles: [9],
   },
   {
@@ -63,6 +67,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Execute Data Processing Agreements (DPAs) with all vendors and conduct vendor risk assessments.',
     gdprArticles: [28, 30],
   },
   {
@@ -74,6 +79,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Conduct a data mapping exercise and populate your Record of Processing Activities (ROPA).',
     gdprArticles: [5],
   },
   
@@ -87,6 +93,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Conduct and document a Legitimate Interest Assessment (LIA) for all relevant processing activities.',
     gdprArticles: [6],
   },
   {
@@ -98,6 +105,7 @@ const questions = [
       { text: 'We don\'t rely on consent', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [7],
   },
   {
@@ -109,6 +117,7 @@ const questions = [
       { text: 'We don\'t rely on legitimate interest', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Conduct and document a Legitimate Interest Assessment (LIA) for all relevant processing activities.',
     gdprArticles: [6],
   },
   {
@@ -120,6 +129,7 @@ const questions = [
       { text: 'Not sure', riskWeight: 8 }, // Decreased from 10 to 8
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [7],
   },
   {
@@ -131,6 +141,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Conduct and document a Legitimate Interest Assessment (LIA) for all relevant processing activities.',
     gdprArticles: [13, 14],
   },
 
@@ -144,6 +155,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [28],
   },
   {
@@ -155,6 +167,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [44, 45, 46],
   },
   {
@@ -166,6 +179,7 @@ const questions = [
       { text: 'We don\'t use vendors outside the EU/EEA', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Execute Data Processing Agreements (DPAs) with all vendors and conduct vendor risk assessments.',
     gdprArticles: [44, 45, 46],
   },
   {
@@ -177,6 +191,7 @@ const questions = [
       { text: 'No', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [44, 45, 46],
   },
   {
@@ -187,6 +202,7 @@ const questions = [
       { text: 'No', riskWeight: 5 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Execute Data Processing Agreements (DPAs) with all vendors and conduct vendor risk assessments.',
     gdprArticles: [28],
   },
   {
@@ -210,6 +226,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [15],
   },
   {
@@ -231,6 +248,7 @@ const questions = [
       { text: 'No', riskWeight: 8 }, // Increased from 5 to 8
     ],
     dependsOn: null,
+    remediationGuidance: 'Implement a structured workflow to verify identities and fulfill Data Subject Access Requests (DSARs) within the 30-day statutory deadline.',
     gdprArticles: [20],
   },
   {
@@ -241,6 +259,7 @@ const questions = [
       { text: 'No', riskWeight: 5 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Implement a structured workflow to verify identities and fulfill Data Subject Access Requests (DSARs) within the 30-day statutory deadline.',
     gdprArticles: [12],
   },
   {
@@ -252,6 +271,7 @@ const questions = [
       { text: 'We don\'t do direct marketing', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [21],
   },
   {
@@ -263,6 +283,7 @@ const questions = [
       { text: 'No', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [22],
   },
 
@@ -276,6 +297,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Implement technical safeguards such as encryption at rest/transit and robust role-based access controls.',
     gdprArticles: [32],
   },
   {
@@ -287,6 +309,7 @@ const questions = [
       { text: 'Everyone has access', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Implement technical safeguards such as encryption at rest/transit and robust role-based access controls.',
     gdprArticles: [32],
   },
   {
@@ -298,6 +321,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Implement technical safeguards such as encryption at rest/transit and robust role-based access controls.',
     gdprArticles: [32],
   },
   {
@@ -319,6 +343,7 @@ const questions = [
       { text: 'No', riskWeight: 5 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [39],
   },
 
@@ -332,6 +357,7 @@ const questions = [
       { text: 'No privacy policy at all', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Update your public-facing privacy notice to ensure it clearly covers all data processing activities, lawful bases, and user rights.',
     gdprArticles: [13, 14],
   },
   {
@@ -343,6 +369,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Update your public-facing privacy notice to ensure it clearly covers all data processing activities, lawful bases, and user rights.',
     gdprArticles: [13, 14],
   },
   {
@@ -353,18 +380,21 @@ const questions = [
       { text: 'No, one policy for everything', riskWeight: 5 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Update your public-facing privacy notice to ensure it clearly covers all data processing activities, lawful bases, and user rights.',
     gdprArticles: [13, 14],
   },
 
   // Cookie Consent
   {
     category: 'Cookie Consent',
+    id: '33333333-3333-4333-a333-333333333333',
     questionText: 'Does your website have a cookie consent banner?',
     options: [
       { text: 'Yes', riskWeight: 0 },
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Implement a compliant cookie consent manager that requires active opt-in for non-essential cookies and provides an equally prominent \'Reject All\' option.',
     gdprArticles: [7],
   },
   {
@@ -374,7 +404,8 @@ const questions = [
       { text: 'Yes', riskWeight: 0 },
       { text: 'No, reject is hidden or requires multiple clicks', riskWeight: 8 },
     ],
-    dependsOn: null,
+    dependsOn: { conditions: [{ questionId: '33333333-3333-4333-a333-333333333333', answerEquals: 'Yes' }] },
+    remediationGuidance: 'Implement a compliant cookie consent manager that requires active opt-in for non-essential cookies and provides an equally prominent \'Reject All\' option.',
     gdprArticles: [7],
   },
   {
@@ -386,6 +417,7 @@ const questions = [
       { text: 'No, they fire immediately', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Implement a compliant cookie consent manager that requires active opt-in for non-essential cookies and provides an equally prominent \'Reject All\' option.',
     gdprArticles: [7],
   },
   {
@@ -396,6 +428,7 @@ const questions = [
       { text: 'No', riskWeight: 8 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Implement a compliant cookie consent manager that requires active opt-in for non-essential cookies and provides an equally prominent \'Reject All\' option.',
     gdprArticles: [7],
   },
 
@@ -409,6 +442,7 @@ const questions = [
       { text: 'No, we are not required to', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Evaluate the requirement to appoint a Data Protection Officer (DPO) and formally designate one if required.',
     gdprArticles: [37],
   },
   {
@@ -420,6 +454,7 @@ const questions = [
       { text: 'We don\'t have high-risk activities', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [35],
   },
   {
@@ -431,6 +466,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [30],
   },
 
@@ -444,6 +480,7 @@ const questions = [
       { text: 'No', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [9],
   },
   {
@@ -485,6 +522,7 @@ const questions = [
       { text: 'No', riskWeight: 0 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [32],
   },
   {
@@ -511,6 +549,7 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Implement technical safeguards such as encryption at rest/transit and robust role-based access controls.',
     gdprArticles: [28],
   },
   {
@@ -522,12 +561,14 @@ const questions = [
       { text: 'No', riskWeight: 10 },
     ],
     dependsOn: null,
+    remediationGuidance: 'Review this process area, establish documented procedures, and assign an internal owner to remediate the compliance gap.',
     gdprArticles: [5], // Accountability principle
   },
 ];
 
 async function seed() {
   console.log('Clearing existing assessment data to prevent FK violations...');
+  await db.delete(pendingSignups);
   await db.delete(actionItems); // Clear action items too just in case
   await db.delete(assessmentAnswers);
   await db.delete(assessments);
