@@ -317,8 +317,9 @@ export const exportRouter = router({
         organizationId: orgId,
         userId: ctx.user!.id,
         action: 'pdf.download',
-        entityType: 'assessment',
-        entityId: assessmentId,
+        resourceType: 'assessment',
+        resourceId: assessmentId,
+        description: 'Downloaded Assessment Report PDF',
         metadata: { assessmentId }
       });
       
