@@ -18,7 +18,7 @@ export * from './consentRollup.js';
 export * from './consentRollupDriftCheck.js';
 export * from './rateLimitCleanup.js';
 export * from './generateLeadPdf.js';
-
+export * from './generateAssessmentPdf.js';
 import { createQueue } from '../lib/queue.js';
 
 import { getBoss } from '../lib/queue.js';

@@ -44,7 +44,6 @@
     "@fastify/swagger-ui": "^5.2.6",
     "@google/genai": "^2.11.0",
     "@paddle/paddle-node-sdk": "^3.8.0",
-    "@react-pdf/renderer": "^4.5.1",
     "@sentry/nextjs": "^10.52.0",
     "@sentry/node": "^10.52.0",
     "@trpc/client": "^11.16.0",

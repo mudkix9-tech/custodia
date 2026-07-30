@@ -22,6 +22,7 @@ import { emailSenderWorker } from './workers/emailSenderWorker.js';
 import { vendorAssessmentWorker } from './workers/vendorAssessmentWorker.js';
 import { impactAssessmentWorker } from './workers/impactAssessmentWorker.js';
 import { regulatoryNotificationWorker } from './workers/regulatoryNotificationWorker.js';
+import { generateAssessmentPdfWorker } from './workers/generateAssessmentPdf.js';
 
 import { scheduleGlobalJobs } from './workers/index.js';
 import cmpRoutes from './routes/cmp.js';

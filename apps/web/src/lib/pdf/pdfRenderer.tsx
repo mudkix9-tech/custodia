@@ -4,15 +4,14 @@ import * as Sentry from '@sentry/node';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const fontsDir = path.join(process.cwd(), 'src', 'assets', 'fonts');
 
 Font.register({
   family: 'Inter',
   fonts: [
-    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Inter-Regular.ttf'), fontWeight: 400 },
-    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Inter-SemiBold.ttf'), fontWeight: 600 },
-    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Inter-Bold.ttf'), fontWeight: 700 },
+    { src: path.join(fontsDir, 'Inter-Regular.ttf'), fontWeight: 400 },
+    { src: path.join(fontsDir, 'Inter-SemiBold.ttf'), fontWeight: 600 },
+    { src: path.join(fontsDir, 'Inter-Bold.ttf'), fontWeight: 700 },
   ]
 });
 
@@ -20,10 +19,10 @@ Font.register({
 Font.register({
   family: 'Geist',
   fonts: [
-    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Geist-Regular.ttf'), fontWeight: 400 },
-    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Geist-Medium.ttf'), fontWeight: 500 },
-    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Geist-SemiBold.ttf'), fontWeight: 600 },
-    { src: path.join(__dirname, '..', '..', 'assets', 'fonts', 'Geist-Bold.ttf'), fontWeight: 700 },
+    { src: path.join(fontsDir, 'Geist-Regular.ttf'), fontWeight: 400 },
+    { src: path.join(fontsDir, 'Geist-Medium.ttf'), fontWeight: 500 },
+    { src: path.join(fontsDir, 'Geist-SemiBold.ttf'), fontWeight: 600 },
+    { src: path.join(fontsDir, 'Geist-Bold.ttf'), fontWeight: 700 },
   ]
 });
 

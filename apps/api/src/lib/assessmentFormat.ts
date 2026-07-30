@@ -1,5 +1,12 @@
-import { AssessmentReportData } from './auditTemplates/assessmentReport.js';
-
+export interface AssessmentReportData {
+  organizationName: string;
+  reportDate: string;
+  overallScore: number;
+  riskLevel: string;
+  categories: { name: string; score: number; risk: string; }[];
+  findings: { categoryName: string; items: { question: string; answer: string; riskScore: number; risk: string; }[]; }[];
+  actionItems: { title: string; description: string; severity: string; article: string; }[];
+}
 export function buildAssessmentReportData(
   orgName: string,
   overallScore: number,

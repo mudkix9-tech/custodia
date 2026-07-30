@@ -218,108 +218,13 @@ export const exportRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       
-      const { AssessmentReport } = await import('../lib/auditTemplates/assessmentReport.js');
-      const { renderReactToPdf } = await import('../lib/pdfRenderer.js');
-      const { generateDownloadUrl, getS3ClientForRegion, getS3BucketForOrg } = await import('../lib/s3.js');
-      const { PutObjectCommand } = await import('@aws-sdk/client-s3');
-      const { assessments, assessmentAnswers, actionItems, auditLogs, organizations } = await import('db');
-      
-      // 1. Fetch data
-      const org = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.id, ctx.user!.orgId)
+      const { assessmentPdfQueue } = await import('../lib/queue.js');
+      await assessmentPdfQueue.add('assessment-pdf', {
+        assessmentId: input.assessmentId,
+        orgId: ctx.user!.orgId,
+        userId: ctx.user!.id
       });
       
-      let assessment = undefined;
-      let answersWithTemplates: any[] = [];
-      
-      const [foundAssessment] = await ctx.db.select().from(assessments)
-        .where(and(eq(assessments.id, input.assessmentId), eq(assessments.organizationId, ctx.user!.orgId)));
-        
-      if (foundAssessment) {
-        assessment = foundAssessment;
-        const { assessmentTemplates } = await import('db');
-        answersWithTemplates = await ctx.db.select({
-            questionId: assessmentAnswers.questionId,
-            selectedOption: assessmentAnswers.selectedOption,
-            riskScore: assessmentAnswers.riskScore,
-            category: assessmentTemplates.category,
-            questionText: assessmentTemplates.questionText,
-            gdprArticles: assessmentTemplates.gdprArticles
-        })
-        .from(assessmentAnswers)
-        .innerJoin(assessmentTemplates, eq(assessmentAnswers.questionId, assessmentTemplates.id))
-        .where(eq(assessmentAnswers.assessmentId, input.assessmentId));
-      } else {
-        const { leadAssessments, assessmentTemplates } = await import('db');
-        const [lead] = await ctx.db.select().from(leadAssessments).where(eq(leadAssessments.id, input.assessmentId));
-        
-        if (!lead || (lead.convertedToOrgId && lead.convertedToOrgId !== ctx.user!.orgId)) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Assessment not found' });
-        }
-        
-        assessment = { overallScore: lead.totalScore || 0 };
-        
-        const snapshot = Array.isArray(lead.snapshot) ? lead.snapshot : [];
-        const questionIds = snapshot.map((s: any) => s.questionId);
-        
-        // Fetch the templates to get accurate categories and articles for lead answers
-        let templatesMap = new Map();
-        if (questionIds.length > 0) {
-          const { inArray } = await import('drizzle-orm');
-          const templates = await ctx.db.select().from(assessmentTemplates).where(
-            inArray(assessmentTemplates.id, questionIds)
-          );
-          templates.forEach(t => templatesMap.set(t.id, t));
-        }
-
-        answersWithTemplates = snapshot.map((s: any) => {
-          const t = templatesMap.get(s.questionId) || {};
-          return {
-             questionId: s.questionId,
-             selectedOption: s.selectedValue || s.selectedOption,
-             riskScore: s.score || s.riskScore || 0,
-             category: t.category || 'General',
-             questionText: t.questionText || s.questionId,
-             gdprArticles: t.gdprArticles || []
-          };
-        });
-      }
-      
-      const { buildAssessmentReportData } = await import('../lib/assessmentFormat.js');
-      const reportData = buildAssessmentReportData(
-        org?.name || 'Organization',
-        assessment.overallScore || 0,
-        answersWithTemplates
-      );
-      
-      try {
-        const element = React.createElement(AssessmentReport, { data: reportData });
-        const pdfBuffer = await renderReactToPdf(element);
-        
-        const fileKey = `assessments/${ctx.user!.orgId}/${input.assessmentId}/report_${Date.now()}.pdf`;
-        const dataRegion = org?.dataRegion || 'eu-central-1';
-        
-        const s3Client = getS3ClientForRegion(dataRegion);
-        await s3Client.send(new PutObjectCommand({
-          Bucket: getS3BucketForOrg(dataRegion),
-          Key: fileKey,
-          Body: pdfBuffer,
-          ContentType: 'application/pdf'
-        }));
-        
-        await ctx.db.insert(auditLogs).values({
-          action: 'assessment_report_exported',
-          description: 'Exported assessment report PDF',
-          organizationId: ctx.user!.orgId,
-          userId: ctx.user!.id,
-          newValue: { assessmentId: input.assessmentId }
-        });
-        
-        const downloadUrl = await generateDownloadUrl(fileKey, org?.dataRegion || 'eu-central-1', 3600, `Assessment_Report_${input.assessmentId.split('-')[0]}.pdf`);
-        return { success: true, url: downloadUrl };
-      } catch (err) {
-        console.error("Failed to generate/upload Assessment PDF:", err);
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to generate PDF' });
-      }
+      return { success: true, message: "Generating your report, we'll notify you when it's ready" };
     }),
 });

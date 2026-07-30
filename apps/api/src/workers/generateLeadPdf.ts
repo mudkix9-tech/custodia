@@ -1,10 +1,9 @@
-import React from 'react';
+
 import { createWorker } from '../lib/queue.js';
 import { db } from '../db.js';
 import { leadAssessments } from 'db';
 import { eq } from 'drizzle-orm';
-import { AssessmentReport } from '../lib/auditTemplates/assessmentReport.js';
-import { renderReactToPdf, renderReactToPdfStream } from '../lib/pdfRenderer.js';
+
 import { generateUploadUrl, generateDownloadUrl, getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Resend } from 'resend';
@@ -55,28 +54,38 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
       answersWithTemplates
     );
 
-    const element = React.createElement(AssessmentReport, { data: reportData });
-    const pdfStream = await renderReactToPdfStream(element);
+    const frontendUrl = process.env.FRONTEND_INTERNAL_URL || 'http://localhost:3000';
+    const apiKey = process.env.INTERNAL_API_KEY || 'development_key';
+    
+    console.log(`Calling Vercel API to generate Lead PDF: ${frontendUrl}/api/internal/pdf/assessment`);
+    const response = await fetch(`${frontendUrl}/api/internal/pdf/assessment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'INTERNAL_API_KEY': apiKey,
+      },
+      body: JSON.stringify({ reportData }),
+      signal: AbortSignal.timeout(15000), // 15-second timeout
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Vercel API returned ${response.status}: ${errText}`);
+    }
+
+    const pdfBuffer = Buffer.from(await response.arrayBuffer());
 
     const fileKey = `leads/${leadId}/report_${Date.now()}.pdf`;
     const dataRegion = 'eu-central-1';
     
-    const abortController = new AbortController();
-    
-    pdfStream.on('error', (err) => {
-      console.error("PDF generation stream emitted error in worker:", err);
-      abortController.abort(err);
-    });
-
     const upload = new Upload({
       client: getS3ClientForRegion(dataRegion),
       params: {
         Bucket: getS3BucketForOrg(dataRegion),
         Key: fileKey,
-        Body: pdfStream as any,
+        Body: pdfBuffer,
         ContentType: 'application/pdf',
-      },
-      abortController
+      }
     });
 
     await upload.done();

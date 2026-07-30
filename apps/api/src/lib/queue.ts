@@ -83,3 +83,4 @@ export function createWorker<T = any, R = any, N extends string = string>(
 
 export const dataExportQueue = createQueue('data-export');
 export const orgEmbeddingsQueue = createQueue('org-embeddings');
+export const assessmentPdfQueue = createQueue('assessment-pdf');
