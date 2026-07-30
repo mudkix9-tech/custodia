@@ -24,7 +24,7 @@ export const generateAssessmentPdfWorker = createWorker('assessment-pdf', async 
     if (!foundAssessment) {
       const { leadAssessments } = await import('db');
       const [lead] = await db.select().from(leadAssessments)
-        .where(and(eq(leadAssessments.id, assessmentId), eq(leadAssessments.convertedToOrgId, orgId)));
+        .where(eq(leadAssessments.id, assessmentId));
       if (lead) {
         isLead = true;
         foundLead = lead;
