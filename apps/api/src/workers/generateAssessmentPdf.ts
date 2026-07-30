@@ -15,29 +15,68 @@ export const generateAssessmentPdfWorker = createWorker('assessment-pdf', async 
       where: eq(organizations.id, orgId)
     });
 
-    const [foundAssessment] = await db.select().from(assessments)
+    let [foundAssessment] = await db.select().from(assessments)
       .where(and(eq(assessments.id, assessmentId), eq(assessments.organizationId, orgId)));
       
+    let isLead = false;
+    let foundLead: any = null;
+
     if (!foundAssessment) {
-      throw new Error(`Assessment not found for ID: ${assessmentId}`);
+      const { leadAssessments } = await import('db');
+      const [lead] = await db.select().from(leadAssessments)
+        .where(and(eq(leadAssessments.id, assessmentId), eq(leadAssessments.convertedToOrgId, orgId)));
+      if (lead) {
+        isLead = true;
+        foundLead = lead;
+      } else {
+        throw new Error(`Assessment not found for ID: ${assessmentId}`);
+      }
     }
 
     const { assessmentTemplates } = await import('db');
-    const answersWithTemplates = await db.select({
-        questionId: assessmentAnswers.questionId,
-        selectedOption: assessmentAnswers.selectedOption,
-        riskScore: assessmentAnswers.riskScore,
-        category: assessmentTemplates.category,
-        questionText: assessmentTemplates.questionText,
-        gdprArticles: assessmentTemplates.gdprArticles
-    })
-    .from(assessmentAnswers)
-    .innerJoin(assessmentTemplates, eq(assessmentAnswers.questionId, assessmentTemplates.id))
-    .where(eq(assessmentAnswers.assessmentId, assessmentId));
+    let answersWithTemplates: any[] = [];
+    
+    if (isLead) {
+      const snapshot = Array.isArray(foundLead.snapshot) ? (foundLead.snapshot as any[]) : [];
+      const { inArray } = await import('drizzle-orm');
+      const questionIds = snapshot.map(s => s.questionId);
+      
+      let templatesMap = new Map();
+      if (questionIds.length > 0) {
+        const templates = await db.select().from(assessmentTemplates).where(
+          inArray(assessmentTemplates.id, questionIds)
+        );
+        templates.forEach(t => templatesMap.set(t.id, t));
+      }
+
+      answersWithTemplates = snapshot.map((s: any) => {
+        const t = templatesMap.get(s.questionId) || {};
+        return {
+           questionId: s.questionId,
+           selectedOption: s.selectedValue || s.selectedOption,
+           riskScore: s.score || s.riskScore || 0,
+           category: t.category || 'General',
+           questionText: t.questionText || s.questionId,
+           gdprArticles: t.gdprArticles || []
+        };
+      });
+    } else {
+      answersWithTemplates = await db.select({
+          questionId: assessmentAnswers.questionId,
+          selectedOption: assessmentAnswers.selectedOption,
+          riskScore: assessmentAnswers.riskScore,
+          category: assessmentTemplates.category,
+          questionText: assessmentTemplates.questionText,
+          gdprArticles: assessmentTemplates.gdprArticles
+      })
+      .from(assessmentAnswers)
+      .innerJoin(assessmentTemplates, eq(assessmentAnswers.questionId, assessmentTemplates.id))
+      .where(eq(assessmentAnswers.assessmentId, assessmentId));
+    }
 
     const reportData = buildAssessmentReportData(
       org?.name || 'Organization',
-      foundAssessment.overallScore || 0,
+      isLead ? (foundLead.totalScore || 0) : (foundAssessment.overallScore || 0),
       answersWithTemplates
     );
 
