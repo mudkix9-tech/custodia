@@ -131,7 +131,7 @@ export const generateAssessmentPdfWorker = createWorker('assessment-pdf', async 
       type: 'assessment.report_ready',
       title: 'Your Assessment Report is ready',
       body: 'Your assessment report PDF has been generated and is ready for download.',
-      actionUrl: downloadUrl,
+      payload: { url: downloadUrl },
       channel: 'email',
     });
 

@@ -116,17 +116,26 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
 
 
       if (templateFn) {
-        let payload = {};
+        let payload: any = {};
         try {
           payload = typeof notification.payload === 'string' ? JSON.parse(notification.payload) : notification.payload || {};
         } catch (e) {
           // ignore parse error
         }
 
+        const resolveUrl = (notif: any, payl: any) => {
+          if (payl?.url) return payl.url;
+          if (!notif.actionUrl) return undefined;
+          if (notif.actionUrl.startsWith('http')) return notif.actionUrl;
+          return `${process.env.FRONTEND_URL || 'http://localhost:3000'}${notif.actionUrl.startsWith('/') ? '' : '/'}${notif.actionUrl}`;
+        };
+
+        const finalUrl = resolveUrl(notification, payload);
+
         // Add URL fallback
         const data = {
           ...payload,
-          url: (payload as any).url || (notification.actionUrl ? `${process.env.FRONTEND_URL || 'http://localhost:3000'}${notification.actionUrl}` : undefined)
+          url: finalUrl
         };
 
         const template = templateFn(data);
@@ -155,8 +164,8 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
           },
             React.createElement('h2', null, notification.title),
             React.createElement('p', null, notification.body),
-            notification.actionUrl ? React.createElement('a', {
-              href: `${process.env.FRONTEND_URL || 'http://localhost:3000'}${notification.actionUrl}`,
+            finalUrl ? React.createElement('a', {
+              href: finalUrl,
               style: { display: 'inline-block', padding: '10px 20px', backgroundColor: '#294036', color: 'white', textDecoration: 'none', borderRadius: '5px', marginTop: '20px' }
             }, 'View Details') : null,
             React.createElement('hr', { style: { marginTop: '40px', border: 'none', borderTop: '1px solid #eee' } }),
@@ -187,6 +196,20 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
       return;
     }
     
+    let payload: any = {};
+    try {
+      payload = typeof notification.payload === 'string' ? JSON.parse(notification.payload) : notification.payload || {};
+    } catch (e) {}
+
+    const resolveUrl = (notif: any, payl: any) => {
+      if (payl?.url) return payl.url;
+      if (!notif.actionUrl) return undefined;
+      if (notif.actionUrl.startsWith('http')) return notif.actionUrl;
+      return `${process.env.FRONTEND_URL || 'http://localhost:3000'}${notif.actionUrl.startsWith('/') ? '' : '/'}${notif.actionUrl}`;
+    };
+    
+    const finalUrl = resolveUrl(notification, payload);
+    
     const slackPayload = {
       blocks: [
         {
@@ -197,13 +220,13 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
           type: "section",
           text: { type: "mrkdwn", text: notification.body }
         },
-        ...(notification.actionUrl ? [{
+        ...(finalUrl ? [{
           type: "actions",
           elements: [
             {
               type: "button",
               text: { type: "plain_text", text: "View Details" },
-              url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}${notification.actionUrl}`
+              url: finalUrl
             }
           ]
         }] : [])

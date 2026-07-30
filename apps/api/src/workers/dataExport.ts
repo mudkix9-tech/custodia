@@ -126,7 +126,7 @@ export const dataExportWorker = createWorker('data-export', async (job: any) => 
       type: 'general.data_export_ready',
       title: notificationTitle,
       body: notificationBody,
-      actionUrl: signedUrl,
+      payload: { url: signedUrl },
       channel: 'email',
     });
 
