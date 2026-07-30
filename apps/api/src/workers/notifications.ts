@@ -114,24 +114,23 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
     try {
       const templateFn = EMAIL_TEMPLATES[notification.type];
 
+      let payload: any = {};
+      try {
+        payload = typeof notification.payload === 'string' ? JSON.parse(notification.payload) : notification.payload || {};
+      } catch (e) {
+        // ignore parse error
+      }
+
+      const resolveUrl = (notif: any, payl: any) => {
+        if (payl?.url) return payl.url;
+        if (!notif.actionUrl) return undefined;
+        if (notif.actionUrl.startsWith('http')) return notif.actionUrl;
+        return `${process.env.FRONTEND_URL || 'http://localhost:3000'}${notif.actionUrl.startsWith('/') ? '' : '/'}${notif.actionUrl}`;
+      };
+
+      const finalUrl = resolveUrl(notification, payload);
 
       if (templateFn) {
-        let payload: any = {};
-        try {
-          payload = typeof notification.payload === 'string' ? JSON.parse(notification.payload) : notification.payload || {};
-        } catch (e) {
-          // ignore parse error
-        }
-
-        const resolveUrl = (notif: any, payl: any) => {
-          if (payl?.url) return payl.url;
-          if (!notif.actionUrl) return undefined;
-          if (notif.actionUrl.startsWith('http')) return notif.actionUrl;
-          return `${process.env.FRONTEND_URL || 'http://localhost:3000'}${notif.actionUrl.startsWith('/') ? '' : '/'}${notif.actionUrl}`;
-        };
-
-        const finalUrl = resolveUrl(notification, payload);
-
         // Add URL fallback
         const data = {
           ...payload,

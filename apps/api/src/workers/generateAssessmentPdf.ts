@@ -76,7 +76,7 @@ export const generateAssessmentPdfWorker = createWorker('assessment-pdf', async 
 
     const reportData = buildAssessmentReportData(
       org?.name || 'Organization',
-      isLead ? (foundLead.totalScore || 0) : (foundAssessment.overallScore || 0),
+      isLead ? (foundLead.totalScore || 0) : (foundAssessment?.overallScore || 0),
       answersWithTemplates
     );
 
