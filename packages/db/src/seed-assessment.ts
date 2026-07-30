@@ -17,12 +17,19 @@ const pool = new Pool({
 
 const db = drizzle(pool);
 
-const healthQId = '11111111-1111-4111-a111-111111111111';
-const paymentQId = '22222222-2222-4222-a222-222222222222';
+function getDeterministicId(slug: string) {
+  if (!slug) throw new Error('Slug is required for deterministic UUIDs');
+  const hash = crypto.createHash('sha1').update(slug).digest('hex');
+  return `${hash.slice(0,8)}-${hash.slice(8,12)}-4${hash.slice(13,16)}-a${hash.slice(17,20)}-${hash.slice(20,32)}`;
+}
+
+const healthQId = getDeterministicId('client-compliance-q1');
+const paymentQId = getDeterministicId('client-compliance-q4');
 
 const questions = [
   // Data Mapping
   {
+    slug: 'data-mapping-q1',
     category: 'Data Mapping',
     questionText: 'Do you know exactly what personal data your organization collects and stores?',
     options: [
@@ -35,6 +42,7 @@ const questions = [
     gdprArticles: [30],
   },
   {
+    slug: 'data-mapping-q2',
     category: 'Data Mapping',
     questionText: 'Have you documented all the places where personal data lives (CRM, email tools, spreadsheets, cloud storage)?',
     options: [
@@ -47,6 +55,7 @@ const questions = [
     gdprArticles: [30],
   },
   {
+    slug: 'data-mapping-q3',
     category: 'Data Mapping',
     questionText: 'Do you know which of your data falls under GDPR "special categories" (health, religion, biometrics)?',
     options: [
@@ -59,6 +68,7 @@ const questions = [
     gdprArticles: [9],
   },
   {
+    slug: 'data-mapping-q4',
     category: 'Data Mapping',
     questionText: 'Can you identify every third party you share personal data with?',
     options: [
@@ -71,6 +81,7 @@ const questions = [
     gdprArticles: [28, 30],
   },
   {
+    slug: 'data-mapping-q5',
     category: 'Data Mapping',
     questionText: 'Do you have a documented data retention policy?',
     options: [
@@ -85,6 +96,7 @@ const questions = [
   
   // Lawful Basis
   {
+    slug: 'lawful-basis-q1',
     category: 'Lawful Basis',
     questionText: 'Have you identified a lawful basis (consent, contract, legitimate interest, etc.) for each type of data you process?',
     options: [
@@ -97,6 +109,7 @@ const questions = [
     gdprArticles: [6],
   },
   {
+    slug: 'lawful-basis-q2',
     category: 'Lawful Basis',
     questionText: 'If you rely on consent, can people withdraw it as easily as they gave it?',
     options: [
@@ -109,6 +122,7 @@ const questions = [
     gdprArticles: [7],
   },
   {
+    slug: 'lawful-basis-q3',
     category: 'Lawful Basis',
     questionText: 'If you rely on legitimate interest, have you documented a balancing test (LIA)?',
     options: [
@@ -121,6 +135,7 @@ const questions = [
     gdprArticles: [6],
   },
   {
+    slug: 'lawful-basis-q4',
     category: 'Lawful Basis',
     questionText: 'Do your consent mechanisms meet GDPR standards (explicit, specific, freely given)?',
     options: [
@@ -133,6 +148,7 @@ const questions = [
     gdprArticles: [7],
   },
   {
+    slug: 'lawful-basis-q5',
     category: 'Lawful Basis',
     questionText: 'Does your privacy notice clearly specify the lawful basis you rely on for each processing purpose (e.g., consent, contract, legitimate interest)?',
     options: [
@@ -147,6 +163,7 @@ const questions = [
 
   // Vendor Management & Transfers
   {
+    slug: 'vendor-management-q1',
     category: 'Vendor Management',
     questionText: 'Do you have a signed Data Processing Agreement with every SaaS tool that handles personal data?',
     options: [
@@ -159,6 +176,7 @@ const questions = [
     gdprArticles: [28],
   },
   {
+    slug: 'vendor-management-q2',
     category: 'Vendor Management',
     questionText: 'Do you know which of your tools transfer data outside the EU?',
     options: [
@@ -171,6 +189,7 @@ const questions = [
     gdprArticles: [44, 45, 46],
   },
   {
+    slug: 'vendor-management-q3',
     category: 'Vendor Management',
     questionText: 'Have you assessed the privacy risks of your vendors and tools based outside the EU/EEA?',
     options: [
@@ -183,6 +202,7 @@ const questions = [
     gdprArticles: [44, 45, 46],
   },
   {
+    slug: 'vendor-management-q4',
     category: 'Vendor Management',
     questionText: 'Do you transfer personal data internationally through your own operations (e.g., remote workers, international branches accessing EU data)?',
     options: [
@@ -195,6 +215,7 @@ const questions = [
     gdprArticles: [44, 45, 46],
   },
   {
+    slug: 'vendor-management-q5',
     category: 'Vendor Management',
     questionText: 'Do you monitor when your vendors change their sub-processors?',
     options: [
@@ -206,6 +227,7 @@ const questions = [
     gdprArticles: [28],
   },
   {
+    slug: 'vendor-management-q6',
     category: 'Vendor Management',
     questionText: 'Have you reviewed your vendors\' security certifications (e.g. SOC 2, ISO 27001)?',
     options: [
@@ -218,6 +240,7 @@ const questions = [
 
   // Data Subject Rights
   {
+    slug: 'data-subject-rights-q1',
     category: 'Data Subject Rights',
     questionText: 'If someone emails asking "what data do you have on me?", do you have a process to respond within 30 days?',
     options: [
@@ -230,6 +253,7 @@ const questions = [
     gdprArticles: [15],
   },
   {
+    slug: 'data-subject-rights-q2',
     category: 'Data Subject Rights',
     questionText: 'Can you locate and delete all of a person\'s data across all your systems if they request erasure?',
     options: [
@@ -241,6 +265,7 @@ const questions = [
     gdprArticles: [17],
   },
   {
+    slug: 'data-subject-rights-q3',
     category: 'Data Subject Rights',
     questionText: 'Do you have a process for data portability requests?',
     options: [
@@ -252,6 +277,7 @@ const questions = [
     gdprArticles: [20],
   },
   {
+    slug: 'data-subject-rights-q4',
     category: 'Data Subject Rights',
     questionText: 'Is there a clear, accessible way for people to submit rights requests?',
     options: [
@@ -263,6 +289,7 @@ const questions = [
     gdprArticles: [12],
   },
   {
+    slug: 'data-subject-rights-q5',
     category: 'Data Subject Rights',
     questionText: 'Do you inform data subjects of their right to object to processing, particularly for direct marketing?',
     options: [
@@ -275,6 +302,7 @@ const questions = [
     gdprArticles: [21],
   },
   {
+    slug: 'data-subject-rights-q6',
     category: 'Data Subject Rights',
     questionText: 'Do you use automated decision-making or profiling (e.g., AI lead scoring, algorithmic hiring)?',
     options: [
@@ -289,6 +317,7 @@ const questions = [
 
   // Security
   {
+    slug: 'security-q1',
     category: 'Security',
     questionText: 'Is personal data encrypted at rest and in transit across your systems?',
     options: [
@@ -301,6 +330,7 @@ const questions = [
     gdprArticles: [32],
   },
   {
+    slug: 'security-q2',
     category: 'Security',
     questionText: 'Do you have access controls limiting who on your team can see personal data?',
     options: [
@@ -313,6 +343,7 @@ const questions = [
     gdprArticles: [32],
   },
   {
+    slug: 'security-q3',
     category: 'Security',
     questionText: 'Do you regularly test, assess, and evaluate the effectiveness of your security measures (e.g., penetration testing, vulnerability scans)?',
     options: [
@@ -325,6 +356,7 @@ const questions = [
     gdprArticles: [32],
   },
   {
+    slug: 'security-q4',
     category: 'Security',
     questionText: 'Do you have a documented process for notifying the supervisory authority within 72 hours for breaches that are likely to result in a risk to people\'s rights and freedoms?',
     options: [
@@ -336,6 +368,7 @@ const questions = [
     gdprArticles: [33, 34],
   },
   {
+    slug: 'security-q5',
     category: 'Security',
     questionText: 'Has your team received GDPR awareness training in the last 12 months?',
     options: [
@@ -349,6 +382,7 @@ const questions = [
 
   // Privacy Notices
   {
+    slug: 'privacy-notices-q1',
     category: 'Privacy Notices',
     questionText: 'Does your website have a privacy policy that was updated in the last 12 months?',
     options: [
@@ -361,6 +395,7 @@ const questions = [
     gdprArticles: [13, 14],
   },
   {
+    slug: 'privacy-notices-q2',
     category: 'Privacy Notices',
     questionText: 'Does your privacy policy explain all the data you collect, why, and who you share it with?',
     options: [
@@ -373,6 +408,7 @@ const questions = [
     gdprArticles: [13, 14],
   },
   {
+    slug: 'privacy-notices-q3',
     category: 'Privacy Notices',
     questionText: 'Do you have separate privacy notices for employees, clients, and website visitors?',
     options: [
@@ -386,6 +422,7 @@ const questions = [
 
   // Cookie Consent
   {
+    slug: 'cookie-consent-q1',
     category: 'Cookie Consent',
     id: '33333333-3333-4333-a333-333333333333',
     questionText: 'Does your website have a cookie consent banner?',
@@ -398,6 +435,7 @@ const questions = [
     gdprArticles: [7],
   },
   {
+    slug: 'cookie-consent-q2',
     category: 'Cookie Consent',
     questionText: 'Can visitors reject all non-essential cookies as easily as accepting them?',
     options: [
@@ -409,6 +447,7 @@ const questions = [
     gdprArticles: [7],
   },
   {
+    slug: 'cookie-consent-q3',
     category: 'Cookie Consent',
     questionText: 'Do you block non-essential cookies and tracking scripts from firing until the user gives explicit consent?',
     options: [
@@ -421,6 +460,7 @@ const questions = [
     gdprArticles: [7],
   },
   {
+    slug: 'cookie-consent-q4',
     category: 'Cookie Consent',
     questionText: 'Do you have a record of cookie consents given by visitors?',
     options: [
@@ -434,6 +474,7 @@ const questions = [
 
   // Governance (New Structural Gaps)
   {
+    slug: 'governance-q1',
     category: 'Governance',
     questionText: 'Have you appointed a Data Protection Officer (DPO) as required by Article 37?',
     options: [
@@ -446,6 +487,7 @@ const questions = [
     gdprArticles: [37],
   },
   {
+    slug: 'governance-q2',
     category: 'Governance',
     questionText: 'Have you conducted Data Protection Impact Assessments (DPIAs) for your high-risk processing activities?',
     options: [
@@ -458,6 +500,7 @@ const questions = [
     gdprArticles: [35],
   },
   {
+    slug: 'governance-q3',
     category: 'Governance',
     questionText: 'Do you maintain a formal Record of Processing Activities (ROPA) mapping out what data you process, why, and where it goes?',
     options: [
@@ -473,6 +516,7 @@ const questions = [
   // Client Compliance
   {
     id: healthQId,
+    slug: 'client-compliance-q1',
     category: 'Client Compliance',
     questionText: 'Do you process patient health records?',
     options: [
@@ -484,6 +528,7 @@ const questions = [
     gdprArticles: [9],
   },
   {
+    slug: 'client-compliance-q2',
     category: 'Client Compliance',
     questionText: 'Have you identified a valid Article 9(2) basis (e.g., explicit consent, medical diagnosis) for processing this special category data?',
     options: [
@@ -499,6 +544,7 @@ const questions = [
     gdprArticles: [9],
   },
   {
+    slug: 'client-compliance-q3',
     category: 'Client Compliance',
     questionText: 'Have you conducted a Data Protection Impact Assessment (DPIA) for this health data processing?',
     options: [
@@ -515,6 +561,7 @@ const questions = [
   },
   {
     id: paymentQId,
+    slug: 'client-compliance-q4',
     category: 'Client Compliance',
     questionText: 'Do you process payment card data?',
     options: [
@@ -526,6 +573,7 @@ const questions = [
     gdprArticles: [32],
   },
   {
+    slug: 'client-compliance-q5',
     category: 'Client Compliance',
     questionText: 'Have you implemented enhanced security measures (e.g., PCI-DSS compliance) to protect this financial data?',
     options: [
@@ -541,6 +589,7 @@ const questions = [
     gdprArticles: [32],
   },
   {
+    slug: 'client-compliance-q6',
     category: 'Client Compliance',
     questionText: 'When you act as a data processor on behalf of clients, do you have DPAs in place with each client?',
     options: [
@@ -553,6 +602,7 @@ const questions = [
     gdprArticles: [28],
   },
   {
+    slug: 'client-compliance-q7',
     category: 'Client Compliance',
     questionText: 'Can you demonstrate your GDPR compliance to clients or partners who ask?',
     options: [
@@ -585,10 +635,7 @@ async function seed() {
       maxRiskWeight: maxRiskWeight,
       gdprArticles: q.gdprArticles,
     };
-    if ((q as any).id) {
-      values.id = (q as any).id;
-    }
-    
+    values.id = getDeterministicId((q as any).slug);
     await db.insert(assessmentTemplates).values(values);
   }
   console.log('Seeding complete.');
