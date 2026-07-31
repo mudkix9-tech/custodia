@@ -2,8 +2,9 @@ import {
   pgTable, 
   uuid, 
   varchar, 
-  boolean, 
-  integer, 
+  boolean,
+  integer,
+  bigint,
   timestamp, 
   jsonb,
   text,
@@ -96,6 +97,7 @@ export const organizations = pgTable('organizations', {
   siemEnabled: boolean('siem_enabled').default(false),
   siemEndpointUrl: varchar('siem_endpoint_url', { length: 1024 }),
   siemFormat: varchar('siem_format', { length: 20 }).default('json'),
+  // TODO(security): stored in plaintext — needs app-level encryption (KMS/envelope), not yet implemented.
   siemAuthHeader: text('siem_auth_header'),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -130,6 +132,7 @@ export const users = pgTable('users', {
   authProvider: varchar('auth_provider', { length: 50 }),
   authProviderId: varchar('auth_provider_id', { length: 255 }),
   mfaEnabled: boolean('mfa_enabled').default(false),
+  // TODO(security): stored in plaintext — needs app-level encryption (KMS/envelope), not yet implemented.
   mfaSecret: varchar('mfa_secret', { length: 255 }),
   
   customRoleId: uuid('custom_role_id').references(() => customRoles.id, { onDelete: 'set null' }),
@@ -154,24 +157,32 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (table) => {
+  return {
+    orgIdx: index('idx_users_org').on(table.organizationId),
+  };
 });
 
 export const documents = pgTable('documents', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id),
   uploaderId: uuid('uploader_id').references(() => users.id),
-  
+
   filename: varchar('filename', { length: 255 }).notNull(),
   originalName: varchar('original_name', { length: 255 }).notNull(),
   mimeType: varchar('mime_type', { length: 100 }),
-  sizeBytes: integer('size_bytes'),
-  
+  sizeBytes: bigint('size_bytes', { mode: 'number' }),
+
   s3Key: varchar('s3_key', { length: 500 }).notNull(),
   encryptionKeyId: varchar('encryption_key_id', { length: 255 }),
-  
+
   status: varchar('status', { length: 50 }).default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_documents_org').on(table.organizationId),
+  };
 });
 
 // ============================================================================
@@ -195,6 +206,7 @@ export const clients = pgTable('clients', {
   dpaDocumentId: uuid('dpa_document_id'),
   
   portalEnabled: boolean('portal_enabled').default(false),
+  // TODO(security): unauthenticated-access token stored in plaintext — should be hashed at rest like apiKeys.keyHash, not yet implemented.
   portalToken: varchar('portal_token', { length: 255 }).unique(),
   
   complianceSummary: jsonb('compliance_summary').default({}),
@@ -257,6 +269,10 @@ export const processingActivities = pgTable('processing_activities', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   source: varchar('source', { length: 50 }).default('template'),
+}, (table) => {
+  return {
+    orgIdx: index('idx_processing_activities_org').on(table.organizationId),
+  };
 });
 
 export const reconsentFlags = pgTable('reconsent_flags', {
@@ -522,6 +538,11 @@ export const organizationVendors = pgTable('organization_vendors', {
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgVendorUnq: unique('organization_vendors_org_vendor_unq').on(table.organizationId, table.vendorId),
+    vendorIdx: index('idx_ov_vendor').on(table.vendorId),
+  };
 });
 
 export const vendorDiscoveries = pgTable('vendor_discoveries', {
@@ -581,6 +602,7 @@ export const vendorAssessments = pgTable('vendor_assessments', {
   expiresAt: timestamp('expires_at', { withTimezone: true }),
   recipientEmail: varchar('recipient_email', { length: 255 }).notNull(),
   recipientName: varchar('recipient_name', { length: 255 }),
+  // TODO(security): unauthenticated-access token stored in plaintext — should be hashed at rest like apiKeys.keyHash, not yet implemented.
   accessToken: varchar('access_token', { length: 255 }).notNull().unique(), // for unauthenticated vendor access
   questionsSnapshot: jsonb('questions_snapshot').notNull(), // snapshot of template questions at send time
   responses: jsonb('responses').default({}).notNull(),
@@ -816,50 +838,6 @@ export const leadAssessments = pgTable('lead_assessments', {
 // AUTH.JS TABLES
 // ============================================================================
 
-export const accounts = pgTable(
-  "account",
-  {
-    userId: uuid("userId")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    type: varchar("type", { length: 255 }).notNull(),
-    provider: varchar("provider", { length: 255 }).notNull(),
-    providerAccountId: varchar("providerAccountId", { length: 255 }).notNull(),
-    refresh_token: text("refresh_token"),
-    access_token: text("access_token"),
-    expires_at: integer("expires_at"),
-    token_type: varchar("token_type", { length: 255 }),
-    scope: varchar("scope", { length: 255 }),
-    id_token: text("id_token"),
-    session_state: varchar("session_state", { length: 255 }),
-  },
-  (account) => ({
-    compoundKey: primaryKey({
-      columns: [account.provider, account.providerAccountId],
-    }),
-  })
-);
-
-export const sessions = pgTable("session", {
-  sessionToken: varchar("sessionToken", { length: 255 }).notNull().primaryKey(),
-  userId: uuid("userId")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
-});
-
-export const verificationTokens = pgTable(
-  "verificationToken",
-  {
-    identifier: varchar("identifier", { length: 255 }).notNull(),
-    token: varchar("token", { length: 255 }).notNull(),
-    expires: timestamp("expires", { mode: "date" }).notNull(),
-  },
-  (vt) => ({
-    compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-  })
-);
-
 export const pendingSignups = pgTable("pending_signups", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: varchar("email", { length: 255 }).notNull(),
@@ -970,9 +948,13 @@ export const dsarTasks = pgTable('dsar_tasks', {
   
   completedBy: uuid('completed_by').references(() => users.id),
   completedAt: timestamp('completed_at', { withTimezone: true }),
-  
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    dsarIdx: index('idx_dsar_tasks_dsar').on(table.dsarId),
+  };
 });
 
 export const dsarCommunications = pgTable('dsar_communications', {
@@ -1045,8 +1027,8 @@ export const consentDomains = pgTable('consent_domains', {
   
   domain: varchar('domain', { length: 255 }).notNull(),
   
-  bannerConfig: jsonb('banner_config').default('{}'),
-  categories: jsonb('categories').default('["necessary", "analytics", "marketing", "functional"]'),
+  bannerConfig: jsonb('banner_config').default({}),
+  categories: jsonb('categories').default(['necessary', 'analytics', 'marketing', 'functional']),
   gcmV2Enabled: boolean('gcm_v2_enabled').default(false),
   tcfEnabled: boolean('tcf_enabled').default(false),
   
@@ -1090,7 +1072,7 @@ export const consentRecords = pgTable('consent_records', {
   consentId: varchar('consent_id', { length: 255 }).notNull(),
   
   categoriesAccepted: jsonb('categories_accepted').notNull(),
-  categoriesRejected: jsonb('categories_rejected').default('[]'),
+  categoriesRejected: jsonb('categories_rejected').default([]),
   
   ipHash: varchar('ip_hash', { length: 64 }),
   countryCode: varchar('country_code', { length: 2 }),
@@ -1111,6 +1093,7 @@ export const consentRecords = pgTable('consent_records', {
 }, (table) => {
   return {
     domainIdx: index('idx_consent_records_domain').on(table.domainId),
+    consentIdIdx: index('idx_consent_records_consent_id').on(table.consentId),
     givenAtIdx: index('idx_consent_records_given_at').on(table.givenAt),
     catAccIdx: index('idx_consent_records_cat_acc').using('gin', table.categoriesAccepted),
     catRejIdx: index('idx_consent_records_cat_rej').using('gin', table.categoriesRejected),
@@ -1138,11 +1121,11 @@ export const breaches = pgTable('breaches', {
   breachCause: varchar('breach_cause', { length: 100 }),
   
   description: text('description').notNull(),
-  dataCategoriesAffected: jsonb('data_categories_affected').default('[]'),
-  dataSubjectsAffected: jsonb('data_subjects_affected').default('[]'),
+  dataCategoriesAffected: jsonb('data_categories_affected').default([]),
+  dataSubjectsAffected: jsonb('data_subjects_affected').default([]),
   estimatedRecordsAffected: integer('estimated_records_affected'),
   estimatedIndividualsAffected: integer('estimated_individuals_affected'),
-  affectedSystems: jsonb('affected_systems').default('[]'),
+  affectedSystems: jsonb('affected_systems').default([]),
   
   riskToIndividuals: varchar('risk_to_individuals', { length: 20 }),
   riskAssessmentDetail: text('risk_assessment_detail'),
@@ -1308,6 +1291,9 @@ export const documentEmbeddings = pgTable('document_embeddings', {
   isCurrentIdx: index('idx_embeddings_is_current').on(t.isCurrent),
 }));
 
+// NOTE: embedding is unindexed (see 0012_embeddings_v3_3072.sql) — flat search is fine for
+// documentEmbeddings' fixed global corpus, but this table scales with tenants x entities.
+// Add a row-count guardrail (and a real vector index) before it silently degrades.
 export const organizationEmbeddings = pgTable('organization_embeddings', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
@@ -1521,11 +1507,12 @@ export const organizationIntegrations = pgTable('organization_integrations', {
   providerAccountId: varchar('provider_account_id', { length: 255 }),
   providerAccountName: varchar('provider_account_name', { length: 255 }),
 
+  // TODO(security): OAuth tokens stored in plaintext — need app-level encryption (KMS/envelope), not yet implemented.
   accessToken: text('access_token').notNull(),
   refreshToken: text('refresh_token'),
   tokenType: varchar('token_type', { length: 50 }).default('Bearer'),
   expiresAt: timestamp('expires_at', { withTimezone: true }),
-  scopes: jsonb('scopes').default('[]'),
+  scopes: jsonb('scopes').default([]),
 
   status: varchar('status', { length: 50 }).default('active'),
   lastError: text('last_error'),
@@ -1556,7 +1543,7 @@ export const apiKeys = pgTable('api_keys', {
   keyHash: varchar('key_hash', { length: 64 }).notNull(),
   prefix: varchar('prefix', { length: 12 }).notNull(),
 
-  scopes: jsonb('scopes').default('["read"]'),
+  scopes: jsonb('scopes').default(['read']),
 
   allowedIps: jsonb('allowed_ips'),
 
@@ -1842,6 +1829,7 @@ export const activeSessions = pgTable('active_sessions', {
 }, (table) => {
   return {
     userIdx: index('idx_as_user').on(table.userId),
+    tokenHashIdx: uniqueIndex('idx_as_token_hash').on(table.tokenHash),
   };
 });
 
