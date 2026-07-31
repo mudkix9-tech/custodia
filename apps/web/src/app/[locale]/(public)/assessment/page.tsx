@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ShieldCheck, ArrowRight, ArrowLeft, Loader2, RotateCcw } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Loader2, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { evaluateDependsOn } from '@/utils/assessment';
 import { saveLeadAssessment } from '@/actions/lead-assessment';
@@ -211,10 +211,12 @@ function AssessmentEngineContent() {
       {/* Header */}
       <header className="p-6 flex justify-between items-center bg-bone-50 sticky top-0 z-10">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-sage-700 rounded-lg flex items-center justify-center shadow-sm">
-            <ShieldCheck className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-serif text-ink-900">Custodia</span>
+          <svg width="26" height="26" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M8 21v-6a7 7 0 0 1 7-7h6" fill="none" stroke="#17222C" strokeWidth="5" strokeLinecap="round" />
+            <path d="M40 27v6a7 7 0 0 1-7 7h-6" fill="none" stroke="#17222C" strokeWidth="5" strokeLinecap="round" />
+            <circle cx="24" cy="24" r="7.5" fill="#0E4E55" />
+          </svg>
+          <span className="text-xl font-sans font-bold tracking-tight text-ink-900">custodia</span>
         </Link>
         <div className="flex items-center gap-6">
           {isResumed && currentStep >= 0 && (

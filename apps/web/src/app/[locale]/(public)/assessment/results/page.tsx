@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { ShieldCheck, Mail, AlertCircle, CheckCircle2, AlertTriangle, Lock, Send, Copy, ArrowRight, Clock, Download, Loader2 } from 'lucide-react';
+import { Mail, AlertCircle, CheckCircle2, AlertTriangle, Lock, Send, Copy, ArrowRight, Clock, Download, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 import { captureLeadEmail } from '@/actions/lead-assessment';
@@ -290,10 +290,12 @@ function AssessmentResultsContent() {
       <div className="max-w-4xl mx-auto">
       <header className="p-6 border-b border-ink-900/5 flex justify-between items-center bg-bone-50">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-sage-700 rounded-lg flex items-center justify-center shadow-sm">
-            <ShieldCheck className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-serif text-ink-900">Custodia</span>
+          <svg width="26" height="26" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M8 21v-6a7 7 0 0 1 7-7h6" fill="none" stroke="#17222C" strokeWidth="5" strokeLinecap="round" />
+            <path d="M40 27v6a7 7 0 0 1-7 7h-6" fill="none" stroke="#17222C" strokeWidth="5" strokeLinecap="round" />
+            <circle cx="24" cy="24" r="7.5" fill="#0E4E55" />
+          </svg>
+          <span className="text-xl font-sans font-bold tracking-tight text-ink-900">custodia</span>
         </Link>
         
         {currentState === 3 && (
