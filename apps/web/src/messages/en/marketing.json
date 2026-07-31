@@ -1,20 +1,50 @@
 {
   "hero": {
-    "badge": "GDPR Compliance Operating System",
-    "titlePrefix": "GDPR compliance for your entire agency.",
-    "titleMain": "One platform.",
-    "subheadline": "Document processing activities, map vendors, manage cookie consent, handle data requests, and train employees — all in one place. No expensive legal consultants. No spreadsheets.",
-    "ctaAssessment": "Run Free Gap Assessment",
-    "ctaCalculator": "Test Risk Exposure"
+    "badge": "GDPR compliance operating system · European Union",
+    "titlePrefix": "One system of record for",
+    "titleAccent": "everything GDPR",
+    "titleSuffix": "asks of you.",
+    "subheadline": "Custodia replaces the spreadsheets, shared drives and ad-hoc consultant retainers that most EU businesses call a compliance programme. Records, assessments, vendors, data subject requests, consent and breaches — governed in one place, with an audit trail regulators accept.",
+    "ctaAssessment": "Start free assessment",
+    "ctaPlatform": "See the platform",
+    "note": "No card. No sales call. 12 minutes."
   },
-  "features": {
-    "badge": "Compliance Suite",
-    "title": "Twelve modules. One compliance core.",
-    "subheadline": "Ditch separate compliance trackers and spreadsheet audits. Monitor, track, and protect your entire operation from a single dashboard."
+  "pains": {
+    "title": "Compliance fails quietly — in the gap between tools.",
+    "subheadline": "Three failure modes account for nearly every finding an EU supervisory authority raises."
   },
-  "authorities": {
-    "badge": "Enforcement Landscape",
-    "title": "Supervisory Authority alignment",
-    "subheadline": "GDPR is uniform, but enforcement priorities vary by nation. Custodia adapts compliance configurations to map to the audits of your target audiences."
+  "modules": {
+    "badge": "The platform",
+    "title": "Eight modules, one register, one audit trail.",
+    "subheadline": "Every module writes to the same record of processing. Change a vendor, and the ROPA, the transfer assessment and the affected DSAR workflows update with it."
+  },
+  "advisor": {
+    "badge": "AI compliance advisor",
+    "title": "Answers with citations, not confident guesses.",
+    "subheadline": "The advisor retrieves from a maintained legal corpus before it answers. Every response is grounded in a named source with a paragraph reference, so your DPO can verify the reasoning and your client can see the basis for it.",
+    "quote": "Retrieval is scoped to the jurisdiction of the entity you are working in — a question asked inside a French client returns CNIL positions, not a generalised EU answer.",
+    "corpusNote": "Corpus reviewed monthly · last update"
+  },
+  "pricing": {
+    "badge": "Pricing",
+    "title": "Priced per entity. Never per seat.",
+    "subheadline": "Invite the whole agency, the client's marketing lead and their external counsel. Compliance breaks when people are locked out of it.",
+    "monthlyLabel": "Monthly",
+    "annualLabel": "Annual −20%",
+    "footnote1": "All prices exclude VAT · charged automatically per member state",
+    "footnote2": "Unlimited users on every plan",
+    "footnote3": "Cancel or export your register at any time"
+  },
+  "trust": {
+    "title": "Infrastructure you can put in front of a regulator.",
+    "subheadline": "Custodia holds the evidence of your compliance. It is built to the standard that implies."
+  },
+  "assessment": {
+    "badge": "Free gap assessment",
+    "title": "Find out where you stand before someone else does.",
+    "subheadline": "Answer 38 questions mapped to the Regulation and receive a scored report with prioritised remediation. Free, permanently — no card, no call, and the report is yours whether or not you continue.",
+    "ctaAssessment": "Start free assessment",
+    "ctaWalkthrough": "Book a 20-minute walkthrough",
+    "usedBy": "Used by agencies and their clients across the EU"
   }
 }

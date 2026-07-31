@@ -5,23 +5,23 @@ import { Menu, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 const NAV_LINKS = [
-  { name: 'Features', href: '#features' },
-  { name: 'Risk Calculator', href: '#risk-calculator' },
-  { name: 'DPA Alignment', href: '#authorities' },
+  { name: 'Platform', href: '#modules' },
+  { name: 'AI Advisor', href: '#advisor' },
   { name: 'Pricing', href: '#pricing' },
+  { name: 'Security', href: '#trust' },
 ];
 
 export function Logo({ className = '' }: { className?: string }) {
   return (
-    <Link href="/" className={`flex items-center gap-2.5 ${className}`}>
-      <svg width="28" height="28" viewBox="0 0 48 48" aria-hidden="true">
-        <path d="M8 21v-6a7 7 0 0 1 7-7h6" fill="none" stroke="#F4F1EA" strokeWidth="5" strokeLinecap="round" />
-        <path d="M40 27v6a7 7 0 0 1-7 7h-6" fill="none" stroke="#F4F1EA" strokeWidth="5" strokeLinecap="round" />
-        <circle cx="24" cy="24" r="7.5" fill="#A3B8A6" />
+    <Link href="/" className={`flex items-center gap-2.5 [font-family:var(--font-plex-sans)] ${className}`}>
+      <svg width="26" height="26" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M8 21v-6a7 7 0 0 1 7-7h6" fill="none" stroke="#E6E8EA" strokeWidth="5" strokeLinecap="round" />
+        <path d="M40 27v6a7 7 0 0 1-7 7h-6" fill="none" stroke="#E6E8EA" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="24" cy="24" r="7.5" fill="#C9A227" />
       </svg>
       <div className="leading-none">
-        <div className="font-sans font-bold text-[20px] tracking-tight text-[#F5F3ED] flex items-center gap-1.5">
-          custodia <span className="text-[10px] uppercase font-mono tracking-wider bg-[#6E8B60]/15 text-[#8BA381] px-1.5 py-0.5 rounded border border-[#6E8B60]/20">OS</span>
+        <div className="font-medium text-[16px] tracking-[-0.01em] text-[#E6E8EA] flex items-center gap-1.5">
+          Custodia
         </div>
       </div>
     </Link>
@@ -101,17 +101,22 @@ export function MarketingHeader() {
   };
 
   return (
-    <header role="banner" className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-[#141712]/80 backdrop-blur-md border-b border-[#252B21]/60 py-3.5' : 'bg-transparent border-b border-transparent py-6'}`}>
+    <header
+      role="banner"
+      className={`[font-family:var(--font-plex-sans)] fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+        isScrolled ? 'bg-[#08090A]/82 backdrop-blur-md border-b border-white/7 py-3.5' : 'bg-transparent border-b border-transparent py-5'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <Logo className="focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md" />
-        
-        <nav role="navigation" aria-label="Primary Navigation" className="hidden lg:flex items-center gap-8 bg-[#1F241D]/60 border border-[#2F362D]/60 px-6 py-2 rounded-full backdrop-blur-sm">
+        <Logo className="focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none rounded-md" />
+
+        <nav role="navigation" aria-label="Primary Navigation" className="hidden lg:flex items-center gap-8">
           {NAV_LINKS.map(link => (
-            <a 
-              key={link.href} 
+            <a
+              key={link.href}
               href={link.href}
               onClick={(e) => handleScrollTo(e, link.href)}
-              className="text-xs font-semibold text-[#9CA297] hover:text-[#F5F3ED] transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded px-1.5 py-0.5"
+              className="text-[13.5px] text-[#9BA1A6] hover:text-[#E6E8EA] transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none rounded px-1.5 py-0.5"
             >
               {link.name}
             </a>
@@ -119,18 +124,18 @@ export function MarketingHeader() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-6">
-          <Link href="/login" className="text-xs font-semibold text-[#C5C8C1] hover:text-[#F5F3ED] transition-colors focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md px-1.5 py-0.5">Sign In</Link>
-          <Link href="/assessment" className="bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] shadow-lg shadow-[#596E51]/10 text-xs font-bold py-2.5 px-5 rounded-lg transition-all flex items-center gap-2 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#141712] hover:scale-[1.02] active:scale-[0.98]">
-            Start Free Assessment <ArrowRight className="w-3.5 h-3.5" />
+          <Link href="/login" className="text-[13.5px] text-[#9BA1A6] hover:text-[#E6E8EA] transition-colors focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none rounded-md px-1.5 py-0.5">Sign in</Link>
+          <Link href="/assessment" className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[14px] font-medium py-2.5 px-5 transition-all flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090A]">
+            Start free assessment <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        <button 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-nav-drawer"
           aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-          className="lg:hidden text-[#9CA297] hover:text-[#F5F3ED] transition-colors focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md p-1"
+          className="lg:hidden text-[#9BA1A6] hover:text-[#E6E8EA] transition-colors focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none rounded-md p-1"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" aria-hidden="true" /> : <Menu className="w-6 h-6" aria-hidden="true" />}
         </button>
@@ -138,33 +143,33 @@ export function MarketingHeader() {
 
       {/* Mobile Menu Overlay Drawer */}
       {mobileMenuOpen && (
-        <div 
+        <div
           ref={drawerRef}
           id="mobile-nav-drawer"
-          className="fixed inset-y-0 right-0 w-full max-w-sm bg-[#141712]/95 border-l border-[#2F362D] p-6 flex flex-col gap-4 lg:hidden z-50 h-screen overflow-y-auto pt-24 shadow-2xl backdrop-blur-md"
+          className="fixed inset-y-0 right-0 w-full max-w-sm bg-[#08090A]/97 border-l border-white/10 p-6 flex flex-col gap-4 lg:hidden z-50 h-screen overflow-y-auto pt-24 shadow-2xl backdrop-blur-md"
         >
-          <button 
-            onClick={() => setMobileMenuOpen(false)} 
+          <button
+            onClick={() => setMobileMenuOpen(false)}
             aria-label="Close navigation menu"
-            className="absolute top-6 right-6 text-[#9CA297] hover:text-[#F5F3ED] focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded-md p-1"
+            className="absolute top-6 right-6 text-[#9BA1A6] hover:text-[#E6E8EA] focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none rounded-md p-1"
           >
             <X className="w-6 h-6" aria-hidden="true" />
           </button>
-          
+
           {NAV_LINKS.map(link => (
-            <a 
-              key={link.href} 
+            <a
+              key={link.href}
               href={link.href}
               onClick={(e) => handleScrollTo(e, link.href)}
-              className="text-left text-sm font-semibold text-[#9CA297] hover:text-[#F5F3ED] py-2 border-b border-[#2F362D]/40 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded px-1.5"
+              className="text-left text-sm text-[#9BA1A6] hover:text-[#E6E8EA] py-2 border-b border-white/7 focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none rounded px-1.5"
             >
               {link.name}
             </a>
           ))}
           <div className="flex flex-col gap-4 mt-4">
-            <Link href="/login" className="text-center text-sm font-semibold text-[#C5C8C1] hover:text-[#F5F3ED] py-2 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none rounded px-1.5">Sign In</Link>
-            <Link href="/assessment" className="bg-gradient-to-r from-[#596E51] to-[#788F6F] text-[#F5F3ED] text-center text-sm font-bold py-3 rounded-lg border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#141712] hover:scale-[1.01] active:scale-[0.99] transition-all">
-              Start Free Assessment
+            <Link href="/login" className="text-center text-sm text-[#9BA1A6] hover:text-[#E6E8EA] py-2 focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none rounded px-1.5">Sign in</Link>
+            <Link href="/assessment" className="bg-[#C9A227] text-[#08090A] text-center text-sm font-medium py-3 focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090A] transition-all">
+              Start free assessment
             </Link>
           </div>
         </div>

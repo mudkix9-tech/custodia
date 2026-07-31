@@ -1,790 +1,531 @@
 "use client";
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Globe, Database, UserCheck,
-  Lock, Check, ArrowRight, XCircle, Activity, CheckCircle,
-  Shield, FileText, AlertTriangle,
-  Users, BookOpen, Share2, BarChart3, HelpCircle, MessageSquare
-} from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { LazyObserver } from '@/components/common/LazyObserver';
-import { 
-  HubSpotLogo, MailchimpLogo, GA4Logo, StripeLogo, SlackLogo, SalesforceLogo, AWSLogo 
-} from '@/components/icons/BrandLogos';
-import { BentoFeatureCard } from '@/components/ui/BentoFeatureCard';
-import { SupervisoryAuthorityCard } from '@/components/ui/SupervisoryAuthorityCard';
-import { FeatureModule, SupervisoryAuthority } from '@/types/marketing';
+import { Check } from 'lucide-react';
 
-// --- Premium Design Constants ---
+// --- Illustrative dashboard mockup data ---
 
-const MODULES: FeatureModule[] = [
-  { 
-    tag: "Assessment",
-    title: 'Gap Assessment', 
-    desc: 'Scan your operations against 142 GDPR requirements and identify compliance gaps instantly.',
-    icon: Shield
-  },
-  { 
-    tag: "ROPA Registry",
-    title: 'Activity Register', 
-    desc: 'Maintain up-to-date Article 30 ROPA records that automatically sync with your vendor stack.',
-    icon: Database
-  },
-  { 
-    tag: "Vendor Auditing",
-    title: 'Vendor Tracking', 
-    desc: 'Map sub-processors, check data hosting locations, and verify Data Protection Agreements (DPAs).',
-    icon: Users
-  },
-  { 
-    tag: "Legal Documents",
-    title: 'Privacy Policies', 
-    desc: 'Generate hosted, responsive privacy policies that update automatically as your active vendors change.',
-    icon: FileText
-  },
-  { 
-    tag: "Cookie Consent",
-    title: 'Cookie Consent', 
-    desc: 'Delivers a fast consent banner fully compatible with Google Consent Mode v2 and IAB guidelines.',
-    icon: Globe
-  },
-  { 
-    tag: "User Rights",
-    title: 'Data Requests', 
-    desc: 'Receive and verify subject access requests (DSARs) and automate secure data deletions.',
-    icon: UserCheck
-  },
-  { 
-    tag: "Incident Log",
-    title: 'Breach Response', 
-    desc: 'Log security incidents, evaluate reporting thresholds, and format regulator notify sheets.',
-    icon: AlertTriangle
-  },
-  { 
-    tag: "Team Training",
-    title: 'Employee Training', 
-    desc: 'Assign byte-sized GDPR awareness training modules to your team and log certification records.',
-    icon: BookOpen
-  },
-  { 
-    tag: "Client Portals",
-    title: 'Client Portals', 
-    desc: 'Provide secure, read-only compliance dashboards to clients to build trust in sales cycles.',
-    icon: Share2
-  },
-  { 
-    tag: "Audits & Export",
-    title: 'Audit Reports', 
-    desc: 'Generate complete compliance binders to share with auditors, prospects, or legal counsel.',
-    icon: BarChart3
-  },
-  { 
-    tag: "Risk Assessment",
-    title: 'DPIA Wizard', 
-    desc: 'Run Data Protection Impact Assessments (DPIA) for high-risk projects with guided templates.',
-    icon: HelpCircle
-  },
-  { 
-    tag: "Automation",
-    title: 'Compliance AI', 
-    desc: 'Resolve day-to-day data privacy questions using context-aware policy intelligence.',
-    icon: MessageSquare
-  }
+const NAV_ITEMS = [
+  { label: 'Overview', count: '' },
+  { label: 'Records of processing', count: '214' },
+  { label: 'Gap assessment', count: '3' },
+  { label: 'Vendors & transfers', count: '48' },
+  { label: 'Data subject requests', count: '7' },
+  { label: 'Consent', count: '' },
+  { label: 'Breach register', count: '1' },
+  { label: 'Advisor', count: '' },
 ];
 
-const AUTHORITIES: SupervisoryAuthority[] = [
-  { 
-    code: 'IE DPC', 
-    name: 'Data Protection Commission', 
-    country: 'Ireland', 
-    focus: 'Lead authority for major tech and cross-border SaaS companies.', 
-    enforcement: 'High focus on analytics tracking consent and marketing profiling.' 
-  },
-  { 
-    code: 'CNIL', 
-    name: 'Commission Nationale de l&apos;Informatique', 
-    country: 'France', 
-    focus: 'Strict enforcement on cookie banner defaults and tracking consent opt-ins.', 
-    enforcement: 'Focus on dark patterns, consent logs, and advertising identifiers.' 
-  },
-  { 
-    code: 'BfDI', 
-    name: 'Federal Commissioner for Data Protection', 
-    country: 'Germany', 
-    focus: 'Highly decentralized enforcement targeting medical, employee, and public sector data.', 
-    enforcement: 'Strict stance on US data transfers and cloud hosting boundaries.' 
-  },
-  { 
-    code: 'AEPD', 
-    name: 'Agencia Española de Protección de Datos', 
-    country: 'Spain', 
-    focus: 'Active authority issuing high-frequency administrative fines for security failures.', 
-    enforcement: 'Focuses on web form privacy disclosures, spam, and vendor tracking.' 
-  },
-  { 
-    code: 'Garante', 
-    name: 'Garante per la Protezione dei Dati Personali', 
-    country: 'Italy', 
-    focus: 'Pioneering regulator on artificial intelligence restrictions and algorithmic auditing.', 
-    enforcement: 'Aggressive enforcement on automated user profiles and analytics tools.' 
-  }
+const BAR_VALUES = [38, 46, 41, 55, 62, 58, 66, 61, 72, 69, 75, 80, 74, 82, 88, 84, 91, 86, 94, 90, 97, 93, 88, 95, 99, 92];
+
+const DASHBOARD_ROWS = [
+  { name: 'Art. 30 register — Nordlicht GmbH', meta: '12 processes', status: 'COMPLETE', color: '#7FA88B', due: '—' },
+  { name: 'DSAR · erasure request #1184', meta: 'day 6 of 30', status: 'IN PROGRESS', color: '#C9A227', due: '14 Aug' },
+  { name: 'Transfer assessment — Segment (US)', meta: 'SCC module 2', status: 'REVIEW DUE', color: '#C48A3F', due: '02 Aug' },
+  { name: 'Cookie banner — 4 client domains', meta: 'TCF v2.2', status: 'LIVE', color: '#7FA88B', due: '—' },
+  { name: 'Breach log — vendor incident 0042', meta: '72h clock closed', status: 'REPORTED', color: '#8A9095', due: '—' },
 ];
 
-const INTEGRATIONS = [
-  { name: 'HubSpot', logo: <HubSpotLogo /> },
-  { name: 'Mailchimp', logo: <MailchimpLogo /> },
-  { name: 'GA4', logo: <GA4Logo /> },
-  { name: 'Stripe', logo: <StripeLogo /> },
-  { name: 'Slack', logo: <SlackLogo /> },
-  { name: 'Salesforce', logo: <SalesforceLogo /> },
-  { name: 'AWS', logo: <AWSLogo /> }
+// --- Pain points ---
+
+const PAINS = [
+  {
+    index: '01',
+    tag: 'Fragmentation',
+    title: "Your compliance programme is eleven files and one person's memory.",
+    body: 'Processing records in a spreadsheet, DPAs in a shared drive, assessments in a consultant’s Word template, decisions in email. Nothing reconciles, and no one can prove what was true on a given date.',
+    stat: 'Average agency: 4 tools, 0 audit trail',
+  },
+  {
+    index: '02',
+    tag: 'Exposure',
+    title: 'Enforcement no longer waits for a data breach.',
+    body: 'Supervisory authorities across the EU open inquiries from complaints, cookie sweeps and vendor chains. Fines reach 4% of global turnover, and "we intended to document it" has never been a defence.',
+    stat: '€1.2bn+ in GDPR fines issued in 2025',
+  },
+  {
+    index: '03',
+    tag: 'Cost of manual work',
+    title: 'DSARs and ROPA upkeep consume billable weeks.',
+    body: 'Every request means chasing systems, exporting data, redacting third parties and hitting a statutory clock by hand. Every new vendor means re-reading the register nobody has updated since onboarding.',
+    stat: '9–14 hours per data subject request',
+  },
 ];
 
-const RiskCalculator = dynamic(() => import('@/components/marketing/RiskCalculator'), {
-  loading: () => (
-    <div className="min-h-[420px] flex items-center justify-center bg-[#141712]/55 border border-[#2F362D]/60 rounded-2xl">
-      <div className="text-sm font-semibold text-[#9CA297] animate-pulse">Loading Risk Calculator...</div>
-    </div>
-  ),
-  ssr: false
-});
+// --- Modules ---
+
+const MODULES = [
+  { index: '01', title: 'Records of processing', body: 'A living Art. 30 register with lawful basis, retention, recipients and transfer routes per activity. Versioned, so you can show what the record said last March.', ref: 'Art. 30' },
+  { index: '02', title: 'Gap assessment', body: '38 controls mapped to the Regulation, scored and prioritised by risk and effort. Re-run quarterly to evidence continuous improvement.', ref: 'Art. 24 · 32' },
+  { index: '03', title: 'Vendor intelligence', body: 'A maintained profile for every common processor: sub-processors, hosting region, transfer mechanism, DPA link and known enforcement history.', ref: 'Art. 28 · 44' },
+  { index: '04', title: 'DSAR automation', body: 'Intake form, identity verification, system-by-system collection tasks, redaction workflow and a statutory clock that escalates before day 30.', ref: 'Art. 15–22' },
+  { index: '05', title: 'Cookie consent (CMP)', body: 'IAB TCF v2.2 certified banner, per-domain configuration, Google Consent Mode signals and a tamper-evident consent proof log.', ref: 'ePrivacy' },
+  { index: '06', title: 'Breach management', body: 'Severity assessment against EDPB criteria, the 72-hour notification clock, notifiable-authority routing and a defensible incident record.', ref: 'Art. 33 · 34' },
+  { index: '07', title: 'Audit readiness dashboard', body: 'One score per entity, one evidence pack per request. Everything a supervisory authority or an enterprise procurement team asks for, exported in a click.', ref: 'Art. 5(2)' },
+  { index: '08', title: 'AI compliance advisor', body: 'Retrieval-grounded answers over the actual legal corpus, scoped to the jurisdiction you are working in and cited down to the paragraph.', ref: 'RAG · cited' },
+];
+
+// --- AI advisor ---
+
+type JurisdictionCode = 'IE' | 'FR' | 'DE' | 'NL' | 'ES';
+
+const JURISDICTIONS: JurisdictionCode[] = ['IE', 'FR', 'DE', 'NL', 'ES'];
+
+const ADVISOR_CONTENT: Record<JurisdictionCode, { q: string; a: string; cites: { ref: string; text: string }[] }> = {
+  IE: {
+    q: 'A client wants to run a prize draw using their newsletter list. Is consent still valid?',
+    a: 'No. Consent obtained for newsletter delivery does not extend to a prize draw — the new purpose is incompatible with the one disclosed at collection, and the DPC treats re-purposing of marketing lists as a separate processing operation requiring fresh, specific consent.',
+    cites: [
+      { ref: 'Art. 6(4)', text: 'Compatibility test for further processing' },
+      { ref: 'EDPB 05/2020', text: 'Consent must be specific to each purpose (§ 56)' },
+      { ref: 'DPC IE', text: 'Guidance on direct marketing, 2023 — § 4.2' },
+    ],
+  },
+  FR: {
+    q: 'A client wants to run a prize draw using their newsletter list. Is consent still valid?',
+    a: "No. The CNIL's position is stricter than the baseline: prospection for a distinct operation requires its own opt-in, and the collection notice must name the promotional purpose. Re-use of an existing list exposes the client to a sanction under Article 82 of the Loi Informatique et Libertés.",
+    cites: [
+      { ref: 'Art. 6(4)', text: 'Compatibility test for further processing' },
+      { ref: 'CNIL', text: 'Référentiel prospection commerciale, § 2.1' },
+      { ref: 'LIL Art. 82', text: 'National consent requirement for tracking' },
+    ],
+  },
+  DE: {
+    q: 'A client wants to run a prize draw using their newsletter list. Is consent still valid?',
+    a: 'No, and there is an additional national dimension: the coupling prohibition under § 7 UWG plus BGH case law on Kopplungsverbot mean the draw cannot be conditioned on marketing consent. A separate, documented opt-in is required and must be logged with its timestamp.',
+    cites: [
+      { ref: 'Art. 7(4)', text: 'Freely given consent — no bundling' },
+      { ref: '§ 7 UWG', text: 'Unzumutbare Belästigung — German marketing rules' },
+      { ref: 'DSK', text: 'Orientierungshilfe Direktwerbung, 2022' },
+    ],
+  },
+  NL: {
+    q: 'A client wants to run a prize draw using their newsletter list. Is consent still valid?',
+    a: 'No. The Autoriteit Persoonsgegevens requires purpose-specific consent, and the Telecommunicatiewet soft opt-in for existing customers does not cover promotional draws. Document the new consent and retain the withdrawal mechanism in the same record.',
+    cites: [
+      { ref: 'Art. 6(4)', text: 'Compatibility test for further processing' },
+      { ref: 'Tw Art. 11.7', text: 'Dutch electronic marketing consent' },
+      { ref: 'AP', text: 'Normuitleg toestemming, 2021' },
+    ],
+  },
+  ES: {
+    q: 'A client wants to run a prize draw using their newsletter list. Is consent still valid?',
+    a: 'No. The AEPD requires consent granular to each purpose, and LSSI Article 21 governs the electronic communication itself. Prize-draw terms must also disclose the retention period for entrant data separately from the newsletter retention rule.',
+    cites: [
+      { ref: 'Art. 6(4)', text: 'Compatibility test for further processing' },
+      { ref: 'LSSI Art. 21', text: 'Spanish commercial communications' },
+      { ref: 'AEPD', text: 'Guía consentimiento, 2023 — § 3' },
+    ],
+  },
+};
+
+const CORPUS = [
+  { source: 'Regulation (EU) 2016/679 — full text', detail: '99 articles · 173 recitals' },
+  { source: 'EDPB guidelines, opinions & recommendations', detail: '142 documents' },
+  { source: 'CJEU judgments on data protection', detail: 'Schrems II → 2026' },
+  { source: 'National DPA guidance — IE, FR, DE, NL, ES', detail: 'DPC · CNIL · DSK · AP · AEPD' },
+  { source: 'Published enforcement decisions & sanctions', detail: '2,400+ decisions' },
+];
+
+// --- Pricing (aligned to the real Paddle tiers in settings/billing) ---
+
+const annualPrice = (monthly: number) => Math.round(monthly * 0.8);
+
+const TIERS = [
+  {
+    name: 'Free', badge: '', bg: '#08090A',
+    price: 0, period: 'forever',
+    blurb: 'The gap assessment, in full. No trial clock.',
+    features: ['38-control gap assessment', 'Scored readiness report', 'Prioritised remediation list', '1 entity'],
+    cta: 'Start assessment', href: '/assessment', highlight: false,
+  },
+  {
+    name: 'Starter', badge: '', bg: '#08090A',
+    price: 39, period: '/mo', blurb: 'Essential compliance for a single business.',
+    features: ['1 organisation, unlimited users', 'Standard DPAs on file', 'Records of processing (ROPA)', 'Gap assessment reruns'],
+    cta: 'Choose Starter', href: '/assessment', highlight: false,
+  },
+  {
+    name: 'Professional', badge: 'MOST CHOSEN', bg: '#0D0F11', highlight: true,
+    price: 89, period: '/mo', blurb: 'For agencies running compliance for a client book.',
+    features: ['Everything in Starter', '100K cookie consent views', 'DPIA workflows', 'DSAR automation'],
+    cta: 'Choose Professional', href: '/assessment',
+  },
+  {
+    name: 'Agency', badge: '', bg: '#08090A',
+    price: 179, period: '/mo', blurb: 'Multi-tenant management for compliance agencies.',
+    features: ['Everything in Professional', '1M cookie consent views', 'White-labelled trust portals', 'Cross-org vendor intelligence'],
+    cta: 'Choose Agency', href: '/assessment', highlight: false,
+  },
+  {
+    name: 'Enterprise', badge: '', bg: '#08090A',
+    price: null, period: 'annual contract', blurb: 'For groups with regulatory scrutiny and procurement.',
+    features: ['Unlimited entities', 'Dedicated EU tenancy', 'Custom DPA & security review', 'SCIM provisioning', 'Named compliance engineer'],
+    cta: 'Talk to us', href: '/contact', highlight: false,
+  },
+];
+
+// --- Trust ---
+
+const TRUST = [
+  { label: 'Residency', title: 'EU data residency', body: 'All data stored and processed on AWS Dublin (eu-west-1). No transfer outside the EEA, including for support access.' },
+  { label: 'Access', title: 'SSO & granular roles', body: 'SAML and OIDC single sign-on, SCIM provisioning, per-entity roles so client staff see only their own register.' },
+  { label: 'Accountability', title: 'Immutable audit logging', body: 'Every change to a record, assessment or consent is written to an append-only log with actor, timestamp and prior value.' },
+  { label: 'Infrastructure', title: 'Enterprise-grade operations', body: 'Encrypted at rest and in transit, daily tested restores, ISO 27001-aligned controls, annual penetration testing.' },
+  { label: 'Billing', title: 'VAT handled automatically', body: 'Reverse charge and local rates applied per member state, with compliant invoices and your VAT number validated at signup.' },
+];
 
 export default function MarketingSite() {
   const t = useTranslations('marketing');
-  const router = useRouter();
-  const [annualBilling, setAnnualBilling] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'cookies' | 'ropa' | 'dsar'>('overview');
+  const [annual, setAnnual] = useState(true);
+  const [jurisdiction, setJurisdiction] = useState<JurisdictionCode>('IE');
+  const advisor = ADVISOR_CONTENT[jurisdiction];
 
   return (
-    <div className="pt-16 antialiased">
-      
-      {/* SECTION 1: HERO CONTAINER */}
-      <section className="w-full bg-[#141712] relative overflow-hidden">
-        {/* Soft forest radial glow behind mockup */}
-        <div aria-hidden="true" className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[550px] bg-[radial-gradient(circle,#24331E_0%,transparent_70%)] opacity-35 pointer-events-none z-0" />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-8 flex flex-col items-center text-center relative z-10">
-          <div className="max-w-4xl flex flex-col items-center">
-            
-            {/* Tagline */}
-            <div className="inline-flex items-center gap-2 bg-[#1F241D] border border-[#2F362D] rounded-full px-4.5 py-1.5 mb-6 text-xs font-semibold text-[#8BA381] tracking-wide">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8BA381] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8BA381]"></span>
-              </span>
-              {t('hero.badge')}
+    <div className="[font-family:var(--font-plex-sans)] pt-16">
+
+      {/* HERO */}
+      <section id="top" className="relative border-b border-white/7 overflow-hidden">
+        <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(120%_80%_at_50%_0%,#000_20%,transparent_75%)]" />
+        <div aria-hidden="true" className="absolute -top-60 left-1/2 w-[900px] h-[520px] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,rgba(201,162,39,0.16),transparent_70%)] pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 pt-20 sm:pt-28 pb-0">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
+              <span className="w-6 h-px bg-[#C9A227]" />
+              <span>{t('hero.badge')}</span>
             </div>
-            
-            {/* Headline */}
-            <h1 className="font-sans tracking-tight mb-5 leading-[1.05] text-balance">
-              <span className="block text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#9CA297] mb-2">{t('hero.titlePrefix')}</span>
-              <span className="inline-block text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#F5F3ED] bg-clip-text">
-                {t('hero.titleMain')}
-              </span>
+            <h1 className="mt-6 text-[40px] sm:text-6xl lg:text-7xl leading-[1.03] tracking-[-0.032em] font-normal text-[#F4F5F6] text-balance">
+              {t('hero.titlePrefix')}<br />
+              <span className="text-[#C9A227]">{t('hero.titleAccent')}</span> {t('hero.titleSuffix')}
             </h1>
-            
-            {/* Subheadline */}
-            <p className="text-sm text-[#9CA297] max-w-xl mb-6 leading-relaxed font-medium">
+            <p className="mt-7 max-w-xl text-[17px] sm:text-[19px] leading-relaxed text-[#9BA1A6] text-pretty">
               {t('hero.subheadline')}
             </p>
-            
-            {/* Hero CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mb-10">
-              <Link 
-                href="/assessment" 
-                onMouseEnter={() => router.prefetch('/assessment')}
-                className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-sm font-bold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#596E51]/10 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#141712] hover:scale-[1.02] active:scale-[0.98]"
-              >
+            <div className="mt-9 flex flex-wrap items-center gap-3.5">
+              <Link href="/assessment" className="text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors">
                 {t('hero.ctaAssessment')}
               </Link>
-              <button 
-                onClick={() => {
-                  const el = document.getElementById('risk-calculator');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="w-full sm:w-auto bg-[#1F241D] hover:bg-[#252B21] text-[#C5C8C1] border border-[#2F362D] text-sm font-semibold py-3.5 px-7 rounded-lg transition-all flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#141712] hover:scale-[1.02] active:scale-[0.98]"
+              <a
+                href="#modules"
+                onClick={(e) => { e.preventDefault(); document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' }); }}
+                className="text-[15px] text-[#E6E8EA] border border-white/16 hover:border-white/40 px-6 py-3.5 transition-colors"
               >
-                {t('hero.ctaCalculator')}
-              </button>
+                {t('hero.ctaPlatform')}
+              </a>
+              <span className="[font-family:var(--font-plex-mono)] text-[11.5px] tracking-[0.06em] text-[#6E747A] pl-1.5">{t('hero.note')}</span>
             </div>
-            
-            {/* LIGHT-THEMED BUSINESS APP MOCKUP */}
-            <LazyObserver fallback={
-              <div className="w-full max-w-5xl bg-[#FBF8F3]/40 border border-[#1F1B16]/10 rounded-2xl h-[450px] shadow-2xl animate-pulse flex items-center justify-center text-xs font-semibold text-[#9CA297]/60">
-                Loading compliance mockup...
+          </div>
+
+          {/* Dashboard mockup */}
+          <div className="mt-16 sm:mt-20 relative">
+            <div className="border border-white/9 border-b-0 bg-gradient-to-b from-[#0D0F11] to-[#0A0B0D] shadow-[0_-1px_0_rgba(201,162,39,0.18)_inset,0_40px_120px_-40px_rgba(0,0,0,0.9)]">
+              <div className="flex items-center gap-4 px-4.5 h-11 border-b border-white/7 [font-family:var(--font-plex-mono)] text-[11px] text-[#6E747A]">
+                <span className="flex gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/14" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/14" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/14" />
+                </span>
+                <span className="text-[#9BA1A6]">custodia / nordlicht-agency.eu</span>
+                <span>&mdash;</span>
+                <span>Audit readiness</span>
+                <span className="flex-1" />
+                <span className="text-[#C9A227]">EU-WEST &middot; FRA1</span>
               </div>
-            }>
-              <div className="w-full max-w-5xl bg-[#FBF8F3] border border-[#1F1B16]/10 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden text-[#1F1B16] text-left">
-              
-              {/* Browser Header Bar */}
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#1F1B16]/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
-                  <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-                  <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
-                  <span className="ml-3 text-[11px] font-sans font-medium text-[#1F1B16]/65">Custodia Compliance Dashboard</span>
+
+              <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] min-h-[360px]">
+                <div className="hidden md:block border-r border-white/7 py-4.5">
+                  {NAV_ITEMS.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 px-4.5 py-2.5 text-[12.5px] text-[#8A9095]">
+                      <span>{item.label}</span>
+                      <span className="[font-family:var(--font-plex-mono)] text-[10.5px] text-[#5C6266]">{item.count}</span>
+                    </div>
+                  ))}
                 </div>
-                
-                {/* Tabs */}
-                <div className="flex gap-1 overflow-x-auto pb-1 max-w-[70%] sm:max-w-none">
-                  {[
-                    { id: 'overview', label: 'Compliance Overview', icon: Activity },
-                    { id: 'cookies', label: 'Cookie Consent', icon: Globe },
-                    { id: 'ropa', label: 'Activity Register', icon: Database },
-                    { id: 'dsar', label: 'Data Requests', icon: UserCheck }
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as 'overview' | 'cookies' | 'ropa' | 'dsar')}
-                      className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold transition-all whitespace-nowrap z-10 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none ${
-                        activeTab === tab.id 
-                          ? 'text-[#6E8B60]' 
-                          : 'text-[#1F1B16]/60 hover:text-[#1F1B16] hover:bg-[#1F1B16]/5'
-                      }`}
-                    >
-                      {activeTab === tab.id && (
-                        <motion.div 
-                          layoutId="activeMockupTab"
-                          className="absolute inset-0 bg-[#6E8B60]/10 border border-[#6E8B60]/20 rounded-md -z-10"
-                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        />
-                      )}
-                      <tab.icon className="w-3 h-3" />
-                      {tab.label}
-                      <span className="sr-only">{activeTab === tab.id ? '(Active)' : '(Inactive)'}</span>
-                    </button>
+                <div className="relative p-5 sm:p-6 overflow-hidden">
+                  <div className="flex items-end justify-between gap-5 flex-wrap">
+                    <div>
+                      <div className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#6E747A]">Readiness score</div>
+                      <div className="flex items-baseline gap-2.5 mt-2">
+                        <span className="text-[44px] leading-none font-light tracking-[-0.03em] text-[#F4F5F6]">82</span>
+                        <span className="text-[15px] text-[#6E747A]">/ 100</span>
+                        <span className="[font-family:var(--font-plex-mono)] text-[11px] text-[#7FA88B]">&#9650; 14 this quarter</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="[font-family:var(--font-plex-mono)] text-[10.5px] text-[#C9A227] border border-[#C9A227]/35 px-2.5 py-1.5">Export evidence pack</span>
+                      <span className="[font-family:var(--font-plex-mono)] text-[10.5px] text-[#8A9095] border border-white/12 px-2.5 py-1.5">Art. 30 register</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex items-end gap-1 h-[74px]">
+                    {BAR_VALUES.map((v, i) => (
+                      <div key={i} className="flex-1" style={{ height: `${v}%`, background: i > 21 ? '#C9A227' : 'rgba(255,255,255,0.13)' }} />
+                    ))}
+                  </div>
+
+                  <div className="mt-7 border-t border-white/7">
+                    {DASHBOARD_ROWS.map((row, i) => (
+                      <div key={i} className="grid grid-cols-[1.6fr_1fr_0.9fr_0.7fr] gap-3 items-center py-3 border-b border-white/5.5 text-[12.5px] text-[#9BA1A6]">
+                        <span className="text-[#DDE0E2] truncate">{row.name}</span>
+                        <span className="[font-family:var(--font-plex-mono)] text-[11px]">{row.meta}</span>
+                        <span className="[font-family:var(--font-plex-mono)] text-[11px]" style={{ color: row.color }}>{row.status}</span>
+                        <span className="[font-family:var(--font-plex-mono)] text-[11px] text-right text-[#5C6266]">{row.due}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PAIN POINTS */}
+      <section className="border-b border-white/7 bg-[#0B0C0E]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-16 sm:py-20">
+          <div className="flex flex-wrap gap-6 items-baseline justify-between">
+            <h2 className="text-[26px] sm:text-[34px] font-normal tracking-[-0.025em] text-[#F4F5F6] max-w-xl text-balance">{t('pains.title')}</h2>
+            <p className="max-w-sm text-[15px] leading-relaxed text-[#7E8489]">{t('pains.subheadline')}</p>
+          </div>
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/8 border border-white/8">
+            {PAINS.map((pain, i) => (
+              <div key={i} className="bg-[#0B0C0E] p-7 pb-8.5 flex flex-col gap-3.5">
+                <div className="flex items-center justify-between [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.12em] text-[#6E747A]">
+                  <span>{pain.index}</span>
+                  <span className="text-[#B0554E]">{pain.tag}</span>
+                </div>
+                <h3 className="text-[19px] font-medium tracking-[-0.015em] text-[#EDEFF0]">{pain.title}</h3>
+                <p className="text-[14.5px] leading-relaxed text-[#8A9095] text-pretty">{pain.body}</p>
+                <div className="mt-auto pt-4.5 [font-family:var(--font-plex-mono)] text-[11.5px] text-[#C9A227]">{pain.stat}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* MODULES */}
+      <section id="modules" className="border-b border-white/7 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-22">
+          <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
+            <span className="w-6 h-px bg-[#C9A227]" />
+            <span>{t('modules.badge')}</span>
+          </div>
+          <h2 className="mt-5.5 max-w-2xl text-[28px] sm:text-[42px] font-normal tracking-[-0.028em] leading-[1.12] text-[#F4F5F6] text-balance">{t('modules.title')}</h2>
+          <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-[#8A9095]">{t('modules.subheadline')}</p>
+
+          <div className="mt-13 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/8 border border-white/8">
+            {MODULES.map((mod, i) => (
+              <div key={i} className="bg-[#08090A] hover:bg-[#0D0F11] transition-colors p-6.5 pb-7.5 flex flex-col gap-3 min-h-[210px]">
+                <div className="flex items-center justify-between">
+                  <span className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.12em] text-[#5C6266]">{mod.index}</span>
+                  <span className="w-1.5 h-1.5 bg-[#C9A227]" />
+                </div>
+                <h3 className="mt-1.5 text-[17.5px] font-medium tracking-[-0.012em] text-[#EDEFF0] text-balance">{mod.title}</h3>
+                <p className="text-[14px] leading-relaxed text-[#868C91] text-pretty">{mod.body}</p>
+                <div className="mt-auto pt-4 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.1em] uppercase text-[#6E747A]">{mod.ref}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* AI ADVISOR */}
+      <section id="advisor" className="relative border-b border-white/7 bg-[#0B0C0E] overflow-hidden scroll-mt-20">
+        <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(70%_60%_at_80%_10%,rgba(201,162,39,0.09),transparent_70%)]" />
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-23 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+          <div>
+            <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
+              <span className="w-6 h-px bg-[#C9A227]" />
+              <span>{t('advisor.badge')}</span>
+            </div>
+            <h2 className="mt-5.5 text-[28px] sm:text-[40px] font-normal tracking-[-0.028em] leading-[1.13] text-[#F4F5F6] text-balance">{t('advisor.title')}</h2>
+            <p className="mt-5.5 text-[16.5px] leading-relaxed text-[#9BA1A6] text-pretty">{t('advisor.subheadline')}</p>
+            <p className="mt-4.5 [font-family:var(--font-spectral)] italic text-[16.5px] leading-relaxed text-[#B9BEC2] border-l border-[#C9A227]/50 pl-5">{t('advisor.quote')}</p>
+
+            <div className="mt-8.5 grid gap-px bg-white/8 border border-white/8">
+              {CORPUS.map((c, i) => (
+                <div key={i} className="bg-[#0B0C0E] grid grid-cols-[1fr_auto] gap-4 items-center px-5 py-3.5">
+                  <span className="text-[14.5px] text-[#DDE0E2]">{c.source}</span>
+                  <span className="[font-family:var(--font-plex-mono)] text-[11px] text-[#6E747A] text-right">{c.detail}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-[#6E747A]">{t('advisor.corpusNote')} 12 July 2026</div>
+          </div>
+
+          <div className="border border-white/10 bg-gradient-to-b from-[#0E1012] to-[#0A0B0D] shadow-[0_40px_100px_-50px_rgba(0,0,0,0.9)]">
+            <div className="flex items-center gap-2.5 px-4.5 py-3.5 border-b border-white/7 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.12em] uppercase text-[#6E747A]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#7FA88B]" />
+              <span>Advisor &middot; jurisdiction {jurisdiction}</span>
+            </div>
+            <div className="px-4.5 pt-5 pb-2 flex flex-wrap gap-2">
+              {JURISDICTIONS.map((code) => {
+                const active = code === jurisdiction;
+                return (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => setJurisdiction(code)}
+                    className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.08em] px-2.5 py-1.5 transition-colors border"
+                    style={{
+                      background: active ? 'rgba(201,162,39,0.14)' : 'transparent',
+                      color: active ? '#C9A227' : '#8A9095',
+                      borderColor: active ? 'rgba(201,162,39,0.5)' : 'rgba(255,255,255,0.12)',
+                    }}
+                  >
+                    {code}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="p-4.5">
+              <div className="border border-white/8 bg-[#0F1114] px-4.5 py-4 text-[14.5px] text-[#DDE0E2] leading-relaxed">{advisor.q}</div>
+              <div className="mt-3.5 p-4.5 border-l border-[#C9A227] bg-[#C9A227]/[0.045]">
+                <p className="text-[15px] leading-relaxed text-[#E6E8EA] text-pretty">{advisor.a}</p>
+                <div className="mt-4.5 grid gap-2">
+                  {advisor.cites.map((cite, i) => (
+                    <div key={i} className="grid grid-cols-[auto_1fr] gap-2.5 items-baseline [font-family:var(--font-plex-mono)] text-[11px] text-[#8A9095]">
+                      <span className="text-[#C9A227]">{cite.ref}</span>
+                      <span>{cite.text}</span>
+                    </div>
                   ))}
                 </div>
               </div>
-
-              {/* Tab Display Area */}
-              <div className="min-h-[380px]">
-                <AnimatePresence mode="wait">
-                  
-                  {activeTab === 'overview' && (
-                    <motion.div 
-                      key="overview"
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      transition={{ duration: 0.2 }}
-                      className="grid md:grid-cols-3 gap-6"
-                    >
-                      {/* Radial Progress */}
-                      <div className="bg-[#F4EFE6]/60 border border-[#1F1B16]/8 rounded-xl p-5 flex flex-col items-center justify-center text-center">
-                        <div className="relative w-28 h-28 flex items-center justify-center">
-                          <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="56" cy="56" r="48" stroke="#EAE5DC" strokeWidth="6" fill="transparent" />
-                            <circle cx="56" cy="56" r="48" stroke="#6E8B60" strokeWidth="6" fill="transparent" 
-                              strokeDasharray={2 * Math.PI * 48}
-                              strokeDashoffset={2 * Math.PI * 48 * (1 - 0.94)}
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          <div className="absolute flex flex-col items-center">
-                            <span className="text-2xl font-bold text-[#1F1B16] font-mono">94%</span>
-                            <span className="text-[9px] uppercase font-bold text-[#6E8B60] tracking-wide">Health</span>
-                          </div>
-                        </div>
-                        <h4 className="text-xs font-bold text-[#1F1B16] mt-4">Compliance Status: Solid</h4>
-                        <p className="text-[10px] text-[#1F1B16]/75 mt-1">Audit exposure level is minimal.</p>
-                      </div>
-
-                      {/* Log Feed */}
-                      <div className="md:col-span-2 bg-[#F4EFE6]/60 border border-[#1F1B16]/8 rounded-xl p-5">
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wide flex items-center gap-1.5">
-                            <Activity className="w-3.5 h-3.5 text-[#6E8B60]" /> Operational Feed
-                          </h4>
-                          <span className="text-[10px] font-sans font-semibold text-[#1F1B16]/65">Real-Time Sync</span>
-                        </div>
-                        <div className="space-y-3 text-[11px]">
-                          <div className="flex items-start gap-2.5 border-b border-[#1F1B16]/5 pb-2">
-                            <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
-                            <div>
-                              <p className="font-bold text-[#1F1B16]">HubSpot DPA Verified</p>
-                              <p className="text-[10px] text-[#1F1B16]/75">Data Protection Agreement verified and logged for HubSpot email marketing.</p>
-                            </div>
-                            <span className="ml-auto text-[10px] text-[#1F1B16]/65 whitespace-nowrap font-medium font-mono"><time dateTime="PT2H">2 hrs ago</time></span>
-                          </div>
-                          <div className="flex items-start gap-2.5 border-b border-[#1F1B16]/5 pb-2">
-                            <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
-                            <div>
-                              <p className="font-bold text-[#1F1B16]">Automated Cookie Scan Completed</p>
-                              <p className="text-[10px] text-[#1F1B16]/75">14 active cookie scripts audited. Zero unclassified tags detected.</p>
-                            </div>
-                            <span className="ml-auto text-[10px] text-[#1F1B16]/65 whitespace-nowrap font-medium font-mono"><time dateTime="P1D">1 day ago</time></span>
-                          </div>
-                          <div className="flex items-start gap-2.5">
-                            <CheckCircle className="w-4 h-4 text-[#6E8B60] shrink-0" />
-                            <div>
-                              <p className="font-bold text-[#1F1B16]">Employee training logs updated</p>
-                              <p className="text-[10px] text-[#1F1B16]/75">12 team members completed the annual GDPR awareness module.</p>
-                            </div>
-                            <span className="ml-auto text-[10px] text-[#1F1B16]/65 whitespace-nowrap font-medium font-mono"><time dateTime="P3D">3 days ago</time></span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {activeTab === 'cookies' && (
-                    <motion.div 
-                      key="cookies"
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      transition={{ duration: 0.2 }}
-                      className="space-y-4"
-                    >
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#F4EFE6]/60 border border-[#1F1B16]/8 p-4 rounded-xl">
-                        <div>
-                          <p className="text-xs font-bold text-[#1F1B16]">
-                            Active Target Domain: <span className="text-[#6E8B60]">https://agency.domain.com</span>
-                          </p>
-                          <p className="text-[10px] text-[#1F1B16]/60 mt-1">Consent banner detects and blocks trackers automatically prior to visitor selection.</p>
-                        </div>
-                        <span className="text-[10px] font-bold bg-[#6E8B60]/10 text-[#6E8B60] border border-[#6E8B60]/20 px-2.5 py-1 rounded">
-                          Consent Mode v2: ACTIVE
-                        </span>
-                      </div>
-
-                      <div className="relative group/scroll overflow-hidden">
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left text-[11px] min-w-[550px]">
-                          <thead>
-                            <tr className="border-b border-[#1F1B16]/10 text-[#1F1B16]/50 uppercase tracking-wider text-[10px] font-bold">
-                              <th className="pb-2">Cookie ID</th>
-                              <th className="pb-2">Service</th>
-                              <th className="pb-2">Classification</th>
-                              <th className="pb-2">Expiry</th>
-                              <th className="pb-2">Confidence</th>
-                              <th className="pb-2">Trigger Action</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#1F1B16]/5 text-[#1F1B16]/80 font-medium">
-                            <tr>
-                              <td className="py-2.5 font-bold text-[#1F1B16] font-mono">_ga</td>
-                              <td className="py-2.5">Google Analytics</td>
-                              <td className="py-2.5"><span className="text-[#6E8B60] bg-[#6E8B60]/8 px-2 py-0.5 rounded border border-[#6E8B60]/15 text-[10px] font-bold">Analytics</span></td>
-                              <td className="py-2.5 font-mono">2 Years</td>
-                              <td className="py-2.5 text-[#6E8B60] font-bold font-mono">99.8%</td>
-                              <td className="py-2.5 text-[#1F1B16]/60">Blocked prior to consent</td>
-                            </tr>
-                            <tr>
-                              <td className="py-2.5 font-bold text-[#1F1B16] font-mono">_fbp</td>
-                              <td className="py-2.5">Meta Pixel</td>
-                              <td className="py-2.5"><span className="text-[#B28247] bg-[#B28247]/8 px-2 py-0.5 rounded border border-[#B28247]/15 text-[10px] font-bold">Marketing</span></td>
-                              <td className="py-2.5 font-mono">3 Months</td>
-                              <td className="py-2.5 text-[#6E8B60] font-bold font-mono">99.5%</td>
-                              <td className="py-2.5 text-[#1F1B16]/60">Blocked prior to consent</td>
-                            </tr>
-                            <tr>
-                              <td className="py-2.5 font-bold text-[#1F1B16] font-mono">stripe_mid</td>
-                              <td className="py-2.5">Stripe Payments</td>
-                              <td className="py-2.5"><span className="text-[#4F779E] bg-[#4F779E]/8 px-2 py-0.5 rounded border border-[#4F779E]/15 text-[10px] font-bold">Necessary</span></td>
-                              <td className="py-2.5 font-mono">1 Year</td>
-                              <td className="py-2.5 text-[#6E8B60] font-bold font-mono">100%</td>
-                              <td className="py-2.5 text-[#6E8B60] font-bold">Always Allowed</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                      {/* Left scroll indicator mask */}
-                      <div className="absolute top-0 bottom-0 left-0 w-8 bg-gradient-to-r from-[#FBF8F3] to-transparent pointer-events-none opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300" />
-                      {/* Right scroll indicator mask */}
-                      <div className="absolute top-0 bottom-0 right-0 w-8 bg-gradient-to-l from-[#FBF8F3] to-transparent pointer-events-none opacity-100 group-hover/scroll:opacity-0 transition-opacity duration-300" />
-                    </div>
-                  </motion.div>
-                  )}
-
-                  {activeTab === 'ropa' && (
-                    <motion.div 
-                      key="ropa"
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      transition={{ duration: 0.2 }}
-                      className="space-y-4"
-                    >
-                      <div className="flex items-center justify-between border-b border-[#1F1B16]/10 pb-3">
-                        <div>
-                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wide">Processing Activities Register</h4>
-                          <p className="text-[10px] text-[#1F1B16]/60 mt-0.5">Article 30 records mapped to active vendor pipelines.</p>
-                        </div>
-                        <span className="text-[10px] text-[#1F1B16]/40 font-semibold">ROPA Version: <span className="font-mono">v2.4</span> (Signed)</span>
-                      </div>
-
-                      <div className="space-y-2.5 text-[11px] font-medium">
-                        {[
-                          { 
-                            name: 'Client Email Marketing Campaigns (HubSpot Integration)', 
-                            basis: 'Consent (Opt-In Audited)', 
-                            subjects: 'Prospects, Leads & Active Customers', 
-                            retention: 'Until consent withdrawal (immediate purge)' 
-                          },
-                          { 
-                            name: 'Transactional Payments & Subscriptions (Stripe Integration)', 
-                            basis: 'Contract Performance (Art. 6.1.b)', 
-                            subjects: 'Active Paying Clients', 
-                            retention: '7 Years (Financial Ledger audits)' 
-                          }
-                        ].map((item, index) => (
-                          <div key={index} className="bg-[#F4EFE6]/60 border border-[#1F1B16]/8 rounded-lg p-3">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
-                              <span className="font-bold text-[#1F1B16] text-[11px]">{item.name}</span>
-                              <span className="text-[9px] bg-[#6E8B60]/10 text-[#6E8B60] border border-[#6E8B60]/20 px-2 py-0.5 rounded font-bold shrink-0 self-start sm:self-auto">
-                                {item.basis}
-                              </span>
-                            </div>
-                            <div className="grid sm:grid-cols-2 gap-2 text-[10px] text-[#1F1B16]/60 pt-1.5 border-t border-[#1F1B16]/5">
-                              <p>Data Subjects: <span className="text-[#1F1B16]/80 font-bold">{item.subjects}</span></p>
-                              <p className="sm:text-right">Retention Period: <span className="text-[#1F1B16]/80 font-bold font-mono">{item.retention}</span></p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {activeTab === 'dsar' && (
-                    <motion.div 
-                      key="dsar"
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      transition={{ duration: 0.2 }}
-                      className="space-y-3"
-                    >
-                      <div className="flex items-center justify-between border-b border-[#1F1B16]/10 pb-3">
-                        <div>
-                          <h4 className="text-xs font-bold text-[#1F1B16] uppercase tracking-wide">Active Data Requests</h4>
-                          <p className="text-[10px] text-[#1F1B16]/60 mt-0.5">Secure queue of data access and deletion requests.</p>
-                        </div>
-                        <span className="text-[10px] text-[#1F1B16]/40 font-semibold">Verification: Email OAuth verified</span>
-                      </div>
-
-                      <div className="space-y-2 text-[11px] font-medium">
-                        {[
-                          {
-                            ref: 'REQ-2026-04',
-                            name: 'Sarah Jenkins',
-                            type: 'Data Deletion (Right to be Forgotten)',
-                            status: 'Pending Purge Approval',
-                            statusColor: 'text-[#B28247] bg-[#B28247]/8 border-[#B28247]/20',
-                            daysLeft: 14
-                          },
-                          {
-                            ref: 'REQ-2026-03',
-                            name: 'Marcus Thorne',
-                            type: 'Data Access Request (Export)',
-                            status: 'Completed & Dispatched',
-                            statusColor: 'text-[#6E8B60] bg-[#6E8B60]/8 border-[#6E8B60]/20',
-                            daysLeft: 0
-                          }
-                        ].map((req, i) => (
-                          <div key={i} className="bg-[#F4EFE6]/60 border border-[#1F1B16]/8 rounded-lg p-3 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-mono text-[#1F1B16]/40 font-bold">{req.ref}</span>
-                                <span className="font-bold text-[#1F1B16]">{req.name}</span>
-                              </div>
-                              <p className="text-[10px] text-[#1F1B16]/60 mt-0.5">{req.type}</p>
-                            </div>
-                            <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
-                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${req.statusColor}`}>
-                                {req.status}
-                              </span>
-                              <span className="text-[10px] text-[#1F1B16]/60 font-semibold">
-                                {req.daysLeft > 0 ? <><span className="font-mono">{req.daysLeft}</span> days remaining</> : 'Archive'}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-
-                </AnimatePresence>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {['Attach to ROPA entry', 'Open remediation task', 'Export as client memo'].map((a, i) => (
+                  <span key={i} className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.08em] text-[#8A9095] border border-white/12 px-2.5 py-1.5">{a}</span>
+                ))}
               </div>
             </div>
-          </LazyObserver>
-
-        </div>
+          </div>
         </div>
       </section>
 
-      {/* SECTION 2: INTEGRATION BAR (REAL LOGOS) */}
-      <section id="integrations" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row items-center justify-between gap-8">
-          <div className="text-center lg:text-left shrink-0">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Active Integrations</p>
-            <h4 className="text-sm font-bold text-[#F5F3ED] mt-1">Works with the systems you use daily</h4>
-          </div>
-          <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:flex md:flex-wrap justify-center lg:justify-end items-center gap-x-8 gap-y-6">
-            {INTEGRATIONS.map((int, i) => (
-              <div key={i} className="flex items-center gap-2.5 bg-[#1F241D]/60 border border-[#2F362D]/60 px-4 py-2 rounded-xl text-xs font-semibold text-[#C5C8C1] opacity-70 hover:opacity-100 hover:shadow-md hover:shadow-[#8BA381]/5 hover:text-[#F5F3ED] hover:border-[#8BA381]/40 transition-all duration-300">
-                {int.logo}
-                <span>{int.name}</span>
+      {/* PRICING */}
+      <section id="pricing" className="border-b border-white/7 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-22">
+          <div className="flex flex-wrap gap-7 items-end justify-between">
+            <div>
+              <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
+                <span className="w-6 h-px bg-[#C9A227]" />
+                <span>{t('pricing.badge')}</span>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 3: BENTO GRID FEATURES (12 SYMMETRICAL MODULES) */}
-      <section id="features" className="w-full bg-[#141712] relative z-10 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-12 md:pt-14 md:pb-20">
-          
-          <div className="mb-10 max-w-2xl text-center md:text-left mx-auto md:mx-0">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">{t('features.badge')}</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight text-balance">{t('features.title')}</h2>
-            <p className="text-sm text-[#9CA297] leading-relaxed">
-              {t('features.subheadline')}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {MODULES.map((mod, i) => (
-              <BentoFeatureCard key={i} module={mod} index={i} />
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* SECTION 4: SUPERVISORY AUTHORITY GRID */}
-      <section id="authorities" className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20">
-          
-          <div className="mb-10">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">{t('authorities.badge')}</p>
-            <h2 className="text-3xl md:text-4xl font-sans font-extrabold text-[#F5F3ED] mb-4 tracking-tight text-balance">{t('authorities.title')}</h2>
-            <p className="text-[#9CA297] max-w-2xl text-xs sm:text-sm leading-relaxed">
-              {t('authorities.subheadline')}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {AUTHORITIES.map((auth, i) => (
-              <SupervisoryAuthorityCard key={i} auth={auth} />
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* SECTION 5: COMPARISON SECTION */}
-      <section className="w-full bg-[#141712] relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20">
-          
-          <div className="text-center mb-10">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Platform Advantage</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-3 tracking-tight text-balance">Structured workflow, no legacy tools</h2>
-            <p className="text-[#9CA297] max-w-xl mx-auto text-xs sm:text-sm">
-              A comparison of audit-readiness and overhead between manual efforts, consultants, and Custodia.
-            </p>
-          </div>
-
-          <div className="relative group/scroll overflow-hidden">
-            <div className="overflow-x-auto border border-[#2F362D]/90 rounded-2xl bg-[#1f241d]/20 backdrop-blur-md">
-              <table className="w-full text-left text-xs sm:text-sm border-collapse min-w-[700px]">
-                <thead>
-                  <tr className="border-b border-[#2F362D] text-[#F5F3ED] font-bold">
-                    <th className="p-6">Compliance Capability</th>
-                    <th className="p-6 bg-[#1F241D]/30">Manual Sheets</th>
-                    <th className="p-6 bg-[#1F241D]/30">Legal Consultants</th>
-                    <th className="p-6 text-[#8BA381] bg-[#242A20]/80 border-x border-[#8BA381]/25">Custodia OS</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#2F362D]/60 text-[#9CA297] font-medium">
-                  <tr>
-                    <td className="p-6 font-bold text-[#F5F3ED]">ROPA / Record keeping</td>
-                    <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Static spreadsheets (Outdates instantly)</td>
-                    <td className="p-6 bg-[#1F241D]/10">Manual document audits (Slow & expensive)</td>
-                    <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Automated logs matching live code stack</td>
-                  </tr>
-                  <tr>
-                    <td className="p-6 font-bold text-[#F5F3ED]">Consent mode tracking</td>
-                    <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Hardcoded scripts (Frequent drifts)</td>
-                    <td className="p-6 bg-[#1F241D]/10">Policy outlines, no actual engineering code</td>
-                    <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Edge blocking scripts synced with logs</td>
-                  </tr>
-                  <tr>
-                    <td className="p-6 font-bold text-[#F5F3ED]">Data subject request queue</td>
-                    <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Manual inbox tracking (High human risk)</td>
-                    <td className="p-6 bg-[#1F241D]/10">Guidance documents, manual action steps</td>
-                    <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> OAuth-verified intake and countdowns</td>
-                  </tr>
-                  <tr>
-                    <td className="p-6 font-bold text-[#F5F3ED]">Employee training & logging</td>
-                    <td className="p-6 bg-[#1F241D]/10 text-red-400/90 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Omitted or undocumented (Audit failure)</td>
-                    <td className="p-6 bg-[#1F241D]/10">External seminars (No centralized logs)</td>
-                    <td className="p-6 text-[#F5F3ED] bg-[#242A20]/40 border-x border-[#8BA381]/20 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-[#8BA381]" /> Integrated training portal & auto certifications</td>
-                  </tr>
-                </tbody>
-              </table>
+              <h2 className="mt-5.5 max-w-xl text-[28px] sm:text-[42px] font-normal tracking-[-0.028em] leading-[1.12] text-[#F4F5F6]">{t('pricing.title')}</h2>
+              <p className="mt-4.5 max-w-lg text-[15.5px] leading-relaxed text-[#8A9095]">{t('pricing.subheadline')}</p>
             </div>
-            {/* Scroll indicator gradient masks */}
-            <div className="absolute top-0 bottom-0 left-0 w-10 bg-gradient-to-r from-[#141712] to-transparent pointer-events-none opacity-0 group-hover/scroll:opacity-100 transition-opacity duration-300" />
-            <div className="absolute top-0 bottom-0 right-0 w-10 bg-gradient-to-l from-[#141712] to-transparent pointer-events-none opacity-100 group-hover/scroll:opacity-0 transition-opacity duration-300" />
-          </div>
-
-        </div>
-      </section>
-
-      {/* SECTION 6: GDPR RISK CALCULATOR */}
-      <RiskCalculator />
-
-      {/* SECTION 7: PRICING TIERS */}
-      <section id="pricing" className="w-full bg-[#141712] relative z-10 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20">
-          
-          <div className="text-center mb-10">
-            <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Pricing Matrix</p>
-            <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-3 tracking-tight text-balance">Structured plans for every agency size</h2>
-            
-            {/* Annual Billing Toggle */}
-            <div className="inline-flex items-center gap-3 bg-[#1F241D] border border-[#2F362D]/80 p-1 rounded-full mt-4">
-              <button 
-                onClick={() => setAnnualBilling(true)}
-                className={`text-[10px] sm:text-xs font-bold py-1.5 px-4 rounded-full transition-all ${
-                  annualBilling ? 'bg-[#6E8B60] text-[#F5F3ED]' : 'text-[#9CA297] hover:text-[#F5F3ED]'
-                }`}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setAnnual(false)}
+                className="[font-family:var(--font-plex-mono)] text-[11.5px] tracking-[0.08em] px-3.5 py-2.5 border border-white/14 transition-colors"
+                style={{ background: annual ? 'transparent' : 'rgba(201,162,39,0.14)', color: annual ? '#8A9095' : '#C9A227' }}
               >
-                Yearly Billing (Save 20%)
+                {t('pricing.monthlyLabel').toUpperCase()}
               </button>
-              <button 
-                onClick={() => setAnnualBilling(false)}
-                className={`text-[10px] sm:text-xs font-bold py-1.5 px-4 rounded-full transition-all ${
-                  !annualBilling ? 'bg-[#6E8B60] text-[#F5F3ED]' : 'text-[#9CA297] hover:text-[#F5F3ED]'
-                }`}
+              <button
+                type="button"
+                onClick={() => setAnnual(true)}
+                className="[font-family:var(--font-plex-mono)] text-[11.5px] tracking-[0.08em] px-3.5 py-2.5 border border-white/14 transition-colors"
+                style={{ background: annual ? 'rgba(201,162,39,0.14)' : 'transparent', color: annual ? '#C9A227' : '#8A9095' }}
               >
-                Monthly Billing
+                {t('pricing.annualLabel').toUpperCase()}
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {[
-              { 
-                name: 'Free Starter', 
-                price: '0', 
-                yearly: '0', 
-                desc: 'Baseline assessment tools.', 
-                features: ['GDPR Gap Assessment', '1 Admin Seat', 'Regulatory News Updates', 'Self-Serve Help Docs'] 
-              },
-              { 
-                name: 'Starter Package', 
-                price: '39', 
-                yearly: '31', 
-                desc: 'Designed for small boutique digital agencies.', 
-                features: ['Activity Register (20 ROPAs)', 'Vendor Tracking (30 processors)', 'Hosted Privacy Policy', '2 Admin Seats', 'Standard Email Support'], 
-                popular: false 
-              },
-              { 
-                name: 'Professional OS', 
-                price: '89', 
-                yearly: '71', 
-                desc: 'Complete compliance management system for growing organizations.', 
-                features: ['Unlimited activity registers', 'Unlimited vendor tracking', 'Hosted Cookie Consent banner', 'Data Request queue', 'DPIA impact assessments', 'Client Portals (up to 10 clients)', '10 Admin Seats', 'Priority Support'], 
-                popular: true 
-              },
-              { 
-                name: 'Enterprise Scale', 
-                price: '179', 
-                yearly: '143', 
-                desc: 'Custom APIs and deep scaling for large networks.', 
-                features: ['Everything in Professional', 'Custom branding for portals', 'Automated Cookie Scanner API', 'Continuous Audit Log exports', 'Employee Training LMS integrations', 'Unlimited Client Dashboards', 'Dedicated Success Representative'], 
-                popular: false 
-              },
-            ].map((plan, i) => (
-              <div 
-                key={i} 
-                className={`rounded-2xl p-6.5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
-                  plan.popular 
-                    ? 'bg-[#1F241D] border-2 border-[#8BA381] shadow-2xl shadow-[#6E8B60]/10 scale-[1.01] md:scale-100 z-10' 
-                    : 'bg-[#1F241D]/35 border border-[#2F362D]/90 hover:border-[#2F362D]/60'
-                }`}
+          <div className="mt-11.5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-px bg-white/8 border border-white/8">
+            {TIERS.map((tier, i) => (
+              <div
+                key={i}
+                className="p-6.5 pb-7.5 flex flex-col justify-between min-h-[400px]"
+                style={{
+                  background: tier.highlight ? '#1F241D0d' : tier.bg,
+                  border: tier.highlight ? '1px solid rgba(201,162,39,0.5)' : undefined,
+                }}
               >
-                {plan.popular && (
-                  <div className="absolute top-0 right-0 bg-[#6E8B60] text-[#F5F3ED] text-[9px] font-bold uppercase tracking-wider py-1.5 px-4 rounded-bl-xl border-l border-b border-[#8BA381]/30">
-                    Recommended Plan
-                  </div>
-                )}
-
                 <div>
-                  <h4 className="text-base font-bold text-[#F5F3ED] mb-1.5">{plan.name}</h4>
-                  <p className="text-[11px] text-[#9CA297] leading-normal min-h-[32px] mb-6">{plan.desc}</p>
-                  
-                  <div className="flex items-baseline gap-1 mb-6">
-                    <span className="text-3xl font-extrabold text-[#F5F3ED] font-mono">
-                      €{annualBilling ? plan.yearly : plan.price}
-                    </span>
-                    <span className="text-xs text-[#9CA297]">/month</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.14em] uppercase" style={{ color: tier.highlight ? '#C9A227' : '#8A9095' }}>{tier.name}</span>
+                    {tier.badge && (
+                      <span className="[font-family:var(--font-plex-mono)] text-[9.5px] tracking-[0.1em] text-[#08090A] bg-[#C9A227] px-1.5 py-0.5">{tier.badge}</span>
+                    )}
                   </div>
-
-                  <ul className="space-y-3.5 border-t border-[#2F362D] pt-6 mb-8 text-xs text-[#9CA297]">
-                    {plan.features.map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5 leading-normal">
-                        <Check className={`w-4 h-4 shrink-0 mt-0.5 ${plan.popular ? 'text-[#8BA381]' : 'text-[#5F655A]'}`} />
+                  <div className="flex items-baseline gap-1.5 mt-4 flex-wrap">
+                    <span className="text-[34px] font-light tracking-[-0.03em] leading-none text-[#F4F5F6] [font-family:var(--font-plex-mono)]">
+                      {tier.price === null ? 'Custom' : `€${tier.price === 0 ? 0 : (annual ? annualPrice(tier.price) : tier.price)}`}
+                    </span>
+                    <span className="text-[13px] text-[#6E747A]">{tier.price === null || tier.price === 0 ? tier.period : (annual ? '/mo, billed yearly' : tier.period)}</span>
+                  </div>
+                  <p className="mt-4 text-[13.5px] leading-relaxed text-[#868C91] min-h-[42px] text-pretty">{tier.blurb}</p>
+                  <div className="grid gap-2.5 pt-4 mt-2 border-t border-white/7">
+                    {tier.features.map((feat, idx) => (
+                      <div key={idx} className="grid grid-cols-[12px_1fr] gap-2.5 items-start text-[13.5px] leading-normal text-[#9BA1A6]">
+                        <Check className="w-3 h-3 mt-0.5" style={{ color: tier.highlight ? '#C9A227' : '#5F655A' }} />
                         <span>{feat}</span>
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
-
-                <Link 
-                  href="/assessment" 
-                  className={`w-full text-center text-xs font-bold py-3 rounded-lg transition-all border focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] ${
-                    plan.popular 
-                      ? 'bg-[#6E8B60] hover:bg-[#596E51] text-[#F5F3ED] border-[#8BA381]/20 shadow-lg shadow-[#6E8B60]/10' 
-                      : 'bg-[#141712]/50 hover:bg-[#141712] text-[#C5C8C1] border-[#2F362D] hover:border-[#8BA381]/20'
-                  }`}
+                <Link
+                  href={tier.href}
+                  className="mt-7 text-center text-[13.5px] font-medium py-2.5 transition-colors"
+                  style={
+                    tier.highlight
+                      ? { background: '#C9A227', color: '#08090A' }
+                      : { background: 'transparent', color: '#E6E8EA', border: '1px solid rgba(255,255,255,0.18)' }
+                  }
                 >
-                  Get Started
+                  {tier.cta}
                 </Link>
               </div>
             ))}
           </div>
-
+          <div className="mt-6 flex flex-wrap gap-7 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-[#6E747A]">
+            <span>{t('pricing.footnote1')}</span>
+            <span>{t('pricing.footnote2')}</span>
+            <span>{t('pricing.footnote3')}</span>
+          </div>
         </div>
       </section>
 
-      {/* SECTION 8: TRUST & AUDIT SECURITY CREDENTIALS */}
-      <section className="w-full bg-[#191D17] border-y border-[#252B21]/60 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 md:py-16">
-          <div className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-2xl p-8 sm:p-10 shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#8BA381]/20 to-transparent" />
-            
-            <div className="text-center mb-10 max-w-xl mx-auto">
-              <h3 className="text-sm font-bold text-[#F5F3ED] uppercase tracking-wide mb-2.5">Security & Hosting Architecture</h3>
-              <p className="text-xs text-[#9CA297] leading-relaxed">
-                Compliance products must process data with complete transparency. Our hosting and encryption standards are fully documented below.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-              {[
-                { title: 'EU Data Residency', desc: '100% hosted in AWS Dublin (eu-west-1). Customer data never exits EU boundaries.' },
-                { title: 'AES-256 Encryption', desc: 'Strict data encrypt-at-rest pipelines and database sector partitions.' },
-                { title: 'Zero-Knowledge Log', desc: 'Consent validation receipts are cryptographic hashes. No tracking of raw user IPs.' },
-                { title: 'SOC 2 Type II Prep', desc: 'Internal security logs mapped to SOC 2 safety guidelines. Readiness audit target Q4 2026.' },
-                { title: 'GDPR Self-Certified', desc: 'Custodia is self-certified compliant under official EU Art. 30 processing standards.' }
-              ].map((cred, i) => (
-                <div key={i} className="bg-[#141712]/55 border border-[#2F362D]/60 p-4.5 rounded-xl">
-                  <Lock className="w-4 h-4 text-[#8BA381] mb-3" />
-                  <h4 className="text-xs font-bold text-[#F5F3ED] mb-1.5">{cred.title}</h4>
-                  <p className="text-[10px] text-[#9CA297] leading-normal">{cred.desc}</p>
-                </div>
-              ))}
-            </div>
+      {/* TRUST */}
+      <section id="trust" className="border-b border-white/7 bg-[#0B0C0E] scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-18 sm:py-20">
+          <div className="flex flex-wrap gap-7 items-baseline justify-between">
+            <h2 className="max-w-lg text-[24px] sm:text-[32px] font-normal tracking-[-0.025em] text-[#F4F5F6] text-balance">{t('trust.title')}</h2>
+            <p className="max-w-sm text-[15px] leading-relaxed text-[#7E8489]">{t('trust.subheadline')}</p>
           </div>
+          <div className="mt-11 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-px bg-white/8 border border-white/8">
+            {TRUST.map((cred, i) => (
+              <div key={i} className="bg-[#0B0C0E] p-6.5 pb-7 flex flex-col gap-2.5">
+                <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#C9A227]">{cred.label}</span>
+                <span className="text-[16px] font-medium tracking-[-0.012em] text-[#EDEFF0]">{cred.title}</span>
+                <span className="text-[13.5px] leading-relaxed text-[#868C91] text-pretty">{cred.body}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section id="assessment" className="relative overflow-hidden border-b border-white/7">
+        <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(90%_90%_at_50%_50%,#000,transparent_75%)]" />
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-26 flex flex-col items-center text-center">
+          <div className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">{t('assessment.badge')}</div>
+          <h2 className="mt-6 max-w-2xl text-[30px] sm:text-[50px] font-normal tracking-[-0.03em] leading-[1.1] text-[#F4F5F6] text-balance">{t('assessment.title')}</h2>
+          <p className="mt-5.5 max-w-xl text-[17px] leading-relaxed text-[#9BA1A6] text-pretty">{t('assessment.subheadline')}</p>
+          <div className="mt-9 flex flex-wrap gap-3.5 justify-center">
+            <Link href="/assessment" className="text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-7 py-3.5 transition-colors">
+              {t('assessment.ctaAssessment')}
+            </Link>
+            <Link href="/contact" className="text-[15px] text-[#E6E8EA] border border-white/16 hover:border-white/40 px-7 py-3.5 transition-colors">
+              {t('assessment.ctaWalkthrough')}
+            </Link>
+          </div>
+          <div className="mt-7 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-[#6E747A]">{t('assessment.usedBy')}</div>
         </div>
       </section>
 

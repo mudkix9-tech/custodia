@@ -1,8 +1,32 @@
 import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Lock, Server, Globe } from 'lucide-react';
-import { MarketingHeader } from '@/components/layout/MarketingHeader';
+import { IBM_Plex_Sans, IBM_Plex_Mono, Spectral } from 'next/font/google';
+import { Lock, Server } from 'lucide-react';
+import { MarketingHeader, Logo } from '@/components/layout/MarketingHeader';
+import { FooterLocaleSwitcher } from '@/components/layout/FooterLocaleSwitcher';
+
+const plexSans = IBM_Plex_Sans({
+  subsets: ['latin'],
+  variable: '--font-plex-sans',
+  weight: ['300', '400', '500', '600'],
+  display: 'swap',
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  variable: '--font-plex-mono',
+  weight: ['400', '500'],
+  display: 'swap',
+});
+
+const spectral = Spectral({
+  subsets: ['latin'],
+  variable: '--font-spectral',
+  weight: ['300', '400'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+});
 
 export async function generateMetadata({
   params
@@ -67,26 +91,65 @@ export async function generateMetadata({
   };
 }
 
+const FOOTER_COLUMNS = [
+  {
+    title: 'Platform',
+    links: [
+      { name: 'Features', href: '/features' },
+      { name: 'Pricing', href: '/pricing' },
+      { name: 'Security', href: '/security' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { name: 'About Custodia', href: '/about' },
+      { name: 'Enterprise', href: '/enterprise' },
+      { name: 'For Agencies', href: '/for-agencies' },
+      { name: 'Contact', href: '/contact' },
+    ],
+  },
+  {
+    title: 'Resources',
+    links: [
+      { name: 'GDPR guides', href: '/gdpr' },
+      { name: 'Blog', href: '/blog' },
+      { name: 'Changelog', href: '/changelog' },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { name: 'Terms of service', href: '/legal/terms' },
+      { name: 'Privacy notice', href: '/legal/privacy' },
+      { name: 'Cookie policy', href: '/legal/cookies' },
+      { name: 'Data processing agreement', href: '/legal/dpa' },
+    ],
+  },
+];
+
 export default function MarketingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#141712] text-[#F5F3ED] font-sans selection:bg-[#6E8B60]/30 overflow-x-hidden flex flex-col relative antialiased">
-      
+    <div
+      className={`min-h-screen bg-[#08090A] text-[#E6E8EA] font-sans selection:bg-[#C9A227] selection:text-[#08090A] overflow-x-hidden flex flex-col relative antialiased ${plexSans.variable} ${plexMono.variable} ${spectral.variable}`}
+    >
+
       {/* Skip to Content Link */}
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-[#1F241D] focus:text-[#F5F3ED] focus:px-4 focus:py-2.5 focus:rounded-lg focus:border focus:border-[#8BA381]/30 focus:outline-none"
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-[#1a1c1e] focus:text-[#E6E8EA] focus:px-4 focus:py-2.5 focus:rounded-lg focus:border focus:border-[#C9A227]/30 focus:outline-none"
       >
         Skip to main content
       </a>
 
       {/* Precision Grid Background */}
-      <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_right,#2a332508_1px,transparent_1px),linear-gradient(to_bottom,#2a332508_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)] pointer-events-none z-0" />
-      <div aria-hidden="true" className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-[#6E8B60]/5 rounded-full blur-[120px] pointer-events-none" />
-      <div aria-hidden="true" className="absolute top-[30%] right-1/4 w-[500px] h-[500px] bg-[#8BA381]/5 rounded-full blur-[140px] pointer-events-none" />
+      <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)] pointer-events-none z-0" />
+      <div aria-hidden="true" className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-[#C9A227]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div aria-hidden="true" className="absolute top-[30%] right-1/4 w-[500px] h-[500px] bg-[#C9A227]/5 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Navigation */}
       <MarketingHeader />
@@ -97,78 +160,36 @@ export default function MarketingLayout({
       </main>
 
       {/* Footer */}
-      <footer role="contentinfo" className="bg-[#0C0F0B] border-t border-[#1F231D] pt-16 pb-10 relative z-10 text-xs">
+      <footer role="contentinfo" className="[font-family:var(--font-plex-sans)] bg-[#08090A] border-t border-white/7 pt-16 pb-10 relative z-10 text-xs">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-10 mb-12">
             <div className="col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <Link href="/" className="flex items-center gap-2.5">
-                  <svg width="28" height="28" viewBox="0 0 48 48" aria-hidden="true">
-                    <path d="M8 21v-6a7 7 0 0 1 7-7h6" fill="none" stroke="#F4F1EA" strokeWidth="5" strokeLinecap="round" />
-                    <path d="M40 27v6a7 7 0 0 1-7 7h-6" fill="none" stroke="#F4F1EA" strokeWidth="5" strokeLinecap="round" />
-                    <circle cx="24" cy="24" r="7.5" fill="#A3B8A6" />
-                  </svg>
-                  <div className="leading-none">
-                    <div className="font-sans font-bold text-[20px] tracking-tight text-[#F5F3ED] flex items-center gap-1.5">
-                      custodia <span className="text-[10px] uppercase font-mono tracking-wider bg-[#6E8B60]/15 text-[#8BA381] px-1.5 py-0.5 rounded border border-[#6E8B60]/20">OS</span>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-              <p className="text-[#9CA297] text-xs leading-relaxed max-w-xs mb-6">
+              <Logo />
+              <p className="text-[#6E747A] text-xs leading-relaxed max-w-xs mt-4 mb-6">
                 The compliance automation platform designed for modern agencies.
               </p>
-              <div className="flex items-center gap-4 text-[#5F655A] font-mono text-[10px]">
-                <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-[#6E8B60]" /> AWS Dublin</span>
-                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#6E8B60]" /> SSL Secured</span>
+              <div className="flex items-center gap-4 text-[#5C6266] [font-family:var(--font-plex-mono)] text-[10px]">
+                <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-[#C9A227]" /> AWS Dublin</span>
+                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#C9A227]" /> SSL Secured</span>
               </div>
             </div>
-            
+
             {/* Footer Links */}
-            {[
-              { 
-                title: 'Product Modules', 
-                links: [
-                  { name: 'Gap Assessment', href: '/features' },
-                  { name: 'Activity Register', href: '/features' },
-                  { name: 'Vendor Tracking', href: '/features' },
-                  { name: 'Cookie Consent', href: '/features' }
-                ] 
-              },
-              { 
-                title: 'Resource Hub', 
-                links: [
-                  { name: 'GDPR Guidance', href: '/gdpr' },
-                  { name: 'Audit Checklist', href: '/changelog' },
-                  { name: 'Security Posture', href: '/security' }
-                ] 
-              },
-              { 
-                title: 'Legal Ledger', 
-                links: [
-                  { name: 'Terms of Service', href: '/legal/terms' },
-                  { name: 'Privacy Policy', href: '/legal/privacy' },
-                  { name: 'Cookie Statement', href: '/legal/cookies' },
-                  { name: 'Standard DPA', href: '/legal/dpa' }
-                ] 
-              }
-            ].map((col, i) => (
+            {FOOTER_COLUMNS.map((col, i) => (
               <div key={i}>
-                <h4 className="text-[#F5F3ED] font-bold mb-4 text-xs">{col.title}</h4>
-                <ul className="space-y-2.5 text-[#9CA297]">
+                <h4 className="[font-family:var(--font-plex-mono)] text-[10.5px] uppercase tracking-[0.14em] text-[#6E747A] mb-4">{col.title}</h4>
+                <ul className="space-y-2.5 text-[#9BA1A6]">
                   {col.links.map((link, j) => (
-                    <li key={j}><Link href={link.href} className="hover:text-[#F5F3ED] transition-colors">{link.name}</Link></li>
+                    <li key={j}><Link href={link.href} className="hover:text-[#E6E8EA] transition-colors">{link.name}</Link></li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          
-          <div className="border-t border-[#1F231D] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-[#5F655A] text-[10.5px]">© {new Date().getFullYear()} Custodia OS. All rights reserved.</p>
-            <div className="flex items-center gap-2 text-[#9CA297] hover:text-[#F5F3ED] cursor-pointer transition-colors text-[10.5px]">
-              <Globe className="w-3.5 h-3.5 text-[#5F655A]" /> English (EU)
-            </div>
+
+          <div className="border-t border-white/7 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-[#5C6266] [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.02em]">© {new Date().getFullYear()} Custodia. All rights reserved.</p>
+            <FooterLocaleSwitcher />
           </div>
         </div>
       </footer>

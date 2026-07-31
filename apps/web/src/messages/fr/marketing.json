@@ -1,20 +1,50 @@
 {
   "hero": {
-    "badge": "Système d'exploitation de conformité RGPD",
-    "titlePrefix": "Conformité RGPD pour toute votre agence.",
-    "titleMain": "Une seule plateforme.",
-    "subheadline": "Documentez les activités de traitement, cartographiez les fournisseurs, gérez le consentement aux cookies, traitez les demandes de données et formez les employés — le tout en un seul endroit. Pas de consultants juridiques coûteux. Pas de tableurs.",
-    "ctaAssessment": "Lancer l'évaluation gratuite",
-    "ctaCalculator": "Tester l'exposition au risque"
+    "badge": "Système d'exploitation de conformité RGPD · Union européenne",
+    "titlePrefix": "Un seul système pour",
+    "titleAccent": "tout ce que le RGPD",
+    "titleSuffix": "exige de vous.",
+    "subheadline": "Custodia remplace les tableurs, les drives partagés et les mandats ponctuels de consultants que la plupart des entreprises de l'UE appellent leur programme de conformité. Registres, évaluations, fournisseurs, demandes des personnes concernées, consentement et violations — gérés en un seul endroit, avec une piste d'audit acceptée par les régulateurs.",
+    "ctaAssessment": "Démarrer l'évaluation gratuite",
+    "ctaPlatform": "Voir la plateforme",
+    "note": "Pas de carte. Pas d'appel commercial. 12 minutes."
   },
-  "features": {
-    "badge": "Suite de conformité",
-    "title": "Douze modules. Un noyau de conformité.",
-    "subheadline": "Fini les suivis de conformité séparés et les audits sur tableurs. Surveillez, suivez et protégez l'ensemble de vos opérations depuis un tableau de bord unique."
+  "pains": {
+    "title": "La conformité échoue silencieusement — dans l'écart entre les outils.",
+    "subheadline": "Trois modes de défaillance expliquent presque tous les constats relevés par une autorité de contrôle de l'UE."
   },
-  "authorities": {
-    "badge": "Paysage d'application",
-    "title": "Alignement avec les autorités de contrôle",
-    "subheadline": "Le RGPD est uniforme, mais les priorités d'application varient selon les pays. Custodia adapte ses configurations de conformité pour correspondre aux audits de vos publics cibles."
+  "modules": {
+    "badge": "La plateforme",
+    "title": "Huit modules, un registre, une piste d'audit.",
+    "subheadline": "Chaque module écrit dans le même registre des traitements. Modifiez un fournisseur, et le registre, l'évaluation de transfert et les workflows DSAR concernés se mettent à jour avec lui."
+  },
+  "advisor": {
+    "badge": "Conseiller de conformité IA",
+    "title": "Des réponses avec citations, pas des suppositions assurées.",
+    "subheadline": "Le conseiller s'appuie sur un corpus juridique tenu à jour avant de répondre. Chaque réponse est fondée sur une source nommée avec une référence de paragraphe, afin que votre DPO puisse vérifier le raisonnement et que votre client puisse en voir le fondement.",
+    "quote": "La recherche est limitée à la juridiction de l'entité concernée — une question posée pour un client français renvoie les positions de la CNIL, pas une réponse générale à l'échelle de l'UE.",
+    "corpusNote": "Corpus révisé mensuellement · dernière mise à jour"
+  },
+  "pricing": {
+    "badge": "Tarifs",
+    "title": "Facturé par entité. Jamais par utilisateur.",
+    "subheadline": "Invitez toute l'agence, le responsable marketing du client et son conseil externe. La conformité échoue quand des personnes en sont exclues.",
+    "monthlyLabel": "Mensuel",
+    "annualLabel": "Annuel −20%",
+    "footnote1": "Prix hors TVA · facturée automatiquement selon l'État membre",
+    "footnote2": "Utilisateurs illimités sur chaque offre",
+    "footnote3": "Résiliez ou exportez votre registre à tout moment"
+  },
+  "trust": {
+    "title": "Une infrastructure que vous pouvez présenter à un régulateur.",
+    "subheadline": "Custodia conserve les preuves de votre conformité. Elle est construite selon le niveau d'exigence que cela suppose."
+  },
+  "assessment": {
+    "badge": "Évaluation gratuite des écarts",
+    "title": "Découvrez où vous en êtes avant que quelqu'un d'autre ne le fasse.",
+    "subheadline": "Répondez à 38 questions cartographiées sur le règlement et recevez un rapport noté avec des mesures correctives priorisées. Gratuit, en permanence — sans carte, sans appel, et le rapport vous appartient, que vous poursuiviez ou non.",
+    "ctaAssessment": "Démarrer l'évaluation gratuite",
+    "ctaWalkthrough": "Réserver une présentation de 20 minutes",
+    "usedBy": "Utilisé par des agences et leurs clients dans toute l'UE"
   }
 }

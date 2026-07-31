@@ -1,20 +1,50 @@
 {
   "hero": {
-    "badge": "GDPR Compliance-Betriebssystem",
-    "titlePrefix": "GDPR-Compliance für Ihre gesamte Agentur.",
-    "titleMain": "Eine Plattform.",
-    "subheadline": "Dokumentieren Sie Verarbeitungstätigkeiten, weisen Sie Anbieter zu, verwalten Sie Cookie-Einwilligungen, bearbeiten Sie Datenanfragen und schulen Sie Mitarbeiter – alles an einem Ort. Keine teuren Rechtsberater. Keine Tabellen.",
-    "ctaAssessment": "Kostenlosen Gap-Assessment starten",
-    "ctaCalculator": "Risiko-Exposition testen"
+    "badge": "DSGVO-Compliance-Betriebssystem · Europäische Union",
+    "titlePrefix": "Ein System für",
+    "titleAccent": "alles, was die DSGVO",
+    "titleSuffix": "von Ihnen verlangt.",
+    "subheadline": "Custodia ersetzt die Tabellen, Shared Drives und ad-hoc beauftragten Berater, die die meisten EU-Unternehmen ihr Compliance-Programm nennen. Verarbeitungsverzeichnis, Assessments, Anbieter, Betroffenenanfragen, Einwilligungen und Meldepflichten — an einem Ort verwaltet, mit einem Prüfpfad, den Aufsichtsbehörden akzeptieren.",
+    "ctaAssessment": "Kostenlose Bewertung starten",
+    "ctaPlatform": "Plattform ansehen",
+    "note": "Keine Kreditkarte. Kein Verkaufsgespräch. 12 Minuten."
   },
-  "features": {
-    "badge": "Compliance-Suite",
-    "title": "Zwölf Module. Ein Compliance-Kern.",
-    "subheadline": "Verzichten Sie auf separate Compliance-Tracker und Tabellenprüfungen. Überwachen, verfolgen und schützen Sie Ihren gesamten Betrieb von einem einzigen Dashboard aus."
+  "pains": {
+    "title": "Compliance scheitert leise — in der Lücke zwischen Werkzeugen.",
+    "subheadline": "Drei Fehlermuster erklären fast jeden Befund, den eine EU-Aufsichtsbehörde aufwirft."
   },
-  "authorities": {
-    "badge": "Durchsetzungslandschaft",
-    "title": "Abstimmung der Aufsichtsbehörden",
-    "subheadline": "Die DSGVO ist einheitlich, aber die Durchsetzungsprioritäten variieren je nach Land. Custodia passt Compliance-Konfigurationen so an, dass sie den Prüfungen Ihrer Zielgruppen entsprechen."
+  "modules": {
+    "badge": "Die Plattform",
+    "title": "Acht Module, ein Verzeichnis, ein Prüfpfad.",
+    "subheadline": "Jedes Modul schreibt in dasselbe Verarbeitungsverzeichnis. Ändern Sie einen Anbieter, und das Verzeichnis, die Transfer-Bewertung und die betroffenen DSAR-Workflows aktualisieren sich mit."
+  },
+  "advisor": {
+    "badge": "KI-Compliance-Berater",
+    "title": "Antworten mit Quellenangaben, nicht mit selbstsicheren Vermutungen.",
+    "subheadline": "Der Berater greift vor jeder Antwort auf einen gepflegten Rechtskorpus zurück. Jede Antwort stützt sich auf eine benannte Quelle mit Absatzverweis, damit Ihr Datenschutzbeauftragter die Begründung prüfen und Ihr Kunde die Grundlage nachvollziehen kann.",
+    "quote": "Die Recherche ist auf die Rechtsordnung der bearbeiteten Entität beschränkt — eine Frage bei einem französischen Kunden liefert CNIL-Positionen, keine allgemeine EU-Antwort.",
+    "corpusNote": "Korpus monatlich geprüft · letzte Aktualisierung"
+  },
+  "pricing": {
+    "badge": "Preise",
+    "title": "Pro Entität berechnet. Nie pro Nutzer.",
+    "subheadline": "Laden Sie die gesamte Agentur, die Marketingleitung des Kunden und dessen externe Beratung ein. Compliance scheitert, wenn Menschen davon ausgeschlossen sind.",
+    "monthlyLabel": "Monatlich",
+    "annualLabel": "Jährlich −20%",
+    "footnote1": "Alle Preise zzgl. MwSt. · automatisch pro Mitgliedstaat berechnet",
+    "footnote2": "Unbegrenzte Nutzer in jedem Plan",
+    "footnote3": "Jederzeit kündbar oder Verzeichnis exportierbar"
+  },
+  "trust": {
+    "title": "Infrastruktur, die Sie einer Aufsichtsbehörde vorlegen können.",
+    "subheadline": "Custodia bewahrt den Nachweis Ihrer Compliance auf. Es ist nach dem Standard gebaut, den das voraussetzt."
+  },
+  "assessment": {
+    "badge": "Kostenlose Lückenanalyse",
+    "title": "Finden Sie heraus, wo Sie stehen, bevor es jemand anderes tut.",
+    "subheadline": "Beantworten Sie 38 Fragen, die auf die Verordnung abgebildet sind, und erhalten Sie einen bewerteten Bericht mit priorisierten Maßnahmen. Dauerhaft kostenlos — keine Kreditkarte, kein Anruf, und der Bericht gehört Ihnen, unabhängig davon, ob Sie fortfahren.",
+    "ctaAssessment": "Kostenlose Bewertung starten",
+    "ctaWalkthrough": "20-minütige Live-Demo buchen",
+    "usedBy": "Im Einsatz bei Agenturen und ihren Kunden in der gesamten EU"
   }
 }
