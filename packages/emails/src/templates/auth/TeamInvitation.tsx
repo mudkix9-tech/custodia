@@ -23,10 +23,10 @@ export const TeamInvitation = ({
         Hi,
       </Text>
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        <strong>{inviterName}</strong> invited you to join <strong>{orgName}</strong> on Privaro as a <strong>{role}</strong>.
+        <strong>{inviterName}</strong> invited you to join <strong>{orgName}</strong> on Custodia as a <strong>{role}</strong>.
       </Text>
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 24px' }}>
-        Privaro is a GDPR compliance platform that helps your team manage data protection, vendor tracking, and regulatory requirements.
+        Custodia is a GDPR compliance platform that helps your team manage data protection, vendor tracking, and regulatory requirements.
       </Text>
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
         <Button href={url}>Accept Invitation</Button>

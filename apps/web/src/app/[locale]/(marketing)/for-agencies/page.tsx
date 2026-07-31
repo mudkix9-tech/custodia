@@ -17,7 +17,7 @@ export default function ForAgenciesPage() {
           <span className="text-ink-400">We keep it compliant.</span>
         </h1>
         <p className="text-xl text-ink-500 max-w-2xl mx-auto mb-10">
-          Agencies face unique GDPR challenges. You are both a controller for your own data, and a processor for your clients. Generic compliance tools don't understand this. Privaro does.
+          Agencies face unique GDPR challenges. You are both a controller for your own data, and a processor for your clients. Generic compliance tools don't understand this. Custodia does.
         </p>
         <Link href="/assessment" className="inline-flex bg-sage-700 hover:bg-sage-600 text-bone-50 text-base font-semibold py-3.5 px-8 rounded-xl transition-all items-center justify-center gap-2 shadow-card">
            Start free agency assessment <ArrowRight className="w-4 h-4"/>
@@ -51,7 +51,7 @@ export default function ForAgenciesPage() {
             <h2 className="text-3xl font-bold text-ink-900 mb-4">You're both a controller and a processor.</h2>
             <p className="text-lg text-ink-500 leading-relaxed mb-6">
               When you manage a newsletter for a client, you're a processor. When you hire an employee, you're a controller.
-              Privaro's architecture natively separates these contexts, ensuring your ROPA and policies accurately reflect your dual role.
+              Custodia's architecture natively separates these contexts, ensuring your ROPA and policies accurately reflect your dual role.
             </p>
             <ul className="space-y-3">
                <li className="flex items-center gap-3 text-ink-700"><ShieldCheck className="w-5 h-5 text-sage-600"/> Context-aware ROPA generation</li>
@@ -77,7 +77,7 @@ export default function ForAgenciesPage() {
             <h2 className="text-3xl font-bold text-ink-900 mb-4">Your clients are asking about compliance.</h2>
             <p className="text-lg text-ink-500 leading-relaxed mb-6">
               Enterprise clients won't sign unless you can prove your GDPR posture. Don't lose deals because you're disorganized.
-              Privaro lets you generate a live, verifiable Client Trust Portal with one click.
+              Custodia lets you generate a live, verifiable Client Trust Portal with one click.
             </p>
             <ul className="space-y-3">
                <li className="flex items-center gap-3 text-ink-700"><ShieldCheck className="w-5 h-5 text-sage-600"/> Instantly shareable compliance portals</li>
@@ -128,7 +128,7 @@ export default function ForAgenciesPage() {
             <h2 className="text-3xl font-bold text-ink-900 mb-4">Prove compliance in seconds, not weeks.</h2>
             <p className="text-lg text-ink-500 leading-relaxed mb-6">
               When a client or a regulatory body asks for proof, you shouldn't have to scramble.
-              Privaro compiles your ROPA, policies, DPAs, and vendor lists into a comprehensive, stamped audit file instantly.
+              Custodia compiles your ROPA, policies, DPAs, and vendor lists into a comprehensive, stamped audit file instantly.
             </p>
             <ul className="space-y-3">
                <li className="flex items-center gap-3 text-ink-700"><ShieldCheck className="w-5 h-5 text-sage-600"/> One-click comprehensive audit generation</li>
@@ -142,7 +142,7 @@ export default function ForAgenciesPage() {
       {/* Testimonial Placeholder */}
       <section className="max-w-4xl mx-auto px-6 mb-32 text-center">
          <div className="text-2xl font-serif text-ink-900 italic mb-6">
-            "Privaro finally gave us a system that understands how our agency actually works. It replaced our messy spreadsheets and expensive legal consultant in one day."
+            "Custodia finally gave us a system that understands how our agency actually works. It replaced our messy spreadsheets and expensive legal consultant in one day."
          </div>
          <div className="font-bold text-ink-900">Sarah Jenkins</div>
          <div className="text-ink-500 text-sm">Managing Director, Digital Forward</div>
@@ -154,7 +154,7 @@ export default function ForAgenciesPage() {
            <div className="relative z-10">
               <Users className="w-12 h-12 text-sage-600 mx-auto mb-6" />
               <h2 className="text-3xl font-serif text-ink-900 mb-4 tracking-tight">Ready to organize your agency?</h2>
-              <p className="text-ink-600 mb-8 max-w-lg mx-auto">Join hundreds of EU agencies managing their compliance on Privaro.</p>
+              <p className="text-ink-600 mb-8 max-w-lg mx-auto">Join hundreds of EU agencies managing their compliance on Custodia.</p>
               <Link href="/assessment" className="inline-flex bg-sage-700 hover:bg-sage-600 text-bone-50 text-base font-semibold py-3.5 px-8 rounded-xl transition-all items-center justify-center gap-2 shadow-card">
                  Start free assessment <ArrowRight className="w-4 h-4"/>
               </Link>

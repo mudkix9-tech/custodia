@@ -17,7 +17,7 @@ export default function SecurityPage() {
           <span className="text-ink-400">like you protect your clients.</span>
         </h1>
         <p className="text-xl text-ink-500 max-w-2xl mx-auto mb-10">
-          We build compliance software, so our security posture has to be flawless. Read about how we secure the Privaro platform.
+          We build compliance software, so our security posture has to be flawless. Read about how we secure the Custodia platform.
         </p>
       </section>
 
@@ -49,7 +49,7 @@ export default function SecurityPage() {
          <div className="border-t border-ink-900/5 pt-16">
             <h2 className="text-3xl font-bold text-ink-900 mb-6">GDPR Compliance</h2>
             <p className="text-lg text-ink-500 leading-relaxed mb-6">
-               We practice what we preach — Privaro is fully GDPR compliant. We maintain our own Records of Processing Activities, manage our vendors meticulously, and have strict data retention policies in place.
+               We practice what we preach — Custodia is fully GDPR compliant. We maintain our own Records of Processing Activities, manage our vendors meticulously, and have strict data retention policies in place.
             </p>
             <ul className="space-y-3 mb-6">
                <li className="flex items-center gap-3 text-ink-700"><CheckCircle2 className="w-5 h-5 text-sage-600"/> Data Processing Agreement (DPA) available for all customers.</li>

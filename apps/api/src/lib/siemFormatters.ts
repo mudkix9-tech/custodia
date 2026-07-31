@@ -1,7 +1,7 @@
 export function formatJSON(entry: any) {
   return JSON.stringify({
     timestamp: entry.createdAt,
-    source: 'privaro',
+    source: 'custodia',
     organizationId: entry.organizationId,
     actor: {
       userId: entry.userId,
@@ -37,14 +37,14 @@ export function formatCEF(entry: any) {
 
   const extensionStr = extensions.join(' ');
 
-  return `CEF:0|Privaro|Privaro|1.0|${entry.action}|${entry.description || entry.action}|${severity}|${extensionStr}`;
+  return `CEF:0|Custodia|Custodia|1.0|${entry.action}|${entry.description || entry.action}|${severity}|${extensionStr}`;
 }
 
 export function formatSyslog(entry: any) {
   const timestamp = new Date(entry.createdAt).toISOString();
   // Construct a standard syslog format string (RFC 5424) or basic BSD syslog
   // Using a simplified RFC 5424 structure without strict facility/severity numbers
-  const hostname = 'privaro';
+  const hostname = 'custodia';
   const appName = 'audit';
   const procId = '-';
   const msgId = entry.action;

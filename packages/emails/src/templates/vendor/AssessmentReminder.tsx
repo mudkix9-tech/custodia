@@ -17,7 +17,7 @@ export const AssessmentReminder = ({
   orgName = 'Acme Corp',
   vendorName = 'Mailchimp',
   recipientName = 'Security Team',
-  url = 'https://app.privaro.io/public/assessments/token-uuid',
+  url = 'https://app.custodia.io/public/assessments/token-uuid',
   daysRemaining = 7
 }: AssessmentReminderProps) => {
   return (

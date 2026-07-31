@@ -18,7 +18,7 @@ export const PaymentFailed = ({
   url = 'https://app.example.com/billing'
 }: PaymentFailedProps) => {
   return (
-    <Layout previewText="Your Privaro subscription payment was unsuccessful">
+    <Layout previewText="Your Custodia subscription payment was unsuccessful">
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
         Hi {name},
       </Text>

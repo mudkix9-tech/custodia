@@ -77,18 +77,18 @@ export const emailWorker = createWorker('email-sequences', async (job: any) => {
       html = `
         <p>Hi there,</p>
         <p>It's been a few days since you completed your GDPR assessment. Your score of ${score}% indicates high risk areas.</p>
-        <p>Most agencies tackle their Vendor Processing Agreements (DPAs) first. Privaro helps you automate this.</p>
+        <p>Most agencies tackle their Vendor Processing Agreements (DPAs) first. Custodia helps you automate this.</p>
         <p><a href="${process.env.APP_URL}/assessment/results?id=${targetId}">Return to your dashboard</a></p>
       `;
       break;
 
     case 'day_7_push':
-      subject = `Missing vendor DPAs takes 10 minutes to fix with Privaro.`;
+      subject = `Missing vendor DPAs takes 10 minutes to fix with Custodia.`;
       html = `
         <p>Hi,</p>
-        <p>One of your critical gaps — missing vendor DPAs — is an easy fix with Privaro OS.</p>
+        <p>One of your critical gaps — missing vendor DPAs — is an easy fix with Custodia OS.</p>
         <p>Start your 14-day free trial of our Professional tier today and automate your vendor compliance.</p>
-        <p><a href="${process.env.APP_URL}/pricing">View Privaro Plans</a></p>
+        <p><a href="${process.env.APP_URL}/pricing">View Custodia Plans</a></p>
       `;
       break;
 
@@ -105,7 +105,7 @@ export const emailWorker = createWorker('email-sequences', async (job: any) => {
 
   try {
     await resend.emails.send({
-      from: 'Custodia <noreply@trycustodia.online>',
+      from: `Custodia  <hello@${process.env.EMAIL_FROM_DOMAIN || 'trycustodia.online'}>`,
       to: data.email,
       subject,
       html,

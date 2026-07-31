@@ -18,7 +18,7 @@ export const PasswordChanged = ({
         Hi,
       </Text>
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        Your password for your Privaro account was successfully changed on {time} from IP address {ipAddress}.
+        Your password for your Custodia account was successfully changed on {time} from IP address {ipAddress}.
       </Text>
       <Text style={{ fontSize: '14px', color: BRAND.textSecondary, margin: '0' }}>
         If you did not make this change, please contact support immediately.

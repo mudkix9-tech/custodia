@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: privaaro-api
+    name: custodia-api
     env: node
     plan: free # Can upgrade to standard if background workers and fast start are needed
     buildCommand: npm install

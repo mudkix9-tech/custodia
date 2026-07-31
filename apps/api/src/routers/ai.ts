@@ -26,7 +26,7 @@ import { trackAiUsage } from '../lib/billing.js';
 
 const ai = new GoogleGenAI({
   vertexai: true,
-  project: process.env.GCP_PROJECT_ID || 'privaro',
+  project: process.env.GCP_PROJECT_ID || 'custodia',
   location: process.env.GCP_LOCATION || 'us-central1',
 });
 
@@ -60,7 +60,7 @@ function classifyIntent(query: string): Intent {
   
   if (
     q.includes('we') || q.includes('our') || q.includes('us') || 
-    q.includes('privaro') || q.includes('my organization') || 
+    q.includes('custodia') || q.includes('my organization') || 
     q.includes('are we') || q.includes('do we') || q.includes('our policy') ||
     q.includes('compliance status') || q.includes('our compliance')
   ) {
@@ -757,12 +757,12 @@ You MUST begin your response with the following exact disclaimer:
         if (intent === 'organization_specific') {
           if (qLower.includes('dpo') || qLower.includes('data protection officer')) {
             if (!org.hasDpo) {
-              insights.push(`⚠️ **DPO Config**: You asked about your DPO status, but currently do not have a Data Protection Officer configured in Privaro. Consider verifying if Article 37 requirements apply to your processing activities.`);
+              insights.push(`⚠️ **DPO Config**: You asked about your DPO status, but currently do not have a Data Protection Officer configured in Custodia. Consider verifying if Article 37 requirements apply to your processing activities.`);
             }
           }
           if (qLower.includes('ropa') || qLower.includes('processing') || qLower.includes('activity') || qLower.includes('activities') || qLower.includes('record')) {
             if (activities.length === 0) {
-              insights.push(`⚠️ **ROPA Config**: You asked about processing activities, but have 0 active Processing Activities registered in your Privaro account. Article 30 requires keeping a ROPA if you have >250 employees or process high-risk data.`);
+              insights.push(`⚠️ **ROPA Config**: You asked about processing activities, but have 0 active Processing Activities registered in your Custodia account. Article 30 requires keeping a ROPA if you have >250 employees or process high-risk data.`);
             }
           }
           if (qLower.includes('vendor') || qLower.includes('processor') || qLower.includes('third party') || qLower.includes('dpa')) {

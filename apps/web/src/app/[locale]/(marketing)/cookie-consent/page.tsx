@@ -66,7 +66,7 @@ export default function CookieConsentPage() {
             <div className="bg-sage-50 border border-sage-500/20 p-8 rounded-3xl flex flex-col justify-center">
                <h3 className="text-2xl font-bold text-ink-900 mb-4">More than just a banner.</h3>
                <p className="text-lg text-ink-600 leading-relaxed mb-8">
-                  Unlike standalone CMPs (Cookiebot, Usercentrics), our cookie consent module is deeply integrated into the Privaro OS. When a cookie scanner detects a new vendor, it automatically prompts you to update your ROPA and Privacy Policy.
+                  Unlike standalone CMPs (Cookiebot, Usercentrics), our cookie consent module is deeply integrated into the Custodia OS. When a cookie scanner detects a new vendor, it automatically prompts you to update your ROPA and Privacy Policy.
                </p>
                <Link href="/features" className="inline-flex items-center gap-2 text-sage-700 font-semibold hover:text-sage-600 transition-colors">
                   Explore all 10 modules <ArrowRight className="w-4 h-4"/>
@@ -82,7 +82,7 @@ export default function CookieConsentPage() {
             <div className="flex flex-col items-center">
                <div className="w-12 h-12 bg-sage-100 text-sage-700 rounded-full flex items-center justify-center font-bold mb-4">1</div>
                <h4 className="font-bold text-ink-900 mb-2">Add your domain</h4>
-               <p className="text-sm text-ink-500">Privaro automatically scans and categorizes your cookies.</p>
+               <p className="text-sm text-ink-500">Custodia automatically scans and categorizes your cookies.</p>
             </div>
             <div className="flex flex-col items-center">
                <div className="w-12 h-12 bg-sage-100 text-sage-700 rounded-full flex items-center justify-center font-bold mb-4">2</div>

@@ -11,16 +11,13 @@ import { OrgSwitcher } from './OrgSwitcher';
 export function Logo({ className = '' }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
-        <rect x="1" y="1" width="30" height="30" rx="8" fill="#3F5836" />
-        <path
-          d="M16 7c-3.5 1.5-6.5 1.8-8 1.8 0 6.4 2 11.5 8 14.4 6-2.9 8-8 8-14.4-1.5 0-4.5-.3-8-1.8z"
-          fill="#EFF2EC"
-        />
-        <circle cx="16" cy="15" r="2.2" fill="#3F5836" />
+      <svg width="26" height="26" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M8 21v-6a7 7 0 0 1 7-7h6" fill="none" stroke="#17222C" strokeWidth="5" strokeLinecap="round" />
+        <path d="M40 27v6a7 7 0 0 1-7 7h-6" fill="none" stroke="#17222C" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="24" cy="24" r="7.5" fill="#0E4E55" />
       </svg>
       <div className="leading-none">
-        <div className="font-serif text-[22px] tracking-tight text-ink-900">Privaro</div>
+        <div className="font-sans font-bold text-[22px] tracking-tight text-ink-900">custodia</div>
       </div>
     </div>
   );

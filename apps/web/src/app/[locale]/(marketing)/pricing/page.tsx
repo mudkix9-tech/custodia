@@ -19,7 +19,7 @@ const FAQS = [
   { q: "Do you have special pricing for non-profits?", a: "Yes, we offer a 50% discount for registered non-profits. Please contact our support team to apply." },
   { q: "What happens if I go over my plan limits?", a: "We'll notify you when you approach your limits. You can choose to upgrade your plan to accommodate your growth." },
   { q: "Is my data secure?", a: "Security is our top priority. All data is encrypted at rest and in transit. We are hosted on AWS in the EU and are working towards SOC 2 Type II certification." },
-  { q: "Do you sign a Data Processing Agreement (DPA)?", a: "Yes, a standard DPA is included in our terms of service for all paid plans, ensuring GDPR compliance for your use of Privaro." },
+  { q: "Do you sign a Data Processing Agreement (DPA)?", a: "Yes, a standard DPA is included in our terms of service for all paid plans, ensuring GDPR compliance for your use of Custodia." },
   { q: "Can I export my data if I cancel?", a: "Yes, you can export all your data (ROPA, vendor lists, policies) at any time, even if you decide to cancel your subscription." }
 ];
 

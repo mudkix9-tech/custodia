@@ -340,8 +340,8 @@ export const dsarRouter = router({
       
       try {
         await resend.emails.send({
-          from: `${org.name} via Custodia <noreply@trycustodia.online>`,
-          replyTo: org.dpoEmail || 'support@trycustodia.online',
+          from: `${org.name} via Custodia <noreply@${process.env.EMAIL_FROM_DOMAIN || 'trycustodia.online'}>`,
+          replyTo: org.dpoEmail || `support@${process.env.EMAIL_FROM_DOMAIN || 'trycustodia.online'}`,
           to: input.subjectEmail,
           subject: `Action Required: Verify your data request to ${org.name}`,
           html: `
@@ -562,7 +562,7 @@ export const dsarRouter = router({
       // In a real app: compile tasks, generate JSON/PDF, upload to S3, return signed URL
       const expiry = new Date();
       expiry.setDate(expiry.getDate() + 30);
-      const mockUrl = `https://s3.privaro.io/mock-package-${input.id}.json`;
+      const mockUrl = `https://s3.custodia.io/mock-package-${input.id}.json`;
       const [updated] = await ctx.db.update(dsarRequests).set({ dataPackageUrl: mockUrl, dataPackageFormat: 'json', dataPackageExpiresAt: expiry, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
       return updated;
     }),

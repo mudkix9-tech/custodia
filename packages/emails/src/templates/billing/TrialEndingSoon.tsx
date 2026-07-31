@@ -32,7 +32,7 @@ export const TrialEndingSoon = ({
       </Text>
 
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        Your 14-day free trial of Privaro {tier} ends on {endDate}.
+        Your 14-day free trial of Custodia {tier} ends on {endDate}.
       </Text>
 
       <Text style={{ fontSize: '16px', fontWeight: 'bold', color: BRAND.textPrimary, margin: '0 0 16px' }}>

@@ -94,7 +94,7 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
     const downloadUrl = await generateDownloadUrl(fileKey, 'eu-central-1', 7 * 24 * 3600, `Lead_Report_${leadId.split('-')[0]}.pdf`);
 
     await resend.emails.send({
-      from: 'Privaro <hello@privaro.com>',
+      from: `Custodia  <hello@${process.env.EMAIL_FROM_DOMAIN || 'trycustodia.online'}>`,
       to: email,
       subject: 'Your GDPR Gap Assessment Report',
       html: `

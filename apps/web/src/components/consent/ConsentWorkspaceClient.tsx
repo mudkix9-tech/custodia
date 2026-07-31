@@ -46,7 +46,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
     }
   }, [domainId, cookies?.length]);
 
-  const scriptTag = `<script src="https://api.privaro.io/api/cmp/${domain.scriptId}/banner.js" async></script>`;
+  const scriptTag = `<script src="https://api.custodia.io/api/cmp/${domain.scriptId}/banner.js" async></script>`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(scriptTag);
@@ -118,8 +118,8 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
                 </div>
                 <div className="p-4 overflow-x-auto">
                   <pre className="text-[13px] font-mono leading-relaxed text-blue-300">
-                    <span className="text-ink-400">&lt;!-- Privaro Consent Management Platform --&gt;</span>{'\n'}
-                    <span className="text-blue-400">&lt;script</span> <span className="text-amber-200">src</span>=<span className="text-sage-300">"https://api.privaro.io/api/cmp/{domain.scriptId}/banner.js"</span> <span className="text-amber-200">async</span><span className="text-blue-400">&gt;&lt;/script&gt;</span>
+                    <span className="text-ink-400">&lt;!-- Custodia Consent Management Platform --&gt;</span>{'\n'}
+                    <span className="text-blue-400">&lt;script</span> <span className="text-amber-200">src</span>=<span className="text-sage-300">"https://api.custodia.io/api/cmp/{domain.scriptId}/banner.js"</span> <span className="text-amber-200">async</span><span className="text-blue-400">&gt;&lt;/script&gt;</span>
                   </pre>
                 </div>
               </div>

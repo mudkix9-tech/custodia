@@ -43,7 +43,7 @@ export const dataMigrationWorker = createWorker('data-migration', async job => {
 
     // Migrate S3 objects
     const s3 = new S3Client({ region: 'eu-west-1' });
-    const sourceBucket = 'privaro-documents-eu-west-1';
+    const sourceBucket = 'custodia-documents-eu-west-1';
     const targetBucket = getS3BucketForOrg(org.dataRegion!);
 
     if (sourceBucket !== targetBucket) {

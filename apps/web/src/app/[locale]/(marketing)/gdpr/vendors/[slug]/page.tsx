@@ -123,7 +123,7 @@ export default async function VendorGDPRPage({ params }: { params: Promise<{ slu
                  <Server className="w-10 h-10 text-sage-500 mb-6"/>
                  <h3 className="text-2xl font-bold mb-4">Track {vendorData.name}'s compliance automatically.</h3>
                  <p className="text-ink-300 mb-8 text-sm leading-relaxed">
-                    Stop manually checking for vendor updates. Privaro tracks {vendorData.name} and 1,000+ other tools, alerting you if their DPA or hosting changes.
+                    Stop manually checking for vendor updates. Custodia tracks {vendorData.name} and 1,000+ other tools, alerting you if their DPA or hosting changes.
                  </p>
                  <Link href="/assessment" className="flex bg-sage-600 hover:bg-sage-500 text-bone-50 text-sm font-semibold py-3 px-6 rounded-xl transition-all items-center justify-center gap-2 w-full shadow-card">
                     Start free assessment <ArrowRight className="w-4 h-4"/>

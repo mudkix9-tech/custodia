@@ -18,13 +18,13 @@ export const SubscriptionExpiring = ({
   url = 'https://app.example.com/billing'
 }: SubscriptionExpiringProps) => {
   return (
-    <Layout previewText="Your Privaro subscription is expiring soon">
+    <Layout previewText="Your Custodia subscription is expiring soon">
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
         Hi {name},
       </Text>
 
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        Your Privaro <strong>{tier}</strong> subscription will expire on <strong>{expirationDate}</strong>.
+        Your Custodia <strong>{tier}</strong> subscription will expire on <strong>{expirationDate}</strong>.
       </Text>
 
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 24px' }}>

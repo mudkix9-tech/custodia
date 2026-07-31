@@ -33,13 +33,13 @@ export default function IntegrationsPage() {
                   {connection?.status === 'error' && <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">Error</span>}
               </div>
               <div className="text-sm text-gray-600 space-y-2 mb-4">
-                  <p>When connected, Privaro can:</p>
+                  <p>When connected, Custodia can:</p>
                   <ul className="list-disc pl-5">
                     <li>Auto-search {provider.name} contacts during DSAR processing</li>
                     <li>Auto-discover processing activities</li>
                     <li>Monitor stored personal data</li>
                   </ul>
-                  <p className="mt-4 font-semibold">Data access: Read-only. Privaro never modifies your data.</p>
+                  <p className="mt-4 font-semibold">Data access: Read-only. Custodia never modifies your data.</p>
 
                   {connection && (
                     <div className="mt-4 p-4 bg-gray-50 rounded-md border">

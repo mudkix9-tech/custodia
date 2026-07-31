@@ -458,7 +458,7 @@ function VendorsTab({ client }: { client: any }) {
       <Globe className="w-12 h-12 text-sage-200 mx-auto mb-4" />
       <h3 className="text-xl font-bold text-ink-900 mb-2">Auto-generated Vendor List</h3>
       <p className="text-[15px] text-ink-600 max-w-md mx-auto mb-6">
-        When processing activities are linked, Privaro automatically traverses the data flow graph to determine which of your vendors sub-process data for this client.
+        When processing activities are linked, Custodia automatically traverses the data flow graph to determine which of your vendors sub-process data for this client.
       </p>
       <p className="text-[14px] text-indigo-600 font-medium">
         (Vendor graph resolution requires full ROPA data population)
@@ -532,7 +532,7 @@ function PortalPreviewTab({ client }: { client: any }) {
           </div>
           <div className="flex-1 mx-4 bg-white rounded-md border border-ink-900/10 px-3 py-1 text-[12px] text-ink-400 flex items-center gap-2">
             <Globe className="w-3 h-3" />
-            https://privaro.io/portal/{client.portalToken.substring(0, 10)}...
+            https://custodia.io/portal/{client.portalToken.substring(0, 10)}...
           </div>
         </div>
         

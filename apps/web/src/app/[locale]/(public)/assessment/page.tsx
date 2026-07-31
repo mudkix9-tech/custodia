@@ -214,7 +214,7 @@ function AssessmentEngineContent() {
           <div className="w-8 h-8 bg-sage-700 rounded-lg flex items-center justify-center shadow-sm">
             <ShieldCheck className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-serif text-ink-900">Privaro</span>
+          <span className="text-xl font-serif text-ink-900">Custodia</span>
         </Link>
         <div className="flex items-center gap-6">
           {isResumed && currentStep >= 0 && (

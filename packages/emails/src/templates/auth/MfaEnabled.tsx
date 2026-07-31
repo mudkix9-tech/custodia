@@ -16,7 +16,7 @@ export const MfaEnabled = ({
         Hi,
       </Text>
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        Two-factor authentication was successfully enabled for your Privaro account on {time}.
+        Two-factor authentication was successfully enabled for your Custodia account on {time}.
       </Text>
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
         Your account is now more secure. You will be required to enter a code from your authenticator app when signing in.

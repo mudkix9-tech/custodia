@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
-process.env.GOOGLE_CLOUD_QUOTA_PROJECT = process.env.GCP_PROJECT_ID || 'privaro';
+process.env.GOOGLE_CLOUD_QUOTA_PROJECT = process.env.GCP_PROJECT_ID || 'custodia';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const BASE_URL = 'https://www.aepd.es';
@@ -26,7 +26,7 @@ const MAX_PAGES = 50;
 
 const ai = new GoogleGenAI({
   vertexai: true,
-  project: process.env.GCP_PROJECT_ID || 'privaro',
+  project: process.env.GCP_PROJECT_ID || 'custodia',
   location: process.env.GCP_LOCATION || 'us-central1',
 });
 

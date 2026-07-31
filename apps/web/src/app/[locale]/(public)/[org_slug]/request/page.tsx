@@ -38,7 +38,7 @@ export default async function BrandedDsarRequestPage({ params }: { params: { org
         </div>
         
         <div className="mt-8 text-center text-[13px] text-ink-400">
-          Powered by <a href="https://privaro.io" className="font-medium hover:text-ink-600 transition-colors">Privaro OS</a>
+          Powered by <a href="https://custodia.io" className="font-medium hover:text-ink-600 transition-colors">Custodia OS</a>
         </div>
       </div>
     </div>

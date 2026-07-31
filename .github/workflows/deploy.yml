@@ -49,7 +49,7 @@ jobs:
       - name: Build, tag, and push API image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: privaro-api
+          ECR_REPOSITORY: custodia-api
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -f apps/api/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
@@ -65,5 +65,5 @@ jobs:
           
       - name: Update ECS service
         run: |
-          aws ecs update-service --cluster privaro --service api --force-new-deployment
-          aws ecs update-service --cluster privaro --service workers --force-new-deployment
+          aws ecs update-service --cluster custodia --service api --force-new-deployment
+          aws ecs update-service --cluster custodia --service workers --force-new-deployment

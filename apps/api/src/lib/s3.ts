@@ -6,10 +6,10 @@ const s3Clients = new Map<string, S3Client>();
 
 export function getS3BucketForOrg(dataRegion: string): string {
   const bucketMap: Record<string, string> = {
-    'eu-west-1': 'privaro-documents-eu-west-1',
-    'eu-central-1': 'privaro-documents-eu-central-1',
-    'eu-west-3': 'privaro-documents-eu-west-3',
-    'eu-north-1': 'privaro-documents-eu-north-1',
+    'eu-west-1': 'custodia-documents-eu-west-1',
+    'eu-central-1': 'custodia-documents-eu-central-1',
+    'eu-west-3': 'custodia-documents-eu-west-3',
+    'eu-north-1': 'custodia-documents-eu-north-1',
   };
   return bucketMap[dataRegion] || bucketMap['eu-central-1'];
 }

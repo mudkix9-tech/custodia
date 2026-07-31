@@ -167,9 +167,9 @@ export default function ClientPortalPage() {
           <div>
             Data processing dashboard managed by {data.orgName}
           </div>
-          <Link href="https://privaro.io" target="_blank" className="hover:text-gray-900 transition-colors flex items-center gap-2">
+          <Link href="https://custodia.io" target="_blank" className="hover:text-gray-900 transition-colors flex items-center gap-2">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            Powered by Privaro
+            Powered by Custodia
           </Link>
         </div>
       </footer>

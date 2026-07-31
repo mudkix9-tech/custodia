@@ -68,7 +68,7 @@ export default function IntegrationsSettingsPage() {
               </div>
 
               <div className="text-sm text-ink-600 space-y-3 mb-6 flex-1">
-                <p>When connected, Privaro can:</p>
+                <p>When connected, Custodia can:</p>
                 <ul className="space-y-1.5">
                   <li className="flex items-start gap-2">
                     <Zap className="w-4 h-4 text-accent-500 shrink-0 mt-0.5" />

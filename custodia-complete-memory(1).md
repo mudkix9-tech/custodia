@@ -1,15 +1,15 @@
-# Privaro — Complete Product Memory
+# Custodia — Complete Product Memory
 
-> **Last updated:** July 26, 2026 (Migrated architecture from BullMQ/Redis to pg-boss)
+> **Last updated:** July 31, 2026 (Implemented "Custos Brackets" logo mark across marketing header and app sidebar)
 > **Owner:** Nisarg (solo founder, Pune, India)
-> **Domain:** getprivaro.com
+> **Domain:** trycustodia.com
 > **Status:** Pre-launch, core product built, polishing for production
 
 ---
 
-## 1. What Privaro Is
+## 1. What Custodia Is
 
-Privaro is a GDPR compliance operating system targeting EU businesses of all sizes, with agencies as the initial go-to-market vertical. It replaces spreadsheets, consultants, and 5+ separate compliance tools with one unified platform covering the full GDPR compliance lifecycle.
+Custodia is a GDPR compliance operating system targeting EU businesses of all sizes, with agencies as the initial go-to-market vertical. It replaces spreadsheets, consultants, and 5+ separate compliance tools with one unified platform covering the full GDPR compliance lifecycle.
 
 **Not agency-only.** 95% of the codebase is industry-agnostic. Only client trust portals and some ROPA templates are agency-specific. The product serves any EU business — e-commerce, SaaS, recruitment, healthcare, legal, consulting, etc. Marketing targets agencies first, then expands.
 
@@ -48,8 +48,8 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 
 ### Domain
 
-- **getprivaro.com** (confirmed choice)
-- Acquire privaro.com later when revenue justifies it
+- **trycustodia.com** (confirmed choice)
+- Acquire trycustodia.com later when revenue justifies it
 
 ---
 
@@ -500,7 +500,7 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 ### Tier 3 (Biggest real competitor)
 - Doing nothing + spreadsheets + €2-5K consultants
 
-### Privaro's competitive advantages
+### Custodia's competitive advantages
 1. Completeness (10+ modules vs point solutions)
 2. Cross-module intelligence (ROPA feeds policies, vendors feed DSAR tasks, etc.)
 3. Unlimited users on all plans (vs per-seat pricing)
@@ -547,11 +547,30 @@ Privaro is a GDPR compliance operating system targeting EU businesses of all siz
 
 ---
 
+## 13a. Brand Mark — "Custos Brackets" (Implemented)
+
+### Overview
+Logo exploration (`Custodia Logo Concepts` design doc, 4 concepts: Keystone, Custos Brackets, Guardian C, The Gate) resolved to **concept 2, "Custos Brackets"** — two corner brackets holding a single circular data point, signaling containment/chain-of-custody without using a shield.
+
+### Mark
+- Two rounded-cap stroke brackets (top-left opening down-right, bottom-right opening up-left) enclosing a filled circle, on a 48×48 viewBox.
+- Light lockup (app sidebar, light backgrounds): brackets in Ink `#17222C`, data point in Teal `#0E4E55`.
+- Dark lockup (marketing header, dark backgrounds): brackets in Bone `#F4F1EA`, data point in Sage `#A3B8A6`.
+- Wordmark set lowercase (`custodia`), bold sans (Onest-style), replacing the previous shield mark + mixed-case wordmark.
+
+### Where implemented
+- `apps/web/src/components/layout/MarketingHeader.tsx` — dark-header `Logo` component (mark + wordmark + "OS" badge).
+- `apps/web/src/components/layout/Sidebar.tsx` — app sidebar `Logo` component (mark + wordmark, no badge).
+- No shared `Logo.tsx` exists yet — the two implementations are still separate per-surface components; a future consolidation could extract a single `<BrandMark />` taking a `variant: 'light' | 'dark'` prop.
+- Favicon (`apps/web/src/app/favicon.ico`) and `public/` assets were **not** updated — still reflect the old shield mark. No `icon.tsx`/`apple-icon`/`manifest.ts` exists yet to regenerate these from the new SVG.
+
+---
+
 ## 14. SSO Implementation (Final Pattern)
 
 ### "SSO Wall" approach
 - Microsoft Entra set to "Allow all tenants"
-- SSO locked by default in Privaro
+- SSO locked by default in Custodia
 - Enabled per organization via `ssoEnabled` toggle in DB when they upgrade to Enterprise
 - `ssoEnforced` flag controls whether SSO is optional or mandatory for the org
 - Domain verification via DNS TXT record before enabling SSO for a domain

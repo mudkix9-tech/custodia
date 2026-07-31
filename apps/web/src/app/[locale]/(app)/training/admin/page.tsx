@@ -174,7 +174,7 @@ export default function TrainingAdminDashboard() {
                       </td>
                       <td className="py-4 px-6">
                         {m.isGlobal ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-700">Privaro Global</span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-700">Custodia Global</span>
                         ) : (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-sage-50 text-sage-700">Custom</span>
                         )}

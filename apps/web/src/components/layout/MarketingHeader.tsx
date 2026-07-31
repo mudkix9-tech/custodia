@@ -14,23 +14,14 @@ const NAV_LINKS = [
 export function Logo({ className = '' }: { className?: string }) {
   return (
     <Link href="/" className={`flex items-center gap-2.5 ${className}`}>
-      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" className="text-[#8BA381]">
-        <rect x="1" y="1" width="30" height="30" rx="8" fill="#1F241D" stroke="#6E8B60" strokeWidth="1.5" />
-        <path
-          d="M16 6c-3.5 1.5-6.5 1.8-8 1.8 0 6.4 2 11.5 8 14.4 6-2.9 8-8 8-14.4-1.5 0-4.5-.3-8-1.8z"
-          fill="#6E8B60"
-          opacity="0.2"
-        />
-        <path
-          d="M16 6c-3.5 1.5-6.5 1.8-8 1.8 0 6.4 2 11.5 8 14.4 6-2.9 8-8 8-14.4-1.5 0-4.5-.3-8-1.8zM16 11.5v7"
-          stroke="#8BA381"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
+      <svg width="28" height="28" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M8 21v-6a7 7 0 0 1 7-7h6" fill="none" stroke="#F4F1EA" strokeWidth="5" strokeLinecap="round" />
+        <path d="M40 27v6a7 7 0 0 1-7 7h-6" fill="none" stroke="#F4F1EA" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="24" cy="24" r="7.5" fill="#A3B8A6" />
       </svg>
       <div className="leading-none">
         <div className="font-sans font-bold text-[20px] tracking-tight text-[#F5F3ED] flex items-center gap-1.5">
-          Privaro <span className="text-[10px] uppercase font-mono tracking-wider bg-[#6E8B60]/15 text-[#8BA381] px-1.5 py-0.5 rounded border border-[#6E8B60]/20">OS</span>
+          custodia <span className="text-[10px] uppercase font-mono tracking-wider bg-[#6E8B60]/15 text-[#8BA381] px-1.5 py-0.5 rounded border border-[#6E8B60]/20">OS</span>
         </div>
       </div>
     </Link>

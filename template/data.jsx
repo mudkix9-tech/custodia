@@ -1,4 +1,4 @@
-// All hardcoded sample data for the Privaro dashboard.
+// All hardcoded sample data for the Custodia dashboard.
 
 const NAV = [
   { id: 'dashboard',  label: 'Dashboard',       icon: 'LayoutDashboard' },

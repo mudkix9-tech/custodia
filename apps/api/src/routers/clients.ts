@@ -338,7 +338,7 @@ export const clientsRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       // Mock PDF generation
-      const mockS3Url = `https://s3.privaro.io/exports/client_${input.id}_report.pdf`;
+      const mockS3Url = `https://s3.custodia.io/exports/client_${input.id}_report.pdf`;
       return { url: mockS3Url };
     }),
 

@@ -1,4 +1,4 @@
-// Reusable parts for the Privaro dashboard.
+// Reusable parts for the Custodia dashboard.
 // All components register on window at the bottom.
 
 const { useEffect, useMemo, useRef, useState } = React;
@@ -6,7 +6,7 @@ const RC = window.Recharts || {};
 
 // ---------- Sidebar ----------
 function Logo({ className = '' }) {
-  // Original Privaro mark: rounded square with an inset "shield-petal" cut.
+  // Original Custodia mark: rounded square with an inset "shield-petal" cut.
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
@@ -18,7 +18,7 @@ function Logo({ className = '' }) {
         <circle cx="16" cy="15" r="2.2" fill="#3F5836" />
       </svg>
       <div className="leading-none">
-        <div className="font-serif text-[22px] tracking-tight text-ink-900">Privaro</div>
+        <div className="font-serif text-[22px] tracking-tight text-ink-900">Custodia</div>
       </div>
     </div>
   );
@@ -581,9 +581,9 @@ function Footer() {
   return (
     <footer className="mt-10 pt-6 border-t border-ink-900/8 text-[12px] text-ink-500 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-sage-500"/> Privaro v1.0</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-sage-500"/> Custodia v1.0</span>
         <span className="text-ink-300">·</span>
-        <span>© 2026 Privaro</span>
+        <span>© 2026 Custodia</span>
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
         <span className="inline-flex items-center gap-1.5"><Icon name="Server" size={12}/> EU hosted (Frankfurt)</span>

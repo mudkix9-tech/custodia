@@ -39,7 +39,7 @@ export const residencyProvisioningWorker = createWorker('residency-provisioning'
 
   try {
     const rds = new RDSClient({ region });
-    const instanceId = `privaro-dedicated-${orgSlug}-${Date.now()}`;
+    const instanceId = `custodia-dedicated-${orgSlug}-${Date.now()}`;
     const password = generateSecurePassword();
 
     // 1. Create instance

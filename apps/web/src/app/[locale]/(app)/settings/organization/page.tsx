@@ -149,7 +149,7 @@ export default function OrganizationSettingsPage() {
                 disabled={!isEditable}
                 className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
-              <p className="text-xs text-ink-500 mt-1.5">privaro.io/legal/{formData.slug || 'slug'}/privacy</p>
+              <p className="text-xs text-ink-500 mt-1.5">custodia.io/legal/{formData.slug || 'slug'}/privacy</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-ink-900 mb-1.5">Registration Number</label>

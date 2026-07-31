@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
-process.env.GOOGLE_CLOUD_QUOTA_PROJECT = process.env.GCP_PROJECT_ID || 'privaro';
+process.env.GOOGLE_CLOUD_QUOTA_PROJECT = process.env.GCP_PROJECT_ID || 'custodia';
 
 const BASE_URL = 'https://www.cnil.fr';
 const START_URLS = [
@@ -23,7 +23,7 @@ const MAX_PAGES = 5;
 
 const ai = new GoogleGenAI({
   vertexai: true,
-  project: process.env.GCP_PROJECT_ID || 'privaro',
+  project: process.env.GCP_PROJECT_ID || 'custodia',
   location: process.env.GCP_LOCATION || 'us-central1',
 });
 

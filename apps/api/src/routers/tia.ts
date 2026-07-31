@@ -134,7 +134,7 @@ export const tiaRouter = router({
         if (!tia) throw new TRPCError({ code: 'NOT_FOUND' });
         
         // Mocking PDF generation and S3 upload
-        const mockS3Url = `https://s3.privaro.io/exports/tia_${tia.id}.pdf`;
+        const mockS3Url = `https://s3.custodia.io/exports/tia_${tia.id}.pdf`;
         return { url: mockS3Url };
       })
 });

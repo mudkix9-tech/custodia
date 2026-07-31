@@ -53,7 +53,7 @@ export const securityRouter = router({
       }
 
       const secret = authenticator.generateSecret();
-      const uri = authenticator.keyuri(user.email, 'Privaro', secret);
+      const uri = authenticator.keyuri(user.email, 'Custodia', secret);
       const qrCodeUrl = await QRCode.toDataURL(uri);
 
       const encryptedSecret = encrypt(secret);

@@ -227,7 +227,7 @@ export default function MarketingSite() {
                   <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
                   <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
                   <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
-                  <span className="ml-3 text-[11px] font-sans font-medium text-[#1F1B16]/65">Privaro Compliance Dashboard</span>
+                  <span className="ml-3 text-[11px] font-sans font-medium text-[#1F1B16]/65">Custodia Compliance Dashboard</span>
                 </div>
                 
                 {/* Tabs */}
@@ -587,7 +587,7 @@ export default function MarketingSite() {
             <p className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wide">Platform Advantage</p>
             <h2 className="text-3xl md:text-5xl font-sans font-extrabold text-[#F5F3ED] mt-2 mb-3 tracking-tight text-balance">Structured workflow, no legacy tools</h2>
             <p className="text-[#9CA297] max-w-xl mx-auto text-xs sm:text-sm">
-              A comparison of audit-readiness and overhead between manual efforts, consultants, and Privaro.
+              A comparison of audit-readiness and overhead between manual efforts, consultants, and Custodia.
             </p>
           </div>
 
@@ -599,7 +599,7 @@ export default function MarketingSite() {
                     <th className="p-6">Compliance Capability</th>
                     <th className="p-6 bg-[#1F241D]/30">Manual Sheets</th>
                     <th className="p-6 bg-[#1F241D]/30">Legal Consultants</th>
-                    <th className="p-6 text-[#8BA381] bg-[#242A20]/80 border-x border-[#8BA381]/25">Privaro OS</th>
+                    <th className="p-6 text-[#8BA381] bg-[#242A20]/80 border-x border-[#8BA381]/25">Custodia OS</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2F362D]/60 text-[#9CA297] font-medium">
@@ -775,7 +775,7 @@ export default function MarketingSite() {
                 { title: 'AES-256 Encryption', desc: 'Strict data encrypt-at-rest pipelines and database sector partitions.' },
                 { title: 'Zero-Knowledge Log', desc: 'Consent validation receipts are cryptographic hashes. No tracking of raw user IPs.' },
                 { title: 'SOC 2 Type II Prep', desc: 'Internal security logs mapped to SOC 2 safety guidelines. Readiness audit target Q4 2026.' },
-                { title: 'GDPR Self-Certified', desc: 'Privaro is self-certified compliant under official EU Art. 30 processing standards.' }
+                { title: 'GDPR Self-Certified', desc: 'Custodia is self-certified compliant under official EU Art. 30 processing standards.' }
               ].map((cred, i) => (
                 <div key={i} className="bg-[#141712]/55 border border-[#2F362D]/60 p-4.5 rounded-xl">
                   <Lock className="w-4 h-4 text-[#8BA381] mb-3" />

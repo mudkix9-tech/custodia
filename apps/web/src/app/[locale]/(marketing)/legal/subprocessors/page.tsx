@@ -7,7 +7,7 @@ export default function SubprocessorsPage() {
       <p className="text-sm text-ink-500 mb-12">Last updated: {new Date().toLocaleDateString()}</p>
 
       <div className="prose prose-sage max-w-none text-ink-600 mb-10">
-        <p>To support delivery of our Services, Privaro OS engages and uses data processors with access to certain Customer Data (each, a "Sub-processor").</p>
+        <p>To support delivery of our Services, Custodia OS engages and uses data processors with access to certain Customer Data (each, a "Sub-processor").</p>
       </div>
 
       <div className="overflow-x-auto">

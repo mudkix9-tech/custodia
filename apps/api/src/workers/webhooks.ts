@@ -33,10 +33,10 @@ export const webhookWorker = createWorker('webhook-deliveries', async (job) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Privaro-Signature': signature,
-        'X-Privaro-Event': delivery.eventType,
-        'X-Privaro-Delivery': delivery.eventId,
-        'X-Privaro-Timestamp': delivery.payload.timestamp,
+        'X-Custodia-Signature': signature,
+        'X-Custodia-Event': delivery.eventType,
+        'X-Custodia-Delivery': delivery.eventId,
+        'X-Custodia-Timestamp': delivery.payload.timestamp,
       },
       body: payloadString,
     });

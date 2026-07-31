@@ -1,4 +1,4 @@
-// Privaro dashboard - root composition
+// Custodia dashboard - root composition
 // (useState/useEffect/useMemo already destructured in parts.jsx)
 
 function App() {

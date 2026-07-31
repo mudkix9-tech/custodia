@@ -13,17 +13,17 @@ export async function generateMetadata({
   
   const translations: Record<string, { title: string, desc: string, keywords: string[] }> = {
     en: {
-      title: 'Privaro — GDPR Compliance Operating System for EU Agencies',
+      title: 'Custodia — GDPR Compliance Operating System for EU Agencies',
       desc: 'The complete GDPR compliance platform built for EU marketing, digital, and design agencies. Replace consultants and spreadsheets.',
       keywords: ['GDPR', 'ROPA', 'Consent Management', 'ePrivacy', 'Data Protection', 'Privacy Policy', 'DSAR', 'Compliance OS', 'Agency Compliance']
     },
     de: {
-      title: 'Privaro — GDPR-Compliance-Betriebssystem für EU-Agenturen',
+      title: 'Custodia — GDPR-Compliance-Betriebssystem für EU-Agenturen',
       desc: 'Die komplette GDPR-Compliance-Plattform für EU-Marketing-, Digital- und Design-Agenturen. Ersetzen Sie Berater und Tabellen.',
       keywords: ['GDPR', 'DSGVO', 'ROPA', 'Einwilligungsmanagement', 'ePrivacy', 'Datenschutz', 'Datenschutzerklärung', 'DSAR', 'Compliance OS']
     },
     fr: {
-      title: "Privaro — Système d'exploitation de conformité RGPD pour les agences de l'UE",
+      title: "Custodia — Système d'exploitation de conformité RGPD pour les agences de l'UE",
       desc: "La plateforme de conformité RGPD complète conçue pour les agences de marketing, de numérique et de design de l'UE.",
       keywords: ['GDPR', 'RGPD', 'ROPA', 'Gestion du consentement', 'ePrivacy', 'Protection des données', 'Politique de confidentialité', 'DSAR']
     }
@@ -38,11 +38,11 @@ export async function generateMetadata({
     openGraph: {
       title: t.title,
       description: t.desc,
-      url: `https://privaro.io/${locale}`,
-      siteName: 'Privaro',
+      url: `https://custodia.io/${locale}`,
+      siteName: 'Custodia',
       images: [
         {
-          url: 'https://privaro.io/og/homepage.png',
+          url: 'https://custodia.io/og/homepage.png',
           width: 1200,
           height: 630,
           alt: t.title,
@@ -54,14 +54,14 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: t.title,
       description: t.desc,
-      images: ['https://privaro.io/og/homepage.png'],
+      images: ['https://custodia.io/og/homepage.png'],
     },
     alternates: {
-      canonical: `https://privaro.io/${locale}`,
+      canonical: `https://custodia.io/${locale}`,
       languages: {
-        'en': 'https://privaro.io/en',
-        'de': 'https://privaro.io/de',
-        'fr': 'https://privaro.io/fr',
+        'en': 'https://custodia.io/en',
+        'de': 'https://custodia.io/de',
+        'fr': 'https://custodia.io/fr',
       }
     },
   };
@@ -119,7 +119,7 @@ export default function MarketingLayout({
                   </svg>
                   <div className="leading-none">
                     <div className="font-sans font-bold text-[20px] tracking-tight text-[#F5F3ED] flex items-center gap-1.5">
-                      Privaro <span className="text-[10px] uppercase font-mono tracking-wider bg-[#6E8B60]/15 text-[#8BA381] px-1.5 py-0.5 rounded border border-[#6E8B60]/20">OS</span>
+                      Custodia <span className="text-[10px] uppercase font-mono tracking-wider bg-[#6E8B60]/15 text-[#8BA381] px-1.5 py-0.5 rounded border border-[#6E8B60]/20">OS</span>
                     </div>
                   </div>
                 </Link>
@@ -174,7 +174,7 @@ export default function MarketingLayout({
           </div>
           
           <div className="border-t border-[#1F231D] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-[#5F655A] text-[10.5px]">© {new Date().getFullYear()} Privaro OS. All rights reserved.</p>
+            <p className="text-[#5F655A] text-[10.5px]">© {new Date().getFullYear()} Custodia OS. All rights reserved.</p>
             <div className="flex items-center gap-2 text-[#9CA297] hover:text-[#F5F3ED] cursor-pointer transition-colors text-[10.5px]">
               <Globe className="w-3.5 h-3.5 text-[#5F655A]" /> English (EU)
             </div>

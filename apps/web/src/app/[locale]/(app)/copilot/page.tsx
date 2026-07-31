@@ -6,7 +6,7 @@ import { Send, Bot, User, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function CopilotPage() {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
-    { role: 'assistant', content: "Hello! I'm your Privaro Co-Pilot. Ask me anything about GDPR compliance, Article 28 requirements, or your organization's specific processing activities." }
+    { role: 'assistant', content: "Hello! I'm your Custodia Co-Pilot. Ask me anything about GDPR compliance, Article 28 requirements, or your organization's specific processing activities." }
   ]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);

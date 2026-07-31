@@ -43,7 +43,7 @@ const FEATURES = [
     icon: ShieldCheck,
     title: "Vendor Intelligence",
     subtitle: "Track your third parties.",
-    desc: "Agencies use dozens of tools. Privaro tracks their compliance status for you. Access our database of over 1,000 marketing and operational tools to instantly verify their GDPR posture.",
+    desc: "Agencies use dozens of tools. Custodia tracks their compliance status for you. Access our database of over 1,000 marketing and operational tools to instantly verify their GDPR posture.",
     highlights: [
       "Instant insights into EU hosting, sub-processors, and transfer mechanisms.",
       "Automated alerts when a vendor changes their terms or gets breached.",
@@ -58,7 +58,7 @@ const FEATURES = [
     icon: FileText,
     title: "Dynamic Privacy Policies",
     subtitle: "Generate compliant policies.",
-    desc: "Say goodbye to generic templates and expensive legal fees. Privaro generates bespoke privacy policies, cookie policies, and terms of service based on your actual data practices.",
+    desc: "Say goodbye to generic templates and expensive legal fees. Custodia generates bespoke privacy policies, cookie policies, and terms of service based on your actual data practices.",
     highlights: [
       "Policies automatically update when you add new vendors or activities.",
       "Embeddable widgets keep your website policies constantly in sync.",
@@ -103,7 +103,7 @@ const FEATURES = [
     icon: AlertTriangle,
     title: "Breach Management",
     subtitle: "Respond to incidents.",
-    desc: "When the worst happens, speed is critical. Privaro guides you through the exact steps required by the GDPR 72-hour notification rule, ensuring you respond correctly and legally.",
+    desc: "When the worst happens, speed is critical. Custodia guides you through the exact steps required by the GDPR 72-hour notification rule, ensuring you respond correctly and legally.",
     highlights: [
       "Step-by-step incident response playbooks.",
       "Automated risk assessment to determine if notification is required.",
@@ -118,7 +118,7 @@ const FEATURES = [
     icon: Shield,
     title: "DPIA (Data Protection Impact Assessments)",
     subtitle: "Assess high-risk processing.",
-    desc: "Conduct mandatory assessments for high-risk projects efficiently. Privaro provides the framework to identify, evaluate, and mitigate privacy risks before you launch new initiatives.",
+    desc: "Conduct mandatory assessments for high-risk projects efficiently. Custodia provides the framework to identify, evaluate, and mitigate privacy risks before you launch new initiatives.",
     highlights: [
       "Guided questionnaires based on regulatory guidelines.",
       "Collaborative workflows for involving DPOs and stakeholders.",
@@ -218,7 +218,7 @@ export default function FeaturesPage() {
            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-ink-800 to-transparent pointer-events-none"/>
            <div className="relative z-10">
               <h2 className="text-3xl font-serif text-bone-50 mb-4 tracking-tight">See it in action.</h2>
-              <p className="text-ink-300 mb-8 max-w-lg mx-auto">Experience the power of the complete Privaro OS. Start your free assessment today.</p>
+              <p className="text-ink-300 mb-8 max-w-lg mx-auto">Experience the power of the complete Custodia OS. Start your free assessment today.</p>
               <Link href="/assessment" className="inline-flex bg-sage-600 hover:bg-sage-500 text-bone-50 text-base font-semibold py-3.5 px-8 rounded-xl transition-all items-center justify-center gap-2 shadow-card">
                  Start free assessment <ArrowRight className="w-4 h-4"/>
               </Link>

@@ -97,7 +97,7 @@ server.register(import('fastify-raw-body'), {
 server.register(cors, {
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:3000',
-    /^https:\/\/.*\.privaro\.io$/,
+    /^https:\/\/.*\.custodia\.io$/,
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],

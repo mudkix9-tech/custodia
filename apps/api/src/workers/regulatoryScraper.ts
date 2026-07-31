@@ -12,7 +12,7 @@ export const regulatoryQueue = createQueue('regulatory-jobs');
 
 const ai = new GoogleGenAI({
   vertexai: true,
-  project: process.env.GCP_PROJECT_ID || 'privaro',
+  project: process.env.GCP_PROJECT_ID || 'custodia',
   location: process.env.GCP_LOCATION || 'us-central1',
 });
 

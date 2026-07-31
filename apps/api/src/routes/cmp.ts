@@ -207,7 +207,7 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
     };
 
     if (navigator.sendBeacon) {
-      navigator.sendBeacon('https://api.privaro.io/api/cmp/log', JSON.stringify(payload));
+      navigator.sendBeacon('https://api.custodia.io/api/cmp/log', JSON.stringify(payload));
     }
   }
 

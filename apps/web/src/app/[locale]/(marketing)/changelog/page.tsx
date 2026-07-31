@@ -4,7 +4,7 @@ export default function ChangelogPage() {
   return (
     <div className="pt-24 pb-32 max-w-3xl mx-auto px-6 font-sans">
       <h1 className="text-4xl font-serif text-ink-900 mb-6 tracking-tight">Changelog</h1>
-      <p className="text-lg text-ink-500 mb-16">New updates, features, and improvements to Privaro OS.</p>
+      <p className="text-lg text-ink-500 mb-16">New updates, features, and improvements to Custodia OS.</p>
 
       <div className="space-y-16">
         <div className="border-l-2 border-sage-500/20 pl-8 relative">

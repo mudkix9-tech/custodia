@@ -1,6 +1,6 @@
-# Future Roadmap: Privaro Architecture Unbuilt Features
+# Future Roadmap: Custodia Architecture Unbuilt Features
 
-This document outlines an extensive list of all modules, tables, and features detailed in the original `privaro-final-architecture.md` document that were purposefully scoped out of the initial 10-Phase MVP. 
+This document outlines an extensive list of all modules, tables, and features detailed in the original `custodia-final-architecture.md` document that were purposefully scoped out of the initial 10-Phase MVP. 
 
 The following phases outline the comprehensive plan to achieve 100% parity with the final architecture spec.
 
@@ -34,7 +34,7 @@ Allowing Agencies to share a read-only compliance dashboard with their clients.
   - Display a branded dashboard showing the client's compliance score, ROPA count, active vendors, and signed DPAs.
 
 ### Phase 14: Employee Training Module
-A full LMS (Learning Management System) built into Privaro to handle mandatory GDPR staff training.
+A full LMS (Learning Management System) built into Custodia to handle mandatory GDPR staff training.
 - **New Tables**: `training_modules` (quizzes, slide content), `training_completions` (progress tracking, certificates).
 - **Backend Implementation**:
   - Auto-generate signed PDF Certificates of Completion using the existing Puppeteer infrastructure.
@@ -56,14 +56,14 @@ Centralizing notifications and tracking two-way communication for DSARs.
 A system to notify users when GDPR laws or national DPA guidelines change.
 - **New Tables**: `regulatory_updates`.
 - **Backend Implementation**:
-  - Admin-only routes for Privaro team to publish updates.
+  - Admin-only routes for Custodia team to publish updates.
   - AI script to scrape EDPB guidelines and draft summaries automatically.
 - **Frontend Implementation**:
   - A "Compliance News" widget on the main dashboard.
   - Visual indicators warning users if a regulatory update affects one of their specific ROPA activities.
 
 ### Phase 17: Public REST API & Webhooks
-Allowing enterprise customers to integrate Privaro programmatically into their CI/CD pipelines.
+Allowing enterprise customers to integrate Custodia programmatically into their CI/CD pipelines.
 - **New Tables**: `api_keys`, `webhooks`.
 - **Backend Implementation**:
   - Add traditional REST endpoints in Fastify (`/api/v1/vendors`, `/api/v1/ropa`).

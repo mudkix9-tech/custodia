@@ -18,7 +18,7 @@ const KNOWN_COOKIES: Record<string, { category: string, provider: string }> = {
   '__stripe_sid': { category: 'functional', provider: 'Stripe' },
   'intercom-id': { category: 'functional', provider: 'Intercom' },
   'intercom-session': { category: 'functional', provider: 'Intercom' },
-  'pvr_consent_id': { category: 'necessary', provider: 'Privaro' },
+  'pvr_consent_id': { category: 'necessary', provider: 'Custodia' },
 };
 
 function classifyCookie(name: string) {

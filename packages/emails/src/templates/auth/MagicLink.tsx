@@ -15,10 +15,10 @@ export const MagicLink = ({ url = 'https://app.example.com/api/auth/callback/ema
         Hi,
       </Text>
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 24px' }}>
-        Click the button below to sign in to Privaro.
+        Click the button below to sign in to Custodia.
       </Text>
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <Button href={url}>Sign in to Privaro</Button>
+        <Button href={url}>Sign in to Custodia</Button>
       </div>
       <Text style={{ fontSize: '14px', color: BRAND.textSecondary, margin: '0 0 20px' }}>
         This link expires in 10 minutes.

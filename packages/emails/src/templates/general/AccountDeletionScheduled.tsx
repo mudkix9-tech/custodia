@@ -27,7 +27,7 @@ export const AccountDeletionScheduled = ({
       </Text>
 
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        We've received your request to delete your Privaro account and all associated data.
+        We've received your request to delete your Custodia account and all associated data.
       </Text>
 
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 24px' }}>

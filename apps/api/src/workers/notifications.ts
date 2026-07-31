@@ -168,7 +168,7 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
               style: { display: 'inline-block', padding: '10px 20px', backgroundColor: '#294036', color: 'white', textDecoration: 'none', borderRadius: '5px', marginTop: '20px' }
             }, 'View Details') : null,
             React.createElement('hr', { style: { marginTop: '40px', border: 'none', borderTop: '1px solid #eee' } }),
-            React.createElement('p', { style: { fontSize: '12px', color: '#999' } }, 'This is an automated notification from Privaro. You can manage your preferences in your account settings.')
+            React.createElement('p', { style: { fontSize: '12px', color: '#999' } }, 'This is an automated notification from Custodia. You can manage your preferences in your account settings.')
           )
         });
 
@@ -286,7 +286,7 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Privaro-Signature': signature,
+        'X-Custodia-Signature': signature,
       },
       body: payloadStr,
     });

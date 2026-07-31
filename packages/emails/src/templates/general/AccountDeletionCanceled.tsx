@@ -22,7 +22,7 @@ export const AccountDeletionCanceled = ({
       </Text>
 
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        We've successfully canceled the scheduled deletion of your Privaro account.
+        We've successfully canceled the scheduled deletion of your Custodia account.
       </Text>
 
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>

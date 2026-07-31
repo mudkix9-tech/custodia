@@ -60,7 +60,7 @@ export function renderFooter(orgName: string, pageLabel: string, locale: string 
   const t = headerTranslations[locale] || headerTranslations.en;
   return `
     <div class="footer">
-      ${orgName} — ${pageLabel} — ${t.generatedBy} Privaro · ${new Date().toISOString().split('T')[0]}
+      ${orgName} — ${pageLabel} — ${t.generatedBy} Custodia · ${new Date().toISOString().split('T')[0]}
     </div>
   `;
 }

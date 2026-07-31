@@ -146,7 +146,7 @@ export default function OnboardingPage() {
     <>
       <header className="bg-white border-b px-6 py-4 flex justify-between items-center w-full shrink-0">
         <div className="flex items-center">
-          <div className="text-xl font-bold text-gray-900">Privaro</div>
+          <div className="text-xl font-bold text-gray-900">Custodia</div>
         </div>
         {currentStep < 6 ? (
           <button onClick={handleDismiss} className="text-sm text-gray-500 hover:text-gray-700">

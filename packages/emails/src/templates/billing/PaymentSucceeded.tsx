@@ -27,7 +27,7 @@ export const PaymentSucceeded = ({
       </Text>
 
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        We have successfully processed your payment for your Privaro subscription.
+        We have successfully processed your payment for your Custodia subscription.
       </Text>
 
       <div style={{ marginBottom: '32px', backgroundColor: '#FAFAFA', padding: '16px', borderRadius: '6px', border: `1px solid ${BRAND.borderColor}` }}>

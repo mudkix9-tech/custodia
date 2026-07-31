@@ -1,4 +1,4 @@
-# Privaro — Complete Technical Architecture
+# Custodia — Complete Technical Architecture
 
 ---
 
@@ -461,7 +461,7 @@ CREATE TABLE vendors (
     -- Data processed
     typical_data_categories JSONB DEFAULT '[]',        -- ['name', 'email', 'ip_address', 'behavioral']
     
-    -- Risk assessment (for global vendors, maintained by Privaro team)
+    -- Risk assessment (for global vendors, maintained by Custodia team)
     risk_score      INTEGER,                           -- 1-100
     risk_level      VARCHAR(20),                       -- low, medium, high, critical
     risk_factors    JSONB DEFAULT '[]',                 -- ['us_based', 'no_eu_hosting', 'fisa_702_subject', 'recent_breach']
@@ -471,7 +471,7 @@ CREATE TABLE vendors (
     regulatory_actions JSONB DEFAULT '[]',              -- [{date, authority, action, fine_amount, source_url}]
     
     -- Metadata
-    last_verified_at TIMESTAMPTZ,                       -- when Privaro team last verified this info
+    last_verified_at TIMESTAMPTZ,                       -- when Custodia team last verified this info
     verified_by     VARCHAR(100),
     
     created_at      TIMESTAMPTZ DEFAULT NOW(),
@@ -1081,7 +1081,7 @@ CREATE INDEX idx_dpia_measure_dpia ON dpia_measures(dpia_id);
 CREATE TABLE training_modules (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
-    -- Global modules (Privaro-provided) or org-custom
+    -- Global modules (Custodia-provided) or org-custom
     is_global       BOOLEAN DEFAULT FALSE,
     organization_id UUID REFERENCES organizations(id),
     
@@ -1280,7 +1280,7 @@ CREATE TABLE regulatory_updates (
     published_at    TIMESTAMPTZ,
     
     -- Internal
-    created_by      VARCHAR(100),                 -- Privaro team member
+    created_by      VARCHAR(100),                 -- Custodia team member
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -1379,7 +1379,7 @@ CREATE INDEX idx_nq_scheduled ON notification_queue(scheduled_for) WHERE status 
 
 ### 3.2 External Integrations
 
-#### 3.2.1 Inbound Integrations (data flowing INTO Privaro)
+#### 3.2.1 Inbound Integrations (data flowing INTO Custodia)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -1429,7 +1429,7 @@ CREATE INDEX idx_nq_scheduled ON notification_queue(scheduled_for) WHERE status 
 └─────────────────────────────────────────────────────────┘
 ```
 
-#### 3.2.2 Outbound Integrations (data flowing OUT of Privaro)
+#### 3.2.2 Outbound Integrations (data flowing OUT of Custodia)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -1608,7 +1608,7 @@ DSAR received for john@example.com
 **How it works:**
 - Slack bot / Teams connector that posts to a designated channel
 - Alert types: DSAR deadline approaching, breach reported, vendor alert, DPA expiring, assessment overdue
-- Slash commands: `/privaro status` → compliance score summary
+- Slash commands: `/custodia status` → compliance score summary
 
 #### 7. Document Signing (DocuSign, PandaDoc)
 
@@ -1628,7 +1628,7 @@ DSAR received for john@example.com
 - Pull list of recurring software subscriptions from accounting data
 - Cross-reference with vendor database
 - Flag SaaS tools being paid for that aren't tracked in the vendor module
-- "You're paying for 28 SaaS tools but only tracking 19 in Privaro"
+- "You're paying for 28 SaaS tools but only tracking 19 in Custodia"
 
 ### 3.3 Cookie Consent Script Architecture
 
@@ -1636,14 +1636,14 @@ DSAR received for john@example.com
 ┌──────────────────────────────────────────────────────────────┐
 │                 AGENCY CLIENT'S WEBSITE                        │
 │                                                                │
-│  <script src="https://consent.privaro.io/v1/abc123.js">      │
+│  <script src="https://consent.custodia.io/v1/abc123.js">      │
 │                                                                │
 │  1. Script loads (15KB gzipped, from Cloudflare edge)         │
 │  2. Checks for existing consent cookie                         │
 │  3. If no consent → renders banner                             │
 │  4. User interacts → records consent                           │
 │  5. Fires/blocks scripts based on consent categories           │
-│  6. Sends consent record to Privaro API                        │
+│  6. Sends consent record to Custodia API                        │
 │  7. Updates Google Consent Mode signals                        │
 │                                                                │
 │  ┌────────────────────────────────────────────────┐           │
@@ -1663,15 +1663,15 @@ DSAR received for john@example.com
 │  Script behavior:                                              │
 │  - Blocks <script> tags marked with data-consent="marketing"  │
 │  - Manages Google Tag Manager dataLayer consent signals        │
-│  - Fires callbacks: window.Privaro.on('consent', fn)          │
-│  - Provides API: window.Privaro.getConsent()                  │
+│  - Fires callbacks: window.Custodia.on('consent', fn)          │
+│  - Provides API: window.Custodia.getConsent()                  │
 │  - Handles consent withdrawal via settings link                │
 │                                                                │
 └───────────────────────────┬──────────────────────────────────┘
                             │
                             ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  Privaro Consent API (Cloudflare Workers)                     │
+│  Custodia Consent API (Cloudflare Workers)                     │
 │                                                                │
 │  POST /consent/record                                         │
 │  {                                                             │
@@ -2012,9 +2012,9 @@ body: {"filterGroups": [{"filters": [
 │  └─────────────────────────────────────────────────────────┘ │
 │                                                                │
 │  S3 Buckets:                                                   │
-│  ├── privaro-documents-eu (DPAs, exports, evidence)           │
-│  ├── privaro-consent-archive-eu (monthly consent archives)    │
-│  └── privaro-backups-eu (database backups)                    │
+│  ├── custodia-documents-eu (DPAs, exports, evidence)           │
+│  ├── custodia-consent-archive-eu (monthly consent archives)    │
+│  └── custodia-backups-eu (database backups)                    │
 │                                                                │
 │  Cross-region backup: eu-central-1 (Frankfurt)                │
 │  ├── S3 replication for documents                             │

@@ -108,7 +108,7 @@ export const exportRouter = router({
           margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
           displayHeaderFooter: true,
           headerTemplate: '<div></div>',
-          footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%;">Privaro OS - Generated securely</div>'
+          footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%;">Custodia OS - Generated securely</div>'
         });
 
         // Normally, we would upload this to S3 and return a URL.
@@ -195,7 +195,7 @@ export const exportRouter = router({
           margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
           displayHeaderFooter: true,
           headerTemplate: '<div></div>',
-          footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%; color: #78716c;">Privaro OS - Executive Summary Report</div>'
+          footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%; color: #78716c;">Custodia OS - Executive Summary Report</div>'
         });
 
         const base64Pdf = Buffer.from(pdfBuffer).toString('base64');

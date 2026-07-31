@@ -49,7 +49,7 @@ export const AssessmentFollowupDay3 = ({
       </Card>
 
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 24px' }}>
-        Most agencies fix this in under 10 minutes with Privaro.
+        Most agencies fix this in under 10 minutes with Custodia.
       </Text>
 
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>

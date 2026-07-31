@@ -25,7 +25,7 @@ export const BreachReported = ({
       </div>
 
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        A new potential data breach has been logged in Privaro by {reportedBy}.
+        A new potential data breach has been logged in Custodia by {reportedBy}.
       </Text>
 
       <Text style={{ fontSize: '18px', fontWeight: 'bold', color: BRAND.textPrimary, margin: '0 0 16px' }}>

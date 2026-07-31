@@ -42,7 +42,7 @@ async function runTests() {
   console.log('Testing text cleaning logic...');
   const sampleRawText = `
     Welcome to our page.
-    Copyright © 2026 GDPR Privaaro Inc. All rights reserved.
+    Copyright © 2026 Custodia Inc. All rights reserved.
     We use cookies to ensure you get the best experience. Accept Cookies Privacy Policy
     Cookie Settings
     Sub-processors List:

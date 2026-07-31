@@ -8,7 +8,7 @@ export default function PrivacyPolicyPage() {
 
       <div className="prose prose-sage max-w-none text-ink-600">
         <h2>1. Introduction</h2>
-        <p>This Privacy Policy explains how Privaro OS ("we", "us", or "our") collects, uses, and discloses your information. As a privacy-focused company, we practice data minimization and strictly adhere to the GDPR.</p>
+        <p>This Privacy Policy explains how Custodia OS ("we", "us", or "our") collects, uses, and discloses your information. As a privacy-focused company, we practice data minimization and strictly adhere to the GDPR.</p>
 
         <h2>2. Information We Collect</h2>
         <p>We collect information that you provide directly to us when using our marketing site, taking the assessment, or creating an account.</p>

@@ -27,7 +27,7 @@ export const WelcomeNewUser = ({
   return (
     <Layout previewText={`Your GDPR score is ${score}% — here's what to do next`}>
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        Welcome to Privaro,
+        Welcome to Custodia,
       </Text>
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
         You scored {score}% on your GDPR compliance assessment. Here's what that means:

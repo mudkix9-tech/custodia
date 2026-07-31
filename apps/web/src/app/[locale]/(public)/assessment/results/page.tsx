@@ -293,7 +293,7 @@ function AssessmentResultsContent() {
           <div className="w-8 h-8 bg-sage-700 rounded-lg flex items-center justify-center shadow-sm">
             <ShieldCheck className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-serif text-ink-900">Privaro</span>
+          <span className="text-xl font-serif text-ink-900">Custodia</span>
         </Link>
         
         {currentState === 3 && (
@@ -484,7 +484,7 @@ function AssessmentResultsContent() {
                   </div>
                   <div>
                     <div className="flex justify-between text-[13px] font-medium mb-2">
-                      <span className="text-sage-300">Agencies using Privaro</span>
+                      <span className="text-sage-300">Agencies using Custodia</span>
                       <span className="text-sage-100 font-bold">87%</span>
                     </div>
                     <div className="w-full h-2 bg-sage-900/50 rounded-full overflow-hidden">
@@ -537,10 +537,10 @@ function AssessmentResultsContent() {
                 <div className="relative z-10">
                   <h3 className="text-2xl font-serif text-bone-50 mb-4">Fix these issues automatically.</h3>
                   <p className="text-[15px] text-bone-50/70 mb-8 max-w-lg mx-auto">
-                    Privaro replaces your spreadsheets with a dynamic compliance operating system. Start resolving these action items today.
+                    Custodia replaces your spreadsheets with a dynamic compliance operating system. Start resolving these action items today.
                   </p>
                   <Link href="/pricing" className="inline-flex bg-sage-600 hover:bg-sage-500 text-white font-medium py-3.5 px-8 rounded-xl transition-all shadow-card touch-manipulation">
-                    View Privaro Plans
+                    View Custodia Plans
                   </Link>
                 </div>
               </div>

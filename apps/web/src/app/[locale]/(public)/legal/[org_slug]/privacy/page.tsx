@@ -53,7 +53,7 @@ export default async function PublicPrivacyPolicy({ params }: { params: { org_sl
         />
         
         <div className="mt-16 pt-8 border-t border-ink-900/10 text-center text-sm text-ink-400">
-          Powered by <a href="https://privaro.io" className="font-medium text-ink-500 hover:text-ink-900">Privaro</a> Privacy Infrastructure
+          Powered by <a href="https://custodia.io" className="font-medium text-ink-500 hover:text-ink-900">Custodia</a> Privacy Infrastructure
         </div>
       </div>
     </div>

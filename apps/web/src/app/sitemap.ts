@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://privaro.io';
+  const baseUrl = 'https://custodia.io';
   const locales = ['en', 'de', 'fr'];
   const routes = ['', '/assessment', '/pricing', '/about', '/contact'];
   

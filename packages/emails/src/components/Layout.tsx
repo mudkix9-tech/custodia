@@ -24,7 +24,7 @@ export function Layout({ previewText, children, orgName, orgLogo }: LayoutProps)
             {orgLogo ? (
               <Img src={orgLogo} alt={orgName} height={32} style={{ margin: '0 auto' }} />
             ) : (
-              <Img src={BRAND.logoUrl} alt="Privaro" height={28} style={{ margin: '0 auto' }} />
+              <Img src={BRAND.logoUrl} alt="Custodia" height={28} style={{ margin: '0 auto' }} />
             )}
           </Section>
 
@@ -38,8 +38,8 @@ export function Layout({ previewText, children, orgName, orgLogo }: LayoutProps)
           <Section style={{ textAlign: 'center' as const, padding: '0 20px' }}>
             <Text style={{ margin: '0 0 8px', color: BRAND.textSecondary, fontSize: '14px' }}>
               {orgName
-                ? `Sent by ${orgName} via Privaro`
-                : 'Sent by Privaro'
+                ? `Sent by ${orgName} via Custodia`
+                : 'Sent by Custodia'
               }
             </Text>
             <Text style={{ margin: '0 0 8px', color: BRAND.textMuted, fontSize: '12px' }}>

@@ -8,10 +8,10 @@ export default function TermsOfServicePage() {
 
       <div className="prose prose-sage max-w-none text-ink-600">
         <h2>1. Acceptance of Terms</h2>
-        <p>By accessing or using Privaro OS, you agree to be bound by these Terms of Service.</p>
+        <p>By accessing or using Custodia OS, you agree to be bound by these Terms of Service.</p>
 
         <h2>2. Description of Service</h2>
-        <p>Privaro OS provides a GDPR compliance platform tailored for EU agencies.</p>
+        <p>Custodia OS provides a GDPR compliance platform tailored for EU agencies.</p>
 
         <h2>3. Subscription and Billing</h2>
         <p>Certain aspects of the Service are provided for a fee. You agree to pay all fees associated with the subscription plan you select.</p>

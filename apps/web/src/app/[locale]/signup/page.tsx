@@ -142,7 +142,7 @@ function SignupPageContent() {
         </div>
         
         <p className="mt-8 text-center text-[12px] text-ink-400 max-w-sm mx-auto leading-relaxed">
-          By signing up, you agree to Privaro's{' '}
+          By signing up, you agree to Custodia's{' '}
           <a href="#" className="underline hover:text-ink-600 transition-colors">Terms of Service</a> and{' '}
           <a href="#" className="underline hover:text-ink-600 transition-colors">Privacy Policy</a>.
         </p>

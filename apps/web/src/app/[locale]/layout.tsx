@@ -29,7 +29,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Privaro | GDPR Compliance OS for Agencies",
+  title: "Custodia | GDPR Compliance OS for Agencies",
   description: "A single platform that replaces the need for a dedicated DPO, expensive legal consultants, and spreadsheets.",
 };
 
@@ -62,12 +62,12 @@ export default async function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              "name": "Privaro",
-              "url": "https://privaro.io",
-              "logo": "https://privaro.io/logo.png",
+              "name": "Custodia",
+              "url": "https://custodia.io",
+              "logo": "https://custodia.io/logo.png",
               "sameAs": [
-                "https://x.com/privaaro",
-                "https://github.com/mudkix9-tech/privaaro"
+                "https://x.com/custodia",
+                "https://github.com/mudkix9-tech/custodia"
               ],
               "description": "Dynamic compliance operating system for digital agencies to automate GDPR, ROPA registers, and consent management."
             })

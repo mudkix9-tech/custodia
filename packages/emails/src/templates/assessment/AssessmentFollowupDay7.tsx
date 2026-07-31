@@ -21,7 +21,7 @@ export const AssessmentFollowupDay7 = ({
         Hi {name},
       </Text>
       <Text style={{ fontSize: '16px', color: BRAND.textPrimary, margin: '0 0 20px' }}>
-        A week ago you scored {score}% on your GDPR assessment. Agencies that use Privaro typically improve their score by 30-40 points in the first month.
+        A week ago you scored {score}% on your GDPR assessment. Agencies that use Custodia typically improve their score by 30-40 points in the first month.
       </Text>
 
       <Text style={{ fontSize: '16px', fontWeight: 'bold', color: BRAND.textPrimary, margin: '0 0 16px' }}>

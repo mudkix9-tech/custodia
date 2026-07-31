@@ -335,7 +335,7 @@ async function run() {
   // Initialize AI Client
   const ai = new GoogleGenAI({
     vertexai: true,
-    project: (process.env.GCP_PROJECT_ID || 'privaro') as string,
+    project: (process.env.GCP_PROJECT_ID || 'custodia') as string,
     location: (process.env.GCP_LOCATION || 'us-central1') as string,
   });
 

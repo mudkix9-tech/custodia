@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: privaro
+      POSTGRES_USER: custodia
       POSTGRES_PASSWORD: privaro_password
       POSTGRES_DB: privaro_db
     ports:
