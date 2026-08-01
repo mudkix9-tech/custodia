@@ -23,6 +23,7 @@ export async function sendContactMessage(formData: FormData) {
     const { error } = await resend.emails.send({
       from: 'notifications@trycustodia.online',
       to: contactEmail,
+      reply_to: email,
       subject: `New Contact Request from ${firstName} ${lastName}`,
       html: `
         <h2>New Contact Request</h2>
