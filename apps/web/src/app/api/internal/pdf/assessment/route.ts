@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import React from 'react';
 import { AssessmentReport } from '../../../../../lib/pdf/templates/assessmentReport';
 import { renderReactToPdf } from '../../../../../lib/pdf/pdfRenderer';
+import { getTranslations } from '../../../../../lib/translations';
 
 export async function POST(req: NextRequest) {
   const apiKey = req.headers.get('INTERNAL_API_KEY');
@@ -10,10 +11,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { reportData } = await req.json();
+    const { reportData, locale = 'en' } = await req.json();
 
     if (!reportData) {
       return new NextResponse('Missing reportData', { status: 400 });
+    }
+
+    const translations = getTranslations(locale, 'marketing');
+    if (translations && translations.pdfReport) {
+      reportData.t = translations.pdfReport;
     }
 
     const element = React.createElement(AssessmentReport, { data: reportData });

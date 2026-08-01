@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import pkg from 'pg';
 import crypto from 'crypto';
 import { assessmentTemplates, assessments, assessmentAnswers, actionItems, pendingSignups } from './schema.js';
+import { questionTranslations } from './seed-translations.js';
 
 const { Pool } = pkg;
 
@@ -666,7 +667,36 @@ async function seed() {
       maxRiskWeight: maxRiskWeight,
       gdprArticles: q.gdprArticles,
       remediationGuidance: q.remediationGuidance,
+      translations: {},
     };
+
+    const t = questionTranslations[q.slug];
+    if (t) {
+      const dbT: any = {};
+      if (t.de) {
+        dbT.de = {
+          category: t.de.category,
+          questionText: t.de.questionText,
+          remediationGuidance: t.de.remediationGuidance,
+          options: q.options.map((o: any) => ({
+            ...o,
+            text: t.de.options[o.text] || o.text
+          }))
+        };
+      }
+      if (t.fr) {
+        dbT.fr = {
+          category: t.fr.category,
+          questionText: t.fr.questionText,
+          remediationGuidance: t.fr.remediationGuidance,
+          options: q.options.map((o: any) => ({
+            ...o,
+            text: t.fr.options[o.text] || o.text
+          }))
+        };
+      }
+      values.translations = dbT;
+    }
     if ((q as any).id) {
       values.id = (q as any).id;
     } else {

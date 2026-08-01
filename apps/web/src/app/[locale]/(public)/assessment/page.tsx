@@ -3,22 +3,23 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/layout/MarketingHeader';
 import { evaluateDependsOn } from '@/utils/assessment';
 import { saveLeadAssessment } from '@/actions/lead-assessment';
 
 const CATEGORY_ORDER = [
-  'Data Mapping',
-  'Lawful Basis',
-  'Vendor Management',
-  'Data Subject Rights',
-  'Security',
-  'Privacy Notices',
-  'Cookie Consent',
-  'Governance',
-  'Client Compliance',
+  'Data Mapping', 'Datenkartierung', 'Cartographie des données',
+  'Lawful Basis', 'Rechtsgrundlage', 'Base légale',
+  'Vendor Management', 'Anbietermanagement', 'Gestion des fournisseurs',
+  'Data Subject Rights', 'Betroffenenrechte', 'Droits des personnes concernées',
+  'Security', 'Sicherheit', 'Sécurité',
+  'Privacy Notices', 'Datenschutzerklärungen', 'Avis de confidentialité',
+  'Cookie Consent', 'Cookie-Einwilligung', 'Consentement aux cookies',
+  'Governance', 'Governance', 'Gouvernance',
+  'Client Compliance', 'Kunden-Compliance', 'Conformité client'
 ];
 
 const DELIVERABLES = [
@@ -40,6 +41,9 @@ function AssessmentEngineContent() {
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [savedSessionExists, setSavedSessionExists] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
+  const t = useTranslations('assessmentFlow');
 
   // TRPC Hooks
   const { data: questions, isLoading: isLoadingQuestions } = trpc.assessments.getQuestions.useQuery();
@@ -172,13 +176,14 @@ function AssessmentEngineContent() {
           // Finished! Submit to Server Action
           setIsSubmitting(true);
           try {
-            const finalPayload = Object.entries(newAnswers).map(([qId, opt]) => ({
+            const finalPayload = Object.entries(newAnswers).map(([qId, opt]: [string, any]) => ({
               questionId: qId,
-              selectedOption: opt.text
+              selectedOption: opt.originalText || opt.text
             }));
 
             const result = await saveLeadAssessment({
               answers: finalPayload,
+              locale: locale,
               utmSource: searchParams?.get('utm_source') || undefined,
               utmMedium: searchParams?.get('utm_medium') || undefined,
               utmCampaign: searchParams?.get('utm_campaign') || undefined,
@@ -197,7 +202,24 @@ function AssessmentEngineContent() {
     }
   };
 
-  const displayQuestions = questions || [];
+  const displayQuestions = (questions || []).map((q) => {
+    const t = (q.translations as Record<string, any>)?.[locale];
+    if (t) {
+      return {
+        ...q,
+        questionText: t.questionText || q.questionText,
+        category: t.category || q.category,
+        options: t.options ? t.options.map((to: any, idx: number) => ({
+          ...to,
+          originalText: (q.options as any[])[idx]?.text
+        })) : q.options
+      };
+    }
+    return {
+      ...q,
+      options: (q.options as any[]).map(o => ({ ...o, originalText: o.text }))
+    };
+  });
 
   // Distinct categories present, in canonical order
   const presentCategories = CATEGORY_ORDER.filter((cat) => displayQuestions.some((q) => q.category === cat));
@@ -253,18 +275,18 @@ function AssessmentEngineContent() {
         <div className="max-w-[1120px] mx-auto px-6 h-16 flex items-center gap-5">
           <Logo />
           <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#6E747A] border-l border-white/12 pl-5 hidden sm:inline">
-            Free gap assessment
+            {t('headerBadge')}
           </span>
           <span className="flex-1" />
           {isResumed && currentStep >= 0 && (
             <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.06em] text-[#C9A227] hidden sm:inline">
-              Resumed — continuing where you left off
+              {t('resumed')}
             </span>
           )}
           <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.1em] text-[#6E747A] whitespace-nowrap">
             {currentStep >= 0
-              ? `${answeredCount} of ${totalApplicableCount} answered`
-              : 'No account required · ~10 min'}
+              ? t('answered', { answered: answeredCount, total: totalApplicableCount })
+              : t('unanswered')}
           </span>
         </div>
         <div className="h-0.5 bg-white/6">
@@ -300,13 +322,13 @@ function AssessmentEngineContent() {
                 <div>
                   <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
                     <span className="w-6 h-px bg-[#C9A227]" />
-                    <span>{displayQuestions.length} requirements · {categories.length} categories · ~10 minutes</span>
+                    <span>{t('introReqs', { reqs: displayQuestions.length, categories: categories.length })}</span>
                   </div>
                   <h1 className="mt-6 text-[34px] sm:text-[44px] lg:text-[54px] leading-[1.06] tracking-[-0.032em] font-normal text-[#F4F5F6] text-balance">
-                    Find out where you stand before someone else does.
+                    {t('introTitle')}
                   </h1>
                   <p className="mt-6 max-w-[540px] text-[17.5px] leading-[1.65] text-[#9BA1A6]">
-                    A structured scan of your operations against the Regulation as it is actually enforced. Answer {displayQuestions.length} questions; Custodia scores every requirement, maps each gap to its article, and orders the findings by category.
+                    {t('introDesc', { reqs: displayQuestions.length })}
                   </p>
                   <div className="mt-9 flex flex-wrap gap-3.5 items-center">
                     {savedSessionExists ? (
@@ -315,13 +337,13 @@ function AssessmentEngineContent() {
                           onClick={handleResume}
                           className="[font-family:var(--font-plex-sans)] text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors cursor-pointer"
                         >
-                          Resume assessment
+                          {t('resumeBtn')}
                         </button>
                         <button
                           onClick={handleStartFresh}
                           className="[font-family:var(--font-plex-sans)] text-[15px] text-[#9BA1A6] hover:text-[#E6E8EA] border border-white/16 hover:border-white/30 px-[22px] py-3.5 transition-colors cursor-pointer"
                         >
-                          Start over
+                          {t('startOverBtn')}
                         </button>
                       </>
                     ) : (
@@ -329,26 +351,29 @@ function AssessmentEngineContent() {
                         onClick={handleStartFresh}
                         className="[font-family:var(--font-plex-sans)] text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors cursor-pointer"
                       >
-                        Begin assessment
+                        {t('beginBtn')}
                       </button>
                     )}
                   </div>
                   <div className="mt-[22px] [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-[#6E747A] leading-[1.8]">
-                    No account. No credit card. No sales call.<br />
-                    Progress saves in your browser — you can leave and come back.
+                    {t('introFootnote')}
                   </div>
                   <div className="mt-10 pt-[22px] border-t border-white/8 text-[13.5px] text-[#7E8489]">
-                    Used by agencies and their clients across the EU.
+                    {t('usedBy')}
                   </div>
                 </div>
 
                 <div className="animate-[cd-fade_.8s_.15s_both]">
                   <div className="border border-white/9 bg-gradient-to-b from-[#0D0F11] to-[#0A0B0D] shadow-[0_40px_100px_-50px_rgba(0,0,0,0.9)]">
                     <div className="px-5 py-4 border-b border-white/7 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#6E747A]">
-                      What you get, immediately
+                      {t('whatYouGet')}
                     </div>
                     <div className="grid">
-                      {DELIVERABLES.map((d) => (
+                      {[{ index: '01', title: t('d1Title'), body: t('d1Desc') },
+                        { index: '02', title: t('d2Title'), body: t('d2Desc') },
+                        { index: '03', title: t('d3Title'), body: t('d3Desc') },
+                        { index: '04', title: t('d4Title'), body: t('d4Desc') }
+                      ].map((d) => (
                         <div key={d.index} className="grid grid-cols-[26px_1fr] gap-3.5 px-5 py-[18px] border-b border-white/[0.055]">
                           <span className="[font-family:var(--font-plex-mono)] text-[11px] text-[#C9A227] pt-0.5">{d.index}</span>
                           <span>
@@ -368,9 +393,9 @@ function AssessmentEngineContent() {
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-px bg-white/8 border border-white/8">
                     {[
-                      { value: String(displayQuestions.length), label: 'Requirements checked' },
-                      { value: String(categories.length), label: 'Categories assessed' },
-                      { value: 'EU', label: 'Data stored & processed' },
+                      { value: String(displayQuestions.length), label: t('statsReqs') },
+                      { value: String(categories.length), label: t('statsCats') },
+                      { value: 'EU', label: t('statsEU') },
                     ].map((s) => (
                       <div key={s.label} className="bg-[#0B0C0E] px-4 py-[18px]">
                         <div className="text-[22px] font-light tracking-[-0.02em] text-[#F4F5F6]">{s.value}</div>
@@ -416,7 +441,7 @@ function AssessmentEngineContent() {
                     className="w-full max-w-[720px]"
                   >
                     <div className="flex items-center gap-3.5 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.12em] uppercase text-[#6E747A]">
-                      <span className="text-[#C9A227]">Question {currentStep + 1} / {displayQuestions.length}</span>
+                      <span className="text-[#C9A227]">{t('questionHeader', { current: currentStep + 1, total: displayQuestions.length })}</span>
                       <span className="w-4 h-px bg-white/18" />
                       <span>{currentQuestion.category}</span>
                     </div>
@@ -477,10 +502,10 @@ function AssessmentEngineContent() {
                         disabled={isAdvancing || isSubmitting}
                         className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.1em] uppercase text-[#8A9095] hover:text-[#E6E8EA] border border-white/14 px-4 py-[11px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        ← Back
+                        {t('back')}
                       </button>
                       <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.06em] text-[#6E747A]">
-                        Press 1–{(currentQuestion.options as Array<{ text: string }>).length} to answer · answers save as you go
+                        {t('keyboardHint', { count: (currentQuestion.options as Array<{ text: string }>).length })}
                       </span>
                     </div>
                   </motion.div>

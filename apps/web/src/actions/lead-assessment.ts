@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 
 export async function saveLeadAssessment(data: {
   answers: Array<{ questionId: string, selectedOption: string }>;
+  locale?: string;
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
@@ -36,10 +37,21 @@ export async function saveLeadAssessment(data: {
     totalRisk += riskScore;
     totalPossibleRisk += (template.maxRiskWeight ?? 10);
 
+    const locale = data.locale || 'en';
+    const translations = (template.translations as Record<string, any>)?.[locale];
+    
+    const questionText = translations?.questionText || template.questionText;
+    const translatedOptionText = translations?.options?.find((o: any) => o.text === ans.selectedOption)?.text || ans.selectedOption;
+    const category = translations?.category || template.category || 'General';
+    const remediationGuidance = translations?.remediationGuidance || template.remediationGuidance || null;
+
     snapshot.push({
       questionId: template.id,
-      questionText: template.questionText,
-      selectedOption: ans.selectedOption,
+      questionText: questionText,
+      category: category,
+      remediationGuidance: remediationGuidance,
+      selectedOption: translatedOptionText,
+      originalSelectedOption: ans.selectedOption,
       score: riskScore
     });
   }
@@ -59,6 +71,7 @@ export async function saveLeadAssessment(data: {
     snapshot,
     ipAddress,
     userAgent,
+    locale: data.locale || 'en',
     utmSource: data.utmSource || null,
     utmMedium: data.utmMedium || null,
     utmCampaign: data.utmCampaign || null,

@@ -826,6 +826,7 @@ export const leadAssessments = pgTable('lead_assessments', {
   snapshot: jsonb('snapshot').notNull(),
   ipAddress: varchar('ip_address', { length: 45 }),
   userAgent: text('user_agent'),
+  locale: varchar('locale', { length: 10 }).default('en').notNull(),
   utmSource: varchar('utm_source', { length: 255 }),
   utmMedium: varchar('utm_medium', { length: 255 }),
   utmCampaign: varchar('utm_campaign', { length: 255 }),

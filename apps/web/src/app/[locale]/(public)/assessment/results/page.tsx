@@ -3,7 +3,8 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Send, Copy, ArrowRight, Clock, Download, Loader2, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
@@ -23,8 +24,15 @@ const categoryRouteMap: Record<string, string> = {
 };
 
 const CATEGORY_ORDER = [
-  'Data Mapping', 'Lawful Basis', 'Vendor Management', 'Data Subject Rights',
-  'Security', 'Privacy Notices', 'Cookie Consent', 'Governance', 'Client Compliance',
+  'Data Mapping', 'Datenkartierung', 'Cartographie des données',
+  'Lawful Basis', 'Rechtsgrundlage', 'Base légale',
+  'Vendor Management', 'Anbietermanagement', 'Gestion des fournisseurs',
+  'Data Subject Rights', 'Betroffenenrechte', 'Droits des personnes concernées',
+  'Security', 'Sicherheit', 'Sécurité',
+  'Privacy Notices', 'Datenschutzerklärungen', 'Avis de confidentialité',
+  'Cookie Consent', 'Cookie-Einwilligung', 'Consentement aux cookies',
+  'Governance', 'Governance', 'Gouvernance',
+  'Client Compliance', 'Kunden-Compliance', 'Conformité client'
 ];
 
 function getFixIssueLink(category?: string | null): string {
@@ -56,6 +64,9 @@ function verdictFor(score: number) {
 
 function AssessmentResultsContent() {
   const searchParams = useSearchParams();
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
+  const t = useTranslations('marketing.assessmentResults');
   const router = useRouter();
   const id = searchParams?.get('id');
   const { data: session, status } = useSession();
@@ -108,7 +119,7 @@ function AssessmentResultsContent() {
     if (!email) return;
     const ok = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email.trim());
     if (!ok) {
-      setNote('Enter a valid email address so we can send the report.');
+      setNote(t('emailNoteError'));
       return;
     }
 
@@ -176,11 +187,9 @@ function AssessmentResultsContent() {
           <div className="w-16 h-16 border border-[#C48A3F]/40 bg-[#C48A3F]/10 flex items-center justify-center mx-auto mb-6">
             <Clock className="w-8 h-8 text-[#C48A3F]" />
           </div>
-          <h1 className="text-2xl font-normal text-[#F4F5F6] mb-4">Assessment expired</h1>
-          <p className="text-[#9BA1A6] mb-8">This assessment was completed over 30 days ago and is no longer available.</p>
-          <Link href="/assessment" className="inline-flex [font-family:var(--font-plex-sans)] text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors">
-            Start new assessment
-          </Link>
+          <h1 className="text-2xl font-normal text-[#F4F5F6] mb-4">{t('expiredTitle')}</h1>
+          <p className="text-[#9BA1A6] mb-8">{t('expiredDesc')}</p>
+          <Link href="/assessment" className="inline-flex [font-family:var(--font-plex-sans)] text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors">{t('startNewBtn')}</Link>
         </div>
       </div>
     );
@@ -194,7 +203,7 @@ function AssessmentResultsContent() {
           {currentState === 3 && (
             <button onClick={handleCopyLink} className="flex items-center gap-2 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-[#9BA1A6] hover:text-[#E6E8EA] border border-white/14 px-3 py-2 transition-colors cursor-pointer">
               {copiedLink ? <CheckCircle2 className="w-3.5 h-3.5 text-[#7FA88B]" /> : <Copy className="w-3.5 h-3.5" />}
-              {copiedLink ? 'Copied' : 'Share results'}
+              {copiedLink ? t('copied') : t('shareLink')}
             </button>
           )}
         </div>
@@ -208,8 +217,8 @@ function AssessmentResultsContent() {
             <section className="border-b border-white/7 relative">
               <div className="max-w-[1120px] mx-auto px-6 py-14 sm:py-16 relative">
                 <div className="flex flex-wrap gap-4 items-center [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.14em] uppercase text-[#6E747A]">
-                  <span className="text-[#C9A227]">Assessment complete</span>
-                  <span>Ref {reportRef}</span>
+                  <span className="text-[#C9A227]">{t('assessmentComplete')}</span>
+                  <span>{t('ref', { ref: reportRef })}</span>
                   <span>{reportDate}</span>
                 </div>
                 <div className="mt-8 flex items-end gap-4 flex-wrap">
@@ -224,21 +233,21 @@ function AssessmentResultsContent() {
                 <div className="mt-[22px] h-1.5 bg-white/7 relative max-w-2xl">
                   <div className="h-1.5 transition-[width] duration-1000" style={{ background: band.color, width: `${Math.max(finalScore, 2)}%` }} />
                 </div>
-                <div className="mt-2 [font-family:var(--font-plex-mono)] text-[10.5px] text-[#6E747A]">Median score for agencies at first assessment: 55</div>
+                <div className="mt-2 [font-family:var(--font-plex-mono)] text-[10.5px] text-[#6E747A]">{t('medianScore')}</div>
                 <p className="mt-6 max-w-2xl text-[16.5px] leading-[1.66] text-[#9BA1A6] text-pretty">{verdictFor(finalScore)}</p>
 
                 <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 gap-px bg-white/8 border border-white/8 max-w-2xl">
                   <div className="bg-[#0B0C0E] px-4 py-5">
                     <div className="text-[28px] font-light tracking-[-0.02em] text-[#C0554C]">{highCount}</div>
-                    <div className="mt-1.5 [font-family:var(--font-plex-mono)] text-[10px] tracking-[0.1em] uppercase text-[#6E747A]">High severity</div>
+                    <div className="mt-1.5 [font-family:var(--font-plex-mono)] text-[10px] tracking-[0.1em] uppercase text-[#6E747A]">{t('highSeverity')}</div>
                   </div>
                   <div className="bg-[#0B0C0E] px-4 py-5">
                     <div className="text-[28px] font-light tracking-[-0.02em] text-[#C48A3F]">{mediumCount}</div>
-                    <div className="mt-1.5 [font-family:var(--font-plex-mono)] text-[10px] tracking-[0.1em] uppercase text-[#6E747A]">Medium severity</div>
+                    <div className="mt-1.5 [font-family:var(--font-plex-mono)] text-[10px] tracking-[0.1em] uppercase text-[#6E747A]">{t('mediumSeverity')}</div>
                   </div>
                   <div className="bg-[#0B0C0E] px-4 py-5">
                     <div className="text-[28px] font-light tracking-[-0.02em] text-[#F4F5F6]">{sortedFindings.length}</div>
-                    <div className="mt-1.5 [font-family:var(--font-plex-mono)] text-[10px] tracking-[0.1em] uppercase text-[#6E747A]">Total findings</div>
+                    <div className="mt-1.5 [font-family:var(--font-plex-mono)] text-[10px] tracking-[0.1em] uppercase text-[#6E747A]">{t('totalFindings')}</div>
                   </div>
                 </div>
               </div>
@@ -247,7 +256,7 @@ function AssessmentResultsContent() {
             {sortedCategoryScores.length > 0 && (
               <section className="border-b border-white/7 bg-[#0B0C0E]">
                 <div className="max-w-[1120px] mx-auto px-6 py-14">
-                  <h3 className="text-xl font-normal tracking-[-0.02em] text-[#F4F5F6]">Score by category</h3>
+                  <h3 className="text-xl font-normal tracking-[-0.02em] text-[#F4F5F6]">{t('scoreByCategory')}</h3>
                   <div className="mt-7 grid gap-px bg-white/8 border border-white/8">
                     {sortedCategoryScores.map((c) => {
                       const cColor = c.score >= 75 ? '#7FA88B' : c.score >= 45 ? '#C48A3F' : '#C0554C';
@@ -269,8 +278,8 @@ function AssessmentResultsContent() {
             <section className="border-b border-white/7">
               <div className="max-w-[1120px] mx-auto px-6 py-14">
                 <div className="flex flex-wrap gap-5 items-baseline justify-between">
-                  <h3 className="text-xl font-normal tracking-[-0.02em] text-[#F4F5F6]">Findings</h3>
-                  <p className="max-w-[420px] text-sm leading-[1.6] text-[#7E8489]">Ordered by severity — the full report includes every finding and its remediation step.</p>
+                  <h3 className="text-xl font-normal tracking-[-0.02em] text-[#F4F5F6]">{t('findings')}</h3>
+                  <p className="max-w-[420px] text-sm leading-[1.6] text-[#7E8489]">{t('findingsDesc')}</p>
                 </div>
                 <div className="mt-7 grid gap-3">
                   {shownFindings.map((f, i) => {
@@ -294,8 +303,8 @@ function AssessmentResultsContent() {
                 </div>
                 {lockedCount > 0 && (
                   <div className="mt-3.5 border border-dashed border-[#C9A227]/35 bg-[#C9A227]/[0.04] px-[22px] py-5 flex flex-wrap gap-4 items-center justify-between">
-                    <span className="text-[15px] text-[#DDE0E2]">{lockedCount} further finding{lockedCount === 1 ? '' : 's'} {lockedCount === 1 ? 'is' : 'are'} in the full report.</span>
-                    <a href="#unlock" className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.1em] uppercase text-[#C9A227]">Unlock below ↓</a>
+                    <span className="text-[15px] text-[#DDE0E2]">{t('furtherFindings', { count: lockedCount })}</span>
+                    <a href="#unlock" className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.1em] uppercase text-[#C9A227]">{t('unlockBelow')}</a>
                   </div>
                 )}
               </div>
@@ -304,22 +313,22 @@ function AssessmentResultsContent() {
             <section id="unlock" className="bg-[#0B0C0E]">
               <div className="max-w-[560px] mx-auto px-6 py-16">
                 <div className="border border-white/10 bg-gradient-to-b from-[#0E1012] to-[#0A0B0D] px-7 py-8 shadow-[0_40px_100px_-50px_rgba(0,0,0,0.9)]">
-                  <div className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#6E747A]">Send my report</div>
-                  <p className="mt-4 text-[14.5px] leading-[1.6] text-[#9BA1A6]">One email, containing your PDF. No sequence, no sales call — unsubscribe is a single click and your assessment stays valid either way.</p>
+                  <div className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#6E747A]">{t('sendReportHeader')}</div>
+                  <p className="mt-4 text-[14.5px] leading-[1.6] text-[#9BA1A6]">{t('sendReportDesc')}</p>
                   <form onSubmit={handleUnlock} className="mt-[22px] grid gap-2.5">
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setNote(''); }}
-                      placeholder="name@company.eu"
+                      placeholder={t('emailPlaceholder')}
                       className="w-full bg-[#08090A] border border-white/16 text-[#E6E8EA] text-[15px] px-[15px] py-3.5 focus:border-[#C9A227]"
                     />
                     <input
                       type="text"
                       value={company}
                       onChange={(e) => setCompany(e.target.value)}
-                      placeholder="Company (optional)"
+                      placeholder={t('companyPlaceholder')}
                       className="w-full bg-[#08090A] border border-white/16 text-[#E6E8EA] text-[15px] px-[15px] py-3.5 focus:border-[#C9A227]"
                     />
                     <label className="flex items-start gap-2.5 mt-1 cursor-pointer">
@@ -329,7 +338,7 @@ function AssessmentResultsContent() {
                         onChange={(e) => setMarketingConsent(e.target.checked)}
                         className="mt-0.5 w-4 h-4 accent-[#C9A227] bg-[#08090A] border border-white/20"
                       />
-                      <span className="text-[13px] leading-[1.5] text-[#8A9095]">Keep me updated about Custodia, including product news and offers</span>
+                      <span className="text-[13px] leading-[1.5] text-[#8A9095]">{t('marketingConsent')}</span>
                     </label>
                     <button
                       type="submit"
@@ -340,11 +349,11 @@ function AssessmentResultsContent() {
                     </button>
                   </form>
                   <div className="mt-3 text-[12.5px] leading-[1.6]" style={{ color: note ? '#C0554C' : '#6E747A' }}>
-                    {note || 'We will email you a secure magic link. No password required.'}
+                    {note || t('emailNote')}
                   </div>
                   <div className="mt-5 pt-[18px] border-t border-white/7 grid gap-2 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.06em] text-[#6E747A]">
-                    <span>Stored in the EU</span>
-                    <span>Deleted after 90 days on request</span>
+                    <span>{t('storedEU')}</span>
+                    <span>{t('deleted90Days')}</span>
                   </div>
                 </div>
               </div>
@@ -358,18 +367,13 @@ function AssessmentResultsContent() {
             <div className="w-16 h-16 border border-white/10 bg-[#0B0C0E] flex items-center justify-center mx-auto mb-8">
               <Send className="w-7 h-7 text-[#C9A227]" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-normal tracking-[-0.02em] text-[#F4F5F6] mb-4">Check your email</h1>
+            <h1 className="text-3xl sm:text-4xl font-normal tracking-[-0.02em] text-[#F4F5F6] mb-4">{t('checkEmailTitle')}</h1>
             <p className="text-[16px] leading-[1.6] text-[#9BA1A6] mb-8">
-              We&apos;ve sent a magic link to <span className="text-[#F4F5F6] font-medium">{email}</span>.<br />
-              Click the link to securely access your complete GDPR gap assessment.
+              {t('checkEmailDesc1')}<span className="text-[#F4F5F6] font-medium">{email}</span>.<br />{t('checkEmailDesc2')}
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              <button onClick={() => handleUnlock({ preventDefault: () => {} } as React.FormEvent)} className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.1em] uppercase text-[#C9A227] border border-[#C9A227]/40 px-4 py-2.5 transition-colors cursor-pointer">
-                Resend magic link
-              </button>
-              <button onClick={() => setIsMagicLinkSent(false)} className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.1em] uppercase text-[#8A9095] border border-white/14 px-4 py-2.5 transition-colors cursor-pointer">
-                Wrong email?
-              </button>
+              <button onClick={() => handleUnlock({ preventDefault: () => {} } as React.FormEvent)} className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.1em] uppercase text-[#C9A227] border border-[#C9A227]/40 px-4 py-2.5 transition-colors cursor-pointer">{t('resendLink')}</button>
+              <button onClick={() => setIsMagicLinkSent(false)} className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.1em] uppercase text-[#8A9095] border border-white/14 px-4 py-2.5 transition-colors cursor-pointer">{t('wrongEmail')}</button>
             </div>
           </motion.div>
         )}
@@ -381,8 +385,8 @@ function AssessmentResultsContent() {
               <div className="max-w-[1120px] mx-auto px-6 py-14">
                 <div className="flex flex-wrap gap-4 items-center justify-between">
                   <div>
-                    <div className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.14em] uppercase text-[#C9A227]">Full report</div>
-                    <h1 className="mt-3 text-3xl font-normal tracking-[-0.02em] text-[#F4F5F6]">GDPR audit readiness report</h1>
+                    <div className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.14em] uppercase text-[#C9A227]">{t('fullReportBadge')}</div>
+                    <h1 className="mt-3 text-3xl font-normal tracking-[-0.02em] text-[#F4F5F6]">{t('fullReportTitle')}</h1>
                     <p className="mt-1 text-xs text-[#6E747A]">Ref {reportRef} · {reportDate}</p>
                   </div>
                   <button
@@ -431,7 +435,7 @@ function AssessmentResultsContent() {
             {sortedCategoryScores.length > 0 && (
               <section className="border-b border-white/7 bg-[#0B0C0E]">
                 <div className="max-w-[1120px] mx-auto px-6 py-14">
-                  <h3 className="text-xl font-normal tracking-[-0.02em] text-[#F4F5F6]">Score by category</h3>
+                  <h3 className="text-xl font-normal tracking-[-0.02em] text-[#F4F5F6]">{t('scoreByCategory')}</h3>
                   <div className="mt-7 grid gap-px bg-white/8 border border-white/8">
                     {sortedCategoryScores.map((c) => {
                       const cColor = c.score >= 75 ? '#7FA88B' : c.score >= 45 ? '#C48A3F' : '#C0554C';
@@ -452,7 +456,7 @@ function AssessmentResultsContent() {
 
             <section className="border-b border-white/7">
               <div className="max-w-[1120px] mx-auto px-6 py-14">
-                <h3 className="text-xl font-normal tracking-[-0.02em] text-[#F4F5F6] mb-7">Your action plan</h3>
+                <h3 className="text-xl font-normal tracking-[-0.02em] text-[#F4F5F6] mb-7">{t('actionPlan')}</h3>
                 <div className="grid gap-3">
                   {sortedFindings.map((f, i) => {
                     const isHigh = f.priority === 'High';
@@ -467,7 +471,7 @@ function AssessmentResultsContent() {
                             <span className="text-[#8A9095]">{shortArticle(f.gdprArticleReference)}</span>
                             <span className="flex-1" />
                             <Link href={getFixIssueLink(f.category)} className="flex items-center gap-1.5 normal-case tracking-normal text-[13px] text-[#C9A227] hover:text-[#E5C463]">
-                              Fix issue <ArrowRight className="w-3.5 h-3.5" />
+                              {t('fixIssue')} <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
                           </div>
                           <h4 className="text-[17.5px] font-medium tracking-[-0.014em] text-[#EDEFF0] text-pretty">{f.title}</h4>
@@ -486,13 +490,9 @@ function AssessmentResultsContent() {
                   <div className="border border-white/10 bg-gradient-to-b from-[#0E1012] to-[#0A0B0D] px-8 py-12 text-center relative overflow-hidden">
                     <div aria-hidden="true" className="absolute top-0 right-0 w-64 h-64 bg-[#C9A227]/10 rounded-full blur-[80px]" />
                     <div className="relative">
-                      <h3 className="text-2xl font-normal tracking-[-0.02em] text-[#F4F5F6] mb-4">Fix these issues automatically.</h3>
-                      <p className="text-[15px] leading-[1.65] text-[#9BA1A6] mb-8 max-w-lg mx-auto">
-                        Custodia replaces your spreadsheets with a dynamic compliance operating system. Start resolving these action items today.
-                      </p>
-                      <Link href="/pricing" className="inline-flex [font-family:var(--font-plex-sans)] text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors">
-                        View Custodia plans
-                      </Link>
+                      <h3 className="text-2xl font-normal tracking-[-0.02em] text-[#F4F5F6] mb-4">{t('fixAutomaticallyTitle')}</h3>
+                      <p className="text-[15px] leading-[1.65] text-[#9BA1A6] mb-8 max-w-lg mx-auto">{t('fixAutomaticallyDesc')}</p>
+                      <Link href="/pricing" className="inline-flex [font-family:var(--font-plex-sans)] text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors">{t('viewPlans')}</Link>
                     </div>
                   </div>
                 </div>

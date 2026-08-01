@@ -5,6 +5,7 @@ import { leadAssessments } from 'db';
 import { eq } from 'drizzle-orm';
 
 import { generateUploadUrl, generateDownloadUrl, getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
+import { getTranslations } from '../lib/translations.js';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Resend } from 'resend';
 
@@ -41,8 +42,8 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
          questionId: s.questionId,
          selectedOption: s.selectedValue || s.selectedOption,
          riskScore: s.score || s.riskScore || 0,
-         category: t.category || 'General',
-         questionText: t.questionText || s.questionId,
+         category: s.category || t.category || 'General',
+         questionText: s.questionText || t.questionText || s.questionId,
          gdprArticles: t.gdprArticles || []
       };
     });
@@ -58,13 +59,14 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
     const apiKey = process.env.INTERNAL_API_KEY || 'development_key';
     
     console.log(`Calling Vercel API to generate Lead PDF: ${frontendUrl}/api/internal/pdf/assessment`);
+    const locale = lead.locale || 'en';
     const response = await fetch(`${frontendUrl}/api/internal/pdf/assessment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'INTERNAL_API_KEY': apiKey,
       },
-      body: JSON.stringify({ reportData }),
+      body: JSON.stringify({ reportData, locale }),
       signal: AbortSignal.timeout(15000), // 15-second timeout
     });
 
@@ -93,19 +95,29 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
     // Generate 48-hour presigned URL (48 * 3600 = 172800)
     const downloadUrl = await generateDownloadUrl(fileKey, 'eu-central-1', 7 * 24 * 3600, `Lead_Report_${leadId.split('-')[0]}.pdf`);
 
+    const tAll = getTranslations(locale, 'marketing');
+    const tEmail = tAll?.assessmentEmail || {
+      subject: 'Your GDPR Gap Assessment Report',
+      greeting: 'Your GDPR Gap Assessment Report is ready',
+      body1: 'Thank you for completing the GDPR Gap Assessment. Your detailed report has been generated.',
+      body2: 'You can download it securely using the link below (valid for 48 hours):',
+      btnLabel: 'Download PDF Report',
+      footer: 'If you have any questions, feel free to reply to this email.'
+    };
+
     await resend.emails.send({
       from: `Custodia  <hello@${process.env.EMAIL_FROM_DOMAIN || 'trycustodia.online'}>`,
       to: email,
-      subject: 'Your GDPR Gap Assessment Report',
+      subject: tEmail.subject,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Your GDPR Gap Assessment Report is ready</h2>
-          <p>Thank you for completing the GDPR Gap Assessment. Your detailed report has been generated.</p>
-          <p>You can download it securely using the link below (valid for 48 hours):</p>
+          <h2>${tEmail.greeting}</h2>
+          <p>${tEmail.body1}</p>
+          <p>${tEmail.body2}</p>
           <div style="margin: 30px 0;">
-            <a href="${downloadUrl}" style="background-color: #294036; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Download PDF Report</a>
+            <a href="${downloadUrl}" style="background-color: #294036; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">${tEmail.btnLabel}</a>
           </div>
-          <p>If you have any questions, feel free to reply to this email.</p>
+          <p>${tEmail.footer}</p>
         </div>
       `,
     });

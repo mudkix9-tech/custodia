@@ -6,11 +6,13 @@ export interface AssessmentReportData {
   categories: { name: string; score: number; risk: string; }[];
   findings: { categoryName: string; items: { question: string; answer: string; riskScore: number; risk: string; }[]; }[];
   actionItems: { title: string; description: string; severity: string; article: string; }[];
+  t?: any;
 }
 export function buildAssessmentReportData(
   orgName: string,
   overallScore: number,
-  answersWithTemplates: any[]
+  answersWithTemplates: any[],
+  t?: any
 ): AssessmentReportData {
   const riskLevel = overallScore < 50 ? 'High' : overallScore <= 75 ? 'Moderate' : 'Low';
   
@@ -72,8 +74,8 @@ export function buildAssessmentReportData(
     .sort((a, b) => b.riskScore - a.riskScore) // Sort by highest risk
     .map(a => {
       return {
-        title: `Address gap in ${a.category || 'General'}`,
-        description: a.remediationGuidance || `Response "${a.selectedOption}" to "${a.questionText || a.questionId}" indicates a compliance gap.`,
+        title: (t?.actionTitle || 'Address gap in {category}').replace('{category}', a.category || 'General'),
+        description: a.remediationGuidance || (t?.actionDescDefault || 'Response "{answer}" to "{question}" indicates a compliance gap.').replace('{answer}', a.selectedOption).replace('{question}', a.questionText || a.questionId),
         severity: a.riskScore >= 7 ? 'High' : a.riskScore >= 4 ? 'Medium' : 'Low',
         category: a.category,
         article: Array.isArray(a.gdprArticles) && a.gdprArticles.length > 0 
@@ -89,6 +91,7 @@ export function buildAssessmentReportData(
     riskLevel,
     categories,
     findings,
-    actionItems
+    actionItems,
+    t
   };
 }

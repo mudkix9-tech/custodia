@@ -20,14 +20,14 @@ import crypto from 'crypto';
 import React from 'react';
 
 function computeCategoryScores(
-  entries: Array<{ questionId: string; score: number }>,
+  entries: Array<{ questionId: string; score: number; category?: string | null }>,
   templates: Array<{ id: string; category: string | null; maxRiskWeight: number | null }>
 ): Array<{ category: string; score: number }> {
   const byCategory: Record<string, { possible: number; actual: number }> = {};
   for (const entry of entries) {
     const template = templates.find((t) => t.id === entry.questionId);
     if (!template) continue;
-    const category = template.category || 'General';
+    const category = entry.category || template.category || 'General';
     if (!byCategory[category]) byCategory[category] = { possible: 0, actual: 0 };
     byCategory[category].possible += template.maxRiskWeight || 10;
     byCategory[category].actual += entry.score;
@@ -247,17 +247,17 @@ export const assessmentsRouter = router({
                  id: crypto.randomUUID(),
                  assessmentId: lead.id,
                  title: s.questionText ? `Address risk regarding: ${s.questionText}` : `Address risk regarding: ${s.questionId}`,
-                 description: `Your answer "${s.selectedOption || s.selectedText || s.selectedValue || 'Unknown'}" indicates a compliance gap.`,
+                 description: s.remediationGuidance || `Your answer "${s.selectedOption || s.selectedText || s.selectedValue || 'Unknown'}" indicates a compliance gap.`,
                  priority: s.score > 5 ? 'High' : 'Medium',
                  status: 'open',
                  createdAt: lead.createdAt,
-                 category: template?.category || 'General',
+                 category: s.category || template?.category || 'General',
                  gdprArticles: template?.gdprArticles || null,
                  gdprArticleReference: template ? getGdprArticleReference(template.gdprArticles) : getGdprArticleReference(null)
                 };
              }) as any;
              categoryScores = computeCategoryScores(
-               lead.snapshot.map((s: any) => ({ questionId: s.questionId, score: s.score })),
+               lead.snapshot.map((s: any) => ({ questionId: s.questionId, score: s.score, category: s.category })),
                templates
              );
            }
