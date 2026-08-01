@@ -43,7 +43,7 @@ function AssessmentEngineContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
-  const t = useTranslations('assessmentFlow');
+  const t = useTranslations('marketing.assessmentFlow');
 
   // TRPC Hooks
   const { data: questions, isLoading: isLoadingQuestions } = trpc.assessments.getQuestions.useQuery();
