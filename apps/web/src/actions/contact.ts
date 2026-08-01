@@ -2,7 +2,6 @@
 
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendContactMessage(formData: FormData) {
   const firstName = formData.get('firstName') as string;
@@ -18,6 +17,14 @@ export async function sendContactMessage(formData: FormData) {
   if (!contactEmail) {
     throw new Error("CONTACT_EMAIL not configured");
   }
+
+  const resendApiKey = process.env.AUTH_RESEND_KEY;
+  if (!resendApiKey) {
+    console.error("AUTH_RESEND_KEY not configured or empty.");
+    return { success: false, error: 'Failed to send message due to missing email configuration.' };
+  }
+
+  const resend = new Resend(resendApiKey);
 
   try {
     const { error } = await resend.emails.send({
