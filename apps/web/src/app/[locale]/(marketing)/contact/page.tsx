@@ -2,19 +2,34 @@
 
 import React, { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
+import { sendContactMessage } from '@/actions/contact';
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
+    setSubmitError(null);
+
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      const result = await sendContactMessage(formData);
+      
+      if (result.success) {
+        setIsSuccess(true);
+      } else {
+        setSubmitError(result.error || 'Something went wrong.');
+      }
+    } catch (err) {
+      console.error(err);
+      setSubmitError('An unexpected error occurred. Please try again.');
+    } finally {
       setIsSubmitting(false);
-      setIsSuccess(true);
-    }, 800);
+    }
   };
 
   if (isSuccess) {
@@ -52,23 +67,29 @@ export default function ContactPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom border border-white/9 p-8 sm:p-10 shadow-panel-elevated">
+          {submitError && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-[14px] rounded-md">
+              {submitError}
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
              <div>
                <label className="block text-[13px] font-medium text-text-primary mb-2">First Name</label>
-               <input required type="text" className="w-full bg-surface-base text-text-primary px-4 py-2.5 border border-white/12 hover:border-white/20 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-colors outline-none" />
+               <input name="firstName" required type="text" className="w-full bg-surface-base text-text-primary px-4 py-2.5 border border-white/12 hover:border-white/20 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-colors outline-none" />
              </div>
              <div>
                <label className="block text-[13px] font-medium text-text-primary mb-2">Last Name</label>
-               <input required type="text" className="w-full bg-surface-base text-text-primary px-4 py-2.5 border border-white/12 hover:border-white/20 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-colors outline-none" />
+               <input name="lastName" required type="text" className="w-full bg-surface-base text-text-primary px-4 py-2.5 border border-white/12 hover:border-white/20 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-colors outline-none" />
              </div>
           </div>
           <div>
              <label className="block text-[13px] font-medium text-text-primary mb-2">Work Email</label>
-             <input required type="email" className="w-full bg-surface-base text-text-primary px-4 py-2.5 border border-white/12 hover:border-white/20 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-colors outline-none" />
+             <input name="email" required type="email" className="w-full bg-surface-base text-text-primary px-4 py-2.5 border border-white/12 hover:border-white/20 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-colors outline-none" />
           </div>
           <div>
              <label className="block text-[13px] font-medium text-text-primary mb-2">Message</label>
-             <textarea required rows={5} className="w-full bg-surface-base text-text-primary px-4 py-2.5 border border-white/12 hover:border-white/20 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-colors outline-none"></textarea>
+             <textarea name="message" required rows={5} className="w-full bg-surface-base text-text-primary px-4 py-2.5 border border-white/12 hover:border-white/20 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-colors outline-none"></textarea>
           </div>
           <button type="submit" disabled={isSubmitting} className="w-full mt-2 text-[15px] font-medium text-surface-base bg-accent-gold hover:bg-accent-gold-hover py-3.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             {isSubmitting ? 'Sending...' : 'Send Message'}
