@@ -246,7 +246,7 @@ export const assessmentsRouter = router({
                 return {
                  id: crypto.randomUUID(),
                  assessmentId: lead.id,
-                 title: s.questionText ? `Address risk regarding: ${s.questionText}` : `Address risk regarding: ${s.questionId}`,
+                 title: s.questionText ? s.questionText : s.questionId,
                  description: s.remediationGuidance || `Your answer "${s.selectedOption || s.selectedText || s.selectedValue || 'Unknown'}" indicates a compliance gap.`,
                  priority: s.score > 5 ? 'High' : 'Medium',
                  status: 'open',

@@ -42,7 +42,7 @@ export async function saveLeadAssessment(data: {
     
     const optionIndex = options.findIndex(o => o.text === ans.selectedOption);
     const questionText = translations?.questionText || template.questionText;
-    const translatedOptionText = (optionIndex >= 0 && translations?.options?.[optionIndex]) ? translations.options[optionIndex].text : ans.selectedOption;
+    const translatedOptionText = translations?.options?.[ans.selectedOption] || ans.selectedOption;
     const category = translations?.category || template.category || 'General';
     const remediationGuidance = translations?.remediationGuidance || template.remediationGuidance || null;
 

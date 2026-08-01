@@ -46,20 +46,20 @@ function shortArticle(ref?: string | null): string {
   return 'Art. ' + Array.from(new Set(matches)).join(', ');
 }
 
-function bandFor(score: number) {
-  if (score >= 75) return { label: 'Defensible', color: '#7FA88B', border: 'rgba(127,168,139,0.45)' };
-  if (score >= 45) return { label: 'Material exposure', color: '#C48A3F', border: 'rgba(196,138,63,0.45)' };
-  return { label: 'High exposure', color: '#C0554C', border: 'rgba(192,85,76,0.45)' };
+function bandFor(score: number, t: any) {
+  if (score >= 75) return { label: t('bandDefensible'), color: '#7FA88B', border: 'rgba(127,168,139,0.45)' };
+  if (score >= 45) return { label: t('bandMaterialExposure'), color: '#C48A3F', border: 'rgba(196,138,63,0.45)' };
+  return { label: t('bandHighExposure'), color: '#C0554C', border: 'rgba(192,85,76,0.45)' };
 }
 
-function verdictFor(score: number) {
+function verdictFor(score: number, t: any) {
   if (score >= 75) {
-    return "Your programme is broadly defensible. The findings below are refinements rather than exposures — close them to move from compliant-in-substance to demonstrable on request.";
+    return t('verdictDefensible');
   }
   if (score >= 45) {
-    return "You have the outline of a compliance programme without the evidence to prove it. In an inquiry, the gap between what you do and what you can show is where liability sits — and most of the findings below are documentation, not new work.";
+    return t('verdictMaterialExposure');
   }
-  return "Several foundational obligations are unmet, including ones a supervisory authority can verify without contacting you. Treat the high-severity findings as this quarter's priority.";
+  return t('verdictHighExposure');
 }
 
 function AssessmentResultsContent() {
@@ -67,6 +67,7 @@ function AssessmentResultsContent() {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
   const t = useTranslations('marketing.assessmentResults');
+  const tPdf = useTranslations('marketing.pdfReport');
   const router = useRouter();
   const id = searchParams?.get('id');
   const { data: session, status } = useSession();
@@ -148,8 +149,8 @@ function AssessmentResultsContent() {
   const isExpired = resultsData?.assessment?.expiresAt && new Date(resultsData.assessment.expiresAt) < new Date();
 
   const mockActionItems = [
-    { priority: 'High', title: 'Address risk regarding: vendor data processing agreements', category: 'Vendor Management', gdprArticleReference: 'Article 28 (Processor)', description: 'Missing DPAs with critical sub-processors.' },
-    { priority: 'High', title: 'Address risk regarding: encryption at rest', category: 'Security', gdprArticleReference: 'Article 32 (Security of processing)', description: 'Data is not encrypted at rest.' },
+    { priority: 'High', title: 'vendor data processing agreements', category: 'Vendor Management', gdprArticleReference: 'Article 28 (Processor)', description: 'Missing DPAs with critical sub-processors.' },
+    { priority: 'High', title: 'encryption at rest', category: 'Security', gdprArticleReference: 'Article 32 (Security of processing)', description: 'Data is not encrypted at rest.' },
   ];
   const mockCategoryScores = [
     { category: 'Vendor Management', score: 38 }, { category: 'Security', score: 44 }, { category: 'Data Mapping', score: 71 },
@@ -174,7 +175,7 @@ function AssessmentResultsContent() {
   const shownFindings = currentState === 3 ? sortedFindings : sortedFindings.slice(0, gateAfter);
   const lockedCount = Math.max(sortedFindings.length - shownFindings.length, 0);
 
-  const band = bandFor(finalScore);
+  const band = bandFor(finalScore, t);
   const reportDate = resultsData?.assessment?.completedAt
     ? new Date(resultsData.assessment.completedAt as unknown as string).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
     : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -234,7 +235,7 @@ function AssessmentResultsContent() {
                   <div className="h-1.5 transition-[width] duration-1000" style={{ background: band.color, width: `${Math.max(finalScore, 2)}%` }} />
                 </div>
                 <div className="mt-2 [font-family:var(--font-plex-mono)] text-[10.5px] text-[#6E747A]">{t('medianScore')}</div>
-                <p className="mt-6 max-w-2xl text-[16.5px] leading-[1.66] text-[#9BA1A6] text-pretty">{verdictFor(finalScore)}</p>
+                <p className="mt-6 max-w-2xl text-[16.5px] leading-[1.66] text-[#9BA1A6] text-pretty">{verdictFor(finalScore, t)}</p>
 
                 <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 gap-px bg-white/8 border border-white/8 max-w-2xl">
                   <div className="bg-[#0B0C0E] px-4 py-5">
@@ -294,7 +295,7 @@ function AssessmentResultsContent() {
                             <span className="px-2 py-[3px] border" style={{ color, borderColor: border }}>{f.priority}</span>
                             <span className="text-[#8A9095]">{shortArticle(f.gdprArticleReference)}</span>
                           </div>
-                          <h4 className="text-[17.5px] font-medium tracking-[-0.014em] text-[#EDEFF0] text-pretty">{f.title}</h4>
+                          <h4 className="text-[17.5px] font-medium tracking-[-0.014em] text-[#EDEFF0] text-pretty">{tPdf('actionItemPrefix')}{f.title}</h4>
                           <p className="text-[14.5px] leading-[1.65] text-[#8A9095] max-w-[780px] text-pretty">{f.description}</p>
                         </div>
                       </div>
@@ -345,7 +346,7 @@ function AssessmentResultsContent() {
                       disabled={isCapturing}
                       className="[font-family:var(--font-plex-sans)] mt-2 text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] disabled:opacity-60 disabled:cursor-not-allowed px-5 py-3.5 transition-colors cursor-pointer"
                     >
-                      {isCapturing ? 'Processing…' : 'Email me the full report'}
+                      {isCapturing ? t('btnProcessing') : t('btnEmailReport')}
                     </button>
                   </form>
                   <div className="mt-3 text-[12.5px] leading-[1.6]" style={{ color: note ? '#C0554C' : '#6E747A' }}>
@@ -412,7 +413,7 @@ function AssessmentResultsContent() {
                     className="[font-family:var(--font-plex-sans)] inline-flex items-center gap-2 text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3.5 transition-colors cursor-pointer"
                   >
                     {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                    {isDownloading ? 'Generating…' : 'Download PDF report'}
+                    {isDownloading ? t('btnGenerating') : t('btnDownloadPdf')}
                   </button>
                 </div>
 
@@ -428,7 +429,7 @@ function AssessmentResultsContent() {
                 <div className="mt-[22px] h-1.5 bg-white/7 max-w-2xl">
                   <div className="h-1.5" style={{ background: band.color, width: `${Math.max(finalScore, 2)}%` }} />
                 </div>
-                <p className="mt-6 max-w-2xl text-[16.5px] leading-[1.66] text-[#9BA1A6] text-pretty">{verdictFor(finalScore)}</p>
+                <p className="mt-6 max-w-2xl text-[16.5px] leading-[1.66] text-[#9BA1A6] text-pretty">{verdictFor(finalScore, t)}</p>
               </div>
             </section>
 

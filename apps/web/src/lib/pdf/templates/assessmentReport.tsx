@@ -732,7 +732,7 @@ export const AssessmentReport: React.FC<{ data: AssessmentReportData }> = ({ dat
                 </View>
               </View>
               <View style={styles.actionTextCol}>
-                <Text style={styles.actionText}>{a.description || a.title}</Text>
+                <Text style={styles.actionText}>{a.description || `${T(data.t, 'actionItemPrefix', 'Address risk regarding: ')}${a.title}`}</Text>
               </View>
               <View style={styles.actionArticleCol}>
                 <Text style={styles.actionArticleText}>{a.article || '-'}</Text>
