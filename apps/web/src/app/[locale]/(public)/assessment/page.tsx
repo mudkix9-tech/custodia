@@ -4,10 +4,31 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trpc } from '@/utils/trpc';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, ArrowLeft, Loader2, RotateCcw } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
+import { Logo } from '@/components/layout/MarketingHeader';
 import { evaluateDependsOn } from '@/utils/assessment';
 import { saveLeadAssessment } from '@/actions/lead-assessment';
+
+const CATEGORY_ORDER = [
+  'Data Mapping',
+  'Lawful Basis',
+  'Vendor Management',
+  'Data Subject Rights',
+  'Security',
+  'Privacy Notices',
+  'Cookie Consent',
+  'Governance',
+  'Client Compliance',
+];
+
+const DELIVERABLES = [
+  { index: '01', title: 'A scored readiness figure', body: 'One number, benchmarked against comparable EU agencies.' },
+  { index: '02', title: 'Every gap mapped to its article', body: 'Findings cite the provision they fail, not a vague category.' },
+  { index: '03', title: 'Severity per finding', body: 'So you can tell what needs attention this quarter from what can wait.' },
+  { index: '04', title: 'A category-by-category breakdown', body: 'Records, consent, vendors, security and more, scored independently.' },
+];
+
+const ARTICLES = ['Art. 5', 'Art. 6', 'Art. 7', 'Art. 9', 'Art. 13–14', 'Art. 15–22', 'Art. 28', 'Art. 30', 'Art. 32–34', 'Art. 44–46'];
 
 function AssessmentEngineContent() {
   const router = useRouter();
@@ -19,10 +40,10 @@ function AssessmentEngineContent() {
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [savedSessionExists, setSavedSessionExists] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // TRPC Hooks
   const { data: questions, isLoading: isLoadingQuestions } = trpc.assessments.getQuestions.useQuery();
-  
+
   useEffect(() => {
     // Check local storage for existing session
     const saved = localStorage.getItem('pvr_assessment_answers');
@@ -45,18 +66,18 @@ function AssessmentEngineContent() {
       const ropa = searchParams?.get('ropa');
       const cookies = searchParams?.get('cookies');
       const special = searchParams?.get('special');
-      
+
       if (jurisdiction || ropa || cookies || special) {
         const prefilled: Record<string, { text: string }> = {};
-        
+
         for (const q of questions) {
           const typedOptions = q.options as Array<{ text: string }>;
-          
+
           if (special && q.questionText.includes('special categories')) {
             const option = typedOptions.find(o => special === 'yes' ? o.text.includes('Yes') : o.text.includes('We don\'t process'));
             if (option) prefilled[q.id] = option;
           }
-          
+
           if (cookies && q.questionText.includes('cookie consent banner')) {
             const option = typedOptions.find(o => cookies === 'automated' || cookies === 'basic' ? o.text === 'Yes' : o.text === 'No');
             if (option) prefilled[q.id] = option;
@@ -75,7 +96,7 @@ function AssessmentEngineContent() {
             if (option) prefilled[q.id] = option;
           }
         }
-        
+
         if (Object.keys(prefilled).length > 0) {
           setTimeout(() => {
             setAnswers(prev => ({ ...prev, ...prefilled }));
@@ -121,7 +142,7 @@ function AssessmentEngineContent() {
   };
 
   const handleSelectOption = async (
-    question: { id: string }, 
+    question: { id: string },
     option: { text: string }
   ) => {
     if (isAdvancing || isSubmitting) return;
@@ -133,7 +154,7 @@ function AssessmentEngineContent() {
     // Auto-advance logic with dependsOn
     if (questions) {
       let nextStep = currentStep + 1;
-      
+
       // Find the next question that satisfies its dependsOn condition
       while (nextStep < questions.length) {
         const nextQ = questions[nextStep];
@@ -155,14 +176,14 @@ function AssessmentEngineContent() {
               questionId: qId,
               selectedOption: opt.text
             }));
-            
+
             const result = await saveLeadAssessment({
               answers: finalPayload,
               utmSource: searchParams?.get('utm_source') || undefined,
               utmMedium: searchParams?.get('utm_medium') || undefined,
               utmCampaign: searchParams?.get('utm_campaign') || undefined,
             });
-            
+
             localStorage.removeItem('pvr_assessment_answers');
             router.push(`/assessment/results?id=${result.leadId}`);
           } catch (error) {
@@ -176,21 +197,16 @@ function AssessmentEngineContent() {
     }
   };
 
-  if (isLoadingQuestions) {
-    return (
-      <div className="min-h-screen bg-bone-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-sage-600" />
-      </div>
-    );
-  }
-
-  // Filter out questions that don't meet dependsOn so progress bar is accurate (approximate)
   const displayQuestions = questions || [];
-  
+
+  // Distinct categories present, in canonical order
+  const presentCategories = CATEGORY_ORDER.filter((cat) => displayQuestions.some((q) => q.category === cat));
+  const categories = presentCategories.length > 0 ? presentCategories : Array.from(new Set(displayQuestions.map((q) => q.category)));
+
   // Calculate true progress
   let answeredCount = 0;
   let totalApplicableCount = 0;
-  
+
   if (questions) {
     for (const q of questions) {
       if (evaluateDependsOn(q.dependsOn as Parameters<typeof evaluateDependsOn>[0], answers)) {
@@ -202,168 +218,273 @@ function AssessmentEngineContent() {
     }
   }
 
-  const progress = totalApplicableCount > 0 
-    ? Math.max(0, (answeredCount / totalApplicableCount) * 100) 
+  const progress = totalApplicableCount > 0
+    ? Math.max(0, (answeredCount / totalApplicableCount) * 100)
     : 0;
+
+  const currentQuestion = currentStep >= 0 && currentStep < displayQuestions.length ? displayQuestions[currentStep] : null;
+  const currentCategoryIndex = currentQuestion ? categories.indexOf(currentQuestion.category) : -1;
+
+  useEffect(() => {
+    if (!currentQuestion || isAdvancing || isSubmitting) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const options = currentQuestion.options as Array<{ text: string }>;
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= options.length) {
+        handleSelectOption(currentQuestion, options[n - 1]);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestion?.id, isAdvancing, isSubmitting]);
+
+  if (isLoadingQuestions) {
+    return (
+      <div className="min-h-screen bg-[#08090A] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
+      </div>
+    );
+  }
 
   return (
     <>
-      {/* Header */}
-      <header className="p-6 flex justify-between items-center bg-bone-50 sticky top-0 z-10">
-        <Link href="/" className="flex items-center gap-2.5">
-          <svg width="26" height="26" viewBox="0 0 48 48" aria-hidden="true">
-            <path d="M8 21v-6a7 7 0 0 1 7-7h6" fill="none" stroke="#17222C" strokeWidth="5" strokeLinecap="round" />
-            <path d="M40 27v6a7 7 0 0 1-7 7h-6" fill="none" stroke="#17222C" strokeWidth="5" strokeLinecap="round" />
-            <circle cx="24" cy="24" r="7.5" fill="#0E4E55" />
-          </svg>
-          <span className="text-xl font-sans font-bold tracking-tight text-ink-900">custodia</span>
-        </Link>
-        <div className="flex items-center gap-6">
+      <header className="sticky top-0 z-50 backdrop-blur-[14px] bg-[#08090A]/85 border-b border-white/7 flex-none">
+        <div className="max-w-[1120px] mx-auto px-6 h-16 flex items-center gap-5">
+          <Logo />
+          <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#6E747A] border-l border-white/12 pl-5 hidden sm:inline">
+            Free gap assessment
+          </span>
+          <span className="flex-1" />
           {isResumed && currentStep >= 0 && (
-            <span className="text-[13px] text-sage-600 font-medium bg-sage-50 px-3 py-1 rounded-full hidden sm:inline-block">
-              Welcome back — continuing where you left off
+            <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.06em] text-[#C9A227] hidden sm:inline">
+              Resumed — continuing where you left off
             </span>
           )}
-          {currentStep >= 0 && (
-            <Link href="/" className="text-[13px] text-ink-500 hover:text-ink-900 font-medium transition-colors">
-              Save and exit
-            </Link>
-          )}
+          <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.1em] text-[#6E747A] whitespace-nowrap">
+            {currentStep >= 0
+              ? `${answeredCount} of ${totalApplicableCount} answered`
+              : 'No account required · ~10 min'}
+          </span>
+        </div>
+        <div className="h-0.5 bg-white/6">
+          <div
+            className="h-0.5 bg-[#C9A227] transition-[width] duration-500 ease-out"
+            style={{ width: currentStep === -1 ? '0%' : `${progress}%` }}
+          />
         </div>
       </header>
 
-      {/* Progress Bar */}
-      {currentStep >= 0 && (
-        <div className="w-full h-1.5 bg-bone-100">
-          <motion.div 
-            className="h-full bg-sage-500 rounded-r-full" 
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
-          />
-        </div>
-      )}
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 relative">
+      <main className="flex-1 relative">
         <AnimatePresence mode="wait">
-          
+
           {/* Intro Screen */}
           {currentStep === -1 && (
             <motion.div
               key="intro"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-2xl text-center"
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.4 }}
+              className="relative overflow-hidden"
             >
-              <div className="inline-flex items-center gap-2 bg-sage-50 border border-sage-500/20 rounded-full px-4 py-1.5 mb-8 text-[13px] font-medium text-sage-700">
-                Takes 3 minutes • Actionable Results
-              </div>
-              <h1 className="text-4xl md:text-5xl font-serif text-ink-900 tracking-tight mb-6">
-                Find out your agency&apos;s GDPR risk score.
-              </h1>
-              <p className="text-[16px] text-ink-600 mb-10 leading-relaxed max-w-xl mx-auto">
-                Answer a few quick questions to identify compliance gaps in your vendor stack, data workflows, and security posture. Get a free, actionable roadmap immediately.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                {savedSessionExists ? (
-                  <>
-                    <button 
-                      onClick={handleResume}
-                      className="bg-sage-700 hover:bg-sage-600 text-bone-50 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white w-full sm:w-auto"
-                    >
-                      Resume Assessment <ArrowRight className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={handleStartFresh}
-                      className="bg-white hover:bg-bone-50 border border-ink-200 text-ink-700 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white w-full sm:w-auto"
-                    >
-                      Start Fresh <RotateCcw className="w-4 h-4" />
-                    </button>
-                  </>
-                ) : (
-                  <button 
-                    onClick={handleStartFresh}
-                    className="bg-sage-700 hover:bg-sage-600 text-bone-50 text-[15px] font-medium py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 shadow-card focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white w-full sm:w-auto"
-                  >
-                    Start Assessment <ArrowRight className="w-4 h-4" />
-                  </button>
-                )}
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(110%_70%_at_50%_0%,#000_15%,transparent_72%)]"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute -top-[220px] left-1/2 -translate-x-1/2 w-[820px] h-[480px] bg-[radial-gradient(50%_50%_at_50%_50%,rgba(201,162,39,0.15),transparent_70%)]"
+              />
+              <div className="relative max-w-[1120px] mx-auto px-6 py-20 sm:py-24 grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
+                <div>
+                  <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
+                    <span className="w-6 h-px bg-[#C9A227]" />
+                    <span>{displayQuestions.length} requirements · {categories.length} categories · ~10 minutes</span>
+                  </div>
+                  <h1 className="mt-6 text-[34px] sm:text-[44px] lg:text-[54px] leading-[1.06] tracking-[-0.032em] font-normal text-[#F4F5F6] text-balance">
+                    Find out where you stand before someone else does.
+                  </h1>
+                  <p className="mt-6 max-w-[540px] text-[17.5px] leading-[1.65] text-[#9BA1A6]">
+                    A structured scan of your operations against the Regulation as it is actually enforced. Answer {displayQuestions.length} questions; Custodia scores every requirement, maps each gap to its article, and orders the findings by category.
+                  </p>
+                  <div className="mt-9 flex flex-wrap gap-3.5 items-center">
+                    {savedSessionExists ? (
+                      <>
+                        <button
+                          onClick={handleResume}
+                          className="[font-family:var(--font-plex-sans)] text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors cursor-pointer"
+                        >
+                          Resume assessment
+                        </button>
+                        <button
+                          onClick={handleStartFresh}
+                          className="[font-family:var(--font-plex-sans)] text-[15px] text-[#9BA1A6] hover:text-[#E6E8EA] border border-white/16 hover:border-white/30 px-[22px] py-3.5 transition-colors cursor-pointer"
+                        >
+                          Start over
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleStartFresh}
+                        className="[font-family:var(--font-plex-sans)] text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors cursor-pointer"
+                      >
+                        Begin assessment
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-[22px] [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-[#6E747A] leading-[1.8]">
+                    No account. No credit card. No sales call.<br />
+                    Progress saves in your browser — you can leave and come back.
+                  </div>
+                  <div className="mt-10 pt-[22px] border-t border-white/8 text-[13.5px] text-[#7E8489]">
+                    Used by agencies and their clients across the EU.
+                  </div>
+                </div>
+
+                <div className="animate-[cd-fade_.8s_.15s_both]">
+                  <div className="border border-white/9 bg-gradient-to-b from-[#0D0F11] to-[#0A0B0D] shadow-[0_40px_100px_-50px_rgba(0,0,0,0.9)]">
+                    <div className="px-5 py-4 border-b border-white/7 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#6E747A]">
+                      What you get, immediately
+                    </div>
+                    <div className="grid">
+                      {DELIVERABLES.map((d) => (
+                        <div key={d.index} className="grid grid-cols-[26px_1fr] gap-3.5 px-5 py-[18px] border-b border-white/[0.055]">
+                          <span className="[font-family:var(--font-plex-mono)] text-[11px] text-[#C9A227] pt-0.5">{d.index}</span>
+                          <span>
+                            <span className="block text-[15px] font-medium text-[#EDEFF0]">{d.title}</span>
+                            <span className="block mt-[5px] text-[13.5px] leading-[1.6] text-[#868C91]">{d.body}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="px-5 py-[18px] flex flex-wrap gap-2">
+                      {ARTICLES.map((art) => (
+                        <span key={art} className="[font-family:var(--font-plex-mono)] text-[10.5px] text-[#8A9095] border border-white/10 px-2 py-1">
+                          {art}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-px bg-white/8 border border-white/8">
+                    {[
+                      { value: String(displayQuestions.length), label: 'Requirements checked' },
+                      { value: String(categories.length), label: 'Categories assessed' },
+                      { value: 'EU', label: 'Data stored & processed' },
+                    ].map((s) => (
+                      <div key={s.label} className="bg-[#0B0C0E] px-4 py-[18px]">
+                        <div className="text-[22px] font-light tracking-[-0.02em] text-[#F4F5F6]">{s.value}</div>
+                        <div className="mt-1.5 [font-family:var(--font-plex-mono)] text-[10px] tracking-[0.1em] uppercase text-[#6E747A]">{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
 
           {/* Question Screen */}
-          {currentStep >= 0 && currentStep < displayQuestions.length && (
-            <motion.div
-              key={displayQuestions[currentStep].id}
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.3 }}
-              className="w-full max-w-2xl"
-            >
-              <div className="mb-4 text-[13px] font-semibold text-sage-600 uppercase tracking-widest">
-                {displayQuestions[currentStep].category}
+          {currentQuestion && (
+            <motion.div key="quiz" initial={{ opacity: 1 }} animate={{ opacity: 1 }} className="flex flex-col">
+              <div className="border-b border-white/7 bg-[#0A0B0C]">
+                <div className="max-w-[900px] mx-auto px-6 py-3.5 flex items-center gap-2.5 flex-wrap">
+                  {categories.map((cat, i) => (
+                    <div key={cat} className="flex-1 min-w-[90px]">
+                      <div
+                        className="h-[3px]"
+                        style={{ background: i < currentCategoryIndex ? '#C9A227' : i === currentCategoryIndex ? 'rgba(201,162,39,0.55)' : 'rgba(255,255,255,0.1)' }}
+                      />
+                      <div
+                        className="mt-2 [font-family:var(--font-plex-mono)] text-[9.5px] tracking-[0.1em] uppercase truncate"
+                        style={{ color: i === currentCategoryIndex ? '#C9A227' : i < currentCategoryIndex ? '#8A9095' : '#5C6266' }}
+                      >
+                        {cat}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h2 className="text-2xl md:text-3xl font-serif text-ink-900 mb-10 leading-snug">
-                {displayQuestions[currentStep].questionText}
-              </h2>
 
-              <div className="space-y-3">
-                {(displayQuestions[currentStep].options as Array<{ text: string }>).map((option, i) => {
-                  const isSelected = answers[displayQuestions[currentStep].id]?.text === option.text;
-                  return (
-                    <button
-                      key={i}
-                      disabled={isAdvancing || isSubmitting}
-                      onClick={() => handleSelectOption(displayQuestions[currentStep], option)}
-                      className={`w-full cursor-pointer text-left p-5 rounded-xl border transition-all duration-200 flex items-center justify-between group focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-white touch-manipulation disabled:opacity-70 disabled:cursor-not-allowed ${
-                        isSelected 
-                          ? 'border-sage-500 bg-sage-50 shadow-sm' 
-                          : 'border-ink-900/10 bg-white hover:border-ink-900/20 hover:bg-bone-50'
-                      }`}
-                    >
-                      <span className={`text-[15px] font-medium ${isSelected ? 'text-sage-700' : 'text-ink-700 group-hover:text-ink-900'}`}>
-                        {option.text}
+              <div className="flex-1 flex items-start justify-center px-6 py-14 sm:py-20">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentQuestion.id}
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -40 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full max-w-[720px]"
+                  >
+                    <div className="flex items-center gap-3.5 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.12em] uppercase text-[#6E747A]">
+                      <span className="text-[#C9A227]">Question {currentStep + 1} / {displayQuestions.length}</span>
+                      <span className="w-4 h-px bg-white/18" />
+                      <span>{currentQuestion.category}</span>
+                    </div>
+                    <h2 className="mt-[22px] text-2xl sm:text-3xl lg:text-[34px] leading-[1.2] tracking-[-0.026em] font-normal text-[#F4F5F6] text-pretty">
+                      {currentQuestion.questionText}
+                    </h2>
+
+                    <div className="mt-[34px] grid gap-2.5">
+                      {(currentQuestion.options as Array<{ text: string }>).map((option, i) => {
+                        const isSelected = answers[currentQuestion.id]?.text === option.text;
+                        return (
+                          <button
+                            key={i}
+                            disabled={isAdvancing || isSubmitting}
+                            onClick={() => handleSelectOption(currentQuestion, option)}
+                            className="grid grid-cols-[30px_1fr_auto] gap-3.5 items-center text-left w-full cursor-pointer [font-family:var(--font-plex-sans)] px-[18px] py-[18px] border transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                            style={{
+                              background: isSelected ? 'rgba(201,162,39,0.09)' : '#0A0B0D',
+                              borderColor: isSelected ? 'rgba(201,162,39,0.6)' : 'rgba(255,255,255,0.1)',
+                            }}
+                          >
+                            <span
+                              className="[font-family:var(--font-plex-mono)] text-[11px] border w-6 h-6 grid place-items-center"
+                              style={{
+                                color: isSelected ? '#C9A227' : '#6E747A',
+                                borderColor: isSelected ? 'rgba(201,162,39,0.5)' : 'rgba(255,255,255,0.12)',
+                              }}
+                            >
+                              {i + 1}
+                            </span>
+                            <span className="text-[16px] font-normal leading-[1.4]" style={{ color: isSelected ? '#F4F5F6' : '#DDE0E2' }}>
+                              {option.text}
+                            </span>
+                            <span className="[font-family:var(--font-plex-mono)] text-[11px] text-[#C9A227]">
+                              {isSelected ? (isSubmitting || isAdvancing ? <Loader2 className="w-4 h-4 animate-spin" /> : '✓') : ''}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-7 flex items-center gap-4 flex-wrap">
+                      <button
+                        onClick={() => {
+                          let prevStep = currentStep - 1;
+                          while (prevStep >= 0) {
+                            if (evaluateDependsOn(displayQuestions[prevStep].dependsOn as Parameters<typeof evaluateDependsOn>[0], answers)) {
+                              break;
+                            }
+                            prevStep--;
+                          }
+                          if (prevStep < 0) {
+                            setCurrentStep(-1);
+                          } else {
+                            setCurrentStep(prevStep);
+                          }
+                        }}
+                        disabled={isAdvancing || isSubmitting}
+                        className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.1em] uppercase text-[#8A9095] hover:text-[#E6E8EA] border border-white/14 px-4 py-[11px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        ← Back
+                      </button>
+                      <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.06em] text-[#6E747A]">
+                        Press 1–{(currentQuestion.options as Array<{ text: string }>).length} to answer · answers save as you go
                       </span>
-                      {isSelected && (
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                          {isSubmitting ? (
-                             <Loader2 className="w-5 h-5 text-sage-600 animate-spin" />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-sage-600 flex items-center justify-center">
-                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Navigation Arrows */}
-              <div className="mt-10 flex justify-between items-center">
-                <button 
-                  onClick={() => {
-                    // Find previous applicable step
-                    let prevStep = currentStep - 1;
-                    while (prevStep >= 0) {
-                      if (evaluateDependsOn(displayQuestions[prevStep].dependsOn as Parameters<typeof evaluateDependsOn>[0], answers)) {
-                        break;
-                      }
-                      prevStep--;
-                    }
-                    setCurrentStep(Math.max(0, prevStep));
-                  }}
-                  disabled={currentStep === 0 || isAdvancing || isSubmitting}
-                  className={`flex items-center gap-2 text-[13.5px] font-medium transition-colors ${currentStep === 0 ? 'opacity-0 pointer-events-none' : 'text-ink-500 hover:text-ink-900 disabled:opacity-50 disabled:cursor-not-allowed'}`}
-                >
-                  <ArrowLeft className="w-4 h-4" /> Previous Question
-                </button>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </motion.div>
           )}
@@ -377,8 +498,8 @@ function AssessmentEngineContent() {
 export default function AssessmentEngine() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-bone-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-sage-600" />
+      <div className="min-h-screen bg-[#08090A] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
       </div>
     }>
       <AssessmentEngineContent />

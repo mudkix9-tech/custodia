@@ -19,6 +19,25 @@ import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import React from 'react';
 
+function computeCategoryScores(
+  entries: Array<{ questionId: string; score: number }>,
+  templates: Array<{ id: string; category: string | null; maxRiskWeight: number | null }>
+): Array<{ category: string; score: number }> {
+  const byCategory: Record<string, { possible: number; actual: number }> = {};
+  for (const entry of entries) {
+    const template = templates.find((t) => t.id === entry.questionId);
+    if (!template) continue;
+    const category = template.category || 'General';
+    if (!byCategory[category]) byCategory[category] = { possible: 0, actual: 0 };
+    byCategory[category].possible += template.maxRiskWeight || 10;
+    byCategory[category].actual += entry.score;
+  }
+  return Object.entries(byCategory).map(([category, v]) => ({
+    category,
+    score: v.possible > 0 ? Math.round(100 - (v.actual / v.possible) * 100) : 100,
+  }));
+}
+
 function getGdprArticleReference(articles: number[] | null | undefined): string {
   if (!articles || articles.length === 0) return 'Article 5 (Principles relating to processing of personal data)';
   
@@ -197,7 +216,16 @@ export const assessmentsRouter = router({
     .query(async ({ ctx, input }) => {
       let [assessment] = await db.select().from(assessments).where(eq(assessments.id, input.assessmentId));
       let items = await db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
-      
+      let categoryScores: Array<{ category: string; score: number }> = [];
+
+      if (assessment) {
+        const answers = await db.select().from(assessmentAnswers).where(eq(assessmentAnswers.assessmentId, assessment.id));
+        if (answers.length > 0) {
+          const templates = await db.select().from(assessmentTemplates).where(inArray(assessmentTemplates.id, answers.map((a: any) => a.questionId)));
+          categoryScores = computeCategoryScores(answers.map((a: any) => ({ questionId: a.questionId, score: a.riskScore })), templates);
+        }
+      }
+
       // Fallback for lead assessments
       if (!assessment) {
         const { leadAssessments } = await import('db');
@@ -210,7 +238,7 @@ export const assessmentsRouter = router({
              overallScore: lead.totalScore,
              completedAt: lead.createdAt
            } as any;
-           
+
            if (Array.isArray(lead.snapshot)) {
              const templates = await db.select().from(assessmentTemplates);
              items = lead.snapshot.filter((s: any) => s.score > 0).map((s: any) => {
@@ -220,7 +248,7 @@ export const assessmentsRouter = router({
                  assessmentId: lead.id,
                  title: s.questionText ? `Address risk regarding: ${s.questionText}` : `Address risk regarding: ${s.questionId}`,
                  description: `Your answer "${s.selectedOption || s.selectedText || s.selectedValue || 'Unknown'}" indicates a compliance gap.`,
-                 severity: s.score > 5 ? 'High' : 'Medium',
+                 priority: s.score > 5 ? 'High' : 'Medium',
                  status: 'open',
                  createdAt: lead.createdAt,
                  category: template?.category || 'General',
@@ -228,11 +256,15 @@ export const assessmentsRouter = router({
                  gdprArticleReference: template ? getGdprArticleReference(template.gdprArticles) : getGdprArticleReference(null)
                 };
              }) as any;
+             categoryScores = computeCategoryScores(
+               lead.snapshot.map((s: any) => ({ questionId: s.questionId, score: s.score })),
+               templates
+             );
            }
         }
       }
-      
-      return { assessment, actionItems: items };
+
+      return { assessment, actionItems: items, categoryScores };
     }),
 
   // ============================================================================
