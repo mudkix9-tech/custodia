@@ -39,6 +39,23 @@
   --shadow-card: 0 1px 0 rgba(31,27,22,0.04), 0 1px 2px rgba(31,27,22,0.04);
   --shadow-lift: 0 1px 0 rgba(31,27,22,0.04), 0 8px 24px -8px rgba(31,27,22,0.10);
   --shadow-inset-hairline: inset 0 0 0 1px rgba(31,27,22,0.06);
+
+  /* Marketing Dark Theme Tokens */
+  --color-surface-base: #08090A;
+  --color-surface-dark: #040506;
+  --color-surface-panel-top: #0D0F11;
+  --color-surface-panel-bottom: #0A0B0D;
+
+  --color-text-primary: #E6E8EA;
+  --color-text-heading: #F4F5F6;
+  --color-text-muted: #9BA1A6;
+  --color-text-subtle: #6E747A;
+
+  --color-accent-gold: #C9A227;
+  --color-accent-gold-hover: #E5C463;
+  --color-accent-transparent: rgba(201, 162, 39, 0.16);
+
+  --shadow-panel-elevated: 0 -1px 0 rgba(201,162,39,0.18) inset, 0 40px 120px -40px rgba(0,0,0,0.9);
 }
 
 @layer base {

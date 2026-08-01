@@ -189,50 +189,50 @@ export default function MarketingSite() {
       {/* HERO */}
       <section id="top" className="relative border-b border-white/7 overflow-hidden">
         <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(120%_80%_at_50%_0%,#000_20%,transparent_75%)]" />
-        <div aria-hidden="true" className="absolute -top-60 left-1/2 w-[900px] h-[520px] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,rgba(201,162,39,0.16),transparent_70%)] pointer-events-none" />
+        <div aria-hidden="true" className="absolute -top-60 left-1/2 w-[900px] h-[520px] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,var(--color-accent-transparent),transparent_70%)] pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 pt-20 sm:pt-28 pb-0">
           <div className="max-w-3xl">
-            <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
-              <span className="w-6 h-px bg-[#C9A227]" />
+            <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-accent-gold">
+              <span className="w-6 h-px bg-accent-gold" />
               <span>{t('hero.badge')}</span>
             </div>
-            <h1 className="mt-6 text-[40px] sm:text-6xl lg:text-7xl leading-[1.03] tracking-[-0.032em] font-normal text-[#F4F5F6] text-balance">
+            <h1 className="mt-6 text-[40px] sm:text-6xl lg:text-7xl leading-[1.03] tracking-[-0.032em] font-normal text-text-heading text-balance">
               {t('hero.titlePrefix')}<br />
-              <span className="text-[#C9A227]">{t('hero.titleAccent')}</span> {t('hero.titleSuffix')}
+              <span className="text-accent-gold">{t('hero.titleAccent')}</span> {t('hero.titleSuffix')}
             </h1>
-            <p className="mt-7 max-w-xl text-[17px] sm:text-[19px] leading-relaxed text-[#9BA1A6] text-pretty">
+            <p className="mt-7 max-w-xl text-[17px] sm:text-[19px] leading-relaxed text-text-muted text-pretty">
               {t('hero.subheadline')}
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-3.5">
-              <Link href="/assessment" className="text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors">
+              <Link href="/assessment" className="text-[15px] font-medium text-surface-base bg-accent-gold hover:bg-accent-gold-hover px-6 py-3.5 transition-colors">
                 {t('hero.ctaAssessment')}
               </Link>
               <a
                 href="#modules"
                 onClick={(e) => { e.preventDefault(); document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' }); }}
-                className="text-[15px] text-[#E6E8EA] border border-white/16 hover:border-white/40 px-6 py-3.5 transition-colors"
+                className="text-[15px] text-text-primary border border-white/16 hover:border-white/40 px-6 py-3.5 transition-colors"
               >
                 {t('hero.ctaPlatform')}
               </a>
-              <span className="[font-family:var(--font-plex-mono)] text-[11.5px] tracking-[0.06em] text-[#6E747A] pl-1.5">{t('hero.note')}</span>
+              <span className="[font-family:var(--font-plex-mono)] text-[11.5px] tracking-[0.06em] text-text-subtle pl-1.5">{t('hero.note')}</span>
             </div>
           </div>
 
           {/* Dashboard mockup */}
           <div className="mt-16 sm:mt-20 relative">
-            <div className="border border-white/9 border-b-0 bg-gradient-to-b from-[#0D0F11] to-[#0A0B0D] shadow-[0_-1px_0_rgba(201,162,39,0.18)_inset,0_40px_120px_-40px_rgba(0,0,0,0.9)]">
-              <div className="flex items-center gap-4 px-4.5 h-11 border-b border-white/7 [font-family:var(--font-plex-mono)] text-[11px] text-[#6E747A]">
+            <div className="border border-white/9 border-b-0 bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom shadow-panel-elevated">
+              <div className="flex items-center gap-4 px-4.5 h-11 border-b border-white/7 [font-family:var(--font-plex-mono)] text-[11px] text-text-subtle">
                 <span className="flex gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-white/14" />
                   <span className="w-1.5 h-1.5 rounded-full bg-white/14" />
                   <span className="w-1.5 h-1.5 rounded-full bg-white/14" />
                 </span>
-                <span className="text-[#9BA1A6]">custodia / nordlicht-agency.eu</span>
+                <span className="text-text-muted">custodia / nordlicht-agency.eu</span>
                 <span>&mdash;</span>
                 <span>Audit readiness</span>
                 <span className="flex-1" />
-                <span className="text-[#C9A227]">EU-WEST &middot; FRA1</span>
+                <span className="text-accent-gold">EU-WEST &middot; FRA1</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] min-h-[360px]">
@@ -247,15 +247,15 @@ export default function MarketingSite() {
                 <div className="relative p-5 sm:p-6 overflow-hidden">
                   <div className="flex items-end justify-between gap-5 flex-wrap">
                     <div>
-                      <div className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#6E747A]">Readiness score</div>
+                      <div className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-text-subtle">Readiness score</div>
                       <div className="flex items-baseline gap-2.5 mt-2">
-                        <span className="text-[44px] leading-none font-light tracking-[-0.03em] text-[#F4F5F6]">82</span>
-                        <span className="text-[15px] text-[#6E747A]">/ 100</span>
+                        <span className="text-[44px] leading-none font-light tracking-[-0.03em] text-text-heading">82</span>
+                        <span className="text-[15px] text-text-subtle">/ 100</span>
                         <span className="[font-family:var(--font-plex-mono)] text-[11px] text-[#7FA88B]">&#9650; 14 this quarter</span>
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <span className="[font-family:var(--font-plex-mono)] text-[10.5px] text-[#C9A227] border border-[#C9A227]/35 px-2.5 py-1.5">Export evidence pack</span>
+                      <span className="[font-family:var(--font-plex-mono)] text-[10.5px] text-accent-gold border border-[#C9A227]/35 px-2.5 py-1.5">Export evidence pack</span>
                       <span className="[font-family:var(--font-plex-mono)] text-[10.5px] text-[#8A9095] border border-white/12 px-2.5 py-1.5">Art. 30 register</span>
                     </div>
                   </div>
@@ -268,7 +268,7 @@ export default function MarketingSite() {
 
                   <div className="mt-7 border-t border-white/7">
                     {DASHBOARD_ROWS.map((row, i) => (
-                      <div key={i} className="grid grid-cols-[1.6fr_1fr_0.9fr_0.7fr] gap-3 items-center py-3 border-b border-white/5.5 text-[12.5px] text-[#9BA1A6]">
+                      <div key={i} className="grid grid-cols-[1.6fr_1fr_0.9fr_0.7fr] gap-3 items-center py-3 border-b border-white/5.5 text-[12.5px] text-text-muted">
                         <span className="text-[#DDE0E2] truncate">{row.name}</span>
                         <span className="[font-family:var(--font-plex-mono)] text-[11px]">{row.meta}</span>
                         <span className="[font-family:var(--font-plex-mono)] text-[11px]" style={{ color: row.color }}>{row.status}</span>
@@ -287,19 +287,19 @@ export default function MarketingSite() {
       <section className="border-b border-white/7 bg-[#0B0C0E]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-16 sm:py-20">
           <div className="flex flex-wrap gap-6 items-baseline justify-between">
-            <h2 className="text-[26px] sm:text-[34px] font-normal tracking-[-0.025em] text-[#F4F5F6] max-w-xl text-balance">{t('pains.title')}</h2>
+            <h2 className="text-[26px] sm:text-[34px] font-normal tracking-[-0.025em] text-text-heading max-w-xl text-balance">{t('pains.title')}</h2>
             <p className="max-w-sm text-[15px] leading-relaxed text-[#7E8489]">{t('pains.subheadline')}</p>
           </div>
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/8 border border-white/8">
             {PAINS.map((pain, i) => (
               <div key={i} className="bg-[#0B0C0E] p-7 pb-8.5 flex flex-col gap-3.5">
-                <div className="flex items-center justify-between [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.12em] text-[#6E747A]">
+                <div className="flex items-center justify-between [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.12em] text-text-subtle">
                   <span>{pain.index}</span>
                   <span className="text-[#B0554E]">{pain.tag}</span>
                 </div>
                 <h3 className="text-[19px] font-medium tracking-[-0.015em] text-[#EDEFF0]">{pain.title}</h3>
                 <p className="text-[14.5px] leading-relaxed text-[#8A9095] text-pretty">{pain.body}</p>
-                <div className="mt-auto pt-4.5 [font-family:var(--font-plex-mono)] text-[11.5px] text-[#C9A227]">{pain.stat}</div>
+                <div className="mt-auto pt-4.5 [font-family:var(--font-plex-mono)] text-[11.5px] text-accent-gold">{pain.stat}</div>
               </div>
             ))}
           </div>
@@ -309,23 +309,23 @@ export default function MarketingSite() {
       {/* MODULES */}
       <section id="modules" className="border-b border-white/7 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-22">
-          <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
-            <span className="w-6 h-px bg-[#C9A227]" />
+          <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-accent-gold">
+            <span className="w-6 h-px bg-accent-gold" />
             <span>{t('modules.badge')}</span>
           </div>
-          <h2 className="mt-5.5 max-w-2xl text-[28px] sm:text-[42px] font-normal tracking-[-0.028em] leading-[1.12] text-[#F4F5F6] text-balance">{t('modules.title')}</h2>
+          <h2 className="mt-5.5 max-w-2xl text-[28px] sm:text-[42px] font-normal tracking-[-0.028em] leading-[1.12] text-text-heading text-balance">{t('modules.title')}</h2>
           <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-[#8A9095]">{t('modules.subheadline')}</p>
 
           <div className="mt-13 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/8 border border-white/8">
             {MODULES.map((mod, i) => (
-              <div key={i} className="bg-[#08090A] hover:bg-[#0D0F11] transition-colors p-6.5 pb-7.5 flex flex-col gap-3 min-h-[210px]">
+              <div key={i} className="bg-surface-base hover:bg-surface-panel-top transition-colors p-6.5 pb-7.5 flex flex-col gap-3 min-h-[210px]">
                 <div className="flex items-center justify-between">
                   <span className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.12em] text-[#5C6266]">{mod.index}</span>
-                  <span className="w-1.5 h-1.5 bg-[#C9A227]" />
+                  <span className="w-1.5 h-1.5 bg-accent-gold" />
                 </div>
                 <h3 className="mt-1.5 text-[17.5px] font-medium tracking-[-0.012em] text-[#EDEFF0] text-balance">{mod.title}</h3>
                 <p className="text-[14px] leading-relaxed text-[#868C91] text-pretty">{mod.body}</p>
-                <div className="mt-auto pt-4 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.1em] uppercase text-[#6E747A]">{mod.ref}</div>
+                <div className="mt-auto pt-4 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.1em] uppercase text-text-subtle">{mod.ref}</div>
               </div>
             ))}
           </div>
@@ -337,27 +337,27 @@ export default function MarketingSite() {
         <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(70%_60%_at_80%_10%,rgba(201,162,39,0.09),transparent_70%)]" />
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-23 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           <div>
-            <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
-              <span className="w-6 h-px bg-[#C9A227]" />
+            <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-accent-gold">
+              <span className="w-6 h-px bg-accent-gold" />
               <span>{t('advisor.badge')}</span>
             </div>
-            <h2 className="mt-5.5 text-[28px] sm:text-[40px] font-normal tracking-[-0.028em] leading-[1.13] text-[#F4F5F6] text-balance">{t('advisor.title')}</h2>
-            <p className="mt-5.5 text-[16.5px] leading-relaxed text-[#9BA1A6] text-pretty">{t('advisor.subheadline')}</p>
+            <h2 className="mt-5.5 text-[28px] sm:text-[40px] font-normal tracking-[-0.028em] leading-[1.13] text-text-heading text-balance">{t('advisor.title')}</h2>
+            <p className="mt-5.5 text-[16.5px] leading-relaxed text-text-muted text-pretty">{t('advisor.subheadline')}</p>
             <p className="mt-4.5 [font-family:var(--font-spectral)] italic text-[16.5px] leading-relaxed text-[#B9BEC2] border-l border-[#C9A227]/50 pl-5">{t('advisor.quote')}</p>
 
             <div className="mt-8.5 grid gap-px bg-white/8 border border-white/8">
               {CORPUS.map((c, i) => (
                 <div key={i} className="bg-[#0B0C0E] grid grid-cols-[1fr_auto] gap-4 items-center px-5 py-3.5">
                   <span className="text-[14.5px] text-[#DDE0E2]">{c.source}</span>
-                  <span className="[font-family:var(--font-plex-mono)] text-[11px] text-[#6E747A] text-right">{c.detail}</span>
+                  <span className="[font-family:var(--font-plex-mono)] text-[11px] text-text-subtle text-right">{c.detail}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-5 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-[#6E747A]">{t('advisor.corpusNote')} 12 July 2026</div>
+            <div className="mt-5 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-text-subtle">{t('advisor.corpusNote')} 12 July 2026</div>
           </div>
 
-          <div className="border border-white/10 bg-gradient-to-b from-[#0E1012] to-[#0A0B0D] shadow-[0_40px_100px_-50px_rgba(0,0,0,0.9)]">
-            <div className="flex items-center gap-2.5 px-4.5 py-3.5 border-b border-white/7 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.12em] uppercase text-[#6E747A]">
+          <div className="border border-white/10 bg-gradient-to-b from-[#0E1012] to-surface-panel-bottom shadow-[0_40px_100px_-50px_rgba(0,0,0,0.9)]">
+            <div className="flex items-center gap-2.5 px-4.5 py-3.5 border-b border-white/7 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.12em] uppercase text-text-subtle">
               <span className="w-1.5 h-1.5 rounded-full bg-[#7FA88B]" />
               <span>Advisor &middot; jurisdiction {jurisdiction}</span>
             </div>
@@ -383,12 +383,12 @@ export default function MarketingSite() {
             </div>
             <div className="p-4.5">
               <div className="border border-white/8 bg-[#0F1114] px-4.5 py-4 text-[14.5px] text-[#DDE0E2] leading-relaxed">{advisor.q}</div>
-              <div className="mt-3.5 p-4.5 border-l border-[#C9A227] bg-[#C9A227]/[0.045]">
-                <p className="text-[15px] leading-relaxed text-[#E6E8EA] text-pretty">{advisor.a}</p>
+              <div className="mt-3.5 p-4.5 border-l border-[#C9A227] bg-accent-gold/[0.045]">
+                <p className="text-[15px] leading-relaxed text-text-primary text-pretty">{advisor.a}</p>
                 <div className="mt-4.5 grid gap-2">
                   {advisor.cites.map((cite, i) => (
                     <div key={i} className="grid grid-cols-[auto_1fr] gap-2.5 items-baseline [font-family:var(--font-plex-mono)] text-[11px] text-[#8A9095]">
-                      <span className="text-[#C9A227]">{cite.ref}</span>
+                      <span className="text-accent-gold">{cite.ref}</span>
                       <span>{cite.text}</span>
                     </div>
                   ))}
@@ -409,11 +409,11 @@ export default function MarketingSite() {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-22">
           <div className="flex flex-wrap gap-7 items-end justify-between">
             <div>
-              <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
-                <span className="w-6 h-px bg-[#C9A227]" />
+              <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-accent-gold">
+                <span className="w-6 h-px bg-accent-gold" />
                 <span>{t('pricing.badge')}</span>
               </div>
-              <h2 className="mt-5.5 max-w-xl text-[28px] sm:text-[42px] font-normal tracking-[-0.028em] leading-[1.12] text-[#F4F5F6]">{t('pricing.title')}</h2>
+              <h2 className="mt-5.5 max-w-xl text-[28px] sm:text-[42px] font-normal tracking-[-0.028em] leading-[1.12] text-text-heading">{t('pricing.title')}</h2>
               <p className="mt-4.5 max-w-lg text-[15.5px] leading-relaxed text-[#8A9095]">{t('pricing.subheadline')}</p>
             </div>
             <div className="flex items-center gap-3">
@@ -450,19 +450,19 @@ export default function MarketingSite() {
                   <div className="flex items-center justify-between gap-2">
                     <span className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.14em] uppercase" style={{ color: tier.highlight ? '#C9A227' : '#8A9095' }}>{tier.name}</span>
                     {tier.badge && (
-                      <span className="[font-family:var(--font-plex-mono)] text-[9.5px] tracking-[0.1em] text-[#08090A] bg-[#C9A227] px-1.5 py-0.5">{tier.badge}</span>
+                      <span className="[font-family:var(--font-plex-mono)] text-[9.5px] tracking-[0.1em] text-surface-base bg-accent-gold px-1.5 py-0.5">{tier.badge}</span>
                     )}
                   </div>
                   <div className="flex items-baseline gap-1.5 mt-4 flex-wrap">
-                    <span className="text-[34px] font-light tracking-[-0.03em] leading-none text-[#F4F5F6] [font-family:var(--font-plex-mono)]">
+                    <span className="text-[34px] font-light tracking-[-0.03em] leading-none text-text-heading [font-family:var(--font-plex-mono)]">
                       {tier.price === null ? 'Custom' : `€${tier.price === 0 ? 0 : (annual ? annualPrice(tier.price) : tier.price)}`}
                     </span>
-                    <span className="text-[13px] text-[#6E747A]">{tier.price === null || tier.price === 0 ? tier.period : (annual ? '/mo, billed yearly' : tier.period)}</span>
+                    <span className="text-[13px] text-text-subtle">{tier.price === null || tier.price === 0 ? tier.period : (annual ? '/mo, billed yearly' : tier.period)}</span>
                   </div>
                   <p className="mt-4 text-[13.5px] leading-relaxed text-[#868C91] min-h-[42px] text-pretty">{tier.blurb}</p>
                   <div className="grid gap-2.5 pt-4 mt-2 border-t border-white/7">
                     {tier.features.map((feat, idx) => (
-                      <div key={idx} className="grid grid-cols-[12px_1fr] gap-2.5 items-start text-[13.5px] leading-normal text-[#9BA1A6]">
+                      <div key={idx} className="grid grid-cols-[12px_1fr] gap-2.5 items-start text-[13.5px] leading-normal text-text-muted">
                         <Check className="w-3 h-3 mt-0.5" style={{ color: tier.highlight ? '#C9A227' : '#5F655A' }} />
                         <span>{feat}</span>
                       </div>
@@ -483,7 +483,7 @@ export default function MarketingSite() {
               </div>
             ))}
           </div>
-          <div className="mt-6 flex flex-wrap gap-7 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-[#6E747A]">
+          <div className="mt-6 flex flex-wrap gap-7 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-text-subtle">
             <span>{t('pricing.footnote1')}</span>
             <span>{t('pricing.footnote2')}</span>
             <span>{t('pricing.footnote3')}</span>
@@ -495,13 +495,13 @@ export default function MarketingSite() {
       <section id="trust" className="border-b border-white/7 bg-[#0B0C0E] scroll-mt-20">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-18 sm:py-20">
           <div className="flex flex-wrap gap-7 items-baseline justify-between">
-            <h2 className="max-w-lg text-[24px] sm:text-[32px] font-normal tracking-[-0.025em] text-[#F4F5F6] text-balance">{t('trust.title')}</h2>
+            <h2 className="max-w-lg text-[24px] sm:text-[32px] font-normal tracking-[-0.025em] text-text-heading text-balance">{t('trust.title')}</h2>
             <p className="max-w-sm text-[15px] leading-relaxed text-[#7E8489]">{t('trust.subheadline')}</p>
           </div>
           <div className="mt-11 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-px bg-white/8 border border-white/8">
             {TRUST.map((cred, i) => (
               <div key={i} className="bg-[#0B0C0E] p-6.5 pb-7 flex flex-col gap-2.5">
-                <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#C9A227]">{cred.label}</span>
+                <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-accent-gold">{cred.label}</span>
                 <span className="text-[16px] font-medium tracking-[-0.012em] text-[#EDEFF0]">{cred.title}</span>
                 <span className="text-[13.5px] leading-relaxed text-[#868C91] text-pretty">{cred.body}</span>
               </div>
@@ -514,18 +514,18 @@ export default function MarketingSite() {
       <section id="assessment" className="relative overflow-hidden border-b border-white/7">
         <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(90%_90%_at_50%_50%,#000,transparent_75%)]" />
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-26 flex flex-col items-center text-center">
-          <div className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">{t('assessment.badge')}</div>
-          <h2 className="mt-6 max-w-2xl text-[30px] sm:text-[50px] font-normal tracking-[-0.03em] leading-[1.1] text-[#F4F5F6] text-balance">{t('assessment.title')}</h2>
-          <p className="mt-5.5 max-w-xl text-[17px] leading-relaxed text-[#9BA1A6] text-pretty">{t('assessment.subheadline')}</p>
+          <div className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-accent-gold">{t('assessment.badge')}</div>
+          <h2 className="mt-6 max-w-2xl text-[30px] sm:text-[50px] font-normal tracking-[-0.03em] leading-[1.1] text-text-heading text-balance">{t('assessment.title')}</h2>
+          <p className="mt-5.5 max-w-xl text-[17px] leading-relaxed text-text-muted text-pretty">{t('assessment.subheadline')}</p>
           <div className="mt-9 flex flex-wrap gap-3.5 justify-center">
-            <Link href="/assessment" className="text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-7 py-3.5 transition-colors">
+            <Link href="/assessment" className="text-[15px] font-medium text-surface-base bg-accent-gold hover:bg-accent-gold-hover px-7 py-3.5 transition-colors">
               {t('assessment.ctaAssessment')}
             </Link>
-            <Link href="/contact" className="text-[15px] text-[#E6E8EA] border border-white/16 hover:border-white/40 px-7 py-3.5 transition-colors">
+            <Link href="/contact" className="text-[15px] text-text-primary border border-white/16 hover:border-white/40 px-7 py-3.5 transition-colors">
               {t('assessment.ctaWalkthrough')}
             </Link>
           </div>
-          <div className="mt-7 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-[#6E747A]">{t('assessment.usedBy')}</div>
+          <div className="mt-7 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-text-subtle">{t('assessment.usedBy')}</div>
         </div>
       </section>
 

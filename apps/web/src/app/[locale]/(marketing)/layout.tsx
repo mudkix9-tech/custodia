@@ -135,21 +135,21 @@ export default function MarketingLayout({
 }) {
   return (
     <div
-      className={`min-h-screen bg-[#08090A] text-[#E6E8EA] font-sans selection:bg-[#C9A227] selection:text-[#08090A] overflow-x-hidden flex flex-col relative antialiased ${plexSans.variable} ${plexMono.variable} ${spectral.variable}`}
+      className={`min-h-screen bg-surface-base text-text-primary font-sans selection:bg-accent-gold selection:text-surface-base overflow-x-hidden flex flex-col relative antialiased ${plexSans.variable} ${plexMono.variable} ${spectral.variable}`}
     >
 
       {/* Skip to Content Link */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-[#1a1c1e] focus:text-[#E6E8EA] focus:px-4 focus:py-2.5 focus:rounded-lg focus:border focus:border-[#C9A227]/30 focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-surface-panel-top focus:text-text-primary focus:px-4 focus:py-2.5 focus:rounded-lg focus:border focus:border-accent-gold/30 focus:outline-none"
       >
         Skip to main content
       </a>
 
       {/* Precision Grid Background */}
       <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)] pointer-events-none z-0" />
-      <div aria-hidden="true" className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-[#C9A227]/5 rounded-full blur-[120px] pointer-events-none" />
-      <div aria-hidden="true" className="absolute top-[30%] right-1/4 w-[500px] h-[500px] bg-[#C9A227]/5 rounded-full blur-[140px] pointer-events-none" />
+      <div aria-hidden="true" className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-accent-transparent rounded-full blur-[120px] pointer-events-none" />
+      <div aria-hidden="true" className="absolute top-[30%] right-1/4 w-[500px] h-[500px] bg-accent-transparent rounded-full blur-[140px] pointer-events-none" />
 
       {/* Navigation */}
       <MarketingHeader />
@@ -160,27 +160,27 @@ export default function MarketingLayout({
       </main>
 
       {/* Footer */}
-      <footer role="contentinfo" className="[font-family:var(--font-plex-sans)] bg-[#08090A] border-t border-white/7 pt-16 pb-10 relative z-10 text-xs">
+      <footer role="contentinfo" className="[font-family:var(--font-plex-sans)] bg-surface-base border-t border-white/7 pt-16 pb-10 relative z-10 text-xs">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-6 gap-10 mb-12">
             <div className="col-span-2">
               <Logo />
-              <p className="text-[#6E747A] text-xs leading-relaxed max-w-xs mt-4 mb-6">
+              <p className="text-text-subtle text-xs leading-relaxed max-w-xs mt-4 mb-6">
                 The compliance automation platform designed for modern agencies.
               </p>
               <div className="flex items-center gap-4 text-[#5C6266] [font-family:var(--font-plex-mono)] text-[10px]">
-                <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-[#C9A227]" /> AWS Dublin</span>
-                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#C9A227]" /> SSL Secured</span>
+                <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-accent-gold" /> AWS Dublin</span>
+                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-accent-gold" /> SSL Secured</span>
               </div>
             </div>
 
             {/* Footer Links */}
             {FOOTER_COLUMNS.map((col, i) => (
               <div key={i}>
-                <h4 className="[font-family:var(--font-plex-mono)] text-[10.5px] uppercase tracking-[0.14em] text-[#6E747A] mb-4">{col.title}</h4>
-                <ul className="space-y-2.5 text-[#9BA1A6]">
+                <h4 className="[font-family:var(--font-plex-mono)] text-[10.5px] uppercase tracking-[0.14em] text-text-subtle mb-4">{col.title}</h4>
+                <ul className="space-y-2.5 text-text-muted">
                   {col.links.map((link, j) => (
-                    <li key={j}><Link href={link.href} className="hover:text-[#E6E8EA] transition-colors">{link.name}</Link></li>
+                    <li key={j}><Link href={link.href} className="hover:text-text-primary transition-colors">{link.name}</Link></li>
                   ))}
                 </ul>
               </div>

@@ -263,27 +263,27 @@ function AssessmentEngineContent() {
 
   if (isLoadingQuestions) {
     return (
-      <div className="min-h-screen bg-[#08090A] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-accent-gold" />
       </div>
     );
   }
 
   return (
     <>
-      <header className="sticky top-0 z-50 backdrop-blur-[14px] bg-[#08090A]/85 border-b border-white/7 flex-none">
+      <header className="sticky top-0 z-50 backdrop-blur-[14px] bg-surface-base/85 border-b border-white/7 flex-none">
         <div className="max-w-[1120px] mx-auto px-6 h-16 flex items-center gap-5">
           <Logo />
-          <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#6E747A] border-l border-white/12 pl-5 hidden sm:inline">
+          <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-text-subtle border-l border-white/12 pl-5 hidden sm:inline">
             {t('headerBadge')}
           </span>
           <span className="flex-1" />
           {isResumed && currentStep >= 0 && (
-            <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.06em] text-[#C9A227] hidden sm:inline">
+            <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.06em] text-accent-gold hidden sm:inline">
               {t('resumed')}
             </span>
           )}
-          <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.1em] text-[#6E747A] whitespace-nowrap">
+          <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.1em] text-text-subtle whitespace-nowrap">
             {currentStep >= 0
               ? t('answered', { answered: answeredCount, total: totalApplicableCount })
               : t('unanswered')}
@@ -291,7 +291,7 @@ function AssessmentEngineContent() {
         </div>
         <div className="h-0.5 bg-white/6">
           <div
-            className="h-0.5 bg-[#C9A227] transition-[width] duration-500 ease-out"
+            className="h-0.5 bg-accent-gold transition-[width] duration-500 ease-out"
             style={{ width: currentStep === -1 ? '0%' : `${progress}%` }}
           />
         </div>
@@ -320,14 +320,14 @@ function AssessmentEngineContent() {
               />
               <div className="relative max-w-[1120px] mx-auto px-6 py-20 sm:py-24 grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
                 <div>
-                  <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-[#C9A227]">
-                    <span className="w-6 h-px bg-[#C9A227]" />
+                  <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-accent-gold">
+                    <span className="w-6 h-px bg-accent-gold" />
                     <span>{t('introReqs', { reqs: displayQuestions.length, categories: categories.length })}</span>
                   </div>
-                  <h1 className="mt-6 text-[34px] sm:text-[44px] lg:text-[54px] leading-[1.06] tracking-[-0.032em] font-normal text-[#F4F5F6] text-balance">
+                  <h1 className="mt-6 text-[34px] sm:text-[44px] lg:text-[54px] leading-[1.06] tracking-[-0.032em] font-normal text-text-heading text-balance">
                     {t('introTitle')}
                   </h1>
-                  <p className="mt-6 max-w-[540px] text-[17.5px] leading-[1.65] text-[#9BA1A6]">
+                  <p className="mt-6 max-w-[540px] text-[17.5px] leading-[1.65] text-text-muted">
                     {t('introDesc', { reqs: displayQuestions.length })}
                   </p>
                   <div className="mt-9 flex flex-wrap gap-3.5 items-center">
@@ -335,13 +335,13 @@ function AssessmentEngineContent() {
                       <>
                         <button
                           onClick={handleResume}
-                          className="[font-family:var(--font-plex-sans)] text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors cursor-pointer"
+                          className="[font-family:var(--font-plex-sans)] text-[15px] font-medium text-surface-base bg-accent-gold hover:bg-accent-gold-hover px-6 py-3.5 transition-colors cursor-pointer"
                         >
                           {t('resumeBtn')}
                         </button>
                         <button
                           onClick={handleStartFresh}
-                          className="[font-family:var(--font-plex-sans)] text-[15px] text-[#9BA1A6] hover:text-[#E6E8EA] border border-white/16 hover:border-white/30 px-[22px] py-3.5 transition-colors cursor-pointer"
+                          className="[font-family:var(--font-plex-sans)] text-[15px] text-text-muted hover:text-text-primary border border-white/16 hover:border-white/30 px-[22px] py-3.5 transition-colors cursor-pointer"
                         >
                           {t('startOverBtn')}
                         </button>
@@ -349,13 +349,13 @@ function AssessmentEngineContent() {
                     ) : (
                       <button
                         onClick={handleStartFresh}
-                        className="[font-family:var(--font-plex-sans)] text-[15px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] px-6 py-3.5 transition-colors cursor-pointer"
+                        className="[font-family:var(--font-plex-sans)] text-[15px] font-medium text-surface-base bg-accent-gold hover:bg-accent-gold-hover px-6 py-3.5 transition-colors cursor-pointer"
                       >
                         {t('beginBtn')}
                       </button>
                     )}
                   </div>
-                  <div className="mt-[22px] [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-[#6E747A] leading-[1.8]">
+                  <div className="mt-[22px] [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-text-subtle leading-[1.8]">
                     {t('introFootnote')}
                   </div>
                   <div className="mt-10 pt-[22px] border-t border-white/8 text-[13.5px] text-[#7E8489]">
@@ -364,8 +364,8 @@ function AssessmentEngineContent() {
                 </div>
 
                 <div className="animate-[cd-fade_.8s_.15s_both]">
-                  <div className="border border-white/9 bg-gradient-to-b from-[#0D0F11] to-[#0A0B0D] shadow-[0_40px_100px_-50px_rgba(0,0,0,0.9)]">
-                    <div className="px-5 py-4 border-b border-white/7 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-[#6E747A]">
+                  <div className="border border-white/9 bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom shadow-[0_40px_100px_-50px_rgba(0,0,0,0.9)]">
+                    <div className="px-5 py-4 border-b border-white/7 [font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-text-subtle">
                       {t('whatYouGet')}
                     </div>
                     <div className="grid">
@@ -375,7 +375,7 @@ function AssessmentEngineContent() {
                         { index: '04', title: t('d4Title'), body: t('d4Desc') }
                       ].map((d) => (
                         <div key={d.index} className="grid grid-cols-[26px_1fr] gap-3.5 px-5 py-[18px] border-b border-white/[0.055]">
-                          <span className="[font-family:var(--font-plex-mono)] text-[11px] text-[#C9A227] pt-0.5">{d.index}</span>
+                          <span className="[font-family:var(--font-plex-mono)] text-[11px] text-accent-gold pt-0.5">{d.index}</span>
                           <span>
                             <span className="block text-[15px] font-medium text-[#EDEFF0]">{d.title}</span>
                             <span className="block mt-[5px] text-[13.5px] leading-[1.6] text-[#868C91]">{d.body}</span>
@@ -398,8 +398,8 @@ function AssessmentEngineContent() {
                       { value: 'EU', label: t('statsEU') },
                     ].map((s) => (
                       <div key={s.label} className="bg-[#0B0C0E] px-4 py-[18px]">
-                        <div className="text-[22px] font-light tracking-[-0.02em] text-[#F4F5F6]">{s.value}</div>
-                        <div className="mt-1.5 [font-family:var(--font-plex-mono)] text-[10px] tracking-[0.1em] uppercase text-[#6E747A]">{s.label}</div>
+                        <div className="text-[22px] font-light tracking-[-0.02em] text-text-heading">{s.value}</div>
+                        <div className="mt-1.5 [font-family:var(--font-plex-mono)] text-[10px] tracking-[0.1em] uppercase text-text-subtle">{s.label}</div>
                       </div>
                     ))}
                   </div>
@@ -440,12 +440,12 @@ function AssessmentEngineContent() {
                     transition={{ duration: 0.3 }}
                     className="w-full max-w-[720px]"
                   >
-                    <div className="flex items-center gap-3.5 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.12em] uppercase text-[#6E747A]">
-                      <span className="text-[#C9A227]">{t('questionHeader', { current: currentStep + 1, total: displayQuestions.length })}</span>
+                    <div className="flex items-center gap-3.5 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.12em] uppercase text-text-subtle">
+                      <span className="text-accent-gold">{t('questionHeader', { current: currentStep + 1, total: displayQuestions.length })}</span>
                       <span className="w-4 h-px bg-white/18" />
                       <span>{currentQuestion.category}</span>
                     </div>
-                    <h2 className="mt-[22px] text-2xl sm:text-3xl lg:text-[34px] leading-[1.2] tracking-[-0.026em] font-normal text-[#F4F5F6] text-pretty">
+                    <h2 className="mt-[22px] text-2xl sm:text-3xl lg:text-[34px] leading-[1.2] tracking-[-0.026em] font-normal text-text-heading text-pretty">
                       {currentQuestion.questionText}
                     </h2>
 
@@ -475,7 +475,7 @@ function AssessmentEngineContent() {
                             <span className="text-[16px] font-normal leading-[1.4]" style={{ color: isSelected ? '#F4F5F6' : '#DDE0E2' }}>
                               {option.text}
                             </span>
-                            <span className="[font-family:var(--font-plex-mono)] text-[11px] text-[#C9A227]">
+                            <span className="[font-family:var(--font-plex-mono)] text-[11px] text-accent-gold">
                               {isSelected ? (isSubmitting || isAdvancing ? <Loader2 className="w-4 h-4 animate-spin" /> : '✓') : ''}
                             </span>
                           </button>
@@ -500,11 +500,11 @@ function AssessmentEngineContent() {
                           }
                         }}
                         disabled={isAdvancing || isSubmitting}
-                        className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.1em] uppercase text-[#8A9095] hover:text-[#E6E8EA] border border-white/14 px-4 py-[11px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="[font-family:var(--font-plex-mono)] text-[11px] tracking-[0.1em] uppercase text-[#8A9095] hover:text-text-primary border border-white/14 px-4 py-[11px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {t('back')}
                       </button>
-                      <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.06em] text-[#6E747A]">
+                      <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.06em] text-text-subtle">
                         {t('keyboardHint', { count: (currentQuestion.options as Array<{ text: string }>).length })}
                       </span>
                     </div>
@@ -523,8 +523,8 @@ function AssessmentEngineContent() {
 export default function AssessmentEngine() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#08090A] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#C9A227]" />
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-accent-gold" />
       </div>
     }>
       <AssessmentEngineContent />
