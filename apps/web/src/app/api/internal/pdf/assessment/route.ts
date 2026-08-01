@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import React from 'react';
 import { AssessmentReport } from '../../../../../lib/pdf/templates/assessmentReport';
 import { renderReactToPdf } from '../../../../../lib/pdf/pdfRenderer';
-import { getTranslations } from '../../../../../lib/translations';
+// Removed getTranslations from fs
 
 export async function POST(req: NextRequest) {
   const apiKey = req.headers.get('INTERNAL_API_KEY');
@@ -17,7 +17,19 @@ export async function POST(req: NextRequest) {
       return new NextResponse('Missing reportData', { status: 400 });
     }
 
-    const translations = getTranslations(locale, 'marketing');
+    let translations: any = null;
+    try {
+      if (locale === 'de') {
+        translations = (await import('../../../../../messages/de/marketing.json')).default;
+      } else if (locale === 'fr') {
+        translations = (await import('../../../../../messages/fr/marketing.json')).default;
+      } else {
+        translations = (await import('../../../../../messages/en/marketing.json')).default;
+      }
+    } catch (e) {
+      console.error('Failed to load translations for PDF', e);
+    }
+
     if (translations && translations.pdfReport) {
       reportData.t = translations.pdfReport;
     }

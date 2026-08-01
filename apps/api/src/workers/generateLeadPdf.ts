@@ -5,7 +5,7 @@ import { leadAssessments } from 'db';
 import { eq } from 'drizzle-orm';
 
 import { generateUploadUrl, generateDownloadUrl, getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
-import { getTranslations } from '../lib/translations.js';
+// Removed getTranslations from fs
 import { Upload } from '@aws-sdk/lib-storage';
 import { Resend } from 'resend';
 
@@ -95,8 +95,19 @@ export const generateLeadPdfWorker = createWorker('generate-lead-pdf', async (jo
     // Generate 48-hour presigned URL (48 * 3600 = 172800)
     const downloadUrl = await generateDownloadUrl(fileKey, 'eu-central-1', 7 * 24 * 3600, `Lead_Report_${leadId.split('-')[0]}.pdf`);
 
-    const tAll = getTranslations(locale, 'marketing');
-    const tEmail = tAll?.assessmentEmail || {
+    let tAll: any = null;
+    try {
+      if (locale === 'de') {
+        tAll = (await import('../../../web/src/messages/de/marketing.json', { with: { type: 'json' } })).default || await import('../../../web/src/messages/de/marketing.json');
+      } else if (locale === 'fr') {
+        tAll = (await import('../../../web/src/messages/fr/marketing.json', { with: { type: 'json' } })).default || await import('../../../web/src/messages/fr/marketing.json');
+      } else {
+        tAll = (await import('../../../web/src/messages/en/marketing.json', { with: { type: 'json' } })).default || await import('../../../web/src/messages/en/marketing.json');
+      }
+    } catch (e) {
+      console.warn('Failed to load translations for email', e);
+    }
+    const tEmail = (tAll && tAll.assessmentEmail) ? tAll.assessmentEmail : {
       subject: 'Your GDPR Gap Assessment Report',
       greeting: 'Your GDPR Gap Assessment Report is ready',
       body1: 'Thank you for completing the GDPR Gap Assessment. Your detailed report has been generated.',
