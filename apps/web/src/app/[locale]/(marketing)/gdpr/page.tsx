@@ -66,7 +66,7 @@ export default function GdprHubPage() {
             <ul className="space-y-3 text-[14px] text-text-primary">
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>The six lawful bases and how to choose the right one</span>
+                <Link href="/gdpr/lawful-bases" className="hover:text-accent-gold transition-colors">The six lawful bases and how to choose the right one</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
