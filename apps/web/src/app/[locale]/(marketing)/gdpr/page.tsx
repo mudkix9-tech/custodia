@@ -150,7 +150,7 @@ export default function GdprHubPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>ePrivacy and the GDPR: where they overlap and where they don't</span>
+                <Link href="/gdpr/eprivacy-and-gdpr" className="hover:text-accent-gold transition-colors">ePrivacy and the GDPR: where they overlap and where they don't</Link>
               </li>
             </ul>
           </div>
