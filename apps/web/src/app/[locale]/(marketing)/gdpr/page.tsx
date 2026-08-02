@@ -98,7 +98,7 @@ export default function GdprHubPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>How to audit your vendor stack for GDPR compliance</span>
+                <Link href="/gdpr/vendor-audit" className="hover:text-accent-gold transition-colors">How to audit your vendor stack for GDPR compliance</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
