@@ -137,6 +137,10 @@ export default function MarketingLayout({
     <div
       className={`min-h-screen bg-surface-base text-text-primary font-sans selection:bg-accent-gold selection:text-surface-base overflow-x-hidden flex flex-col relative antialiased ${plexSans.variable} ${plexMono.variable} ${spectral.variable}`}
     >
+      {/* Force body background to dark theme to prevent white overscroll bounce */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        html, body { background-color: var(--color-surface-base) !important; color: var(--color-text-primary) !important; }
+      `}} />
 
       {/* Skip to Content Link */}
       <a
