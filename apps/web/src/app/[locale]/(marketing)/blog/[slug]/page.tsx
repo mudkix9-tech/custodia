@@ -3,9 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { GdprGuidePost } from './GdprGuidePost';
 
 export default function BlogPost({ params }: { params: { slug: string } }) {
-  // Mock blog post rendering
+  const isGdprGuide = params.slug === 'gdpr-compliance-guide-agencies';
+  
   return (
     <div className="relative pt-24 pb-32 overflow-hidden min-h-screen">
        {/* Background decorations matching new design */}
@@ -17,21 +19,31 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
              <ArrowLeft className="w-4 h-4"/> Back to blog
           </Link>
           <div className="flex items-center gap-3 mb-6">
-             <span className="text-xs font-medium text-accent-gold bg-accent-gold/10 px-2.5 py-1 rounded-full border border-accent-gold/20">Category</span>
-             <span className="text-[13px] text-text-muted">June 1, 2026</span>
+             <span className="text-xs font-medium text-accent-gold bg-accent-gold/10 px-2.5 py-1 rounded-full border border-accent-gold/20">
+               {isGdprGuide ? "GDPR Basics" : "Category"}
+             </span>
+             <span className="text-[13px] text-text-muted">
+               {isGdprGuide ? "June 1, 2026" : "June 1, 2026"}
+             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-normal text-text-heading mb-8 tracking-[-0.032em] capitalize">
-             {params.slug.replace(/-/g, ' ')}
+             {isGdprGuide ? "The Complete GDPR Compliance Guide for Agencies" : params.slug.replace(/-/g, ' ')}
           </h1>
 
           <div className="prose prose-invert prose-p:text-text-primary prose-headings:text-text-heading prose-headings:font-normal prose-headings:tracking-tight max-w-none mb-16">
-             <p className="lead text-lg text-text-muted mb-8">
-                This is a placeholder for the actual blog content which would be rendered from MDX files.
-             </p>
-             <h2 className="text-2xl mt-10 mb-4">Introduction</h2>
-             <p className="mb-4">As a digital agency, managing compliance is often an afterthought. However, the regulatory landscape in the EU is shifting, making it a critical business function.</p>
-             <h2 className="text-2xl mt-10 mb-4">Understanding the Basics</h2>
-             <p className="mb-4">You need to understand the difference between being a data controller and a data processor. This fundamental distinction drives your entire compliance strategy.</p>
+             {isGdprGuide ? (
+                <GdprGuidePost />
+             ) : (
+                <>
+                   <p className="lead text-lg text-text-muted mb-8">
+                      This is a placeholder for the actual blog content which would be rendered from MDX files.
+                   </p>
+                   <h2 className="text-2xl mt-10 mb-4">Introduction</h2>
+                   <p className="mb-4">As a digital agency, managing compliance is often an afterthought. However, the regulatory landscape in the EU is shifting, making it a critical business function.</p>
+                   <h2 className="text-2xl mt-10 mb-4">Understanding the Basics</h2>
+                   <p className="mb-4">You need to understand the difference between being a data controller and a data processor. This fundamental distinction drives your entire compliance strategy.</p>
+                </>
+             )}
           </div>
 
           <div className="bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom border border-white/9 p-10 shadow-panel-elevated text-center mt-16">
