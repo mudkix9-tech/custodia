@@ -5,21 +5,25 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { GdprGuidePost } from './GdprGuidePost';
 import { RopaTemplatePost } from './RopaTemplatePost';
+import { ConsentModePost } from './ConsentModePost';
 
 export default function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
   const isGdprGuide = resolvedParams.slug === 'gdpr-compliance-guide-agencies';
   const isRopaGuide = resolvedParams.slug === 'what-is-ropa-template';
+  const isConsentGuide = resolvedParams.slug === 'google-consent-mode-v2';
   
   const getCategory = () => {
     if (isGdprGuide) return "GDPR Basics";
     if (isRopaGuide) return "Guides & Templates";
+    if (isConsentGuide) return "Cookie Consent";
     return "Category";
   };
 
   const getTitle = () => {
     if (isGdprGuide) return "The Complete GDPR Compliance Guide for Agencies";
     if (isRopaGuide) return "What is a ROPA? A Practical Template for Marketing Teams";
+    if (isConsentGuide) return "Why Google Consent Mode v2 Matters for Your Clients";
     return resolvedParams.slug.replace(/-/g, ' ');
   };
   
@@ -50,6 +54,8 @@ export default function BlogPost({ params }: { params: Promise<{ slug: string }>
                 <GdprGuidePost />
              ) : isRopaGuide ? (
                 <RopaTemplatePost />
+             ) : isConsentGuide ? (
+                <ConsentModePost />
              ) : (
                 <>
                    <p className="lead text-lg text-text-muted mb-8">
