@@ -78,7 +78,7 @@ export default function GdprHubPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>When a DPIA is required and how to run one</span>
+                <Link href="/gdpr/dpia-guide" className="hover:text-accent-gold transition-colors">When a DPIA is required and how to run one</Link>
               </li>
             </ul>
           </div>
