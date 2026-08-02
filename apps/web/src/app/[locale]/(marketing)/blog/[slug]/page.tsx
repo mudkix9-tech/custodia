@@ -1,12 +1,13 @@
 "use client";
 
-import React from 'react';
+import React, { use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { GdprGuidePost } from './GdprGuidePost';
 
-export default function BlogPost({ params }: { params: { slug: string } }) {
-  const isGdprGuide = params.slug === 'gdpr-compliance-guide-agencies';
+export default function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = use(params);
+  const isGdprGuide = resolvedParams.slug === 'gdpr-compliance-guide-agencies';
   
   return (
     <div className="relative pt-24 pb-32 overflow-hidden min-h-screen">
@@ -27,7 +28,7 @@ export default function BlogPost({ params }: { params: { slug: string } }) {
              </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-normal text-text-heading mb-8 tracking-[-0.032em] capitalize">
-             {isGdprGuide ? "The Complete GDPR Compliance Guide for Agencies" : params.slug.replace(/-/g, ' ')}
+             {isGdprGuide ? "The Complete GDPR Compliance Guide for Agencies" : resolvedParams.slug.replace(/-/g, ' ')}
           </h1>
 
           <div className="prose prose-invert prose-p:text-text-primary prose-headings:text-text-heading prose-headings:font-normal prose-headings:tracking-tight max-w-none mb-16">
