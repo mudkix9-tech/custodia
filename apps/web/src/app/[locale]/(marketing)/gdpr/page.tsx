@@ -19,37 +19,38 @@ export default function GdprHubPage() {
             The practical guide to GDPR compliance
           </h1>
           <p className="text-[17px] sm:text-[19px] text-text-muted mb-10 text-pretty">
-            The General Data Protection Regulation (GDPR) is a comprehensive privacy law that dictates how organizations must collect, handle, and protect personal data. This hub breaks down complex requirements into actionable steps so your team can achieve and maintain compliance.
+            The GDPR is 99 articles, 173 recitals, and thousands of pages of regulatory guidance. These guides cut through it and tell you what actually matters for your business.
           </p>
           <div className="flex justify-center">
             <Link href="/assessment" className="inline-flex items-center gap-2 text-[15px] font-medium text-surface-base bg-accent-gold hover:bg-accent-gold-hover px-8 py-3.5 transition-colors">
-              Take Free Assessment <ArrowRight className="w-4 h-4" />
+              Take free gap assessment <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
 
         {/* Grid of Resource Clusters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-24">
           
           {/* Cluster 1: Rights & Obligations */}
           <div className="bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom border border-white/9 p-8 shadow-panel-elevated flex flex-col">
             <BookOpen className="w-8 h-8 text-accent-gold mb-6" />
-            <h2 className="text-xl text-text-heading mb-3">Rights & Obligations</h2>
+            <div className="text-[11px] font-mono tracking-widest text-text-muted mb-2 uppercase">ARTICLES 13–22</div>
+            <h2 className="text-xl text-text-heading mb-3">Data subject rights and your obligations</h2>
             <p className="text-[14px] text-text-muted mb-6 leading-relaxed flex-grow">
-              Understand the core tenets of Articles 13-22, mapping exactly what you must do to honor data subject requests like access, rectification, and erasure.
+              The GDPR gives individuals specific rights over their personal data — access, rectification, erasure, portability, and objection. Your obligation isn't just to respect them, it's to have a documented process that can respond within one calendar month.
             </p>
             <ul className="space-y-3 text-[14px] text-text-primary">
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>Responding to Data Subject Access Requests (DSARs)</span>
+                <span>Understanding the right to erasure vs retention obligations</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>The Right to be Forgotten in practice</span>
+                <span>How to handle a DSAR when you're both controller and processor</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>Data portability requirements</span>
+                <span>Responding to data portability requests in practice</span>
               </li>
             </ul>
           </div>
@@ -57,22 +58,23 @@ export default function GdprHubPage() {
           {/* Cluster 2: Data Processing */}
           <div className="bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom border border-white/9 p-8 shadow-panel-elevated flex flex-col">
             <FileCheck className="w-8 h-8 text-accent-gold mb-6" />
-            <h2 className="text-xl text-text-heading mb-3">Data Processing</h2>
+            <div className="text-[11px] font-mono tracking-widest text-text-muted mb-2 uppercase">ARTICLES 5, 6, 30, 35</div>
+            <h2 className="text-xl text-text-heading mb-3">Lawful bases, ROPA, and impact assessments</h2>
             <p className="text-[14px] text-text-muted mb-6 leading-relaxed flex-grow">
-              Establish your lawful bases, map your data flows with a ROPA, and assess high-risk activities through Data Protection Impact Assessments (DPIAs).
+              Every time you process personal data, you need a lawful basis. Every processing activity needs to be recorded. And some activities require a formal impact assessment before you start. This is where most compliance gaps live.
             </p>
             <ul className="space-y-3 text-[14px] text-text-primary">
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>How to map your ROPA (Record of Processing Activities)</span>
+                <span>The six lawful bases and how to choose the right one</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>Choosing the correct lawful basis</span>
+                <Link href="/blog/what-is-ropa-template" className="hover:text-accent-gold transition-colors">What is a ROPA? A Practical Template for Marketing Teams</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>When to conduct a DPIA</span>
+                <span>When a DPIA is required and how to run one</span>
               </li>
             </ul>
           </div>
@@ -80,50 +82,47 @@ export default function GdprHubPage() {
           {/* Cluster 3: Vendor Management */}
           <div className="bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom border border-white/9 p-8 shadow-panel-elevated flex flex-col">
             <Users className="w-8 h-8 text-accent-gold mb-6" />
-            <h2 className="text-xl text-text-heading mb-3">Vendor Management</h2>
+            <div className="text-[11px] font-mono tracking-widest text-text-muted mb-2 uppercase">ARTICLES 28, 44–49</div>
+            <h2 className="text-xl text-text-heading mb-3">Sub-processors, DPAs, and international transfers</h2>
             <p className="text-[14px] text-text-muted mb-6 leading-relaxed flex-grow">
-              Learn how to vet sub-processors, enforce Standard Contractual Clauses (SCCs), and conduct Transfer Impact Assessments (TIAs).
+              Every SaaS tool in your stack that touches personal data is a sub-processor with data processing implications. You need a DPA with each one, and if they transfer data outside the EU, you need a legal mechanism to justify it.
             </p>
             <ul className="space-y-3 text-[14px] text-text-primary mb-6">
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>Managing third-party sub-processors</span>
+                <span>SCCs, the Data Privacy Framework, and what survives Schrems III</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>Implementing Standard Contractual Clauses</span>
+                <span>How to audit your vendor stack for GDPR compliance</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>How to run a Transfer Impact Assessment</span>
+                <Link href="/gdpr/vendors" className="hover:text-accent-gold transition-colors flex items-center gap-1.5">Browse vendor compliance profiles <ArrowRight className="w-3.5 h-3.5" /></Link>
               </li>
             </ul>
-            <div className="pt-4 border-t border-white/7 mt-auto">
-              <Link href="/gdpr/vendors/aws" className="text-[13px] text-accent-gold hover:text-accent-gold-hover transition-colors flex items-center gap-1.5">
-                View vendor intelligence profiles <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
           </div>
 
           {/* Cluster 4: Breach Response */}
           <div className="bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom border border-white/9 p-8 shadow-panel-elevated flex flex-col lg:col-start-1 lg:col-end-2">
             <AlertTriangle className="w-8 h-8 text-accent-gold mb-6" />
-            <h2 className="text-xl text-text-heading mb-3">Breach Response</h2>
+            <div className="text-[11px] font-mono tracking-widest text-text-muted mb-2 uppercase">ARTICLES 33–34</div>
+            <h2 className="text-xl text-text-heading mb-3">Breach notification and incident response</h2>
             <p className="text-[14px] text-text-muted mb-6 leading-relaxed flex-grow">
-              Prepare for the worst with a robust incident response plan, including 72-hour notification procedures and data subject communication workflows.
+              A breach isn't just a cyberattack. An email sent to the wrong recipient, a lost laptop, an unencrypted export — all qualify. You have 72 hours to notify your supervisory authority once you're aware. That window is too short to figure out your process on the fly.
             </p>
             <ul className="space-y-3 text-[14px] text-text-primary">
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>The 72-hour notification rule explained</span>
+                <span>What qualifies as a personal data breach under the GDPR</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>When to communicate breaches to data subjects</span>
+                <span>The 72-hour notification timeline step by step</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>Building an internal incident response plan</span>
+                <span>Building an incident response plan before you need one</span>
               </li>
             </ul>
           </div>
@@ -131,26 +130,37 @@ export default function GdprHubPage() {
           {/* Cluster 5: Consent & Privacy */}
           <div className="bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom border border-white/9 p-8 shadow-panel-elevated flex flex-col lg:col-start-2 lg:col-end-3">
             <Shield className="w-8 h-8 text-accent-gold mb-6" />
-            <h2 className="text-xl text-text-heading mb-3">Consent & Privacy</h2>
+            <div className="text-[11px] font-mono tracking-widest text-text-muted mb-2 uppercase">EPRIVACY DIRECTIVE &middot; ARTICLES 6–7</div>
+            <h2 className="text-xl text-text-heading mb-3">Cookie consent, legitimate interest, and the ePrivacy rules</h2>
             <p className="text-[14px] text-text-muted mb-6 leading-relaxed flex-grow">
-              Navigate the nuances of cookie banners, marketing opt-ins, and understanding when to use legitimate interest versus explicit consent.
+              Consent under the GDPR isn't just a cookie banner. It's a specific lawful basis with strict conditions: freely given, specific, informed, and unambiguous. And the ePrivacy Directive adds its own layer of rules for electronic communications and terminal equipment access.
             </p>
             <ul className="space-y-3 text-[14px] text-text-primary">
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>Legitimate interest vs. explicit consent</span>
+                <Link href="/blog/google-consent-mode-v2" className="hover:text-accent-gold transition-colors">Why Google Consent Mode v2 Matters for Your Clients</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>Building compliant cookie banners</span>
+                <span>Legitimate interest vs consent: when you can skip the banner</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>B2B vs B2C marketing rules under GDPR</span>
+                <span>ePrivacy and the GDPR: where they overlap and where they don't</span>
               </li>
             </ul>
           </div>
 
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom border border-white/9 p-10 shadow-panel-elevated text-center">
+          <p className="text-text-primary text-[17px] mb-8 max-w-2xl mx-auto">
+            Not sure where your gaps are? The assessment scans your operations against 142 GDPR requirements and shows you exactly where you stand. Takes 12 minutes, no account required.
+          </p>
+          <Link href="/assessment" className="inline-flex items-center gap-2 text-[15px] font-medium text-surface-base bg-accent-gold hover:bg-accent-gold-hover px-8 py-3.5 transition-colors">
+            Start free assessment <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
     </div>
