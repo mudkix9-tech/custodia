@@ -4,10 +4,24 @@ import React, { use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { GdprGuidePost } from './GdprGuidePost';
+import { RopaTemplatePost } from './RopaTemplatePost';
 
 export default function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
   const isGdprGuide = resolvedParams.slug === 'gdpr-compliance-guide-agencies';
+  const isRopaGuide = resolvedParams.slug === 'what-is-ropa-template';
+  
+  const getCategory = () => {
+    if (isGdprGuide) return "GDPR Basics";
+    if (isRopaGuide) return "Guides & Templates";
+    return "Category";
+  };
+
+  const getTitle = () => {
+    if (isGdprGuide) return "The Complete GDPR Compliance Guide for Agencies";
+    if (isRopaGuide) return "What is a ROPA? A Practical Template for Marketing Teams";
+    return resolvedParams.slug.replace(/-/g, ' ');
+  };
   
   return (
     <div className="relative pt-24 pb-32 overflow-hidden min-h-screen">
@@ -21,19 +35,21 @@ export default function BlogPost({ params }: { params: Promise<{ slug: string }>
           </Link>
           <div className="flex items-center gap-3 mb-6">
              <span className="text-xs font-medium text-accent-gold bg-accent-gold/10 px-2.5 py-1 rounded-full border border-accent-gold/20">
-               {isGdprGuide ? "GDPR Basics" : "Category"}
+               {getCategory()}
              </span>
              <span className="text-[13px] text-text-muted">
-               {isGdprGuide ? "June 1, 2026" : "June 1, 2026"}
+               June 1, 2026
              </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-normal text-text-heading mb-8 tracking-[-0.032em] capitalize">
-             {isGdprGuide ? "The Complete GDPR Compliance Guide for Agencies" : resolvedParams.slug.replace(/-/g, ' ')}
+             {getTitle()}
           </h1>
 
           <div className="prose prose-invert prose-p:text-text-primary prose-headings:text-text-heading prose-headings:font-normal prose-headings:tracking-tight max-w-none mb-16">
              {isGdprGuide ? (
                 <GdprGuidePost />
+             ) : isRopaGuide ? (
+                <RopaTemplatePost />
              ) : (
                 <>
                    <p className="lead text-lg text-text-muted mb-8">
