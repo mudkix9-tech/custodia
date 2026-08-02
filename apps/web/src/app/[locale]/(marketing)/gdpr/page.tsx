@@ -46,7 +46,7 @@ export default function GdprHubPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>How to handle a DSAR when you're both controller and processor</span>
+                <Link href="/gdpr/dsar-controller-processor" className="hover:text-accent-gold transition-colors">How to handle a DSAR when you're both controller and processor</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
