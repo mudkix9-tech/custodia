@@ -146,7 +146,7 @@ export default function GdprHubPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>Legitimate interest vs consent: when you can skip the banner</span>
+                <Link href="/gdpr/legitimate-interest-vs-consent" className="hover:text-accent-gold transition-colors">Legitimate interest vs consent: when you can skip the banner</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
