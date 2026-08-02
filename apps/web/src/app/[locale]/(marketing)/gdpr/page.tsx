@@ -46,6 +46,10 @@ export default function GdprHubPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
+                <Link href="/gdpr/compliance-guide-agencies" className="hover:text-accent-gold transition-colors">The Ultimate GDPR Compliance Guide for Agencies</Link>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-white/20 mt-1">&mdash;</span>
                 <Link href="/gdpr/dsar-controller-processor" className="hover:text-accent-gold transition-colors">How to handle a DSAR when you're both controller and processor</Link>
               </li>
               <li className="flex items-start gap-2">
@@ -70,7 +74,7 @@ export default function GdprHubPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <Link href="/blog/what-is-ropa-template" className="hover:text-accent-gold transition-colors">What is a ROPA? A Practical Template for Marketing Teams</Link>
+                <Link href="/gdpr/ropa-template" className="hover:text-accent-gold transition-colors">What is a ROPA? A Practical Template for Marketing Teams</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
@@ -114,7 +118,7 @@ export default function GdprHubPage() {
             <ul className="space-y-3 text-[14px] text-text-primary">
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>What qualifies as a personal data breach under the GDPR</span>
+                <Link href="/gdpr/data-breach-response" className="hover:text-accent-gold transition-colors">What qualifies as a personal data breach under the GDPR</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
@@ -138,7 +142,7 @@ export default function GdprHubPage() {
             <ul className="space-y-3 text-[14px] text-text-primary">
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <Link href="/blog/google-consent-mode-v2" className="hover:text-accent-gold transition-colors">Why Google Consent Mode v2 Matters for Your Clients</Link>
+                <Link href="/gdpr/consent-mode-v2" className="hover:text-accent-gold transition-colors">Why Google Consent Mode v2 Matters for Your Clients</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>

@@ -5,6 +5,40 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/:locale/blog/what-is-ropa-template',
+        destination: '/:locale/gdpr/ropa-template',
+        permanent: true,
+      },
+      {
+        source: '/blog/what-is-ropa-template',
+        destination: '/gdpr/ropa-template',
+        permanent: true,
+      },
+      {
+        source: '/:locale/blog/gdpr-compliance-guide-agencies',
+        destination: '/:locale/gdpr/compliance-guide-agencies',
+        permanent: true,
+      },
+      {
+        source: '/blog/gdpr-compliance-guide-agencies',
+        destination: '/gdpr/compliance-guide-agencies',
+        permanent: true,
+      },
+      {
+        source: '/:locale/blog/google-consent-mode-v2',
+        destination: '/:locale/gdpr/consent-mode-v2',
+        permanent: true,
+      },
+      {
+        source: '/blog/google-consent-mode-v2',
+        destination: '/gdpr/consent-mode-v2',
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

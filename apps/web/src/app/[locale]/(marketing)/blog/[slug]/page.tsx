@@ -2,31 +2,20 @@
 
 import React, { use } from 'react';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { GdprGuidePost } from './GdprGuidePost';
-import { RopaTemplatePost } from './RopaTemplatePost';
-import { ConsentModePost } from './ConsentModePost';
+import { POSTS } from '../posts';
 
 export default function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
-  const isGdprGuide = resolvedParams.slug === 'gdpr-compliance-guide-agencies';
-  const isRopaGuide = resolvedParams.slug === 'what-is-ropa-template';
-  const isConsentGuide = resolvedParams.slug === 'google-consent-mode-v2';
-  
-  const getCategory = () => {
-    if (isGdprGuide) return "GDPR Basics";
-    if (isRopaGuide) return "Guides & Templates";
-    if (isConsentGuide) return "Cookie Consent";
-    return "Category";
-  };
+  const post = POSTS[resolvedParams.slug];
 
-  const getTitle = () => {
-    if (isGdprGuide) return "The Complete GDPR Compliance Guide for Agencies";
-    if (isRopaGuide) return "What is a ROPA? A Practical Template for Marketing Teams";
-    if (isConsentGuide) return "Why Google Consent Mode v2 Matters for Your Clients";
-    return resolvedParams.slug.replace(/-/g, ' ');
-  };
-  
+  if (!post) {
+    notFound();
+  }
+
+  const PostComponent = React.lazy(post.component);
+
   return (
     <div className="relative pt-24 pb-32 overflow-hidden min-h-screen">
        {/* Background decorations matching new design */}
@@ -39,34 +28,20 @@ export default function BlogPost({ params }: { params: Promise<{ slug: string }>
           </Link>
           <div className="flex items-center gap-3 mb-6">
              <span className="text-xs font-medium text-accent-gold bg-accent-gold/10 px-2.5 py-1 rounded-full border border-accent-gold/20">
-               {getCategory()}
+               {post.category}
              </span>
              <span className="text-[13px] text-text-muted">
-               June 1, 2026
+               {post.date}
              </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-normal text-text-heading mb-8 tracking-[-0.032em] capitalize">
-             {getTitle()}
+             {post.title}
           </h1>
 
           <div className="prose prose-invert prose-p:text-text-primary prose-headings:text-text-heading prose-headings:font-normal prose-headings:tracking-tight max-w-none mb-16">
-             {isGdprGuide ? (
-                <GdprGuidePost />
-             ) : isRopaGuide ? (
-                <RopaTemplatePost />
-             ) : isConsentGuide ? (
-                <ConsentModePost />
-             ) : (
-                <>
-                   <p className="lead text-lg text-text-muted mb-8">
-                      This is a placeholder for the actual blog content which would be rendered from MDX files.
-                   </p>
-                   <h2 className="text-2xl mt-10 mb-4">Introduction</h2>
-                   <p className="mb-4">As a digital agency, managing compliance is often an afterthought. However, the regulatory landscape in the EU is shifting, making it a critical business function.</p>
-                   <h2 className="text-2xl mt-10 mb-4">Understanding the Basics</h2>
-                   <p className="mb-4">You need to understand the difference between being a data controller and a data processor. This fundamental distinction drives your entire compliance strategy.</p>
-                </>
-             )}
+             <React.Suspense fallback={<div className="animate-pulse h-96 bg-white/5 rounded-lg"></div>}>
+               <PostComponent />
+             </React.Suspense>
           </div>
 
           <div className="bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom border border-white/9 p-10 shadow-panel-elevated text-center mt-16">

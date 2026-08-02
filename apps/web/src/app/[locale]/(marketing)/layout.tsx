@@ -113,7 +113,6 @@ const FOOTER_COLUMNS = [
     title: 'Resources',
     links: [
       { name: 'GDPR guides', href: '/gdpr' },
-      { name: 'Blog', href: '/blog' },
       { name: 'Changelog', href: '/changelog' },
     ],
   },
