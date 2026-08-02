@@ -13,7 +13,7 @@ export function ConsentModePost() {
 
       <h2 className="text-2xl mt-12 mb-4 font-medium text-text-heading">What Actually Changed with Consent Mode v2?</h2>
       <p className="mb-4">
-        Historically, Consent Mode was Google's recommended way to adjust how its tags behaved based on user consent choices. As of March 2024, it is no longer optional. The Digital Markets Act (DMA) designated Google as a "gatekeeper," forcing them to strictly enforce user privacy choices before serving ads or tracking users in the European Economic Area (EEA).
+        Historically, Consent Mode was Google's recommended way to adjust how its tags behaved based on user consent choices. As of March 2024, it is no longer optional. The Digital Markets Act (DMA) designated Google as a "gatekeeper," forcing them to obtain verifiable consent signals before processing EEA user data for ads, which is why Google then mandated Consent Mode v2 for all publishers.
       </p>
       <p className="mb-4">
         Consent Mode v2 requires your website's Consent Management Platform (CMP) to pass granular consent signals to Google tags. Specifically, it introduced two new parameters:
