@@ -6,17 +6,20 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { GdprGuidePost } from './GdprGuidePost';
 import { RopaTemplatePost } from './RopaTemplatePost';
 import { ConsentModePost } from './ConsentModePost';
+import { LawfulBasesPost } from './LawfulBasesPost';
 
 export default function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
   const isGdprGuide = resolvedParams.slug === 'gdpr-compliance-guide-agencies';
   const isRopaGuide = resolvedParams.slug === 'what-is-ropa-template';
   const isConsentGuide = resolvedParams.slug === 'google-consent-mode-v2';
+  const isLawfulBasesGuide = resolvedParams.slug === 'six-lawful-bases-gdpr';
   
   const getCategory = () => {
     if (isGdprGuide) return "GDPR Basics";
     if (isRopaGuide) return "Guides & Templates";
     if (isConsentGuide) return "Cookie Consent";
+    if (isLawfulBasesGuide) return "GDPR Basics";
     return "Category";
   };
 
@@ -24,7 +27,16 @@ export default function BlogPost({ params }: { params: Promise<{ slug: string }>
     if (isGdprGuide) return "The Complete GDPR Compliance Guide for Agencies";
     if (isRopaGuide) return "What is a ROPA? A Practical Template for Marketing Teams";
     if (isConsentGuide) return "Why Google Consent Mode v2 Matters for Your Clients";
+    if (isLawfulBasesGuide) return "The Six Lawful Bases Under the GDPR and How to Choose the Right One";
     return resolvedParams.slug.replace(/-/g, ' ');
+  };
+
+  const getDate = () => {
+    if (isGdprGuide) return "June 1, 2026";
+    if (isRopaGuide) return "May 15, 2026";
+    if (isConsentGuide) return "May 2, 2026";
+    if (isLawfulBasesGuide) return "August 2, 2026";
+    return "Date";
   };
   
   return (
@@ -42,7 +54,7 @@ export default function BlogPost({ params }: { params: Promise<{ slug: string }>
                {getCategory()}
              </span>
              <span className="text-[13px] text-text-muted">
-               June 1, 2026
+               {getDate()}
              </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-normal text-text-heading mb-8 tracking-[-0.032em] capitalize">
@@ -56,6 +68,8 @@ export default function BlogPost({ params }: { params: Promise<{ slug: string }>
                 <RopaTemplatePost />
              ) : isConsentGuide ? (
                 <ConsentModePost />
+             ) : isLawfulBasesGuide ? (
+                <LawfulBasesPost />
              ) : (
                 <>
                    <p className="lead text-lg text-text-muted mb-8">

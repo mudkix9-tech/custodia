@@ -22,6 +22,7 @@ export default function BlogIndex() {
       <section className="relative max-w-7xl mx-auto px-6 z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
            {[
+             { title: "The Six Lawful Bases Under the GDPR and How to Choose the Right One", slug: "six-lawful-bases-gdpr", category: "GDPR Basics", date: "August 2, 2026", readTime: "10 min" },
              { title: "The Complete GDPR Compliance Guide for Agencies", slug: "gdpr-compliance-guide-agencies", category: "GDPR Basics", date: "June 1, 2026", readTime: "10 min" },
              { title: "What is a ROPA? A Practical Template for Marketing Teams", slug: "what-is-ropa-template", category: "Guides & Templates", date: "May 15, 2026", readTime: "8 min" },
              { title: "Why Google Consent Mode v2 Matters for Your Clients", slug: "google-consent-mode-v2", category: "Cookie Consent", date: "May 2, 2026", readTime: "6 min" }
