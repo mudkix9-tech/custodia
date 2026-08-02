@@ -75,7 +75,7 @@ export function RopaTemplatePost() {
             </div>
             <div>
               <dt className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Cross-Border Transfers</dt>
-              <dd className="text-text-primary text-[15px]">Yes, data is transferred to the US by Mailchimp. Safeguard: EU-US Data Privacy Framework (DPF) and/or Standard Contractual Clauses (SCCs).</dd>
+              <dd className="text-text-primary text-[15px]">Yes, data is transferred to the US. Safeguards: EU-US Data Privacy Framework (Intuit/Mailchimp is DPF-certified) with Standard Contractual Clauses (SCCs) as fallback per the Mailchimp DPA.</dd>
             </div>
             <div>
               <dt className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Retention Period</dt>
