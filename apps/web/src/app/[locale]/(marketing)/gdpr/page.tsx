@@ -122,7 +122,7 @@ export default function GdprHubPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>The 72-hour notification timeline step by step</span>
+                <Link href="/gdpr/breach-timeline" className="hover:text-accent-gold transition-colors">The 72-hour notification timeline step by step</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
