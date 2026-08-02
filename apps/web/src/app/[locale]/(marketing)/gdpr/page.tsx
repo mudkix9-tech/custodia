@@ -94,7 +94,7 @@ export default function GdprHubPage() {
             <ul className="space-y-3 text-[14px] text-text-primary mb-6">
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>SCCs, the Data Privacy Framework, and what survives Schrems III</span>
+                <Link href="/gdpr/sccs-dpf-schrems" className="hover:text-accent-gold transition-colors">SCCs, the Data Privacy Framework, and what survives Schrems III</Link>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
