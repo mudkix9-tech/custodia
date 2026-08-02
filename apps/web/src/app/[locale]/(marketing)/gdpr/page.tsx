@@ -126,7 +126,7 @@ export default function GdprHubPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-white/20 mt-1">&mdash;</span>
-                <span>Building an incident response plan before you need one</span>
+                <Link href="/gdpr/incident-response-plan" className="hover:text-accent-gold transition-colors">Building an incident response plan before you need one</Link>
               </li>
             </ul>
           </div>
