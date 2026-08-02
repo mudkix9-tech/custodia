@@ -75,7 +75,7 @@ export function RopaTemplatePost() {
             </div>
             <div>
               <dt className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Cross-Border Transfers</dt>
-              <dd className="text-text-primary text-[15px]">Yes, data is transferred to the US by Mailchimp. Safeguard: Standard Contractual Clauses (SCCs) via the Mailchimp DPA.</dd>
+              <dd className="text-text-primary text-[15px]">Yes, data is transferred to the US by Mailchimp. Safeguard: EU-US Data Privacy Framework (DPF) and/or Standard Contractual Clauses (SCCs).</dd>
             </div>
             <div>
               <dt className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Retention Period</dt>
@@ -118,6 +118,9 @@ export function RopaTemplatePost() {
       </ol>
       <p className="mb-8">
         If manually managing a spreadsheet sounds like a nightmare, this is exactly what Custodia's Activity Register module solves. It completely replaces the spreadsheet ROPA by syncing directly with your vendor stack, auto-populating sub-processor fields, and ensuring your records stay current without manual data entry.
+      </p>
+      <p>
+        If you don't know whether your current ROPA (or lack of one) passes an audit, you can find out in 12 minutes by taking our <Link href="/assessment" className="text-accent-gold hover:underline">free GDPR gap assessment</Link>.
       </p>
     </>
   );
