@@ -1,0 +1,46 @@
+{
+  "title": "Vendor Intelligence",
+  "subtitle": "Automated tracking for DPAs, TIAs, and sub-processor risk.",
+  "analyze_dpa": "Analyze DPA",
+  "export_register": "Export Register",
+  "discover_vendors": "Discover Vendors",
+  "tabs": {
+    "tracked_register": "Tracked Register ({count})",
+    "vendor_discovery": "Vendor Discovery & Shadow IT"
+  },
+  "metrics": {
+    "total_tracked": "Total Tracked",
+    "dpa_coverage": "DPA Coverage",
+    "missing_dpas": "Missing / Expired DPAs",
+    "high_risk": "High / Critical Risk"
+  },
+  "filter_placeholder": "Filter vendors...",
+  "add_custom_vendor": "Add Custom Vendor",
+  "empty_state": "No vendors tracked yet. Click 'Discover Vendors' to start building your register.",
+  "load_more": "Load More",
+  "loading_more": "Loading more...",
+  "columns": {
+    "vendor": "Vendor",
+    "category": "Category",
+    "dpa_status": "DPA Status",
+    "risk_score": "Risk Score & Level",
+    "data_locations": "Data Locations"
+  },
+  "dpa_status": {
+    "signed": "Signed",
+    "expired": "Expired",
+    "missing": "Missing"
+  },
+  "locations": {
+    "hq": "HQ: {country}",
+    "unknown": "Unknown",
+    "eu_hosted": "(EU Hosted)"
+  },
+  "discover_modal": {
+    "title": "Discover Global Vendors",
+    "search_placeholder": "Search by name (e.g., HubSpot, AWS)...",
+    "no_results": "No global vendors found matching '{search}'.",
+    "hq": "HQ: {country}",
+    "add_to_register": "Add to Register"
+  }
+}

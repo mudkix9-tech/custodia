@@ -8,13 +8,15 @@ import { ComplianceScoreDial } from '@/components/audit/ComplianceScoreDial';
 import { GapRemediationList } from '@/components/audit/GapRemediationList';
 import { Article30Generator } from '@/components/audit/Article30Generator';
 import { AuditLogTable } from '@/components/audit/AuditLogTable';
+import { useTranslations } from 'next-intl';
 
 export default function AuditPage() {
+  const t = useTranslations('audit');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'ledger'>('dashboard');
   const { data: metrics, isLoading } = trpc.audit.getDashboardMetrics.useQuery();
 
   if (isLoading) {
-    return <div className="p-8 text-center text-[#6E747A]">Loading audit workspace...</div>;
+    return <div className="p-8 text-center text-[#6E747A]">{t('loading')}</div>;
   }
 
   // Use the latest score if available, otherwise default to a calculated representation or 100
@@ -28,8 +30,8 @@ export default function AuditPage() {
     <div className="max-w-6xl mx-auto p-8 space-y-8 fade-up">
       <div className="flex items-end justify-between border-b border-white/10 pb-4">
         <div>
-          <h1 className="text-3xl font-serif text-[#F4F5F6] tracking-tight">Audit Readiness</h1>
-          <p className="text-[#9BA1A6] mt-2 text-[15px]">Automated compliance reporting, score tracking, and gap remediation.</p>
+          <h1 className="text-3xl font-serif text-[#F4F5F6] tracking-tight">{t('title')}</h1>
+          <p className="text-[#9BA1A6] mt-2 text-[15px]">{t('subtitle')}</p>
         </div>
         <div className="flex p-1 bg-white/5 rounded-lg">
           <button
@@ -38,7 +40,7 @@ export default function AuditPage() {
               activeTab === 'dashboard' ? 'bg-[#0D0F11] text-[#F4F5F6] shadow-panel-elevated border border-white/5' : 'text-[#6E747A] hover:text-[#E6E8EA]'
             }`}
           >
-            <LayoutDashboard size={16} /> Dashboard
+            <LayoutDashboard size={16} /> {t('tabs.dashboard')}
           </button>
           <button
             onClick={() => setActiveTab('ledger')}
@@ -46,7 +48,7 @@ export default function AuditPage() {
               activeTab === 'ledger' ? 'bg-[#0D0F11] text-[#F4F5F6] shadow-panel-elevated border border-white/5' : 'text-[#6E747A] hover:text-[#E6E8EA]'
             }`}
           >
-            <ScrollText size={16} /> Immutable Ledger
+            <ScrollText size={16} /> {t('tabs.ledger')}
           </button>
         </div>
       </div>
@@ -59,22 +61,22 @@ export default function AuditPage() {
           <div className="absolute top-0 right-0 p-4">
             {score >= 80 ? <ShieldCheck className="w-6 h-6 text-sage-500" /> : <ShieldAlert className="w-6 h-6 text-amber-500" />}
           </div>
-          <h2 className="text-sm font-medium text-[#6E747A] uppercase tracking-wider mb-6">Overall Compliance Score</h2>
+          <h2 className="text-sm font-medium text-[#6E747A] uppercase tracking-wider mb-6">{t('compliance_score')}</h2>
           <ComplianceScoreDial score={score} />
         </div>
 
         {/* Categories/Summary Card */}
         <div className="lg:col-span-2 bg-[#0D0F11] border border-white/10 rounded-3xl p-8 shadow-panel-elevated">
-          <h2 className="text-lg font-serif text-[#F4F5F6] mb-6">Compliance Pillars</h2>
+          <h2 className="text-lg font-serif text-[#F4F5F6] mb-6">{t('compliance_pillars')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <PillarCard title="ROPA" score={(metrics?.latestReport?.categoryScores as any)?.ropa || 100} />
-            <PillarCard title="Vendors" score={(metrics?.latestReport?.categoryScores as any)?.vendors || 100} />
-            <PillarCard title="DPIAs" score={(metrics?.latestReport?.categoryScores as any)?.dpia || 100} />
-            <PillarCard title="Policies" score={(metrics?.latestReport?.categoryScores as any)?.policies || 100} />
-            <PillarCard title="DSARs" score={(metrics?.latestReport?.categoryScores as any)?.dsar || 100} />
-            <PillarCard title="Breaches" score={(metrics?.latestReport?.categoryScores as any)?.breach || 100} />
-            <PillarCard title="Training" score={(metrics?.latestReport?.categoryScores as any)?.training || 100} />
-            <PillarCard title="Transfers" score={(metrics?.latestReport?.categoryScores as any)?.transfers || 100} />
+            <PillarCard title={t('pillars.ropa')} score={(metrics?.latestReport?.categoryScores as any)?.ropa || 100} />
+            <PillarCard title={t('pillars.vendors')} score={(metrics?.latestReport?.categoryScores as any)?.vendors || 100} />
+            <PillarCard title={t('pillars.dpia')} score={(metrics?.latestReport?.categoryScores as any)?.dpia || 100} />
+            <PillarCard title={t('pillars.policies')} score={(metrics?.latestReport?.categoryScores as any)?.policies || 100} />
+            <PillarCard title={t('pillars.dsar')} score={(metrics?.latestReport?.categoryScores as any)?.dsar || 100} />
+            <PillarCard title={t('pillars.breaches')} score={(metrics?.latestReport?.categoryScores as any)?.breach || 100} />
+            <PillarCard title={t('pillars.training')} score={(metrics?.latestReport?.categoryScores as any)?.training || 100} />
+            <PillarCard title={t('pillars.transfers')} score={(metrics?.latestReport?.categoryScores as any)?.transfers || 100} />
           </div>
         </div>
       </div>
@@ -82,16 +84,16 @@ export default function AuditPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-serif text-[#F4F5F6]">Detected Gaps</h2>
+            <h2 className="text-xl font-serif text-[#F4F5F6]">{t('detected_gaps')}</h2>
             {totalGaps > 0 && (
-              <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded-full">{totalGaps} Active</span>
+              <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded-full">{t('active_gaps', { total: totalGaps })}</span>
             )}
           </div>
           <GapRemediationList />
         </div>
 
         <div>
-          <h2 className="text-xl font-serif text-[#F4F5F6] mb-4">Reporting & Exports</h2>
+          <h2 className="text-xl font-serif text-[#F4F5F6] mb-4">{t('reporting_exports')}</h2>
           <Article30Generator />
         </div>
       </div>
@@ -104,8 +106,8 @@ export default function AuditPage() {
                 <ShieldCheck className="w-5 h-5 text-[#C9A227]" />
               </div>
               <div>
-                <h3 className="text-[15px] font-medium text-[#F4F5F6]">Immutable Audit Ledger</h3>
-                <p className="text-sm text-[#9BA1A6]">Article 5(2) Demonstrable Accountability. All records are read-only and cryptographically secure.</p>
+                <h3 className="text-[15px] font-medium text-[#F4F5F6]">{t('immutable_ledger.title')}</h3>
+                <p className="text-sm text-[#9BA1A6]">{t('immutable_ledger.description')}</p>
               </div>
             </div>
           </div>

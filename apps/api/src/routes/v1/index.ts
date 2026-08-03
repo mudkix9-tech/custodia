@@ -1,3 +1,5 @@
+// NOT REGISTERED - future public API
+// Do not wire this up until the public API feature is fully built and security reviewed.
 import { FastifyInstance } from 'fastify';
 import vendorRoutes from './vendors.js';
 

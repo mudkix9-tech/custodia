@@ -7,10 +7,11 @@ import { useSession } from 'next-auth/react';
 import { trpc } from '@/utils/trpc';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Shield, Key, Smartphone, Monitor, Clock, LogOut, CheckCircle2 } from 'lucide-react';
-
 import { format } from 'date-fns';
+import { useTranslations } from 'next-intl';
 
 export default function SecuritySettingsPage() {
+  const t = useTranslations('settings.security');
   const { data: session } = useSession();
 
   const { data: activeSessions, refetch: refetchSessions } = trpc.security.listSessions.useQuery();
@@ -44,7 +45,7 @@ export default function SecuritySettingsPage() {
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError("Passwords do not match");
+      setPasswordError(t('password.error_mismatch'));
       setPasswordStatus('error');
       return;
     }
@@ -63,7 +64,7 @@ export default function SecuritySettingsPage() {
       refetchSessions();
     } catch (e: any) {
       setPasswordStatus('error');
-      setPasswordError(e.message || "Failed to change password");
+      setPasswordError(e.message || t('password.error_failed'));
     }
   };
 
@@ -73,19 +74,19 @@ export default function SecuritySettingsPage() {
       refetchSessions();
     } catch (e) {
       console.error(e);
-      alert('Failed to revoke session');
+      alert(t('sessions.error_revoke'));
     }
   };
 
   const handleRevokeAll = async () => {
-    const confirmed = await confirm({ title: 'Revoke all other sessions?', description: 'This will log out all other devices.', variant: 'destructive', confirmText: 'Revoke All' });
+    const confirmed = await confirm({ title: t('sessions.revoke_all_confirm.title'), description: t('sessions.revoke_all_confirm.description'), variant: 'destructive', confirmText: t('sessions.revoke_all_confirm.confirm') });
     if (confirmed) {
       try {
         await revokeAllSessions.mutateAsync({});
         refetchSessions();
       } catch (e) {
         console.error(e);
-        alert('Failed to revoke sessions');
+        alert(t('sessions.error_revoke_all'));
       }
     }
   };
@@ -97,7 +98,7 @@ export default function SecuritySettingsPage() {
         setMfaData(result);
         setMfaState('verifying');
     } catch (e: any) {
-        setMfaError(e.message || 'Failed to initiate MFA');
+        setMfaError(e.message || t('mfa.error_init'));
         setMfaState('idle');
     }
   };
@@ -109,18 +110,18 @@ export default function SecuritySettingsPage() {
         setMfaState('idle');
         setMfaToken('');
     } catch (e: any) {
-        setMfaError(e.message || 'Invalid token');
+        setMfaError(e.message || t('mfa.error_invalid'));
     }
   };
 
   const handleDisableMfa = async () => {
-    const confirmed = await confirm({ title: 'Disable MFA?', description: 'Are you sure you want to disable MFA? This decreases account security.', variant: 'destructive', confirmText: 'Disable' });
+    const confirmed = await confirm({ title: t('mfa.disable_confirm.title'), description: t('mfa.disable_confirm.description'), variant: 'destructive', confirmText: t('mfa.disable_confirm.confirm') });
     if (confirmed) {
         try {
             await disableMfa.mutateAsync();
             refetchUser();
         } catch(e: any) {
-            alert(e.message || 'Failed to disable MFA');
+            alert(e.message || t('mfa.error_disable'));
         }
     }
   };
@@ -129,8 +130,8 @@ export default function SecuritySettingsPage() {
     <div className="max-w-4xl mx-auto p-8 fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">Security</h1>
-          <p className="text-[#9BA1A6]">Manage your password, MFA, and active sessions.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
+          <p className="text-[#9BA1A6]">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -139,12 +140,12 @@ export default function SecuritySettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <Key className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">Password</h2>
+            <h2 className="text-lg font-medium">{t('password.title')}</h2>
           </div>
 
           <form onSubmit={handlePasswordSubmit} className="max-w-md space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Current Password</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('password.current')}</label>
               <input
                 type="password"
                 required
@@ -154,7 +155,7 @@ export default function SecuritySettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">New Password</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('password.new')}</label>
               <input
                 type="password"
                 required
@@ -165,7 +166,7 @@ export default function SecuritySettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Confirm New Password</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('password.confirm')}</label>
               <input
                 type="password"
                 required
@@ -182,9 +183,9 @@ export default function SecuritySettingsPage() {
                 disabled={passwordStatus === 'saving'}
                 className="bg-ink-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-ink-800 disabled:opacity-50"
               >
-                {passwordStatus === 'saving' ? 'Updating...' : 'Update Password'}
+                {passwordStatus === 'saving' ? t('password.updating') : t('password.update')}
               </button>
-              {passwordStatus === 'saved' && <span className="text-sm text-[#C9A227]">Password updated successfully</span>}
+              {passwordStatus === 'saved' && <span className="text-sm text-[#C9A227]">{t('password.success')}</span>}
               {passwordStatus === 'error' && <span className="text-sm text-red-400">{passwordError}</span>}
             </div>
           </form>
@@ -194,14 +195,14 @@ export default function SecuritySettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <Smartphone className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">Multi-factor Authentication (MFA)</h2>
+            <h2 className="text-lg font-medium">{t('mfa.title')}</h2>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-[#08090A] rounded-lg border border-white/10 mb-4">
             <div>
-              <p className="font-medium text-[#F4F5F6] text-sm">Authenticator App</p>
+              <p className="font-medium text-[#F4F5F6] text-sm">{t('mfa.app')}</p>
               <p className="text-sm text-[#6E747A] mt-1">
-                 {mfaEnabled ? 'Enabled' : mfaState === 'enabling' || mfaState === 'verifying' ? 'Setup in progress...' : 'Not configured'}
+                 {mfaEnabled ? t('mfa.status.enabled') : mfaState === 'enabling' || mfaState === 'verifying' ? t('mfa.status.in_progress') : t('mfa.status.not_configured')}
               </p>
             </div>
             {mfaEnabled ? (
@@ -209,7 +210,7 @@ export default function SecuritySettingsPage() {
                   onClick={handleDisableMfa}
                   className="bg-[#0D0F11] border border-red-900/50 text-red-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-500/10 shadow-panel-elevated"
                 >
-                  Disable MFA
+                  {t('mfa.disable')}
                 </button>
             ) : (
                 <button
@@ -217,25 +218,25 @@ export default function SecuritySettingsPage() {
                   disabled={mfaState !== 'idle'}
                   className="bg-[#0D0F11] border border-white/20 text-[#F4F5F6] px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/5 shadow-panel-elevated disabled:opacity-50"
                 >
-                  Enable MFA
+                  {t('mfa.enable')}
                 </button>
             )}
           </div>
 
           {mfaState === 'verifying' && (
               <div className="p-4 border border-white/10 rounded-lg space-y-4">
-                  <p className="text-sm text-[#9BA1A6]">Scan this QR code with your authenticator app (e.g. Google Authenticator, Authy, 1Password).</p>
+                  <p className="text-sm text-[#9BA1A6]">{t('mfa.scan_qr')}</p>
                   {mfaData.qrCodeUrl && (
                       <div className="bg-[#0D0F11] p-2 border border-white/10 inline-block rounded-lg">
                           <img src={mfaData.qrCodeUrl} alt="MFA QR Code" width={150} height={150} />
                       </div>
                   )}
-                  <p className="text-xs text-[#6E747A] font-mono bg-[#08090A] p-2 rounded inline-block">Secret: {mfaData.secret}</p>
+                  <p className="text-xs text-[#6E747A] font-mono bg-[#08090A] p-2 rounded inline-block">{t('mfa.secret')}{mfaData.secret}</p>
 
                   <div className="flex gap-2 max-w-sm mt-4">
                       <input
                           type="text"
-                          placeholder="Enter 6-digit code"
+                          placeholder={t('mfa.placeholder')}
                           value={mfaToken}
                           onChange={(e) => setMfaToken(e.target.value)}
                           maxLength={6}
@@ -245,7 +246,7 @@ export default function SecuritySettingsPage() {
                           onClick={handleVerifyMfa}
                           className="bg-ink-900 text-white px-4 py-2 rounded-lg text-sm font-medium"
                       >
-                          Verify
+                          {t('mfa.verify')}
                       </button>
                   </div>
                   {mfaError && <p className="text-sm text-red-400">{mfaError}</p>}
@@ -257,12 +258,12 @@ export default function SecuritySettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <Monitor className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">Active Sessions</h2>
+            <h2 className="text-lg font-medium">{t('sessions.title')}</h2>
           </div>
 
           <div className="space-y-4">
             {activeSessions?.length === 0 && (
-              <p className="text-sm text-[#6E747A]">No active sessions found.</p>
+              <p className="text-sm text-[#6E747A]">{t('sessions.no_sessions')}</p>
             )}
 
             {activeSessions?.map((session) => (
@@ -271,10 +272,10 @@ export default function SecuritySettingsPage() {
                   <Monitor className="w-8 h-8 text-[#6E747A]" />
                   <div>
                     <p className="font-medium text-[#F4F5F6] text-sm flex items-center gap-2">
-                      {session.device || 'Unknown Device'} • {session.browser || 'Unknown Browser'}
+                      {session.device || t('sessions.unknown_device')} • {session.browser || t('sessions.unknown_browser')}
                     </p>
                     <p className="text-xs text-[#6E747A] mt-1">
-                      {session.ipAddress || 'Unknown IP'} • Last active {session.lastActiveAt ? format(new Date(session.lastActiveAt), 'MMM d, h:mm a') : 'Unknown'}
+                      {session.ipAddress || t('sessions.unknown_ip')} • {t('sessions.last_active')} {session.lastActiveAt ? format(new Date(session.lastActiveAt), 'MMM d, h:mm a') : t('sessions.unknown')}
                     </p>
                   </div>
                 </div>
@@ -282,7 +283,7 @@ export default function SecuritySettingsPage() {
                   onClick={() => handleRevoke(session.id)}
                   className="text-xs font-medium text-[#6E747A] hover:text-red-400 bg-[#0D0F11] border border-white/10 px-3 py-1.5 rounded shadow-panel-elevated hover:border-red-900/50"
                 >
-                  Revoke
+                  {t('sessions.revoke')}
                 </button>
               </div>
             ))}
@@ -292,7 +293,7 @@ export default function SecuritySettingsPage() {
                 onClick={handleRevokeAll}
                 className="text-sm font-medium text-red-400 hover:text-red-400 mt-4 block"
               >
-                Revoke all other sessions
+                {t('sessions.revoke_all')}
               </button>
             )}
           </div>

@@ -1,0 +1,40 @@
+{
+  "title": "Client Management",
+  "subtitle": "Manage clients, DPAs, and their secure compliance portals.",
+  "add_client": "Add Client",
+  "total_clients": "Total Clients",
+  "active_portals": "Active Portals",
+  "signed_dpas": "Signed DPAs",
+  "search_placeholder": "Search clients...",
+  "empty_state": "No clients added yet. Click 'Add Client' to start managing agency clients.",
+  "loading_more": "Loading more...",
+  "load_more": "Load More",
+  "columns": {
+    "name": "Client Name",
+    "contact": "Primary Contact",
+    "activities": "Processing Activities",
+    "dpa_status": "DPA Status",
+    "portal_status": "Portal Status"
+  },
+  "status": {
+    "signed": "Signed",
+    "expired": "Expired",
+    "pending": "Pending",
+    "active": "Active",
+    "disabled": "Disabled",
+    "linked": "{count} Linked"
+  },
+  "modal": {
+    "title": "Add New Client",
+    "client_name": "Client Name *",
+    "client_name_placeholder": "e.g., Acme Corp",
+    "legal_name": "Legal Entity Name",
+    "legal_name_placeholder": "e.g., Acme Corporation LLC",
+    "contact_name": "Contact Name",
+    "contact_email": "Contact Email",
+    "industry": "Industry",
+    "cancel": "Cancel",
+    "creating": "Creating...",
+    "create_button": "Create Client"
+  }
+}

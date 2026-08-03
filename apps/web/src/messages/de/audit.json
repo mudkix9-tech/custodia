@@ -1,0 +1,31 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Audit-Bereitschaft' or 'Prüfungsbereitschaft'"
+  },
+  "title": "Audit-Bereitschaft",
+  "subtitle": "Automatisierte Compliance-Berichterstattung, Punkteverfolgung und Behebung von Lücken.",
+  "loading": "Audit-Arbeitsbereich wird geladen...",
+  "tabs": {
+    "dashboard": "Dashboard",
+    "ledger": "Unveränderliches Ledger"
+  },
+  "compliance_score": "Gesamter Compliance-Score",
+  "compliance_pillars": "Compliance-Säulen",
+  "pillars": {
+    "ropa": "VVT",
+    "vendors": "Dienstleister",
+    "dpia": "DSFAs",
+    "policies": "Richtlinien",
+    "dsar": "DSARs",
+    "breaches": "Datenpannen",
+    "training": "Schulung",
+    "transfers": "Übermittlungen"
+  },
+  "detected_gaps": "Erkannte Lücken",
+  "active_gaps": "{total} Aktiv",
+  "reporting_exports": "Berichterstattung & Exporte",
+  "immutable_ledger": {
+    "title": "Unveränderliches Audit-Ledger",
+    "description": "Artikel 5(2) Nachweispflicht. Alle Datensätze sind schreibgeschützt und kryptografisch gesichert."
+  }
+}

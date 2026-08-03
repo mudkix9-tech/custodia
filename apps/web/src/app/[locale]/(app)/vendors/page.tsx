@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import { DataGrid } from 'ui';
-import { Plus, Search, FileText, Download, ShieldAlert, CheckCircle2, Clock, Link as LinkIcon, Building2, Sparkles } from 'lucide-react';
+import { Search, FileText, Download, ShieldAlert, CheckCircle2, Clock, Link as LinkIcon, Building2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { DiscoveryTab } from '@/components/vendors/DiscoveryTab';
+import { useTranslations } from 'next-intl';
 
 export default function VendorsPage() {
+  const t = useTranslations('vendors');
   const {
     data: vendorsResp,
     isLoading,
@@ -44,7 +46,7 @@ export default function VendorsPage() {
   const columns = [
     {
       accessorKey: 'name',
-      header: 'Vendor',
+      header: t('columns.vendor'),
       cell: ({ row }: any) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center border border-white/10">
@@ -58,22 +60,22 @@ export default function VendorsPage() {
     },
     {
       accessorKey: 'category',
-      header: 'Category',
+      header: t('columns.category'),
       cell: ({ getValue }: any) => <span className="text-[#9BA1A6]">{getValue() || '-'}</span>
     },
     {
       accessorKey: 'dpaStatus',
-      header: 'DPA Status',
+      header: t('columns.dpa_status'),
       cell: ({ getValue }: any) => {
         const val = getValue();
-        if (val === 'signed') return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30"><CheckCircle2 className="w-3.5 h-3.5"/> Signed</span>;
-        if (val === 'expired') return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-red-500/10 text-red-400 border border-red-900/50"><Clock className="w-3.5 h-3.5"/> Expired</span>;
-        return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-amber-500/10 text-amber-400 border border-amber-900/50"><FileText className="w-3.5 h-3.5"/> Missing</span>;
+        if (val === 'signed') return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30"><CheckCircle2 className="w-3.5 h-3.5"/> {t('dpa_status.signed')}</span>;
+        if (val === 'expired') return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-red-500/10 text-red-400 border border-red-900/50"><Clock className="w-3.5 h-3.5"/> {t('dpa_status.expired')}</span>;
+        return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-amber-500/10 text-amber-400 border border-amber-900/50"><FileText className="w-3.5 h-3.5"/> {t('dpa_status.missing')}</span>;
       }
     },
     {
       accessorKey: 'riskLevel',
-      header: 'Risk Score & Level',
+      header: t('columns.risk_score'),
       cell: ({ row }: any) => {
         const level = row.original.riskLevel || 'low';
         const score = row.original.riskScore || 0;
@@ -92,11 +94,11 @@ export default function VendorsPage() {
     },
     {
       accessorKey: 'headquartersCountry',
-      header: 'Data Locations',
+      header: t('columns.data_locations'),
       cell: ({ row }: any) => (
         <span className="text-[#9BA1A6] text-[13px]">
-          HQ: {row.original.headquartersCountry || 'Unknown'} 
-          {row.original.usingEuHosting && <span className="ml-2 text-[#C9A227] font-medium">(EU Hosted)</span>}
+          {t('locations.hq', { country: row.original.headquartersCountry || t('locations.unknown') })} 
+          {row.original.usingEuHosting && <span className="ml-2 text-[#C9A227] font-medium">{t('locations.eu_hosted')}</span>}
         </span>
       )
     }
@@ -106,18 +108,18 @@ export default function VendorsPage() {
     <div className="max-w-[1200px] mx-auto p-8 fade-up space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-serif text-[#F4F5F6] mb-2">Vendor Intelligence</h1>
-          <p className="text-[#9BA1A6] text-[15px]">Automated tracking for DPAs, TIAs, and sub-processor risk.</p>
+          <h1 className="text-3xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
+          <p className="text-[#9BA1A6] text-[15px]">{t('subtitle')}</p>
         </div>
         <div className="flex gap-3">
           <Link href="/vendors/analyzer" className="inline-flex items-center gap-2 bg-indigo-500/10 hover:bg-indigo-100 text-indigo-400 text-[14px] font-medium px-4 py-2 rounded-xl border border-indigo-900/50 transition-colors shadow-panel-elevated">
-            <Sparkles className="w-4 h-4" /> Analyze DPA
+            <Sparkles className="w-4 h-4" /> {t('analyze_dpa')}
           </Link>
           <button className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-[#08090A] text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated">
-            <Download className="w-4 h-4" /> Export Register
+            <Download className="w-4 h-4" /> {t('export_register')}
           </button>
           <button onClick={() => setIsDiscoverOpen(true)} className="inline-flex items-center gap-2 bg-sage-700 hover:bg-sage-600 text-white text-[14px] font-medium px-4 py-2 rounded-xl transition-all shadow-card">
-            <Search className="w-4 h-4" /> Discover Vendors
+            <Search className="w-4 h-4" /> {t('discover_vendors')}
           </button>
         </div>
       </div>
@@ -128,13 +130,13 @@ export default function VendorsPage() {
           onClick={() => setActiveTab('register')}
           className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'register' ? 'border-sage-600 text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-ink-950'}`}
         >
-          Tracked Register ({totalVendors})
+          {t('tabs.tracked_register', { count: totalVendors })}
         </button>
         <button
           onClick={() => setActiveTab('discovery')}
           className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'discovery' ? 'border-sage-600 text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-ink-950'}`}
         >
-          Vendor Discovery &amp; Shadow IT
+          {t('tabs.vendor_discovery')}
         </button>
       </div>
 
@@ -143,22 +145,22 @@ export default function VendorsPage() {
           {/* Summary Strip */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
-              <div className="text-[13px] font-medium text-[#6E747A] uppercase tracking-wider mb-2">Total Tracked</div>
+              <div className="text-[13px] font-medium text-[#6E747A] uppercase tracking-wider mb-2">{t('metrics.total_tracked')}</div>
               <div className="text-3xl font-serif text-[#F4F5F6]">{totalVendors}</div>
             </div>
             <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
-              <div className="text-[13px] font-medium text-[#6E747A] uppercase tracking-wider mb-2">DPA Coverage</div>
+              <div className="text-[13px] font-medium text-[#6E747A] uppercase tracking-wider mb-2">{t('metrics.dpa_coverage')}</div>
               <div className="text-3xl font-serif text-[#F4F5F6]">{dpaCoverage}%</div>
             </div>
             <div className={`bg-[#0D0F11] border rounded-2xl p-6 shadow-panel-elevated ${missingDpas > 0 ? 'border-red-900/50' : 'border-white/10'}`}>
               <div className="text-[13px] font-medium text-[#6E747A] uppercase tracking-wider mb-2 flex items-center gap-2">
-                Missing / Expired DPAs {missingDpas > 0 && <span className="w-2 h-2 rounded-full bg-red-500/100"></span>}
+                {t('metrics.missing_dpas')} {missingDpas > 0 && <span className="w-2 h-2 rounded-full bg-red-500/100"></span>}
               </div>
               <div className={`text-3xl font-serif ${missingDpas > 0 ? 'text-red-400' : 'text-[#F4F5F6]'}`}>{missingDpas}</div>
             </div>
             <div className={`bg-[#0D0F11] border rounded-2xl p-6 shadow-panel-elevated ${highRiskVendors > 0 ? 'border-amber-900/50' : 'border-white/10'}`}>
               <div className="text-[13px] font-medium text-[#6E747A] uppercase tracking-wider mb-2 flex items-center gap-2">
-                High / Critical Risk {highRiskVendors > 0 && <span className="w-2 h-2 rounded-full bg-amber-500/100"></span>}
+                {t('metrics.high_risk')} {highRiskVendors > 0 && <span className="w-2 h-2 rounded-full bg-amber-500/100"></span>}
               </div>
               <div className={`text-3xl font-serif ${highRiskVendors > 0 ? 'text-amber-400' : 'text-[#F4F5F6]'}`}>{highRiskVendors}</div>
             </div>
@@ -171,12 +173,12 @@ export default function VendorsPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E747A]" />
                 <input 
                   type="text" 
-                  placeholder="Filter vendors..."
+                  placeholder={t('filter_placeholder')}
                   className="w-full bg-[#0D0F11] border border-white/10 rounded-lg pl-9 pr-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                 />
               </div>
               <button className="text-[13px] font-medium text-[#9BA1A6] hover:text-[#F4F5F6] bg-[#0D0F11] border border-white/10 px-3 py-1.5 rounded-lg shadow-panel-elevated">
-                Add Custom Vendor
+                {t('add_custom_vendor')}
               </button>
             </div>
             <DataGrid 
@@ -184,7 +186,7 @@ export default function VendorsPage() {
               columns={columns as any}
               data={vendors}
               isLoading={isLoading}
-              emptyStateMessage="No vendors tracked yet. Click 'Discover Vendors' to start building your register."
+              emptyStateMessage={t('empty_state')}
             />
             {hasNextPage && (
               <div className="mt-4 flex justify-center">
@@ -193,7 +195,7 @@ export default function VendorsPage() {
                   disabled={isFetchingNextPage}
                   className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors border border-white/10 shadow-panel-elevated disabled:opacity-50"
                 >
-                  {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+                  {isFetchingNextPage ? t('loading_more') : t('load_more')}
                 </button>
               </div>
             )}
@@ -213,6 +215,7 @@ function DiscoverModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => vo
   const linkMutation = trpc.vendors.linkVendor.useMutation();
   const utils = trpc.useUtils();
   const [search, setSearch] = useState('');
+  const t = useTranslations('vendors');
 
   const handleLink = async (id: string) => {
     await linkMutation.mutateAsync({ vendorId: id });
@@ -228,7 +231,7 @@ function DiscoverModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => vo
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/50 backdrop-blur-sm">
       <div className="bg-[#08090A] border-white/10 rounded-2xl w-full max-w-[600px] overflow-hidden flex flex-col shadow-2xl">
         <div className="p-6 border-b border-white/10 bg-[#0D0F11] flex justify-between items-center">
-          <h2 className="text-xl font-serif text-[#F4F5F6]">Discover Global Vendors</h2>
+          <h2 className="text-xl font-serif text-[#F4F5F6]">{t('discover_modal.title')}</h2>
           <button onClick={onClose} className="text-[#6E747A] hover:text-[#F4F5F6] text-2xl leading-none">&times;</button>
         </div>
         <div className="p-6 border-b border-white/10 bg-[#0D0F11]">
@@ -239,7 +242,7 @@ function DiscoverModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => vo
               autoFocus
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by name (e.g., HubSpot, AWS)..."
+              placeholder={t('discover_modal.search_placeholder')}
               className="w-full bg-[#08090A] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
             />
           </div>
@@ -247,7 +250,7 @@ function DiscoverModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => vo
         
         <div className="max-h-[400px] overflow-y-auto p-4 space-y-2 bg-[#08090A]">
           {filtered.length === 0 ? (
-            <div className="p-8 text-center text-[#6E747A]">No global vendors found matching "{search}".</div>
+            <div className="p-8 text-center text-[#6E747A]">{t('discover_modal.no_results', { search })}</div>
           ) : (
             filtered.map((v: any) => (
               <div key={v.id} className="bg-[#0D0F11] border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-sage-500/30 transition-colors shadow-panel-elevated">
@@ -256,14 +259,14 @@ function DiscoverModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => vo
                     {v.name}
                     {v.category && <span className="px-2 py-0.5 bg-white/5 text-[#9BA1A6] text-[11px] rounded uppercase tracking-wider">{v.category}</span>}
                   </h4>
-                  <p className="text-[13px] text-[#6E747A] mt-1">HQ: {v.headquartersCountry}</p>
+                  <p className="text-[13px] text-[#6E747A] mt-1">{t('discover_modal.hq', { country: v.headquartersCountry })}</p>
                 </div>
                 <button 
                   onClick={() => handleLink(v.id)}
                   disabled={linkMutation.isPending}
                   className="bg-[#C9A227]/10 text-[#C9A227] hover:bg-[#C9A227]/20 hover:text-sage-800 font-medium text-[13px] px-4 py-2 rounded-lg transition-colors border border-[#C9A227]/30"
                 >
-                  Add to Register
+                  {t('discover_modal.add_to_register')}
                 </button>
               </div>
             ))

@@ -1,0 +1,15 @@
+{
+  "title": "My Training",
+  "subtitle": "Complete your mandatory data protection and security training.",
+  "training_due": {
+    "title": "Training Due",
+    "description": "You have {count} incomplete training module(s). Please complete them as soon as possible."
+  },
+  "assigned_modules": "Assigned Modules",
+  "resume_course": "Resume Course",
+  "start_course": "Start Course",
+  "download_certificate": "Download Certificate",
+  "score": "Score: {score}%",
+  "valid_until": "Valid until {date}",
+  "empty_state": "You have no assigned training modules."
+}

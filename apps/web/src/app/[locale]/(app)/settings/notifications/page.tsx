@@ -5,41 +5,43 @@ import React, { useState, useEffect } from 'react';
 import { Bell, AlertCircle, Save } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 
 export const NOTIFICATION_GROUPS = [
   {
-    category: 'DSARs',
+    categoryKey: 'category_dsars',
     types: [
-      { key: 'dsar.received', label: 'New DSAR received' },
-      { key: 'dsar.deadline_warning_7d', label: 'DSAR deadline warning (7d)' },
-      { key: 'dsar.deadline_warning_3d', label: 'DSAR deadline warning (3d)' },
-      { key: 'dsar.overdue', label: 'DSAR overdue' },
-      { key: 'dsar.reply_received', label: 'DSAR subject reply received' },
+      { key: 'dsar.received' },
+      { key: 'dsar.deadline_warning_7d' },
+      { key: 'dsar.deadline_warning_3d' },
+      { key: 'dsar.overdue' },
+      { key: 'dsar.reply_received' },
     ]
   },
   {
-    category: 'Breaches',
+    categoryKey: 'category_breaches',
     types: [
-      { key: 'breach.reported', label: 'New breach reported' },
-      { key: 'breach.deadline_48h', label: 'Breach notification deadline (48h)' },
-      { key: 'breach.deadline_12h', label: 'Breach notification deadline (12h)' },
-      { key: 'breach.overdue', label: 'Breach overdue' },
+      { key: 'breach.reported' },
+      { key: 'breach.deadline_48h' },
+      { key: 'breach.deadline_12h' },
+      { key: 'breach.overdue' },
     ]
   },
   {
-    category: 'Vendors & Compliance',
+    categoryKey: 'category_vendors',
     types: [
-      { key: 'vendor.dpa_expiring_30d', label: 'Vendor DPA expiring (30d)' },
-      { key: 'vendor.dpa_expired', label: 'Vendor DPA expired' },
-      { key: 'compliance.gap_detected', label: 'Compliance gap detected' },
-      { key: 'training.assigned', label: 'Training assigned' },
-      { key: 'policy.out_of_sync', label: 'Policy out of sync with ROPA' },
+      { key: 'vendor.dpa_expiring_30d' },
+      { key: 'vendor.dpa_expired' },
+      { key: 'compliance.gap_detected' },
+      { key: 'training.assigned' },
+      { key: 'policy.out_of_sync' },
     ]
   }
 ];
 
 export default function NotificationsSettingsPage() {
   const { data: session } = useSession();
+  const t = useTranslations('settings.notifications');
   const userRole = (session?.user as any)?.role;
   const isEditable = userRole === 'admin' || userRole === 'owner';
 
@@ -105,7 +107,7 @@ export default function NotificationsSettingsPage() {
     } catch (e) {
       console.error(e);
       setSaveStatus('idle');
-      alert('Failed to save settings');
+      alert(t('failed_to_save'));
     }
   };
 
@@ -123,17 +125,17 @@ export default function NotificationsSettingsPage() {
     <div className="max-w-5xl mx-auto p-8 fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">Platform Settings</h1>
-          <p className="text-[#9BA1A6]">Manage integrations and global notification routing.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
+          <p className="text-[#9BA1A6]">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-4">
-          {saveStatus === 'saved' && <span className="text-sm text-[#C9A227] font-medium">Saved</span>}
+          {saveStatus === 'saved' && <span className="text-sm text-[#C9A227] font-medium">{t('saved')}</span>}
           <button
             onClick={handleSave}
             disabled={updateOrgMutation.isPending || updateUserMutation.isPending || saveStatus === 'saving'}
             className="flex items-center gap-2 bg-[var(--org-primary,#2c3e38)] text-white px-5 py-2.5 rounded-xl font-medium disabled:opacity-50"
           >
-            <Save className="w-4 h-4" /> {saveStatus === 'saving' ? 'Saving...' : 'Save Changes'}
+            <Save className="w-4 h-4" /> {saveStatus === 'saving' ? t('saving') : t('save_changes')}
           </button>
         </div>
       </div>
@@ -148,13 +150,13 @@ export default function NotificationsSettingsPage() {
                 <Bell className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-[#F4F5F6]">Slack Integration</h3>
-                <p className="text-[12px] text-[#6E747A]">Route alerts to a channel</p>
+                <h3 className="font-semibold text-[#F4F5F6]">{t('slack_integration.title')}</h3>
+                <p className="text-[12px] text-[#6E747A]">{t('slack_integration.subtitle')}</p>
               </div>
             </div>
 
             <div className="space-y-3">
-              <label className="block text-[13px] font-medium text-[#F4F5F6]">Incoming Webhook URL</label>
+              <label className="block text-[13px] font-medium text-[#F4F5F6]">{t('slack_integration.webhook_url')}</label>
               <input
                 type="text"
                 placeholder="https://hooks.slack.com/services/..."
@@ -163,7 +165,7 @@ export default function NotificationsSettingsPage() {
                 disabled={!isEditable}
                 className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-[14px] disabled:opacity-50"
               />
-              <p className="text-[11px] text-[#6E747A] leading-snug">Create an Incoming Webhook in your Slack workspace settings and paste the URL here to enable Slack notifications.</p>
+              <p className="text-[11px] text-[#6E747A] leading-snug">{t('slack_integration.webhook_hint')}</p>
             </div>
           </div>
         </div>
@@ -173,13 +175,13 @@ export default function NotificationsSettingsPage() {
           <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 overflow-hidden">
             <div className="flex items-center gap-2 mb-6">
               <Bell className="w-5 h-5 text-[#F4F5F6]" />
-              <h2 className="text-lg font-medium text-[#F4F5F6]">Notification Routing</h2>
+              <h2 className="text-lg font-medium text-[#F4F5F6]">{t('routing.title')}</h2>
             </div>
 
             <div className="bg-blue-500/10/50 border border-blue-900/50 rounded-xl p-4 mb-6 flex gap-3 text-sm text-blue-800">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <div>
-                <p><strong>Admin Note:</strong> The checkboxes control the organization-wide defaults. Individual team members can click the bell icon next to a channel to mute it for themselves personally.</p>
+                <p><strong>{t('routing.admin_note')}</strong> {t('routing.admin_note_text')}</p>
               </div>
             </div>
 
@@ -187,21 +189,21 @@ export default function NotificationsSettingsPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-white/10">
-                    <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider">Event Type</th>
-                    <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">Email</th>
-                    <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">Slack</th>
-                    <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">In-App</th>
+                    <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider">{t('routing.event_type')}</th>
+                    <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">{t('routing.email')}</th>
+                    <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">{t('routing.slack')}</th>
+                    <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">{t('routing.in_app')}</th>
                   </tr>
                 </thead>
                 <tbody className="text-[14px] text-[#F4F5F6]">
                   {NOTIFICATION_GROUPS.map((group, gIdx) => (
                     <React.Fragment key={gIdx}>
                       <tr className="bg-[#08090A]">
-                        <td colSpan={4} className="py-2 px-3 text-[11px] font-bold text-[#9BA1A6] uppercase tracking-wider">{group.category}</td>
+                        <td colSpan={4} className="py-2 px-3 text-[11px] font-bold text-[#9BA1A6] uppercase tracking-wider">{t(`events.${group.categoryKey}` as any)}</td>
                       </tr>
                       {group.types.map(nt => (
                         <tr key={nt.key} className="border-b border-white/5 last:border-0 hover:bg-ink-900/5">
-                          <td className="py-3 px-3 font-medium text-[#E6E8EA]">{nt.label}</td>
+                          <td className="py-3 px-3 font-medium text-[#E6E8EA]">{t(`events.${nt.key}` as any)}</td>
                           {['email', 'slack', 'in_app'].map(channel => (
                             <td key={channel} className="py-3 text-center align-middle relative group">
                               <div className="flex items-center justify-center gap-1">
@@ -211,13 +213,13 @@ export default function NotificationsSettingsPage() {
                                   onChange={() => handleOrgToggle(nt.key, channel)}
                                   disabled={!isEditable}
                                   className="rounded border-white/20 text-[#C9A227] focus:ring-sage-600 w-4 h-4 cursor-pointer disabled:opacity-50"
-                                  title="Organization Default"
+                                  title={t('routing.org_default')}
                                 />
                                 {isOrgChannelActive(nt.key, channel) && (
                                   <button
                                     onClick={() => handleUserToggle(nt.key, channel)}
                                     className={`w-5 h-5 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${isUserMuted(nt.key, channel) ? 'opacity-100 text-red-500 bg-red-500/10' : 'text-[#6E747A] hover:bg-ink-900/10'}`}
-                                    title={isUserMuted(nt.key, channel) ? "Unmute for me" : "Mute for me"}
+                                    title={isUserMuted(nt.key, channel) ? t('routing.unmute') : t('routing.mute')}
                                   >
                                     <Bell className="w-3 h-3" />
                                   </button>

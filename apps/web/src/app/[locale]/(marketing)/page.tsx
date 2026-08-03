@@ -141,7 +141,7 @@ const TIERS = [
   {
     name: 'Enterprise', badge: '', bg: '#08090A',
     price: null, period: '', blurb: 'For large organizations needing custom compliance controls.',
-    features: ['Everything in Professional', 'Custom data residency', 'SSO & Custom Roles', 'Dedicated Account Manager'],
+    features: ['Everything in Professional', 'Custom data residency', 'SSO & Custom Roles', 'Dedicated Account Manager', 'REST APIs (Read & Write)'],
     cta: 'Contact us', href: '/contact', highlight: false,
   },
 ];

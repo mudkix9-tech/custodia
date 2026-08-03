@@ -1,0 +1,49 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Gestion des fournisseurs'"
+  },
+  "title": "Intelligence des fournisseurs",
+  "subtitle": "Suivi automatisé pour les DPA, les TIA et les risques liés aux sous-traitants.",
+  "analyze_dpa": "Analyser le DPA",
+  "export_register": "Exporter le registre",
+  "discover_vendors": "Découvrir des fournisseurs",
+  "tabs": {
+    "tracked_register": "Registre suivi ({count})",
+    "vendor_discovery": "Découverte de fournisseurs et Shadow IT"
+  },
+  "metrics": {
+    "total_tracked": "Total suivi",
+    "dpa_coverage": "Couverture DPA",
+    "missing_dpas": "DPA manquants / expirés",
+    "high_risk": "Risque élevé / critique"
+  },
+  "filter_placeholder": "Filtrer les fournisseurs...",
+  "add_custom_vendor": "Ajouter un fournisseur personnalisé",
+  "empty_state": "Aucun fournisseur suivi pour le moment. Cliquez sur 'Découvrir des fournisseurs' pour commencer à construire votre registre.",
+  "load_more": "Charger plus",
+  "loading_more": "Chargement...",
+  "columns": {
+    "vendor": "Fournisseur",
+    "category": "Catégorie",
+    "dpa_status": "Statut DPA",
+    "risk_score": "Score et niveau de risque",
+    "data_locations": "Emplacements des données"
+  },
+  "dpa_status": {
+    "signed": "Signé",
+    "expired": "Expiré",
+    "missing": "Manquant"
+  },
+  "locations": {
+    "hq": "Siège social : {country}",
+    "unknown": "Inconnu",
+    "eu_hosted": "(Hébergé dans l'UE)"
+  },
+  "discover_modal": {
+    "title": "Découvrir des fournisseurs mondiaux",
+    "search_placeholder": "Recherche par nom (ex. HubSpot, AWS)...",
+    "no_results": "Aucun fournisseur mondial trouvé correspondant à '{search}'.",
+    "hq": "Siège social : {country}",
+    "add_to_register": "Ajouter au registre"
+  }
+}

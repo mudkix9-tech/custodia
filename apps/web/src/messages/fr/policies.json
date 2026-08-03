@@ -1,0 +1,26 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Politiques de confidentialité'"
+  },
+  "title": "Politiques de confidentialité",
+  "subtitle": "Gérez et générez automatiquement des politiques juridiques à partir de votre registre des traitements.",
+  "loading": "Chargement des politiques...",
+  "new_policy": "Nouvelle politique",
+  "create_title": "Créer une nouvelle politique",
+  "name_placeholder": "ex. Politique de confidentialité du site principal",
+  "types": {
+    "website_visitors": "Visiteurs du site web",
+    "employees": "Employés",
+    "cookie_policy": "Politique relative aux cookies"
+  },
+  "creating": "Création...",
+  "create": "Créer",
+  "cancel": "Annuler",
+  "out_of_sync": "Action requise - Désynchronisé",
+  "published_ago": "Publié il y a {time}",
+  "draft": "Brouillon - Jamais publié",
+  "auto_sync": "Synchronisation automatique active",
+  "empty_state": "Aucune politique de confidentialité créée pour le moment.",
+  "load_more": "Charger plus",
+  "loading_more": "Chargement..."
+}

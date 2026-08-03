@@ -6,8 +6,10 @@ import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 import { useSession } from 'next-auth/react';
 import { trpc } from '@/utils/trpc';
+import { useTranslations } from 'next-intl';
 
 export default function DataPrivacySettingsPage() {
+  const t = useTranslations('settings.data');
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role;
   const isOwner = userRole === 'owner';
@@ -35,10 +37,10 @@ export default function DataPrivacySettingsPage() {
 
   const handleDelete = async () => {
     const confirmed = await confirm({
-      title: 'Delete organization',
-      description: 'This permanently deletes all data after a 30-day grace period.',
-      requireTyping: org.data?.name || 'confirm',
-      confirmText: 'Schedule deletion',
+      title: t('deletion.confirm_title'),
+      description: t('deletion.confirm_description'),
+      requireTyping: org.data?.name || t('deletion.confirm_word'),
+      confirmText: t('deletion.confirm_text'),
       variant: 'destructive',
     });
     if (confirmed) {
@@ -57,8 +59,8 @@ export default function DataPrivacySettingsPage() {
     <div className="max-w-4xl mx-auto p-8 fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">Data & Privacy</h1>
-          <p className="text-[#9BA1A6]">Export your organization's data or delete your account.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
+          <p className="text-[#9BA1A6]">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -67,11 +69,11 @@ export default function DataPrivacySettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <Download className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">Export Data</h2>
+            <h2 className="text-lg font-medium">{t('export.title')}</h2>
           </div>
 
           <p className="text-sm text-[#9BA1A6] mb-6 max-w-2xl">
-            You can request a complete export of your organization's data. This includes all processing activities, vendor assessments, DSAR records, breaches, and uploaded documents.
+            {t('export.description')}
           </p>
 
           <div className="flex items-center gap-4">
@@ -80,21 +82,21 @@ export default function DataPrivacySettingsPage() {
               disabled={exportStatus === 'loading'}
               className="bg-[#0D0F11] border border-white/20 text-[#F4F5F6] px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/5 shadow-panel-elevated flex items-center gap-2 disabled:opacity-50"
             >
-              <Download className="w-4 h-4" /> {exportStatus === 'loading' ? 'Requesting...' : 'Download All Data'}
+              <Download className="w-4 h-4" /> {exportStatus === 'loading' ? t('export.requesting') : t('export.download')}
             </button>
             <p className="text-xs text-[#6E747A]">
-              A zip file will be sent to your email when ready.
+              {t('export.email_notice')}
             </p>
           </div>
 
           {exportStatus === 'success' && (
             <div className="mt-4 p-3 bg-[#C9A227]/10 text-sage-800 text-sm rounded-lg border border-[#C9A227]/30">
-              Export requested successfully! You will receive an email when it is ready.
+              {t('export.success')}
             </div>
           )}
           {exportStatus === 'error' && (
             <div className="mt-4 p-3 bg-red-500/10 text-red-400 text-sm rounded-lg border border-red-900/50">
-              Failed to request data export. Please try again later.
+              {t('export.error')}
             </div>
           )}
         </div>
@@ -103,15 +105,15 @@ export default function DataPrivacySettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <Database className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">Data Retention Policy</h2>
+            <h2 className="text-lg font-medium">{t('retention.title')}</h2>
           </div>
 
           <ul className="list-disc pl-5 space-y-2 text-sm text-[#9BA1A6]">
-            <li><strong>Active account data:</strong> retained as long as your account is active</li>
-            <li><strong>Consent records:</strong> retained for 5 years after collection (regulatory requirement)</li>
-            <li><strong>Audit logs:</strong> retained for 3 years after the event</li>
-            <li><strong>Deleted account data:</strong> permanently removed 30 days after deletion request</li>
-            <li><strong>Backups:</strong> purged within 90 days of deletion</li>
+            <li><strong>{t('retention.active_label')}</strong> {t('retention.active')}</li>
+            <li><strong>{t('retention.consent_label')}</strong> {t('retention.consent')}</li>
+            <li><strong>{t('retention.audit_label')}</strong> {t('retention.audit')}</li>
+            <li><strong>{t('retention.deleted_label')}</strong> {t('retention.deleted')}</li>
+            <li><strong>{t('retention.backups_label')}</strong> {t('retention.backups')}</li>
           </ul>
         </div>
 
@@ -120,11 +122,11 @@ export default function DataPrivacySettingsPage() {
           <div className="bg-red-500/10/50 rounded-2xl border border-red-900/50 p-6">
             <div className="flex items-center gap-2 mb-6 text-red-400">
               <AlertTriangle className="w-5 h-5" />
-              <h2 className="text-lg font-medium">Danger Zone</h2>
+              <h2 className="text-lg font-medium">{t('deletion.title')}</h2>
             </div>
 
             <p className="text-sm text-red-400 mb-6 max-w-2xl">
-              Permanently delete this organization and all of its data. This action cannot be undone. Data will be hard-deleted after a 30-day grace period.
+              {t('deletion.description')}
             </p>
 
             <button
@@ -132,17 +134,17 @@ export default function DataPrivacySettingsPage() {
               disabled={deleteStatus === 'loading' || deleteStatus === 'success'}
               className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
             >
-              {deleteStatus === 'loading' ? 'Scheduling Deletion...' : deleteStatus === 'success' ? 'Scheduled' : 'Delete Organization'}
+              {deleteStatus === 'loading' ? t('deletion.scheduling') : deleteStatus === 'success' ? t('deletion.scheduled') : t('deletion.delete')}
             </button>
 
             {deleteStatus === 'success' && (
               <div className="mt-4 p-3 bg-red-500/20 text-red-400 text-sm rounded-lg border border-red-300">
-                Organization scheduled for deletion.
+                {t('deletion.success')}
               </div>
             )}
             {deleteStatus === 'error' && (
               <div className="mt-4 p-3 bg-red-500/10 text-red-400 text-sm rounded-lg border border-red-900/50">
-                Failed to schedule organization for deletion.
+                {t('deletion.error')}
               </div>
             )}
           </div>

@@ -1,0 +1,30 @@
+{
+  "_review_notes": {
+    "navigation.ropa": "REVIEW: Verify 'Datenverarbeitung' for 'Data Processing' (ROPA context)",
+    "navigation.dsars": "REVIEW: Verify 'Betroffenenanfragen' for 'Data Requests' (DSAR context)"
+  },
+  "navigation": {
+    "workspace": "Arbeitsbereich",
+    "dashboard": "Dashboard",
+    "clients": "Vertrauensportale",
+    "ropa": "Datenverarbeitung",
+    "vendors": "Anbieter",
+    "dsars": "Betroffenenanfragen",
+    "policies": "Datenschutzrichtlinien",
+    "consent": "Cookie-Einwilligung",
+    "breaches": "Verstöße",
+    "audit": "Audit-Bereitschaft",
+    "training": "Schulung",
+    "settings": "Einstellungen",
+    "help_docs": "Hilfe & Dokumentation",
+    "log_out": "Abmelden"
+  },
+  "actions": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "confirm": "Bestätigen"
+  }
+}

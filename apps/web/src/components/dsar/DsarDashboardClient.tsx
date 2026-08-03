@@ -5,19 +5,21 @@ import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
 import { Clock, ShieldAlert, LayoutGrid, List } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
+import { useTranslations } from 'next-intl';
 
 type ViewMode = 'kanban' | 'datagrid';
 
-const COLUMNS = [
-  { id: 'new', label: 'New' },
-  { id: 'identity_verification', label: 'Verification' },
-  { id: 'in_progress', label: 'In Progress' },
-  { id: 'pending_review', label: 'Review' },
-  { id: 'completed', label: 'Completed' },
-];
-
 export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boolean }) {
+  const t = useTranslations('dsar');
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+
+  const COLUMNS = [
+    { id: 'new', label: t('status_columns.new') },
+    { id: 'identity_verification', label: t('status_columns.verification') },
+    { id: 'in_progress', label: t('status_columns.in_progress') },
+    { id: 'pending_review', label: t('status_columns.review') },
+    { id: 'completed', label: t('status_columns.completed') },
+  ];
   const {
     data: requestsResp,
     isLoading,
@@ -31,7 +33,7 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
 
   const requests = requestsResp?.pages.flatMap((page: any) => page.data) || [];
 
-  if (isLoading) return <div className="text-[#6E747A]">Loading DSARs...</div>;
+  if (isLoading) return <div className="text-[#6E747A]">{t('loading')}</div>;
 
   return (
     <div>
@@ -83,17 +85,17 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
                           <span className="text-[11px] font-mono font-medium text-[#6E747A]">{request.referenceNumber}</span>
                           <span className={`text-[11px] px-2 py-0.5 rounded-full flex items-center gap-1 ${deadlineColor}`}>
                             <Clock className="w-3 h-3" />
-                            {daysRemaining < 0 ? 'Overdue' : `${daysRemaining} days`}
+                            {daysRemaining < 0 ? t('deadline.overdue') : t('deadline.days', { count: daysRemaining })}
                           </span>
                         </div>
                         <h4 className="font-medium text-[#F4F5F6] text-sm mb-1">{request.subjectName.split(' ')[0]}</h4>
                         {isGroupContext && (
-                          <div className="text-[11px] text-[#9BA1A6] font-medium mb-1 truncate">{request.organizationName || 'Unknown'}</div>
+                          <div className="text-[11px] text-[#9BA1A6] font-medium mb-1 truncate">{request.organizationName || t('unknown_entity')}</div>
                         )}
                         <div className="text-xs text-[#6E747A] capitalize">{request.requestType}</div>
                         {!request.subjectVerified && (
                           <div className="mt-3 flex items-center gap-1 text-[11px] text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md">
-                            <ShieldAlert className="w-3 h-3" /> Unverified
+                            <ShieldAlert className="w-3 h-3" /> {t('unverified')}
                           </div>
                         )}
                       </Link>
@@ -109,14 +111,14 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
           <table className="w-full text-left text-sm">
             <thead className="bg-[#08090A] border-b border-white/10 text-[#6E747A] text-[11px] uppercase tracking-wider font-semibold">
               <tr>
-                {isGroupContext && <th className="px-6 py-4">Entity</th>}
-                <th className="px-6 py-4">Reference</th>
-                <th className="px-6 py-4">Subject</th>
-                <th className="px-6 py-4">Type</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Deadline</th>
-                <th className="px-6 py-4">Verification</th>
-                <th className="px-6 py-4">Action</th>
+                {isGroupContext && <th className="px-6 py-4">{t('table_headers.entity')}</th>}
+                <th className="px-6 py-4">{t('table_headers.reference')}</th>
+                <th className="px-6 py-4">{t('table_headers.subject')}</th>
+                <th className="px-6 py-4">{t('table_headers.type')}</th>
+                <th className="px-6 py-4">{t('table_headers.status')}</th>
+                <th className="px-6 py-4">{t('table_headers.deadline')}</th>
+                <th className="px-6 py-4">{t('table_headers.verification')}</th>
+                <th className="px-6 py-4">{t('table_headers.action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-900/5">
@@ -124,7 +126,7 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
                 <tr key={request.id} className="hover:bg-[#08090A]/50">
                   {isGroupContext && (
                     <td className="px-6 py-4 text-[13px] text-[#9BA1A6] font-medium">
-                      {request.organizationName || 'Unknown'}
+                      {request.organizationName || t('unknown_entity')}
                     </td>
                   )}
                   <td className="px-6 py-4 font-mono text-[13px]">{request.referenceNumber}</td>
@@ -136,14 +138,14 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
                   </td>
                   <td className="px-6 py-4">
                     {request.subjectVerified ? (
-                      <span className="text-[#C9A227] bg-[#C9A227]/10 px-2 py-1 rounded-full text-xs font-medium">Verified</span>
+                      <span className="text-[#C9A227] bg-[#C9A227]/10 px-2 py-1 rounded-full text-xs font-medium">{t('verified')}</span>
                     ) : (
-                      <span className="text-amber-400 bg-amber-500/10 px-2 py-1 rounded-full text-xs font-medium">Pending</span>
+                      <span className="text-amber-400 bg-amber-500/10 px-2 py-1 rounded-full text-xs font-medium">{t('pending')}</span>
                     )}
                   </td>
                   <td className="px-6 py-4">
                     <Link href={isGroupContext ? `/group/dsar/${request.id}` : `/dsar/${request.id}`} className="text-[#C9A227] hover:text-[#C9A227] font-medium text-[13px]">
-                      View
+                      {t('view')}
                     </Link>
                   </td>
                 </tr>
@@ -160,7 +162,7 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
             disabled={isFetchingNextPage}
             className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors border border-white/10 shadow-panel-elevated disabled:opacity-50"
           >
-            {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+            {isFetchingNextPage ? t('loading_more') : t('load_more')}
           </button>
         </div>
       )}

@@ -10,8 +10,10 @@ import { Step3CreateActivities } from '@/components/onboarding/Step3CreateActivi
 import { Step4GeneratePolicy } from '@/components/onboarding/Step4GeneratePolicy';
 import { Step5InviteTeam } from '@/components/onboarding/Step5InviteTeam';
 import { Step6Complete } from '@/components/onboarding/Step6Complete';
+import { useTranslations } from 'next-intl';
 
 export default function OnboardingPage() {
+  const t = useTranslations('onboarding');
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -150,11 +152,11 @@ export default function OnboardingPage() {
         </div>
         {currentStep < 6 ? (
           <button onClick={handleDismiss} className="text-sm text-gray-500 hover:text-gray-700">
-            Save and exit
+            {t('save_and_exit')}
           </button>
         ) : (
           <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2.5 py-0.5 rounded-full font-semibold">
-            Setup Complete
+            {t('setup_complete')}
           </span>
         )}
       </header>

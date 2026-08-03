@@ -1,0 +1,28 @@
+{
+  "title": "Audit Readiness",
+  "subtitle": "Automated compliance reporting, score tracking, and gap remediation.",
+  "loading": "Loading audit workspace...",
+  "tabs": {
+    "dashboard": "Dashboard",
+    "ledger": "Immutable Ledger"
+  },
+  "compliance_score": "Overall Compliance Score",
+  "compliance_pillars": "Compliance Pillars",
+  "pillars": {
+    "ropa": "ROPA",
+    "vendors": "Vendors",
+    "dpia": "DPIAs",
+    "policies": "Policies",
+    "dsar": "DSARs",
+    "breaches": "Breaches",
+    "training": "Training",
+    "transfers": "Transfers"
+  },
+  "detected_gaps": "Detected Gaps",
+  "active_gaps": "{total} Active",
+  "reporting_exports": "Reporting & Exports",
+  "immutable_ledger": {
+    "title": "Immutable Audit Ledger",
+    "description": "Article 5(2) Demonstrable Accountability. All records are read-only and cryptographically secure."
+  }
+}

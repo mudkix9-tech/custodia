@@ -1,0 +1,424 @@
+{
+  "_review_notes": "REVIEW: None",
+  "navigation": {
+    "header": "Settings",
+    "organization": "Organization",
+    "team": "Team",
+    "notifications": "Notifications",
+    "integrations": "Integrations",
+    "developers": "Developers",
+    "billing": "Billing",
+    "security": "Security",
+    "data_privacy": "Data & Privacy",
+    "personal": "Personal",
+    "my_profile": "My Profile"
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your personal settings and notification preferences.",
+    "save_changes": "Save Changes",
+    "saving": "Saving...",
+    "personal_information": {
+      "title": "Personal Information",
+      "full_name": "Full Name",
+      "email_address": "Email Address",
+      "language": "Language",
+      "timezone": "Timezone"
+    },
+    "notification_preferences": {
+      "title": "My Notification Preferences",
+      "description": "Mute specific notifications that you don't want to receive. If unchecked, the organization default routing will be used.",
+      "event_type": "Event Type",
+      "email": "Email",
+      "slack": "Slack",
+      "in_app": "In-App",
+      "unmute": "Unmute for me",
+      "mute": "Mute for me"
+    }
+  },
+  "organization": {
+    "title": "Organization Profile",
+    "subtitle": "Manage your company details, data protection officer, and branding.",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "basic_information": {
+      "title": "Basic Information",
+      "name": "Organization Name",
+      "legal_name": "Legal Name",
+      "slug": "Public Slug",
+      "slug_hint": "custodia.io/legal/{slug}/privacy",
+      "registration_number": "Registration Number"
+    },
+    "location": {
+      "title": "Location & Jurisdiction",
+      "country": "Country",
+      "select_country": "Select a country...",
+      "countries": {
+        "DE": "Germany",
+        "FR": "France",
+        "NL": "Netherlands",
+        "IE": "Ireland",
+        "GB": "United Kingdom",
+        "US": "United States"
+      },
+      "street": "Street Address",
+      "city": "City",
+      "postal_code": "Postal Code",
+      "lead_authority": "Lead Supervisory Authority",
+      "lead_authority_placeholder": "e.g. BfDI (Germany) or CNIL (France)"
+    },
+    "dpo": {
+      "title": "Data Protection Officer",
+      "has_dpo": "Do you have a DPO?",
+      "dpo_hint": "Under GDPR, a DPO is required if you regularly process personal data on a large scale or process special category data.",
+      "name": "DPO Name",
+      "email": "DPO Email",
+      "is_external": "Is the DPO external?"
+    },
+    "branding": {
+      "title": "Branding",
+      "logo": "Organization Logo",
+      "upload_logo": "Upload Logo",
+      "logo_hint": "Recommended: 400x100px PNG or SVG",
+      "primary_color": "Primary Brand Color",
+      "trust_portal_preview": "Trust Portal Preview",
+      "your_org": "Your Org"
+    }
+  },
+  "team": {
+    "title": "Team Management",
+    "subtitle": "Manage organization members, roles, and granular access permissions.",
+    "invite": {
+      "title": "Invite New Members",
+      "single_invite": "Single invite",
+      "bulk_invite": "Bulk invite",
+      "email_single": "Email Address",
+      "email_bulk": "Email Addresses (one per line)",
+      "email_placeholder_single": "colleague@example.com",
+      "email_placeholder_bulk": "colleague1@example.com\\ncolleague2@example.com",
+      "role": "Role",
+      "roles": {
+        "admin": "Admin",
+        "member": "Member",
+        "viewer": "Viewer"
+      },
+      "sending": "Sending...",
+      "send": "Send Invitations",
+      "success": "Invitations sent successfully!"
+    },
+    "members": {
+      "title": "Current Members",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "joined": "Joined",
+        "actions": "Actions"
+      },
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Member",
+        "viewer": "Viewer",
+        "basic_roles": "Basic Roles",
+        "custom_roles": "Custom Roles"
+      },
+      "invited_user": "Invited User",
+      "unknown": "Unknown",
+      "permissions": "Permissions",
+      "remove": "Remove",
+      "no_members": "No team members found."
+    },
+    "pending": {
+      "title": "Pending Invitations",
+      "resend": "Resend",
+      "cancel": "Cancel",
+      "no_pending": "No pending invitations."
+    },
+    "permissions": {
+      "title": "Edit Permissions",
+      "owner_warning": "Owner permissions cannot be restricted. They have full access to all modules.",
+      "description": "Override role-based access for specific modules. Green check grants access, red cross denies, gray dash inherits from role.",
+      "module": "Module",
+      "footer": "Changes save automatically and will invalidate the user's current session to enforce new permissions."
+    }
+  },
+  "notifications": {
+    "title": "Platform Settings",
+    "subtitle": "Manage integrations and global notification routing.",
+    "saved": "Saved",
+    "saving": "Saving...",
+    "save_changes": "Save Changes",
+    "failed_to_save": "Failed to save settings",
+    "slack_integration": {
+      "title": "Slack Integration",
+      "subtitle": "Route alerts to a channel",
+      "webhook_url": "Incoming Webhook URL",
+      "webhook_hint": "Create an Incoming Webhook in your Slack workspace settings and paste the URL here to enable Slack notifications."
+    },
+    "routing": {
+      "title": "Notification Routing",
+      "admin_note": "Admin Note:",
+      "admin_note_text": "The checkboxes control the organization-wide defaults. Individual team members can click the bell icon next to a channel to mute it for themselves personally.",
+      "event_type": "Event Type",
+      "email": "Email",
+      "slack": "Slack",
+      "in_app": "In-App",
+      "org_default": "Organization Default",
+      "unmute": "Unmute for me",
+      "mute": "Mute for me"
+    },
+    "events": {
+      "category_dsars": "DSARs",
+      "dsar": {
+        "received": "New DSAR received",
+        "deadline_warning_7d": "DSAR deadline warning (7d)",
+        "deadline_warning_3d": "DSAR deadline warning (3d)",
+        "overdue": "DSAR overdue",
+        "reply_received": "DSAR subject reply received"
+      },
+      "category_breaches": "Breaches",
+      "breach": {
+        "reported": "New breach reported",
+        "deadline_48h": "Breach notification deadline (48h)",
+        "deadline_12h": "Breach notification deadline (12h)",
+        "overdue": "Breach overdue"
+      },
+      "category_vendors": "Vendors & Compliance",
+      "vendor": {
+        "dpa_expiring_30d": "Vendor DPA expiring (30d)",
+        "dpa_expired": "Vendor DPA expired"
+      },
+      "compliance": {
+        "gap_detected": "Compliance gap detected"
+      },
+      "training": {
+        "assigned": "Training assigned"
+      },
+      "policy": {
+        "out_of_sync": "Policy out of sync with ROPA"
+      }
+    }
+  },
+  "integrations": {
+    "title": "Integrations",
+    "subtitle": "Connect CRM and marketing tools for automated DSAR discovery.",
+    "disconnect_warning": "Disconnecting will disable automatic DSAR data discovery. Any in-progress DSAR searches will be marked as manual. Proceed?",
+    "status": {
+      "connected": "Connected",
+      "error": "Error"
+    },
+    "features": {
+      "title": "When connected, Custodia can:",
+      "auto_search": "Auto-search {providerName} contacts during DSAR processing",
+      "auto_discover": "Auto-discover processing activities"
+    },
+    "connection": {
+      "connected_to": "Connected to:",
+      "last_synced": "Last synced:"
+    },
+    "actions": {
+      "disconnect": "Disconnect",
+      "reconnect": "Reconnect",
+      "connect": "Connect",
+      "request": "Request"
+    },
+    "coming_soon": "Coming Soon"
+  },
+  "developers": {
+    "title": "Developers",
+    "subtitle": "Manage API keys and Webhooks for external integrations",
+    "api_keys": {
+      "title": "API Keys",
+      "create": "Create API Key",
+      "no_keys": "No API keys found.",
+      "revoked": "Revoked",
+      "scopes": "Scopes:",
+      "ips": "IPs:",
+      "any": "Any",
+      "uses": "Uses:",
+      "revoke_title": "Revoke API Key?",
+      "revoke_description": "This will instantly disable the key. Any applications using it will lose access.",
+      "revoke": "Revoke",
+      "modal": {
+        "title": "Create API Key",
+        "name": "Name",
+        "name_placeholder": "e.g. Production Zapier",
+        "scopes": "Scopes",
+        "allowed_ips": "Allowed IPs (Optional, comma-separated)",
+        "allowed_ips_placeholder": "e.g. 192.168.1.1, 10.0.0.1",
+        "cancel": "Cancel",
+        "generate": "Generate Key",
+        "warning": "This key will only be shown once. Copy it now and store it securely.",
+        "copied": "I've copied the key"
+      }
+    },
+    "webhooks": {
+      "title": "Webhooks",
+      "add": "Add Webhook",
+      "no_webhooks": "No webhooks found.",
+      "subscribed_to": "Subscribed to:",
+      "events": "events",
+      "disabled": "Disabled due to consecutive failures",
+      "send_test": "Send Test",
+      "test_success": "Test event successfully dispatched!",
+      "test_failure": "Failed to dispatch test event: ",
+      "delete_title": "Delete webhook?",
+      "delete_description": "This will permanently delete the webhook and stop sending events.",
+      "delete": "Delete",
+      "modal": {
+        "title": "Add Webhook",
+        "payload_url": "Payload URL",
+        "url_placeholder": "https://example.com/api/webhook",
+        "events_to_send": "Events to send",
+        "cancel": "Cancel",
+        "add": "Add Webhook"
+      }
+    }
+  },
+  "billing": {
+    "title": "Billing & Subscriptions",
+    "subtitle": "Manage your plan and payment methods.",
+    "available_plans": "Available Plans",
+    "initializing": "Initializing billing system...",
+    "locked": {
+      "trial_ended": "Your trial has ended.",
+      "payment_failed": "Your payment failed.",
+      "canceled": "Your subscription was canceled.",
+      "trial_ended_desc": "Subscribe to keep access to your compliance data.",
+      "payment_failed_desc": "Update your billing details to restore access to your account.",
+      "canceled_desc": "Resubscribe to restore access to your account."
+    },
+    "stats": {
+      "ropa_entries": "ROPA Entries",
+      "vendors_tracked": "Vendors Tracked"
+    },
+    "cta": {
+      "contact_us": "Contact us",
+      "subscribe": "Subscribe to {name}",
+      "current_plan": "Current Plan",
+      "payment_failed": "Payment Failed",
+      "canceled": "Canceled",
+      "paused": "Paused"
+    },
+    "plans": {
+      "professional": {
+        "name": "Professional",
+        "price": "€99",
+        "description": "The complete OS for growing agencies.",
+        "features": [
+          "Unlimited users & activities",
+          "Unlimited vendors & DPIAs",
+          "Cookie consent (50 domains)",
+          "AI compliance advisor (2,000 queries)"
+        ]
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom",
+        "description": "For large organizations needing custom compliance controls.",
+        "features": [
+          "Everything in Professional",
+          "Custom data residency",
+          "SSO & Custom Roles",
+          "Dedicated Account Manager"
+        ]
+      }
+    }
+  },
+  "security": {
+    "title": "Security",
+    "subtitle": "Manage your password, MFA, and active sessions.",
+    "password": {
+      "title": "Password",
+      "current": "Current Password",
+      "new": "New Password",
+      "confirm": "Confirm New Password",
+      "updating": "Updating...",
+      "update": "Update Password",
+      "success": "Password updated successfully",
+      "error_mismatch": "Passwords do not match",
+      "error_failed": "Failed to change password"
+    },
+    "mfa": {
+      "title": "Multi-factor Authentication (MFA)",
+      "app": "Authenticator App",
+      "status": {
+        "enabled": "Enabled",
+        "in_progress": "Setup in progress...",
+        "not_configured": "Not configured"
+      },
+      "enable": "Enable MFA",
+      "disable": "Disable MFA",
+      "scan_qr": "Scan this QR code with your authenticator app (e.g. Google Authenticator, Authy, 1Password).",
+      "secret": "Secret: ",
+      "placeholder": "Enter 6-digit code",
+      "verify": "Verify",
+      "error_init": "Failed to initiate MFA",
+      "error_invalid": "Invalid token",
+      "error_disable": "Failed to disable MFA",
+      "disable_confirm": {
+        "title": "Disable MFA?",
+        "description": "Are you sure you want to disable MFA? This decreases account security.",
+        "confirm": "Disable"
+      }
+    },
+    "sessions": {
+      "title": "Active Sessions",
+      "no_sessions": "No active sessions found.",
+      "unknown_device": "Unknown Device",
+      "unknown_browser": "Unknown Browser",
+      "unknown_ip": "Unknown IP",
+      "last_active": "Last active",
+      "unknown": "Unknown",
+      "revoke": "Revoke",
+      "revoke_all": "Revoke all other sessions",
+      "error_revoke": "Failed to revoke session",
+      "error_revoke_all": "Failed to revoke sessions",
+      "revoke_all_confirm": {
+        "title": "Revoke all other sessions?",
+        "description": "This will log out all other devices.",
+        "confirm": "Revoke All"
+      }
+    }
+  },
+  "data": {
+    "title": "Data & Privacy",
+    "subtitle": "Export your organization's data or delete your account.",
+    "export": {
+      "title": "Export Data",
+      "description": "You can request a complete export of your organization's data. This includes all processing activities, vendor assessments, DSAR records, breaches, and uploaded documents.",
+      "requesting": "Requesting...",
+      "download": "Download All Data",
+      "email_notice": "A zip file will be sent to your email when ready.",
+      "success": "Export requested successfully! You will receive an email when it is ready.",
+      "error": "Failed to request data export. Please try again later."
+    },
+    "retention": {
+      "title": "Data Retention Policy",
+      "active": "retained as long as your account is active",
+      "active_label": "Active account data:",
+      "consent": "retained for 5 years after collection (regulatory requirement)",
+      "consent_label": "Consent records:",
+      "audit": "retained for 3 years after the event",
+      "audit_label": "Audit logs:",
+      "deleted": "permanently removed 30 days after deletion request",
+      "deleted_label": "Deleted account data:",
+      "backups": "purged within 90 days of deletion",
+      "backups_label": "Backups:"
+    },
+    "deletion": {
+      "title": "Danger Zone",
+      "description": "Permanently delete this organization and all of its data. This action cannot be undone. Data will be hard-deleted after a 30-day grace period.",
+      "scheduling": "Scheduling Deletion...",
+      "scheduled": "Scheduled",
+      "delete": "Delete Organization",
+      "success": "Organization scheduled for deletion.",
+      "error": "Failed to schedule organization for deletion.",
+      "confirm_title": "Delete organization",
+      "confirm_description": "This permanently deletes all data after a 30-day grace period.",
+      "confirm_text": "Schedule deletion",
+      "confirm_word": "confirm"
+    }
+  }
+}

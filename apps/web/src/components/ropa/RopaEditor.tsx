@@ -11,6 +11,7 @@ import * as z from 'zod';
 import { FieldError } from '@/components/ui/FieldError';
 import { announce } from '@/components/layout/Announcer';
 import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
+import { useTranslations } from 'next-intl';
 
 import { DataCategoriesTab } from './tabs/DataCategoriesTab';
 import { RecipientsTab } from './tabs/RecipientsTab';
@@ -19,15 +20,15 @@ import { DpiaTab } from './tabs/DpiaTab';
 import { HistoryTab } from './tabs/HistoryTab';
 
 const TABS = [
-  { id: 'general', label: 'General' },
-  { id: 'legal', label: 'Legal Basis' },
-  { id: 'data', label: 'Data Categories' },
-  { id: 'recipients', label: 'Recipients' },
-  { id: 'transfers', label: 'Transfers' },
-  { id: 'retention', label: 'Retention' },
-  { id: 'security', label: 'Security' },
-  { id: 'dpia', label: 'DPIA' },
-  { id: 'history', label: 'History' },
+  { id: 'general', label: 'tabs.general' },
+  { id: 'legal', label: 'tabs.legal' },
+  { id: 'data', label: 'tabs.data' },
+  { id: 'recipients', label: 'tabs.recipients' },
+  { id: 'transfers', label: 'tabs.transfers' },
+  { id: 'retention', label: 'tabs.retention' },
+  { id: 'security', label: 'tabs.security' },
+  { id: 'dpia', label: 'tabs.dpia' },
+  { id: 'history', label: 'tabs.history' },
 ];
 
 const ropaSchema = z.object({
@@ -49,6 +50,7 @@ const ropaSchema = z.object({
 
 export function RopaEditor({ initialData = null }: { initialData?: any }) {
   const router = useRouter();
+  const t = useTranslations('ropa.editor');
   const searchParams = useSearchParams();
   const isNew = !initialData;
   const [activeTab, setActiveTab] = useState('general');
@@ -96,7 +98,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
       } else if (field === 'dataCategories') {
         // Data categories are managed via a sub-tab; store them for later application
         // For now, just announce the suggestion
-        announce(`AI suggested ${(value || []).length} data categories. Apply them in the Data Categories tab.`);
+        announce(t('ai_suggested_data', { count: (value || []).length }));
       }
     });
     return () => unregisterApplyCallback();
@@ -207,7 +209,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           data: formData
         });
         setSaveStatus('saved');
-      announce('Processing activity saved successfully.');
+      announce(t('saved_success'));
         setTimeout(() => setSaveStatus('idle'), 2000);
       } catch (err) {
         setSaveStatus('error');
@@ -242,7 +244,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
             </button>
             <div>
               <h1 className="text-[20px] font-serif tracking-tight text-[#F4F5F6]">
-                {isNew ? 'New Processing Activity' : formData.name || 'Untitled Activity'}
+                {isNew ? t('new_activity') : formData.name || t('untitled')}
               </h1>
               {!isNew && (
                 <div className="flex items-center gap-2 mt-1 text-[12px]">
@@ -256,9 +258,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                   {/* Save Status Indicator */}
                   {autoSaveTabs.includes(activeTab) && (
                     <span className="text-[#6E747A] flex items-center gap-1">
-                      {saveStatus === 'saving' && <span className="animate-pulse">Saving...</span>}
-                      {saveStatus === 'saved' && <span className="text-[#C9A227] flex items-center gap-1"><Save className="w-3 h-3"/> Saved</span>}
-                      {saveStatus === 'error' && <span className="text-clay-600 flex items-center gap-1"><AlertCircle className="w-3 h-3"/> Error saving</span>}
+                      {saveStatus === 'saving' && <span className="animate-pulse">{t('saving')}</span>}
+                      {saveStatus === 'saved' && <span className="text-[#C9A227] flex items-center gap-1"><Save className="w-3 h-3"/> {t('saved')}</span>}
+                      {saveStatus === 'error' && <span className="text-clay-600 flex items-center gap-1"><AlertCircle className="w-3 h-3"/> {t('error_saving')}</span>}
                     </span>
                   )}
                 </div>
@@ -273,7 +275,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 onClick={handleAiAssist}
                 className="px-3 py-2 bg-amber-500/10 hover:bg-amber-100 border border-amber-900/50 text-amber-800 text-[13px] font-medium rounded-lg transition-colors flex items-center gap-1.5"
               >
-                <Lightbulb className="w-4 h-4" /> Help me fill this in
+                <Lightbulb className="w-4 h-4" /> {t('help_me_fill')}
               </button>
             )}
             {isNew && (
@@ -282,7 +284,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 disabled={!formData.name || !formData.purpose}
                 className="px-3 py-2 bg-sage-700 hover:bg-sage-600 disabled:opacity-50 text-bone-50 text-[13px] font-medium rounded-lg shadow-card transition-colors flex items-center gap-1.5"
               >
-                <Save className="w-4 h-4" /> Create Activity
+                <Save className="w-4 h-4" /> {t('create_activity')}
               </button>
             )}
           </div>
@@ -301,7 +303,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:border-white/10'
                 }`}
               >
-                {tab.label}
+                {t(tab.label as any)}
               </button>
             ))}
           </div>
@@ -318,7 +320,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           >
             <div className="flex items-center gap-2">
               <Info className="w-4 h-4 text-blue-400" />
-              <span>{relevantImpacts.length} regulatory update(s) may affect this activity. Review updates →</span>
+              <span>{t('regulatory_impacts_notice', { count: relevantImpacts.length })}</span>
             </div>
           </div>
         )}
@@ -327,7 +329,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           <div className="mb-6 bg-blue-500/10/50 border border-blue-200 rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200 bg-blue-500/10">
               <div className="flex items-center gap-2 font-medium text-blue-900 text-sm">
-                <Info className="w-4 h-4" /> Regulatory Impacts
+                <Info className="w-4 h-4" /> {t('regulatory_impacts')}
               </div>
               <button onClick={() => setShowImpacts(false)} className="text-blue-500 hover:text-blue-400">
                 <X className="w-4 h-4" />
@@ -343,7 +345,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                       <h4 className="font-semibold text-[#F4F5F6] text-[14px] mb-1">{update.title}</h4>
                       <p className="text-[#9BA1A6] text-[13px] mb-2">{activityImpact?.reason}</p>
                       <a href={update.sourceUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[12px] font-medium text-blue-400 hover:underline">
-                        View full update <ExternalLink className="w-3 h-3" />
+                        {t('view_full_update')} <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
                     <button 
@@ -351,7 +353,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                       disabled={acknowledgeMutation.isPending}
                       className="shrink-0 bg-[#0D0F11] border border-blue-200 hover:border-blue-400 text-blue-400 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
                     >
-                      Acknowledge
+                      {t('acknowledge')}
                     </button>
                   </div>
                 );
@@ -364,31 +366,31 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         {(activeTab === 'general' || isNew) && (
           <div className="space-y-6 max-w-3xl">
             <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
-              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">General Information</h2>
+              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">{t('general.title')}</h2>
               
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Activity Name <span className="text-clay-600">*</span></label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.activity_name')} <span className="text-clay-600">*</span></label>
                 <input 
                   type="text" 
                   {...register('name')}
                   className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
-                  placeholder="e.g. Employee Payroll Processing"
+                  placeholder={t('general.activity_name_ph')}
                 />
                 {errors.name && <FieldError>{errors.name.message as string}</FieldError>}
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Purpose of Processing <span className="text-clay-600">*</span></label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.purpose')} <span className="text-clay-600">*</span></label>
                 <textarea 
                   {...register('purpose')}
                   rows={3}
                   className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
-                  placeholder="Describe exactly why this processing occurs..."
+                  placeholder={t('general.purpose_ph')}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Description</label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.description')}</label>
                 <textarea 
                   value={formData.description || ''}
                   onChange={(e) => handleFieldChange('description', e.target.value)}
@@ -399,8 +401,8 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
 
               {!isNew && allClients.length > 0 && (
                 <div className="space-y-3 pt-4 border-t border-ink-900/8">
-                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">Client Assignment (Agency Feature)</label>
-                  <p className="text-[12px] text-[#6E747A] mb-2">Select which clients this processing activity serves. It will appear on their compliance portals.</p>
+                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.client_assignment')}</label>
+                  <p className="text-[12px] text-[#6E747A] mb-2">{t('general.client_assignment_desc')}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2">
                     {allClients.map((client: any) => (
                       <label key={client.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
@@ -423,30 +425,30 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-ink-900/8">
                 <div className="space-y-2">
-                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">Status</label>
+                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.status')}</label>
                   <select 
                     value={formData.status}
                     onChange={(e) => handleFieldChange('status', e.target.value)}
                     className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   >
-                    <option value="draft">Draft</option>
-                    <option value="active">Active</option>
-                    <option value="under_review">Under Review</option>
-                    <option value="archived">Archived</option>
+                    <option value="draft">{t('general.status_draft')}</option>
+                    <option value="active">{t('general.status_active')}</option>
+                    <option value="under_review">{t('general.status_under_review')}</option>
+                    <option value="archived">{t('general.status_archived')}</option>
                   </select>
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">Risk Level</label>
+                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.risk_level')}</label>
                   <select 
                     value={formData.riskLevel}
                     onChange={(e) => handleFieldChange('riskLevel', e.target.value)}
                     className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
+                    <option value="low">{t('general.risk_low')}</option>
+                    <option value="medium">{t('general.risk_medium')}</option>
+                    <option value="high">{t('general.risk_high')}</option>
+                    <option value="critical">{t('general.risk_critical')}</option>
                   </select>
                 </div>
               </div>
@@ -460,8 +462,8 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     className="mt-0.5 w-4 h-4 rounded border-white/20 text-[#C9A227] focus:ring-sage-500/20"
                   />
                   <div>
-                    <p className="text-[13.5px] font-medium text-[#F4F5F6]">Systematic Monitoring</p>
-                    <p className="text-[12px] text-[#6E747A]">Processing involves regular and systematic monitoring of data subjects on a large scale.</p>
+                    <p className="text-[13.5px] font-medium text-[#F4F5F6]">{t('general.systematic_monitoring')}</p>
+                    <p className="text-[12px] text-[#6E747A]">{t('general.systematic_monitoring_desc')}</p>
                   </div>
                 </label>
               </div>
@@ -473,31 +475,31 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         {activeTab === 'legal' && !isNew && (
           <div className="space-y-6 max-w-3xl">
             <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
-              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">Legal Basis Configuration</h2>
+              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">{t('legal.title')}</h2>
               
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Lawful Basis (Art. 6) <span className="text-clay-600">*</span></label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('legal.lawful_basis')} <span className="text-clay-600">*</span></label>
                 <select 
                   {...register('lawfulBasis')}
                   className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                 >
-                  <option value="" disabled>Select Lawful Basis...</option>
-                  <option value="consent">Consent (Art. 6(1)(a))</option>
-                  <option value="contract">Contract (Art. 6(1)(b))</option>
-                  <option value="legal_obligation">Legal Obligation (Art. 6(1)(c))</option>
-                  <option value="vital_interests">Vital Interests (Art. 6(1)(d))</option>
-                  <option value="public_task">Public Task (Art. 6(1)(e))</option>
-                  <option value="legitimate_interest">Legitimate Interest (Art. 6(1)(f))</option>
+                  <option value="" disabled>{t('legal.select_lawful_basis')}</option>
+                  <option value="consent">{t('legal.consent')}</option>
+                  <option value="contract">{t('legal.contract')}</option>
+                  <option value="legal_obligation">{t('legal.legal_obligation')}</option>
+                  <option value="vital_interests">{t('legal.vital_interests')}</option>
+                  <option value="public_task">{t('legal.public_task')}</option>
+                  <option value="legitimate_interest">{t('legal.legitimate_interest')}</option>
                 </select>
                 {errors.lawfulBasis && <FieldError>{errors.lawfulBasis.message as string}</FieldError>}
               </div>
 
               {formData.lawfulBasis === 'legitimate_interest' && (
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                  <h3 className="text-[13px] font-medium text-amber-400 mb-1">Legitimate Interest Assessment (LIA) Required</h3>
-                  <p className="text-[12.5px] text-[#9BA1A6] mb-3">You must conduct and document an LIA when relying on legitimate interests.</p>
+                  <h3 className="text-[13px] font-medium text-amber-400 mb-1">{t('legal.lia_required')}</h3>
+                  <p className="text-[12.5px] text-[#9BA1A6] mb-3">{t('legal.lia_desc')}</p>
                   <button className="px-3 py-1.5 bg-[#0D0F11] text-[#E6E8EA] text-[12.5px] hairline rounded-md hover:bg-white/5 transition-colors">
-                    Start / View LIA
+                    {t('legal.start_lia')}
                   </button>
                 </div>
               )}
@@ -525,40 +527,40 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         {activeTab === 'retention' && !isNew && (
           <div className="space-y-6 max-w-3xl">
             <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
-              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">Data Retention Policy</h2>
+              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">{t('retention.title')}</h2>
               
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Retention Period <span className="text-clay-600">*</span></label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.retention_period')} <span className="text-clay-600">*</span></label>
                 <select 
                   value={formData.retentionPeriod || ''}
                   onChange={(e) => handleFieldChange('retentionPeriod', e.target.value)}
                   className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                 >
-                  <option value="" disabled>Select Retention Period...</option>
-                  <option value="6_months">6 Months</option>
-                  <option value="1_year">1 Year</option>
-                  <option value="3_years">3 Years</option>
-                  <option value="5_years">5 Years</option>
-                  <option value="duration_of_contract">Duration of Contract</option>
-                  <option value="indefinite">Indefinite (Requires strong justification)</option>
-                  <option value="custom">Custom</option>
+                  <option value="" disabled>{t('retention.select_retention')}</option>
+                  <option value="6_months">{t('retention.6_months')}</option>
+                  <option value="1_year">{t('retention.1_year')}</option>
+                  <option value="3_years">{t('retention.3_years')}</option>
+                  <option value="5_years">{t('retention.5_years')}</option>
+                  <option value="duration_of_contract">{t('retention.duration_of_contract')}</option>
+                  <option value="indefinite">{t('retention.indefinite')}</option>
+                  <option value="custom">{t('retention.custom')}</option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Justification for Retention Period <span className="text-clay-600">*</span></label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.justification')} <span className="text-clay-600">*</span></label>
                 <textarea 
                   value={formData.retentionJustification || ''}
                   onChange={(e) => handleFieldChange('retentionJustification', e.target.value)}
                   rows={3}
                   className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
-                  placeholder="Explain why this data must be kept for this period (e.g., statutory requirements, business needs)..."
+                  placeholder={t('retention.justification_ph')}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">Next Review Date</label>
+                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.next_review')}</label>
                   <input 
                     type="date"
                     value={formData.retentionReviewDate ? new Date(formData.retentionReviewDate).toISOString().split('T')[0] : ''}
@@ -569,13 +571,13 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Deletion Procedure</label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.deletion_procedure')}</label>
                 <textarea 
                   value={formData.deletionProcedure || ''}
                   onChange={(e) => handleFieldChange('deletionProcedure', e.target.value)}
                   rows={2}
                   className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
-                  placeholder="How is this data securely destroyed at the end of its lifecycle?"
+                  placeholder={t('retention.deletion_procedure_ph')}
                 />
               </div>
             </div>
@@ -586,20 +588,20 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         {activeTab === 'security' && !isNew && (
           <div className="space-y-6 max-w-3xl">
             <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
-              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">Technical & Organizational Measures (TOMs)</h2>
+              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">{t('security.title')}</h2>
               
               <div className="space-y-3">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Standard Security Measures</label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('security.standard_measures')}</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    { id: 'encryption_at_rest', label: 'Encryption at Rest' },
-                    { id: 'encryption_in_transit', label: 'Encryption in Transit (TLS/SSL)' },
-                    { id: 'access_controls', label: 'Role-Based Access Controls (RBAC)' },
-                    { id: 'mfa', label: 'Multi-Factor Authentication (MFA)' },
-                    { id: 'pseudonymization', label: 'Pseudonymization' },
-                    { id: 'anonymization', label: 'Data Anonymization' },
-                    { id: 'regular_backups', label: 'Regular Backups' },
-                    { id: 'audit_logging', label: 'System Audit Logging' },
+                    { id: 'encryption_at_rest', label: t('security.encryption_at_rest') },
+                    { id: 'encryption_in_transit', label: t('security.encryption_in_transit') },
+                    { id: 'access_controls', label: t('security.access_controls') },
+                    { id: 'mfa', label: t('security.mfa') },
+                    { id: 'pseudonymization', label: t('security.pseudonymization') },
+                    { id: 'anonymization', label: t('security.anonymization') },
+                    { id: 'regular_backups', label: t('security.backups') },
+                    { id: 'audit_logging', label: t('security.audit_logs') },
                   ].map(measure => (
                     <label key={measure.id} className="flex items-start gap-3 p-3 bg-white/5/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
                       <input 
@@ -621,13 +623,13 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </div>
 
               <div className="space-y-2 mt-4">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Additional Security Details</label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('security.additional_notes')}</label>
                 <textarea 
                   value={formData.securityMeasuresDetail || ''}
                   onChange={(e) => handleFieldChange('securityMeasuresDetail', e.target.value)}
                   rows={3}
                   className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
-                  placeholder="Describe any other specific technical or organizational measures..."
+                  placeholder={t('security.additional_notes_ph')}
                 />
               </div>
             </div>

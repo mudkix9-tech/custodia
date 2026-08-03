@@ -1,0 +1,43 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Gestion des clients'"
+  },
+  "title": "Gestion des clients",
+  "subtitle": "Gérez les clients, les DPA et leurs portails de conformité sécurisés.",
+  "add_client": "Ajouter un client",
+  "total_clients": "Total des clients",
+  "active_portals": "Portails actifs",
+  "signed_dpas": "DPA signés",
+  "search_placeholder": "Rechercher des clients...",
+  "empty_state": "Aucun client ajouté pour le moment. Cliquez sur 'Ajouter un client' pour commencer à gérer les clients de l'agence.",
+  "loading_more": "Chargement...",
+  "load_more": "Charger plus",
+  "columns": {
+    "name": "Nom du client",
+    "contact": "Contact principal",
+    "activities": "Activités de traitement",
+    "dpa_status": "Statut DPA",
+    "portal_status": "Statut du portail"
+  },
+  "status": {
+    "signed": "Signé",
+    "expired": "Expiré",
+    "pending": "En attente",
+    "active": "Actif",
+    "disabled": "Désactivé",
+    "linked": "{count} liés"
+  },
+  "modal": {
+    "title": "Ajouter un nouveau client",
+    "client_name": "Nom du client *",
+    "client_name_placeholder": "ex: Acme Corp",
+    "legal_name": "Nom de l'entité légale",
+    "legal_name_placeholder": "ex: Acme Corporation SAS",
+    "contact_name": "Nom du contact",
+    "contact_email": "E-mail du contact",
+    "industry": "Secteur",
+    "cancel": "Annuler",
+    "creating": "Création...",
+    "create_button": "Créer le client"
+  }
+}

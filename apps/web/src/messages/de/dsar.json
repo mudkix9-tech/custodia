@@ -1,0 +1,36 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'DSAR-Automatisierung' or 'Betroffenenanfragen-Automatisierung'"
+  },
+  "title": "Betroffenenanfragen (DSAR)",
+  "subtitle": "Verwalten Sie Auskunftsanträge von Betroffenen innerhalb der gesetzlichen 30-Tage-Frist.",
+  "loading": "DSARs werden geladen...",
+  "status_columns": {
+    "new": "Neu",
+    "verification": "Überprüfung",
+    "in_progress": "In Bearbeitung",
+    "review": "Prüfung",
+    "completed": "Abgeschlossen"
+  },
+  "deadline": {
+    "overdue": "Überfällig",
+    "days": "{count} Tage"
+  },
+  "unknown_entity": "Unbekannt",
+  "unverified": "Nicht verifiziert",
+  "verified": "Verifiziert",
+  "pending": "Ausstehend",
+  "view": "Anzeigen",
+  "table_headers": {
+    "entity": "Einheit",
+    "reference": "Referenz",
+    "subject": "Betroffener",
+    "type": "Typ",
+    "status": "Status",
+    "deadline": "Frist",
+    "verification": "Überprüfung",
+    "action": "Aktion"
+  },
+  "load_more": "Mehr laden",
+  "loading_more": "Wird geladen..."
+}

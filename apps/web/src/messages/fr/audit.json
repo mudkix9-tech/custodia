@@ -1,0 +1,31 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Préparation à l'audit'"
+  },
+  "title": "Préparation à l'audit",
+  "subtitle": "Rapports de conformité automatisés, suivi des scores et remédiation des écarts.",
+  "loading": "Chargement de l'espace d'audit...",
+  "tabs": {
+    "dashboard": "Tableau de bord",
+    "ledger": "Registre immuable"
+  },
+  "compliance_score": "Score de conformité global",
+  "compliance_pillars": "Piliers de conformité",
+  "pillars": {
+    "ropa": "Registre",
+    "vendors": "Fournisseurs",
+    "dpia": "AIPD",
+    "policies": "Politiques",
+    "dsar": "Demandes",
+    "breaches": "Violations",
+    "training": "Formation",
+    "transfers": "Transferts"
+  },
+  "detected_gaps": "Écarts détectés",
+  "active_gaps": "{total} Actifs",
+  "reporting_exports": "Rapports et exportations",
+  "immutable_ledger": {
+    "title": "Registre d'audit immuable",
+    "description": "Article 5(2) Responsabilité démontrable. Tous les enregistrements sont en lecture seule et sécurisés cryptographiquement."
+  }
+}

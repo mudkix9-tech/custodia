@@ -1,0 +1,424 @@
+{
+  "_review_notes": "REVIEW: Verify technical terms like 'In-App', 'Mute/Unmute' sound natural in this context.",
+  "navigation": {
+    "header": "Einstellungen",
+    "organization": "Organisation",
+    "team": "Team",
+    "notifications": "Benachrichtigungen",
+    "integrations": "Integrationen",
+    "developers": "Entwickler",
+    "billing": "Abrechnung",
+    "security": "Sicherheit",
+    "data_privacy": "Daten & Datenschutz",
+    "personal": "Persönlich",
+    "my_profile": "Mein Profil"
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "subtitle": "Verwalten Sie Ihre persönlichen Einstellungen und Benachrichtigungspräferenzen.",
+    "save_changes": "Änderungen speichern",
+    "saving": "Speichern...",
+    "personal_information": {
+      "title": "Persönliche Informationen",
+      "full_name": "Vollständiger Name",
+      "email_address": "E-Mail-Adresse",
+      "language": "Sprache",
+      "timezone": "Zeitzone"
+    },
+    "notification_preferences": {
+      "title": "Meine Benachrichtigungspräferenzen",
+      "description": "Schalten Sie bestimmte Benachrichtigungen stumm, die Sie nicht erhalten möchten. Wenn nicht angekreuzt, wird das Standard-Routing der Organisation verwendet.",
+      "event_type": "Ereignistyp",
+      "email": "E-Mail",
+      "slack": "Slack",
+      "in_app": "In-App",
+      "unmute": "Stummschaltung aufheben",
+      "mute": "Stumm schalten"
+    }
+  },
+  "organization": {
+    "title": "Organisationsprofil",
+    "subtitle": "Verwalten Sie Ihre Unternehmensdetails, den Datenschutzbeauftragten und das Branding.",
+    "saving": "Speichern...",
+    "saved": "Gespeichert",
+    "basic_information": {
+      "title": "Grundlegende Informationen",
+      "name": "Name der Organisation",
+      "legal_name": "Rechtlicher Name",
+      "slug": "Öffentlicher Slug",
+      "slug_hint": "custodia.io/legal/{slug}/privacy",
+      "registration_number": "Registrierungsnummer"
+    },
+    "location": {
+      "title": "Standort & Zuständigkeit",
+      "country": "Land",
+      "select_country": "Bitte ein Land wählen...",
+      "countries": {
+        "DE": "Deutschland",
+        "FR": "Frankreich",
+        "NL": "Niederlande",
+        "IE": "Irland",
+        "GB": "Vereinigtes Königreich",
+        "US": "Vereinigte Staaten"
+      },
+      "street": "Straße und Hausnummer",
+      "city": "Stadt",
+      "postal_code": "Postleitzahl",
+      "lead_authority": "Federführende Aufsichtsbehörde",
+      "lead_authority_placeholder": "z.B. BfDI (Deutschland) oder CNIL (Frankreich)"
+    },
+    "dpo": {
+      "title": "Datenschutzbeauftragter (DSB)",
+      "has_dpo": "Haben Sie einen DSB?",
+      "dpo_hint": "Nach der DSGVO ist ein DSB erforderlich, wenn Sie regelmäßig im großen Umfang personenbezogene Daten verarbeiten oder besondere Datenkategorien verarbeiten.",
+      "name": "Name des DSB",
+      "email": "E-Mail des DSB",
+      "is_external": "Ist der DSB extern?"
+    },
+    "branding": {
+      "title": "Branding",
+      "logo": "Organisationslogo",
+      "upload_logo": "Logo hochladen",
+      "logo_hint": "Empfohlen: 400x100px PNG oder SVG",
+      "primary_color": "Primäre Markenfarbe",
+      "trust_portal_preview": "Trust Portal Vorschau",
+      "your_org": "Ihre Organisation"
+    }
+  },
+  "team": {
+    "title": "Team-Verwaltung",
+    "subtitle": "Verwalten Sie Organisationsmitglieder, Rollen und granulare Zugriffsberechtigungen.",
+    "invite": {
+      "title": "Neue Mitglieder einladen",
+      "single_invite": "Einzelne Einladung",
+      "bulk_invite": "Masseneinladung",
+      "email_single": "E-Mail-Adresse",
+      "email_bulk": "E-Mail-Adressen (eine pro Zeile)",
+      "email_placeholder_single": "kollege@beispiel.de",
+      "email_placeholder_bulk": "kollege1@beispiel.de\\nkollege2@beispiel.de",
+      "role": "Rolle",
+      "roles": {
+        "admin": "Administrator",
+        "member": "Mitglied",
+        "viewer": "Betrachter"
+      },
+      "sending": "Sende...",
+      "send": "Einladungen senden",
+      "success": "Einladungen erfolgreich gesendet!"
+    },
+    "members": {
+      "title": "Aktuelle Mitglieder",
+      "columns": {
+        "name": "Name",
+        "email": "E-Mail",
+        "role": "Rolle",
+        "joined": "Beigetreten",
+        "actions": "Aktionen"
+      },
+      "roles": {
+        "owner": "Eigentümer",
+        "admin": "Administrator",
+        "member": "Mitglied",
+        "viewer": "Betrachter",
+        "basic_roles": "Grundrollen",
+        "custom_roles": "Benutzerdefinierte Rollen"
+      },
+      "invited_user": "Eingeladener Benutzer",
+      "unknown": "Unbekannt",
+      "permissions": "Berechtigungen",
+      "remove": "Entfernen",
+      "no_members": "Keine Teammitglieder gefunden."
+    },
+    "pending": {
+      "title": "Ausstehende Einladungen",
+      "resend": "Erneut senden",
+      "cancel": "Abbrechen",
+      "no_pending": "Keine ausstehenden Einladungen."
+    },
+    "permissions": {
+      "title": "Berechtigungen bearbeiten",
+      "owner_warning": "Die Berechtigungen des Eigentümers können nicht eingeschränkt werden. Sie haben vollen Zugriff auf alle Module.",
+      "description": "Überschreiben Sie den rollenbasierten Zugriff für bestimmte Module. Grünes Häkchen gewährt Zugriff, rotes Kreuz verweigert, grauer Strich übernimmt von der Rolle.",
+      "module": "Modul",
+      "footer": "Änderungen werden automatisch gespeichert und entwerten die aktuelle Sitzung des Benutzers, um neue Berechtigungen durchzusetzen."
+    }
+  },
+  "notifications": {
+    "title": "Plattform-Einstellungen",
+    "subtitle": "Verwalten Sie Integrationen und globales Benachrichtigungsrouting.",
+    "saved": "Gespeichert",
+    "saving": "Speichern...",
+    "save_changes": "Änderungen speichern",
+    "failed_to_save": "Fehler beim Speichern der Einstellungen",
+    "slack_integration": {
+      "title": "Slack-Integration",
+      "subtitle": "Warnungen an einen Kanal weiterleiten",
+      "webhook_url": "Eingehende Webhook-URL",
+      "webhook_hint": "Erstellen Sie einen Eingehenden Webhook in Ihren Slack-Workspace-Einstellungen und fügen Sie die URL hier ein, um Slack-Benachrichtigungen zu aktivieren."
+    },
+    "routing": {
+      "title": "Benachrichtigungsrouting",
+      "admin_note": "Admin-Hinweis:",
+      "admin_note_text": "Die Kontrollkästchen steuern die organisationsweiten Standardwerte. Einzelne Teammitglieder können auf das Glockensymbol neben einem Kanal klicken, um ihn für sich selbst stummzuschalten.",
+      "event_type": "Ereignistyp",
+      "email": "E-Mail",
+      "slack": "Slack",
+      "in_app": "In-App",
+      "org_default": "Organisations-Standard",
+      "unmute": "Für mich aufheben",
+      "mute": "Für mich stummschalten"
+    },
+    "events": {
+      "category_dsars": "DSARs",
+      "dsar": {
+        "received": "Neuer DSAR erhalten",
+        "deadline_warning_7d": "DSAR-Fristwarnung (7T)",
+        "deadline_warning_3d": "DSAR-Fristwarnung (3T)",
+        "overdue": "DSAR überfällig",
+        "reply_received": "DSAR-Betreffantwort erhalten"
+      },
+      "category_breaches": "Verstöße",
+      "breach": {
+        "reported": "Neuer Verstoß gemeldet",
+        "deadline_48h": "Frist für Verstoßmeldung (48h)",
+        "deadline_12h": "Frist für Verstoßmeldung (12h)",
+        "overdue": "Verstoß überfällig"
+      },
+      "category_vendors": "Anbieter & Compliance",
+      "vendor": {
+        "dpa_expiring_30d": "Anbieter-DPA läuft ab (30T)",
+        "dpa_expired": "Anbieter-DPA abgelaufen"
+      },
+      "compliance": {
+        "gap_detected": "Compliance-Lücke erkannt"
+      },
+      "training": {
+        "assigned": "Schulung zugewiesen"
+      },
+      "policy": {
+        "out_of_sync": "Richtlinie nicht mit ROPA synchronisiert"
+      }
+    }
+  },
+  "integrations": {
+    "title": "Integrationen",
+    "subtitle": "Verbinden Sie CRM- und Marketing-Tools für die automatisierte DSAR-Erkennung.",
+    "disconnect_warning": "Das Trennen der Verbindung deaktiviert die automatische DSAR-Datenerkennung. Alle laufenden DSAR-Suchen werden als manuell markiert. Fortfahren?",
+    "status": {
+      "connected": "Verbunden",
+      "error": "Fehler"
+    },
+    "features": {
+      "title": "Wenn verbunden, kann Custodia:",
+      "auto_search": "Kontakte von {providerName} während der DSAR-Verarbeitung automatisch durchsuchen",
+      "auto_discover": "Verarbeitungsaktivitäten automatisch erkennen"
+    },
+    "connection": {
+      "connected_to": "Verbunden mit:",
+      "last_synced": "Zuletzt synchronisiert:"
+    },
+    "actions": {
+      "disconnect": "Trennen",
+      "reconnect": "Neu verbinden",
+      "connect": "Verbinden",
+      "request": "Anfragen"
+    },
+    "coming_soon": "Demnächst"
+  },
+  "developers": {
+    "title": "Entwickler",
+    "subtitle": "Verwalten Sie API-Schlüssel und Webhooks für externe Integrationen",
+    "api_keys": {
+      "title": "API-Schlüssel",
+      "create": "API-Schlüssel erstellen",
+      "no_keys": "Keine API-Schlüssel gefunden.",
+      "revoked": "Widerrufen",
+      "scopes": "Bereiche:",
+      "ips": "IPs:",
+      "any": "Beliebig",
+      "uses": "Nutzt:",
+      "revoke_title": "API-Schlüssel widerrufen?",
+      "revoke_description": "Dies wird den Schlüssel sofort deaktivieren. Alle Anwendungen, die ihn verwenden, verlieren den Zugriff.",
+      "revoke": "Widerrufen",
+      "modal": {
+        "title": "API-Schlüssel erstellen",
+        "name": "Name",
+        "name_placeholder": "z. B. Production Zapier",
+        "scopes": "Bereiche",
+        "allowed_ips": "Zulässige IPs (Optional, durch Komma getrennt)",
+        "allowed_ips_placeholder": "z. B. 192.168.1.1, 10.0.0.1",
+        "cancel": "Abbrechen",
+        "generate": "Schlüssel generieren",
+        "warning": "Dieser Schlüssel wird nur einmal angezeigt. Kopieren Sie ihn jetzt und bewahren Sie ihn sicher auf.",
+        "copied": "Ich habe den Schlüssel kopiert"
+      }
+    },
+    "webhooks": {
+      "title": "Webhooks",
+      "add": "Webhook hinzufügen",
+      "no_webhooks": "Keine Webhooks gefunden.",
+      "subscribed_to": "Abonniert auf:",
+      "events": "Ereignisse",
+      "disabled": "Wegen aufeinanderfolgender Fehler deaktiviert",
+      "send_test": "Test senden",
+      "test_success": "Test-Ereignis erfolgreich versendet!",
+      "test_failure": "Fehler beim Senden des Test-Ereignisses: ",
+      "delete_title": "Webhook löschen?",
+      "delete_description": "Dadurch wird der Webhook dauerhaft gelöscht und keine Ereignisse mehr gesendet.",
+      "delete": "Löschen",
+      "modal": {
+        "title": "Webhook hinzufügen",
+        "payload_url": "Payload-URL",
+        "url_placeholder": "https://beispiel.de/api/webhook",
+        "events_to_send": "Zu sendende Ereignisse",
+        "cancel": "Abbrechen",
+        "add": "Webhook hinzufügen"
+      }
+    }
+  },
+  "billing": {
+    "title": "Abrechnung & Abonnements",
+    "subtitle": "Verwalten Sie Ihren Plan und Ihre Zahlungsmethoden.",
+    "available_plans": "Verfügbare Pläne",
+    "initializing": "Abrechnungssystem wird initialisiert...",
+    "locked": {
+      "trial_ended": "Ihre Testversion ist abgelaufen.",
+      "payment_failed": "Ihre Zahlung ist fehlgeschlagen.",
+      "canceled": "Ihr Abonnement wurde gekündigt.",
+      "trial_ended_desc": "Abonnieren Sie, um weiterhin auf Ihre Compliance-Daten zugreifen zu können.",
+      "payment_failed_desc": "Aktualisieren Sie Ihre Zahlungsdetails, um den Zugriff auf Ihr Konto wiederherzustellen.",
+      "canceled_desc": "Abonnieren Sie erneut, um den Zugriff auf Ihr Konto wiederherzustellen."
+    },
+    "stats": {
+      "ropa_entries": "ROPA-Einträge",
+      "vendors_tracked": "Verfolgte Dienstleister"
+    },
+    "cta": {
+      "contact_us": "Kontaktiere uns",
+      "subscribe": "{name} abonnieren",
+      "current_plan": "Aktueller Plan",
+      "payment_failed": "Zahlung fehlgeschlagen",
+      "canceled": "Gekündigt",
+      "paused": "Pausiert"
+    },
+    "plans": {
+      "professional": {
+        "name": "Professional",
+        "price": "99 €",
+        "description": "Das komplette Betriebssystem für wachsende Agenturen.",
+        "features": [
+          "Unbegrenzte Benutzer & Aktivitäten",
+          "Unbegrenzte Anbieter & DSFA",
+          "Cookie-Einwilligung (50 Domains)",
+          "KI-Compliance-Berater (2.000 Anfragen)"
+        ]
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Individuell",
+        "description": "Für große Organisationen, die maßgeschneiderte Compliance-Kontrollen benötigen.",
+        "features": [
+          "Alles in Professional",
+          "Benutzerdefinierte Datenresidenz",
+          "SSO & Benutzerdefinierte Rollen",
+          "Dedizierter Account Manager"
+        ]
+      }
+    }
+  },
+  "security": {
+    "title": "Sicherheit",
+    "subtitle": "Verwalten Sie Ihr Passwort, MFA und aktive Sitzungen.",
+    "password": {
+      "title": "Passwort",
+      "current": "Aktuelles Passwort",
+      "new": "Neues Passwort",
+      "confirm": "Neues Passwort bestätigen",
+      "updating": "Wird aktualisiert...",
+      "update": "Passwort aktualisieren",
+      "success": "Passwort erfolgreich aktualisiert",
+      "error_mismatch": "Passwörter stimmen nicht überein",
+      "error_failed": "Passwort konnte nicht geändert werden"
+    },
+    "mfa": {
+      "title": "Multi-Faktor-Authentifizierung (MFA)",
+      "app": "Authentifizierungs-App",
+      "status": {
+        "enabled": "Aktiviert",
+        "in_progress": "Einrichtung läuft...",
+        "not_configured": "Nicht konfiguriert"
+      },
+      "enable": "MFA aktivieren",
+      "disable": "MFA deaktivieren",
+      "scan_qr": "Scannen Sie diesen QR-Code mit Ihrer Authentifizierungs-App (z. B. Google Authenticator, Authy, 1Password).",
+      "secret": "Geheimnis: ",
+      "placeholder": "6-stelligen Code eingeben",
+      "verify": "Überprüfen",
+      "error_init": "MFA konnte nicht initiiert werden",
+      "error_invalid": "Ungültiger Token",
+      "error_disable": "MFA konnte nicht deaktiviert werden",
+      "disable_confirm": {
+        "title": "MFA deaktivieren?",
+        "description": "Sind Sie sicher, dass Sie MFA deaktivieren möchten? Dies verringert die Kontosicherheit.",
+        "confirm": "Deaktivieren"
+      }
+    },
+    "sessions": {
+      "title": "Aktive Sitzungen",
+      "no_sessions": "Keine aktiven Sitzungen gefunden.",
+      "unknown_device": "Unbekanntes Gerät",
+      "unknown_browser": "Unbekannter Browser",
+      "unknown_ip": "Unbekannte IP",
+      "last_active": "Zuletzt aktiv",
+      "unknown": "Unbekannt",
+      "revoke": "Widerrufen",
+      "revoke_all": "Alle anderen Sitzungen widerrufen",
+      "error_revoke": "Sitzung konnte nicht widerrufen werden",
+      "error_revoke_all": "Sitzungen konnten nicht widerrufen werden",
+      "revoke_all_confirm": {
+        "title": "Alle anderen Sitzungen widerrufen?",
+        "description": "Dies wird Sie auf allen anderen Geräten abmelden.",
+        "confirm": "Alle widerrufen"
+      }
+    }
+  },
+  "data": {
+    "title": "Daten & Datenschutz",
+    "subtitle": "Exportieren Sie die Daten Ihrer Organisation oder löschen Sie Ihr Konto.",
+    "export": {
+      "title": "Daten exportieren",
+      "description": "Sie können einen vollständigen Export der Daten Ihrer Organisation anfordern. Dies umfasst alle Verarbeitungsaktivitäten, Lieferantenbewertungen, DSFA-Aufzeichnungen, Vorfälle und hochgeladene Dokumente.",
+      "requesting": "Wird angefordert...",
+      "download": "Alle Daten herunterladen",
+      "email_notice": "Eine Zip-Datei wird an Ihre E-Mail gesendet, sobald sie bereit ist.",
+      "success": "Export erfolgreich angefordert! Sie erhalten eine E-Mail, wenn er bereit ist.",
+      "error": "Fehler bei der Anforderung des Datenexports. Bitte versuchen Sie es später noch einmal."
+    },
+    "retention": {
+      "title": "Richtlinie zur Vorratsdatenspeicherung",
+      "active": "gespeichert, solange Ihr Konto aktiv ist",
+      "active_label": "Aktive Kontodaten:",
+      "consent": "5 Jahre nach Erfassung gespeichert (regulatorische Anforderung)",
+      "consent_label": "Einwilligungsaufzeichnungen:",
+      "audit": "3 Jahre nach dem Ereignis gespeichert",
+      "audit_label": "Überwachungsprotokolle:",
+      "deleted": "30 Tage nach Löschanforderung dauerhaft entfernt",
+      "deleted_label": "Gelöschte Kontodaten:",
+      "backups": "innerhalb von 90 Tagen nach Löschung bereinigt",
+      "backups_label": "Backups:"
+    },
+    "deletion": {
+      "title": "Gefahrenzone",
+      "description": "Diese Organisation und alle ihre Daten dauerhaft löschen. Diese Aktion kann nicht rückgängig gemacht werden. Die Daten werden nach einer 30-tägigen Nachfrist endgültig gelöscht.",
+      "scheduling": "Löschung wird geplant...",
+      "scheduled": "Geplant",
+      "delete": "Organisation löschen",
+      "success": "Die Organisation ist zur Löschung vorgesehen.",
+      "error": "Die Organisation konnte nicht zur Löschung vorgesehen werden.",
+      "confirm_title": "Organisation löschen",
+      "confirm_description": "Dadurch werden alle Daten nach einer 30-tägigen Nachfrist endgültig gelöscht.",
+      "confirm_text": "Löschung planen",
+      "confirm_word": "bestätigen"
+    }
+  }
+}

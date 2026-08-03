@@ -4,11 +4,13 @@ import React, { useState, useEffect } from "react";
 
 import { User, Bell, Save } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { NOTIFICATION_GROUPS } from '../notifications/page';
 
 export default function ProfileSettingsPage() {
   const { data: session } = useSession();
+  const t = useTranslations('settings.profile');
   const { data: userSettings, isLoading } = trpc.settings.getUserSettings.useQuery();
   const updateUserSettings = trpc.settings.updateUserSettings.useMutation();
 
@@ -67,8 +69,8 @@ export default function ProfileSettingsPage() {
     <div className="max-w-4xl mx-auto p-8 fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">My Profile</h1>
-          <p className="text-[#9BA1A6]">Manage your personal settings and notification preferences.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
+          <p className="text-[#9BA1A6]">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-4">
           {saveStatus === 'saved' && <span className="text-sm text-[#C9A227] font-medium">Saved</span>}
@@ -77,7 +79,7 @@ export default function ProfileSettingsPage() {
             disabled={saveStatus === 'saving'}
             className="flex items-center gap-2 bg-ink-900 text-white px-5 py-2.5 rounded-xl font-medium disabled:opacity-50"
           >
-            <Save className="w-4 h-4" /> {saveStatus === 'saving' ? 'Saving...' : 'Save Changes'}
+            <Save className="w-4 h-4" /> {saveStatus === 'saving' ? t('saving') : t('save_changes')}
           </button>
         </div>
       </div>
@@ -87,34 +89,34 @@ export default function ProfileSettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <User className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">Personal Information</h2>
+            <h2 className="text-lg font-medium">{t('personal_information.title')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Full Name</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.full_name')}</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm text-[#F4F5F6] focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227] outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Email Address</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.email_address')}</label>
               <input
                 type="email"
                 value={session?.user?.email || ''}
                 disabled
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm opacity-50 cursor-not-allowed"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm text-[#9BA1A6] opacity-60 cursor-not-allowed"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Language</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.language')}</label>
               <select
                 value={formData.language}
                 onChange={e => setFormData({ ...formData, language: e.target.value })}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm text-[#F4F5F6] focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227] outline-none transition-all"
               >
                 <option value="en">English</option>
                 <option value="de">German (Deutsch)</option>
@@ -122,11 +124,11 @@ export default function ProfileSettingsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Timezone</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.timezone')}</label>
               <select
                 value={formData.timezone}
                 onChange={e => setFormData({ ...formData, timezone: e.target.value })}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm text-[#F4F5F6] focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227] outline-none transition-all"
               >
                 <option value="UTC">UTC</option>
                 <option value="Europe/London">Europe/London (GMT/BST)</option>
@@ -152,21 +154,21 @@ export default function ProfileSettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated overflow-hidden">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <Bell className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">My Notification Preferences</h2>
+            <h2 className="text-lg font-medium">{t('notification_preferences.title')}</h2>
           </div>
 
           <p className="text-sm text-[#9BA1A6] mb-6">
-            Mute specific notifications that you don't want to receive. If unchecked, the organization default routing will be used.
+            {t('notification_preferences.description')}
           </p>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/10">
-                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider">Event Type</th>
-                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">Email</th>
-                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">Slack</th>
-                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">In-App</th>
+                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider">{t('notification_preferences.event_type')}</th>
+                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">{t('notification_preferences.email')}</th>
+                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">{t('notification_preferences.slack')}</th>
+                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">{t('notification_preferences.in_app')}</th>
                 </tr>
               </thead>
               <tbody className="text-[14px] text-[#F4F5F6]">
@@ -183,7 +185,7 @@ export default function ProfileSettingsPage() {
                             <button
                               onClick={() => handleUserToggle(nt.key, channel)}
                               className={`w-5 h-5 flex items-center justify-center rounded-full mx-auto transition-colors ${isUserMuted(nt.key, channel) ? 'text-red-500 bg-red-500/10' : 'text-sage-500 bg-[#C9A227]/10 hover:bg-[#C9A227]/20'}`}
-                              title={isUserMuted(nt.key, channel) ? "Unmute for me" : "Mute for me"}
+                              title={isUserMuted(nt.key, channel) ? t('notification_preferences.unmute') : t('notification_preferences.mute')}
                             >
                               {isUserMuted(nt.key, channel) ? <Bell className="w-3 h-3 line-through" /> : <Bell className="w-3 h-3" />}
                             </button>

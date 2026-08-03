@@ -1,8 +1,44 @@
 {
-  "title": "Tableau de bord",
-  "overview": "Aperçu",
+  "_review_notes": {
+    "dpia.title": "REVIEW: Verify 'DPIA' vs 'AIPD' (Analyse d'Impact sur la Protection des Données)",
+    "active_processing": "REVIEW: Verify 'Activités de traitement' for 'Processing Activities'"
+  },
+  "title": "Bon retour",
+  "subtitle": "Voici votre aperçu de conformité et vos tâches en attente.",
   "compliance_score": "Score de conformité",
-  "recent_activity": "Activité récente",
-  "pending_tasks": "Tâches en attente",
-  "view_all": "Voir tout"
+  "active_processing": "Activités de traitement actives",
+  "pending_dsars": "Demandes de données (DSAR) en attente",
+  "high_risk_vendors": "Fournisseurs à haut risque",
+  "undocumented_services": "Services non documentés",
+  "setup_progress": {
+    "title": "Terminez la configuration de votre espace de travail",
+    "description": "Vous êtes actuellement à {score}% de conformité. Effectuez ces tâches pour améliorer votre score.",
+    "onboarding_title": "Terminer l'assistant d'intégration",
+    "onboarding_desc": "Reprenez là où vous vous étiez arrêté",
+    "ropa_title": "Complétez votre registre (ROPA)",
+    "ropa_desc": "Les activités nécessitent des durées de conservation",
+    "vendors_title": "Signer les DPA fournisseurs",
+    "vendors_desc": "Les fournisseurs nécessitent des DPA signés"
+  },
+  "regulatory": {
+    "title": "Mises à jour réglementaires",
+    "new_count": "{count} Nouveau",
+    "high_impact": "Impact élevé",
+    "advisory": "Avis",
+    "affected_entities": "Entités concernées :",
+    "acknowledge": "Acquitter",
+    "view_details": "Voir les détails"
+  },
+  "dpia": {
+    "title": "Remédiations AIPD (DPIA) en retard",
+    "singular": "1 mesure d'atténuation des risques est en retard",
+    "plural": "{count} mesures d'atténuation des risques sont en retard",
+    "resolve": "Résoudre les écarts"
+  },
+  "breach": {
+    "title": "Action de sécurité requise",
+    "singular": "1 alerte de violation de fournisseur nécessite une attention",
+    "plural": "{count} alertes de violation de fournisseur nécessitent une attention",
+    "review": "Examiner les menaces"
+  }
 }

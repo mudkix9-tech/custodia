@@ -1,0 +1,20 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Cookie-Einwilligungsmanager'"
+  },
+  "title": "Cookie-Einwilligungsmanager",
+  "subtitle": "Verwalten Sie Einwilligungsbanner, scannen Sie nach Trackern und überwachen Sie die Compliance.",
+  "loading": "CMP wird geladen...",
+  "add_domain": "Domain hinzufügen",
+  "add_new_website": "Neue Website hinzufügen",
+  "domain_placeholder": "www.beispiel.de",
+  "adding": "Wird hinzugefügt...",
+  "cancel": "Abbrechen",
+  "script_id": "Skript-ID: {id}",
+  "gcm_v2": "GCM v2",
+  "tcf": "TCF",
+  "pageviews": "Seitenaufrufe (30T)",
+  "consent_rate": "Einwilligungsrate",
+  "analytics": "Analytik",
+  "configure_banner": "Banner konfigurieren"
+}

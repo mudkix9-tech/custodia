@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function RopaListPage() {
+  const t = useTranslations('ropa');
   const router = useRouter();
   const [globalFilter, setGlobalFilter] = useState('');
   const [flagsTab, setFlagsTab] = useState<'flagged'|'dismissed'>('flagged');
@@ -134,17 +136,17 @@ export default function RopaListPage() {
   const columns = [
     {
       accessorKey: 'name',
-      header: 'Name',
+      header: t('columns.name'),
       cell: (info: any) => <span className="font-medium text-[#F4F5F6]">{info.getValue()}</span>,
     },
     {
       accessorKey: 'purpose',
-      header: 'Purpose',
+      header: t('columns.purpose'),
       cell: (info: any) => <span className="text-[#9BA1A6] truncate max-w-xs inline-block">{info.getValue()}</span>,
     },
     {
       accessorKey: 'lawfulBasis',
-      header: 'Lawful Basis',
+      header: t('columns.lawful_basis'),
       cell: (info: any) => (
         <span className="px-2.5 py-1 rounded-md text-[12px] font-medium bg-white/5 text-[#9BA1A6] border border-white/10">
           {info.getValue() || 'Unspecified'}
@@ -153,7 +155,7 @@ export default function RopaListPage() {
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('columns.status'),
       cell: (info: any) => {
         const status = info.getValue();
         return (
@@ -162,14 +164,14 @@ export default function RopaListPage() {
             status === 'draft' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
             'bg-white/5 text-[#6E747A] border-white/10'
           }`}>
-            {status}
+            {t(`status_types.${status}`) || status}
           </span>
         );
       },
     },
     {
       accessorKey: 'riskLevel',
-      header: 'Risk',
+      header: t('columns.risk'),
       cell: (info: any) => {
         const risk = info.getValue()?.toLowerCase() || 'low';
         return (
@@ -179,7 +181,7 @@ export default function RopaListPage() {
             risk === 'medium' ? 'bg-yellow-50 text-yellow-700 border-yellow-500/20' :
             'bg-[#C9A227]/10 text-[#C9A227] border-sage-500/20'
           }`}>
-            {risk}
+            {t(`risk_levels.${risk}`) || risk}
           </span>
         );
       },
@@ -197,10 +199,10 @@ export default function RopaListPage() {
               <div className="p-2 bg-[#0D0F11] rounded-xl shadow-card border border-ink-900/8">
                 <FileText className="w-5 h-5 text-[#C9A227]" />
               </div>
-              Records of Processing Activities
+              {t('title')}
             </h1>
             <p className="text-[13.5px] text-[#6E747A] mt-2">
-              Manage your Article 30 compliance records and data processing activities.
+              {t('subtitle')}
             </p>
           </div>
           
@@ -218,14 +220,14 @@ export default function RopaListPage() {
               className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-white/10 shadow-panel-elevated disabled:opacity-50"
             >
               <Upload className="w-4 h-4" />
-              {isImporting ? 'Importing...' : 'Import CSV'}
+              {isImporting ? t('importing') : t('import_csv')}
             </button>
             <button 
               onClick={handleExportCSV}
               className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-white/10 shadow-panel-elevated"
             >
               <Download className="w-4 h-4" />
-              Export CSV
+              {t('export_csv')}
             </button>
             <button 
               onClick={handleExportPDF}
@@ -233,14 +235,14 @@ export default function RopaListPage() {
               className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-white/10 shadow-panel-elevated disabled:opacity-50"
             >
               <FileText className="w-4 h-4" />
-              {isExportingPdf ? 'Generating...' : 'Export PDF'}
+              {isExportingPdf ? t('generating') : t('export_pdf')}
             </button>
             <button 
               onClick={() => router.push('/ropa/new')}
               className="px-4 py-2 bg-sage-700 hover:bg-sage-600 text-bone-50 font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 shadow-card"
             >
               <Plus className="w-4 h-4" />
-              New Activity
+              {t('new_activity')}
             </button>
           </div>
         </div>
@@ -251,34 +253,34 @@ export default function RopaListPage() {
             <div className="p-4 border-b border-white/5 flex items-center justify-between bg-amber-500/10/30">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-amber-400" />
-                <h3 className="font-semibold text-[#F4F5F6]">Re-Consent Triggers</h3>
+                <h3 className="font-semibold text-[#F4F5F6]">{t('reconsent_triggers')}</h3>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setFlagsTab('flagged')}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${flagsTab === 'flagged' ? 'bg-[#0D0F11] text-amber-400 shadow-panel-elevated border border-amber-500/20' : 'text-[#6E747A] hover:text-[#E6E8EA]'}`}
                 >
-                  Active Flags
+                  {t('active_flags')}
                 </button>
                 <button
                   onClick={() => setFlagsTab('dismissed')}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${flagsTab === 'dismissed' ? 'bg-[#0D0F11] text-[#E6E8EA] shadow-panel-elevated border border-white/10' : 'text-[#6E747A] hover:text-[#E6E8EA]'}`}
                 >
-                  Dismissed
+                  {t('dismissed')}
                 </button>
               </div>
             </div>
             <div className="divide-y divide-ink-900/5 max-h-[300px] overflow-y-auto">
               {reconsentFlags?.length === 0 ? (
                 <div className="p-8 text-center text-[#6E747A] text-sm">
-                  No {flagsTab} re-consent triggers found.
+                  {t('no_flags', { tab: flagsTab === 'flagged' ? t('active_flags').toLowerCase() : t('dismissed').toLowerCase() })}
                 </div>
               ) : (
                 reconsentFlags?.map((flag: any) => (
                   <div key={flag.id} className="p-4 hover:bg-[#08090A]/50 transition-colors flex items-start gap-4">
                     <div className="mt-1">
                       {flag.confidence === 'ambiguous' ? (
-                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 tooltip" data-tip="Human review recommended">
+                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 tooltip" data-tip={t('human_review')}>
                           <AlertCircle className="w-4 h-4" />
                         </div>
                       ) : (
@@ -290,7 +292,7 @@ export default function RopaListPage() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <h4 className="font-medium text-[#F4F5F6] text-sm">
-                          Activity Changed: {flag.activity.name}
+                          {t('activity_changed', { name: flag.activity.name })}
                         </h4>
                         <div className="text-xs text-[#6E747A]">
                           {new Date(flag.detectedAt).toLocaleDateString()}
@@ -303,7 +305,7 @@ export default function RopaListPage() {
                           onClick={() => router.push(`/ropa/${flag.activity.id}`)}
                           className="text-xs font-medium text-[#C9A227] hover:text-[#C9A227] flex items-center gap-1"
                         >
-                          Review Activity <ChevronRight className="w-3 h-3" />
+                          {t('review_activity')} <ChevronRight className="w-3 h-3" />
                         </button>
                         {flagsTab === 'flagged' && (
                           <button
@@ -311,12 +313,12 @@ export default function RopaListPage() {
                             disabled={dismissFlagMutation.isPending}
                             className="text-xs font-medium text-[#6E747A] hover:text-[#E6E8EA] flex items-center gap-1"
                           >
-                            <X className="w-3 h-3" /> Dismiss
+                            <X className="w-3 h-3" /> {t('dismiss')}
                           </button>
                         )}
                         {flagsTab === 'dismissed' && (
                           <span className="text-xs text-[#6E747A] flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Dismissed
+                            <CheckCircle2 className="w-3 h-3" /> {t('dismissed')}
                           </span>
                         )}
                       </div>
@@ -339,7 +341,7 @@ export default function RopaListPage() {
             globalFilter={globalFilter}
             setGlobalFilter={setGlobalFilter}
             onRowClick={(row: any) => router.push(`/ropa/${row.id}`)}
-            emptyStateMessage="No processing activities found. Create your first record to begin."
+            emptyStateMessage={t('empty_state')}
           />
 
           {hasNextPage && (
@@ -349,7 +351,7 @@ export default function RopaListPage() {
                 disabled={isFetchingNextPage}
                 className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors border border-white/10 shadow-panel-elevated disabled:opacity-50"
               >
-                {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+                {isFetchingNextPage ? t('loading_more') : t('load_more')}
               </button>
             </div>
           )}

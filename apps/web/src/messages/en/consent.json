@@ -1,0 +1,17 @@
+{
+  "title": "Cookie Consent Manager",
+  "subtitle": "Manage consent banners, scan for trackers, and monitor compliance.",
+  "loading": "Loading CMP...",
+  "add_domain": "Add Domain",
+  "add_new_website": "Add New Website",
+  "domain_placeholder": "www.example.com",
+  "adding": "Adding...",
+  "cancel": "Cancel",
+  "script_id": "Script ID: {id}",
+  "gcm_v2": "GCM v2",
+  "tcf": "TCF",
+  "pageviews": "Pageviews (30d)",
+  "consent_rate": "Consent Rate",
+  "analytics": "Analytics",
+  "configure_banner": "Configure Banner"
+}

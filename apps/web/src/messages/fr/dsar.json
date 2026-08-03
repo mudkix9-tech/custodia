@@ -1,0 +1,36 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Automatisation des DSAR'"
+  },
+  "title": "Automatisation des DSAR",
+  "subtitle": "Gérez les demandes d'accès des personnes concernées dans le délai légal de 30 jours.",
+  "loading": "Chargement des DSAR...",
+  "status_columns": {
+    "new": "Nouveau",
+    "verification": "Vérification",
+    "in_progress": "En cours",
+    "review": "Examen",
+    "completed": "Terminé"
+  },
+  "deadline": {
+    "overdue": "En retard",
+    "days": "{count} jours"
+  },
+  "unknown_entity": "Inconnu",
+  "unverified": "Non vérifié",
+  "verified": "Vérifié",
+  "pending": "En attente",
+  "view": "Voir",
+  "table_headers": {
+    "entity": "Entité",
+    "reference": "Référence",
+    "subject": "Sujet",
+    "type": "Type",
+    "status": "Statut",
+    "deadline": "Date limite",
+    "verification": "Vérification",
+    "action": "Action"
+  },
+  "load_more": "Charger plus",
+  "loading_more": "Chargement..."
+}

@@ -1,0 +1,43 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Kundenverwaltung'"
+  },
+  "title": "Kundenverwaltung",
+  "subtitle": "Verwalten Sie Kunden, AVVs und deren sichere Compliance-Portale.",
+  "add_client": "Kunde hinzufügen",
+  "total_clients": "Gesamte Kunden",
+  "active_portals": "Aktive Portale",
+  "signed_dpas": "Unterzeichnete AVVs",
+  "search_placeholder": "Kunden suchen...",
+  "empty_state": "Noch keine Kunden hinzugefügt. Klicken Sie auf 'Kunde hinzufügen', um Agenturkunden zu verwalten.",
+  "loading_more": "Wird geladen...",
+  "load_more": "Mehr laden",
+  "columns": {
+    "name": "Kundenname",
+    "contact": "Hauptansprechpartner",
+    "activities": "Verarbeitungstätigkeiten",
+    "dpa_status": "AVV-Status",
+    "portal_status": "Portal-Status"
+  },
+  "status": {
+    "signed": "Unterzeichnet",
+    "expired": "Abgelaufen",
+    "pending": "Ausstehend",
+    "active": "Aktiv",
+    "disabled": "Deaktiviert",
+    "linked": "{count} Verknüpft"
+  },
+  "modal": {
+    "title": "Neuen Kunden hinzufügen",
+    "client_name": "Kundenname *",
+    "client_name_placeholder": "z.B. Acme GmbH",
+    "legal_name": "Juristischer Name",
+    "legal_name_placeholder": "z.B. Acme Corporation GmbH",
+    "contact_name": "Kontaktname",
+    "contact_email": "Kontakt-E-Mail",
+    "industry": "Branche",
+    "cancel": "Abbrechen",
+    "creating": "Wird erstellt...",
+    "create_button": "Kunde erstellen"
+  }
+}

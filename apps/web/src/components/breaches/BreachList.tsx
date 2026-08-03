@@ -1,14 +1,16 @@
 import React from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function BreachList({ breaches, isLoading, isGroupContext }: { breaches: any[], isLoading: boolean, isGroupContext?: boolean }) {
+  const t = useTranslations('breaches');
   if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-12 bg-gray-200 rounded"></div></div>;
 
   if (breaches.length === 0) {
     return (
       <div className="text-center py-12 bg-[#0D0F11] dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
-        <h3 className="text-sm font-medium text-gray-900 dark:text-white">No breaches reported</h3>
-        <p className="text-sm text-gray-500 mt-1">Report a new incident to begin the triage and assessment process.</p>
+        <h3 className="text-sm font-medium text-gray-900 dark:text-white">{t('list.empty_title')}</h3>
+        <p className="text-sm text-gray-500 mt-1">{t('list.empty_subtitle')}</p>
       </div>
     );
   }
@@ -38,12 +40,12 @@ export default function BreachList({ breaches, isLoading, isGroupContext }: { br
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-900/50">
           <tr>
-            {isGroupContext && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entity</th>}
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Incident</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discovered</th>
+            {isGroupContext && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('list.columns.entity')}</th>}
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('list.columns.reference')}</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('list.columns.incident')}</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('list.columns.status')}</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('list.columns.risk_level')}</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('list.columns.discovered')}</th>
             <th className="px-6 py-3 relative"></th>
           </tr>
         </thead>
@@ -52,7 +54,7 @@ export default function BreachList({ breaches, isLoading, isGroupContext }: { br
             <tr key={b.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
               {isGroupContext && (
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                  {b.organizationName || 'Unknown'}
+                  {b.organizationName || t('list.unknown')}
                 </td>
               )}
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
@@ -69,7 +71,7 @@ export default function BreachList({ breaches, isLoading, isGroupContext }: { br
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm">
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getRiskColor(b.riskToIndividuals || 'unassessed')}`}>
-                  {b.riskToIndividuals || 'Unassessed'}
+                  {b.riskToIndividuals || t('list.unassessed')}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -77,7 +79,7 @@ export default function BreachList({ breaches, isLoading, isGroupContext }: { br
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <Link href={isGroupContext ? `/group/breaches/${b.id}` : `/breaches/${b.id}`} className="text-indigo-400 hover:text-indigo-300 dark:text-indigo-400 dark:hover:text-indigo-300">
-                  Manage →
+                  {t('list.manage')}
                 </Link>
               </td>
             </tr>

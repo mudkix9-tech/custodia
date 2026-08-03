@@ -7,6 +7,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { LayoutDashboard, Users, Database, Building2, UserCircle, GraduationCap, Settings, LifeBuoy, ChevronUp, FileText, Cookie, AlertTriangle, ShieldCheck, Sparkles, Menu, X, LogOut } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { OrgSwitcher } from './OrgSwitcher';
+import { useTranslations } from 'next-intl';
 
 export function Logo({ className = '' }: { className?: string }) {
   return (
@@ -36,10 +37,10 @@ const NAV = [
   { id: 'breaches', label: 'Breaches', icon: AlertTriangle, href: '/breaches' },
   { id: 'audit', label: 'Audit Readiness', icon: ShieldCheck, href: '/audit' },
   { id: 'training', label: 'Training', icon: GraduationCap, href: '/training' },
-  { id: 'copilot', label: 'Co-Pilot', icon: Sparkles, href: '/copilot' },
 ];
 
 export function Sidebar() {
+  const t = useTranslations('shared');
   const pathname = usePathname();
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -98,7 +99,7 @@ export function Sidebar() {
         <nav className="flex-1 px-3 overflow-y-auto">
           {!isLocked && (
             <>
-              <div className="px-2 pt-2 pb-1.5 text-[11px] uppercase tracking-[0.14em] text-[#6E747A]">Workspace</div>
+              <div className="px-2 pt-2 pb-1.5 text-[11px] uppercase tracking-[0.14em] text-[#6E747A]">{t('navigation.workspace')}</div>
               <ul className="space-y-0.5">
                 {NAV.map((n) => {
                   const isActive = pathname === n.href || (n.href !== '/' && pathname.startsWith(n.href));
@@ -117,7 +118,7 @@ export function Sidebar() {
                           size={16}
                           className={isActive ? 'text-[#F4F5F6]' : 'text-[#6E747A] group-hover:text-[#9BA1A6]'}
                         />
-                        <span className="flex-1 text-left">{n.label}</span>
+                        <span className="flex-1 text-left">{t(`navigation.${n.id}`)}</span>
                         {n.badge && (
                           <span className="text-[10.5px] tabular-nums px-1.5 py-0.5 rounded-md bg-[#C9A227]/20 text-[#C9A227]">{n.badge}</span>
                         )}
@@ -134,12 +135,12 @@ export function Sidebar() {
           <ul className="space-y-0.5 mb-3">
             <li>
               <Link href="/settings" className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-[#9BA1A6] hover:bg-[#0D0F11]/5 hover:text-[#E6E8EA] focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none">
-                <Settings size={16} className="text-[#6E747A]" /> Settings
+                <Settings size={16} className="text-[#6E747A]" /> {t('navigation.settings')}
               </Link>
             </li>
             <li>
               <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-[#9BA1A6] hover:bg-[#0D0F11]/5 hover:text-[#E6E8EA] focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none">
-                <LifeBuoy size={16} className="text-[#6E747A]" /> Help &amp; Docs
+                <LifeBuoy size={16} className="text-[#6E747A]" /> {t('navigation.help_docs')}
               </button>
             </li>
           </ul>
@@ -156,23 +157,23 @@ export function Sidebar() {
                     className="w-full text-left px-3 py-1.5 text-[13px] text-[#E6E8EA] hover:bg-white/5 flex items-center gap-2 transition-colors"
                   >
                     <LogOut size={14} className="text-[#9BA1A6]" />
-                    Log out
+                    {t('navigation.log_out')}
                   </button>
                 </div>
               )}
-              <div 
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#0D0F11]/5 cursor-pointer transition-colors"
+              <button 
+                onClick={(e) => { e.preventDefault(); setUserMenuOpen(!userMenuOpen); }}
+                className="w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#0D0F11]/5 cursor-pointer transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-[#0D0F11]/10 text-[#E6E8EA] flex items-center justify-center font-medium text-[12.5px] border border-white/10">
+                <div className="w-8 h-8 rounded-full bg-[#0D0F11]/10 text-[#E6E8EA] flex items-center justify-center font-medium text-[12.5px] border border-white/10 shrink-0">
                   {session.user.name?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <div className="min-w-0 flex-1 leading-tight">
                   <div className="text-[13px] text-[#E6E8EA] truncate">{session.user.name || 'User'}</div>
                   <div className="text-[11.5px] text-[#6E747A] truncate">{session.user.email}</div>
                 </div>
-                <ChevronUp size={14} className="text-[#6E747A] transition-transform duration-200" style={{ transform: userMenuOpen ? 'rotate(180deg)' : 'none' }} />
-              </div>
+                <ChevronUp size={14} className="text-[#6E747A] transition-transform duration-200 shrink-0" style={{ transform: userMenuOpen ? 'rotate(180deg)' : 'none' }} />
+              </button>
             </div>
           )}
         </div>

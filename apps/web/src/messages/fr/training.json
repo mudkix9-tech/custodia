@@ -1,0 +1,18 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Mes formations'"
+  },
+  "title": "Mes formations",
+  "subtitle": "Complétez votre formation obligatoire sur la protection des données et la sécurité.",
+  "training_due": {
+    "title": "Formation due",
+    "description": "Vous avez {count} module(s) de formation incomplet(s). Veuillez les compléter dès que possible."
+  },
+  "assigned_modules": "Modules attribués",
+  "resume_course": "Reprendre le cours",
+  "start_course": "Commencer le cours",
+  "download_certificate": "Télécharger le certificat",
+  "score": "Score : {score}%",
+  "valid_until": "Valable jusqu'au {date}",
+  "empty_state": "Vous n'avez aucun module de formation attribué."
+}

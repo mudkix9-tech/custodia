@@ -1,0 +1,20 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Gestionnaire de consentement aux cookies'"
+  },
+  "title": "Gestionnaire de consentement aux cookies",
+  "subtitle": "Gérez les bannières de consentement, analysez les traceurs et surveillez la conformité.",
+  "loading": "Chargement du CMP...",
+  "add_domain": "Ajouter un domaine",
+  "add_new_website": "Ajouter un nouveau site web",
+  "domain_placeholder": "www.exemple.fr",
+  "adding": "Ajout...",
+  "cancel": "Annuler",
+  "script_id": "ID du script : {id}",
+  "gcm_v2": "GCM v2",
+  "tcf": "TCF",
+  "pageviews": "Pages vues (30j)",
+  "consent_rate": "Taux de consentement",
+  "analytics": "Analytique",
+  "configure_banner": "Configurer la bannière"
+}

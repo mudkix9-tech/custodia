@@ -4,8 +4,10 @@ import React from 'react';
 import { trpc } from '@/utils/trpc';
 import { AlertTriangle, Info, Bell, Check, ExternalLink, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslations } from 'next-intl';
 
 export function RegulatoryImpactWidget() {
+  const t = useTranslations('dashboard.regulatory');
   const { data: groupedImpacts, isLoading } = trpc.regulatory.listUnacknowledgedImpacts.useQuery();
   const utils = trpc.useUtils();
   const acknowledgeMutation = trpc.regulatory.acknowledgeImpact.useMutation({
@@ -32,10 +34,10 @@ export function RegulatoryImpactWidget() {
           ) : (
             <Bell className="w-5 h-5 text-indigo-400" />
           )}
-          <h2 className={`font-semibold ${hasAnyHighConfidence ? 'text-amber-950' : 'text-[#F4F5F6]'}`}>Regulatory Updates</h2>
+          <h2 className={`font-semibold ${hasAnyHighConfidence ? 'text-amber-950' : 'text-[#F4F5F6]'}`}>{t('title')}</h2>
           <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
             hasAnyHighConfidence ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-400'
-          }`}>{groupedImpacts.length} New</span>
+          }`}>{t('new_count', { count: groupedImpacts.length })}</span>
         </div>
       </div>
       
@@ -53,11 +55,11 @@ export function RegulatoryImpactWidget() {
                   <div className="flex items-center gap-2 mb-2">
                     {hasHigh ? (
                       <span className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-100 px-2 py-0.5 rounded-md uppercase tracking-wide">
-                        <AlertTriangle className="w-3 h-3" /> High Impact
+                        <AlertTriangle className="w-3 h-3" /> {t('high_impact')}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 bg-indigo-500/100/10 px-2 py-0.5 rounded-md uppercase tracking-wide">
-                        <Info className="w-3 h-3" /> Advisory
+                        <Info className="w-3 h-3" /> {t('advisory')}
                       </span>
                     )}
                     <span className="text-[12px] font-medium text-[#6E747A]">{update.sourceName}</span>
@@ -71,7 +73,7 @@ export function RegulatoryImpactWidget() {
                     hasHigh ? 'bg-amber-500/100/10/50 border-amber-900/50' : 'bg-indigo-500/100/10/50 border-indigo-900/50'
                   }`}>
                     <p className={`text-[12px] font-semibold mb-2 ${hasHigh ? 'text-amber-300' : 'text-indigo-300'}`}>
-                      Affected Entities:
+                      {t('affected_entities')}
                     </p>
                     <ul className="space-y-2">
                       {matches.map((match: any, i: number) => (
@@ -95,13 +97,13 @@ export function RegulatoryImpactWidget() {
                     disabled={acknowledgeMutation.isPending}
                     className="flex items-center justify-center gap-1.5 bg-[#0D0F11] border border-white/20 hover:border-sage-500 hover:text-[#C9A227] text-[#9BA1A6] px-4 py-2 rounded-xl text-[13px] font-medium transition-colors disabled:opacity-50"
                   >
-                    <Check className="w-4 h-4" /> Acknowledge
+                    <Check className="w-4 h-4" /> {t('acknowledge')}
                   </button>
                   <a 
                     href={`/updates`} 
                     className="flex items-center justify-center gap-1 text-[12px] font-medium text-blue-400 hover:underline px-4 py-1"
                   >
-                    View Details <ExternalLink className="w-3 h-3" />
+                    {t('view_details')} <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
               </div>

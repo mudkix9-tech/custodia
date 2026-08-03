@@ -1,0 +1,23 @@
+{
+  "title": "Privacy Policies",
+  "subtitle": "Manage and auto-generate legal policies from your ROPA.",
+  "loading": "Loading Policies...",
+  "new_policy": "New Policy",
+  "create_title": "Create New Policy",
+  "name_placeholder": "e.g., Main Website Privacy Policy",
+  "types": {
+    "website_visitors": "Website Visitors",
+    "employees": "Employees",
+    "cookie_policy": "Cookie Policy"
+  },
+  "creating": "Creating...",
+  "create": "Create",
+  "cancel": "Cancel",
+  "out_of_sync": "Action Required - Out of Sync",
+  "published_ago": "Published {time} ago",
+  "draft": "Draft - Never Published",
+  "auto_sync": "Auto-sync active",
+  "empty_state": "No privacy policies created yet.",
+  "load_more": "Load More",
+  "loading_more": "Loading more..."
+}

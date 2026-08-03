@@ -1,0 +1,26 @@
+{
+  "navigation": {
+    "workspace": "Workspace",
+    "dashboard": "Dashboard",
+    "clients": "Trust Portals",
+    "ropa": "Data Processing",
+    "vendors": "Vendors",
+    "dsars": "Data Requests",
+    "policies": "Privacy Policies",
+    "consent": "Cookie Consent",
+    "breaches": "Breaches",
+    "audit": "Audit Readiness",
+    "training": "Training",
+    "settings": "Settings",
+    "help_docs": "Help & Docs",
+    "log_out": "Log out"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm"
+  }
+}

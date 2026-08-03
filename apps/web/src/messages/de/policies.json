@@ -1,0 +1,26 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Datenschutzrichtlinien' or 'Datenschutzerklärungen'"
+  },
+  "title": "Datenschutzerklärungen",
+  "subtitle": "Verwalten und generieren Sie automatisch rechtliche Richtlinien aus Ihrem VVT.",
+  "loading": "Richtlinien werden geladen...",
+  "new_policy": "Neue Richtlinie",
+  "create_title": "Neue Richtlinie erstellen",
+  "name_placeholder": "z. B. Haupt-Datenschutzerklärung der Website",
+  "types": {
+    "website_visitors": "Website-Besucher",
+    "employees": "Mitarbeiter",
+    "cookie_policy": "Cookie-Richtlinie"
+  },
+  "creating": "Wird erstellt...",
+  "create": "Erstellen",
+  "cancel": "Abbrechen",
+  "out_of_sync": "Aktion erforderlich - Nicht synchronisiert",
+  "published_ago": "Veröffentlicht vor {time}",
+  "draft": "Entwurf - Nie veröffentlicht",
+  "auto_sync": "Auto-Sync aktiv",
+  "empty_state": "Noch keine Datenschutzerklärungen erstellt.",
+  "load_more": "Mehr laden",
+  "loading_more": "Wird geladen..."
+}

@@ -26,6 +26,7 @@ export default function EnterprisePage() {
           <li>Dedicated Database</li>
           <li>SIEM Integration</li>
           <li>Data Residency Options</li>
+          <li>REST APIs (Read & Write)</li>
         </ul>
       </div>
 

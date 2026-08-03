@@ -1,0 +1,22 @@
+{
+  "title": "Breach Register",
+  "subtitle": "Manage incidents, risk assessments, and supervisory authority notifications.",
+  "report_incident": "Report Incident",
+  "loading_more": "Loading more...",
+  "load_more": "Load More",
+  "list": {
+    "empty_title": "No breaches reported",
+    "empty_subtitle": "Report a new incident to begin the triage and assessment process.",
+    "columns": {
+      "entity": "Entity",
+      "reference": "Reference",
+      "incident": "Incident",
+      "status": "Status",
+      "risk_level": "Risk Level",
+      "discovered": "Discovered"
+    },
+    "unknown": "Unknown",
+    "unassessed": "Unassessed",
+    "manage": "Manage →"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Anbieter-Intelligenz' or 'Dienstleister-Verwaltung'"
+  },
+  "title": "Dienstleister-Verwaltung",
+  "subtitle": "Automatisierte Verfolgung von AVVs, TIAs und Unterauftragsverarbeiter-Risiken.",
+  "analyze_dpa": "AVV analysieren",
+  "export_register": "Register exportieren",
+  "discover_vendors": "Dienstleister entdecken",
+  "tabs": {
+    "tracked_register": "Verfolgtes Register ({count})",
+    "vendor_discovery": "Dienstleister-Entdeckung & Schatten-IT"
+  },
+  "metrics": {
+    "total_tracked": "Gesamt verfolgt",
+    "dpa_coverage": "AVV-Abdeckung",
+    "missing_dpas": "Fehlende / Abgelaufene AVVs",
+    "high_risk": "Hohes / Kritisches Risiko"
+  },
+  "filter_placeholder": "Dienstleister filtern...",
+  "add_custom_vendor": "Benutzerdefinierten Dienstleister hinzufügen",
+  "empty_state": "Noch keine Dienstleister verfolgt. Klicken Sie auf 'Dienstleister entdecken', um Ihr Register aufzubauen.",
+  "load_more": "Mehr laden",
+  "loading_more": "Wird geladen...",
+  "columns": {
+    "vendor": "Dienstleister",
+    "category": "Kategorie",
+    "dpa_status": "AVV-Status",
+    "risk_score": "Risiko & Stufe",
+    "data_locations": "Datenstandorte"
+  },
+  "dpa_status": {
+    "signed": "Unterzeichnet",
+    "expired": "Abgelaufen",
+    "missing": "Fehlt"
+  },
+  "locations": {
+    "hq": "Hauptsitz: {country}",
+    "unknown": "Unbekannt",
+    "eu_hosted": "(In der EU gehostet)"
+  },
+  "discover_modal": {
+    "title": "Globale Dienstleister entdecken",
+    "search_placeholder": "Suche nach Namen (z. B. HubSpot, AWS)...",
+    "no_results": "Keine globalen Dienstleister gefunden, die '{search}' entsprechen.",
+    "hq": "Hauptsitz: {country}",
+    "add_to_register": "Zum Register hinzufügen"
+  }
+}

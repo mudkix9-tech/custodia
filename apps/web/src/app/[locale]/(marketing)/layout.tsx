@@ -28,40 +28,23 @@ const spectral = Spectral({
   display: 'swap',
 });
 
+import { getTranslations } from 'next-intl/server';
+
 export async function generateMetadata({
   params
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  
-  const translations: Record<string, { title: string, desc: string, keywords: string[] }> = {
-    en: {
-      title: 'Custodia — GDPR Compliance Operating System for EU Agencies',
-      desc: 'The complete GDPR compliance platform built for EU marketing, digital, and design agencies. Replace consultants and spreadsheets.',
-      keywords: ['GDPR', 'ROPA', 'Consent Management', 'ePrivacy', 'Data Protection', 'Privacy Policy', 'DSAR', 'Compliance OS', 'Agency Compliance']
-    },
-    de: {
-      title: 'Custodia — GDPR-Compliance-Betriebssystem für EU-Agenturen',
-      desc: 'Die komplette GDPR-Compliance-Plattform für EU-Marketing-, Digital- und Design-Agenturen. Ersetzen Sie Berater und Tabellen.',
-      keywords: ['GDPR', 'DSGVO', 'ROPA', 'Einwilligungsmanagement', 'ePrivacy', 'Datenschutz', 'Datenschutzerklärung', 'DSAR', 'Compliance OS']
-    },
-    fr: {
-      title: "Custodia — Système d'exploitation de conformité RGPD pour les agences de l'UE",
-      desc: "La plateforme de conformité RGPD complète conçue pour les agences de marketing, de numérique et de design de l'UE.",
-      keywords: ['GDPR', 'RGPD', 'ROPA', 'Gestion du consentement', 'ePrivacy', 'Protection des données', 'Politique de confidentialité', 'DSAR']
-    }
-  };
-
-  const t = translations[locale] || translations.en;
+  const t = await getTranslations({ locale, namespace: 'marketing.seo' });
 
   return {
-    title: t.title,
-    description: t.desc,
-    keywords: t.keywords,
+    title: t('title'),
+    description: t('desc'),
+    keywords: ['GDPR', 'ROPA', 'Consent Management', 'ePrivacy', 'Data Protection', 'Privacy Policy', 'DSAR', 'Compliance OS', 'Agency Compliance'],
     openGraph: {
-      title: t.title,
-      description: t.desc,
+      title: t('title'),
+      description: t('desc'),
       url: `https://custodia.io/${locale}`,
       siteName: 'Custodia',
       images: [
@@ -69,15 +52,15 @@ export async function generateMetadata({
           url: 'https://custodia.io/og/homepage.png',
           width: 1200,
           height: 630,
-          alt: t.title,
+          alt: t('title'),
         }
       ],
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: t.title,
-      description: t.desc,
+      title: t('title'),
+      description: t('desc'),
       images: ['https://custodia.io/og/homepage.png'],
     },
     alternates: {
@@ -91,47 +74,53 @@ export async function generateMetadata({
   };
 }
 
-const FOOTER_COLUMNS = [
-  {
-    title: 'Platform',
-    links: [
-      { name: 'Features', href: '/features' },
-      { name: 'Pricing', href: '/pricing' },
-      { name: 'Security', href: '/security' },
-    ],
-  },
-  {
-    title: 'Company',
-    links: [
-      { name: 'About Custodia', href: '/about' },
-      { name: 'Enterprise', href: '/enterprise' },
-      { name: 'For Agencies', href: '/for-agencies' },
-      { name: 'Contact', href: '/contact' },
-    ],
-  },
-  {
-    title: 'Resources',
-    links: [
-      { name: 'GDPR guides', href: '/gdpr' },
-      { name: 'Changelog', href: '/changelog' },
-    ],
-  },
-  {
-    title: 'Legal',
-    links: [
-      { name: 'Terms of service', href: '/legal/terms' },
-      { name: 'Privacy notice', href: '/legal/privacy' },
-      { name: 'Cookie policy', href: '/legal/cookies' },
-      { name: 'Data processing agreement', href: '/legal/dpa' },
-    ],
-  },
-];
-
-export default function MarketingLayout({
+export default async function MarketingLayout({
   children,
+  params
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'marketing.layout' });
+
+  // Update FOOTER_COLUMNS with translations inline to avoid global scope issues
+  const FOOTER_COLUMNS = [
+    {
+      title: t('footer_columns.platform'),
+      links: [
+        { name: t('footer_links.features'), href: '/features' },
+        { name: t('footer_links.pricing'), href: '/pricing' },
+        { name: t('footer_links.security'), href: '/security' },
+      ],
+    },
+    {
+      title: t('footer_columns.company'),
+      links: [
+        { name: t('footer_links.about'), href: '/about' },
+        { name: t('footer_links.enterprise'), href: '/enterprise' },
+        { name: t('footer_links.for_agencies'), href: '/for-agencies' },
+        { name: t('footer_links.contact'), href: '/contact' },
+      ],
+    },
+    {
+      title: t('footer_columns.resources'),
+      links: [
+        { name: t('footer_links.gdpr_guides'), href: '/gdpr' },
+        { name: t('footer_links.changelog'), href: '/changelog' },
+      ],
+    },
+    {
+      title: t('footer_columns.legal'),
+      links: [
+        { name: t('footer_links.terms'), href: '/legal/terms' },
+        { name: t('footer_links.privacy'), href: '/legal/privacy' },
+        { name: t('footer_links.cookies'), href: '/legal/cookies' },
+        { name: t('footer_links.dpa'), href: '/legal/dpa' },
+      ],
+    },
+  ];
+
   return (
     <div
       className={`min-h-screen bg-surface-base text-text-primary font-sans selection:bg-accent-gold selection:text-surface-base overflow-x-hidden flex flex-col relative antialiased ${plexSans.variable} ${plexMono.variable} ${spectral.variable}`}
@@ -146,7 +135,7 @@ export default function MarketingLayout({
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-surface-panel-top focus:text-text-primary focus:px-4 focus:py-2.5 focus:rounded-lg focus:border focus:border-accent-gold/30 focus:outline-none"
       >
-        Skip to main content
+        {t('skip_to_content')}
       </a>
 
       {/* Precision Grid Background */}
@@ -169,11 +158,11 @@ export default function MarketingLayout({
             <div className="col-span-2">
               <Logo />
               <p className="text-text-subtle text-xs leading-relaxed max-w-xs mt-4 mb-6">
-                The compliance automation platform designed for modern agencies.
+                {t('footer_description')}
               </p>
               <div className="flex items-center gap-4 text-[#5C6266] [font-family:var(--font-plex-mono)] text-[10px]">
                 <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-accent-gold" /> AWS Dublin</span>
-                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-accent-gold" /> SSL Secured</span>
+                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-accent-gold" /> {t('secured')}</span>
               </div>
             </div>
 
@@ -191,7 +180,7 @@ export default function MarketingLayout({
           </div>
 
           <div className="border-t border-white/7 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-[#5C6266] [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.02em]">© {new Date().getFullYear()} Custodia. All rights reserved.</p>
+            <p className="text-[#5C6266] [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.02em]">{t('rights', { year: new Date().getFullYear() })}</p>
             <FooterLocaleSwitcher />
           </div>
         </div>

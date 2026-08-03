@@ -5,8 +5,9 @@ import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import WebhookDeliveryLog from '@/components/developers/WebhookDeliveryLog';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
-import { ExternalLink, Copy, Check, Eye, EyeOff, Key, Plus, Trash2, Webhook, Activity, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Key, Plus, Trash2, Webhook, Activity, AlertCircle } from 'lucide-react';
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
+import { useTranslations } from 'next-intl';
 
 
 function Card({ children, className }: { children: React.ReactNode, className?: string }) {
@@ -21,6 +22,7 @@ const ALL_EVENTS = [
 ];
 
 export default function DevelopersSettingsPage() {
+  const t = useTranslations('settings.developers');
   const [isKeyModalOpen, setKeyModalOpen] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [keyName, setKeyName] = useState('');
@@ -81,43 +83,43 @@ export default function DevelopersSettingsPage() {
   return (
     <div className="space-y-8 p-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Developers</h1>
-        <p className="text-slate-500">Manage API keys and Webhooks for external integrations</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('title')}</h1>
+        <p className="text-slate-500">{t('subtitle')}</p>
       </div>
 
       <Card>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-slate-800">API Keys</h2>
+          <h2 className="text-xl font-semibold text-slate-800">{t('api_keys.title')}</h2>
           <button
             className="bg-slate-900 text-white px-4 py-2 rounded-md font-medium text-sm"
             onClick={() => setKeyModalOpen(true)}
           >
-            Create API Key
+            {t('api_keys.create')}
           </button>
         </div>
 
         <div className="space-y-4">
-          {keysQuery.data?.length === 0 && <p className="text-slate-500 text-sm">No API keys found.</p>}
+          {keysQuery.data?.length === 0 && <p className="text-slate-500 text-sm">{t('api_keys.no_keys')}</p>}
           {keysQuery.data?.map(key => (
             <div key={key.id} className="flex justify-between items-center border border-slate-200 p-4 rounded-md bg-slate-50">
               <div>
                 <p className="font-medium text-slate-900 flex items-center gap-2">
                   {key.name}
-                  {key.revokedAt && <span className="bg-red-500/20 text-red-400 text-xs px-2 py-0.5 rounded-full">Revoked</span>}
+                  {key.revokedAt && <span className="bg-red-500/20 text-red-400 text-xs px-2 py-0.5 rounded-full">{t('api_keys.revoked')}</span>}
                 </p>
                 <div className="text-sm font-mono text-slate-500 mt-1">{key.prefix}••••••••</div>
                 <div className="text-xs text-slate-400 mt-1">
-                  Scopes: {(key.scopes as string[]).join(', ')} •
-                  IPs: {key.allowedIps ? (key.allowedIps as string[]).join(', ') : 'Any'} •
-                  Uses: {key.requestCount}
+                  {t('api_keys.scopes')} {(key.scopes as string[]).join(', ')} •
+                  {t('api_keys.ips')} {key.allowedIps ? (key.allowedIps as string[]).join(', ') : t('api_keys.any')} •
+                  {t('api_keys.uses')} {key.requestCount}
                 </div>
               </div>
               {!key.revokedAt && (
                 <button
                   className="text-red-400 hover:text-red-400 text-sm font-medium border border-red-900/50 px-3 py-1.5 rounded bg-[#0D0F11]"
-                  onClick={async () => { const confirmed = await confirm({ title: 'Revoke API Key?', description: 'This will instantly disable the key. Any applications using it will lose access.', variant: 'destructive', confirmText: 'Revoke' }); if (confirmed) revokeKeyMutation.mutate({ id: key.id }); }}
+                  onClick={async () => { const confirmed = await confirm({ title: t('api_keys.revoke_title'), description: t('api_keys.revoke_description'), variant: 'destructive', confirmText: t('api_keys.revoke') }); if (confirmed) revokeKeyMutation.mutate({ id: key.id }); }}
                 >
-                  Revoke
+                  {t('api_keys.revoke')}
                 </button>
               )}
             </div>
@@ -127,48 +129,48 @@ export default function DevelopersSettingsPage() {
 
       <Card>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-slate-800">Webhooks</h2>
+          <h2 className="text-xl font-semibold text-slate-800">{t('webhooks.title')}</h2>
           <button
             className="bg-slate-900 text-white px-4 py-2 rounded-md font-medium text-sm"
             onClick={() => setWebhookModalOpen(true)}
           >
-            Add Webhook
+            {t('webhooks.add')}
           </button>
         </div>
 
         <div className="space-y-4">
-          {webhooksQuery.data?.length === 0 && <p className="text-slate-500 text-sm">No webhooks found.</p>}
+          {webhooksQuery.data?.length === 0 && <p className="text-slate-500 text-sm">{t('webhooks.no_webhooks')}</p>}
           {webhooksQuery.data?.map(hook => (
             <div key={hook.id} className="border border-slate-200 p-4 rounded-md bg-slate-50">
               <div className="flex justify-between items-center">
                 <div>
                   <p className="font-medium text-slate-900">{hook.url}</p>
                   <p className="text-xs text-slate-500 mt-1">
-                    Subscribed to: {(hook.events as string[]).length} events
+                    {t('webhooks.subscribed_to')} {(hook.events as string[]).length} {t('webhooks.events')}
                   </p>
-                  {!hook.isActive && <p className="text-xs text-red-500 mt-1">Disabled due to consecutive failures</p>}
+                  {!hook.isActive && <p className="text-xs text-red-500 mt-1">{t('webhooks.disabled')}</p>}
                 </div>
                 <div className="flex gap-2">
                   <button
                     className="text-slate-600 hover:text-slate-900 text-sm font-medium border border-slate-200 px-3 py-1.5 rounded bg-[#0D0F11]"
                     onClick={() => {
                       testWebhookMutation.mutate({ id: hook.id }, {
-                        onSuccess: () => alert('Test event successfully dispatched!'),
-                        onError: (e) => alert('Failed to dispatch test event: ' + e.message)
+                        onSuccess: () => alert(t('webhooks.test_success')),
+                        onError: (e) => alert(t('webhooks.test_failure') + e.message)
                       });
                     }}
                     disabled={testWebhookMutation.isPending}
                   >
-                    Send Test
+                    {t('webhooks.send_test')}
                   </button>
                   <button
                     className="text-red-400 hover:text-red-400 text-sm font-medium border border-red-900/50 px-3 py-1.5 rounded bg-[#0D0F11]"
                     onClick={async () => {
-                      const confirmed = await confirm({ title: 'Delete webhook?', description: 'This will permanently delete the webhook and stop sending events.', variant: 'destructive' });
+                      const confirmed = await confirm({ title: t('webhooks.delete_title'), description: t('webhooks.delete_description'), variant: 'destructive' });
                       if (confirmed) deleteWebhookMutation.mutate({ id: hook.id });
                     }}
                   >
-                    Delete
+                    {t('webhooks.delete')}
                   </button>
                 </div>
               </div>
@@ -181,21 +183,21 @@ export default function DevelopersSettingsPage() {
       {isKeyModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
           <div className="bg-[#0D0F11] rounded-lg p-6 max-w-md w-full shadow-panel-elevated">
-            <h3 className="text-lg font-bold mb-4">Create API Key</h3>
+            <h3 className="text-lg font-bold mb-4">{t('api_keys.modal.title')}</h3>
             {!newKey ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('api_keys.modal.name')}</label>
                   <input
                     type="text"
                     value={keyName}
                     onChange={e => setKeyName(e.target.value)}
                     className="w-full border border-slate-300 px-3 py-2 rounded-md focus:ring-1 focus:ring-slate-900"
-                    placeholder="e.g. Production Zapier"
+                    placeholder={t('api_keys.modal.name_placeholder')}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Scopes</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('api_keys.modal.scopes')}</label>
                   <div className="flex gap-2 text-sm">
                     {['read', 'write', 'delete'].map(scope => (
                       <label key={scope} className="flex items-center gap-1 cursor-pointer">
@@ -212,30 +214,30 @@ export default function DevelopersSettingsPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Allowed IPs (Optional, comma-separated)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('api_keys.modal.allowed_ips')}</label>
                   <input
                     type="text"
                     value={keyAllowedIps}
                     onChange={e => setKeyAllowedIps(e.target.value)}
                     className="w-full border border-slate-300 px-3 py-2 rounded-md focus:ring-1 focus:ring-slate-900"
-                    placeholder="e.g. 192.168.1.1, 10.0.0.1"
+                    placeholder={t('api_keys.modal.allowed_ips_placeholder')}
                   />
                 </div>
                 <div className="flex justify-end gap-2 pt-4">
-                  <button onClick={() => setKeyModalOpen(false)} className="px-4 py-2 text-slate-600 hover:text-slate-900">Cancel</button>
+                  <button onClick={() => setKeyModalOpen(false)} className="px-4 py-2 text-slate-600 hover:text-slate-900">{t('api_keys.modal.cancel')}</button>
                   <button
                     onClick={handleCreateKey}
                     disabled={!keyName || createKeyMutation.isPending}
                     className="bg-slate-900 text-white px-4 py-2 rounded-md disabled:opacity-50"
                   >
-                    Generate Key
+                    {t('api_keys.modal.generate')}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="p-3 bg-red-500/10 text-red-400 text-sm font-medium rounded-md border border-red-900/50">
-                  This key will only be shown once. Copy it now and store it securely.
+                  {t('api_keys.modal.warning')}
                 </div>
                 <div className="bg-slate-100 border border-slate-200 p-4 rounded-md font-mono text-sm break-all text-slate-900">
                   {newKey}
@@ -244,7 +246,7 @@ export default function DevelopersSettingsPage() {
                   onClick={() => { setKeyModalOpen(false); setNewKey(null); setKeyName(''); setKeyScopes(['read']); setKeyAllowedIps(''); }}
                   className="w-full bg-slate-900 text-white px-4 py-2 rounded-md font-medium"
                 >
-                  I&apos;ve copied the key
+                  {t('api_keys.modal.copied')}
                 </button>
               </div>
             )}
@@ -255,21 +257,21 @@ export default function DevelopersSettingsPage() {
       {isWebhookModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
           <div className="bg-[#0D0F11] rounded-lg p-6 max-w-lg w-full shadow-panel-elevated">
-            <h3 className="text-lg font-bold mb-4">Add Webhook</h3>
+            <h3 className="text-lg font-bold mb-4">{t('webhooks.modal.title')}</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Payload URL</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('webhooks.modal.payload_url')}</label>
                 <input
                   type="url"
                   value={webhookUrl}
                   onChange={e => setWebhookUrl(e.target.value)}
                   className="w-full border border-slate-300 px-3 py-2 rounded-md focus:ring-1 focus:ring-slate-900"
-                  placeholder="https://example.com/api/webhook"
+                  placeholder={t('webhooks.modal.url_placeholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Events to send</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">{t('webhooks.modal.events_to_send')}</label>
                 <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-md p-2 space-y-1">
                   {ALL_EVENTS.map(event => (
                     <label key={event} className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer text-sm">
@@ -286,13 +288,13 @@ export default function DevelopersSettingsPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                <button onClick={() => setWebhookModalOpen(false)} className="px-4 py-2 text-slate-600 hover:text-slate-900">Cancel</button>
+                <button onClick={() => setWebhookModalOpen(false)} className="px-4 py-2 text-slate-600 hover:text-slate-900">{t('webhooks.modal.cancel')}</button>
                 <button
                   onClick={handleCreateWebhook}
                   disabled={!webhookUrl || webhookEvents.length === 0 || createWebhookMutation.isPending}
                   className="bg-slate-900 text-white px-4 py-2 rounded-md disabled:opacity-50"
                 >
-                  Add Webhook
+                  {t('webhooks.modal.add')}
                 </button>
               </div>
             </div>

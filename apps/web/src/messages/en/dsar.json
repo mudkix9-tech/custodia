@@ -1,0 +1,33 @@
+{
+  "title": "DSAR Automation",
+  "subtitle": "Manage Data Subject Access Requests within the legal 30-day deadline.",
+  "loading": "Loading DSARs...",
+  "status_columns": {
+    "new": "New",
+    "verification": "Verification",
+    "in_progress": "In Progress",
+    "review": "Review",
+    "completed": "Completed"
+  },
+  "deadline": {
+    "overdue": "Overdue",
+    "days": "{count} days"
+  },
+  "unknown_entity": "Unknown",
+  "unverified": "Unverified",
+  "verified": "Verified",
+  "pending": "Pending",
+  "view": "View",
+  "table_headers": {
+    "entity": "Entity",
+    "reference": "Reference",
+    "subject": "Subject",
+    "type": "Type",
+    "status": "Status",
+    "deadline": "Deadline",
+    "verification": "Verification",
+    "action": "Action"
+  },
+  "load_more": "Load More",
+  "loading_more": "Loading more..."
+}

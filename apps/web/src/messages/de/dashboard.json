@@ -1,8 +1,44 @@
 {
-  "title": "Dashboard",
-  "overview": "Übersicht",
-  "compliance_score": "Compliance-Punktzahl",
-  "recent_activity": "Letzte Aktivität",
-  "pending_tasks": "Ausstehende Aufgaben",
-  "view_all": "Alle ansehen"
+  "_review_notes": {
+    "dpia.title": "REVIEW: Verify 'DPIA' is correctly understood or if 'DSFA' (Datenschutz-Folgenabschätzung) is preferred",
+    "active_processing": "REVIEW: Verify 'Verarbeitungsaktivitäten' for 'Processing Activities' (ROPA context)"
+  },
+  "title": "Willkommen zurück",
+  "subtitle": "Hier ist Ihre Compliance-Übersicht und anstehende Aufgaben.",
+  "compliance_score": "Compliance-Score",
+  "active_processing": "Aktive Verarbeitungsaktivitäten",
+  "pending_dsars": "Ausstehende Betroffenenanfragen",
+  "high_risk_vendors": "Hochrisiko-Anbieter",
+  "undocumented_services": "Undokumentierte Dienste",
+  "setup_progress": {
+    "title": "Schließen Sie Ihre Arbeitsbereich-Einrichtung ab",
+    "description": "Sie haben derzeit {score}% Compliance. Erledigen Sie diese Aufgaben, um Ihren Score zu verbessern.",
+    "onboarding_title": "Onboarding-Assistenten abschließen",
+    "onboarding_desc": "Machen Sie dort weiter, wo Sie aufgehört haben",
+    "ropa_title": "Vervollständigen Sie Ihre Verarbeitungsübersicht (ROPA)",
+    "ropa_desc": "Aktivitäten benötigen Aufbewahrungsfristen",
+    "vendors_title": "AVV mit Anbietern unterzeichnen",
+    "vendors_desc": "Anbieter benötigen unterzeichnete AVV (DPAs)"
+  },
+  "regulatory": {
+    "title": "Regulatorische Updates",
+    "new_count": "{count} Neu",
+    "high_impact": "Hohe Auswirkung",
+    "advisory": "Hinweis",
+    "affected_entities": "Betroffene Entitäten:",
+    "acknowledge": "Bestätigen",
+    "view_details": "Details anzeigen"
+  },
+  "dpia": {
+    "title": "Überfällige DSFA-Behebungen",
+    "singular": "1 Maßnahme zur Risikominderung ist überfällig",
+    "plural": "{count} Maßnahmen zur Risikominderung sind überfällig",
+    "resolve": "Lücken schließen"
+  },
+  "breach": {
+    "title": "Sicherheitsmaßnahme erforderlich",
+    "singular": "1 Anbieter-Vorfall erfordert Aufmerksamkeit",
+    "plural": "{count} Anbieter-Vorfälle erfordern Aufmerksamkeit",
+    "review": "Bedrohungen überprüfen"
+  }
 }

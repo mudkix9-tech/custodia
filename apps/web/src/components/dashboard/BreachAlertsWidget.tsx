@@ -5,8 +5,10 @@ import React from 'react';
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
 import { AlertTriangle, ArrowRight, ShieldAlert } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function BreachAlertsWidget() {
+  const t = useTranslations('dashboard.breach');
   const { data: alertsCount, isLoading } = trpc.vendors.getUnreadIncidentAlertsCount.useQuery();
 
   if (isLoading || !alertsCount || alertsCount.count === 0) return null;
@@ -20,11 +22,11 @@ export function BreachAlertsWidget() {
           <ShieldAlert className="w-5 h-5" />
         </div>
         <div>
-          <h4 className="font-bold text-red-950 text-sm">Security Action Required</h4>
+          <h4 className="font-bold text-red-950 text-sm">{t('title')}</h4>
           <p className="text-xs text-red-400 mt-0.5 font-medium">
             {count === 1 
-              ? '1 vendor breach alert requires attention' 
-              : `${count} vendor breach alerts require attention`}
+              ? t('singular') 
+              : t('plural', { count })}
           </p>
         </div>
       </div>
@@ -33,7 +35,7 @@ export function BreachAlertsWidget() {
         href="/vendors" 
         className="inline-flex items-center gap-1 bg-red-900 hover:bg-red-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-panel-elevated self-end sm:self-auto shrink-0"
       >
-        Review Threats <ArrowRight className="w-3.5 h-3.5" />
+        {t('review')} <ArrowRight className="w-3.5 h-3.5" />
       </Link>
     </div>
   );

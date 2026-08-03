@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { trpc } from '@/utils/trpc';
+import { useTranslations } from 'next-intl';
 
 export function SetupProgress() {
   const { data: status, isLoading } = trpc.onboarding.getStatus.useQuery();
@@ -18,36 +19,37 @@ export function SetupProgress() {
 }
 
 function SetupProgressCard() {
+  const t = useTranslations('dashboard.setup_progress');
   const score = 35; // Defaulting for demo before real score is available
 
   return (
     <div className="bg-[#0D0F11] border-2 border-blue-900/50 rounded-2xl p-6 shadow-panel-elevated mb-8 flex flex-col md:flex-row gap-6 items-start">
       <div className="flex-1">
-        <h2 className="text-lg font-bold text-gray-900 mb-2">Complete your workspace setup</h2>
-        <p className="text-gray-600 mb-4 text-sm">You're currently at {score}% compliance. Complete these tasks to improve your score.</p>
+        <h2 className="text-lg font-bold text-gray-900 mb-2">{t('title')}</h2>
+        <p className="text-gray-600 mb-4 text-sm">{t('description', { score })}</p>
 
         <div className="space-y-3">
           <Link href="/onboarding" className="flex items-center p-3 hover:bg-gray-50 rounded border border-transparent hover:border-gray-200 transition">
             <div className="w-5 h-5 rounded-full border border-gray-300 mr-3"></div>
             <div className="flex-1">
-              <span className="font-medium text-sm text-gray-900">Finish Onboarding Wizard</span>
-              <p className="text-xs text-gray-500">Pick up where you left off</p>
+              <span className="font-medium text-sm text-gray-900">{t('onboarding_title')}</span>
+              <p className="text-xs text-gray-500">{t('onboarding_desc')}</p>
             </div>
           </Link>
 
           <Link href="/ropa" className="flex items-center p-3 hover:bg-gray-50 rounded border border-transparent hover:border-gray-200 transition">
             <div className="w-5 h-5 rounded-full border border-gray-300 mr-3"></div>
             <div className="flex-1">
-              <span className="font-medium text-sm text-gray-900">Complete your ROPA</span>
-              <p className="text-xs text-gray-500">Activities need retention periods</p>
+              <span className="font-medium text-sm text-gray-900">{t('ropa_title')}</span>
+              <p className="text-xs text-gray-500">{t('ropa_desc')}</p>
             </div>
           </Link>
 
           <Link href="/vendors" className="flex items-center p-3 hover:bg-gray-50 rounded border border-transparent hover:border-gray-200 transition">
             <div className="w-5 h-5 rounded-full border border-gray-300 mr-3"></div>
             <div className="flex-1">
-              <span className="font-medium text-sm text-gray-900">Sign vendor DPAs</span>
-              <p className="text-xs text-gray-500">Vendors need signed DPAs</p>
+              <span className="font-medium text-sm text-gray-900">{t('vendors_title')}</span>
+              <p className="text-xs text-gray-500">{t('vendors_desc')}</p>
             </div>
           </Link>
         </div>

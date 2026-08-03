@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 const PRICING = [
   { name: 'Professional', price: '99', yearly: '79', desc: 'The complete OS for growing agencies.', cta: 'Start free trial', href: '/signup', features: ['Unlimited users & processing activities', 'Unlimited vendors & DPIAs', 'Cookie consent (50 domains)', 'AI compliance advisor (2,000 queries)'], popular: true },
-  { name: 'Enterprise', price: 'Custom', yearly: 'Custom', desc: 'For large organizations needing custom compliance controls.', cta: 'Contact us', href: '/contact', features: ['Everything in Professional', 'Custom data residency', 'SSO & Custom Roles', 'Dedicated Account Manager'], popular: false },
+  { name: 'Enterprise', price: 'Custom', yearly: 'Custom', desc: 'For large organizations needing custom compliance controls.', cta: 'Contact us', href: '/contact', features: ['Everything in Professional', 'Custom data residency', 'SSO & Custom Roles', 'Dedicated Account Manager', 'REST APIs (Read & Write)'], popular: false },
 ];
 
 const FAQS = [

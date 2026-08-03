@@ -1,0 +1,18 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Meine Schulungen'"
+  },
+  "title": "Meine Schulungen",
+  "subtitle": "Absolvieren Sie Ihre obligatorischen Datenschutz- und Sicherheitsschulungen.",
+  "training_due": {
+    "title": "Schulung fällig",
+    "description": "Sie haben {count} unvollständige Schulungsmodule. Bitte schließen Sie diese so bald wie möglich ab."
+  },
+  "assigned_modules": "Zugewiesene Module",
+  "resume_course": "Kurs fortsetzen",
+  "start_course": "Kurs starten",
+  "download_certificate": "Zertifikat herunterladen",
+  "score": "Ergebnis: {score}%",
+  "valid_until": "Gültig bis {date}",
+  "empty_state": "Ihnen sind keine Schulungsmodule zugewiesen."
+}

@@ -1,0 +1,25 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Registre des violations' or 'Registre des incidents'"
+  },
+  "title": "Registre des violations",
+  "subtitle": "Gérez les incidents, les évaluations des risques et les notifications aux autorités de contrôle.",
+  "report_incident": "Signaler un incident",
+  "loading_more": "Chargement...",
+  "load_more": "Charger plus",
+  "list": {
+    "empty_title": "Aucune violation signalée",
+    "empty_subtitle": "Signalez un nouvel incident pour commencer le processus d'évaluation et de tri.",
+    "columns": {
+      "entity": "Entité",
+      "reference": "Référence",
+      "incident": "Incident",
+      "status": "Statut",
+      "risk_level": "Niveau de risque",
+      "discovered": "Découvert le"
+    },
+    "unknown": "Inconnu",
+    "unassessed": "Non évalué",
+    "manage": "Gérer →"
+  }
+}

@@ -7,7 +7,8 @@ import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { useSession } from 'next-auth/react';
-import { Users, MoreVertical, Shield, UserPlus, Mail, ShieldAlert, Loader2, Plus, Settings } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { Users, MoreVertical, Shield, UserPlus, Mail, ShieldAlert, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 
 const MODULES = ['ROPA', 'Vendors', 'DSARs', 'Breaches', 'Training', 'Billing', 'Users'];
@@ -15,6 +16,7 @@ const ACTIONS = ['View', 'Edit', 'Manage'];
 
 export default function TeamSettingsPage() {
   const { data: session } = useSession();
+  const t = useTranslations('settings.team');
   const userRole = (session?.user as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.role || 'member';
   const isAdmin = userRole === 'admin' || userRole === 'owner';
   const isOwner = userRole === 'owner';
@@ -104,8 +106,8 @@ export default function TeamSettingsPage() {
     <div className="max-w-5xl mx-auto p-8 fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">Team Management</h1>
-          <p className="text-[#9BA1A6]">Manage organization members, roles, and granular access permissions.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
+          <p className="text-[#9BA1A6]">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -115,27 +117,27 @@ export default function TeamSettingsPage() {
             <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-medium text-[#F4F5F6] flex items-center gap-2">
-                  <UserPlus className="w-5 h-5" /> Invite New Members
+                  <UserPlus className="w-5 h-5" /> {t('invite.title')}
                 </h2>
                 <button
                   type="button"
                   onClick={() => { setIsBulk(!isBulk); setInviteEmails(''); }}
                   className="text-sm text-[#C9A227] hover:text-[#C9A227] font-medium"
                 >
-                  {isBulk ? 'Single invite' : 'Bulk invite'}
+                  {isBulk ? t('invite.single_invite') : t('invite.bulk_invite')}
                 </button>
               </div>
 
               <form onSubmit={handleInvite} className={`flex gap-4 ${isBulk ? 'flex-col' : 'items-end'}`}>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{isBulk ? 'Email Addresses (one per line)' : 'Email Address'}</label>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{isBulk ? t('invite.email_bulk') : t('invite.email_single')}</label>
                   {isBulk ? (
                     <textarea
                       required
                       value={inviteEmails}
                       onChange={e => setInviteEmails(e.target.value)}
                       className="w-full bg-[#08090A] border border-white/10 rounded-lg p-3 text-sm h-32 resize-none"
-                      placeholder="colleague1@example.com&#10;colleague2@example.com"
+                      placeholder={t('invite.email_placeholder_bulk')}
                     />
                   ) : (
                     <div className="relative">
@@ -146,21 +148,21 @@ export default function TeamSettingsPage() {
                         value={inviteEmails}
                         onChange={e => setInviteEmails(e.target.value)}
                         className="w-full bg-[#08090A] border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm"
-                        placeholder="colleague@example.com"
+                        placeholder={t('invite.email_placeholder_single')}
                       />
                     </div>
                   )}
                 </div>
                 <div className={`${isBulk ? 'w-full' : 'w-48'}`}>
-                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Role</label>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('invite.role')}</label>
                   <select
                     value={inviteRole}
                     onChange={e => setInviteRole(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)}
                     className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm"
                   >
-                    <option value="admin">Admin</option>
-                    <option value="member">Member</option>
-                    <option value="viewer">Viewer</option>
+                    <option value="admin">{t('invite.roles.admin')}</option>
+                    <option value="member">{t('invite.roles.member')}</option>
+                    <option value="viewer">{t('invite.roles.viewer')}</option>
                   </select>
                 </div>
                 <button
@@ -168,10 +170,10 @@ export default function TeamSettingsPage() {
                   disabled={inviteStatus === 'sending'}
                   className={`bg-ink-900 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 ${isBulk ? 'w-full' : 'h-[38px]'}`}
                 >
-                  {inviteStatus === 'sending' ? 'Sending...' : 'Send Invitations'}
+                  {inviteStatus === 'sending' ? t('invite.sending') : t('invite.send')}
                 </button>
               </form>
-              {inviteStatus === 'sent' && <p className="text-sm text-[#C9A227] mt-2">Invitations sent successfully!</p>}
+              {inviteStatus === 'sent' && <p className="text-sm text-[#C9A227] mt-2">{t('invite.success')}</p>}
               {inviteStatus === 'error' && <p className="text-sm text-red-400 mt-2">{inviteError}</p>}
             </div>
           )}
@@ -179,18 +181,18 @@ export default function TeamSettingsPage() {
           <div className="bg-[#0D0F11] rounded-2xl border border-white/10 overflow-hidden shadow-panel-elevated">
             <div className="p-6 border-b border-white/10">
               <h2 className="text-lg font-medium text-[#F4F5F6] flex items-center gap-2">
-                <Users className="w-5 h-5" /> Current Members
+                <Users className="w-5 h-5" /> {t('members.title')}
               </h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#08090A] border-b border-white/10 text-xs font-semibold text-[#6E747A] uppercase tracking-wider">
-                    <th className="px-6 py-3">Name</th>
-                    <th className="px-6 py-3">Email</th>
-                    <th className="px-6 py-3">Role</th>
-                    <th className="px-6 py-3">Joined</th>
-                    {isAdmin && <th className="px-6 py-3 text-right">Actions</th>}
+                    <th className="px-6 py-3">{t('members.columns.name')}</th>
+                    <th className="px-6 py-3">{t('members.columns.email')}</th>
+                    <th className="px-6 py-3">{t('members.columns.role')}</th>
+                    <th className="px-6 py-3">{t('members.columns.joined')}</th>
+                    {isAdmin && <th className="px-6 py-3 text-right">{t('members.columns.actions')}</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-900/10 text-sm">
@@ -201,7 +203,7 @@ export default function TeamSettingsPage() {
                           <div className="w-8 h-8 rounded-full bg-sage-100 text-[#C9A227] flex items-center justify-center font-medium text-xs">
                             {member.name?.[0]?.toUpperCase() || member.email[0].toUpperCase()}
                           </div>
-                          {member.name || 'Invited User'}
+                          {member.name || t('members.invited_user')}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-[#9BA1A6]">{member.email}</td>
@@ -213,14 +215,14 @@ export default function TeamSettingsPage() {
                             className="bg-transparent border border-white/20 rounded text-sm text-[#E6E8EA] focus:ring-sage-500 py-1 pl-2 pr-6 max-w-[120px]"
                             disabled={member.role === 'owner' && !isOwner}
                           >
-                            <optgroup label="Basic Roles">
-                              <option value="owner" disabled>Owner</option>
-                              <option value="admin">Admin</option>
-                              <option value="member">Member</option>
-                              <option value="viewer">Viewer</option>
+                            <optgroup label={t('members.roles.basic_roles')}>
+                              <option value="owner" disabled>{t('members.roles.owner')}</option>
+                              <option value="admin">{t('members.roles.admin')}</option>
+                              <option value="member">{t('members.roles.member')}</option>
+                              <option value="viewer">{t('members.roles.viewer')}</option>
                             </optgroup>
                             {customRoles && customRoles.length > 0 && (
-                              <optgroup label="Custom Roles">
+                              <optgroup label={t('members.roles.custom_roles')}>
                                 {customRoles.map((cr: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => (
                                   <option key={cr.id} value={cr.id}>{cr.name}</option>
                                 ))}
@@ -238,7 +240,7 @@ export default function TeamSettingsPage() {
                           <span className="text-clay-600 italic">Invited {format(new Date(member.invitedAt), 'MMM d, yyyy')}</span>
                         ) : member.createdAt ? (
                           format(new Date(member.createdAt), 'MMM d, yyyy')
-                        ) : 'Unknown'}
+                        ) : t('members.unknown')}
                       </td>
                       {isAdmin && (
                         <td className="px-6 py-4 text-right">
@@ -247,14 +249,14 @@ export default function TeamSettingsPage() {
                               onClick={() => setSelectedUser(selectedUser?.id === member.id ? null : member)}
                               className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${selectedUser?.id === member.id ? 'bg-sage-100 text-[#C9A227]' : 'bg-[#0D0F11] border border-white/10 text-[#9BA1A6] hover:bg-ink-900/5'}`}
                             >
-                              Permissions
+                              {t('members.permissions')}
                             </button>
                             {member.id !== (session?.user as { id?: string })?.id && member.role !== 'owner' && (
                               <button
                                 onClick={() => handleRemove(member.id, member.name || member.email)}
                                 className="text-xs font-medium text-red-400 hover:bg-red-500/10 bg-[#0D0F11] border border-red-900/50 px-3 py-1.5 rounded-md transition-colors"
                               >
-                                Remove
+                                {t('members.remove')}
                               </button>
                             )}
                           </div>
@@ -265,7 +267,7 @@ export default function TeamSettingsPage() {
                 </tbody>
               </table>
               {team?.length === 0 && (
-                <div className="p-8 text-center text-[#6E747A]">No team members found.</div>
+                <div className="p-8 text-center text-[#6E747A]">{t('members.no_members')}</div>
               )}
             </div>
           </div>
@@ -274,7 +276,7 @@ export default function TeamSettingsPage() {
           <div className="bg-[#0D0F11] rounded-2xl border border-white/10 overflow-hidden shadow-panel-elevated mt-8">
             <div className="p-6 border-b border-white/10">
               <h2 className="text-lg font-medium text-[#F4F5F6] flex items-center gap-2">
-                <Mail className="w-5 h-5" /> Pending Invitations
+                <Mail className="w-5 h-5" /> {t('pending.title')}
               </h2>
             </div>
             <div className="overflow-x-auto">
@@ -285,14 +287,14 @@ export default function TeamSettingsPage() {
                       <td className="px-6 py-4 font-medium text-[#F4F5F6]">{member.email}</td>
                       <td className="px-6 py-4 capitalize text-[#9BA1A6]">{member.role}</td>
                       <td className="px-6 py-4 text-[#6E747A] text-right">
-                        <button className="text-xs font-medium bg-[#0D0F11] border border-white/10 text-[#9BA1A6] hover:bg-ink-900/5 px-3 py-1.5 rounded-md mr-2">Resend</button>
-                        <button onClick={() => handleRemove(member.id, member.email)} className="text-xs font-medium text-red-400 hover:bg-red-500/10 bg-[#0D0F11] border border-red-900/50 px-3 py-1.5 rounded-md">Cancel</button>
+                        <button className="text-xs font-medium bg-[#0D0F11] border border-white/10 text-[#9BA1A6] hover:bg-ink-900/5 px-3 py-1.5 rounded-md mr-2">{t('pending.resend')}</button>
+                        <button onClick={() => handleRemove(member.id, member.email)} className="text-xs font-medium text-red-400 hover:bg-red-500/10 bg-[#0D0F11] border border-red-900/50 px-3 py-1.5 rounded-md">{t('pending.cancel')}</button>
                       </td>
                     </tr>
                   ))}
                   {team?.filter(m => m.invitedAt && !m.emailVerified).length === 0 && (
                      <tr className="hover:bg-ink-900/5">
-                       <td colSpan={3} className="px-6 py-4 text-[#6E747A] text-center">No pending invitations.</td>
+                       <td colSpan={3} className="px-6 py-4 text-[#6E747A] text-center">{t('pending.no_pending')}</td>
                      </tr>
                   )}
                 </tbody>
@@ -307,7 +309,7 @@ export default function TeamSettingsPage() {
           <div className="w-[380px] fixed top-[73px] bottom-0 right-0 bg-[#0D0F11] border-l border-white/10 shadow-panel-elevated z-30 overflow-y-auto">
             <div className="p-6 border-b border-white/10 sticky top-0 bg-[#0D0F11] z-10 flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-medium text-[#F4F5F6]">Edit Permissions</h3>
+                <h3 className="text-lg font-medium text-[#F4F5F6]">{t('permissions.title')}</h3>
                 <p className="text-sm text-[#6E747A] mt-1">{selectedUser.name}</p>
               </div>
               <button onClick={() => setSelectedUser(null)} className="text-[#6E747A] hover:text-[#F4F5F6] bg-ink-900/5 hover:bg-ink-900/10 p-2 rounded-full transition-colors">
@@ -319,18 +321,18 @@ export default function TeamSettingsPage() {
               {selectedUser.role === 'owner' ? (
                 <div className="bg-amber-500/10 text-amber-800 p-4 rounded-lg text-sm border border-amber-900/50">
                   <ShieldAlert className="w-5 h-5 mb-2" />
-                  Owner permissions cannot be restricted. They have full access to all modules.
+                  {t('permissions.owner_warning')}
                 </div>
               ) : (
                 <div className="space-y-6">
                   <p className="text-sm text-[#9BA1A6] mb-4">
-                    Override role-based access for specific modules. Green check grants access, red cross denies, gray dash inherits from role.
+                    {t('permissions.description')}
                   </p>
 
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="border-b border-white/10">
-                        <th className="pb-2 font-medium text-[#6E747A] uppercase tracking-wider text-xs">Module</th>
+                        <th className="pb-2 font-medium text-[#6E747A] uppercase tracking-wider text-xs">{t('permissions.module')}</th>
                         {ACTIONS.map(a => (
                           <th key={a} className="pb-2 font-medium text-[#6E747A] uppercase tracking-wider text-xs text-center">{a}</th>
                         ))}
@@ -364,7 +366,7 @@ export default function TeamSettingsPage() {
                     </tbody>
                   </table>
                   <div className="pt-4 border-t border-white/10 text-xs text-[#6E747A]">
-                    Changes save automatically and will invalidate the user's current session to enforce new permissions.
+                    {t('permissions.footer')}
                   </div>
                 </div>
               )}

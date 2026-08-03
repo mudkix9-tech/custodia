@@ -1,0 +1,25 @@
+{
+  "_review_notes": {
+    "title": "REVIEW: 'Datenpannen-Register' or 'Verletzungs-Register'"
+  },
+  "title": "Datenpannen-Register",
+  "subtitle": "Verwalten Sie Vorfälle, Risikobewertungen und Meldungen an Aufsichtsbehörden.",
+  "report_incident": "Vorfall melden",
+  "loading_more": "Wird geladen...",
+  "load_more": "Mehr laden",
+  "list": {
+    "empty_title": "Keine Datenpannen gemeldet",
+    "empty_subtitle": "Melden Sie einen neuen Vorfall, um den Bewertungs- und Triage-Prozess zu starten.",
+    "columns": {
+      "entity": "Einheit",
+      "reference": "Referenz",
+      "incident": "Vorfall",
+      "status": "Status",
+      "risk_level": "Risikostufe",
+      "discovered": "Entdeckt am"
+    },
+    "unknown": "Unbekannt",
+    "unassessed": "Nicht bewertet",
+    "manage": "Verwalten →"
+  }
+}

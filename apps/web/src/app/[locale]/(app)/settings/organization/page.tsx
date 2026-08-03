@@ -5,10 +5,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Save, Building2, MapPin, UserCheck, Shield, Palette, Upload } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import debounce from 'lodash.debounce';
 
 export default function OrganizationSettingsPage() {
   const { data: session } = useSession();
+  const t = useTranslations('settings.organization');
   const userRole = (session?.user as any)?.role;
   const isEditable = userRole === 'admin' || userRole === 'owner';
 
@@ -102,12 +104,12 @@ export default function OrganizationSettingsPage() {
     <div className="max-w-4xl mx-auto p-8 fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">Organization Profile</h1>
-          <p className="text-[#9BA1A6]">Manage your company details, data protection officer, and branding.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
+          <p className="text-[#9BA1A6]">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          {saveStatus === 'saving' && <span className="text-sm text-[#6E747A]">Saving...</span>}
-          {saveStatus === 'saved' && <span className="text-sm text-[#C9A227] font-medium">Saved</span>}
+          {saveStatus === 'saving' && <span className="text-sm text-[#6E747A]">{t('saving')}</span>}
+          {saveStatus === 'saved' && <span className="text-sm text-[#C9A227] font-medium">{t('saved')}</span>}
         </div>
       </div>
 
@@ -116,12 +118,12 @@ export default function OrganizationSettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <Building2 className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">Basic Information</h2>
+            <h2 className="text-lg font-medium">{t('basic_information.title')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Organization Name</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.name')}</label>
               <input
                 type="text"
                 value={formData.name}
@@ -131,7 +133,7 @@ export default function OrganizationSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Legal Name</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.legal_name')}</label>
               <input
                 type="text"
                 value={formData.legalName}
@@ -141,7 +143,7 @@ export default function OrganizationSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Public Slug</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.slug')}</label>
               <input
                 type="text"
                 value={formData.slug}
@@ -149,10 +151,10 @@ export default function OrganizationSettingsPage() {
                 disabled={!isEditable}
                 className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
-              <p className="text-xs text-[#6E747A] mt-1.5">custodia.io/legal/{formData.slug || 'slug'}/privacy</p>
+              <p className="text-xs text-[#6E747A] mt-1.5">{t('basic_information.slug_hint', { slug: formData.slug || 'slug' })}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Registration Number</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.registration_number')}</label>
               <input
                 type="text"
                 value={formData.registrationNumber}
@@ -168,30 +170,30 @@ export default function OrganizationSettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <MapPin className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">Location & Jurisdiction</h2>
+            <h2 className="text-lg font-medium">{t('location.title')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Country</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.country')}</label>
               <select
                 value={formData.countryCode}
                 onChange={e => handleChange('countryCode', e.target.value)}
                 disabled={!isEditable}
                 className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50 max-w-sm"
               >
-                <option value="">Select a country...</option>
-                <option value="DE">Germany</option>
-                <option value="FR">France</option>
-                <option value="NL">Netherlands</option>
-                <option value="IE">Ireland</option>
-                <option value="GB">United Kingdom</option>
-                <option value="US">United States</option>
+                <option value="">{t('location.select_country')}</option>
+                <option value="DE">{t('location.countries.DE')}</option>
+                <option value="FR">{t('location.countries.FR')}</option>
+                <option value="NL">{t('location.countries.NL')}</option>
+                <option value="IE">{t('location.countries.IE')}</option>
+                <option value="GB">{t('location.countries.GB')}</option>
+                <option value="US">{t('location.countries.US')}</option>
                 {/* Expand later */}
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Street Address</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.street')}</label>
               <input
                 type="text"
                 value={formData.address?.street}
@@ -201,7 +203,7 @@ export default function OrganizationSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">City</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.city')}</label>
               <input
                 type="text"
                 value={formData.address?.city}
@@ -211,7 +213,7 @@ export default function OrganizationSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Postal Code</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.postal_code')}</label>
               <input
                 type="text"
                 value={formData.address?.postalCode}
@@ -221,14 +223,14 @@ export default function OrganizationSettingsPage() {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Lead Supervisory Authority</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.lead_authority')}</label>
               <input
                 type="text"
                 value={formData.leadSupervisoryAuthority}
                 onChange={e => handleChange('leadSupervisoryAuthority', e.target.value)}
                 disabled={!isEditable}
                 className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
-                placeholder="e.g. BfDI (Germany) or CNIL (France)"
+                placeholder={t('location.lead_authority_placeholder')}
               />
             </div>
           </div>
@@ -238,7 +240,7 @@ export default function OrganizationSettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <UserCheck className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">Data Protection Officer</h2>
+            <h2 className="text-lg font-medium">{t('dpo.title')}</h2>
           </div>
 
           <div className="mb-6">
@@ -250,17 +252,17 @@ export default function OrganizationSettingsPage() {
                 disabled={!isEditable}
                 className="rounded border-white/20 text-[#C9A227] focus:ring-sage-600"
               />
-              Do you have a DPO?
+              {t('dpo.has_dpo')}
             </label>
             <p className="text-xs text-[#6E747A] mt-2 ml-6">
-              Under GDPR, a DPO is required if you regularly process personal data on a large scale or process special category data.
+              {t('dpo.dpo_hint')}
             </p>
           </div>
 
           {formData.hasDpo && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6 border-l-2 border-white/10 ml-1">
               <div>
-                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">DPO Name</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('dpo.name')}</label>
                 <input
                   type="text"
                   value={formData.dpoName}
@@ -270,7 +272,7 @@ export default function OrganizationSettingsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">DPO Email</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('dpo.email')}</label>
                 <input
                   type="email"
                   value={formData.dpoEmail}
@@ -288,7 +290,7 @@ export default function OrganizationSettingsPage() {
                     disabled={!isEditable}
                     className="rounded border-white/20 text-[#C9A227] focus:ring-sage-600"
                   />
-                  Is the DPO external?
+                  {t('dpo.is_external')}
                 </label>
               </div>
             </div>
@@ -299,13 +301,13 @@ export default function OrganizationSettingsPage() {
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
           <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
             <Palette className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">Branding</h2>
+            <h2 className="text-lg font-medium">{t('branding.title')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Organization Logo</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('branding.logo')}</label>
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-xl bg-[#08090A] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                     {formData.branding.logoUrl ? (
@@ -320,15 +322,15 @@ export default function OrganizationSettingsPage() {
                       onClick={handleUploadLogo}
                       className="text-sm bg-[#0D0F11] border border-white/20 text-[#F4F5F6] px-3 py-1.5 rounded-lg font-medium hover:bg-[#08090A] transition-colors flex items-center gap-2 disabled:opacity-50"
                     >
-                      <Upload className="w-4 h-4" /> Upload Logo
+                      <Upload className="w-4 h-4" /> {t('branding.upload_logo')}
                     </button>
-                    <p className="text-xs text-[#6E747A] mt-2">Recommended: 400x100px PNG or SVG</p>
+                    <p className="text-xs text-[#6E747A] mt-2">{t('branding.logo_hint')}</p>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Primary Brand Color</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('branding.primary_color')}</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -349,7 +351,7 @@ export default function OrganizationSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Trust Portal Preview</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('branding.trust_portal_preview')}</label>
               <div className="border border-white/10 rounded-xl overflow-hidden h-32 bg-[#08090A] flex flex-col">
                 {/* Mock Header */}
                 <div
@@ -359,7 +361,7 @@ export default function OrganizationSettingsPage() {
                   {formData.branding.logoUrl ? (
                     <img src={formData.branding.logoUrl} alt="Logo" className="h-5 brightness-0 invert" />
                   ) : (
-                    <div className="text-white text-xs font-serif font-bold">{formData.name || 'Your Org'}</div>
+                    <div className="text-white text-xs font-serif font-bold">{formData.name || t('branding.your_org')}</div>
                   )}
                 </div>
                 <div className="p-4 flex-1">

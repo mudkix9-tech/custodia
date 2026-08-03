@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import BreachList from '@/components/breaches/BreachList';
 import ReportBreachModal from '@/components/breaches/ReportBreachModal';
+import { useTranslations } from 'next-intl';
 
 export default function BreachesPage() {
+  const t = useTranslations('breaches');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const {
     data: breachesResp,
@@ -25,14 +27,14 @@ export default function BreachesPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Breach Register</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage incidents, risk assessments, and supervisory authority notifications.</p>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('title')}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
         </div>
         <button
           onClick={() => setIsReportModalOpen(true)}
           className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-panel-elevated"
         >
-          Report Incident
+          {t('report_incident')}
         </button>
       </div>
 
@@ -45,7 +47,7 @@ export default function BreachesPage() {
             disabled={isFetchingNextPage}
             className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors border border-white/10 shadow-panel-elevated disabled:opacity-50"
           >
-            {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+            {isFetchingNextPage ? t('loading_more') : t('load_more')}
           </button>
         </div>
       )}

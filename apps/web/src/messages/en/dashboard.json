@@ -1,8 +1,40 @@
 {
-  "title": "Dashboard",
-  "overview": "Overview",
+  "title": "Welcome back",
+  "subtitle": "Here's your compliance overview and pending tasks.",
   "compliance_score": "Compliance Score",
-  "recent_activity": "Recent Activity",
-  "pending_tasks": "Pending Tasks",
-  "view_all": "View All"
+  "active_processing": "Active Processing Activities",
+  "pending_dsars": "Pending DSARs",
+  "high_risk_vendors": "High Risk Vendors",
+  "undocumented_services": "Undocumented Services",
+  "setup_progress": {
+    "title": "Complete your workspace setup",
+    "description": "You're currently at {score}% compliance. Complete these tasks to improve your score.",
+    "onboarding_title": "Finish Onboarding Wizard",
+    "onboarding_desc": "Pick up where you left off",
+    "ropa_title": "Complete your ROPA",
+    "ropa_desc": "Activities need retention periods",
+    "vendors_title": "Sign vendor DPAs",
+    "vendors_desc": "Vendors need signed DPAs"
+  },
+  "regulatory": {
+    "title": "Regulatory Updates",
+    "new_count": "{count} New",
+    "high_impact": "High Impact",
+    "advisory": "Advisory",
+    "affected_entities": "Affected Entities:",
+    "acknowledge": "Acknowledge",
+    "view_details": "View Details"
+  },
+  "dpia": {
+    "title": "Overdue DPIA Remediations",
+    "singular": "1 high/critical risk mitigation is past its due date",
+    "plural": "{count} high/critical risk mitigations are past their due date",
+    "resolve": "Resolve Gaps"
+  },
+  "breach": {
+    "title": "Security Action Required",
+    "singular": "1 vendor breach alert requires attention",
+    "plural": "{count} vendor breach alerts require attention",
+    "review": "Review Threats"
+  }
 }
