@@ -6,5 +6,9 @@
   "language": "Langue",
   "save": "Enregistrer",
   "cancel": "Annuler",
-  "delete": "Supprimer"
+  "delete": "Supprimer",
+  "trialBanner": {
+    "message": "Il vous reste {count, plural, =1 {1 jour} other {# jours}} d'essai gratuit.",
+    "upgrade": "Mettre à niveau"
+  }
 }

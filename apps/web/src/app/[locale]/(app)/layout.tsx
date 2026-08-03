@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
+import { TrialBanner } from "@/components/layout/TrialBanner";
 import { Announcer } from "@/components/layout/Announcer";
 import { AiGuidancePanel } from "@/components/layout/AiGuidancePanel";
 
@@ -20,6 +21,7 @@ export default function AppLayout({
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-[#08090A] selection:bg-[#C9A227]/30">
           <OfflineBanner />
+          <TrialBanner />
           <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto outline-none relative">
             {/* Background decorations matching marketing design */}
             <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(120%_80%_at_50%_0%,#000_20%,transparent_75%)] pointer-events-none" />
