@@ -11,6 +11,7 @@ import { NOTIFICATION_GROUPS } from '../notifications/page';
 export default function ProfileSettingsPage() {
   const { data: session } = useSession();
   const t = useTranslations('settings.profile');
+  const tNotifications = useTranslations('settings.notifications');
   const { data: userSettings, isLoading } = trpc.settings.getUserSettings.useQuery();
   const updateUserSettings = trpc.settings.updateUserSettings.useMutation();
 
@@ -175,11 +176,11 @@ export default function ProfileSettingsPage() {
                 {NOTIFICATION_GROUPS.map((group, gIdx) => (
                   <React.Fragment key={gIdx}>
                     <tr className="bg-[#08090A]">
-                      <td colSpan={4} className="py-2 px-3 text-[11px] font-bold text-[#9BA1A6] uppercase tracking-wider">{group.category}</td>
+                      <td colSpan={4} className="py-2 px-3 text-[11px] font-bold text-[#9BA1A6] uppercase tracking-wider">{tNotifications(`events.${group.categoryKey}` as any)}</td>
                     </tr>
                     {group.types.map(nt => (
                       <tr key={nt.key} className="border-b border-white/5 last:border-0 hover:bg-ink-900/5">
-                        <td className="py-3 px-3 font-medium text-[#E6E8EA]">{nt.label}</td>
+                        <td className="py-3 px-3 font-medium text-[#E6E8EA]">{tNotifications(`events.${nt.key}` as any)}</td>
                         {['email', 'slack', 'in_app'].map(channel => (
                           <td key={channel} className="py-3 text-center align-middle">
                             <button
