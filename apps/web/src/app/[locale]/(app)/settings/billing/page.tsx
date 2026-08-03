@@ -14,6 +14,15 @@ const TIERS = [
     description: 'The complete OS for growing agencies.',
     features: ['Unlimited users & activities', 'Unlimited vendors & DPIAs', 'Cookie consent (50 domains)', 'AI compliance advisor (2,000 queries)'],
     paddlePriceId: process.env.NEXT_PUBLIC_PADDLE_PROFESSIONAL_PRICE_ID || 'pri_01professional',
+    isCustom: false,
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: 'Custom',
+    description: 'For large organizations needing custom compliance controls.',
+    features: ['Everything in Professional', 'Custom data residency', 'SSO & Custom Roles', 'Dedicated Account Manager'],
+    isCustom: true,
   }
 ];
 
@@ -45,11 +54,11 @@ export default function BillingPage() {
   }, []);
 
   const handleUpgrade = (priceId: string) => {
-    if (!paddle || !user?.orgId) return;
+    if (!paddle || !user?.organizationId) return;
 
     paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
-      customData: { organizationId: user.orgId },
+      customData: { organizationId: user.organizationId },
       customer: {
         email: user.email,
       },
@@ -60,6 +69,59 @@ export default function BillingPage() {
         allowLogout: false,
       },
     });
+  };
+
+  const renderCTA = (tier: any) => {
+    if (tier.isCustom) {
+      return (
+        <a
+          href="mailto:hello@trycustodia.com?subject=Enterprise%20Inquiry"
+          className="block text-center w-full py-2.5 px-4 bg-transparent border border-ink-700 text-[#F4F5F6] rounded-lg hover:bg-ink-800 transition-colors font-medium text-sm"
+        >
+          Contact us
+        </a>
+      );
+    }
+
+    if (!subscriptionStatus || subscriptionStatus === 'trialing') {
+      return (
+        <button
+          onClick={() => handleUpgrade(tier.paddlePriceId)}
+          className="w-full py-2.5 px-4 bg-ink-900 text-white rounded-lg hover:bg-ink-800 transition-colors font-medium text-sm"
+        >
+          Subscribe to {tier.name}
+        </button>
+      );
+    }
+
+    let badgeText = "Current Plan";
+    let badgeColors = "bg-green-500/10 text-green-500 border border-green-500/20";
+
+    switch (subscriptionStatus) {
+      case 'active':
+        badgeText = "Current Plan";
+        badgeColors = "bg-green-500/10 text-green-500 border border-green-500/20";
+        break;
+      case 'past_due':
+      case 'unpaid':
+        badgeText = "Payment Failed";
+        badgeColors = "bg-red-500/10 text-red-500 border border-red-500/20";
+        break;
+      case 'canceled':
+        badgeText = "Canceled";
+        badgeColors = "bg-[#2D3135] text-[#9BA1A6] border border-white/10";
+        break;
+      case 'paused':
+        badgeText = "Paused";
+        badgeColors = "bg-amber-500/10 text-amber-500 border border-amber-500/20";
+        break;
+    }
+
+    return (
+      <div className={`w-full py-2.5 px-4 rounded-lg text-center font-medium text-sm ${badgeColors}`}>
+        {badgeText}
+      </div>
+    );
   };
 
   return (
@@ -125,12 +187,7 @@ export default function BillingPage() {
                   ))}
                 </ul>
 
-                <button
-                  onClick={() => handleUpgrade(tier.paddlePriceId)}
-                  className="w-full py-2.5 px-4 bg-ink-900 text-white rounded-lg hover:bg-ink-800 transition-colors font-medium text-sm"
-                >
-                  Upgrade to {tier.name}
-                </button>
+                {renderCTA(tier)}
               </div>
             ))}
           </div>
