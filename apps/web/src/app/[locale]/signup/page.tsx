@@ -3,9 +3,9 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
-import { Mail, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { Logo } from '@/components/layout/Sidebar';
+import { Logo } from '@/components/layout/MarketingHeader';
 
 function SignupPageContent() {
   const searchParams = useSearchParams();
@@ -36,39 +36,43 @@ function SignupPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-bone-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-sage-500/30">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
-        <Logo className="mb-6 scale-110" />
-        <h2 className="text-center text-3xl font-serif tracking-tight text-ink-900">
+    <div className="min-h-screen bg-[#08090A] flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-[#C9A227]/30 relative overflow-hidden">
+      {/* Background decorations matching marketing design */}
+      <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(120%_80%_at_50%_0%,#000_20%,transparent_75%)] pointer-events-none" />
+      <div aria-hidden="true" className="absolute top-0 left-1/2 w-[900px] h-[520px] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,var(--color-accent-transparent),transparent_70%)] pointer-events-none opacity-50" />
+
+      <div className="relative sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center z-10">
+        <Logo className="mb-8 scale-110 justify-center" />
+        <h2 className="text-center text-[32px] font-normal tracking-[-0.032em] text-[#F4F5F6]">
           Create your workspace
         </h2>
-        <p className="mt-2 text-center text-[13.5px] text-ink-500">
+        <p className="mt-3 text-center text-[15px] text-[#9BA1A6]">
           Already have an account?{' '}
-          <Link href="/login" className="font-medium text-sage-600 hover:text-sage-700 transition-colors">
+          <Link href="/login" className="font-medium text-[#E6E8EA] hover:text-[#C9A227] transition-colors focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none rounded-sm px-1">
             Sign in here
           </Link>
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-[440px]">
-        <div className="bg-white hairline py-8 px-4 shadow-sm sm:rounded-2xl sm:px-10">
+      <div className="relative mt-10 sm:mx-auto sm:w-full sm:max-w-[440px] z-10">
+        <div className="bg-gradient-to-b from-[#0D0F11] to-[#0A0B0D] border border-white/9 py-10 px-6 shadow-panel-elevated sm:px-10">
           {error && (
-            <div className="mb-6 p-3 bg-clay-50 border border-clay-100 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-clay-500 shrink-0 mt-0.5" />
-              <div className="text-[13px] text-clay-700 leading-relaxed">
+            <div className="mb-8 p-4 bg-red-950/30 border border-red-900/50 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+              <div className="text-[14px] text-red-200/90 leading-relaxed">
                 An error occurred during sign up. Please try again or use a different method.
               </div>
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleEmailSignIn}>
+          <form className="space-y-6" onSubmit={handleEmailSignIn}>
             <div>
-              <label htmlFor="email" className="block text-[13px] font-medium text-ink-700">
+              <label htmlFor="email" className="block text-[14px] font-medium text-[#E6E8EA]">
                 Work email address
               </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-4 w-4 text-ink-400" />
+              <div className="mt-2 relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Mail className="h-4 w-4 text-[#6E747A]" />
                 </div>
                 <input
                   id="email"
@@ -78,7 +82,7 @@ function SignupPageContent() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full pl-10 pr-3 py-2.5 hairline bg-bone-50 rounded-lg text-[13.5px] text-ink-900 placeholder-ink-400 focus:outline-none focus:ring-2 focus:ring-sage-500/20 sm:text-sm transition-shadow"
+                  className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 bg-[#040506] text-[15px] text-[#E6E8EA] placeholder-[#6E747A] focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 sm:text-sm transition-all"
                   placeholder="name@agency.com"
                 />
               </div>
@@ -88,9 +92,9 @@ function SignupPageContent() {
               <button
                 type="submit"
                 disabled={isLoading !== null}
-                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-card text-[13.5px] font-medium text-bone-50 bg-sage-700 hover:bg-sage-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500 disabled:opacity-50 transition-all"
+                className="w-full flex justify-center items-center gap-2 py-3 px-4 text-[14px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#08090A] focus:ring-[#C9A227] disabled:opacity-50 transition-all"
               >
-                {isLoading === 'email' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Continue with email'}
+                {isLoading === 'email' ? <Loader2 className="w-4 h-4 animate-spin text-[#08090A]" /> : 'Continue with email'}
               </button>
             </div>
           </form>
@@ -98,10 +102,10 @@ function SignupPageContent() {
           <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-ink-900/10" />
+                <div className="w-full border-t border-white/10" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-white text-ink-500 text-[12.5px]">Or sign up with</span>
+                <span className="px-3 bg-[#0A0B0D] text-[#6E747A] text-[13px]">Or continue with</span>
               </div>
             </div>
 
@@ -109,7 +113,7 @@ function SignupPageContent() {
               <button
                 onClick={() => handleOAuthSignIn('google')}
                 disabled={isLoading !== null}
-                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 hairline bg-bone-50 hover:bg-bone-100 rounded-lg text-[13px] font-medium text-ink-700 transition-colors disabled:opacity-50"
+                className="w-full flex justify-center items-center gap-2.5 py-3 px-4 border border-white/10 bg-transparent hover:bg-white/5 text-[14px] font-medium text-[#E6E8EA] transition-colors disabled:opacity-50 focus:outline-none focus:border-white/20"
               >
                 {isLoading === 'google' ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -125,7 +129,7 @@ function SignupPageContent() {
               <button
                 onClick={() => handleOAuthSignIn('microsoft-entra-id')}
                 disabled={isLoading !== null}
-                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 hairline bg-bone-50 hover:bg-bone-100 rounded-lg text-[13px] font-medium text-ink-700 transition-colors disabled:opacity-50"
+                className="w-full flex justify-center items-center gap-2.5 py-3 px-4 border border-white/10 bg-transparent hover:bg-white/5 text-[14px] font-medium text-[#E6E8EA] transition-colors disabled:opacity-50 focus:outline-none focus:border-white/20"
               >
                 {isLoading === 'microsoft-entra-id' ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                   <svg className="w-4 h-4" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -141,10 +145,10 @@ function SignupPageContent() {
           </div>
         </div>
         
-        <p className="mt-8 text-center text-[12px] text-ink-400 max-w-sm mx-auto leading-relaxed">
+        <p className="mt-10 text-center text-[13px] text-[#6E747A] max-w-sm mx-auto leading-relaxed z-10 relative">
           By signing up, you agree to Custodia's{' '}
-          <a href="#" className="underline hover:text-ink-600 transition-colors">Terms of Service</a> and{' '}
-          <a href="#" className="underline hover:text-ink-600 transition-colors">Privacy Policy</a>.
+          <a href="#" className="underline hover:text-[#9BA1A6] transition-colors focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none rounded-sm">Terms of Service</a> and{' '}
+          <a href="#" className="underline hover:text-[#9BA1A6] transition-colors focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none rounded-sm">Privacy Policy</a>.
         </p>
       </div>
     </div>
@@ -153,7 +157,7 @@ function SignupPageContent() {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-bone-50 flex justify-center py-12"><div className="text-ink-500">Loading...</div></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#08090A] flex justify-center py-12"><div className="text-[#9BA1A6]">Loading...</div></div>}>
       <SignupPageContent />
     </Suspense>
   );
