@@ -5,12 +5,12 @@ import { Check, Info, ArrowRight, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 const PRICING = [
-  { name: 'Professional', price: '99', yearly: '79', desc: 'The complete OS for growing agencies.', cta: 'Start 14-day free trial', href: '/signup', features: ['Unlimited users & processing activities', 'Unlimited vendors & DPIAs', 'Cookie consent (50 domains)', 'AI compliance advisor (2,000 queries)'], popular: true },
+  { name: 'Professional', price: '99', yearly: '79', desc: 'The complete OS for growing agencies.', cta: 'Start free trial', href: '/signup', features: ['Unlimited users & processing activities', 'Unlimited vendors & DPIAs', 'Cookie consent (50 domains)', 'AI compliance advisor (2,000 queries)'], popular: true },
   { name: 'Enterprise', price: 'Custom', yearly: 'Custom', desc: 'For large organizations needing custom compliance controls.', cta: 'Contact us', href: '/contact', features: ['Everything in Professional', 'Custom data residency', 'SSO & Custom Roles', 'Dedicated Account Manager'], popular: false },
 ];
 
 const FAQS = [
-  { q: "Do you offer a free trial for paid plans?", a: "Yes, we offer a 14-day free trial for our Starter, Professional, and Agency plans. No credit card required to start." },
+  { q: "Do you offer a free trial for paid plans?", a: "Yes, we offer a time-limited free trial. No credit card required to start." },
   { q: "Can I upgrade or downgrade at any time?", a: "Absolutely. You can change your plan at any time. Prorated charges or credits will be applied automatically." },
   { q: "Are there any setup fees?", a: "No, there are no hidden fees or setup costs. You only pay the monthly or annual subscription price." },
   { q: "Do you have special pricing for non-profits?", a: "Yes, we offer a 50% discount for registered non-profits. Please contact our support team to apply." },

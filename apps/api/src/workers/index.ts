@@ -19,6 +19,7 @@ export * from './consentRollupDriftCheck.js';
 export * from './rateLimitCleanup.js';
 export * from './generateLeadPdf.js';
 export * from './generateAssessmentPdf.js';
+export * from './trialExpiry.js';
 import { createQueue } from '../lib/queue.js';
 
 import { getBoss } from '../lib/queue.js';
@@ -27,6 +28,7 @@ export const gapScannerQueue = createQueue('gap-scanner');
 export const complianceScoreQueue = createQueue('compliance-score');
 export const consentRollupQueue = createQueue('consent-rollup');
 export const consentRollupDriftCheckQueue = createQueue('consent-rollup-drift-check');
+export const trialExpiryQueue = createQueue('trial-expiry');
 
 export async function scheduleGlobalJobs() {
   const boss = await getBoss();
@@ -36,6 +38,7 @@ export async function scheduleGlobalJobs() {
   await boss.schedule('consent-rollup', '0 1 * * *', { name: 'daily-rollup', data: {} });
   await boss.schedule('consent-rollup-drift-check', '0 4 * * 0', { name: 'weekly-drift-check', data: {} });
   await boss.schedule('impact-assessment', '*/15 * * * *', { name: 'impact-assessment-dispatcher', data: {} });
+  await boss.schedule('trial-expiry', '0 8 * * *', { name: 'daily-trial-expiry', data: {} });
   
   // Rate limit cleanup every hour
   await boss.schedule('maintenance-jobs', '0 * * * *', { name: 'rate-limit-cleanup', data: {} });

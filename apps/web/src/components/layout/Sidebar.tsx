@@ -43,6 +43,12 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const subscriptionStatus = (session as any)?.subscriptionStatus;
+  const trialEndsAt = (session as any)?.trialEndsAt;
+  const isExpiredTrial = subscriptionStatus === 'trialing' && trialEndsAt && Date.now() > trialEndsAt;
+  const isPastDue = subscriptionStatus === 'past_due';
+  const isCanceled = subscriptionStatus === 'canceled';
+  const isLocked = isExpiredTrial || isPastDue || isCanceled;
 
   // Close sidebar on route change
   useEffect(() => {
@@ -76,34 +82,38 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 px-3 overflow-y-auto">
-          <div className="px-2 pt-2 pb-1.5 text-[11px] uppercase tracking-[0.14em] text-[#6E747A]">Workspace</div>
-          <ul className="space-y-0.5">
-            {NAV.map((n) => {
-              const isActive = pathname === n.href || (n.href !== '/' && pathname.startsWith(n.href));
-              const IconComp = n.icon;
+          {!isLocked && (
+            <>
+              <div className="px-2 pt-2 pb-1.5 text-[11px] uppercase tracking-[0.14em] text-[#6E747A]">Workspace</div>
+              <ul className="space-y-0.5">
+                {NAV.map((n) => {
+                  const isActive = pathname === n.href || (n.href !== '/' && pathname.startsWith(n.href));
+                  const IconComp = n.icon;
 
-              return (
-                <li key={n.id}>
-                  <Link
-                    href={n.href}
-                    className={`group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] transition-colors focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none
-                      ${isActive
-                        ? 'bg-[#0D0F11]/10 text-[#F4F5F6] font-medium'
-                        : 'text-[#9BA1A6] hover:bg-[#0D0F11]/5 hover:text-[#E6E8EA]'}`}
-                  >
-                    <IconComp
-                      size={16}
-                      className={isActive ? 'text-[#F4F5F6]' : 'text-[#6E747A] group-hover:text-[#9BA1A6]'}
-                    />
-                    <span className="flex-1 text-left">{n.label}</span>
-                    {n.badge && (
-                      <span className="text-[10.5px] tabular-nums px-1.5 py-0.5 rounded-md bg-[#C9A227]/20 text-[#C9A227]">{n.badge}</span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+                  return (
+                    <li key={n.id}>
+                      <Link
+                        href={n.href}
+                        className={`group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] transition-colors focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none
+                          ${isActive
+                            ? 'bg-[#0D0F11]/10 text-[#F4F5F6] font-medium'
+                            : 'text-[#9BA1A6] hover:bg-[#0D0F11]/5 hover:text-[#E6E8EA]'}`}
+                      >
+                        <IconComp
+                          size={16}
+                          className={isActive ? 'text-[#F4F5F6]' : 'text-[#6E747A] group-hover:text-[#9BA1A6]'}
+                        />
+                        <span className="flex-1 text-left">{n.label}</span>
+                        {n.badge && (
+                          <span className="text-[10.5px] tabular-nums px-1.5 py-0.5 rounded-md bg-[#C9A227]/20 text-[#C9A227]">{n.badge}</span>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
         </nav>
 
         <div className="mt-2 px-3 pb-3 pt-3 border-t border-white/10">

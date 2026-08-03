@@ -211,6 +211,13 @@
       "when": 1785697291763,
       "tag": "0040_fair_invisible_woman",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1785762445024,
+      "tag": "0041_large_maginty",
+      "breakpoints": true
     }
   ]
 }

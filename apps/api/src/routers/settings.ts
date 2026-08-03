@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { router, protectedProcedure, requireRole } from '../trpc.js';
 import { db } from '../db.js';
-import { organizations, users, notificationQueue } from 'db';
-import { eq, and, desc } from 'drizzle-orm';
+import { organizations, users, notificationQueue, processingActivities, organizationVendors } from 'db';
+import { eq, and, desc, count } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
 const checkOrgContext = (user: any) => {
@@ -10,6 +10,17 @@ const checkOrgContext = (user: any) => {
 };
 
 export const settingsRouter = router({
+  getUsageStats: protectedProcedure.query(async ({ ctx }) => {
+    checkOrgContext(ctx.user);
+    const ropaRes = await db.select({ count: count() }).from(processingActivities).where(eq(processingActivities.organizationId, ctx.user!.orgId));
+    const vendorRes = await db.select({ count: count() }).from(organizationVendors).where(eq(organizationVendors.organizationId, ctx.user!.orgId));
+    
+    return {
+      ropaEntries: ropaRes[0]?.count ?? 0,
+      vendorsTracked: vendorRes[0]?.count ?? 0,
+    };
+  }),
+
   getResidencyData: protectedProcedure.query(async ({ ctx }) => {
     checkOrgContext(ctx.user);
     const org = await db.query.organizations.findFirst({

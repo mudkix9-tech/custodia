@@ -68,10 +68,14 @@ export async function ssoRoutes(fastify: FastifyInstance) {
         let [org] = await db.select().from(organizations).where(eq(organizations.slug, domain));
 
         if (!org) {
+          const trialEndsAt = new Date();
+          trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
           [org] = await db.insert(organizations).values({
             name: domain,
             slug: domain,
             countryCode: 'US', // default
+            trialEndsAt,
           }).returning();
         }
 

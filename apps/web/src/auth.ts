@@ -63,6 +63,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.tier = org?.subscriptionTier || 'professional';
             token.onboardingCompleted = org?.onboardingCompleted;
             token.onboardingDismissed = org?.onboardingDismissed;
+            token.subscriptionStatus = org?.subscriptionStatus;
+            token.trialEndsAt = org?.trialEndsAt ? org.trialEndsAt.getTime() : null;
           }
         }
       }
@@ -78,6 +80,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).tier = token.tier as string;
         (session as any).onboardingCompleted = token.onboardingCompleted as boolean;
         (session as any).onboardingDismissed = token.onboardingDismissed as boolean;
+        (session as any).subscriptionStatus = token.subscriptionStatus as string | undefined;
+        (session as any).trialEndsAt = token.trialEndsAt as number | null;
         (session as any).tokenInvalidatedAt = token.tokenInvalidatedAt;
       }
       return session;
@@ -89,10 +93,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       
       // 1. Auto-create organization from email domain
       const domain = user.email.split('@')[1] || 'agency';
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
       const [newOrg] = await db.insert(organizations).values({
         name: domain,
         slug: domain,
         countryCode: 'US', // Default required by schema
+        trialEndsAt,
       }).returning();
       
       // 2. Fetch pending signups to check for marketing consent and anonymous sessions

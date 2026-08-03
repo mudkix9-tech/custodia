@@ -22,6 +22,17 @@ export default function BillingPage() {
   const [isInitializing, setIsInitializing] = useState(true);
   const { data: session } = useSession();
   const user = session?.user as any;
+  const subscriptionStatus = (session as any)?.subscriptionStatus;
+  const trialEndsAt = (session as any)?.trialEndsAt;
+  
+  const isExpiredTrial = subscriptionStatus === 'trialing' && trialEndsAt && Date.now() > trialEndsAt;
+  const isPastDue = subscriptionStatus === 'past_due';
+  const isCanceled = subscriptionStatus === 'canceled';
+  const isLocked = isExpiredTrial || isPastDue || isCanceled;
+
+  const { data: stats } = trpc.settings.getUsageStats.useQuery(undefined, {
+    enabled: isLocked,
+  });
 
   useEffect(() => {
     initializePaddle({
@@ -53,6 +64,38 @@ export default function BillingPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
+      {isLocked && (
+        <div className="bg-accent-500/10 border border-accent-500/20 rounded-2xl p-6 mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent-500/20 mb-4">
+            <CheckCircle className="w-6 h-6 text-accent-500" />
+          </div>
+          <h2 className="text-xl font-bold text-[#F4F5F6] mb-2">
+            {isExpiredTrial && "Your trial has ended."}
+            {isPastDue && "Your payment failed."}
+            {isCanceled && "Your subscription was canceled."}
+          </h2>
+          <p className="text-[#9BA1A6] max-w-lg mx-auto mb-6">
+            {isExpiredTrial && "Subscribe to keep access to your compliance data."}
+            {isPastDue && "Update your billing details to restore access to your account."}
+            {isCanceled && "Resubscribe to restore access to your account."}
+          </p>
+          
+          {stats && (
+             <div className="flex items-center justify-center gap-8 border-t border-white/10 pt-6 mt-6">
+               <div className="text-center">
+                 <div className="text-2xl font-serif text-[#F4F5F6]">{stats.ropaEntries}</div>
+                 <div className="text-xs text-[#9BA1A6] uppercase tracking-wider mt-1">ROPA Entries</div>
+               </div>
+               <div className="w-px h-10 bg-white/10"></div>
+               <div className="text-center">
+                 <div className="text-2xl font-serif text-[#F4F5F6]">{stats.vendorsTracked}</div>
+                 <div className="text-xs text-[#9BA1A6] uppercase tracking-wider mt-1">Vendors Tracked</div>
+               </div>
+             </div>
+          )}
+        </div>
+      )}
+
       <div>
         <h1 className="text-2xl font-serif text-[#F4F5F6]">Billing & Subscriptions</h1>
         <p className="text-[#9BA1A6] mt-2">Manage your plan and payment methods.</p>

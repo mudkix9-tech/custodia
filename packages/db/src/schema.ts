@@ -79,6 +79,7 @@ export const organizations = pgTable('organizations', {
   paddleSubscriptionId: varchar('paddle_subscription_id', { length: 255 }),
   subscriptionTier: subscriptionTierEnum('subscription_tier').default('professional'),
   subscriptionStatus: varchar('subscription_status', { length: 50 }).default('trialing'),
+  trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
   
   // AI Rate Limiting
   aiQueriesUsed: integer('ai_queries_used').default(0),

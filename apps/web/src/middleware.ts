@@ -41,6 +41,18 @@ export async function middleware(request: NextRequest) {
            const targetPath = path.match(localePattern) ? `${path.match(localePattern)![0]}dashboard` : '/dashboard';
            return NextResponse.redirect(new URL(targetPath.replace(/\/\/+/g, '/'), request.url));
         }
+
+        // Paywall Check
+        const subscriptionStatus = (decoded as any).subscriptionStatus;
+        const trialEndsAt = (decoded as any).trialEndsAt;
+        const isLocked = subscriptionStatus === 'canceled' || 
+                         subscriptionStatus === 'past_due' || 
+                         (subscriptionStatus === 'trialing' && trialEndsAt && Date.now() > trialEndsAt);
+
+        if (isLocked && !normalizedPath.startsWith('/settings/billing') && normalizedPath !== '/logout') {
+          const targetPath = path.match(localePattern) ? `${path.match(localePattern)![0]}settings/billing` : '/settings/billing';
+          return NextResponse.redirect(new URL(targetPath.replace(/\/\/+/g, '/'), request.url));
+        }
       }
     } catch (e) {
       // Ignored
