@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { LayoutDashboard, Users, Database, Building2, UserCircle, GraduationCap, Settings, LifeBuoy, ChevronUp, FileText, Cookie, AlertTriangle, ShieldCheck, Sparkles, Menu, X } from 'lucide-react';
+import { useSession, signOut } from 'next-auth/react';
+import { LayoutDashboard, Users, Database, Building2, UserCircle, GraduationCap, Settings, LifeBuoy, ChevronUp, FileText, Cookie, AlertTriangle, ShieldCheck, Sparkles, Menu, X, LogOut } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { OrgSwitcher } from './OrgSwitcher';
 
@@ -43,6 +43,20 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   const subscriptionStatus = (session as any)?.subscriptionStatus;
   const trialEndsAt = (session as any)?.trialEndsAt;
   const isExpiredTrial = subscriptionStatus === 'trialing' && trialEndsAt && Date.now() > trialEndsAt;
@@ -130,15 +144,35 @@ export function Sidebar() {
             </li>
           </ul>
           {session?.user && (
-            <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#0D0F11]/5 cursor-pointer">
-              <div className="w-8 h-8 rounded-full bg-[#0D0F11]/10 text-[#E6E8EA] flex items-center justify-center font-medium text-[12.5px] border border-white/10">
-                {session.user.name?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase() || 'U'}
+            <div className="relative" ref={userMenuRef}>
+              {userMenuOpen && (
+                <div className="absolute bottom-full left-0 mb-2 w-full bg-[#1A1D21] border border-white/10 rounded-xl shadow-xl overflow-hidden py-1 z-50">
+                  <div className="px-3 py-2 border-b border-white/10 mb-1">
+                    <div className="text-[13px] text-[#E6E8EA] font-medium truncate">{session.user.name || 'User'}</div>
+                    <div className="text-[11.5px] text-[#9BA1A6] truncate">{session.user.email}</div>
+                  </div>
+                  <button 
+                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    className="w-full text-left px-3 py-1.5 text-[13px] text-[#E6E8EA] hover:bg-white/5 flex items-center gap-2 transition-colors"
+                  >
+                    <LogOut size={14} className="text-[#9BA1A6]" />
+                    Log out
+                  </button>
+                </div>
+              )}
+              <div 
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#0D0F11]/5 cursor-pointer transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#0D0F11]/10 text-[#E6E8EA] flex items-center justify-center font-medium text-[12.5px] border border-white/10">
+                  {session.user.name?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <div className="min-w-0 flex-1 leading-tight">
+                  <div className="text-[13px] text-[#E6E8EA] truncate">{session.user.name || 'User'}</div>
+                  <div className="text-[11.5px] text-[#6E747A] truncate">{session.user.email}</div>
+                </div>
+                <ChevronUp size={14} className="text-[#6E747A] transition-transform duration-200" style={{ transform: userMenuOpen ? 'rotate(180deg)' : 'none' }} />
               </div>
-              <div className="min-w-0 flex-1 leading-tight">
-                <div className="text-[13px] text-[#E6E8EA] truncate">{session.user.name || 'User'}</div>
-                <div className="text-[11.5px] text-[#6E747A] truncate">{session.user.email}</div>
-              </div>
-              <ChevronUp size={14} className="text-[#6E747A]" />
             </div>
           )}
         </div>

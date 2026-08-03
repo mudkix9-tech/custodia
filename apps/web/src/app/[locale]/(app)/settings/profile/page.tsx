@@ -118,6 +118,7 @@ export default function ProfileSettingsPage() {
               >
                 <option value="en">English</option>
                 <option value="de">German (Deutsch)</option>
+                <option value="fr">French (Français)</option>
               </select>
             </div>
             <div>
@@ -128,9 +129,20 @@ export default function ProfileSettingsPage() {
                 className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm"
               >
                 <option value="UTC">UTC</option>
-                <option value="Europe/Berlin">Central European Time (CET/CEST)</option>
-                <option value="Europe/London">Greenwich Mean Time (GMT/BST)</option>
-                <option value="America/New_York">Eastern Time (ET)</option>
+                <option value="Europe/London">Europe/London (GMT/BST)</option>
+                <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
+                <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
+                <option value="Europe/Helsinki">Europe/Helsinki (EET/EEST)</option>
+                <option value="Europe/Athens">Europe/Athens (EET/EEST)</option>
+                <option value="Europe/Bucharest">Europe/Bucharest (EET/EEST)</option>
+                <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+                <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                <option value="Australia/Sydney">Australia/Sydney (AEST/AEDT)</option>
+                <option value="America/New_York">America/New_York (EST/EDT)</option>
+                <option value="America/Chicago">America/Chicago (CST/CDT)</option>
+                <option value="America/Denver">America/Denver (MST/MDT)</option>
+                <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
               </select>
             </div>
           </div>

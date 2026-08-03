@@ -15,7 +15,6 @@ const SETTINGS_NAV = [
   { id: 'billing', label: 'Billing', icon: CreditCard, href: '/settings/billing', roles: ['admin', 'owner'] },
   { id: 'security', label: 'Security', icon: Shield, href: '/settings/security', roles: ['viewer', 'member', 'admin', 'owner'] },
   { id: 'data', label: 'Data & Privacy', icon: Database, href: '/settings/data', roles: ['admin', 'owner'] },
-  { id: 'copilot', label: 'AI Copilot', icon: Cpu, href: '/settings/copilot', roles: ['admin', 'owner'] },
 ];
 
 export default function SettingsLayout({
@@ -30,7 +29,7 @@ export default function SettingsLayout({
   const visibleNav = SETTINGS_NAV.filter(nav => nav.roles.includes(userRole));
 
   return (
-    <div className="flex min-h-full">
+    <div className="flex min-h-full relative bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
       <aside className="w-64 border-r border-white/10 bg-[#0D0F11] hidden md:block">
         <div className="p-6">
           <h2 className="text-lg font-serif text-[#F4F5F6] mb-6">Settings</h2>
