@@ -15,7 +15,7 @@ export const groupRouter = router({
       // Check if user is a group admin or if this org is a parent
       const [currentUser] = await ctx.db.select().from(users).where(eq(users.id, ctx.user.id));
       if (currentUser?.organizationGroupRole !== 'group_admin') {
-         throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a group admin' });
+         return [];
       }
 
       const childOrgs = await ctx.db.select().from(organizations)
