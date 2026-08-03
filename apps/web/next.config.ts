@@ -71,7 +71,7 @@ const nextConfig: NextConfig = {
           // Basic CSP. Note: Sentry will need its own domains whitelisted if added
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' https://*.custodia.io http://localhost:4000",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.paddle.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' https://*.custodia.io http://localhost:4000 https://*.paddle.com; frame-src 'self' https://*.paddle.com",
           }
         ],
       },
