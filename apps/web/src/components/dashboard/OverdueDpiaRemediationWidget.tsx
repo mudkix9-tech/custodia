@@ -13,9 +13,9 @@ export function OverdueDpiaRemediationWidget() {
   const count = overdueData.count;
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between animate-in fade-in slide-in-from-top duration-300">
+    <div className="bg-amber-500/100/10 border border-amber-900/50 rounded-2xl p-5 shadow-panel-elevated mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between animate-in fade-in slide-in-from-top duration-300">
       <div className="flex items-center gap-3.5">
-        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-400 shrink-0">
           <AlertTriangle className="w-5 h-5" />
         </div>
         <div>
@@ -30,7 +30,7 @@ export function OverdueDpiaRemediationWidget() {
 
       <Link 
         href="/audit?source=dpia" 
-        className="inline-flex items-center gap-1 bg-amber-800 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm self-end sm:self-auto shrink-0"
+        className="inline-flex items-center gap-1 bg-amber-800 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-panel-elevated self-end sm:self-auto shrink-0"
       >
         Resolve Gaps <ArrowRight className="w-3.5 h-3.5" />
       </Link>

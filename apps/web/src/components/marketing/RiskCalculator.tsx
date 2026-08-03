@@ -96,7 +96,7 @@ export default function RiskCalculator() {
           </p>
         </div>
 
-        <div className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-2xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
+        <div className="bg-[#1F241D]/45 border border-[#2F362D]/90 rounded-2xl p-6 sm:p-10 shadow-panel-elevated relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-[#8BA381]/25 to-transparent" />
           
           {calcStep < CALCULATOR_QUESTIONS.length ? (
@@ -192,8 +192,8 @@ export default function RiskCalculator() {
                     riskLevel === 'MEDIUM' ? 'text-amber-400 border-amber-500/50' : 'text-[#8BA381] border-[#8BA381]/50'
                   }`}>
                     <span className={`w-2 h-2 rounded-full ${
-                      riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? 'bg-red-500 animate-pulse' :
-                      riskLevel === 'MEDIUM' ? 'bg-amber-500' : 'bg-[#8BA381]'
+                      riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? 'bg-red-500/100 animate-pulse' :
+                      riskLevel === 'MEDIUM' ? 'bg-amber-500/100' : 'bg-[#8BA381]'
                     }`} />
                     {riskLevel}
                   </span>

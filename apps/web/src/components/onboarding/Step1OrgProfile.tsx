@@ -270,7 +270,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
   );
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-sm border max-w-2xl mx-auto w-full">
+    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-2xl mx-auto w-full">
       <h2 className="text-2xl font-bold mb-6 text-gray-900">Organization profile</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -286,13 +286,13 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                 setErrors(prev => ({ ...prev, name: undefined }));
               }
             }}
-            className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-4 py-2 border rounded-md shadow-panel-elevated focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
               errors.name ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="Acme Agency"
           />
           {errors.name && (
-            <p className="text-sm text-red-600 mt-1">{errors.name}</p>
+            <p className="text-sm text-red-400 mt-1">{errors.name}</p>
           )}
         </div>
 
@@ -315,7 +315,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
               name="industry"
               value={formData.industry}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-md font-normal text-gray-900 bg-white"
+              className="w-full px-4 py-2 border rounded-md font-normal text-gray-900 bg-[#0D0F11]"
             >
               <option value="marketing_agency">Marketing / Digital Agency</option>
               <option value="design_agency">Design / Creative Agency</option>
@@ -341,7 +341,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
               name="companySize"
               value={formData.companySize}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-md font-normal text-gray-900 bg-white"
+              className="w-full px-4 py-2 border rounded-md font-normal text-gray-900 bg-[#0D0F11]"
             >
               <option value="1-4">1-4</option>
               <option value="5-10">5-10</option>
@@ -358,14 +358,14 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="w-full px-4 py-2 border rounded-md text-left flex justify-between items-center bg-white shadow-sm hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-2 border rounded-md text-left flex justify-between items-center bg-[#0D0F11] shadow-panel-elevated hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
           >
             <span className="text-gray-900 font-normal">{selectedCountryName}</span>
             <ChevronDown className="w-4 h-4 text-gray-500" />
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute z-50 left-0 right-0 mt-1 bg-white border rounded-md shadow-lg max-h-64 flex flex-col overflow-hidden">
+            <div className="absolute z-50 left-0 right-0 mt-1 bg-[#0D0F11] border rounded-md shadow-panel-elevated max-h-64 flex flex-col overflow-hidden">
               <div className="p-2 border-b flex items-center bg-gray-50">
                 <Search className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
                 <input
@@ -386,11 +386,11 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                           key={c.code}
                           type="button"
                           onClick={() => selectCountry(c.code)}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900 flex justify-between items-center"
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-500/10 hover:text-blue-900 flex justify-between items-center"
                         >
                           <span>{c.name}</span>
                           {formData.countryCode === c.code && (
-                            <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                            <Check className="w-4 h-4 text-blue-400 shrink-0" />
                           )}
                         </button>
                       ))
@@ -412,11 +412,11 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                             key={c.code}
                             type="button"
                             onClick={() => selectCountry(c.code)}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900 flex justify-between items-center"
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-500/10 hover:text-blue-900 flex justify-between items-center"
                           >
                             <span>{c.name}</span>
                             {formData.countryCode === c.code && (
-                              <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                              <Check className="w-4 h-4 text-blue-400 shrink-0" />
                             )}
                           </button>
                         ))}
@@ -433,11 +433,11 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                             key={c.code}
                             type="button"
                             onClick={() => selectCountry(c.code)}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900 flex justify-between items-center"
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-500/10 hover:text-blue-900 flex justify-between items-center"
                           >
                             <span>{c.name}</span>
                             {formData.countryCode === c.code && (
-                              <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                              <Check className="w-4 h-4 text-blue-400 shrink-0" />
                             )}
                           </button>
                         ))}
@@ -457,7 +457,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
               name="hasDpo"
               checked={formData.hasDpo}
               onChange={handleChange}
-              className="rounded text-blue-600 w-4 h-4 mr-2.5 mt-0.5 shrink-0"
+              className="rounded text-blue-400 w-4 h-4 mr-2.5 mt-0.5 shrink-0"
             />
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">We have a Data Protection Officer (DPO)</span>

@@ -38,19 +38,19 @@ export function Article30Generator() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm">
+      <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
         <div className="flex items-start gap-4">
-          <div className="p-3 bg-sage-50 text-sage-600 rounded-xl">
+          <div className="p-3 bg-[#C9A227]/10 text-[#C9A227] rounded-xl">
             <FileText className="w-6 h-6" />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-medium text-ink-900 mb-1">Article 30 Record (ROPA)</h3>
-            <p className="text-sm text-ink-600 mb-4">Export the legally required Record of Processing Activities. Includes both Controller and Processor (Client) records.</p>
+            <h3 className="text-lg font-medium text-[#F4F5F6] mb-1">Article 30 Record (ROPA)</h3>
+            <p className="text-sm text-[#9BA1A6] mb-4">Export the legally required Record of Processing Activities. Includes both Controller and Processor (Client) records.</p>
             <div className="flex gap-3">
               <button 
                 onClick={handleDownloadCsv}
                 disabled={isGeneratingCsv}
-                className="bg-white border border-ink-900/20 text-ink-700 hover:bg-bone-50 hover:text-ink-900 px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+                className="bg-[#0D0F11] border border-white/20 text-[#E6E8EA] hover:bg-[#08090A] hover:text-[#F4F5F6] px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
               >
                 {isGeneratingCsv ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
                 Download CSV
@@ -60,19 +60,19 @@ export function Article30Generator() {
         </div>
       </div>
 
-      <div className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
+      <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-br from-sage-50 to-transparent opacity-50 z-0"></div>
         <div className="relative z-10 flex items-start gap-4">
           <div className="p-3 bg-ink-900 text-white rounded-xl shadow-md">
             <Download className="w-6 h-6" />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-medium text-ink-900 mb-1">One-Click Audit File</h3>
-            <p className="text-sm text-ink-600 mb-4">Generates a comprehensive .zip package containing all required compliance documentation for an auditor (Article 30, Vendor DPAs, DPIAs, Policies).</p>
+            <h3 className="text-lg font-medium text-[#F4F5F6] mb-1">One-Click Audit File</h3>
+            <p className="text-sm text-[#9BA1A6] mb-4">Generates a comprehensive .zip package containing all required compliance documentation for an auditor (Article 30, Vendor DPAs, DPIAs, Policies).</p>
             <button 
               onClick={handleGenerateAuditFile}
               disabled={isGeneratingAudit}
-              className="bg-ink-900 text-white hover:bg-ink-800 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm flex items-center gap-2"
+              className="bg-ink-900 text-white hover:bg-ink-800 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-panel-elevated flex items-center gap-2"
             >
               {isGeneratingAudit ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               Generate Complete Audit ZIP

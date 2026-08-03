@@ -13,16 +13,22 @@ export default function AppLayout({
   return (
     <>
       <Announcer />
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-white focus:text-ink-900 focus:px-4 focus:py-2 focus:rounded focus:shadow-xl">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-[#0D0F11] focus:text-[#F4F5F6] focus:px-4 focus:py-2 focus:rounded focus:shadow-panel-elevated">
         Skip to main content
       </a>
       <div className="h-screen flex overflow-hidden">
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-bone-50">
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-[#08090A] selection:bg-[#C9A227]/30">
           <OfflineBanner />
-          <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto outline-none">
+          <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto outline-none relative">
+            {/* Background decorations matching marketing design */}
+            <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(120%_80%_at_50%_0%,#000_20%,transparent_75%)] pointer-events-none" />
+            <div aria-hidden="true" className="absolute top-0 left-1/2 w-[900px] h-[520px] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,var(--color-accent-transparent),transparent_70%)] pointer-events-none opacity-50" />
+            
             <Header />
-            {children}
+            <div className="relative z-10">
+              {children}
+            </div>
           </main>
         </div>
         <AiGuidancePanel />

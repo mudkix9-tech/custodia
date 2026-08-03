@@ -26,8 +26,8 @@ export default function AssessmentPrintPage() {
 
   if (isQueryLoading) {
     return (
-      <div className="min-h-screen bg-white text-neutral-900 flex flex-col items-center justify-center p-6">
-        <Loader2 className="w-10 h-10 text-sage-600 animate-spin mb-3" />
+      <div className="min-h-screen bg-[#0D0F11] text-neutral-900 flex flex-col items-center justify-center p-6">
+        <Loader2 className="w-10 h-10 text-[#C9A227] animate-spin mb-3" />
         <p className="text-sm text-neutral-500 font-medium">Preparing compliance audit export...</p>
       </div>
     );
@@ -35,9 +35,9 @@ export default function AssessmentPrintPage() {
 
   if (queryError || !record) {
     return (
-      <div className="min-h-screen bg-white text-neutral-900 flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-[#0D0F11] text-neutral-900 flex flex-col items-center justify-center p-6">
         <div className="max-w-md border border-neutral-200 rounded-xl p-8 text-center">
-          <h2 className="text-xl font-bold text-red-600 mb-2">Record Not Found</h2>
+          <h2 className="text-xl font-bold text-red-400 mb-2">Record Not Found</h2>
           <p className="text-sm text-neutral-500 mb-4">
             The requested assessment record could not be loaded or is inaccessible in this organization context.
           </p>
@@ -56,16 +56,16 @@ export default function AssessmentPrintPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900 p-8 sm:p-12 print:p-0 max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[#0D0F11] text-neutral-900 p-8 sm:p-12 print:p-0 max-w-4xl mx-auto space-y-8">
       {/* Top Print Utility Bar (Hidden during print) */}
-      <div className="print:hidden flex justify-between items-center bg-neutral-50 border border-neutral-200 rounded-xl p-4 mb-6 shadow-sm">
+      <div className="print:hidden flex justify-between items-center bg-neutral-50 border border-neutral-200 rounded-xl p-4 mb-6 shadow-panel-elevated">
         <div className="flex items-center gap-2 text-sm text-neutral-600">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />
           <span>Legitimate Interest Audit Record (GDPR Art. 30 ROPA)</span>
         </div>
         <button
           onClick={handlePrint}
-          className="inline-flex items-center gap-2 bg-sage-700 hover:bg-sage-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 bg-sage-700 hover:bg-sage-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-panel-elevated"
         >
           <Printer className="w-4 h-4" /> Print / Save as PDF
         </button>
@@ -129,7 +129,7 @@ export default function AssessmentPrintPage() {
           <p className="text-sm text-neutral-400 italic">No compliance audit summary comments available.</p>
         )}
         {a.scoreAdjustment !== 0 && (
-          <div className="text-xs font-semibold text-red-600 bg-red-50 border border-red-100 rounded-lg p-2.5 inline-block">
+          <div className="text-xs font-semibold text-red-400 bg-red-500/10 border border-red-900/50 rounded-lg p-2.5 inline-block">
             ⚠️ Risk score modification applied by auditor: {a.scoreAdjustment} points
           </div>
         )}
@@ -159,7 +159,7 @@ export default function AssessmentPrintPage() {
                         className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg border text-sm ${
                           isSelected 
                             ? 'bg-neutral-100 border-neutral-800 font-semibold text-neutral-900' 
-                            : 'bg-white border-neutral-200 text-neutral-400'
+                            : 'bg-[#0D0F11] border-neutral-200 text-neutral-400'
                         }`}
                       >
                         <CheckSquare className={`w-4 h-4 ${isSelected ? 'text-neutral-900' : 'text-neutral-300'}`} />

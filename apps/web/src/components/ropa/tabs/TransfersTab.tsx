@@ -64,7 +64,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
         value={value || ''}
         onChange={e => setValue(e.target.value)}
         onBlur={onBlur}
-        className="bg-transparent border-none outline-none focus:ring-2 focus:ring-sage-500/20 rounded px-2 py-1 w-full text-ink-900 placeholder:text-ink-300"
+        className="bg-transparent border-none outline-none focus:ring-2 focus:ring-sage-500/20 rounded px-2 py-1 w-full text-[#F4F5F6] placeholder:text-white/20"
       />
     );
   };
@@ -75,7 +75,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
       <select
         value={value || ''}
         onChange={(e) => table.options.meta?.updateData(row.index, column.id, e.target.value)}
-        className="bg-transparent hairline rounded px-2 py-1 w-full text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+        className="bg-transparent hairline rounded px-2 py-1 w-full text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
       >
         <option value="" disabled>Select...</option>
         {options.map((opt: string) => (
@@ -91,7 +91,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
       <select
         value={value || ''}
         onChange={(e) => table.options.meta?.updateData(row.index, column.id, e.target.value)}
-        className="bg-transparent hairline rounded px-2 py-1 w-full text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+        className="bg-transparent hairline rounded px-2 py-1 w-full text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
       >
         <option value="">No vendor linked</option>
         {orgVendors.map((ov: any) => (
@@ -103,16 +103,16 @@ export function TransfersTab({ activityId }: { activityId: string }) {
 
   const TiaStatusCell = ({ row }: any) => {
     const transfer = row.original;
-    if (!transfer.vendorId) return <span className="text-xs text-ink-400">Link vendor to assess</span>;
+    if (!transfer.vendorId) return <span className="text-xs text-[#6E747A]">Link vendor to assess</span>;
     
     if (transfer.tiaCompleted) {
       if (transfer.tiaRiskLevel === 'critical') {
         return (
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-2 py-1 rounded text-xs font-medium border border-red-200">
+            <span className="inline-flex items-center gap-1 bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-medium border border-red-900/50">
               <AlertTriangle className="w-3 h-3" /> Suspended
             </span>
-            <Link href={`/vendors/${transfer.vendorId}`} className="text-ink-400 hover:text-ink-900">
+            <Link href={`/vendors/${transfer.vendorId}`} className="text-[#6E747A] hover:text-[#F4F5F6]">
               <ExternalLink className="w-3 h-3" />
             </Link>
           </div>
@@ -120,10 +120,10 @@ export function TransfersTab({ activityId }: { activityId: string }) {
       }
       return (
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 bg-sage-50 text-sage-700 px-2 py-1 rounded text-xs font-medium border border-sage-200">
+          <span className="inline-flex items-center gap-1 bg-[#C9A227]/10 text-[#C9A227] px-2 py-1 rounded text-xs font-medium border border-[#C9A227]/30">
             <ShieldCheck className="w-3 h-3" /> TIA: Completed
           </span>
-          <Link href={`/vendors/${transfer.vendorId}`} className="text-ink-400 hover:text-ink-900">
+          <Link href={`/vendors/${transfer.vendorId}`} className="text-[#6E747A] hover:text-[#F4F5F6]">
             <ExternalLink className="w-3 h-3" />
           </Link>
         </div>
@@ -132,10 +132,10 @@ export function TransfersTab({ activityId }: { activityId: string }) {
     
     return (
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-1 rounded text-xs font-medium border border-amber-200">
+        <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 px-2 py-1 rounded text-xs font-medium border border-amber-900/50">
           <AlertTriangle className="w-3 h-3" /> TIA: Required
         </span>
-        <Link href={`/vendors/${transfer.vendorId}`} className="text-ink-400 hover:text-ink-900">
+        <Link href={`/vendors/${transfer.vendorId}`} className="text-[#6E747A] hover:text-[#F4F5F6]">
           <ExternalLink className="w-3 h-3" />
         </Link>
       </div>
@@ -178,7 +178,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
       id: 'actions',
       header: '',
       cell: ({ row }: any) => (
-        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-ink-400 hover:text-clay-600 hover:bg-bone-100 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
+        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-[#6E747A] hover:text-clay-600 hover:bg-white/5 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
         </button>
       ),
       size: 50,
@@ -188,9 +188,9 @@ export function TransfersTab({ activityId }: { activityId: string }) {
 
   return (
     <div className="space-y-6 fade-up">
-      <div className="bg-bone-50 hairline rounded-2xl p-6">
-        <h2 className="text-[14px] font-medium text-ink-900 mb-2">International Transfers</h2>
-        <p className="text-[12px] text-ink-500 mb-4">Document cross-border data transfers outside of the EEA or recognized adequate countries.</p>
+      <div className="bg-[#08090A] hairline rounded-2xl p-6">
+        <h2 className="text-[14px] font-medium text-[#F4F5F6] mb-2">International Transfers</h2>
+        <p className="text-[12px] text-[#6E747A] mb-4">Document cross-border data transfers outside of the EEA or recognized adequate countries.</p>
         <DataGrid
           mode="compact"
           columns={columns as any}

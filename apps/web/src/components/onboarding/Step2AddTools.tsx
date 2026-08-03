@@ -145,7 +145,7 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
   );
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-sm border max-w-4xl mx-auto w-full">
+    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-4xl mx-auto w-full">
       <div className="mb-8 text-center">
         <h2 className="text-2xl font-bold mb-2 text-gray-900">What tools do you use?</h2>
         <p className="text-gray-500 max-w-lg mx-auto">Select the tools you use to process data. We'll use this to build your data map.</p>
@@ -165,14 +165,14 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
                   onClick={() => toggleTool(tool.id)}
                   className={`relative p-4 border rounded-xl flex flex-col items-center justify-center gap-3 transition-all select-none min-h-[110px] ${
                     isSelected
-                      ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-100'
+                      ? 'border-blue-600 bg-blue-500/10/50 ring-2 ring-blue-100'
                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
                   }`}
                 >
                   <div className="shrink-0">{getToolIcon(tool.id, "w-8 h-8")}</div>
                   <div className="font-semibold text-xs text-gray-700 text-center">{tool.name}</div>
                   {isSelected && (
-                    <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white rounded-full p-0.5 shadow-sm shrink-0">
+                    <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white rounded-full p-0.5 shadow-panel-elevated shrink-0">
                       <svg className="w-3 h-3 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
@@ -200,14 +200,14 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
                 onClick={() => toggleTool(tool.id)}
                 className={`relative p-4 border rounded-xl flex flex-col items-center justify-center gap-3 transition-all select-none min-h-[110px] ${
                   isSelected
-                    ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-100'
+                    ? 'border-blue-600 bg-blue-500/10/50 ring-2 ring-blue-100'
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
                 }`}
               >
                 <div className="shrink-0">{getToolIcon(tool.id, "w-8 h-8")}</div>
                 <div className="font-semibold text-xs text-gray-700 text-center">{tool.name}</div>
                 {isSelected && (
-                  <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white rounded-full p-0.5 shadow-sm shrink-0">
+                  <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white rounded-full p-0.5 shadow-panel-elevated shrink-0">
                     <svg className="w-3 h-3 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
@@ -257,14 +257,14 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
                       onClick={() => toggleTool(tool.id)}
                       className={`relative p-4 border rounded-xl flex flex-col items-center justify-center gap-3 transition-all select-none min-h-[110px] ${
                         isSelected
-                          ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-100'
+                          ? 'border-blue-600 bg-blue-500/10/50 ring-2 ring-blue-100'
                           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
                       }`}
                     >
                       <div className="shrink-0">{getToolIcon(tool.id, "w-8 h-8")}</div>
                       <div className="font-semibold text-xs text-gray-700 text-center">{tool.name}</div>
                       {isSelected && (
-                        <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white rounded-full p-0.5 shadow-sm shrink-0">
+                        <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white rounded-full p-0.5 shadow-panel-elevated shrink-0">
                           <svg className="w-3 h-3 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
@@ -308,7 +308,7 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
             {customTools.map(name => (
               <span
                 key={name}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-200"
               >
                 <span>{name}</span>
                 <button

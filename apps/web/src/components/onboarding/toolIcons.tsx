@@ -245,8 +245,8 @@ export function getToolIcon(id: string, className = "w-8 h-8"): React.ReactNode 
   const colors = [
     'bg-teal-500 text-white',
     'bg-slate-500 text-white',
-    'bg-indigo-500 text-white',
-    'bg-amber-500 text-white',
+    'bg-indigo-500/100 text-white',
+    'bg-amber-500/100 text-white',
     'bg-rose-500 text-white',
   ];
   const colorIndex = Math.abs(id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)) % colors.length;

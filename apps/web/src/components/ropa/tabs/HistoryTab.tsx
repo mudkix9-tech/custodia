@@ -10,22 +10,22 @@ export function HistoryTab({ activityId }: { activityId: string }) {
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   if (isLoading) {
-    return <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-sage-600" /></div>;
+    return <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" /></div>;
   }
 
   if (!logs || logs.length === 0) {
     return (
-      <div className="py-12 text-center border border-dashed border-ink-900/20 rounded-2xl bg-bone-50/50 max-w-3xl">
-        <Clock className="w-6 h-6 text-ink-400 mx-auto mb-3" />
-        <p className="text-[13px] text-ink-500">No history found for this activity.</p>
+      <div className="py-12 text-center border border-dashed border-white/20 rounded-2xl bg-[#08090A]/50 max-w-3xl">
+        <Clock className="w-6 h-6 text-[#6E747A] mx-auto mb-3" />
+        <p className="text-[13px] text-[#6E747A]">No history found for this activity.</p>
       </div>
     );
   }
 
   const getActionIcon = (action: string) => {
-    if (action.includes('create')) return <PlusCircle className="w-4 h-4 text-sage-600" />;
+    if (action.includes('create')) return <PlusCircle className="w-4 h-4 text-[#C9A227]" />;
     if (action.includes('delete')) return <Trash2 className="w-4 h-4 text-clay-600" />;
-    return <Edit className="w-4 h-4 text-amber-600" />;
+    return <Edit className="w-4 h-4 text-amber-400" />;
   };
 
   const getActionText = (action: string) => {
@@ -59,13 +59,13 @@ export function HistoryTab({ activityId }: { activityId: string }) {
       }
     });
 
-    if (changes.length === 0) return <div className="text-[12px] text-ink-500 italic mt-2">No structural changes detected (likely just an auto-save).</div>;
+    if (changes.length === 0) return <div className="text-[12px] text-[#6E747A] italic mt-2">No structural changes detected (likely just an auto-save).</div>;
 
     return (
       <div className="mt-3 space-y-2">
         {changes.map(change => (
-          <div key={change.key} className="text-[12px] font-mono bg-white border border-ink-900/10 rounded-md overflow-hidden">
-            <div className="px-3 py-1.5 bg-bone-100 border-b border-ink-900/10 font-medium text-ink-700">
+          <div key={change.key} className="text-[12px] font-mono bg-[#0D0F11] border border-white/10 rounded-md overflow-hidden">
+            <div className="px-3 py-1.5 bg-white/5 border-b border-white/10 font-medium text-[#E6E8EA]">
               {change.key}
             </div>
             <div className="grid grid-cols-2 divide-x divide-ink-900/10">
@@ -73,7 +73,7 @@ export function HistoryTab({ activityId }: { activityId: string }) {
                 <span className="text-clay-400 select-none mr-2">-</span>
                 {typeof change.old === 'object' ? JSON.stringify(change.old) : String(change.old || 'null')}
               </div>
-              <div className="p-2 bg-sage-50/30 text-sage-700 break-all">
+              <div className="p-2 bg-[#C9A227]/10/30 text-[#C9A227] break-all">
                 <span className="text-sage-400 select-none mr-2">+</span>
                 {typeof change.new === 'object' ? JSON.stringify(change.new) : String(change.new || 'null')}
               </div>
@@ -86,9 +86,9 @@ export function HistoryTab({ activityId }: { activityId: string }) {
 
   return (
     <div className="space-y-6 max-w-3xl fade-up">
-      <div className="bg-bone-50 hairline rounded-2xl p-6">
-        <h2 className="text-[14px] font-medium text-ink-900 mb-6 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-ink-500" />
+      <div className="bg-[#08090A] hairline rounded-2xl p-6">
+        <h2 className="text-[14px] font-medium text-[#F4F5F6] mb-6 flex items-center gap-2">
+          <Activity className="w-4 h-4 text-[#6E747A]" />
           Audit Trail
         </h2>
 
@@ -99,12 +99,12 @@ export function HistoryTab({ activityId }: { activityId: string }) {
             const isExpanded = expandedLogId === log.id;
 
             return (
-              <div key={log.id} className="relative pl-6 pb-4 border-l border-ink-900/10 last:border-transparent last:pb-0">
-                <div className="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-bone-50 border border-ink-900/20 flex items-center justify-center">
+              <div key={log.id} className="relative pl-6 pb-4 border-l border-white/10 last:border-transparent last:pb-0">
+                <div className="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-[#08090A] border border-white/20 flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-ink-400" />
                 </div>
                 
-                <div className="bg-white hairline rounded-xl p-4 shadow-sm">
+                <div className="bg-[#0D0F11] hairline rounded-xl p-4 shadow-panel-elevated">
                   <div 
                     className="flex items-start justify-between cursor-pointer"
                     onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
@@ -112,13 +112,13 @@ export function HistoryTab({ activityId }: { activityId: string }) {
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5">{getActionIcon(log.action)}</div>
                       <div>
-                        <div className="text-[13px] font-medium text-ink-900">{getActionText(log.action)}</div>
-                        <div className="text-[12px] text-ink-500 mt-0.5">{date}</div>
+                        <div className="text-[13px] font-medium text-[#F4F5F6]">{getActionText(log.action)}</div>
+                        <div className="text-[12px] text-[#6E747A] mt-0.5">{date}</div>
                       </div>
                     </div>
                     
                     {log.action === 'ropa.update' && (
-                      <div className="text-[12px] text-sage-600 font-medium bg-sage-50 px-2 py-1 rounded">
+                      <div className="text-[12px] text-[#C9A227] font-medium bg-[#C9A227]/10 px-2 py-1 rounded">
                         {isExpanded ? 'Hide Diff' : 'View Diff'}
                       </div>
                     )}
@@ -132,7 +132,7 @@ export function HistoryTab({ activityId }: { activityId: string }) {
                   
                   {isExpanded && log.action === 'ropa.create' && details && (
                     <div className="mt-4 pt-4 border-t border-ink-900/8 animate-in fade-in slide-in-from-top-2 duration-200">
-                      <div className="text-[12px] text-ink-600 bg-bone-100 p-3 rounded-lg font-mono break-all">
+                      <div className="text-[12px] text-[#9BA1A6] bg-white/5 p-3 rounded-lg font-mono break-all">
                         {JSON.stringify(details.changes, null, 2)}
                       </div>
                     </div>

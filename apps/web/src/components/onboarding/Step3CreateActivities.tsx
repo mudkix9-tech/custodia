@@ -76,7 +76,7 @@ export function Step3CreateActivities({ templates, onNext }: Step3Props) {
   const totalCount = selected.length + selectedCustom.length;
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-sm border max-w-4xl mx-auto w-full">
+    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-4xl mx-auto w-full">
       <div className="mb-6 text-center">
         <h2 className="text-2xl font-bold mb-2 text-gray-900">Let's document your first data processing activities</h2>
         <p className="text-gray-500 max-w-lg mx-auto">Based on your industry, we've prepared standard processing activities. Review and select the ones you do.</p>
@@ -92,7 +92,7 @@ export function Step3CreateActivities({ templates, onNext }: Step3Props) {
               onClick={() => toggleTemplate(template.id)}
               className={`p-3.5 border rounded-xl cursor-pointer transition-all flex items-start justify-between select-none ${
                 isSelected
-                  ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-100'
+                  ? 'border-blue-600 bg-blue-500/10/50 ring-1 ring-blue-100'
                   : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
               }`}
             >
@@ -132,7 +132,7 @@ export function Step3CreateActivities({ templates, onNext }: Step3Props) {
               onClick={() => toggleCustom(name)}
               className={`p-3.5 border rounded-xl cursor-pointer transition-all flex items-start justify-between select-none ${
                 isSelected
-                  ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-100'
+                  ? 'border-blue-600 bg-blue-500/10/50 ring-1 ring-blue-100'
                   : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
               }`}
             >
@@ -143,8 +143,8 @@ export function Step3CreateActivities({ templates, onNext }: Step3Props) {
                   <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600 font-medium">
                     Source: Manually added
                   </span>
-                  <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-semibold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Needs Review
+                  <span className="bg-amber-500/10 text-amber-800 border border-amber-900/50 px-2 py-0.5 rounded font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/100 animate-pulse"></span> Needs Review
                   </span>
                 </div>
               </div>

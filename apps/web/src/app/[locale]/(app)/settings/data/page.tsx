@@ -57,20 +57,20 @@ export default function DataPrivacySettingsPage() {
     <div className="max-w-4xl mx-auto p-8 fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-ink-900 mb-2">Data & Privacy</h1>
-          <p className="text-ink-600">Export your organization's data or delete your account.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">Data & Privacy</h1>
+          <p className="text-[#9BA1A6]">Export your organization's data or delete your account.</p>
         </div>
       </div>
 
       <div className="space-y-8">
         {/* Data Export */}
-        <div className="bg-white rounded-2xl border border-ink-900/10 p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-6 text-ink-900">
-            <Download className="w-5 h-5 text-ink-400" />
+        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
+          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
+            <Download className="w-5 h-5 text-[#6E747A]" />
             <h2 className="text-lg font-medium">Export Data</h2>
           </div>
 
-          <p className="text-sm text-ink-600 mb-6 max-w-2xl">
+          <p className="text-sm text-[#9BA1A6] mb-6 max-w-2xl">
             You can request a complete export of your organization's data. This includes all processing activities, vendor assessments, DSAR records, breaches, and uploaded documents.
           </p>
 
@@ -78,35 +78,35 @@ export default function DataPrivacySettingsPage() {
             <button
               onClick={handleExport}
               disabled={exportStatus === 'loading'}
-              className="bg-white border border-ink-900/20 text-ink-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-bone-100 shadow-sm flex items-center gap-2 disabled:opacity-50"
+              className="bg-[#0D0F11] border border-white/20 text-[#F4F5F6] px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/5 shadow-panel-elevated flex items-center gap-2 disabled:opacity-50"
             >
               <Download className="w-4 h-4" /> {exportStatus === 'loading' ? 'Requesting...' : 'Download All Data'}
             </button>
-            <p className="text-xs text-ink-500">
+            <p className="text-xs text-[#6E747A]">
               A zip file will be sent to your email when ready.
             </p>
           </div>
 
           {exportStatus === 'success' && (
-            <div className="mt-4 p-3 bg-sage-50 text-sage-800 text-sm rounded-lg border border-sage-200">
+            <div className="mt-4 p-3 bg-[#C9A227]/10 text-sage-800 text-sm rounded-lg border border-[#C9A227]/30">
               Export requested successfully! You will receive an email when it is ready.
             </div>
           )}
           {exportStatus === 'error' && (
-            <div className="mt-4 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-200">
+            <div className="mt-4 p-3 bg-red-500/10 text-red-400 text-sm rounded-lg border border-red-900/50">
               Failed to request data export. Please try again later.
             </div>
           )}
         </div>
 
         {/* Data Retention Information */}
-        <div className="bg-white rounded-2xl border border-ink-900/10 p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-6 text-ink-900">
-            <Database className="w-5 h-5 text-ink-400" />
+        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
+          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
+            <Database className="w-5 h-5 text-[#6E747A]" />
             <h2 className="text-lg font-medium">Data Retention Policy</h2>
           </div>
 
-          <ul className="list-disc pl-5 space-y-2 text-sm text-ink-600">
+          <ul className="list-disc pl-5 space-y-2 text-sm text-[#9BA1A6]">
             <li><strong>Active account data:</strong> retained as long as your account is active</li>
             <li><strong>Consent records:</strong> retained for 5 years after collection (regulatory requirement)</li>
             <li><strong>Audit logs:</strong> retained for 3 years after the event</li>
@@ -117,13 +117,13 @@ export default function DataPrivacySettingsPage() {
 
         {/* Account Deletion */}
         {isOwner && (
-          <div className="bg-red-50/50 rounded-2xl border border-red-200 p-6">
-            <div className="flex items-center gap-2 mb-6 text-red-700">
+          <div className="bg-red-500/10/50 rounded-2xl border border-red-900/50 p-6">
+            <div className="flex items-center gap-2 mb-6 text-red-400">
               <AlertTriangle className="w-5 h-5" />
               <h2 className="text-lg font-medium">Danger Zone</h2>
             </div>
 
-            <p className="text-sm text-red-800 mb-6 max-w-2xl">
+            <p className="text-sm text-red-400 mb-6 max-w-2xl">
               Permanently delete this organization and all of its data. This action cannot be undone. Data will be hard-deleted after a 30-day grace period.
             </p>
 
@@ -136,12 +136,12 @@ export default function DataPrivacySettingsPage() {
             </button>
 
             {deleteStatus === 'success' && (
-              <div className="mt-4 p-3 bg-red-100 text-red-800 text-sm rounded-lg border border-red-300">
+              <div className="mt-4 p-3 bg-red-500/20 text-red-400 text-sm rounded-lg border border-red-300">
                 Organization scheduled for deletion.
               </div>
             )}
             {deleteStatus === 'error' && (
-              <div className="mt-4 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-200">
+              <div className="mt-4 p-3 bg-red-500/10 text-red-400 text-sm rounded-lg border border-red-900/50">
                 Failed to schedule organization for deletion.
               </div>
             )}

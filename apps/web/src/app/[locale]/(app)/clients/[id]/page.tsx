@@ -36,12 +36,12 @@ export default function ClientDetailPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-bone-100 rounded-xl flex items-center justify-center border border-ink-900/10 text-xl font-bold text-ink-900">
+          <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 text-xl font-bold text-[#F4F5F6]">
             {client.name.charAt(0).toUpperCase()}
           </div>
           <div>
-            <h1 className="text-3xl font-serif text-ink-900">{client.name}</h1>
-            <div className="text-ink-500 text-[14px] flex items-center gap-4 mt-1">
+            <h1 className="text-3xl font-serif text-[#F4F5F6]">{client.name}</h1>
+            <div className="text-[#6E747A] text-[14px] flex items-center gap-4 mt-1">
               <span>{client.industry || 'No industry specified'}</span>
               <span>&bull;</span>
               <span>{client.countryCode || 'Unknown location'}</span>
@@ -51,7 +51,7 @@ export default function ClientDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-ink-900/10">
+      <div className="border-b border-white/10">
         <nav className="flex gap-8">
           {tabs.map(tab => (
             <button
@@ -59,8 +59,8 @@ export default function ClientDetailPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`pb-4 text-[14px] font-medium transition-colors border-b-2 ${
                 activeTab === tab.id 
-                  ? 'border-sage-600 text-sage-700' 
-                  : 'border-transparent text-ink-500 hover:text-ink-900 hover:border-ink-900/20'
+                  ? 'border-sage-600 text-[#C9A227]' 
+                  : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:border-white/20'
               }`}
             >
               {tab.label}
@@ -117,45 +117,45 @@ function OverviewTab({ client }: { client: any }) {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {/* Left Col - Info */}
       <div className="space-y-8 md:col-span-2">
-        <section className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-ink-900 mb-4">Client Details</h3>
+        <section className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
+          <h3 className="text-lg font-bold text-[#F4F5F6] mb-4">Client Details</h3>
           <div className="grid grid-cols-2 gap-y-6">
             <div>
-              <div className="text-[12px] text-ink-500 font-medium uppercase tracking-wider">Legal Name</div>
-              <div className="text-[15px] text-ink-900 mt-1">{client.legalName || '-'}</div>
+              <div className="text-[12px] text-[#6E747A] font-medium uppercase tracking-wider">Legal Name</div>
+              <div className="text-[15px] text-[#F4F5F6] mt-1">{client.legalName || '-'}</div>
             </div>
             <div>
-              <div className="text-[12px] text-ink-500 font-medium uppercase tracking-wider">Contact Person</div>
-              <div className="text-[15px] text-ink-900 mt-1">{client.contactName || '-'}</div>
+              <div className="text-[12px] text-[#6E747A] font-medium uppercase tracking-wider">Contact Person</div>
+              <div className="text-[15px] text-[#F4F5F6] mt-1">{client.contactName || '-'}</div>
             </div>
             <div>
-              <div className="text-[12px] text-ink-500 font-medium uppercase tracking-wider">Contact Email</div>
-              <div className="text-[15px] text-ink-900 mt-1">{client.contactEmail || '-'}</div>
+              <div className="text-[12px] text-[#6E747A] font-medium uppercase tracking-wider">Contact Email</div>
+              <div className="text-[15px] text-[#F4F5F6] mt-1">{client.contactEmail || '-'}</div>
             </div>
             <div>
-              <div className="text-[12px] text-ink-500 font-medium uppercase tracking-wider">Created At</div>
-              <div className="text-[15px] text-ink-900 mt-1">{new Date(client.createdAt).toLocaleDateString()}</div>
+              <div className="text-[12px] text-[#6E747A] font-medium uppercase tracking-wider">Created At</div>
+              <div className="text-[15px] text-[#F4F5F6] mt-1">{new Date(client.createdAt).toLocaleDateString()}</div>
             </div>
           </div>
         </section>
 
-        <section className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm">
+        <section className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-ink-900">Data Processing Agreement (DPA)</h3>
+            <h3 className="text-lg font-bold text-[#F4F5F6]">Data Processing Agreement (DPA)</h3>
           </div>
-          <p className="text-[14px] text-ink-600 mb-6">
+          <p className="text-[14px] text-[#9BA1A6] mb-6">
             Manage the DPA between your agency (Processor) and this client (Controller). 
             This is required under GDPR Article 28.
           </p>
           
-          <div className="grid grid-cols-2 gap-6 bg-bone-50 p-6 rounded-xl border border-ink-900/5">
+          <div className="grid grid-cols-2 gap-6 bg-[#08090A] p-6 rounded-xl border border-white/5">
             <div>
-              <label className="block text-[12px] font-medium text-ink-500 uppercase tracking-wider mb-2">DPA Status</label>
+              <label className="block text-[12px] font-medium text-[#6E747A] uppercase tracking-wider mb-2">DPA Status</label>
               <select 
                 value={client.dpaStatus} 
                 onChange={handleDpaStatusChange}
                 disabled={updateDpa.isPending}
-                className="w-full bg-white border border-ink-900/10 rounded-lg px-3 py-2 text-[14px] focus:ring-2 focus:ring-sage-500/20"
+                className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:ring-2 focus:ring-sage-500/20"
               >
                 <option value="not_started">Not Started</option>
                 <option value="pending">Pending Signature</option>
@@ -167,20 +167,20 @@ function OverviewTab({ client }: { client: any }) {
             {client.dpaStatus === 'signed' && (
               <>
                 <div>
-                  <label className="block text-[12px] font-medium text-ink-500 uppercase tracking-wider mb-2">Signed Date</label>
-                  <div className="text-[14px] font-medium text-ink-900 py-2">
+                  <label className="block text-[12px] font-medium text-[#6E747A] uppercase tracking-wider mb-2">Signed Date</label>
+                  <div className="text-[14px] font-medium text-[#F4F5F6] py-2">
                     {client.dpaSignedAt ? new Date(client.dpaSignedAt).toLocaleDateString() : '-'}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[12px] font-medium text-ink-500 uppercase tracking-wider mb-2">Expiry Date</label>
-                  <div className="text-[14px] font-medium text-ink-900 py-2">
+                  <label className="block text-[12px] font-medium text-[#6E747A] uppercase tracking-wider mb-2">Expiry Date</label>
+                  <div className="text-[14px] font-medium text-[#F4F5F6] py-2">
                     {client.dpaExpiresAt ? new Date(client.dpaExpiresAt).toLocaleDateString() : '-'}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[12px] font-medium text-ink-500 uppercase tracking-wider mb-2">Document</label>
-                  <button className="text-[14px] font-medium text-sage-600 hover:text-sage-700 py-2 inline-flex items-center gap-1.5">
+                  <label className="block text-[12px] font-medium text-[#6E747A] uppercase tracking-wider mb-2">Document</label>
+                  <button className="text-[14px] font-medium text-[#C9A227] hover:text-[#C9A227] py-2 inline-flex items-center gap-1.5">
                     <Download className="w-4 h-4" /> Upload Document
                   </button>
                 </div>
@@ -192,13 +192,13 @@ function OverviewTab({ client }: { client: any }) {
 
       {/* Right Col - Portal */}
       <div className="space-y-6">
-        <section className={`border rounded-2xl p-6 shadow-sm ${client.portalEnabled ? 'bg-indigo-50 border-indigo-100' : 'bg-white border-ink-900/10'}`}>
+        <section className={`border rounded-2xl p-6 shadow-panel-elevated ${client.portalEnabled ? 'bg-indigo-500/10 border-indigo-900/50' : 'bg-[#0D0F11] border-white/10'}`}>
           <div className="flex items-center gap-3 mb-4">
-            <Globe className={`w-6 h-6 ${client.portalEnabled ? 'text-indigo-600' : 'text-ink-400'}`} />
-            <h3 className="text-lg font-bold text-ink-900">Trust Portal</h3>
+            <Globe className={`w-6 h-6 ${client.portalEnabled ? 'text-indigo-400' : 'text-[#6E747A]'}`} />
+            <h3 className="text-lg font-bold text-[#F4F5F6]">Trust Portal</h3>
           </div>
           
-          <p className="text-[14px] text-ink-600 mb-6">
+          <p className="text-[14px] text-[#9BA1A6] mb-6">
             Share a read-only compliance dashboard with this client showing their linked processing activities and vendors.
           </p>
 
@@ -206,25 +206,25 @@ function OverviewTab({ client }: { client: any }) {
             <label className="flex items-center gap-3 cursor-pointer">
               <div className="relative">
                 <input type="checkbox" className="sr-only" checked={client.portalEnabled} onChange={handleTogglePortal} disabled={togglePortal.isPending} />
-                <div className={`block w-10 h-6 rounded-full transition-colors ${client.portalEnabled ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
-                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${client.portalEnabled ? 'transform translate-x-4' : ''}`}></div>
+                <div className={`block w-10 h-6 rounded-full transition-colors ${client.portalEnabled ? 'bg-indigo-500/100' : 'bg-gray-300'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-[#0D0F11] w-4 h-4 rounded-full transition-transform ${client.portalEnabled ? 'transform translate-x-4' : ''}`}></div>
               </div>
-              <span className="text-[14px] font-medium text-ink-900">Enable Portal</span>
+              <span className="text-[14px] font-medium text-[#F4F5F6]">Enable Portal</span>
             </label>
 
             {client.portalEnabled && (
-              <div className="pt-4 border-t border-indigo-200/50 space-y-4">
+              <div className="pt-4 border-t border-indigo-900/50/50 space-y-4">
                 <div>
                   <label className="block text-[12px] font-medium text-indigo-800/70 uppercase tracking-wider mb-1">Secret URL</label>
                   <div className="flex gap-2">
                     <input 
                       readOnly 
                       value={portalUrl} 
-                      className="w-full bg-white border border-indigo-200 rounded-lg px-3 py-2 text-[13px] text-ink-600 font-mono"
+                      className="w-full bg-[#0D0F11] border border-indigo-900/50 rounded-lg px-3 py-2 text-[13px] text-[#9BA1A6] font-mono"
                     />
                     <button 
                       onClick={() => navigator.clipboard.writeText(portalUrl)}
-                      className="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-3 py-2 rounded-lg"
+                      className="bg-[#0D0F11] border border-indigo-900/50 text-indigo-400 hover:bg-indigo-500/10 px-3 py-2 rounded-lg"
                     >
                       Copy
                     </button>
@@ -234,7 +234,7 @@ function OverviewTab({ client }: { client: any }) {
                 <button 
                   onClick={handleRotate}
                   disabled={rotateToken.isPending}
-                  className="text-[13px] text-red-600 hover:text-red-700 font-medium inline-flex items-center gap-1.5"
+                  className="text-[13px] text-red-400 hover:text-red-400 font-medium inline-flex items-center gap-1.5"
                 >
                   <AlertTriangle className="w-4 h-4" /> Regenerate Link
                 </button>
@@ -243,12 +243,12 @@ function OverviewTab({ client }: { client: any }) {
           </div>
         </section>
 
-        <section className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-[15px] font-bold text-ink-900 mb-4">Quick Stats</h3>
+        <section className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
+          <h3 className="text-[15px] font-bold text-[#F4F5F6] mb-4">Quick Stats</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[14px] text-ink-600">Processing Activities</span>
-              <span className="font-bold text-ink-900 bg-bone-100 px-2.5 py-0.5 rounded-full text-[13px]">
+              <span className="text-[14px] text-[#9BA1A6]">Processing Activities</span>
+              <span className="font-bold text-[#F4F5F6] bg-white/5 px-2.5 py-0.5 rounded-full text-[13px]">
                 {client.processingActivities?.length || 0}
               </span>
             </div>
@@ -287,10 +287,10 @@ function ActivitiesTab({ client }: { client: any }) {
       header: 'Activity',
       cell: ({ row }: any) => (
         <div>
-          <Link href={`/ropa/${row.original.id}`} className="font-medium text-ink-900 hover:text-sage-600 block">
+          <Link href={`/ropa/${row.original.id}`} className="font-medium text-[#F4F5F6] hover:text-[#C9A227] block">
             {row.original.name}
           </Link>
-          <div className="text-[13px] text-ink-500 truncate max-w-[300px]">{row.original.purpose}</div>
+          <div className="text-[13px] text-[#6E747A] truncate max-w-[300px]">{row.original.purpose}</div>
         </div>
       )
     },
@@ -298,7 +298,7 @@ function ActivitiesTab({ client }: { client: any }) {
       accessorKey: 'lawfulBasis',
       header: 'Lawful Basis',
       cell: ({ getValue }: any) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-bone-100 text-ink-700 uppercase tracking-wider">
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-white/5 text-[#E6E8EA] uppercase tracking-wider">
           {getValue()?.replace('_', ' ')}
         </span>
       )
@@ -308,8 +308,8 @@ function ActivitiesTab({ client }: { client: any }) {
       header: 'Risk Level',
       cell: ({ getValue }: any) => {
         const val = getValue();
-        if (val === 'high') return <span className="text-red-600 font-bold uppercase text-[12px] tracking-wider">{val}</span>;
-        return <span className="text-sage-600 font-bold uppercase text-[12px] tracking-wider">{val || 'low'}</span>;
+        if (val === 'high') return <span className="text-red-400 font-bold uppercase text-[12px] tracking-wider">{val}</span>;
+        return <span className="text-[#C9A227] font-bold uppercase text-[12px] tracking-wider">{val || 'low'}</span>;
       }
     },
     {
@@ -317,7 +317,7 @@ function ActivitiesTab({ client }: { client: any }) {
       cell: ({ row }: any) => (
         <button 
           onClick={() => handleUnlink(row.original.id)}
-          className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors"
+          className="text-red-500 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 p-2 rounded-lg transition-colors"
           title="Unlink from client"
         >
           <Unlink className="w-4 h-4" />
@@ -328,10 +328,10 @@ function ActivitiesTab({ client }: { client: any }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-ink-900/10 shadow-sm">
+      <div className="flex justify-between items-center bg-[#0D0F11] p-6 rounded-2xl border border-white/10 shadow-panel-elevated">
         <div>
-          <h2 className="text-lg font-bold text-ink-900">Linked Processing Activities</h2>
-          <p className="text-[14px] text-ink-600 mt-1">Activities shown here appear on the client's compliance portal.</p>
+          <h2 className="text-lg font-bold text-[#F4F5F6]">Linked Processing Activities</h2>
+          <p className="text-[14px] text-[#9BA1A6] mt-1">Activities shown here appear on the client's compliance portal.</p>
         </div>
         <button 
           onClick={() => setIsLinkOpen(true)}
@@ -341,7 +341,7 @@ function ActivitiesTab({ client }: { client: any }) {
         </button>
       </div>
 
-      <div className="bg-white border border-ink-900/10 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-[#0D0F11] border border-white/10 rounded-2xl shadow-panel-elevated overflow-hidden">
         <DataGrid 
           columns={columns}
           data={activities}
@@ -388,32 +388,32 @@ function LinkActivityModal({ clientId, isOpen, onClose, existingActivityIds }: a
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/50 backdrop-blur-sm">
-      <div className="bg-white border-ink-900/10 rounded-2xl w-full max-w-[600px] overflow-hidden flex flex-col shadow-2xl h-[600px]">
-        <div className="p-6 border-b border-ink-900/10 flex justify-between items-center bg-bone-50">
+      <div className="bg-[#0D0F11] border-white/10 rounded-2xl w-full max-w-[600px] overflow-hidden flex flex-col shadow-2xl h-[600px]">
+        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#08090A]">
           <div>
-            <h2 className="text-xl font-serif text-ink-900">Link Processing Activities</h2>
-            <p className="text-[13px] text-ink-500 mt-1">Select activities that involve this client's data.</p>
+            <h2 className="text-xl font-serif text-[#F4F5F6]">Link Processing Activities</h2>
+            <p className="text-[13px] text-[#6E747A] mt-1">Select activities that involve this client's data.</p>
           </div>
-          <button onClick={onClose} className="text-ink-500 hover:text-ink-900 text-2xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-[#6E747A] hover:text-[#F4F5F6] text-2xl leading-none">&times;</button>
         </div>
         
-        <div className="p-4 border-b border-ink-900/5">
+        <div className="p-4 border-b border-white/5">
           <input 
             type="text"
             placeholder="Search your ROPA..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-bone-50 border border-ink-900/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+            className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
           />
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {availableActivities.length === 0 ? (
-            <div className="text-center text-ink-500 py-8">No unlinked activities found.</div>
+            <div className="text-center text-[#6E747A] py-8">No unlinked activities found.</div>
           ) : (
             availableActivities.map((act: any) => (
               <label key={act.id} className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
-                selected.includes(act.id) ? 'border-sage-500 bg-sage-50' : 'border-ink-900/10 hover:border-ink-900/30'
+                selected.includes(act.id) ? 'border-sage-500 bg-[#C9A227]/10' : 'border-white/10 hover:border-ink-900/30'
               }`}>
                 <input 
                   type="checkbox" 
@@ -422,20 +422,20 @@ function LinkActivityModal({ clientId, isOpen, onClose, existingActivityIds }: a
                   className="mt-1"
                 />
                 <div>
-                  <div className="font-medium text-ink-900">{act.name}</div>
-                  <div className="text-[13px] text-ink-500 line-clamp-1">{act.purpose}</div>
+                  <div className="font-medium text-[#F4F5F6]">{act.name}</div>
+                  <div className="text-[13px] text-[#6E747A] line-clamp-1">{act.purpose}</div>
                 </div>
               </label>
             ))
           )}
         </div>
 
-        <div className="p-4 border-t border-ink-900/10 bg-bone-50 flex justify-between items-center">
-          <div className="text-[13px] text-ink-600 font-medium">
+        <div className="p-4 border-t border-white/10 bg-[#08090A] flex justify-between items-center">
+          <div className="text-[13px] text-[#9BA1A6] font-medium">
             {selected.length} selected
           </div>
           <div className="flex gap-3">
-            <button onClick={onClose} className="px-4 py-2 text-[14px] font-medium text-ink-600 hover:text-ink-900 bg-white border border-ink-900/10 rounded-xl">Cancel</button>
+            <button onClick={onClose} className="px-4 py-2 text-[14px] font-medium text-[#9BA1A6] hover:text-[#F4F5F6] bg-[#0D0F11] border border-white/10 rounded-xl">Cancel</button>
             <button 
               onClick={handleLink}
               disabled={selected.length === 0 || linkBulk.isPending}
@@ -454,13 +454,13 @@ function VendorsTab({ client }: { client: any }) {
   // In a real app, this would make an API call to resolve the vendor graph.
   // For UI representation, we just display the concept.
   return (
-    <div className="bg-white border border-ink-900/10 rounded-2xl p-12 shadow-sm text-center">
+    <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-12 shadow-panel-elevated text-center">
       <Globe className="w-12 h-12 text-sage-200 mx-auto mb-4" />
-      <h3 className="text-xl font-bold text-ink-900 mb-2">Auto-generated Vendor List</h3>
-      <p className="text-[15px] text-ink-600 max-w-md mx-auto mb-6">
+      <h3 className="text-xl font-bold text-[#F4F5F6] mb-2">Auto-generated Vendor List</h3>
+      <p className="text-[15px] text-[#9BA1A6] max-w-md mx-auto mb-6">
         When processing activities are linked, Custodia automatically traverses the data flow graph to determine which of your vendors sub-process data for this client.
       </p>
-      <p className="text-[14px] text-indigo-600 font-medium">
+      <p className="text-[14px] text-indigo-400 font-medium">
         (Vendor graph resolution requires full ROPA data population)
       </p>
     </div>
@@ -477,19 +477,19 @@ function ReportTab({ client }: { client: any }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-ink-900/10 rounded-2xl p-8 shadow-sm flex flex-col items-center justify-center text-center">
-        <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
+      <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-8 shadow-panel-elevated flex flex-col items-center justify-center text-center">
+        <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center mb-4">
           <FileText className="w-8 h-8 text-red-500" />
         </div>
-        <h2 className="text-xl font-bold text-ink-900 mb-2">Client Compliance Report</h2>
-        <p className="text-[15px] text-ink-600 max-w-lg mb-8">
+        <h2 className="text-xl font-bold text-[#F4F5F6] mb-2">Client Compliance Report</h2>
+        <p className="text-[15px] text-[#9BA1A6] max-w-lg mb-8">
           Generate a formal PDF report detailing your processing activities and sub-processor DPAs 
           specifically scoped to {client.name}. Send this when clients ask for your GDPR compliance posture.
         </p>
         <button 
           onClick={handleGenerate}
           disabled={generate.isPending}
-          className="bg-red-500 hover:bg-red-600 text-white font-medium px-6 py-3 rounded-xl flex items-center gap-2 shadow-sm transition-all"
+          className="bg-red-500/100 hover:bg-red-600 text-white font-medium px-6 py-3 rounded-xl flex items-center gap-2 shadow-panel-elevated transition-all"
         >
           {generate.isPending ? 'Generating PDF...' : <><Download className="w-5 h-5" /> Generate PDF Report</>}
         </button>
@@ -501,7 +501,7 @@ function ReportTab({ client }: { client: any }) {
 function PortalPreviewTab({ client }: { client: any }) {
   if (!client.portalEnabled) {
     return (
-      <div className="bg-bone-50 border border-ink-900/10 rounded-2xl p-12 text-center text-ink-500">
+      <div className="bg-[#08090A] border border-white/10 rounded-2xl p-12 text-center text-[#6E747A]">
         Enable the portal in the Overview tab to view the preview.
       </div>
     );
@@ -509,28 +509,28 @@ function PortalPreviewTab({ client }: { client: any }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between bg-white px-6 py-4 rounded-xl border border-ink-900/10">
-        <div className="text-[14px] text-ink-600 font-medium">
+      <div className="flex items-center justify-between bg-[#0D0F11] px-6 py-4 rounded-xl border border-white/10">
+        <div className="text-[14px] text-[#9BA1A6] font-medium">
           This is an interactive preview of exactly what {client.name} sees at their secure link.
         </div>
         <Link 
           href={`/portal/${client.portalToken}`} 
           target="_blank"
-          className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium text-[14px]"
+          className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-400 font-medium text-[14px]"
         >
           Open in new tab <Share2 className="w-4 h-4" />
         </Link>
       </div>
 
-      <div className="border-[8px] border-ink-900 rounded-[2rem] overflow-hidden shadow-2xl h-[800px] relative bg-white">
+      <div className="border-[8px] border-ink-900 rounded-[2rem] overflow-hidden shadow-2xl h-[800px] relative bg-[#0D0F11]">
         {/* Simple browser chrome */}
-        <div className="bg-bone-100 border-b border-ink-900/10 px-4 py-3 flex gap-2 items-center">
+        <div className="bg-white/5 border-b border-white/10 px-4 py-3 flex gap-2 items-center">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-400"></div>
             <div className="w-3 h-3 rounded-full bg-amber-400"></div>
             <div className="w-3 h-3 rounded-full bg-green-400"></div>
           </div>
-          <div className="flex-1 mx-4 bg-white rounded-md border border-ink-900/10 px-3 py-1 text-[12px] text-ink-400 flex items-center gap-2">
+          <div className="flex-1 mx-4 bg-[#0D0F11] rounded-md border border-white/10 px-3 py-1 text-[12px] text-[#6E747A] flex items-center gap-2">
             <Globe className="w-3 h-3" />
             https://custodia.io/portal/{client.portalToken.substring(0, 10)}...
           </div>

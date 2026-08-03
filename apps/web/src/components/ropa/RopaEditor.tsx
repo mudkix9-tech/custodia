@@ -231,33 +231,33 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
   return (
     <div className="flex-1 flex flex-col">
       {/* Header */}
-      <div className="border-b border-ink-900/8 bg-bone-50/90 backdrop-blur sticky top-0 z-20">
+      <div className="border-b border-ink-900/8 bg-[#08090A]/90 backdrop-blur sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
               <button 
               onClick={() => router.push('/ropa')}
-              className="p-2 hover:bg-bone-100 rounded-lg text-ink-500 hover:text-ink-900 transition-colors"
+              className="p-2 hover:bg-white/5 rounded-lg text-[#6E747A] hover:text-[#F4F5F6] transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-[20px] font-serif tracking-tight text-ink-900">
+              <h1 className="text-[20px] font-serif tracking-tight text-[#F4F5F6]">
                 {isNew ? 'New Processing Activity' : formData.name || 'Untitled Activity'}
               </h1>
               {!isNew && (
                 <div className="flex items-center gap-2 mt-1 text-[12px]">
                   <span className={`px-2 py-0.5 rounded-md ${
-                    formData.status === 'active' ? 'bg-sage-50 text-sage-700' : 
-                    'bg-bone-100 text-ink-500'
+                    formData.status === 'active' ? 'bg-[#C9A227]/10 text-[#C9A227]' : 
+                    'bg-white/5 text-[#6E747A]'
                   }`}>
                     {formData.status}
                   </span>
                   
                   {/* Save Status Indicator */}
                   {autoSaveTabs.includes(activeTab) && (
-                    <span className="text-ink-500 flex items-center gap-1">
+                    <span className="text-[#6E747A] flex items-center gap-1">
                       {saveStatus === 'saving' && <span className="animate-pulse">Saving...</span>}
-                      {saveStatus === 'saved' && <span className="text-sage-700 flex items-center gap-1"><Save className="w-3 h-3"/> Saved</span>}
+                      {saveStatus === 'saved' && <span className="text-[#C9A227] flex items-center gap-1"><Save className="w-3 h-3"/> Saved</span>}
                       {saveStatus === 'error' && <span className="text-clay-600 flex items-center gap-1"><AlertCircle className="w-3 h-3"/> Error saving</span>}
                     </span>
                   )}
@@ -271,7 +271,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               <button
                 type="button"
                 onClick={handleAiAssist}
-                className="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-[13px] font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                className="px-3 py-2 bg-amber-500/10 hover:bg-amber-100 border border-amber-900/50 text-amber-800 text-[13px] font-medium rounded-lg transition-colors flex items-center gap-1.5"
               >
                 <Lightbulb className="w-4 h-4" /> Help me fill this in
               </button>
@@ -297,8 +297,8 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-3 text-[13.5px] whitespace-nowrap transition-colors border-b-2 ${
                   activeTab === tab.id 
-                    ? 'border-sage-700 text-sage-700 font-medium' 
-                    : 'border-transparent text-ink-500 hover:text-ink-900 hover:border-ink-900/10'
+                    ? 'border-sage-700 text-[#C9A227] font-medium' 
+                    : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:border-white/10'
                 }`}
               >
                 {tab.label}
@@ -314,22 +314,22 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         {relevantImpacts.length > 0 && !showImpacts && (
           <div 
             onClick={() => setShowImpacts(true)}
-            className="mb-6 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors"
+            className="mb-6 bg-blue-500/10 border border-blue-200 text-blue-800 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors"
           >
             <div className="flex items-center gap-2">
-              <Info className="w-4 h-4 text-blue-600" />
+              <Info className="w-4 h-4 text-blue-400" />
               <span>{relevantImpacts.length} regulatory update(s) may affect this activity. Review updates →</span>
             </div>
           </div>
         )}
 
         {relevantImpacts.length > 0 && showImpacts && (
-          <div className="mb-6 bg-blue-50/50 border border-blue-200 rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200 bg-blue-50">
+          <div className="mb-6 bg-blue-500/10/50 border border-blue-200 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200 bg-blue-500/10">
               <div className="flex items-center gap-2 font-medium text-blue-900 text-sm">
                 <Info className="w-4 h-4" /> Regulatory Impacts
               </div>
-              <button onClick={() => setShowImpacts(false)} className="text-blue-500 hover:text-blue-700">
+              <button onClick={() => setShowImpacts(false)} className="text-blue-500 hover:text-blue-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -340,16 +340,16 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 return (
                   <div key={impact.id} className="p-4 flex flex-col md:flex-row justify-between items-start gap-4">
                     <div>
-                      <h4 className="font-semibold text-ink-900 text-[14px] mb-1">{update.title}</h4>
-                      <p className="text-ink-600 text-[13px] mb-2">{activityImpact?.reason}</p>
-                      <a href={update.sourceUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[12px] font-medium text-blue-600 hover:underline">
+                      <h4 className="font-semibold text-[#F4F5F6] text-[14px] mb-1">{update.title}</h4>
+                      <p className="text-[#9BA1A6] text-[13px] mb-2">{activityImpact?.reason}</p>
+                      <a href={update.sourceUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[12px] font-medium text-blue-400 hover:underline">
                         View full update <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
                     <button 
                       onClick={() => acknowledgeMutation.mutate({ assessmentId: impact.id })}
                       disabled={acknowledgeMutation.isPending}
-                      className="shrink-0 bg-white border border-blue-200 hover:border-blue-400 text-blue-700 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
+                      className="shrink-0 bg-[#0D0F11] border border-blue-200 hover:border-blue-400 text-blue-400 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
                     >
                       Acknowledge
                     </button>
@@ -363,48 +363,48 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         {/* Render Tab 1: General */}
         {(activeTab === 'general' || isNew) && (
           <div className="space-y-6 max-w-3xl">
-            <div className="bg-bone-50 hairline rounded-2xl p-6 space-y-5 fade-up">
-              <h2 className="text-[14px] font-medium text-ink-900 border-b border-ink-900/8 pb-3">General Information</h2>
+            <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
+              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">General Information</h2>
               
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-ink-700">Activity Name <span className="text-clay-600">*</span></label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Activity Name <span className="text-clay-600">*</span></label>
                 <input 
                   type="text" 
                   {...register('name')}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder="e.g. Employee Payroll Processing"
                 />
                 {errors.name && <FieldError>{errors.name.message as string}</FieldError>}
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-ink-700">Purpose of Processing <span className="text-clay-600">*</span></label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Purpose of Processing <span className="text-clay-600">*</span></label>
                 <textarea 
                   {...register('purpose')}
                   rows={3}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder="Describe exactly why this processing occurs..."
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-ink-700">Description</label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Description</label>
                 <textarea 
                   value={formData.description || ''}
                   onChange={(e) => handleFieldChange('description', e.target.value)}
                   rows={2}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                 />
               </div>
 
               {!isNew && allClients.length > 0 && (
                 <div className="space-y-3 pt-4 border-t border-ink-900/8">
-                  <label className="text-[12.5px] font-medium text-ink-700">Client Assignment (Agency Feature)</label>
-                  <p className="text-[12px] text-ink-500 mb-2">Select which clients this processing activity serves. It will appear on their compliance portals.</p>
+                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">Client Assignment (Agency Feature)</label>
+                  <p className="text-[12px] text-[#6E747A] mb-2">Select which clients this processing activity serves. It will appear on their compliance portals.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2">
                     {allClients.map((client: any) => (
                       <label key={client.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                        assignedClientIds.includes(client.id) ? 'border-indigo-300 bg-indigo-50/50' : 'border-ink-900/10 hover:border-ink-900/30'
+                        assignedClientIds.includes(client.id) ? 'border-indigo-300 bg-indigo-500/10/50' : 'border-white/10 hover:border-ink-900/30'
                       }`}>
                         <input 
                           type="checkbox"
@@ -413,7 +413,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                           className="mt-0.5"
                         />
                         <div>
-                          <div className="text-[13px] font-medium text-ink-900">{client.name}</div>
+                          <div className="text-[13px] font-medium text-[#F4F5F6]">{client.name}</div>
                         </div>
                       </label>
                     ))}
@@ -423,11 +423,11 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-ink-900/8">
                 <div className="space-y-2">
-                  <label className="text-[12.5px] font-medium text-ink-700">Status</label>
+                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">Status</label>
                   <select 
                     value={formData.status}
                     onChange={(e) => handleFieldChange('status', e.target.value)}
-                    className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                    className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   >
                     <option value="draft">Draft</option>
                     <option value="active">Active</option>
@@ -437,11 +437,11 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-[12.5px] font-medium text-ink-700">Risk Level</label>
+                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">Risk Level</label>
                   <select 
                     value={formData.riskLevel}
                     onChange={(e) => handleFieldChange('riskLevel', e.target.value)}
-                    className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                    className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -452,16 +452,16 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </div>
 
               <div className="space-y-2 pt-2 border-t border-ink-900/8">
-                <label className="flex items-start gap-3 p-3 bg-bone-100/50 rounded-xl cursor-pointer hover:bg-bone-100 transition-colors">
+                <label className="flex items-start gap-3 p-3 bg-white/5/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
                   <input 
                     type="checkbox"
                     checked={formData.isSystematicMonitoring || false}
                     onChange={(e) => handleFieldChange('isSystematicMonitoring', e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded border-ink-900/20 text-sage-600 focus:ring-sage-500/20"
+                    className="mt-0.5 w-4 h-4 rounded border-white/20 text-[#C9A227] focus:ring-sage-500/20"
                   />
                   <div>
-                    <p className="text-[13.5px] font-medium text-ink-900">Systematic Monitoring</p>
-                    <p className="text-[12px] text-ink-500">Processing involves regular and systematic monitoring of data subjects on a large scale.</p>
+                    <p className="text-[13.5px] font-medium text-[#F4F5F6]">Systematic Monitoring</p>
+                    <p className="text-[12px] text-[#6E747A]">Processing involves regular and systematic monitoring of data subjects on a large scale.</p>
                   </div>
                 </label>
               </div>
@@ -472,14 +472,14 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         {/* Tab 2: Legal Basis */}
         {activeTab === 'legal' && !isNew && (
           <div className="space-y-6 max-w-3xl">
-            <div className="bg-bone-50 hairline rounded-2xl p-6 space-y-5 fade-up">
-              <h2 className="text-[14px] font-medium text-ink-900 border-b border-ink-900/8 pb-3">Legal Basis Configuration</h2>
+            <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
+              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">Legal Basis Configuration</h2>
               
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-ink-700">Lawful Basis (Art. 6) <span className="text-clay-600">*</span></label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Lawful Basis (Art. 6) <span className="text-clay-600">*</span></label>
                 <select 
                   {...register('lawfulBasis')}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                 >
                   <option value="" disabled>Select Lawful Basis...</option>
                   <option value="consent">Consent (Art. 6(1)(a))</option>
@@ -493,10 +493,10 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </div>
 
               {formData.lawfulBasis === 'legitimate_interest' && (
-                <div className="p-4 bg-amber-50 border border-amber-500/20 rounded-xl">
-                  <h3 className="text-[13px] font-medium text-amber-600 mb-1">Legitimate Interest Assessment (LIA) Required</h3>
-                  <p className="text-[12.5px] text-ink-600 mb-3">You must conduct and document an LIA when relying on legitimate interests.</p>
-                  <button className="px-3 py-1.5 bg-white text-ink-800 text-[12.5px] hairline rounded-md hover:bg-bone-100 transition-colors">
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                  <h3 className="text-[13px] font-medium text-amber-400 mb-1">Legitimate Interest Assessment (LIA) Required</h3>
+                  <p className="text-[12.5px] text-[#9BA1A6] mb-3">You must conduct and document an LIA when relying on legitimate interests.</p>
+                  <button className="px-3 py-1.5 bg-[#0D0F11] text-[#E6E8EA] text-[12.5px] hairline rounded-md hover:bg-white/5 transition-colors">
                     Start / View LIA
                   </button>
                 </div>
@@ -524,15 +524,15 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         {/* Tab 6: Retention */}
         {activeTab === 'retention' && !isNew && (
           <div className="space-y-6 max-w-3xl">
-            <div className="bg-bone-50 hairline rounded-2xl p-6 space-y-5 fade-up">
-              <h2 className="text-[14px] font-medium text-ink-900 border-b border-ink-900/8 pb-3">Data Retention Policy</h2>
+            <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
+              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">Data Retention Policy</h2>
               
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-ink-700">Retention Period <span className="text-clay-600">*</span></label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Retention Period <span className="text-clay-600">*</span></label>
                 <select 
                   value={formData.retentionPeriod || ''}
                   onChange={(e) => handleFieldChange('retentionPeriod', e.target.value)}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                 >
                   <option value="" disabled>Select Retention Period...</option>
                   <option value="6_months">6 Months</option>
@@ -546,35 +546,35 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-ink-700">Justification for Retention Period <span className="text-clay-600">*</span></label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Justification for Retention Period <span className="text-clay-600">*</span></label>
                 <textarea 
                   value={formData.retentionJustification || ''}
                   onChange={(e) => handleFieldChange('retentionJustification', e.target.value)}
                   rows={3}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder="Explain why this data must be kept for this period (e.g., statutory requirements, business needs)..."
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[12.5px] font-medium text-ink-700">Next Review Date</label>
+                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">Next Review Date</label>
                   <input 
                     type="date"
                     value={formData.retentionReviewDate ? new Date(formData.retentionReviewDate).toISOString().split('T')[0] : ''}
                     onChange={(e) => handleFieldChange('retentionReviewDate', e.target.value ? new Date(e.target.value) : null)}
-                    className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                    className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-ink-700">Deletion Procedure</label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Deletion Procedure</label>
                 <textarea 
                   value={formData.deletionProcedure || ''}
                   onChange={(e) => handleFieldChange('deletionProcedure', e.target.value)}
                   rows={2}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder="How is this data securely destroyed at the end of its lifecycle?"
                 />
               </div>
@@ -585,11 +585,11 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         {/* Tab 7: Security Measures */}
         {activeTab === 'security' && !isNew && (
           <div className="space-y-6 max-w-3xl">
-            <div className="bg-bone-50 hairline rounded-2xl p-6 space-y-5 fade-up">
-              <h2 className="text-[14px] font-medium text-ink-900 border-b border-ink-900/8 pb-3">Technical & Organizational Measures (TOMs)</h2>
+            <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
+              <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">Technical & Organizational Measures (TOMs)</h2>
               
               <div className="space-y-3">
-                <label className="text-[12.5px] font-medium text-ink-700">Standard Security Measures</label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Standard Security Measures</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
                     { id: 'encryption_at_rest', label: 'Encryption at Rest' },
@@ -601,7 +601,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     { id: 'regular_backups', label: 'Regular Backups' },
                     { id: 'audit_logging', label: 'System Audit Logging' },
                   ].map(measure => (
-                    <label key={measure.id} className="flex items-start gap-3 p-3 bg-bone-100/50 rounded-xl cursor-pointer hover:bg-bone-100 transition-colors">
+                    <label key={measure.id} className="flex items-start gap-3 p-3 bg-white/5/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
                       <input 
                         type="checkbox"
                         checked={Array.isArray(formData.securityMeasures) && formData.securityMeasures.includes(measure.id)}
@@ -612,21 +612,21 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                             : current.filter((m: string) => m !== measure.id);
                           handleFieldChange('securityMeasures', updated);
                         }}
-                        className="mt-0.5 w-4 h-4 rounded border-ink-900/20 text-sage-600 focus:ring-sage-500/20"
+                        className="mt-0.5 w-4 h-4 rounded border-white/20 text-[#C9A227] focus:ring-sage-500/20"
                       />
-                      <span className="text-[13px] font-medium text-ink-900">{measure.label}</span>
+                      <span className="text-[13px] font-medium text-[#F4F5F6]">{measure.label}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-2 mt-4">
-                <label className="text-[12.5px] font-medium text-ink-700">Additional Security Details</label>
+                <label className="text-[12.5px] font-medium text-[#E6E8EA]">Additional Security Details</label>
                 <textarea 
                   value={formData.securityMeasuresDetail || ''}
                   onChange={(e) => handleFieldChange('securityMeasuresDetail', e.target.value)}
                   rows={3}
-                  className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder="Describe any other specific technical or organizational measures..."
                 />
               </div>

@@ -104,23 +104,23 @@ export default function TeamSettingsPage() {
     <div className="max-w-5xl mx-auto p-8 fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-ink-900 mb-2">Team Management</h1>
-          <p className="text-ink-600">Manage organization members, roles, and granular access permissions.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">Team Management</h1>
+          <p className="text-[#9BA1A6]">Manage organization members, roles, and granular access permissions.</p>
         </div>
       </div>
 
       <div className="space-y-8 flex relative">
         <div className={`flex-1 space-y-8 transition-all ${selectedUser ? 'mr-[400px]' : ''}`}>
           {isAdmin && (
-            <div className="bg-white rounded-2xl border border-ink-900/10 p-6 shadow-sm">
+            <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-ink-900 flex items-center gap-2">
+                <h2 className="text-lg font-medium text-[#F4F5F6] flex items-center gap-2">
                   <UserPlus className="w-5 h-5" /> Invite New Members
                 </h2>
                 <button
                   type="button"
                   onClick={() => { setIsBulk(!isBulk); setInviteEmails(''); }}
-                  className="text-sm text-sage-600 hover:text-sage-700 font-medium"
+                  className="text-sm text-[#C9A227] hover:text-[#C9A227] font-medium"
                 >
                   {isBulk ? 'Single invite' : 'Bulk invite'}
                 </button>
@@ -128,35 +128,35 @@ export default function TeamSettingsPage() {
 
               <form onSubmit={handleInvite} className={`flex gap-4 ${isBulk ? 'flex-col' : 'items-end'}`}>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-ink-900 mb-1.5">{isBulk ? 'Email Addresses (one per line)' : 'Email Address'}</label>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{isBulk ? 'Email Addresses (one per line)' : 'Email Address'}</label>
                   {isBulk ? (
                     <textarea
                       required
                       value={inviteEmails}
                       onChange={e => setInviteEmails(e.target.value)}
-                      className="w-full bg-bone-50 border border-ink-900/10 rounded-lg p-3 text-sm h-32 resize-none"
+                      className="w-full bg-[#08090A] border border-white/10 rounded-lg p-3 text-sm h-32 resize-none"
                       placeholder="colleague1@example.com&#10;colleague2@example.com"
                     />
                   ) : (
                     <div className="relative">
-                      <Mail className="w-4 h-4 absolute left-3 top-3 text-ink-400" />
+                      <Mail className="w-4 h-4 absolute left-3 top-3 text-[#6E747A]" />
                       <input
                         type="email"
                         required
                         value={inviteEmails}
                         onChange={e => setInviteEmails(e.target.value)}
-                        className="w-full bg-bone-50 border border-ink-900/10 rounded-lg pl-9 pr-3 py-2 text-sm"
+                        className="w-full bg-[#08090A] border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm"
                         placeholder="colleague@example.com"
                       />
                     </div>
                   )}
                 </div>
                 <div className={`${isBulk ? 'w-full' : 'w-48'}`}>
-                  <label className="block text-sm font-medium text-ink-900 mb-1.5">Role</label>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Role</label>
                   <select
                     value={inviteRole}
                     onChange={e => setInviteRole(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)}
-                    className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm"
+                    className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm"
                   >
                     <option value="admin">Admin</option>
                     <option value="member">Member</option>
@@ -171,21 +171,21 @@ export default function TeamSettingsPage() {
                   {inviteStatus === 'sending' ? 'Sending...' : 'Send Invitations'}
                 </button>
               </form>
-              {inviteStatus === 'sent' && <p className="text-sm text-sage-600 mt-2">Invitations sent successfully!</p>}
-              {inviteStatus === 'error' && <p className="text-sm text-red-600 mt-2">{inviteError}</p>}
+              {inviteStatus === 'sent' && <p className="text-sm text-[#C9A227] mt-2">Invitations sent successfully!</p>}
+              {inviteStatus === 'error' && <p className="text-sm text-red-400 mt-2">{inviteError}</p>}
             </div>
           )}
 
-          <div className="bg-white rounded-2xl border border-ink-900/10 overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-ink-900/10">
-              <h2 className="text-lg font-medium text-ink-900 flex items-center gap-2">
+          <div className="bg-[#0D0F11] rounded-2xl border border-white/10 overflow-hidden shadow-panel-elevated">
+            <div className="p-6 border-b border-white/10">
+              <h2 className="text-lg font-medium text-[#F4F5F6] flex items-center gap-2">
                 <Users className="w-5 h-5" /> Current Members
               </h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-bone-50 border-b border-ink-900/10 text-xs font-semibold text-ink-500 uppercase tracking-wider">
+                  <tr className="bg-[#08090A] border-b border-white/10 text-xs font-semibold text-[#6E747A] uppercase tracking-wider">
                     <th className="px-6 py-3">Name</th>
                     <th className="px-6 py-3">Email</th>
                     <th className="px-6 py-3">Role</th>
@@ -196,21 +196,21 @@ export default function TeamSettingsPage() {
                 <tbody className="divide-y divide-ink-900/10 text-sm">
                   {team?.map((member) => (
                     <tr key={member.id} className="hover:bg-ink-900/5">
-                      <td className="px-6 py-4 font-medium text-ink-900">
+                      <td className="px-6 py-4 font-medium text-[#F4F5F6]">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center font-medium text-xs">
+                          <div className="w-8 h-8 rounded-full bg-sage-100 text-[#C9A227] flex items-center justify-center font-medium text-xs">
                             {member.name?.[0]?.toUpperCase() || member.email[0].toUpperCase()}
                           </div>
                           {member.name || 'Invited User'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-ink-600">{member.email}</td>
+                      <td className="px-6 py-4 text-[#9BA1A6]">{member.email}</td>
                       <td className="px-6 py-4">
                         {isAdmin && member.id !== (session?.user as { id?: string })?.id ? (
                           <select
                             value={member.customRoleId || member.role}
                             onChange={(e) => handleUpdateRole(member.id, e.target.value)}
-                            className="bg-transparent border border-ink-900/20 rounded text-sm text-ink-700 focus:ring-sage-500 py-1 pl-2 pr-6 max-w-[120px]"
+                            className="bg-transparent border border-white/20 rounded text-sm text-[#E6E8EA] focus:ring-sage-500 py-1 pl-2 pr-6 max-w-[120px]"
                             disabled={member.role === 'owner' && !isOwner}
                           >
                             <optgroup label="Basic Roles">
@@ -228,12 +228,12 @@ export default function TeamSettingsPage() {
                             )}
                           </select>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-ink-100 text-ink-800 capitalize">
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-ink-100 text-[#E6E8EA] capitalize">
                             {member.role}
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-ink-500">
+                      <td className="px-6 py-4 text-[#6E747A]">
                         {member.invitedAt && !member.emailVerified ? (
                           <span className="text-clay-600 italic">Invited {format(new Date(member.invitedAt), 'MMM d, yyyy')}</span>
                         ) : member.createdAt ? (
@@ -245,14 +245,14 @@ export default function TeamSettingsPage() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => setSelectedUser(selectedUser?.id === member.id ? null : member)}
-                              className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${selectedUser?.id === member.id ? 'bg-sage-100 text-sage-700' : 'bg-white border border-ink-900/10 text-ink-600 hover:bg-ink-900/5'}`}
+                              className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${selectedUser?.id === member.id ? 'bg-sage-100 text-[#C9A227]' : 'bg-[#0D0F11] border border-white/10 text-[#9BA1A6] hover:bg-ink-900/5'}`}
                             >
                               Permissions
                             </button>
                             {member.id !== (session?.user as { id?: string })?.id && member.role !== 'owner' && (
                               <button
                                 onClick={() => handleRemove(member.id, member.name || member.email)}
-                                className="text-xs font-medium text-red-600 hover:bg-red-50 bg-white border border-red-200 px-3 py-1.5 rounded-md transition-colors"
+                                className="text-xs font-medium text-red-400 hover:bg-red-500/10 bg-[#0D0F11] border border-red-900/50 px-3 py-1.5 rounded-md transition-colors"
                               >
                                 Remove
                               </button>
@@ -265,15 +265,15 @@ export default function TeamSettingsPage() {
                 </tbody>
               </table>
               {team?.length === 0 && (
-                <div className="p-8 text-center text-ink-500">No team members found.</div>
+                <div className="p-8 text-center text-[#6E747A]">No team members found.</div>
               )}
             </div>
           </div>
 
           {/* Pending Invitations Section */}
-          <div className="bg-white rounded-2xl border border-ink-900/10 overflow-hidden shadow-sm mt-8">
-            <div className="p-6 border-b border-ink-900/10">
-              <h2 className="text-lg font-medium text-ink-900 flex items-center gap-2">
+          <div className="bg-[#0D0F11] rounded-2xl border border-white/10 overflow-hidden shadow-panel-elevated mt-8">
+            <div className="p-6 border-b border-white/10">
+              <h2 className="text-lg font-medium text-[#F4F5F6] flex items-center gap-2">
                 <Mail className="w-5 h-5" /> Pending Invitations
               </h2>
             </div>
@@ -282,17 +282,17 @@ export default function TeamSettingsPage() {
                 <tbody className="divide-y divide-ink-900/10 text-sm">
                   {team?.filter(m => m.invitedAt && !m.emailVerified).map(member => (
                     <tr key={`invite-${member.id}`} className="hover:bg-ink-900/5">
-                      <td className="px-6 py-4 font-medium text-ink-900">{member.email}</td>
-                      <td className="px-6 py-4 capitalize text-ink-600">{member.role}</td>
-                      <td className="px-6 py-4 text-ink-500 text-right">
-                        <button className="text-xs font-medium bg-white border border-ink-900/10 text-ink-600 hover:bg-ink-900/5 px-3 py-1.5 rounded-md mr-2">Resend</button>
-                        <button onClick={() => handleRemove(member.id, member.email)} className="text-xs font-medium text-red-600 hover:bg-red-50 bg-white border border-red-200 px-3 py-1.5 rounded-md">Cancel</button>
+                      <td className="px-6 py-4 font-medium text-[#F4F5F6]">{member.email}</td>
+                      <td className="px-6 py-4 capitalize text-[#9BA1A6]">{member.role}</td>
+                      <td className="px-6 py-4 text-[#6E747A] text-right">
+                        <button className="text-xs font-medium bg-[#0D0F11] border border-white/10 text-[#9BA1A6] hover:bg-ink-900/5 px-3 py-1.5 rounded-md mr-2">Resend</button>
+                        <button onClick={() => handleRemove(member.id, member.email)} className="text-xs font-medium text-red-400 hover:bg-red-500/10 bg-[#0D0F11] border border-red-900/50 px-3 py-1.5 rounded-md">Cancel</button>
                       </td>
                     </tr>
                   ))}
                   {team?.filter(m => m.invitedAt && !m.emailVerified).length === 0 && (
                      <tr className="hover:bg-ink-900/5">
-                       <td colSpan={3} className="px-6 py-4 text-ink-500 text-center">No pending invitations.</td>
+                       <td colSpan={3} className="px-6 py-4 text-[#6E747A] text-center">No pending invitations.</td>
                      </tr>
                   )}
                 </tbody>
@@ -304,42 +304,42 @@ export default function TeamSettingsPage() {
 
         {/* Slide-over Panel for Granular Permissions */}
         {selectedUser && (
-          <div className="w-[380px] fixed top-[73px] bottom-0 right-0 bg-white border-l border-ink-900/10 shadow-xl z-30 overflow-y-auto">
-            <div className="p-6 border-b border-ink-900/10 sticky top-0 bg-white z-10 flex justify-between items-center">
+          <div className="w-[380px] fixed top-[73px] bottom-0 right-0 bg-[#0D0F11] border-l border-white/10 shadow-panel-elevated z-30 overflow-y-auto">
+            <div className="p-6 border-b border-white/10 sticky top-0 bg-[#0D0F11] z-10 flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-medium text-ink-900">Edit Permissions</h3>
-                <p className="text-sm text-ink-500 mt-1">{selectedUser.name}</p>
+                <h3 className="text-lg font-medium text-[#F4F5F6]">Edit Permissions</h3>
+                <p className="text-sm text-[#6E747A] mt-1">{selectedUser.name}</p>
               </div>
-              <button onClick={() => setSelectedUser(null)} className="text-ink-400 hover:text-ink-900 bg-ink-900/5 hover:bg-ink-900/10 p-2 rounded-full transition-colors">
+              <button onClick={() => setSelectedUser(null)} className="text-[#6E747A] hover:text-[#F4F5F6] bg-ink-900/5 hover:bg-ink-900/10 p-2 rounded-full transition-colors">
                 <Plus className="w-5 h-5 rotate-45" />
               </button>
             </div>
 
             <div className="p-6">
               {selectedUser.role === 'owner' ? (
-                <div className="bg-amber-50 text-amber-800 p-4 rounded-lg text-sm border border-amber-200">
+                <div className="bg-amber-500/10 text-amber-800 p-4 rounded-lg text-sm border border-amber-900/50">
                   <ShieldAlert className="w-5 h-5 mb-2" />
                   Owner permissions cannot be restricted. They have full access to all modules.
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <p className="text-sm text-ink-600 mb-4">
+                  <p className="text-sm text-[#9BA1A6] mb-4">
                     Override role-based access for specific modules. Green check grants access, red cross denies, gray dash inherits from role.
                   </p>
 
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-ink-900/10">
-                        <th className="pb-2 font-medium text-ink-500 uppercase tracking-wider text-xs">Module</th>
+                      <tr className="border-b border-white/10">
+                        <th className="pb-2 font-medium text-[#6E747A] uppercase tracking-wider text-xs">Module</th>
                         {ACTIONS.map(a => (
-                          <th key={a} className="pb-2 font-medium text-ink-500 uppercase tracking-wider text-xs text-center">{a}</th>
+                          <th key={a} className="pb-2 font-medium text-[#6E747A] uppercase tracking-wider text-xs text-center">{a}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-ink-900/5">
                       {MODULES.map(module => (
                         <tr key={module}>
-                          <td className="py-3 font-medium text-ink-900">{module}</td>
+                          <td className="py-3 font-medium text-[#F4F5F6]">{module}</td>
                           {ACTIONS.map(action => {
                             const permState = (selectedUser.permissions || []).find((p: string) => p.startsWith(`${module}:${action}:`));
                             const state = permState ? permState.split(':')[2] : 'inherit';
@@ -349,9 +349,9 @@ export default function TeamSettingsPage() {
                                 <button
                                   onClick={() => handlePermissionChange(module, action, state === 'inherit' ? 'allow' : state === 'allow' ? 'deny' : 'inherit')}
                                   className={`w-6 h-6 rounded-full inline-flex items-center justify-center transition-colors ${
-                                    state === 'allow' ? 'bg-sage-100 text-sage-600' :
-                                    state === 'deny' ? 'bg-red-100 text-red-600' :
-                                    'bg-bone-100 text-ink-300 hover:bg-bone-200'
+                                    state === 'allow' ? 'bg-sage-100 text-[#C9A227]' :
+                                    state === 'deny' ? 'bg-red-500/20 text-red-400' :
+                                    'bg-white/5 text-white/20 hover:bg-white/10'
                                   }`}
                                 >
                                   {state === 'allow' ? '✓' : state === 'deny' ? '×' : '-'}
@@ -363,7 +363,7 @@ export default function TeamSettingsPage() {
                       ))}
                     </tbody>
                   </table>
-                  <div className="pt-4 border-t border-ink-900/10 text-xs text-ink-500">
+                  <div className="pt-4 border-t border-white/10 text-xs text-[#6E747A]">
                     Changes save automatically and will invalidate the user's current session to enforce new permissions.
                   </div>
                 </div>

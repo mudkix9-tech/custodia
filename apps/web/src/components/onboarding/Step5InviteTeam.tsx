@@ -46,7 +46,7 @@ export function Step5InviteTeam({ onNext, companySize }: Step5Props) {
   };
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-sm border max-w-2xl mx-auto w-full">
+    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-2xl mx-auto w-full">
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2 text-gray-900">Invite your team</h2>
         <p className="text-gray-500">Compliance is a team effort. Invite your colleagues to help manage privacy requests and data processing activities.</p>
@@ -55,7 +55,7 @@ export function Step5InviteTeam({ onNext, companySize }: Step5Props) {
       <form onSubmit={handleSubmit}>
         {/* Workspace Owner Context Indicator */}
         <div className="mb-6 p-3 bg-gray-50 border border-gray-200/60 rounded-xl text-xs text-gray-600 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+          <span className="w-2 h-2 rounded-full bg-blue-500/100 shrink-0"></span>
           <span>You are logged in as the <strong>Workspace Owner</strong>. Invites will be sent to the colleagues below.</span>
         </div>
 
@@ -72,7 +72,7 @@ export function Step5InviteTeam({ onNext, companySize }: Step5Props) {
               <select
                 value={invite.role}
                 onChange={(e) => handleChange(index, 'role', e.target.value)}
-                className="w-32 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white font-normal text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-32 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-[#0D0F11] font-normal text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="admin">Admin</option>
                 <option value="member">Member</option>
@@ -96,7 +96,7 @@ export function Step5InviteTeam({ onNext, companySize }: Step5Props) {
           <button
             type="button"
             onClick={handleAdd}
-            className="text-blue-600 font-semibold text-sm flex items-center hover:text-blue-800 mb-8 transition-colors"
+            className="text-blue-400 font-semibold text-sm flex items-center hover:text-blue-800 mb-8 transition-colors"
           >
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -105,7 +105,7 @@ export function Step5InviteTeam({ onNext, companySize }: Step5Props) {
           </button>
         )}
 
-        <div className="bg-blue-50 p-4 border border-blue-100 rounded-xl mb-8 text-sm text-blue-800">
+        <div className="bg-blue-500/10 p-4 border border-blue-900/50 rounded-xl mb-8 text-sm text-blue-800">
           <p className="font-semibold mb-1">Why invite your team?</p>
           <ul className="list-disc pl-5 space-y-1 text-xs">
             <li>Everyone can report data breaches (72-hour deadline requires fast response)</li>

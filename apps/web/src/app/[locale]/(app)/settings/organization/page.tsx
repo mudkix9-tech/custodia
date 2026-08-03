@@ -102,83 +102,83 @@ export default function OrganizationSettingsPage() {
     <div className="max-w-4xl mx-auto p-8 fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-ink-900 mb-2">Organization Profile</h1>
-          <p className="text-ink-600">Manage your company details, data protection officer, and branding.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">Organization Profile</h1>
+          <p className="text-[#9BA1A6]">Manage your company details, data protection officer, and branding.</p>
         </div>
         <div className="flex items-center gap-2">
-          {saveStatus === 'saving' && <span className="text-sm text-ink-500">Saving...</span>}
-          {saveStatus === 'saved' && <span className="text-sm text-sage-600 font-medium">Saved</span>}
+          {saveStatus === 'saving' && <span className="text-sm text-[#6E747A]">Saving...</span>}
+          {saveStatus === 'saved' && <span className="text-sm text-[#C9A227] font-medium">Saved</span>}
         </div>
       </div>
 
       <div className="space-y-8">
         {/* Basic Information */}
-        <div className="bg-white rounded-2xl border border-ink-900/10 p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-6 text-ink-900">
-            <Building2 className="w-5 h-5 text-ink-400" />
+        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
+          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
+            <Building2 className="w-5 h-5 text-[#6E747A]" />
             <h2 className="text-lg font-medium">Basic Information</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">Organization Name</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Organization Name</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={e => handleChange('name', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">Legal Name</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Legal Name</label>
               <input
                 type="text"
                 value={formData.legalName}
                 onChange={e => handleChange('legalName', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">Public Slug</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Public Slug</label>
               <input
                 type="text"
                 value={formData.slug}
                 onChange={e => handleChange('slug', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
-              <p className="text-xs text-ink-500 mt-1.5">custodia.io/legal/{formData.slug || 'slug'}/privacy</p>
+              <p className="text-xs text-[#6E747A] mt-1.5">custodia.io/legal/{formData.slug || 'slug'}/privacy</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">Registration Number</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Registration Number</label>
               <input
                 type="text"
                 value={formData.registrationNumber}
                 onChange={e => handleChange('registrationNumber', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
           </div>
         </div>
 
         {/* Location & Jurisdiction */}
-        <div className="bg-white rounded-2xl border border-ink-900/10 p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-6 text-ink-900">
-            <MapPin className="w-5 h-5 text-ink-400" />
+        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
+          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
+            <MapPin className="w-5 h-5 text-[#6E747A]" />
             <h2 className="text-lg font-medium">Location & Jurisdiction</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">Country</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Country</label>
               <select
                 value={formData.countryCode}
                 onChange={e => handleChange('countryCode', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50 max-w-sm"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50 max-w-sm"
               >
                 <option value="">Select a country...</option>
                 <option value="DE">Germany</option>
@@ -191,43 +191,43 @@ export default function OrganizationSettingsPage() {
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">Street Address</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Street Address</label>
               <input
                 type="text"
                 value={formData.address?.street}
                 onChange={e => handleAddressChange('street', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">City</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">City</label>
               <input
                 type="text"
                 value={formData.address?.city}
                 onChange={e => handleAddressChange('city', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">Postal Code</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Postal Code</label>
               <input
                 type="text"
                 value={formData.address?.postalCode}
                 onChange={e => handleAddressChange('postalCode', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">Lead Supervisory Authority</label>
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Lead Supervisory Authority</label>
               <input
                 type="text"
                 value={formData.leadSupervisoryAuthority}
                 onChange={e => handleChange('leadSupervisoryAuthority', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
                 placeholder="e.g. BfDI (Germany) or CNIL (France)"
               />
             </div>
@@ -235,58 +235,58 @@ export default function OrganizationSettingsPage() {
         </div>
 
         {/* Data Protection Officer */}
-        <div className="bg-white rounded-2xl border border-ink-900/10 p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-6 text-ink-900">
-            <UserCheck className="w-5 h-5 text-ink-400" />
+        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
+          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
+            <UserCheck className="w-5 h-5 text-[#6E747A]" />
             <h2 className="text-lg font-medium">Data Protection Officer</h2>
           </div>
 
           <div className="mb-6">
-            <label className="flex items-center gap-2 text-sm font-medium text-ink-900">
+            <label className="flex items-center gap-2 text-sm font-medium text-[#F4F5F6]">
               <input
                 type="checkbox"
                 checked={formData.hasDpo}
                 onChange={e => handleChange('hasDpo', e.target.checked)}
                 disabled={!isEditable}
-                className="rounded border-ink-900/20 text-sage-600 focus:ring-sage-600"
+                className="rounded border-white/20 text-[#C9A227] focus:ring-sage-600"
               />
               Do you have a DPO?
             </label>
-            <p className="text-xs text-ink-500 mt-2 ml-6">
+            <p className="text-xs text-[#6E747A] mt-2 ml-6">
               Under GDPR, a DPO is required if you regularly process personal data on a large scale or process special category data.
             </p>
           </div>
 
           {formData.hasDpo && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6 border-l-2 border-ink-900/10 ml-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6 border-l-2 border-white/10 ml-1">
               <div>
-                <label className="block text-sm font-medium text-ink-900 mb-1.5">DPO Name</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">DPO Name</label>
                 <input
                   type="text"
                   value={formData.dpoName}
                   onChange={e => handleChange('dpoName', e.target.value)}
                   disabled={!isEditable}
-                  className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                  className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-900 mb-1.5">DPO Email</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">DPO Email</label>
                 <input
                   type="email"
                   value={formData.dpoEmail}
                   onChange={e => handleChange('dpoEmail', e.target.value)}
                   disabled={!isEditable}
-                  className="w-full bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                  className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-ink-900">
+                <label className="flex items-center gap-2 text-sm font-medium text-[#F4F5F6]">
                   <input
                     type="checkbox"
                     checked={formData.dpoIsExternal}
                     onChange={e => handleChange('dpoIsExternal', e.target.checked)}
                     disabled={!isEditable}
-                    className="rounded border-ink-900/20 text-sage-600 focus:ring-sage-600"
+                    className="rounded border-white/20 text-[#C9A227] focus:ring-sage-600"
                   />
                   Is the DPO external?
                 </label>
@@ -296,64 +296,64 @@ export default function OrganizationSettingsPage() {
         </div>
 
         {/* Branding */}
-        <div className="bg-white rounded-2xl border border-ink-900/10 p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-6 text-ink-900">
-            <Palette className="w-5 h-5 text-ink-400" />
+        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
+          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
+            <Palette className="w-5 h-5 text-[#6E747A]" />
             <h2 className="text-lg font-medium">Branding</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-ink-900 mb-1.5">Organization Logo</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Organization Logo</label>
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-xl bg-bone-50 border border-ink-900/10 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="w-16 h-16 rounded-xl bg-[#08090A] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                     {formData.branding.logoUrl ? (
                       <img src={formData.branding.logoUrl} alt="Logo" className="w-full h-full object-contain p-2" />
                     ) : (
-                      <Building2 className="w-6 h-6 text-ink-300" />
+                      <Building2 className="w-6 h-6 text-white/20" />
                     )}
                   </div>
                   <div className="flex-1">
                     <button
                       disabled={!isEditable}
                       onClick={handleUploadLogo}
-                      className="text-sm bg-white border border-ink-900/20 text-ink-900 px-3 py-1.5 rounded-lg font-medium hover:bg-bone-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+                      className="text-sm bg-[#0D0F11] border border-white/20 text-[#F4F5F6] px-3 py-1.5 rounded-lg font-medium hover:bg-[#08090A] transition-colors flex items-center gap-2 disabled:opacity-50"
                     >
                       <Upload className="w-4 h-4" /> Upload Logo
                     </button>
-                    <p className="text-xs text-ink-500 mt-2">Recommended: 400x100px PNG or SVG</p>
+                    <p className="text-xs text-[#6E747A] mt-2">Recommended: 400x100px PNG or SVG</p>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-ink-900 mb-1.5">Primary Brand Color</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Primary Brand Color</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
                     value={formData.branding.primaryColor || '#2c3e38'}
                     onChange={e => handleBrandingChange('primaryColor', e.target.value)}
                     disabled={!isEditable}
-                    className="w-10 h-10 p-1 bg-white border border-ink-900/10 rounded cursor-pointer disabled:opacity-50"
+                    className="w-10 h-10 p-1 bg-[#0D0F11] border border-white/10 rounded cursor-pointer disabled:opacity-50"
                   />
                   <input
                     type="text"
                     value={formData.branding.primaryColor || '#2c3e38'}
                     onChange={e => handleBrandingChange('primaryColor', e.target.value)}
                     disabled={!isEditable}
-                    className="w-24 bg-bone-50 border border-ink-900/10 rounded-lg px-3 py-2 text-sm font-mono disabled:opacity-50"
+                    className="w-24 bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm font-mono disabled:opacity-50"
                   />
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-ink-900 mb-1.5">Trust Portal Preview</label>
-              <div className="border border-ink-900/10 rounded-xl overflow-hidden h-32 bg-bone-50 flex flex-col">
+              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Trust Portal Preview</label>
+              <div className="border border-white/10 rounded-xl overflow-hidden h-32 bg-[#08090A] flex flex-col">
                 {/* Mock Header */}
                 <div
-                  className="h-10 px-4 flex items-center shadow-sm"
+                  className="h-10 px-4 flex items-center shadow-panel-elevated"
                   style={{ backgroundColor: formData.branding.primaryColor || '#2c3e38' }}
                 >
                   {formData.branding.logoUrl ? (

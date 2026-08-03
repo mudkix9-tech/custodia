@@ -28,7 +28,7 @@ export function GapRemediationList() {
   const [dismissingId, setDismissingId] = useState<string | null>(null);
   const [dismissReason, setDismissReason] = useState('');
 
-  if (isLoading) return <div className="text-sm text-ink-500 p-8">Scanning for compliance gaps...</div>;
+  if (isLoading) return <div className="text-sm text-[#6E747A] p-8">Scanning for compliance gaps...</div>;
 
   const activeAndRemovedGaps = ((gaps as any)?.data || gaps || []).filter((g: any) => 
     (g.status === 'open' || g.status === 'in_progress' || g.resolvedReason === 'dpia_risk_removed') &&
@@ -73,11 +73,11 @@ export function GapRemediationList() {
   return (
     <div className="space-y-4">
       {/* Source Filters Tab Bar */}
-      <div className="flex border-b border-ink-900/10 text-[12.5px] font-medium gap-2 pb-1 mb-2">
+      <div className="flex border-b border-white/10 text-[12.5px] font-medium gap-2 pb-1 mb-2">
         <button
           onClick={() => setFilterSource('all')}
           className={`pb-2 px-3 border-b-2 transition-colors ${
-            filterSource === 'all' ? 'border-sage-600 text-sage-700 font-semibold' : 'border-transparent text-ink-500 hover:text-ink-900'
+            filterSource === 'all' ? 'border-sage-600 text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'
           }`}
         >
           All Gaps
@@ -85,7 +85,7 @@ export function GapRemediationList() {
         <button
           onClick={() => setFilterSource('scanner')}
           className={`pb-2 px-3 border-b-2 transition-colors ${
-            filterSource === 'scanner' ? 'border-sage-600 text-sage-700 font-semibold' : 'border-transparent text-ink-500 hover:text-ink-900'
+            filterSource === 'scanner' ? 'border-sage-600 text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'
           }`}
         >
           Scanner Detected
@@ -93,7 +93,7 @@ export function GapRemediationList() {
         <button
           onClick={() => setFilterSource('dpia')}
           className={`pb-2 px-3 border-b-2 transition-colors ${
-            filterSource === 'dpia' ? 'border-sage-600 text-sage-700 font-semibold' : 'border-transparent text-ink-500 hover:text-ink-900'
+            filterSource === 'dpia' ? 'border-sage-600 text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'
           }`}
         >
           DPIA Identified
@@ -101,10 +101,10 @@ export function GapRemediationList() {
       </div>
 
       {activeAndRemovedGaps.length === 0 ? (
-        <div className="p-8 text-center bg-sage-50/50 rounded-2xl border border-sage-100/50">
+        <div className="p-8 text-center bg-[#C9A227]/10/50 rounded-2xl border border-sage-100/50">
           <CheckCircle2 className="w-10 h-10 text-sage-500 mx-auto mb-3" />
           <h3 className="text-[14.5px] font-semibold text-sage-900">No Compliance Gaps</h3>
-          <p className="text-sage-600 mt-1 text-[13px]">No active compliance gaps found under the selected filter.</p>
+          <p className="text-[#C9A227] mt-1 text-[13px]">No active compliance gaps found under the selected filter.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -113,20 +113,20 @@ export function GapRemediationList() {
             return (
               <div 
                 key={gap.id} 
-                className={`bg-white border rounded-xl p-4 flex items-start gap-4 hover:shadow-sm transition-shadow group ${
+                className={`bg-[#0D0F11] border rounded-xl p-4 flex items-start gap-4 hover:shadow-panel-elevated transition-shadow group ${
                   isRemoved 
-                    ? 'border-sage-200 bg-sage-50/10 opacity-80' 
-                    : 'border-ink-900/10'
+                    ? 'border-[#C9A227]/30 bg-[#C9A227]/10/10 opacity-80' 
+                    : 'border-white/10'
                 }`}
               >
                 <div className="mt-1">
                   {isRemoved ? (
-                    <CheckCircle2 className="w-5 h-5 text-sage-600" />
+                    <CheckCircle2 className="w-5 h-5 text-[#C9A227]" />
                   ) : (
                     <AlertCircle className={`w-5 h-5 ${
-                      gap.severity === 'critical' ? 'text-red-600' :
-                      gap.severity === 'high' ? 'text-amber-600' :
-                      'text-blue-600'
+                      gap.severity === 'critical' ? 'text-red-400' :
+                      gap.severity === 'high' ? 'text-amber-400' :
+                      'text-blue-400'
                     }`} />
                   )}
                 </div>
@@ -139,22 +139,22 @@ export function GapRemediationList() {
                       </span>
                     ) : (
                       <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
-                        gap.severity === 'critical' ? 'bg-red-100 text-red-700' :
-                        gap.severity === 'high' ? 'bg-amber-100 text-amber-700' :
-                        'bg-blue-100 text-blue-700'
+                        gap.severity === 'critical' ? 'bg-red-500/20 text-red-400' :
+                        gap.severity === 'high' ? 'bg-amber-100 text-amber-400' :
+                        'bg-blue-100 text-blue-400'
                       }`}>{gap.severity}</span>
                     )}
-                    <h4 className={`text-[14px] font-semibold text-ink-900 truncate ${isRemoved ? 'line-through text-ink-500' : ''}`}>
+                    <h4 className={`text-[14px] font-semibold text-[#F4F5F6] truncate ${isRemoved ? 'line-through text-[#6E747A]' : ''}`}>
                       {gap.title}
                     </h4>
                   </div>
                   
-                  <p className="text-[13px] text-ink-600">{gap.description}</p>
+                  <p className="text-[13px] text-[#9BA1A6]">{gap.description}</p>
                   
                   {/* DPIA Source Badge */}
                   {gap.source === 'dpia' && gap.dpiaTitle && (
                     <div className="mt-2">
-                      <span className="inline-flex items-center bg-sage-50 text-sage-800 border border-sage-200/50 text-[10px] px-2.5 py-1 rounded-md font-medium">
+                      <span className="inline-flex items-center bg-[#C9A227]/10 text-sage-800 border border-[#C9A227]/30/50 text-[10px] px-2.5 py-1 rounded-md font-medium">
                         From DPIA: <Link href={gap.resolutionUrl || '/ropa'} className="underline hover:text-sage-950 font-bold ml-1">{gap.dpiaTitle}</Link>
                       </span>
                     </div>
@@ -162,12 +162,12 @@ export function GapRemediationList() {
 
                   {/* Special notice for removed DPIA risks */}
                   {isRemoved && (
-                    <p className="text-[12px] text-sage-700 mt-2 bg-sage-50 border border-sage-200/50 rounded-lg p-2.5 font-medium leading-relaxed">
+                    <p className="text-[12px] text-[#C9A227] mt-2 bg-[#C9A227]/10 border border-[#C9A227]/30/50 rounded-lg p-2.5 font-medium leading-relaxed">
                       💡 This compliance gap was automatically resolved because the underlying risk was removed or reassessed in the DPIA.
                     </p>
                   )}
 
-                  <div className="mt-2 flex items-center gap-4 text-[11px] font-medium text-ink-500">
+                  <div className="mt-2 flex items-center gap-4 text-[11px] font-medium text-[#6E747A]">
                     <span>Detected: {new Date(gap.firstDetectedAt).toLocaleDateString()}</span>
                     {gap.gdprArticles?.length > 0 && (
                       <span className="flex items-center gap-1">
@@ -182,19 +182,19 @@ export function GapRemediationList() {
                     {/* AI Explain - click-only */}
                     <button
                       onClick={() => handleGapClick(gap)}
-                      className="bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
+                      className="bg-amber-500/10 text-amber-400 hover:bg-amber-100 border border-amber-900/50 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
                     >
                       <Lightbulb className="w-3 h-3" /> Explain
                     </button>
                     {/* Remediation deep-link */}
                     {(gap.resolutionUrl || getRemediationLink(gap)) && (
-                      <Link href={gap.resolutionUrl || getRemediationLink(gap)} className="bg-sage-50 text-sage-700 hover:bg-sage-100 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors">
+                      <Link href={gap.resolutionUrl || getRemediationLink(gap)} className="bg-[#C9A227]/10 text-[#C9A227] hover:bg-[#C9A227]/20 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors">
                         Resolve <ChevronRight className="w-3 h-3" />
                       </Link>
                     )}
                     <button 
                       onClick={() => setDismissingId(gap.id)}
-                      className="text-ink-400 hover:text-ink-600 text-xs font-medium px-3 py-1.5"
+                      className="text-[#6E747A] hover:text-[#9BA1A6] text-xs font-medium px-3 py-1.5"
                     >
                       Dismiss
                     </button>
@@ -209,20 +209,20 @@ export function GapRemediationList() {
       {/* Dismissal Modal */}
       {dismissingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-[400px] overflow-hidden shadow-2xl p-6">
+          <div className="bg-[#0D0F11] rounded-2xl w-full max-w-[400px] overflow-hidden shadow-2xl p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-serif text-ink-900">Dismiss Gap</h3>
-              <button onClick={() => setDismissingId(null)} className="text-ink-400 hover:text-ink-900"><X className="w-5 h-5"/></button>
+              <h3 className="text-lg font-serif text-[#F4F5F6]">Dismiss Gap</h3>
+              <button onClick={() => setDismissingId(null)} className="text-[#6E747A] hover:text-[#F4F5F6]"><X className="w-5 h-5"/></button>
             </div>
-            <p className="text-sm text-ink-600 mb-4">Please provide a reason for dismissing this compliance gap. This will be logged for audit purposes.</p>
+            <p className="text-sm text-[#9BA1A6] mb-4">Please provide a reason for dismissing this compliance gap. This will be logged for audit purposes.</p>
             <textarea
               value={dismissReason}
               onChange={e => setDismissReason(e.target.value)}
               placeholder="e.g. This vendor does not process personal data..."
-              className="w-full h-24 p-3 bg-bone-50 border border-ink-900/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sage-500/20 mb-4"
+              className="w-full h-24 p-3 bg-[#08090A] border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sage-500/20 mb-4"
             />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setDismissingId(null)} className="px-4 py-2 text-sm font-medium text-ink-600 hover:bg-bone-100 rounded-lg">Cancel</button>
+              <button onClick={() => setDismissingId(null)} className="px-4 py-2 text-sm font-medium text-[#9BA1A6] hover:bg-white/5 rounded-lg">Cancel</button>
               <button 
                 onClick={handleDismiss} 
                 disabled={dismissReason.length < 10 || dismissMutation.isPending}

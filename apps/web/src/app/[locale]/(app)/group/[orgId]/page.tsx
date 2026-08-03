@@ -15,10 +15,10 @@ export default function ScopedDashboardPage() {
 
   return (
     <div className="p-8">
-       <h1 className="text-2xl font-serif text-ink-900 mb-4">Dashboard scoped to child org: {orgId}</h1>
-       <p className="text-ink-500 mb-8">This page renders the main Dashboard scoped to the selected child organization data.</p>
+       <h1 className="text-2xl font-serif text-[#F4F5F6] mb-4">Dashboard scoped to child org: {orgId}</h1>
+       <p className="text-[#6E747A] mb-8">This page renders the main Dashboard scoped to the selected child organization data.</p>
 
-       <div className="bg-bone-100 p-8 rounded-lg border border-bone-200">
+       <div className="bg-white/5 p-8 rounded-lg border border-white/10">
          [Normal Dashboard Components scoped to {orgId} will render here]
        </div>
     </div>

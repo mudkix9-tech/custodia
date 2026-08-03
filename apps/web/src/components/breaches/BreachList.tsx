@@ -6,7 +6,7 @@ export default function BreachList({ breaches, isLoading, isGroupContext }: { br
 
   if (breaches.length === 0) {
     return (
-      <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+      <div className="text-center py-12 bg-[#0D0F11] dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
         <h3 className="text-sm font-medium text-gray-900 dark:text-white">No breaches reported</h3>
         <p className="text-sm text-gray-500 mt-1">Report a new incident to begin the triage and assessment process.</p>
       </div>
@@ -18,23 +18,23 @@ export default function BreachList({ breaches, isLoading, isGroupContext }: { br
       case 'detected': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       case 'assessing': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
       case 'notified': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'closed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'closed': return 'bg-green-500/20 text-green-400 dark:bg-green-900 dark:text-green-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
   const getRiskColor = (risk: string) => {
     switch(risk) {
-      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'high': return 'bg-red-500/20 text-red-400 dark:bg-red-900 dark:text-red-200';
       case 'medium': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
       case 'low': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'unlikely': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'unlikely': return 'bg-green-500/20 text-green-400 dark:bg-green-900 dark:text-green-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden ring-1 ring-black ring-opacity-5">
+    <div className="bg-[#0D0F11] dark:bg-gray-800 shadow-panel-elevated rounded-xl overflow-hidden ring-1 ring-black ring-opacity-5">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-900/50">
           <tr>
@@ -47,7 +47,7 @@ export default function BreachList({ breaches, isLoading, isGroupContext }: { br
             <th className="px-6 py-3 relative"></th>
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="bg-[#0D0F11] dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {breaches.map((b) => (
             <tr key={b.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
               {isGroupContext && (
@@ -76,7 +76,7 @@ export default function BreachList({ breaches, isLoading, isGroupContext }: { br
                 {new Date(b.discoveredAt).toLocaleDateString()}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <Link href={isGroupContext ? `/group/breaches/${b.id}` : `/breaches/${b.id}`} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+                <Link href={isGroupContext ? `/group/breaches/${b.id}` : `/breaches/${b.id}`} className="text-indigo-400 hover:text-indigo-300 dark:text-indigo-400 dark:hover:text-indigo-300">
                   Manage →
                 </Link>
               </td>

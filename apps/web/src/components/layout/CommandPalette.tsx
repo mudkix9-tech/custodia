@@ -85,9 +85,9 @@ export function CommandPalette() {
       >
         <h2 id="cmd-palette-label" className="sr-only">Search commands</h2>
 
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-ink-900/10 flex flex-col">
-          <div className="flex items-center px-4 py-4 border-b border-ink-900/10">
-            <Search className="w-5 h-5 text-ink-400 mr-3" aria-hidden="true" />
+        <div className="bg-[#0D0F11] rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-white/10 flex flex-col">
+          <div className="flex items-center px-4 py-4 border-b border-white/10">
+            <Search className="w-5 h-5 text-[#6E747A] mr-3" aria-hidden="true" />
             <input
               autoFocus
               type="text"
@@ -104,7 +104,7 @@ export function CommandPalette() {
             />
             <button
               onClick={() => setIsOpen(false)}
-              className="p-1 rounded-md hover:bg-ink-100 text-ink-400 focus:outline-none focus:ring-2 focus:ring-ink-500"
+              className="p-1 rounded-md hover:bg-ink-100 text-[#6E747A] focus:outline-none focus:ring-2 focus:ring-ink-500"
               aria-label="Close search"
             >
               <X className="w-5 h-5" aria-hidden="true" />
@@ -113,7 +113,7 @@ export function CommandPalette() {
 
           <div className="max-h-[60vh] overflow-y-auto p-2">
             {query.length > 0 && allResults.length === 0 && (
-              <p role="status" aria-live="polite" className="p-8 text-center text-ink-500">No results found for "{query}"</p>
+              <p role="status" aria-live="polite" className="p-8 text-center text-[#6E747A]">No results found for "{query}"</p>
             )}
 
             {allResults.length > 0 && (
@@ -126,13 +126,13 @@ export function CommandPalette() {
                     aria-selected={i === activeIndex}
                     onClick={() => handleSelect(result)}
                     onMouseEnter={() => setActiveIndex(i)}
-                    className={`w-full text-left px-3 py-3 rounded-lg flex items-center justify-between cursor-pointer group ${i === activeIndex ? 'bg-bone-100 text-ink-900' : 'text-ink-700 hover:bg-bone-50'}`}
+                    className={`w-full text-left px-3 py-3 rounded-lg flex items-center justify-between cursor-pointer group ${i === activeIndex ? 'bg-white/5 text-[#F4F5F6]' : 'text-[#E6E8EA] hover:bg-[#08090A]'}`}
                   >
                     <div>
-                      <span className="text-[10px] font-semibold text-ink-500 uppercase tracking-wider block mb-1">{result.type === 'ropa' ? 'Processing Activity' : 'Vendor'}</span>
+                      <span className="text-[10px] font-semibold text-[#6E747A] uppercase tracking-wider block mb-1">{result.type === 'ropa' ? 'Processing Activity' : 'Vendor'}</span>
                       <span className="font-medium">{result.name}</span>
                     </div>
-                    <span className="text-xs text-ink-400 opacity-0 group-hover:opacity-100">Jump to →</span>
+                    <span className="text-xs text-[#6E747A] opacity-0 group-hover:opacity-100">Jump to →</span>
                   </li>
                 ))}
               </ul>
@@ -141,10 +141,10 @@ export function CommandPalette() {
             {query === '' && (
               <div className="p-8 text-center flex flex-col items-center">
                 <div className="flex gap-2 mb-4">
-                  <kbd className="px-2 py-1 bg-bone-50 border border-ink-900/10 rounded font-mono text-xs font-semibold text-ink-500">Cmd</kbd>
-                  <kbd className="px-2 py-1 bg-bone-50 border border-ink-900/10 rounded font-mono text-xs font-semibold text-ink-500">K</kbd>
+                  <kbd className="px-2 py-1 bg-[#08090A] border border-white/10 rounded font-mono text-xs font-semibold text-[#6E747A]">Cmd</kbd>
+                  <kbd className="px-2 py-1 bg-[#08090A] border border-white/10 rounded font-mono text-xs font-semibold text-[#6E747A]">K</kbd>
                 </div>
-                <p className="text-sm text-ink-500">Start typing to search your workspace</p>
+                <p className="text-sm text-[#6E747A]">Start typing to search your workspace</p>
               </div>
             )}
           </div>

@@ -16,7 +16,7 @@ export default function WebhookDeliveryLog({ webhookId }: { webhookId: string })
   };
 
   return (
-    <div className="border border-slate-200 rounded-md overflow-hidden bg-white mt-4">
+    <div className="border border-slate-200 rounded-md overflow-hidden bg-[#0D0F11] mt-4">
       <table className="w-full text-sm text-left">
         <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-medium">
           <tr>
@@ -39,8 +39,8 @@ export default function WebhookDeliveryLog({ webhookId }: { webhookId: string })
                 <td className="p-3">{new Date(delivery.createdAt!).toLocaleString()}</td>
                 <td className="p-3">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium
-                    ${delivery.responseStatus && delivery.responseStatus >= 200 && delivery.responseStatus < 300 ? 'bg-green-100 text-green-700' :
-                      delivery.responseStatus && delivery.responseStatus >= 400 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>
+                    ${delivery.responseStatus && delivery.responseStatus >= 200 && delivery.responseStatus < 300 ? 'bg-green-500/20 text-green-400' :
+                      delivery.responseStatus && delivery.responseStatus >= 400 ? 'bg-red-500/20 text-red-400' : 'bg-slate-100 text-slate-700'}`}>
                     {delivery.responseStatus || 'N/A'}
                   </span>
                 </td>

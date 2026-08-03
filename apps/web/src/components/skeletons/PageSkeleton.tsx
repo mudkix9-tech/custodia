@@ -8,7 +8,7 @@ export function RopaListSkeleton() {
         <Skeleton className="h-10 w-32" />
       </div>
       <Skeleton className="h-12 w-full mb-4" /> {/* Filter bar */}
-      <div className="bg-bone-50 rounded-2xl border border-ink-900/10 p-4 space-y-4">
+      <div className="bg-[#08090A] rounded-2xl border border-white/10 p-4 space-y-4">
         <Skeleton className="h-10 w-full" />
         {Array.from({ length: 8 }).map((_, i) => (
           <Skeleton key={i} className="h-16 w-full" />
@@ -30,7 +30,7 @@ export function VendorListSkeleton() {
           <Skeleton key={i} className="h-24 w-full" />
         ))}
       </div>
-      <div className="bg-bone-50 rounded-2xl border border-ink-900/10 p-4 space-y-4">
+      <div className="bg-[#08090A] rounded-2xl border border-white/10 p-4 space-y-4">
         <Skeleton className="h-10 w-full" />
         {Array.from({ length: 8 }).map((_, i) => (
           <Skeleton key={i} className="h-16 w-full" />
@@ -50,7 +50,7 @@ export function GenericListSkeleton() {
         </div>
         <Skeleton className="h-10 w-32" />
       </div>
-      <div className="bg-bone-50 rounded-2xl border border-ink-900/10 p-4 space-y-4">
+      <div className="bg-[#08090A] rounded-2xl border border-white/10 p-4 space-y-4">
         <Skeleton className="h-10 w-full" />
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-16 w-full" />
@@ -63,7 +63,7 @@ export function GenericListSkeleton() {
 export function GenericWorkspaceSkeleton() {
   return (
     <div className="h-full flex flex-col">
-      <div className="p-6 border-b border-ink-900/10">
+      <div className="p-6 border-b border-white/10">
         <Skeleton className="h-8 w-64 mb-4" />
         <div className="flex gap-4">
           <Skeleton className="h-6 w-24" />

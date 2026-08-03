@@ -69,13 +69,13 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
         const { vendorData, name } = row.original;
         if (vendorData) {
           return (
-            <Link href={`/vendors/${vendorData.id}`} className="font-medium text-ink-900 hover:text-sage-600 transition-colors flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-ink-400" />
+            <Link href={`/vendors/${vendorData.id}`} className="font-medium text-[#F4F5F6] hover:text-[#C9A227] transition-colors flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-[#6E747A]" />
               {name}
             </Link>
           );
         }
-        return <span className="text-ink-900 font-medium">{name}</span>;
+        return <span className="text-[#F4F5F6] font-medium">{name}</span>;
       },
     },
     {
@@ -83,12 +83,12 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
       header: 'DPA Status',
       cell: ({ row }: any) => {
         const { vendorData } = row.original;
-        if (!vendorData) return <span className="text-ink-400 text-[13px]">-</span>;
+        if (!vendorData) return <span className="text-[#6E747A] text-[13px]">-</span>;
         
         const status = vendorData.dpaStatus;
-        if (status === 'signed') return <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-sage-50 text-sage-700"><ShieldCheck className="w-3 h-3"/> Signed</span>;
-        if (status === 'expired') return <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-red-50 text-red-700"><AlertTriangle className="w-3 h-3"/> Expired</span>;
-        return <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700">Missing</span>;
+        if (status === 'signed') return <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-[#C9A227]/10 text-[#C9A227]"><ShieldCheck className="w-3 h-3"/> Signed</span>;
+        if (status === 'expired') return <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400"><AlertTriangle className="w-3 h-3"/> Expired</span>;
+        return <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400">Missing</span>;
       }
     },
     {
@@ -96,15 +96,15 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
       header: 'Vendor Risk',
       cell: ({ row }: any) => {
         const { vendorData } = row.original;
-        if (!vendorData) return <span className="text-ink-400 text-[13px]">-</span>;
+        if (!vendorData) return <span className="text-[#6E747A] text-[13px]">-</span>;
 
         const score = vendorData.riskScore || 0;
         const level = vendorData.riskLevel || 'low';
 
-        let colorClass = "text-sage-600 bg-sage-50 border-sage-200";
-        if (level === 'critical') colorClass = "text-red-700 bg-red-50 border-red-200 font-bold";
+        let colorClass = "text-[#C9A227] bg-[#C9A227]/10 border-[#C9A227]/30";
+        if (level === 'critical') colorClass = "text-red-400 bg-red-500/10 border-red-900/50 font-bold";
         else if (level === 'high') colorClass = "text-orange-700 bg-orange-50 border-orange-200 font-semibold";
-        else if (level === 'medium') colorClass = "text-amber-700 bg-amber-50 border-amber-200";
+        else if (level === 'medium') colorClass = "text-amber-400 bg-amber-500/10 border-amber-900/50";
 
         return (
           <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] uppercase tracking-wider border ${colorClass}`}>
@@ -118,13 +118,13 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
       header: 'Data Processing Locations',
       cell: ({ row }: any) => {
         const { vendorData } = row.original;
-        if (!vendorData) return <span className="text-ink-400 text-[13px]">-</span>;
+        if (!vendorData) return <span className="text-[#6E747A] text-[13px]">-</span>;
 
         return (
-          <div className="flex items-center gap-1.5 text-[13px] text-ink-600">
-            <Globe className="w-3.5 h-3.5 text-ink-400" />
+          <div className="flex items-center gap-1.5 text-[13px] text-[#9BA1A6]">
+            <Globe className="w-3.5 h-3.5 text-[#6E747A]" />
             {vendorData.headquartersCountry || 'Unknown'} 
-            {vendorData.usingEuHosting && <span className="text-sage-600 font-medium">(EU)</span>}
+            {vendorData.usingEuHosting && <span className="text-[#C9A227] font-medium">(EU)</span>}
           </div>
         );
       }
@@ -133,7 +133,7 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
       id: 'actions',
       header: '',
       cell: ({ row }: any) => (
-        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-ink-400 hover:text-clay-600 hover:bg-bone-100 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
+        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-[#6E747A] hover:text-clay-600 hover:bg-white/5 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
         </button>
       ),
       size: 50,
@@ -143,18 +143,18 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
   return (
     <div className="space-y-6 fade-up">
       {dialog}
-      <div className="bg-bone-50 border border-ink-900/10 rounded-2xl p-6 shadow-sm">
-        <h2 className="text-[15px] font-semibold text-ink-900 mb-4">Add Recipient</h2>
+      <div className="bg-[#08090A] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
+        <h2 className="text-[15px] font-semibold text-[#F4F5F6] mb-4">Add Recipient</h2>
         
         <div className="grid md:grid-cols-2 gap-8">
           {/* Add Vendor Link */}
           <div className="space-y-3">
-            <label className="text-[13px] font-medium text-ink-700 block">Link an Existing Vendor</label>
+            <label className="text-[13px] font-medium text-[#E6E8EA] block">Link an Existing Vendor</label>
             <div className="flex gap-3">
               <select 
                 value={selectedVendorId}
                 onChange={e => setSelectedVendorId(e.target.value)}
-                className="flex-1 bg-white border border-ink-900/10 rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                className="flex-1 bg-[#0D0F11] border border-white/10 rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
               >
                 <option value="">Select a vendor from your register...</option>
                 {orgVendors.map((v: any) => (
@@ -169,26 +169,26 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
                 Link Vendor
               </button>
             </div>
-            <p className="text-[12px] text-ink-500">
+            <p className="text-[12px] text-[#6E747A]">
               Linking a vendor automatically synchronizes DPA status and generates cross-border transfer records if required.
             </p>
           </div>
 
           {/* Add Custom Recipient */}
-          <div className="space-y-3 md:border-l md:border-ink-900/10 md:pl-8">
-            <label className="text-[13px] font-medium text-ink-700 block">Add Other Recipient</label>
+          <div className="space-y-3 md:border-l md:border-white/10 md:pl-8">
+            <label className="text-[13px] font-medium text-[#E6E8EA] block">Add Other Recipient</label>
             <div className="flex gap-3">
               <input 
                 type="text"
                 value={customName}
                 onChange={e => setCustomName(e.target.value)}
                 placeholder="E.g. Internal HR Team, Local Auditor"
-                className="flex-1 bg-white border border-ink-900/10 rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                className="flex-1 bg-[#0D0F11] border border-white/10 rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
               />
               <button 
                 onClick={handleAddCustom}
                 disabled={!customName.trim() || createMutation.isPending}
-                className="bg-white border border-ink-900/10 text-ink-700 px-4 py-2 rounded-xl text-[14px] font-medium hover:bg-bone-50 transition-colors disabled:opacity-50"
+                className="bg-[#0D0F11] border border-white/10 text-[#E6E8EA] px-4 py-2 rounded-xl text-[14px] font-medium hover:bg-[#08090A] transition-colors disabled:opacity-50"
               >
                 Add Manual
               </button>
@@ -197,7 +197,7 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
         </div>
       </div>
 
-      <div className="bg-white border border-ink-900/10 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-[#0D0F11] border border-white/10 rounded-2xl shadow-panel-elevated overflow-hidden">
         <DataGrid
           mode="full"
           columns={columns as any}

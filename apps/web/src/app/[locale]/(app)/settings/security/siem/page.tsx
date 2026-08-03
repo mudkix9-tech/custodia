@@ -70,9 +70,9 @@ export default function SiemSettingsPage() {
       {siemSettings?.deliveryStatus && (
         <div className={`p-4 rounded-md border ${
           siemSettings.deliveryStatus.status === 'sent'
-            ? 'bg-green-50 border-green-200 text-green-800'
+            ? 'bg-green-500/10 border-green-200 text-green-400'
             : siemSettings.deliveryStatus.status === 'failed'
-            ? 'bg-red-50 border-red-200 text-red-800'
+            ? 'bg-red-500/10 border-red-900/50 text-red-400'
             : 'bg-yellow-50 border-yellow-200 text-yellow-800'
         }`}>
           <div className="font-semibold">
@@ -98,7 +98,7 @@ export default function SiemSettingsPage() {
         </p>
       </div>
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-6">
+      <div className="bg-[#0D0F11] p-6 rounded-lg border border-gray-200 space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label htmlFor="siem-enabled" className="text-base font-medium text-gray-900">Enable SIEM Integration</Label>

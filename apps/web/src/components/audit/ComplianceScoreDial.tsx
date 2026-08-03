@@ -39,11 +39,11 @@ export function ComplianceScoreDial({ score }: ComplianceScoreDialProps) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-4xl font-serif text-ink-900">{score}</span>
-          <span className="text-xs font-medium text-ink-500 uppercase tracking-widest mt-1">Score</span>
+          <span className="text-4xl font-serif text-[#F4F5F6]">{score}</span>
+          <span className="text-xs font-medium text-[#6E747A] uppercase tracking-widest mt-1">Score</span>
         </div>
       </div>
-      <div className="mt-4 text-sm text-ink-600 text-center max-w-[200px]">
+      <div className="mt-4 text-sm text-[#9BA1A6] text-center max-w-[200px]">
         {score >= 80 ? 'Excellent posture. Audit ready.' : score >= 50 ? 'Fair posture. Action required.' : 'Poor posture. High risk.'}
       </div>
     </div>

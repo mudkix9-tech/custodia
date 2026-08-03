@@ -67,23 +67,23 @@ export default function AnalyticsDashboard() {
 
       {/* Top Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
           <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wider mb-2">Overall Compliance</h3>
           <div className="flex items-end gap-3">
             <span className="text-4xl font-bold text-stone-900">{benchmarkData?.yourScore}%</span>
-            <span className="text-sm text-green-600 font-medium flex items-center mb-1">
+            <span className="text-sm text-green-400 font-medium flex items-center mb-1">
               <TrendingUp className="w-3 h-3 mr-1" />
               +4% this month
             </span>
           </div>
         </div>
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
           <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wider mb-2">Industry Average ({benchmarkData?.industry})</h3>
           <div className="flex items-end gap-3">
             <span className="text-4xl font-bold text-stone-700">{benchmarkData?.industryAverage}%</span>
           </div>
         </div>
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
           <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wider mb-2">Top Quartile</h3>
           <div className="flex items-end gap-3">
             <span className="text-4xl font-bold text-[#294036]">{benchmarkData?.topQuartile}%</span>
@@ -94,7 +94,7 @@ export default function AnalyticsDashboard() {
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Compliance Trend Line with Forecast */}
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm col-span-1 lg:col-span-2">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated col-span-1 lg:col-span-2">
           <h3 className="text-lg font-semibold text-stone-900 mb-6">12-Month Compliance Trajectory & Forecast</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -114,7 +114,7 @@ export default function AnalyticsDashboard() {
         </div>
 
         {/* Pillar Trend (Bar) */}
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
           <h3 className="text-lg font-semibold text-stone-900 mb-6">Pillar Performance vs Previous</h3>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -132,7 +132,7 @@ export default function AnalyticsDashboard() {
         </div>
 
         {/* DSAR Response Time Histogram */}
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
           <h3 className="text-lg font-semibold text-stone-900 mb-6">DSAR Response Time Distribution</h3>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -148,7 +148,7 @@ export default function AnalyticsDashboard() {
         </div>
 
         {/* Gap Resolution Velocity */}
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
           <h3 className="text-lg font-semibold text-stone-900 mb-6">Gap Resolution Velocity (Past 4 Weeks)</h3>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -164,7 +164,7 @@ export default function AnalyticsDashboard() {
         </div>
 
         {/* Training Completion Trends */}
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
           <h3 className="text-lg font-semibold text-stone-900 mb-6">Employee Training Completion</h3>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">

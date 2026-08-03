@@ -26,11 +26,11 @@ export default function IntegrationsPage() {
           const connection = connections?.find((c) => c.provider === provider.id);
 
           return (
-            <div key={provider.id} className="border rounded-md p-4 bg-white shadow-sm">
+            <div key={provider.id} className="border rounded-md p-4 bg-[#0D0F11] shadow-panel-elevated">
               <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-bold">{provider.name}</h3>
-                  {connection?.status === 'active' && <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">Connected</span>}
-                  {connection?.status === 'error' && <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">Error</span>}
+                  {connection?.status === 'active' && <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-sm">Connected</span>}
+                  {connection?.status === 'error' && <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-sm">Error</span>}
               </div>
               <div className="text-sm text-gray-600 space-y-2 mb-4">
                   <p>When connected, Custodia can:</p>
@@ -51,7 +51,7 @@ export default function IntegrationsPage() {
               </div>
               <div>
                 {connection && connection.status === 'active' ? (
-                  <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors" onClick={() => handleDisconnect(connection.id)}>Disconnect</button>
+                  <button className="bg-red-500/100 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors" onClick={() => handleDisconnect(connection.id)}>Disconnect</button>
                 ) : (
                   <a className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors" href={`/api/integrations/${provider.id}/authorize?organizationId=org-id-here`}>
                       {connection?.status === 'error' ? 'Reconnect' : `Connect ${provider.name}`}

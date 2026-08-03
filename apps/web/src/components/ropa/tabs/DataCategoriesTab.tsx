@@ -60,7 +60,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
         value={value || ''}
         onChange={e => setValue(e.target.value)}
         onBlur={onBlur}
-        className="bg-transparent border-none outline-none focus:ring-2 focus:ring-sage-500/20 rounded px-2 py-1 w-full text-ink-900 placeholder:text-ink-300"
+        className="bg-transparent border-none outline-none focus:ring-2 focus:ring-sage-500/20 rounded px-2 py-1 w-full text-[#F4F5F6] placeholder:text-white/20"
       />
     );
   };
@@ -90,7 +90,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
             type="checkbox"
             checked={getValue() || false}
             onChange={(e) => table.options.meta?.updateData(row.index, column.id, e.target.checked)}
-            className="rounded border-ink-900/20 text-sage-600 focus:ring-sage-500/20 bg-transparent"
+            className="rounded border-white/20 text-[#C9A227] focus:ring-sage-500/20 bg-transparent"
           />
         );
       }
@@ -99,7 +99,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
       id: 'actions',
       header: '',
       cell: ({ row }: any) => (
-        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-ink-400 hover:text-clay-600 hover:bg-bone-100 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
+        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-[#6E747A] hover:text-clay-600 hover:bg-white/5 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
         </button>
       ),
       size: 50,
@@ -109,8 +109,8 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
   return (
     <div className="space-y-6 fade-up">
       {dialog}
-      <div className="bg-bone-50 hairline rounded-2xl p-6">
-        <h2 className="text-[14px] font-medium text-ink-900 mb-4">Data Categories</h2>
+      <div className="bg-[#08090A] hairline rounded-2xl p-6">
+        <h2 className="text-[14px] font-medium text-[#F4F5F6] mb-4">Data Categories</h2>
         <DataGrid
           mode="compact"
           columns={columns as any}

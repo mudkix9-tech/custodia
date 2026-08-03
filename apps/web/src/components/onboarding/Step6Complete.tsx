@@ -27,9 +27,9 @@ export function Step6Complete({
   };
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-sm border max-w-2xl mx-auto w-full text-center">
-      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-        <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-2xl mx-auto w-full text-center">
+      <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
         </svg>
       </div>
@@ -105,7 +105,7 @@ export function Step6Complete({
       {/* Background Cookie & Vendor Scan Result Banner */}
       {summary.domainName && (
         <div className="bg-gray-50 border rounded-lg p-5 mb-8 text-left flex items-start gap-4">
-          <div className="bg-blue-100 p-2.5 rounded-lg text-blue-600 shrink-0 mt-0.5">
+          <div className="bg-blue-100 p-2.5 rounded-lg text-blue-400 shrink-0 mt-0.5">
             {summary.isScanning ? (
               <RefreshCw className="w-5 h-5 animate-spin" />
             ) : (
@@ -120,7 +120,7 @@ export function Step6Complete({
               </p>
             ) : (
               <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                We scanned your website <strong>{summary.domainName}</strong> and found <strong>{summary.cookieCount}</strong> cookies and <strong>{summary.undocumentedVendorsCount}</strong> undocumented third-party services. Go to <button onClick={() => onComplete('/vendors?tab=discovery')} className="text-blue-600 font-semibold hover:underline">Vendor Discovery</button> to link or dismiss them.
+                We scanned your website <strong>{summary.domainName}</strong> and found <strong>{summary.cookieCount}</strong> cookies and <strong>{summary.undocumentedVendorsCount}</strong> undocumented third-party services. Go to <button onClick={() => onComplete('/vendors?tab=discovery')} className="text-blue-400 font-semibold hover:underline">Vendor Discovery</button> to link or dismiss them.
               </p>
             )}
           </div>
@@ -128,10 +128,10 @@ export function Step6Complete({
       )}
 
       {/* Compliance Score and Next Steps */}
-      <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 mb-8 text-left">
+      <div className="bg-blue-500/10 border border-blue-900/50 rounded-lg p-6 mb-8 text-left">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-gray-900">Initial Compliance Score</h3>
-          <span className="text-2xl font-bold text-blue-600">35%</span>
+          <span className="text-2xl font-bold text-blue-400">35%</span>
         </div>
         <div className="w-full bg-blue-200 rounded-full h-2 mb-4">
           <div className="bg-blue-600 h-2 rounded-full" style={{ width: '35%' }}></div>
@@ -142,7 +142,7 @@ export function Step6Complete({
             <button
               type="button"
               onClick={() => onComplete('/vendors')}
-              className="text-blue-600 hover:text-blue-800 font-semibold hover:underline text-left transition-colors"
+              className="text-blue-400 hover:text-blue-800 font-semibold hover:underline text-left transition-colors"
             >
               Sign DPAs with your vendors
             </button>
@@ -151,7 +151,7 @@ export function Step6Complete({
             <button
               type="button"
               onClick={() => onComplete('/ropa')}
-              className="text-blue-600 hover:text-blue-800 font-semibold hover:underline text-left transition-colors"
+              className="text-blue-400 hover:text-blue-800 font-semibold hover:underline text-left transition-colors"
             >
               Complete your processing activities by adding retention periods
             </button>
@@ -160,7 +160,7 @@ export function Step6Complete({
             <button
               type="button"
               onClick={() => onComplete('/consent')}
-              className="text-blue-600 hover:text-blue-800 font-semibold hover:underline text-left transition-colors"
+              className="text-blue-400 hover:text-blue-800 font-semibold hover:underline text-left transition-colors"
             >
               Set up cookie consent for your website
             </button>
@@ -169,7 +169,7 @@ export function Step6Complete({
             <button
               type="button"
               onClick={() => onComplete('/training')}
-              className="text-blue-600 hover:text-blue-800 font-semibold hover:underline text-left transition-colors"
+              className="text-blue-400 hover:text-blue-800 font-semibold hover:underline text-left transition-colors"
             >
               Complete your GDPR training
             </button>
@@ -179,7 +179,7 @@ export function Step6Complete({
 
       <button
         onClick={handleGoToDashboard}
-        className="w-full bg-blue-600 text-white font-bold py-4 px-8 rounded-lg hover:bg-blue-700 transition shadow-sm text-lg"
+        className="w-full bg-blue-600 text-white font-bold py-4 px-8 rounded-lg hover:bg-blue-700 transition shadow-panel-elevated text-lg"
       >
         Go to Dashboard
       </button>

@@ -21,9 +21,9 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="mx-auto max-w-lg w-full rounded-xl bg-white dark:bg-gray-800 p-6 shadow-2xl ring-1 ring-red-500/50">
+        <Dialog.Panel className="mx-auto max-w-lg w-full rounded-xl bg-[#0D0F11] dark:bg-gray-800 p-6 shadow-2xl ring-1 ring-red-500/50">
           <Dialog.Title className="text-lg font-bold text-gray-900 dark:text-white flex items-center">
-            <span className="bg-red-100 text-red-600 p-1.5 rounded-md mr-3">🚨</span>
+            <span className="bg-red-500/20 text-red-400 p-1.5 rounded-md mr-3">🚨</span>
             Report New Incident
           </Dialog.Title>
           
@@ -32,7 +32,7 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Incident Title</label>
               <input
                 type="text"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-panel-elevated focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 value={form.title}
                 onChange={e => setForm({...form, title: e.target.value})}
                 placeholder="e.g., Unauthorized access to CRM"
@@ -42,7 +42,7 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
               <textarea
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-panel-elevated focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 rows={3}
                 value={form.description}
                 onChange={e => setForm({...form, description: e.target.value})}
@@ -54,7 +54,7 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Discovery Method</label>
                 <select
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-panel-elevated focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={form.discoveryMethod}
                   onChange={e => setForm({...form, discoveryMethod: e.target.value})}
                 >
@@ -70,7 +70,7 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Discovered At</label>
                 <input
                   type="datetime-local"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-panel-elevated focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={form.discoveredAt}
                   onChange={e => setForm({...form, discoveredAt: e.target.value})}
                 />
@@ -80,7 +80,7 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Breach Type</label>
               <select
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-panel-elevated focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 value={form.breachType}
                 onChange={e => setForm({...form, breachType: e.target.value})}
               >

@@ -44,14 +44,24 @@ export async function paddleWebhookHandler(fastify: FastifyInstance) {
           const status = data.status; // active, past_due, canceled, paused
           const priceId = data.items[0]?.price?.id;
           
+          const [org] = await db.select({ subscriptionTier: organizations.subscriptionTier })
+            .from(organizations)
+            .where(eq(organizations.id, orgId));
+
           // Map price ID to tier
           let tier: 'starter' | 'professional' | 'agency' | 'enterprise' = 'professional';
           if (priceId === process.env.PADDLE_PROFESSIONAL_PRICE_ID) {
             tier = 'professional';
-          } else if (priceId === process.env.PADDLE_ENTERPRISE_PRICE_ID) {
-            tier = 'enterprise';
           } else {
-            console.warn(`[Paddle Webhook] Unrecognized price ID received: ${priceId}. Defaulting to 'professional'. Check your Paddle dashboard and env vars.`);
+            const currentTier = org?.subscriptionTier;
+            if (currentTier === 'enterprise') {
+              // Don't overwrite — Enterprise is manually managed
+              console.info(`[Paddle Webhook] Unrecognized price ID ${priceId} for enterprise org ${orgId}. Skipping tier update.`);
+              tier = 'enterprise';
+            } else {
+              console.warn(`[Paddle Webhook] Unrecognized price ID: ${priceId}. Defaulting to professional.`);
+              tier = 'professional';
+            }
           }
           
           await db.update(organizations)

@@ -30,7 +30,7 @@ export default function BreachesPage() {
         </div>
         <button
           onClick={() => setIsReportModalOpen(true)}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-sm"
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-panel-elevated"
         >
           Report Incident
         </button>
@@ -43,7 +43,7 @@ export default function BreachesPage() {
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
+            className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors border border-white/10 shadow-panel-elevated disabled:opacity-50"
           >
             {isFetchingNextPage ? 'Loading more...' : 'Load More'}
           </button>

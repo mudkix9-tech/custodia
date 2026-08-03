@@ -19,7 +19,7 @@ export default function BreachNotificationDraft({ breachId }: { breachId: string
         <button
           onClick={() => generateMutation.mutate({ breachId })}
           disabled={generateMutation.isPending}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-sm disabled:opacity-50"
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-panel-elevated disabled:opacity-50"
         >
           {generateMutation.isPending ? 'Generating...' : 'Auto-Generate Draft'}
         </button>

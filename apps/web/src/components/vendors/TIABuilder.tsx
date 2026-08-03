@@ -102,17 +102,17 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
     window.open(res.url, '_blank');
   };
 
-  if (isLoading) return <div className="p-8 text-ink-500">Loading TIA...</div>;
+  if (isLoading) return <div className="p-8 text-[#6E747A]">Loading TIA...</div>;
 
   const isUS = formData.destinationCountry === 'US';
   const requiresMeasures = formData.legalAssessmentConclusion === 'not_equivalent' || formData.legalAssessmentConclusion === 'uncertain';
 
   return (
-    <div className="bg-white border border-ink-900/10 rounded-2xl overflow-hidden shadow-sm flex flex-col md:flex-row min-h-[600px]">
+    <div className="bg-[#0D0F11] border border-white/10 rounded-2xl overflow-hidden shadow-panel-elevated flex flex-col md:flex-row min-h-[600px]">
       {/* Sidebar Wizard Steps */}
-      <div className="w-full md:w-64 bg-bone-50 border-r border-ink-900/10 p-6 space-y-6">
+      <div className="w-full md:w-64 bg-[#08090A] border-r border-white/10 p-6 space-y-6">
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-wider text-ink-900 mb-4">Schrems II Process</h3>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-[#F4F5F6] mb-4">Schrems II Process</h3>
           <div className="space-y-3 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
             {[
               { id: 1, name: 'Transfer Details' },
@@ -124,10 +124,10 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
               <button 
                 key={s.id}
                 onClick={() => setStep(s.id)}
-                className={`w-full flex items-center gap-3 p-2 rounded-xl transition-colors relative z-10 ${step === s.id ? 'bg-white shadow-sm border border-ink-900/10 text-sage-700' : 'text-ink-500 hover:bg-bone-100 hover:text-ink-900'}`}
+                className={`w-full flex items-center gap-3 p-2 rounded-xl transition-colors relative z-10 ${step === s.id ? 'bg-[#0D0F11] shadow-panel-elevated border border-white/10 text-[#C9A227]' : 'text-[#6E747A] hover:bg-white/5 hover:text-[#F4F5F6]'}`}
               >
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === s.id ? 'bg-sage-600 text-white' : 'bg-bone-200 text-ink-500'}`}>
-                  {tia?.status === 'completed' ? <CheckCircle2 className="w-4 h-4 text-sage-600 bg-white rounded-full" /> : s.id}
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === s.id ? 'bg-sage-600 text-white' : 'bg-white/10 text-[#6E747A]'}`}>
+                  {tia?.status === 'completed' ? <CheckCircle2 className="w-4 h-4 text-[#C9A227] bg-[#0D0F11] rounded-full" /> : s.id}
                 </div>
                 <span className="text-sm font-medium text-left">{s.name}</span>
               </button>
@@ -136,14 +136,14 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
         </div>
 
         {tia?.status === 'completed' && (
-          <div className="pt-6 border-t border-ink-900/10">
-            <div className="bg-sage-50 text-sage-800 p-4 rounded-xl border border-sage-200 text-sm">
-              <ShieldCheck className="w-5 h-5 mb-2 text-sage-600" />
+          <div className="pt-6 border-t border-white/10">
+            <div className="bg-[#C9A227]/10 text-sage-800 p-4 rounded-xl border border-[#C9A227]/30 text-sm">
+              <ShieldCheck className="w-5 h-5 mb-2 text-[#C9A227]" />
               <div className="font-bold mb-1">TIA Completed</div>
               <div className="text-xs opacity-80 mb-3">Approved on {format(new Date(tia.approvedAt!), 'MMM d, yyyy')}</div>
               <button 
                 onClick={handleExport}
-                className="w-full flex items-center justify-center gap-2 bg-white border border-sage-200 text-sage-700 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-sage-100 transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-[#0D0F11] border border-[#C9A227]/30 text-[#C9A227] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#C9A227]/20 transition-colors"
               >
                 <Download className="w-4 h-4" /> Export PDF
               </button>
@@ -156,24 +156,24 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
       <div className="flex-1 p-8 overflow-y-auto">
         {step === 1 && (
           <div className="space-y-6 animate-in fade-in">
-            <h2 className="text-2xl font-serif text-ink-900">Step 1: Transfer Details</h2>
-            <p className="text-sm text-ink-600">Identify the specific parameters of the international data transfer.</p>
+            <h2 className="text-2xl font-serif text-[#F4F5F6]">Step 1: Transfer Details</h2>
+            <p className="text-sm text-[#9BA1A6]">Identify the specific parameters of the international data transfer.</p>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-ink-900 mb-1">Destination Country</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Destination Country</label>
                 <input 
                   type="text" 
                   maxLength={2}
-                  className="w-full max-w-xs px-4 py-2 border border-ink-900/20 rounded-xl focus:border-sage-500 outline-none uppercase"
+                  className="w-full max-w-xs px-4 py-2 border border-white/20 rounded-xl focus:border-sage-500 outline-none uppercase"
                   value={formData.destinationCountry}
                   onChange={e => setFormData({...formData, destinationCountry: e.target.value.toUpperCase()})}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-ink-900 mb-1">Transfer Mechanism</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Transfer Mechanism</label>
                 <select 
-                  className="w-full max-w-xs px-4 py-2 border border-ink-900/20 rounded-xl focus:border-sage-500 outline-none"
+                  className="w-full max-w-xs px-4 py-2 border border-white/20 rounded-xl focus:border-sage-500 outline-none"
                   value={formData.transferMechanism}
                   onChange={e => setFormData({...formData, transferMechanism: e.target.value})}
                 >
@@ -186,7 +186,7 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
             </div>
 
             {isUS && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-sm text-amber-800">
+              <div className="bg-amber-500/10 border border-amber-900/50 rounded-xl p-4 flex gap-3 text-sm text-amber-800">
                 <AlertTriangle className="w-5 h-5 shrink-0" />
                 <div>
                   <strong>US Context:</strong> Since the invalidation of the Privacy Shield, transfers to the US using SCCs require a TIA to assess risks associated with FISA 702 and EO 12333.
@@ -198,31 +198,31 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
 
         {step === 2 && (
           <div className="space-y-6 animate-in fade-in">
-            <h2 className="text-2xl font-serif text-ink-900">Step 2: Legal Assessment</h2>
-            <p className="text-sm text-ink-600">Assess the laws and practices of the third country applicable to the transferred data.</p>
+            <h2 className="text-2xl font-serif text-[#F4F5F6]">Step 2: Legal Assessment</h2>
+            <p className="text-sm text-[#9BA1A6]">Assess the laws and practices of the third country applicable to the transferred data.</p>
             
             <div className="space-y-6">
-              <div className="bg-bone-50 p-5 rounded-xl border border-ink-900/10 space-y-4">
+              <div className="bg-[#08090A] p-5 rounded-xl border border-white/10 space-y-4">
                 <div>
-                  <div className="font-medium text-sm text-ink-900 mb-2">Are there surveillance laws that compel access to the data?</div>
+                  <div className="font-medium text-sm text-[#F4F5F6] mb-2">Are there surveillance laws that compel access to the data?</div>
                   <div className="flex gap-4">
-                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="true" {...register('surveillanceLawsExist')} className="text-sage-600" /> Yes</label>
-                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="false" {...register('surveillanceLawsExist')} className="text-sage-600" /> No</label>
+                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="true" {...register('surveillanceLawsExist')} className="text-[#C9A227]" /> Yes</label>
+                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="false" {...register('surveillanceLawsExist')} className="text-[#C9A227]" /> No</label>
                   </div>
                 </div>
                 <div>
-                  <div className="font-medium text-sm text-ink-900 mb-2">Are there effective, enforceable legal remedies for data subjects?</div>
+                  <div className="font-medium text-sm text-[#F4F5F6] mb-2">Are there effective, enforceable legal remedies for data subjects?</div>
                   <div className="flex gap-4">
-                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="true" {...register('effectiveRemediesExist')} className="text-sage-600" /> Yes</label>
-                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="false" {...register('effectiveRemediesExist')} className="text-sage-600" /> No</label>
+                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="true" {...register('effectiveRemediesExist')} className="text-[#C9A227]" /> Yes</label>
+                    <label className="flex items-center gap-2 text-sm"><input type="radio" value="false" {...register('effectiveRemediesExist')} className="text-[#C9A227]" /> No</label>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">Conclusion of Legal Assessment</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-2">Conclusion of Legal Assessment</label>
                 <select 
-                  className="w-full px-4 py-2 border border-ink-900/20 rounded-xl focus:border-sage-500 outline-none"
+                  className="w-full px-4 py-2 border border-white/20 rounded-xl focus:border-sage-500 outline-none"
                   value={formData.legalAssessmentConclusion}
                   onChange={e => setFormData({...formData, legalAssessmentConclusion: e.target.value})}
                 >
@@ -238,31 +238,31 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
 
         {step === 3 && (
           <div className="space-y-6 animate-in fade-in">
-            <h2 className="text-2xl font-serif text-ink-900">Step 3: Supplementary Measures</h2>
+            <h2 className="text-2xl font-serif text-[#F4F5F6]">Step 3: Supplementary Measures</h2>
             {!requiresMeasures ? (
-              <div className="bg-sage-50 text-sage-800 p-6 rounded-xl border border-sage-200 text-center">
+              <div className="bg-[#C9A227]/10 text-sage-800 p-6 rounded-xl border border-[#C9A227]/30 text-center">
                 <CheckCircle2 className="w-8 h-8 mx-auto mb-3 text-sage-500" />
                 <p>Based on Step 2, supplementary measures are not strictly required. You can skip to Conclusion.</p>
               </div>
             ) : (
               <div className="space-y-8">
-                <p className="text-sm text-ink-600">Identify the supplementary measures implemented by the data importer to mitigate risks.</p>
+                <p className="text-sm text-[#9BA1A6]">Identify the supplementary measures implemented by the data importer to mitigate risks.</p>
                 
                 {/* Technical Measures */}
                 <div>
-                  <h4 className="font-medium text-ink-900 mb-3 border-b border-ink-900/10 pb-2">Technical Measures</h4>
+                  <h4 className="font-medium text-[#F4F5F6] mb-3 border-b border-white/10 pb-2">Technical Measures</h4>
                   <div className="space-y-3">
                     {formData.technicalMeasures.map((m: any, i: number) => (
-                      <div key={m.measure} className="flex gap-4 items-start bg-bone-50 p-3 rounded-lg border border-ink-900/5">
+                      <div key={m.measure} className="flex gap-4 items-start bg-[#08090A] p-3 rounded-lg border border-white/5">
                         <input type="checkbox" checked={m.implemented} onChange={e => {
                           const newM = [...formData.technicalMeasures];
                           newM[i].implemented = e.target.checked;
                           setFormData({...formData, technicalMeasures: newM});
-                        }} className="mt-1 text-sage-600 rounded" />
+                        }} className="mt-1 text-[#C9A227] rounded" />
                         <div className="flex-1">
                           <div className="text-sm font-medium">{m.label}</div>
                           {m.implemented && (
-                            <input type="text" placeholder="Details..." className="w-full mt-2 px-3 py-1.5 text-xs border border-ink-900/20 rounded" {...register(`technicalMeasures.${i}.detail` as const)} />
+                            <input type="text" placeholder="Details..." className="w-full mt-2 px-3 py-1.5 text-xs border border-white/20 rounded" {...register(`technicalMeasures.${i}.detail` as const)} />
                           )}
                         </div>
                       </div>
@@ -276,18 +276,18 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
 
         {step === 4 && (
           <div className="space-y-6 animate-in fade-in">
-            <h2 className="text-2xl font-serif text-ink-900">Step 4: Residual Risk</h2>
-            <p className="text-sm text-ink-600">Assess the risk level after applying all supplementary measures.</p>
+            <h2 className="text-2xl font-serif text-[#F4F5F6]">Step 4: Residual Risk</h2>
+            <p className="text-sm text-[#9BA1A6]">Assess the risk level after applying all supplementary measures.</p>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">Residual Risk Level</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-2">Residual Risk Level</label>
                 <div className="flex gap-3">
                   {['low', 'medium', 'high', 'critical'].map(level => (
                     <button 
                       key={level}
                       onClick={() => setFormData({...formData, residualRiskLevel: level})}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium uppercase tracking-wider border transition-all ${formData.residualRiskLevel === level ? 'bg-ink-900 text-white border-ink-900' : 'bg-white text-ink-500 border-ink-900/20 hover:border-ink-900/50'}`}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium uppercase tracking-wider border transition-all ${formData.residualRiskLevel === level ? 'bg-ink-900 text-white border-ink-900' : 'bg-[#0D0F11] text-[#6E747A] border-white/20 hover:border-white/50'}`}
                     >
                       {level}
                     </button>
@@ -296,9 +296,9 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-ink-900 mb-1">Justification</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Justification</label>
                 <textarea 
-                  className="w-full px-4 py-3 border border-ink-900/20 rounded-xl focus:border-sage-500 outline-none min-h-[120px] text-sm"
+                  className="w-full px-4 py-3 border border-white/20 rounded-xl focus:border-sage-500 outline-none min-h-[120px] text-sm"
                   placeholder="Explain why the residual risk is acceptable or unacceptable..."
                   value={formData.residualRiskJustification}
                   onChange={e => setFormData({...formData, residualRiskJustification: e.target.value})}
@@ -310,24 +310,24 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
 
         {step === 5 && (
           <div className="space-y-6 animate-in fade-in">
-            <h2 className="text-2xl font-serif text-ink-900">Step 5: Conclusion</h2>
+            <h2 className="text-2xl font-serif text-[#F4F5F6]">Step 5: Conclusion</h2>
             
-            <div className="bg-bone-50 p-6 rounded-xl border border-ink-900/10 space-y-6">
+            <div className="bg-[#08090A] p-6 rounded-xl border border-white/10 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-ink-900 mb-3">Final Decision</label>
+                <label className="block text-sm font-medium text-[#F4F5F6] mb-3">Final Decision</label>
                 <div className="space-y-2">
                   {[
-                    { value: 'proceed', label: 'Proceed with Transfer', color: 'text-sage-700' },
-                    { value: 'proceed_with_conditions', label: 'Proceed with Conditions', color: 'text-amber-700' },
-                    { value: 'suspend', label: 'Suspend Transfer', color: 'text-red-700' }
+                    { value: 'proceed', label: 'Proceed with Transfer', color: 'text-[#C9A227]' },
+                    { value: 'proceed_with_conditions', label: 'Proceed with Conditions', color: 'text-amber-400' },
+                    { value: 'suspend', label: 'Suspend Transfer', color: 'text-red-400' }
                   ].map(opt => (
-                    <label key={opt.value} className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${formData.conclusion === opt.value ? 'bg-white border-sage-500 shadow-sm' : 'bg-white/50 border-ink-900/10 hover:bg-white'}`}>
+                    <label key={opt.value} className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${formData.conclusion === opt.value ? 'bg-[#0D0F11] border-sage-500 shadow-panel-elevated' : 'bg-[#0D0F11]/50 border-white/10 hover:bg-[#0D0F11]'}`}>
                       <input 
                         type="radio" 
                         name="conclusion" 
                         checked={formData.conclusion === opt.value} 
                         onChange={() => setFormData({...formData, conclusion: opt.value})}
-                        className="text-sage-600 focus:ring-sage-500"
+                        className="text-[#C9A227] focus:ring-sage-500"
                       />
                       <span className={`font-medium ${opt.color}`}>{opt.label}</span>
                     </label>
@@ -337,9 +337,9 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
               
               {formData.conclusion === 'proceed_with_conditions' && (
                 <div>
-                  <label className="block text-sm font-medium text-ink-900 mb-1">Specify Conditions</label>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Specify Conditions</label>
                   <textarea 
-                    className="w-full px-4 py-2 border border-ink-900/20 rounded-xl focus:border-sage-500 outline-none text-sm"
+                    className="w-full px-4 py-2 border border-white/20 rounded-xl focus:border-sage-500 outline-none text-sm"
                     value={formData.conditions}
                     onChange={e => setFormData({...formData, conditions: e.target.value})}
                   ></textarea>
@@ -347,10 +347,10 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
               )}
             </div>
 
-            <div className="pt-6 border-t border-ink-900/10 flex justify-end gap-3">
+            <div className="pt-6 border-t border-white/10 flex justify-end gap-3">
               <button 
                 onClick={() => handleSave('draft')}
-                className="px-5 py-2.5 text-sm font-medium text-ink-600 bg-bone-50 border border-ink-900/10 rounded-xl hover:bg-bone-100 transition-colors"
+                className="px-5 py-2.5 text-sm font-medium text-[#9BA1A6] bg-[#08090A] border border-white/10 rounded-xl hover:bg-white/5 transition-colors"
               >
                 Save Draft
               </button>
@@ -366,11 +366,11 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
         )}
 
         {/* Navigation Footer */}
-        <div className="mt-8 pt-6 border-t border-ink-900/5 flex items-center justify-between">
+        <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
           <button 
             disabled={step === 1}
             onClick={() => setStep(step - 1)}
-            className="px-4 py-2 text-sm font-medium text-ink-600 disabled:opacity-0"
+            className="px-4 py-2 text-sm font-medium text-[#9BA1A6] disabled:opacity-0"
           >
             ← Previous Step
           </button>

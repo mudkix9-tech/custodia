@@ -14,7 +14,7 @@ export default function AuditPage() {
   const { data: metrics, isLoading } = trpc.audit.getDashboardMetrics.useQuery();
 
   if (isLoading) {
-    return <div className="p-8 text-center text-ink-500">Loading audit workspace...</div>;
+    return <div className="p-8 text-center text-[#6E747A]">Loading audit workspace...</div>;
   }
 
   // Use the latest score if available, otherwise default to a calculated representation or 100
@@ -26,16 +26,16 @@ export default function AuditPage() {
 
   return (
     <div className="max-w-6xl mx-auto p-8 space-y-8 fade-up">
-      <div className="flex items-end justify-between border-b border-ink-900/10 pb-4">
+      <div className="flex items-end justify-between border-b border-white/10 pb-4">
         <div>
-          <h1 className="text-3xl font-serif text-ink-900 tracking-tight">Audit Readiness</h1>
-          <p className="text-ink-600 mt-2 text-[15px]">Automated compliance reporting, score tracking, and gap remediation.</p>
+          <h1 className="text-3xl font-serif text-[#F4F5F6] tracking-tight">Audit Readiness</h1>
+          <p className="text-[#9BA1A6] mt-2 text-[15px]">Automated compliance reporting, score tracking, and gap remediation.</p>
         </div>
-        <div className="flex p-1 bg-bone-100 rounded-lg">
+        <div className="flex p-1 bg-white/5 rounded-lg">
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-[13.5px] font-medium transition-colors ${
-              activeTab === 'dashboard' ? 'bg-white text-ink-900 shadow-sm border border-ink-900/5' : 'text-ink-500 hover:text-ink-700'
+              activeTab === 'dashboard' ? 'bg-[#0D0F11] text-[#F4F5F6] shadow-panel-elevated border border-white/5' : 'text-[#6E747A] hover:text-[#E6E8EA]'
             }`}
           >
             <LayoutDashboard size={16} /> Dashboard
@@ -43,7 +43,7 @@ export default function AuditPage() {
           <button
             onClick={() => setActiveTab('ledger')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-[13.5px] font-medium transition-colors ${
-              activeTab === 'ledger' ? 'bg-white text-ink-900 shadow-sm border border-ink-900/5' : 'text-ink-500 hover:text-ink-700'
+              activeTab === 'ledger' ? 'bg-[#0D0F11] text-[#F4F5F6] shadow-panel-elevated border border-white/5' : 'text-[#6E747A] hover:text-[#E6E8EA]'
             }`}
           >
             <ScrollText size={16} /> Immutable Ledger
@@ -55,17 +55,17 @@ export default function AuditPage() {
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Score Card */}
-        <div className="lg:col-span-1 bg-white border border-ink-900/10 rounded-3xl p-8 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+        <div className="lg:col-span-1 bg-[#0D0F11] border border-white/10 rounded-3xl p-8 shadow-panel-elevated flex flex-col items-center justify-center relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4">
             {score >= 80 ? <ShieldCheck className="w-6 h-6 text-sage-500" /> : <ShieldAlert className="w-6 h-6 text-amber-500" />}
           </div>
-          <h2 className="text-sm font-medium text-ink-500 uppercase tracking-wider mb-6">Overall Compliance Score</h2>
+          <h2 className="text-sm font-medium text-[#6E747A] uppercase tracking-wider mb-6">Overall Compliance Score</h2>
           <ComplianceScoreDial score={score} />
         </div>
 
         {/* Categories/Summary Card */}
-        <div className="lg:col-span-2 bg-white border border-ink-900/10 rounded-3xl p-8 shadow-sm">
-          <h2 className="text-lg font-serif text-ink-900 mb-6">Compliance Pillars</h2>
+        <div className="lg:col-span-2 bg-[#0D0F11] border border-white/10 rounded-3xl p-8 shadow-panel-elevated">
+          <h2 className="text-lg font-serif text-[#F4F5F6] mb-6">Compliance Pillars</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <PillarCard title="ROPA" score={(metrics?.latestReport?.categoryScores as any)?.ropa || 100} />
             <PillarCard title="Vendors" score={(metrics?.latestReport?.categoryScores as any)?.vendors || 100} />
@@ -82,30 +82,30 @@ export default function AuditPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-serif text-ink-900">Detected Gaps</h2>
+            <h2 className="text-xl font-serif text-[#F4F5F6]">Detected Gaps</h2>
             {totalGaps > 0 && (
-              <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full">{totalGaps} Active</span>
+              <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded-full">{totalGaps} Active</span>
             )}
           </div>
           <GapRemediationList />
         </div>
 
         <div>
-          <h2 className="text-xl font-serif text-ink-900 mb-4">Reporting & Exports</h2>
+          <h2 className="text-xl font-serif text-[#F4F5F6] mb-4">Reporting & Exports</h2>
           <Article30Generator />
         </div>
       </div>
         </>
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-sage-50 border border-sage-200/50 rounded-xl p-4">
+          <div className="flex items-center justify-between bg-[#C9A227]/10 border border-[#C9A227]/30/50 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-sage-100 rounded-full flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-sage-600" />
+                <ShieldCheck className="w-5 h-5 text-[#C9A227]" />
               </div>
               <div>
-                <h3 className="text-[15px] font-medium text-ink-900">Immutable Audit Ledger</h3>
-                <p className="text-sm text-ink-600">Article 5(2) Demonstrable Accountability. All records are read-only and cryptographically secure.</p>
+                <h3 className="text-[15px] font-medium text-[#F4F5F6]">Immutable Audit Ledger</h3>
+                <p className="text-sm text-[#9BA1A6]">Article 5(2) Demonstrable Accountability. All records are read-only and cryptographically secure.</p>
               </div>
             </div>
           </div>
@@ -118,16 +118,16 @@ export default function AuditPage() {
 }
 
 function PillarCard({ title, score }: { title: string, score: number }) {
-  let color = 'bg-red-50 text-red-700';
-  if (score >= 50) color = 'bg-amber-50 text-amber-700';
-  if (score >= 80) color = 'bg-sage-50 text-sage-700';
+  let color = 'bg-red-500/10 text-red-400';
+  if (score >= 50) color = 'bg-amber-500/10 text-amber-400';
+  if (score >= 80) color = 'bg-[#C9A227]/10 text-[#C9A227]';
   if (score === 100) color = 'bg-sage-100 text-sage-800 font-bold';
 
   return (
-    <div className="p-4 bg-bone-50 rounded-2xl border border-ink-900/5 flex flex-col justify-between h-24">
-      <span className="text-xs font-medium text-ink-500 uppercase tracking-wider">{title}</span>
+    <div className="p-4 bg-[#08090A] rounded-2xl border border-white/5 flex flex-col justify-between h-24">
+      <span className="text-xs font-medium text-[#6E747A] uppercase tracking-wider">{title}</span>
       <div className="flex items-end justify-between">
-        <span className="text-2xl font-serif text-ink-900">{score}</span>
+        <span className="text-2xl font-serif text-[#F4F5F6]">{score}</span>
         <span className={`text-[10px] px-1.5 py-0.5 rounded ${color}`}>%</span>
       </div>
     </div>

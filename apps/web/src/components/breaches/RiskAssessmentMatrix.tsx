@@ -55,8 +55,8 @@ export default function RiskAssessmentMatrix({ breach, onAssess }: { breach: any
                   onClick={() => handleToggleCategory(cat)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize border transition-colors ${
                     form.dataCategories.includes(cat) 
-                    ? 'bg-red-50 border-red-500 text-red-700 dark:bg-red-900/30 dark:text-red-300' 
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300'
+                    ? 'bg-red-500/10 border-red-500 text-red-400 dark:bg-red-900/30 dark:text-red-300' 
+                    : 'bg-[#0D0F11] border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300'
                   }`}
                 >
                   {cat}
@@ -67,18 +67,18 @@ export default function RiskAssessmentMatrix({ breach, onAssess }: { breach: any
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 mb-2">Estimated Records Affected</label>
             <input
               type="number"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-panel-elevated focus:border-red-500 focus:ring-red-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               value={form.recordsAffected}
               onChange={e => setForm({ ...form, recordsAffected: parseInt(e.target.value) || 0 })}
             />
 
             <div className="space-y-3 mt-6">
               <label className="flex items-center space-x-3 cursor-pointer">
-                <input type="checkbox" className="rounded text-red-600 focus:ring-red-500 h-4 w-4" checked={form.identityTheftRisk} onChange={() => handleToggleBool('identityTheftRisk')} />
+                <input type="checkbox" className="rounded text-red-400 focus:ring-red-500 h-4 w-4" checked={form.identityTheftRisk} onChange={() => handleToggleBool('identityTheftRisk')} />
                 <span className="text-sm text-gray-700 dark:text-gray-300">High risk of identity theft or fraud</span>
               </label>
               <label className="flex items-center space-x-3 cursor-pointer">
-                <input type="checkbox" className="rounded text-red-600 focus:ring-red-500 h-4 w-4" checked={form.dataWasEncrypted} onChange={() => handleToggleBool('dataWasEncrypted')} />
+                <input type="checkbox" className="rounded text-red-400 focus:ring-red-500 h-4 w-4" checked={form.dataWasEncrypted} onChange={() => handleToggleBool('dataWasEncrypted')} />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Data was strongly encrypted (keys secure)</span>
               </label>
             </div>
@@ -94,28 +94,28 @@ export default function RiskAssessmentMatrix({ breach, onAssess }: { breach: any
             
             <div className="space-y-4">
               <label className="flex items-start space-x-3 cursor-pointer">
-                <input type="checkbox" className="rounded text-red-600 focus:ring-red-500 h-4 w-4 mt-0.5" checked={form.confirmedAccess} onChange={() => handleToggleBool('confirmedAccess')} />
+                <input type="checkbox" className="rounded text-red-400 focus:ring-red-500 h-4 w-4 mt-0.5" checked={form.confirmedAccess} onChange={() => handleToggleBool('confirmedAccess')} />
                 <div>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Confirmed Access/Exfiltration</span>
                   <p className="text-xs text-gray-500">There is evidence that data was actually accessed or copied by an unauthorized party.</p>
                 </div>
               </label>
               <label className="flex items-start space-x-3 cursor-pointer">
-                <input type="checkbox" className="rounded text-red-600 focus:ring-red-500 h-4 w-4 mt-0.5" checked={form.publiclyAccessible} onChange={() => handleToggleBool('publiclyAccessible')} />
+                <input type="checkbox" className="rounded text-red-400 focus:ring-red-500 h-4 w-4 mt-0.5" checked={form.publiclyAccessible} onChange={() => handleToggleBool('publiclyAccessible')} />
                 <div>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Data made publicly accessible</span>
                   <p className="text-xs text-gray-500">Data was exposed on the open internet without authentication.</p>
                 </div>
               </label>
               <label className="flex items-start space-x-3 cursor-pointer">
-                <input type="checkbox" className="rounded text-red-600 focus:ring-red-500 h-4 w-4 mt-0.5" checked={form.maliciousIntent} onChange={() => handleToggleBool('maliciousIntent')} />
+                <input type="checkbox" className="rounded text-red-400 focus:ring-red-500 h-4 w-4 mt-0.5" checked={form.maliciousIntent} onChange={() => handleToggleBool('maliciousIntent')} />
                 <div>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Malicious Intent (e.g. Ransomware)</span>
                   <p className="text-xs text-gray-500">The incident was a targeted attack rather than accidental exposure.</p>
                 </div>
               </label>
               <label className="flex items-start space-x-3 cursor-pointer">
-                <input type="checkbox" className="rounded text-red-600 focus:ring-red-500 h-4 w-4 mt-0.5" checked={form.containedWithinHours} onChange={() => handleToggleBool('containedWithinHours')} />
+                <input type="checkbox" className="rounded text-red-400 focus:ring-red-500 h-4 w-4 mt-0.5" checked={form.containedWithinHours} onChange={() => handleToggleBool('containedWithinHours')} />
                 <div>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Contained within hours</span>
                   <p className="text-xs text-gray-500">The breach was identified and contained very quickly before widespread access.</p>
@@ -141,14 +141,14 @@ export default function RiskAssessmentMatrix({ breach, onAssess }: { breach: any
         <button
           onClick={() => assessMutation.mutate({ id: breach.id, answers: form })}
           disabled={assessMutation.isPending}
-          className="px-6 py-2 bg-gray-900 hover:bg-black dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 text-white text-sm font-medium rounded-md shadow-sm"
+          className="px-6 py-2 bg-gray-900 hover:bg-black dark:bg-[#0D0F11] dark:text-gray-900 dark:hover:bg-gray-100 text-white text-sm font-medium rounded-md shadow-panel-elevated"
         >
           {assessMutation.isPending ? 'Calculating...' : 'Run Risk Assessment'}
         </button>
       </div>
 
       {breach.riskAssessmentDetail && (
-        <div className="mt-6 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-900 dark:text-blue-200 flex items-start">
+        <div className="mt-6 bg-blue-500/10 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-900 dark:text-blue-200 flex items-start">
           <span className="text-xl mr-3">ℹ️</span>
           <div>
             <span className="font-semibold block mb-1">Assessment Outcome</span>

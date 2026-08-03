@@ -56,18 +56,18 @@ export function DpaAnalysisModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white border border-ink-900/10 w-full max-w-4xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="bg-[#0D0F11] border border-white/10 w-full max-w-4xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
         
         {/* Header */}
-        <div className="p-6 border-b border-ink-900/10 flex justify-between items-center bg-bone-50/50">
+        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#08090A]/50">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-50 border border-indigo-100 rounded-lg text-indigo-600 shadow-sm"><Sparkles className="w-5 h-5" /></div>
+            <div className="p-2 bg-indigo-500/10 border border-indigo-900/50 rounded-lg text-indigo-400 shadow-panel-elevated"><Sparkles className="w-5 h-5" /></div>
             <div>
-              <h3 className="text-lg font-serif text-ink-900">AI DPA Analysis Results</h3>
-              <p className="text-xs text-ink-500">GDPR Article 28 clause review drafted by Claude.</p>
+              <h3 className="text-lg font-serif text-[#F4F5F6]">AI DPA Analysis Results</h3>
+              <p className="text-xs text-[#6E747A]">GDPR Article 28 clause review drafted by Claude.</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-ink-400 hover:text-ink-900 hover:bg-bone-100 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-lg text-[#6E747A] hover:text-[#F4F5F6] hover:bg-white/5 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -93,8 +93,8 @@ export function DpaAnalysisModal({
 
           {/* Tier 2 Special Category warning */}
           {analysisData.potential_special_category && (
-            <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-900 rounded-xl text-xs flex gap-3 leading-relaxed">
-              <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600" />
+            <div className="p-4 bg-amber-500/100/10 border border-amber-500/20 text-amber-300 rounded-xl text-xs flex gap-3 leading-relaxed">
+              <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400" />
               <div>
                 <span className="font-bold block mb-0.5">Contextual Special Category Data Warning (Advisory)</span>
                 {analysisData.special_category_rationale}
@@ -107,7 +107,7 @@ export function DpaAnalysisModal({
 
           {/* Article 28 Clause Review Checklist */}
           <div className="space-y-3">
-            <h4 className="font-bold text-ink-900 text-sm">Article 28(3) Mandatory Clause Checklist</h4>
+            <h4 className="font-bold text-[#F4F5F6] text-sm">Article 28(3) Mandatory Clause Checklist</h4>
             <div className="space-y-2">
               {checklistKeys.map(({ key, label }) => {
                 const item = checklist[key] || {};
@@ -115,15 +115,15 @@ export function DpaAnalysisModal({
                 const isWeak = item.status === 'weak';
                 const isExpanded = !!expandedClauses[key];
 
-                let statusBadge = 'bg-red-50 text-red-700 border-red-200';
+                let statusBadge = 'bg-red-500/10 text-red-400 border-red-900/50';
                 if (isPresent) statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                if (isWeak) statusBadge = 'bg-amber-50 text-amber-700 border-amber-200';
+                if (isWeak) statusBadge = 'bg-amber-500/10 text-amber-400 border-amber-900/50';
 
                 return (
-                  <div key={key} className="bg-bone-50/40 border border-ink-900/5 rounded-xl overflow-hidden transition-colors">
+                  <div key={key} className="bg-[#08090A]/40 border border-white/5 rounded-xl overflow-hidden transition-colors">
                     <button
                       onClick={() => toggleClause(key)}
-                      className="w-full flex items-center justify-between p-4 text-left hover:bg-bone-50 transition-colors"
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-[#08090A] transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         {isPresent ? (
@@ -131,26 +131,26 @@ export function DpaAnalysisModal({
                         ) : (
                           <AlertTriangle className={`w-4 h-4 ${isWeak ? 'text-amber-500' : 'text-rose-500'}`} />
                         )}
-                        <span className="text-xs font-semibold text-ink-900">{label}</span>
+                        <span className="text-xs font-semibold text-[#F4F5F6]">{label}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusBadge}`}>
                           {item.status || 'missing'}
                         </span>
-                        {isExpanded ? <ChevronUp className="w-4 h-4 text-ink-400" /> : <ChevronDown className="w-4 h-4 text-ink-400" />}
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-[#6E747A]" /> : <ChevronDown className="w-4 h-4 text-[#6E747A]" />}
                       </div>
                     </button>
 
                     {isExpanded && (
-                      <div className="px-4 pb-4 pt-1 space-y-3 border-t border-ink-900/5 bg-white text-xs leading-relaxed animate-in slide-in-from-top-1 duration-100">
+                      <div className="px-4 pb-4 pt-1 space-y-3 border-t border-white/5 bg-[#0D0F11] text-xs leading-relaxed animate-in slide-in-from-top-1 duration-100">
                         {item.notes && (
-                          <p className="text-ink-600">
-                            <span className="font-bold text-ink-900">Analysis: </span>
+                          <p className="text-[#9BA1A6]">
+                            <span className="font-bold text-[#F4F5F6]">Analysis: </span>
                             {item.notes}
                           </p>
                         )}
                         {item.excerpt && (
-                          <div className="p-3 bg-bone-50 rounded-lg border border-ink-900/5 font-mono text-[11px] text-ink-800 break-words leading-relaxed whitespace-pre-wrap">
+                          <div className="p-3 bg-[#08090A] rounded-lg border border-white/5 font-mono text-[11px] text-[#E6E8EA] break-words leading-relaxed whitespace-pre-wrap">
                             {item.excerpt}
                           </div>
                         )}
@@ -165,7 +165,7 @@ export function DpaAnalysisModal({
           {/* Problematic Language flagged */}
           {problematic.length > 0 && (
             <div className="space-y-3">
-              <h4 className="font-bold text-ink-900 text-sm flex items-center gap-1.5 text-rose-700">
+              <h4 className="font-bold text-[#F4F5F6] text-sm flex items-center gap-1.5 text-rose-700">
                 <ShieldAlert className="w-4 h-4 shrink-0" />
                 Problematic Language Identified
               </h4>
@@ -192,8 +192,8 @@ export function DpaAnalysisModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-ink-900/10 bg-bone-50/50 flex justify-between items-center">
-          <span className="text-[10px] text-ink-400 font-bold uppercase tracking-widest">
+        <div className="p-4 border-t border-white/10 bg-[#08090A]/50 flex justify-between items-center">
+          <span className="text-[10px] text-[#6E747A] font-bold uppercase tracking-widest">
             🛡️ AI-assisted Assessment
           </span>
 
@@ -201,7 +201,7 @@ export function DpaAnalysisModal({
             <button
               onClick={() => onSaveDraft(analysisData)}
               disabled={isSubmitting}
-              className="px-4 py-2 border border-ink-900/10 hover:bg-bone-100 rounded-lg text-xs font-semibold text-ink-700 transition-colors shadow-sm disabled:opacity-50"
+              className="px-4 py-2 border border-white/10 hover:bg-white/5 rounded-lg text-xs font-semibold text-[#E6E8EA] transition-colors shadow-panel-elevated disabled:opacity-50"
             >
               Save as draft
             </button>

@@ -102,7 +102,7 @@ export default function ConsentAnalyticsDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Opt-in Rate Over Time */}
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm col-span-1 lg:col-span-2">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated col-span-1 lg:col-span-2">
           <h3 className="text-lg font-semibold text-stone-900 mb-6">Opt-in Rate Over Time (%)</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -124,7 +124,7 @@ export default function ConsentAnalyticsDashboard() {
         </div>
 
         {/* Interaction Breakdown */}
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
           <h3 className="text-lg font-semibold text-stone-900 mb-6">Interaction Breakdown</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -154,7 +154,7 @@ export default function ConsentAnalyticsDashboard() {
 
         {/* Granular Preference Combinations */}
         {granularCategoryDistribution && granularCategoryDistribution.length > 0 && interactionBreakdown.customizedWithAcceptance + interactionBreakdown.customizedAllRejected > 0 && (
-          <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm">
+          <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
             <h3 className="text-lg font-semibold text-stone-900 mb-2">Customized Combinations</h3>
             <p className="text-sm text-stone-500 mb-6">
               Distribution of preferences for users who actively customized their choices (excludes Accept All / Reject All).
@@ -178,7 +178,7 @@ export default function ConsentAnalyticsDashboard() {
         )}
 
         {/* Category Rejection */}
-        <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm">
+        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
           <h3 className="text-lg font-semibold text-stone-900 mb-6">Category Rejections</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -199,7 +199,7 @@ export default function ConsentAnalyticsDashboard() {
 
         {/* Domain Breakdown */}
         {!domainId && domainBreakdown.length > 0 && (
-          <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm col-span-1 lg:col-span-2">
+          <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated col-span-1 lg:col-span-2">
             <h3 className="text-lg font-semibold text-stone-900 mb-6">Sessions by Domain</h3>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -223,7 +223,7 @@ export default function ConsentAnalyticsDashboard() {
 
         {/* Consent Withdrawals */}
         {withdrawalMetrics && (
-          <div className="bg-white border border-stone-200 rounded-lg p-6 shadow-sm col-span-1 lg:col-span-2">
+          <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated col-span-1 lg:col-span-2">
             <h3 className="text-lg font-semibold text-stone-900 mb-6">Consent Withdrawals</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

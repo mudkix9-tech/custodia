@@ -46,7 +46,7 @@ export default function CopilotPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-indigo-600" />
+            <Sparkles className="w-6 h-6 text-indigo-400" />
             Compliance Co-Pilot
           </h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -55,7 +55,7 @@ export default function CopilotPage() {
         </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-lg border border-gray-200 shadow-sm flex flex-col overflow-hidden">
+      <div className="flex-1 bg-[#0D0F11] rounded-lg border border-gray-200 shadow-panel-elevated flex flex-col overflow-hidden">
         
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -63,7 +63,7 @@ export default function CopilotPage() {
             <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               {msg.role === 'assistant' && (
                 <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-5 h-5 text-indigo-600" />
+                  <Bot className="w-5 h-5 text-indigo-400" />
                 </div>
               )}
               
@@ -87,7 +87,7 @@ export default function CopilotPage() {
           {copilotMutation.isPending && (
             <div className="flex gap-4 justify-start">
               <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-5 h-5 text-indigo-600" />
+                <Bot className="w-5 h-5 text-indigo-400" />
               </div>
               <div className="bg-gray-100 rounded-2xl rounded-tl-none px-5 py-3 flex items-center gap-2">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>

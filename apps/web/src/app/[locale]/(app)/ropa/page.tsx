@@ -135,18 +135,18 @@ export default function RopaListPage() {
     {
       accessorKey: 'name',
       header: 'Name',
-      cell: (info: any) => <span className="font-medium text-ink-900">{info.getValue()}</span>,
+      cell: (info: any) => <span className="font-medium text-[#F4F5F6]">{info.getValue()}</span>,
     },
     {
       accessorKey: 'purpose',
       header: 'Purpose',
-      cell: (info: any) => <span className="text-ink-600 truncate max-w-xs inline-block">{info.getValue()}</span>,
+      cell: (info: any) => <span className="text-[#9BA1A6] truncate max-w-xs inline-block">{info.getValue()}</span>,
     },
     {
       accessorKey: 'lawfulBasis',
       header: 'Lawful Basis',
       cell: (info: any) => (
-        <span className="px-2.5 py-1 rounded-md text-[12px] font-medium bg-bone-100 text-ink-600 border border-ink-900/10">
+        <span className="px-2.5 py-1 rounded-md text-[12px] font-medium bg-white/5 text-[#9BA1A6] border border-white/10">
           {info.getValue() || 'Unspecified'}
         </span>
       ),
@@ -158,9 +158,9 @@ export default function RopaListPage() {
         const status = info.getValue();
         return (
           <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${
-            status === 'active' ? 'bg-sage-50 text-sage-700 border-sage-500/20' : 
-            status === 'draft' ? 'bg-amber-50 text-amber-700 border-amber-500/20' :
-            'bg-bone-100 text-ink-500 border-ink-900/10'
+            status === 'active' ? 'bg-[#C9A227]/10 text-[#C9A227] border-sage-500/20' : 
+            status === 'draft' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+            'bg-white/5 text-[#6E747A] border-white/10'
           }`}>
             {status}
           </span>
@@ -175,9 +175,9 @@ export default function RopaListPage() {
         return (
           <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${
             risk === 'critical' ? 'bg-clay-50 text-clay-700 border-clay-500/20' :
-            risk === 'high' ? 'bg-amber-50 text-amber-700 border-amber-500/20' :
+            risk === 'high' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
             risk === 'medium' ? 'bg-yellow-50 text-yellow-700 border-yellow-500/20' :
-            'bg-sage-50 text-sage-700 border-sage-500/20'
+            'bg-[#C9A227]/10 text-[#C9A227] border-sage-500/20'
           }`}>
             {risk}
           </span>
@@ -187,19 +187,19 @@ export default function RopaListPage() {
   ];
 
   return (
-    <div className="flex-1 p-8 bg-bone-50 min-h-screen">
+    <div className="flex-1 p-8 bg-[#08090A] min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-serif text-ink-900 tracking-tight flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-card border border-ink-900/8">
-                <FileText className="w-5 h-5 text-sage-600" />
+            <h1 className="text-2xl font-serif text-[#F4F5F6] tracking-tight flex items-center gap-3">
+              <div className="p-2 bg-[#0D0F11] rounded-xl shadow-card border border-ink-900/8">
+                <FileText className="w-5 h-5 text-[#C9A227]" />
               </div>
               Records of Processing Activities
             </h1>
-            <p className="text-[13.5px] text-ink-500 mt-2">
+            <p className="text-[13.5px] text-[#6E747A] mt-2">
               Manage your Article 30 compliance records and data processing activities.
             </p>
           </div>
@@ -215,14 +215,14 @@ export default function RopaListPage() {
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isImporting}
-              className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-ink-900/10 shadow-sm disabled:opacity-50"
+              className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-white/10 shadow-panel-elevated disabled:opacity-50"
             >
               <Upload className="w-4 h-4" />
               {isImporting ? 'Importing...' : 'Import CSV'}
             </button>
             <button 
               onClick={handleExportCSV}
-              className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-ink-900/10 shadow-sm"
+              className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-white/10 shadow-panel-elevated"
             >
               <Download className="w-4 h-4" />
               Export CSV
@@ -230,7 +230,7 @@ export default function RopaListPage() {
             <button 
               onClick={handleExportPDF}
               disabled={isExportingPdf}
-              className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-ink-900/10 shadow-sm disabled:opacity-50"
+              className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-white/10 shadow-panel-elevated disabled:opacity-50"
             >
               <FileText className="w-4 h-4" />
               {isExportingPdf ? 'Generating...' : 'Export PDF'}
@@ -247,22 +247,22 @@ export default function RopaListPage() {
 
         {/* Re-Consent Flags Section */}
         {(reconsentFlags?.length || 0) > 0 || flagsTab === 'dismissed' ? (
-          <div className="bg-white rounded-2xl border border-ink-900/10 shadow-sm overflow-hidden fade-up">
-            <div className="p-4 border-b border-ink-900/5 flex items-center justify-between bg-amber-50/30">
+          <div className="bg-[#0D0F11] rounded-2xl border border-white/10 shadow-panel-elevated overflow-hidden fade-up">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-amber-500/10/30">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-600" />
-                <h3 className="font-semibold text-ink-900">Re-Consent Triggers</h3>
+                <AlertCircle className="w-5 h-5 text-amber-400" />
+                <h3 className="font-semibold text-[#F4F5F6]">Re-Consent Triggers</h3>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setFlagsTab('flagged')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${flagsTab === 'flagged' ? 'bg-white text-amber-700 shadow-sm border border-amber-500/20' : 'text-ink-500 hover:text-ink-700'}`}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${flagsTab === 'flagged' ? 'bg-[#0D0F11] text-amber-400 shadow-panel-elevated border border-amber-500/20' : 'text-[#6E747A] hover:text-[#E6E8EA]'}`}
                 >
                   Active Flags
                 </button>
                 <button
                   onClick={() => setFlagsTab('dismissed')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${flagsTab === 'dismissed' ? 'bg-white text-ink-700 shadow-sm border border-ink-900/10' : 'text-ink-500 hover:text-ink-700'}`}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${flagsTab === 'dismissed' ? 'bg-[#0D0F11] text-[#E6E8EA] shadow-panel-elevated border border-white/10' : 'text-[#6E747A] hover:text-[#E6E8EA]'}`}
                 >
                   Dismissed
                 </button>
@@ -270,38 +270,38 @@ export default function RopaListPage() {
             </div>
             <div className="divide-y divide-ink-900/5 max-h-[300px] overflow-y-auto">
               {reconsentFlags?.length === 0 ? (
-                <div className="p-8 text-center text-ink-500 text-sm">
+                <div className="p-8 text-center text-[#6E747A] text-sm">
                   No {flagsTab} re-consent triggers found.
                 </div>
               ) : (
                 reconsentFlags?.map((flag: any) => (
-                  <div key={flag.id} className="p-4 hover:bg-bone-50/50 transition-colors flex items-start gap-4">
+                  <div key={flag.id} className="p-4 hover:bg-[#08090A]/50 transition-colors flex items-start gap-4">
                     <div className="mt-1">
                       {flag.confidence === 'ambiguous' ? (
-                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 tooltip" data-tip="Human review recommended">
+                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 tooltip" data-tip="Human review recommended">
                           <AlertCircle className="w-4 h-4" />
                         </div>
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                        <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400">
                           <AlertCircle className="w-4 h-4" />
                         </div>
                       )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-medium text-ink-900 text-sm">
+                        <h4 className="font-medium text-[#F4F5F6] text-sm">
                           Activity Changed: {flag.activity.name}
                         </h4>
-                        <div className="text-xs text-ink-400">
+                        <div className="text-xs text-[#6E747A]">
                           {new Date(flag.detectedAt).toLocaleDateString()}
                         </div>
                       </div>
-                      <p className="text-sm text-ink-600 mb-2">{flag.reason}</p>
+                      <p className="text-sm text-[#9BA1A6] mb-2">{flag.reason}</p>
                       
                       <div className="flex items-center gap-4 mt-3">
                         <button 
                           onClick={() => router.push(`/ropa/${flag.activity.id}`)}
-                          className="text-xs font-medium text-sage-600 hover:text-sage-700 flex items-center gap-1"
+                          className="text-xs font-medium text-[#C9A227] hover:text-[#C9A227] flex items-center gap-1"
                         >
                           Review Activity <ChevronRight className="w-3 h-3" />
                         </button>
@@ -309,13 +309,13 @@ export default function RopaListPage() {
                           <button
                             onClick={() => dismissFlagMutation.mutate({ id: flag.id })}
                             disabled={dismissFlagMutation.isPending}
-                            className="text-xs font-medium text-ink-500 hover:text-ink-700 flex items-center gap-1"
+                            className="text-xs font-medium text-[#6E747A] hover:text-[#E6E8EA] flex items-center gap-1"
                           >
                             <X className="w-3 h-3" /> Dismiss
                           </button>
                         )}
                         {flagsTab === 'dismissed' && (
-                          <span className="text-xs text-ink-400 flex items-center gap-1">
+                          <span className="text-xs text-[#6E747A] flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3" /> Dismissed
                           </span>
                         )}
@@ -347,7 +347,7 @@ export default function RopaListPage() {
               <button
                 onClick={() => fetchNextPage()}
                 disabled={isFetchingNextPage}
-                className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
+                className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors border border-white/10 shadow-panel-elevated disabled:opacity-50"
               >
                 {isFetchingNextPage ? 'Loading more...' : 'Load More'}
               </button>

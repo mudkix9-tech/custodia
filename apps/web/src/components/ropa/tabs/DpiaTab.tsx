@@ -41,15 +41,15 @@ function computeResidualRiskLevel(likelihood: 'low' | 'medium' | 'high', severit
 function getRiskLevelBadge(level: string) {
   switch (level) {
     case 'low':
-      return 'bg-sage-50 text-sage-700 border-sage-200/50';
+      return 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30/50';
     case 'medium':
-      return 'bg-amber-50 text-amber-700 border-amber-200/50';
+      return 'bg-amber-500/10 text-amber-400 border-amber-900/50/50';
     case 'high':
       return 'bg-clay-50 text-clay-700 border-clay-200/50';
     case 'critical':
-      return 'bg-red-50 text-red-700 border-red-200/50';
+      return 'bg-red-500/10 text-red-400 border-red-900/50/50';
     default:
-      return 'bg-bone-100 text-ink-600 border-ink-200';
+      return 'bg-white/5 text-[#9BA1A6] border-white/10';
   }
 }
 
@@ -295,18 +295,18 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
   };
 
   if (isLoadingDpia && dpiaId) {
-    return <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-sage-600" /></div>;
+    return <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" /></div>;
   }
 
   if (!dpiaId || !dpia) {
     return (
       <div className="space-y-6 max-w-3xl fade-up">
-        <div className="bg-bone-50 hairline rounded-2xl p-8 text-center space-y-4">
+        <div className="bg-[#08090A] hairline rounded-2xl p-8 text-center space-y-4">
           <div className="mx-auto w-12 h-12 bg-clay-50 rounded-full flex items-center justify-center mb-4">
             <ShieldAlert className="w-6 h-6 text-clay-600" />
           </div>
-          <h2 className="text-[16px] font-medium text-ink-900">Data Protection Impact Assessment</h2>
-          <p className="text-[13.5px] text-ink-500 max-w-lg mx-auto leading-relaxed">
+          <h2 className="text-[16px] font-medium text-[#F4F5F6]">Data Protection Impact Assessment</h2>
+          <p className="text-[13.5px] text-[#6E747A] max-w-lg mx-auto leading-relaxed">
             A DPIA is required if this processing activity is likely to result in a high risk to the rights and freedoms of individuals.
           </p>
           
@@ -323,19 +323,19 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
         </div>
 
         {allDpias && allDpias.length > 0 && (
-          <div className="bg-bone-50 hairline rounded-2xl p-6">
-            <h3 className="text-[13px] font-medium text-ink-900 mb-4">Or Link Existing DPIA</h3>
+          <div className="bg-[#08090A] hairline rounded-2xl p-6">
+            <h3 className="text-[13px] font-medium text-[#F4F5F6] mb-4">Or Link Existing DPIA</h3>
             <div className="space-y-2">
               {allDpias.map(d => (
-                <div key={d.id} className="flex items-center justify-between p-3 bg-white hairline rounded-xl">
+                <div key={d.id} className="flex items-center justify-between p-3 bg-[#0D0F11] hairline rounded-xl">
                   <div>
-                    <div className="text-[13px] font-medium text-ink-900">{d.title}</div>
-                    <div className="text-[12px] text-ink-500">Status: {d.status}</div>
+                    <div className="text-[13px] font-medium text-[#F4F5F6]">{d.title}</div>
+                    <div className="text-[12px] text-[#6E747A]">Status: {d.status}</div>
                   </div>
                   <button
                     onClick={() => handleLinkDpia(d.id)}
                     disabled={isLinking}
-                    className="text-[12px] font-medium text-sage-600 hover:text-sage-700 px-3 py-1.5 bg-sage-50 rounded-md transition-colors"
+                    className="text-[12px] font-medium text-[#C9A227] hover:text-[#C9A227] px-3 py-1.5 bg-[#C9A227]/10 rounded-md transition-colors"
                   >
                     Link to this activity
                   </button>
@@ -354,14 +354,14 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
       header: 'Likelihood (1-5)', 
       accessorKey: 'likelihood',
       cell: (info: any) => (
-        <span className="px-2 py-1 bg-bone-100 rounded text-ink-700 font-medium">L{info.getValue()}</span>
+        <span className="px-2 py-1 bg-white/5 rounded text-[#E6E8EA] font-medium">L{info.getValue()}</span>
       )
     },
     { 
       header: 'Severity (1-5)', 
       accessorKey: 'severity',
       cell: (info: any) => (
-        <span className="px-2 py-1 bg-bone-100 rounded text-ink-700 font-medium">S{info.getValue()}</span>
+        <span className="px-2 py-1 bg-white/5 rounded text-[#E6E8EA] font-medium">S{info.getValue()}</span>
       )
     },
     { 
@@ -369,7 +369,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
       accessorKey: 'initialRiskScore',
       cell: (info: any) => {
         const score = info.getValue();
-        const color = score >= 15 ? 'bg-clay-100 text-clay-700' : score >= 8 ? 'bg-amber-100 text-amber-700' : 'bg-sage-100 text-sage-700';
+        const color = score >= 15 ? 'bg-clay-100 text-clay-700' : score >= 8 ? 'bg-amber-100 text-amber-400' : 'bg-sage-100 text-[#C9A227]';
         return <span className={`px-2 py-1 rounded font-medium ${color}`}>{score}</span>;
       }
     },
@@ -378,34 +378,34 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
   return (
     <div className="space-y-6 max-w-5xl fade-up">
       {/* DPIA Header */}
-      <div className="bg-bone-50 hairline rounded-2xl p-6">
+      <div className="bg-[#08090A] hairline rounded-2xl p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-[16px] font-medium text-ink-900">{dpia.title}</h2>
-            <div className="text-[13px] text-ink-500 mt-1">Status: <span className="font-medium text-ink-700">{dpia.status}</span></div>
+            <h2 className="text-[16px] font-medium text-[#F4F5F6]">{dpia.title}</h2>
+            <div className="text-[13px] text-[#6E747A] mt-1">Status: <span className="font-medium text-[#E6E8EA]">{dpia.status}</span></div>
           </div>
-          <button className="px-3 py-1.5 bg-white hairline rounded-lg text-[12.5px] font-medium text-ink-700 hover:bg-bone-100 transition-colors flex items-center gap-1.5">
+          <button className="px-3 py-1.5 bg-[#0D0F11] hairline rounded-lg text-[12.5px] font-medium text-[#E6E8EA] hover:bg-white/5 transition-colors flex items-center gap-1.5">
             View Full DPIA <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
         <div className="grid grid-cols-2 gap-6 pt-4 border-t border-ink-900/8">
           <div>
-            <label className="text-[12.5px] font-medium text-ink-700">Overall Initial Risk Level</label>
+            <label className="text-[12.5px] font-medium text-[#E6E8EA]">Overall Initial Risk Level</label>
             <div className="mt-1 text-[14px] font-medium text-clay-600">{dpia.overallRiskLevel || 'Not Calculated'}</div>
           </div>
           <div>
-            <label className="text-[12.5px] font-medium text-ink-700">Residual Risk Level</label>
-            <div className="mt-1 text-[14px] font-medium text-sage-600">{dpia.residualRiskLevel || 'Pending Mitigations'}</div>
+            <label className="text-[12.5px] font-medium text-[#E6E8EA]">Residual Risk Level</label>
+            <div className="mt-1 text-[14px] font-medium text-[#C9A227]">{dpia.residualRiskLevel || 'Pending Mitigations'}</div>
           </div>
         </div>
       </div>
 
       {/* High Risk Vendor Warnings */}
       {activeHighRiskVendors.map((vendor: any) => (
-        <div key={vendor.orgVendorId} className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4 text-amber-900 animate-in fade-in duration-200">
+        <div key={vendor.orgVendorId} className="bg-amber-500/10 border border-amber-900/50 rounded-xl p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4 text-amber-300 animate-in fade-in duration-200">
           <div className="flex gap-3 leading-relaxed">
-            <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" />
             <div className="text-[13px]">
               <span className="font-bold block mb-0.5 text-amber-950">High Risk Vendor Warning</span>
               Vendor <strong>{vendor.name}</strong> linked to this activity is currently flagged as <strong>{vendor.riskLevel} risk</strong> (Score: {vendor.riskScore}). Consider documenting this as a residual risk in your assessment.
@@ -413,7 +413,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
           </div>
           <button
             onClick={() => handleAddHighRiskVendorRisk(vendor)}
-            className="text-xs font-bold text-amber-800 bg-white border border-amber-200 hover:bg-amber-100/50 px-4 py-2.5 rounded-lg transition-colors shrink-0 shadow-sm self-start sm:self-center"
+            className="text-xs font-bold text-amber-800 bg-[#0D0F11] border border-amber-900/50 hover:bg-amber-100/50 px-4 py-2.5 rounded-lg transition-colors shrink-0 shadow-panel-elevated self-start sm:self-center"
           >
             Document Risk
           </button>
@@ -421,12 +421,12 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
       ))}
 
       {/* Risk Matrix & Mitigations (Initial Risks) */}
-      <div className="bg-bone-50 hairline rounded-2xl p-6">
+      <div className="bg-[#08090A] hairline rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[14px] font-medium text-ink-900">Initial Risk Assessment</h3>
+          <h3 className="text-[14px] font-medium text-[#F4F5F6]">Initial Risk Assessment</h3>
           <button 
             onClick={handleAddRisk}
-            className="p-1.5 bg-sage-50 text-sage-700 rounded-md hover:bg-sage-100 transition-colors"
+            className="p-1.5 bg-[#C9A227]/10 text-[#C9A227] rounded-md hover:bg-[#C9A227]/20 transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -439,28 +439,28 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
             mode="compact" 
           />
         ) : (
-          <div className="py-8 text-center border border-dashed border-ink-900/20 rounded-xl bg-white/50">
-            <p className="text-[13px] text-ink-500">No initial risks identified yet.</p>
+          <div className="py-8 text-center border border-dashed border-white/20 rounded-xl bg-[#0D0F11]/50">
+            <p className="text-[13px] text-[#6E747A]">No initial risks identified yet.</p>
           </div>
         )}
       </div>
 
       {/* Residual Risks & Mitigations (Structured) */}
-      <div className="bg-bone-50 hairline rounded-2xl p-6 space-y-6">
+      <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-[14px] font-medium text-ink-900">Residual Risks & Mitigations</h3>
+            <h3 className="text-[14px] font-medium text-[#F4F5F6]">Residual Risks & Mitigations</h3>
             {saveStatus === 'saving' && (
-              <span className="text-[11px] text-ink-400 flex items-center gap-1">
+              <span className="text-[11px] text-[#6E747A] flex items-center gap-1">
                 <Loader2 className="w-3 h-3 animate-spin" /> Saving...
               </span>
             )}
-            {saveStatus === 'saved' && <span className="text-[11px] text-sage-600 font-medium">✓ Saved</span>}
+            {saveStatus === 'saved' && <span className="text-[11px] text-[#C9A227] font-medium">✓ Saved</span>}
             {saveStatus === 'error' && <span className="text-[11px] text-clay-600 font-medium">⚠ Save failed</span>}
           </div>
           <button 
             onClick={handleAddResidualRisk}
-            className="p-1.5 bg-sage-50 text-sage-700 rounded-md hover:bg-sage-100 transition-colors flex items-center gap-1 text-[12px] font-medium px-2.5 py-1.5"
+            className="p-1.5 bg-[#C9A227]/10 text-[#C9A227] rounded-md hover:bg-[#C9A227]/20 transition-colors flex items-center gap-1 text-[12px] font-medium px-2.5 py-1.5"
           >
             <Plus className="w-3.5 h-3.5" /> Add Residual Risk
           </button>
@@ -472,12 +472,12 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
               const matchedVendor = matchVendorFromDescription(risk.description, orgVendors);
 
               return (
-                <div key={risk.id || index} id={`risk-${risk.id}`} className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm space-y-4 transition-all duration-300">
+                <div key={risk.id || index} id={`risk-${risk.id}`} className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated space-y-4 transition-all duration-300">
                   <div className="flex items-start justify-between gap-4">
-                    <h4 className="text-[13px] font-medium text-ink-700">Residual Risk #{index + 1}</h4>
+                    <h4 className="text-[13px] font-medium text-[#E6E8EA]">Residual Risk #{index + 1}</h4>
                     <button
                       onClick={() => handleDeleteResidualRisk(risk.id)}
-                      className="p-1.5 text-ink-400 hover:text-clay-600 rounded-lg hover:bg-clay-50 transition-colors"
+                      className="p-1.5 text-[#6E747A] hover:text-clay-600 rounded-lg hover:bg-clay-50 transition-colors"
                       title="Delete residual risk"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -487,25 +487,25 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Description */}
                     <div className="space-y-1.5">
-                      <label className="text-[12.5px] font-medium text-ink-700">Risk Description</label>
+                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">Risk Description</label>
                       <textarea
                         value={risk.description || ''}
                         onChange={(e) => handleFieldChange(risk.id, 'description', e.target.value)}
                         placeholder="e.g. Unauthorized access to health records via third-party vendor"
                         rows={3}
-                        className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13.5px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                        className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                       />
                       
                       {/* Vendor suggestion banner */}
                       {matchedVendor && risk.relatedVendorId !== matchedVendor.orgVendorId && (
-                        <div className="mt-1 flex items-center justify-between p-2 bg-sage-50/70 border border-sage-200/50 rounded-lg text-[12px] text-sage-800">
+                        <div className="mt-1 flex items-center justify-between p-2 bg-[#C9A227]/10/70 border border-[#C9A227]/30/50 rounded-lg text-[12px] text-sage-800">
                           <span className="flex items-center gap-1.5">
                             💡 Suggestion: Link to vendor <strong>{matchedVendor.name}</strong>?
                           </span>
                           <button
                             type="button"
                             onClick={() => handleFieldChange(risk.id, 'relatedVendorId', matchedVendor.orgVendorId)}
-                            className="text-[11px] font-bold text-sage-700 hover:text-sage-800 px-2 py-0.5 bg-white border border-sage-200 rounded"
+                            className="text-[11px] font-bold text-[#C9A227] hover:text-sage-800 px-2 py-0.5 bg-[#0D0F11] border border-[#C9A227]/30 rounded"
                           >
                             Link Vendor
                           </button>
@@ -517,11 +517,11 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <label className="text-[12.5px] font-medium text-ink-700">Risk Category</label>
+                          <label className="text-[12.5px] font-medium text-[#E6E8EA]">Risk Category</label>
                           <select
                             value={risk.riskCategory || 'other'}
                             onChange={(e) => handleFieldChange(risk.id, 'riskCategory', e.target.value)}
-                            className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                            className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                           >
                             <option value="confidentiality">Confidentiality</option>
                             <option value="integrity">Integrity</option>
@@ -533,11 +533,11 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                         </div>
 
                         <div className="space-y-1.5">
-                          <label className="text-[12.5px] font-medium text-ink-700">Related Vendor</label>
+                          <label className="text-[12.5px] font-medium text-[#E6E8EA]">Related Vendor</label>
                           <select
                             value={risk.relatedVendorId || ''}
                             onChange={(e) => handleFieldChange(risk.id, 'relatedVendorId', e.target.value || null)}
-                            className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                            className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                           >
                             <option value="">None / Not Vendor Related</option>
                             {orgVendors.map((v) => (
@@ -554,11 +554,11 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[12.5px] font-medium text-ink-700">Related Processing Activity (ROPA)</label>
+                        <label className="text-[12.5px] font-medium text-[#E6E8EA]">Related Processing Activity (ROPA)</label>
                         <select
                           value={risk.relatedProcessingActivityId || ''}
                           onChange={(e) => handleFieldChange(risk.id, 'relatedProcessingActivityId', e.target.value || null)}
-                          className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                          className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                         >
                           <option value="">None / Primary Subject Activity</option>
                           {ropaActivities.map((a) => (
@@ -570,13 +570,13 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                   </div>
 
                   {/* Likelihood, Severity, Calculated Residual Level */}
-                  <div className="grid grid-cols-3 gap-4 items-end pt-3 border-t border-ink-900/5">
+                  <div className="grid grid-cols-3 gap-4 items-end pt-3 border-t border-white/5">
                     <div className="space-y-1.5">
-                      <label className="text-[12.5px] font-medium text-ink-700">Likelihood</label>
+                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">Likelihood</label>
                       <select
                         value={risk.likelihood || 'low'}
                         onChange={(e) => handleFieldChange(risk.id, 'likelihood', e.target.value)}
-                        className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                        className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                       >
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -585,11 +585,11 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[12.5px] font-medium text-ink-700">Severity</label>
+                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">Severity</label>
                       <select
                         value={risk.severity || 'low'}
                         onChange={(e) => handleFieldChange(risk.id, 'severity', e.target.value)}
-                        className="w-full bg-bone-50 hairline rounded-lg px-3 py-2 text-[13px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                        className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                       >
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -598,7 +598,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                     </div>
 
                     <div className="space-y-1.5 flex flex-col justify-end">
-                      <span className="text-[12.5px] font-medium text-ink-500 mb-1">Residual Risk Level</span>
+                      <span className="text-[12.5px] font-medium text-[#6E747A] mb-1">Residual Risk Level</span>
                       <div className="flex">
                         <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border ${getRiskLevelBadge(risk.residualRiskLevel)}`}>
                           {risk.residualRiskLevel}
@@ -609,12 +609,12 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
 
                   {/* Mitigation Required Checkbox */}
                   <div className="pt-2">
-                    <label className="flex items-center gap-2.5 cursor-pointer text-[13px] font-medium text-ink-800">
+                    <label className="flex items-center gap-2.5 cursor-pointer text-[13px] font-medium text-[#E6E8EA]">
                       <input
                         type="checkbox"
                         checked={risk.mitigationRequired || false}
                         onChange={(e) => handleFieldChange(risk.id, 'mitigationRequired', e.target.checked)}
-                        className="w-4 h-4 rounded border-ink-900/20 text-sage-600 focus:ring-sage-500/20"
+                        className="w-4 h-4 rounded border-white/20 text-[#C9A227] focus:ring-sage-500/20"
                       />
                       Mitigation Required to Accept Residual Risk
                     </label>
@@ -622,25 +622,25 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
 
                   {/* Mitigation Details (Rendered Conditionally) */}
                   {risk.mitigationRequired && (
-                    <div className="bg-bone-50 border border-ink-900/5 rounded-xl p-4 space-y-4 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="bg-[#08090A] border border-white/5 rounded-xl p-4 space-y-4 animate-in fade-in slide-in-from-top-1 duration-150">
                       <div className="space-y-1.5">
-                        <label className="text-[12px] font-semibold text-ink-700">Mitigation Description</label>
+                        <label className="text-[12px] font-semibold text-[#E6E8EA]">Mitigation Description</label>
                         <textarea
                           value={risk.mitigationDescription || ''}
                           onChange={(e) => handleFieldChange(risk.id, 'mitigationDescription', e.target.value)}
                           placeholder="e.g. Implement strict MFA on all third-party endpoints and perform quarterly audits"
                           rows={2}
-                          className="w-full bg-white border border-ink-900/10 rounded-lg px-3 py-2 text-[13px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                          className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                         />
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <label className="text-[12px] font-semibold text-ink-700">Mitigation Owner</label>
+                          <label className="text-[12px] font-semibold text-[#E6E8EA]">Mitigation Owner</label>
                           <select
                             value={risk.mitigationOwner || ''}
                             onChange={(e) => handleFieldChange(risk.id, 'mitigationOwner', e.target.value || null)}
-                            className="w-full bg-white border border-ink-900/10 rounded-lg px-3 py-2 text-[13px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                           >
                             <option value="">Unassigned</option>
                             {teamMembers.map((member: any) => (
@@ -650,24 +650,24 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                         </div>
 
                         <div className="space-y-1.5">
-                          <label className="text-[12px] font-semibold text-ink-700">Due Date</label>
+                          <label className="text-[12px] font-semibold text-[#E6E8EA]">Due Date</label>
                           <input
                             type="date"
                             value={risk.mitigationDueDate || ''}
                             onChange={(e) => handleFieldChange(risk.id, 'mitigationDueDate', e.target.value)}
-                            className="w-full bg-white border border-ink-900/10 rounded-lg px-3 py-2 text-[13px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                           />
                         </div>
 
                         <div className="space-y-1.5 flex flex-col">
-                          <label className="text-[12px] font-semibold text-ink-700 mb-1.5">Mitigation Status</label>
-                          <div className="flex items-center gap-1 bg-bone-50 p-1 rounded-lg border border-ink-900/10">
+                          <label className="text-[12px] font-semibold text-[#E6E8EA] mb-1.5">Mitigation Status</label>
+                          <div className="flex items-center gap-1 bg-[#08090A] p-1 rounded-lg border border-white/10">
                             <button
                               onClick={() => handleMitigationStatusChange(risk.id, 'not_started')}
                               className={`flex-1 px-2 py-1.5 text-[12px] font-medium rounded-md transition-colors ${
                                 risk.mitigationStatus === 'not_started' 
-                                  ? 'bg-ink-900 text-white shadow-sm' 
-                                  : 'text-ink-600 hover:bg-white hover:text-ink-900'
+                                  ? 'bg-ink-900 text-white shadow-panel-elevated' 
+                                  : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >
                               Not Started
@@ -676,8 +676,8 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                               onClick={() => handleMitigationStatusChange(risk.id, 'in_progress')}
                               className={`flex-1 px-2 py-1.5 text-[12px] font-medium rounded-md transition-colors ${
                                 risk.mitigationStatus === 'in_progress' 
-                                  ? 'bg-amber-100 text-amber-800 shadow-sm border border-amber-200/50' 
-                                  : 'text-ink-600 hover:bg-white hover:text-ink-900'
+                                  ? 'bg-amber-100 text-amber-800 shadow-panel-elevated border border-amber-900/50/50' 
+                                  : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >
                               In Progress
@@ -686,8 +686,8 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                               onClick={() => handleMitigationStatusChange(risk.id, 'completed')}
                               className={`flex-1 px-2 py-1.5 text-[12px] font-medium rounded-md transition-colors ${
                                 risk.mitigationStatus === 'completed' 
-                                  ? 'bg-sage-100 text-sage-800 shadow-sm border border-sage-200/50' 
-                                  : 'text-ink-600 hover:bg-white hover:text-ink-900'
+                                  ? 'bg-sage-100 text-sage-800 shadow-panel-elevated border border-[#C9A227]/30/50' 
+                                  : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >
                               Completed
@@ -702,8 +702,8 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
             })}
           </div>
         ) : (
-          <div className="py-8 text-center border border-dashed border-ink-900/20 rounded-xl bg-white/50">
-            <p className="text-[13px] text-ink-500">No residual risks documented yet.</p>
+          <div className="py-8 text-center border border-dashed border-white/20 rounded-xl bg-[#0D0F11]/50">
+            <p className="text-[13px] text-[#6E747A]">No residual risks documented yet.</p>
           </div>
         )}
       </div>
@@ -714,19 +714,19 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
 function VendorRiskCard({ vendorId }: { vendorId: string }) {
   const { data, isLoading } = trpc.vendors.getOrgVendorDetails.useQuery({ vendorId }, { enabled: !!vendorId });
 
-  if (isLoading) return <div className="text-[11px] text-ink-500 py-2">Loading vendor risk profile...</div>;
+  if (isLoading) return <div className="text-[11px] text-[#6E747A] py-2">Loading vendor risk profile...</div>;
   if (!data) return null;
 
   const { orgVendor, vendor } = data;
 
   return (
-    <div className="mt-3 bg-white border border-ink-900/10 rounded-xl p-4 text-ink-900 shadow-sm leading-relaxed text-left">
-      <div className="flex items-center justify-between mb-3 border-b border-ink-900/5 pb-2">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-ink-500">Vendor Risk Profile</span>
+    <div className="mt-3 bg-[#0D0F11] border border-white/10 rounded-xl p-4 text-[#F4F5F6] shadow-panel-elevated leading-relaxed text-left">
+      <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+        <span className="text-[11px] font-bold uppercase tracking-widest text-[#6E747A]">Vendor Risk Profile</span>
         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border
-          ${orgVendor.riskLevel === 'low' ? 'bg-sage-50 text-sage-700 border-sage-200/50' : 
-            orgVendor.riskLevel === 'critical' ? 'bg-red-50 text-red-700 border-red-200/50' : 
-            'bg-amber-50 text-amber-700 border-amber-200/50'}
+          ${orgVendor.riskLevel === 'low' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30/50' : 
+            orgVendor.riskLevel === 'critical' ? 'bg-red-500/10 text-red-400 border-red-900/50/50' : 
+            'bg-amber-500/10 text-amber-400 border-amber-900/50/50'}
         `}>
           {orgVendor.riskLevel} Risk ({orgVendor.riskScore})
         </span>
@@ -739,17 +739,17 @@ function VendorRiskCard({ vendorId }: { vendorId: string }) {
             return (
               <div key={key} className="space-y-0.5">
                 <div className="flex justify-between text-[11px] font-medium">
-                  <span className="text-ink-700 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                  <span className="text-[#E6E8EA] capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
                   <span className="font-semibold text-clay-600">+{factor.points} pts</span>
                 </div>
-                <div className="text-[10.5px] text-ink-500 leading-tight">
+                <div className="text-[10.5px] text-[#6E747A] leading-tight">
                   {factor.detail}
                 </div>
               </div>
             );
           })}
           {Object.values(orgVendor.riskFactors as Record<string, any>).every(f => f.points === 0) && (
-            <div className="text-[11px] text-sage-600 text-center py-1 font-medium">
+            <div className="text-[11px] text-[#C9A227] text-center py-1 font-medium">
               ✓ No active risk factors detected.
             </div>
           )}

@@ -37,8 +37,8 @@ export default function IntegrationsSettingsPage() {
     <div className="max-w-5xl mx-auto p-8 fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-ink-900 mb-2">Integrations</h1>
-          <p className="text-ink-600">Connect CRM and marketing tools for automated DSAR discovery.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">Integrations</h1>
+          <p className="text-[#9BA1A6]">Connect CRM and marketing tools for automated DSAR discovery.</p>
         </div>
       </div>
 
@@ -47,27 +47,27 @@ export default function IntegrationsSettingsPage() {
           const connection = connections?.find((c) => c.provider === provider.id);
 
           return (
-            <div key={provider.id} className="bg-white rounded-2xl border border-ink-900/10 p-6 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
+            <div key={provider.id} className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 flex flex-col h-full shadow-panel-elevated hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-bone-50 flex items-center justify-center border border-ink-900/10">
-                    <Plug className="w-5 h-5 text-ink-900" />
+                  <div className="w-10 h-10 rounded-xl bg-[#08090A] flex items-center justify-center border border-white/10">
+                    <Plug className="w-5 h-5 text-[#F4F5F6]" />
                   </div>
-                  <h3 className="text-lg font-medium text-ink-900">{provider.name}</h3>
+                  <h3 className="text-lg font-medium text-[#F4F5F6]">{provider.name}</h3>
                 </div>
                 {connection?.status === 'active' && (
-                  <span className="bg-sage-50 text-sage-700 border border-sage-200 px-2.5 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sage-500"></span> Connected
+                  <span className="bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30 px-2.5 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227]/100"></span> Connected
                   </span>
                 )}
                 {connection?.status === 'error' && (
-                  <span className="bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> Error
+                  <span className="bg-red-500/10 text-red-400 border border-red-900/50 px-2.5 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500/100"></span> Error
                   </span>
                 )}
               </div>
 
-              <div className="text-sm text-ink-600 space-y-3 mb-6 flex-1">
+              <div className="text-sm text-[#9BA1A6] space-y-3 mb-6 flex-1">
                 <p>When connected, Custodia can:</p>
                 <ul className="space-y-1.5">
                   <li className="flex items-start gap-2">
@@ -81,20 +81,20 @@ export default function IntegrationsSettingsPage() {
                 </ul>
 
                 {connection && (
-                  <div className="mt-4 p-4 bg-bone-50 rounded-xl border border-ink-900/10 text-xs space-y-1.5">
-                    <p><strong className="text-ink-900">Connected to:</strong> {connection.providerAccountName}</p>
+                  <div className="mt-4 p-4 bg-[#08090A] rounded-xl border border-white/10 text-xs space-y-1.5">
+                    <p><strong className="text-[#F4F5F6]">Connected to:</strong> {connection.providerAccountName}</p>
                     {connection.lastSyncAt && (
-                      <p><strong className="text-ink-900">Last synced:</strong> {new Date(connection.lastSyncAt).toLocaleString()}</p>
+                      <p><strong className="text-[#F4F5F6]">Last synced:</strong> {new Date(connection.lastSyncAt).toLocaleString()}</p>
                     )}
                   </div>
                 )}
               </div>
 
-              <div className="pt-4 border-t border-ink-900/10 mt-auto">
+              <div className="pt-4 border-t border-white/10 mt-auto">
                 {connection && connection.status === 'active' ? (
                   <button
                     disabled={!isEditable}
-                    className="w-full bg-white border border-red-200 text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    className="w-full bg-[#0D0F11] border border-red-900/50 text-red-400 hover:bg-red-500/10 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                     onClick={() => handleDisconnect(connection.id)}
                   >
                     Disconnect
@@ -114,12 +114,12 @@ export default function IntegrationsSettingsPage() {
       </div>
 
       <div className="mt-12">
-        <h3 className="text-lg font-medium text-ink-900 mb-4">Coming Soon</h3>
+        <h3 className="text-lg font-medium text-[#F4F5F6] mb-4">Coming Soon</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 opacity-50 grayscale">
           {['Xero', 'QuickBooks', 'ActiveCampaign', 'Brevo'].map(name => (
-            <div key={name} className="bg-white border border-ink-900/10 rounded-xl p-4 flex items-center justify-between">
-              <span className="font-medium text-ink-900">{name}</span>
-              <button className="text-xs font-medium text-ink-500 hover:text-ink-900 bg-bone-50 px-2 py-1 rounded">Request</button>
+            <div key={name} className="bg-[#0D0F11] border border-white/10 rounded-xl p-4 flex items-center justify-between">
+              <span className="font-medium text-[#F4F5F6]">{name}</span>
+              <button className="text-xs font-medium text-[#6E747A] hover:text-[#F4F5F6] bg-[#08090A] px-2 py-1 rounded">Request</button>
             </div>
           ))}
         </div>

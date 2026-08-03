@@ -18,40 +18,40 @@ export default function GroupVendorConsistencyPage() {
     <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/group" className="text-sm text-ink-500 hover:text-ink-900 transition-colors">Group Dashboard</Link>
-          <span className="text-ink-400">/</span>
-          <span className="text-sm font-medium text-ink-900">Cross-Entity Vendors</span>
+          <Link href="/group" className="text-sm text-[#6E747A] hover:text-[#F4F5F6] transition-colors">Group Dashboard</Link>
+          <span className="text-[#6E747A]">/</span>
+          <span className="text-sm font-medium text-[#F4F5F6]">Cross-Entity Vendors</span>
         </div>
-        <h1 className="text-2xl font-serif text-ink-900">Group Vendor Consistency</h1>
-        <p className="mt-2 text-sm text-ink-500">Identify gaps in DPA status for vendors used across multiple entities in your group.</p>
+        <h1 className="text-2xl font-serif text-[#F4F5F6]">Group Vendor Consistency</h1>
+        <p className="mt-2 text-sm text-[#6E747A]">Identify gaps in DPA status for vendors used across multiple entities in your group.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white hairline p-6 rounded-xl flex flex-col shadow-sm">
+        <div className="bg-[#0D0F11] hairline p-6 rounded-xl flex flex-col shadow-panel-elevated">
           <div className="flex items-center gap-3 mb-2">
-            <Building2 className="w-5 h-5 text-ink-400" />
-            <div className="text-sm font-medium text-ink-700">Shared Vendors</div>
+            <Building2 className="w-5 h-5 text-[#6E747A]" />
+            <div className="text-sm font-medium text-[#E6E8EA]">Shared Vendors</div>
           </div>
-          <div className="text-3xl font-medium text-ink-900">{vendorsData?.length || 0}</div>
-          <div className="text-xs text-ink-500 mt-1">Vendors used by 2+ entities</div>
+          <div className="text-3xl font-medium text-[#F4F5F6]">{vendorsData?.length || 0}</div>
+          <div className="text-xs text-[#6E747A] mt-1">Vendors used by 2+ entities</div>
         </div>
         
-        <div className="bg-white hairline p-6 rounded-xl flex flex-col shadow-sm border border-transparent hover:border-amber-200 transition-colors">
+        <div className="bg-[#0D0F11] hairline p-6 rounded-xl flex flex-col shadow-panel-elevated border border-transparent hover:border-amber-900/50 transition-colors">
           <div className="flex items-center gap-3 mb-2">
             <AlertTriangle className="w-5 h-5 text-amber-500" />
-            <div className="text-sm font-medium text-amber-700">Inconsistencies</div>
+            <div className="text-sm font-medium text-amber-400">Inconsistencies</div>
           </div>
-          <div className="text-3xl font-medium text-amber-600">{totalInconsistencies}</div>
-          <div className="text-xs text-amber-600/70 mt-1">Vendors with mismatched DPA status</div>
+          <div className="text-3xl font-medium text-amber-400">{totalInconsistencies}</div>
+          <div className="text-xs text-amber-400/70 mt-1">Vendors with mismatched DPA status</div>
         </div>
       </div>
 
-      <div className="bg-white hairline rounded-xl shadow-sm overflow-hidden mb-8">
-        <div className="p-6 border-b border-ink-100 flex justify-between items-center bg-bone-50/50">
-          <h2 className="text-lg font-medium text-ink-900">Cross-Entity Vendor Breakdown</h2>
+      <div className="bg-[#0D0F11] hairline rounded-xl shadow-panel-elevated overflow-hidden mb-8">
+        <div className="p-6 border-b border-ink-100 flex justify-between items-center bg-[#08090A]/50">
+          <h2 className="text-lg font-medium text-[#F4F5F6]">Cross-Entity Vendor Breakdown</h2>
         </div>
         <div className="divide-y divide-ink-100">
-          <div className="grid grid-cols-12 gap-4 p-4 bg-bone-50 text-xs font-medium text-ink-500 uppercase tracking-wider">
+          <div className="grid grid-cols-12 gap-4 p-4 bg-[#08090A] text-xs font-medium text-[#6E747A] uppercase tracking-wider">
             <div className="col-span-4">Vendor</div>
             <div className="col-span-2 text-center">Usage</div>
             <div className="col-span-3">Status</div>
@@ -59,7 +59,7 @@ export default function GroupVendorConsistencyPage() {
           </div>
           
           {vendorsData?.length === 0 && (
-            <div className="p-8 text-center text-ink-500 text-sm">
+            <div className="p-8 text-center text-[#6E747A] text-sm">
               No vendors are shared across multiple entities in this group.
             </div>
           )}
@@ -71,38 +71,38 @@ export default function GroupVendorConsistencyPage() {
 
             return (
               <React.Fragment key={vendor.vendorId}>
-                <div className={`grid grid-cols-12 gap-4 p-4 items-center transition-colors ${vendor.inconsistent ? 'bg-amber-50/30 hover:bg-amber-50/60' : 'hover:bg-bone-50'}`}>
+                <div className={`grid grid-cols-12 gap-4 p-4 items-center transition-colors ${vendor.inconsistent ? 'bg-amber-500/10/30 hover:bg-amber-500/10/60' : 'hover:bg-[#08090A]'}`}>
                   <div className="col-span-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-ink-100 flex items-center justify-center text-ink-600 font-medium text-sm">
+                    <div className="w-8 h-8 rounded bg-ink-100 flex items-center justify-center text-[#9BA1A6] font-medium text-sm">
                       <Building2 className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-medium text-ink-900">{vendor.vendorName}</div>
+                      <div className="font-medium text-[#F4F5F6]">{vendor.vendorName}</div>
                       {vendor.inconsistent && (
-                        <div className="flex items-center gap-1 mt-1 text-xs text-amber-600 font-medium">
+                        <div className="flex items-center gap-1 mt-1 text-xs text-amber-400 font-medium">
                           <AlertTriangle className="w-3 h-3" /> Inconsistent Posture
                         </div>
                       )}
                     </div>
                   </div>
                   
-                  <div className="col-span-2 text-center text-sm text-ink-700">
+                  <div className="col-span-2 text-center text-sm text-[#E6E8EA]">
                     Used by {vendor.usedByCount} entities
                   </div>
 
                   <div className="col-span-3 text-sm">
                     {vendor.inconsistent ? (
                       <div className="flex flex-col gap-1">
-                        <span className="inline-flex items-center gap-1 text-sage-600 font-medium"><CheckCircle2 className="w-3.5 h-3.5"/> {signedCount} Signed</span>
-                        <span className="inline-flex items-center gap-1 text-red-600 font-medium"><XCircle className="w-3.5 h-3.5"/> {missingCount} Missing</span>
+                        <span className="inline-flex items-center gap-1 text-[#C9A227] font-medium"><CheckCircle2 className="w-3.5 h-3.5"/> {signedCount} Signed</span>
+                        <span className="inline-flex items-center gap-1 text-red-400 font-medium"><XCircle className="w-3.5 h-3.5"/> {missingCount} Missing</span>
                       </div>
                     ) : (
                       signedCount > 0 ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-sage-50 text-sage-700 border border-sage-200">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30">
                           Consistently Signed
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-900/50">
                           Consistently Missing
                         </span>
                       )
@@ -112,7 +112,7 @@ export default function GroupVendorConsistencyPage() {
                   <div className="col-span-3 flex justify-end">
                     <button
                       onClick={() => setExpandedVendor(isExpanded ? null : vendor.vendorId)}
-                      className="px-3 py-1.5 bg-white hover:bg-bone-100 text-ink-700 rounded-lg text-sm font-medium transition-colors border border-bone-300 shadow-sm"
+                      className="px-3 py-1.5 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] rounded-lg text-sm font-medium transition-colors border border-bone-300 shadow-panel-elevated"
                     >
                       {isExpanded ? 'Hide Details' : 'Compare Entities'}
                     </button>
@@ -120,44 +120,44 @@ export default function GroupVendorConsistencyPage() {
                 </div>
 
                 {isExpanded && (
-                  <div className="col-span-12 bg-bone-50/50 p-4 border-b border-ink-100">
-                    <div className="rounded-lg border border-ink-200 bg-white overflow-hidden shadow-sm">
+                  <div className="col-span-12 bg-[#08090A]/50 p-4 border-b border-ink-100">
+                    <div className="rounded-lg border border-white/10 bg-[#0D0F11] overflow-hidden shadow-panel-elevated">
                       <table className="min-w-full divide-y divide-ink-200">
-                        <thead className="bg-bone-50">
+                        <thead className="bg-[#08090A]">
                           <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase tracking-wider">Entity</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase tracking-wider">DPA Status</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-ink-500 uppercase tracking-wider">Risk Score</th>
-                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-ink-500 uppercase tracking-wider">Action</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#6E747A] uppercase tracking-wider">Entity</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#6E747A] uppercase tracking-wider">DPA Status</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#6E747A] uppercase tracking-wider">Risk Score</th>
+                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-[#6E747A] uppercase tracking-wider">Action</th>
                           </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-ink-100">
+                        <tbody className="bg-[#0D0F11] divide-y divide-ink-100">
                           {vendor.entityDetails.map((detail: any, idx: number) => (
-                            <tr key={idx} className={vendor.inconsistent && detail.dpaStatus !== 'signed' ? 'bg-red-50/20' : ''}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-ink-900">
+                            <tr key={idx} className={vendor.inconsistent && detail.dpaStatus !== 'signed' ? 'bg-red-500/10/20' : ''}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#F4F5F6]">
                                 {detail.orgName}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm">
                                 {detail.dpaStatus === 'signed' ? (
-                                  <span className="inline-flex items-center gap-1 text-sage-600"><CheckCircle2 className="w-4 h-4"/> Signed</span>
+                                  <span className="inline-flex items-center gap-1 text-[#C9A227]"><CheckCircle2 className="w-4 h-4"/> Signed</span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-red-600"><XCircle className="w-4 h-4"/> Missing</span>
+                                  <span className="inline-flex items-center gap-1 text-red-400"><XCircle className="w-4 h-4"/> Missing</span>
                                 )}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-ink-500">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-[#6E747A]">
                                 <div className="flex items-center gap-2">
                                   <span className={`px-2 py-0.5 rounded text-xs font-medium
-                                    ${detail.riskLevel === 'critical' ? 'bg-red-100 text-red-700' : 
-                                      detail.riskLevel === 'high' ? 'bg-amber-100 text-amber-700' : 
-                                      detail.riskLevel === 'medium' ? 'bg-blue-100 text-blue-700' : 
-                                      'bg-sage-100 text-sage-700'}`}>
+                                    ${detail.riskLevel === 'critical' ? 'bg-red-500/20 text-red-400' : 
+                                      detail.riskLevel === 'high' ? 'bg-amber-100 text-amber-400' : 
+                                      detail.riskLevel === 'medium' ? 'bg-blue-100 text-blue-400' : 
+                                      'bg-sage-100 text-[#C9A227]'}`}>
                                     {detail.riskLevel || 'unknown'}
                                   </span>
-                                  <span className="text-xs text-ink-400">({detail.riskScore})</span>
+                                  <span className="text-xs text-[#6E747A]">({detail.riskScore})</span>
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <Link href={`/vendors/${vendor.vendorId}`} className="text-ink-500 hover:text-ink-900" onClick={() => {
+                                <Link href={`/vendors/${vendor.vendorId}`} className="text-[#6E747A] hover:text-[#F4F5F6]" onClick={() => {
                                   // In a real app, this would use a context switcher or pass the target org header
                                   // For now, we simulate navigating to the vendor profile in that org's context
                                   document.cookie = `targetOrgId=${detail.orgId}; path=/;`;

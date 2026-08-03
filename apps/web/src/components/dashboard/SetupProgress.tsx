@@ -21,7 +21,7 @@ function SetupProgressCard() {
   const score = 35; // Defaulting for demo before real score is available
 
   return (
-    <div className="bg-white border-2 border-blue-100 rounded-2xl p-6 shadow-sm mb-8 flex flex-col md:flex-row gap-6 items-start">
+    <div className="bg-[#0D0F11] border-2 border-blue-900/50 rounded-2xl p-6 shadow-panel-elevated mb-8 flex flex-col md:flex-row gap-6 items-start">
       <div className="flex-1">
         <h2 className="text-lg font-bold text-gray-900 mb-2">Complete your workspace setup</h2>
         <p className="text-gray-600 mb-4 text-sm">You're currently at {score}% compliance. Complete these tasks to improve your score.</p>
@@ -53,7 +53,7 @@ function SetupProgressCard() {
         </div>
       </div>
 
-      <div className="w-full md:w-64 bg-blue-50 rounded-xl p-6 flex flex-col items-center justify-center text-center">
+      <div className="w-full md:w-64 bg-blue-500/100/10 rounded-xl p-6 flex flex-col items-center justify-center text-center">
         <div className="relative w-24 h-24 mb-3">
           <svg className="w-full h-full" viewBox="0 0 36 36">
             <path
@@ -64,7 +64,7 @@ function SetupProgressCard() {
               strokeWidth="3"
             />
             <path
-              className="text-blue-600"
+              className="text-blue-400"
               strokeDasharray={`${score}, 100`}
               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               fill="none"

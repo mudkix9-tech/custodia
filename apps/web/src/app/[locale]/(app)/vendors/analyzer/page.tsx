@@ -38,33 +38,33 @@ export default function DpaAnalyzerPage() {
   };
 
   const statusColors = {
-    present: 'bg-green-100 text-green-800 border-green-200',
+    present: 'bg-green-500/20 text-green-400 border-green-200',
     weak: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    missing: 'bg-red-100 text-red-800 border-red-200'
+    missing: 'bg-red-500/20 text-red-400 border-red-900/50'
   };
 
   const statusIcons = {
-    present: <CheckCircle2 className="w-5 h-5 text-green-600" />,
+    present: <CheckCircle2 className="w-5 h-5 text-green-400" />,
     weak: <AlertTriangle className="w-5 h-5 text-yellow-600" />,
-    missing: <AlertCircle className="w-5 h-5 text-red-600" />
+    missing: <AlertCircle className="w-5 h-5 text-red-400" />
   };
 
   return (
     <div className="max-w-[900px] mx-auto p-8 fade-up space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <Link href="/vendors" className="text-sm text-indigo-600 hover:underline mb-2 inline-block">&larr; Back to Vendors</Link>
+          <Link href="/vendors" className="text-sm text-indigo-400 hover:underline mb-2 inline-block">&larr; Back to Vendors</Link>
           <h1 className="text-3xl font-serif text-gray-900 mb-2 flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-indigo-600" /> AI DPA Analyzer
+            <Sparkles className="w-8 h-8 text-indigo-400" /> AI DPA Analyzer
           </h1>
           <p className="text-gray-600 text-[15px]">Automatically review Vendor Data Processing Agreements against Article 28.</p>
         </div>
       </div>
 
       {!analysis && (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
+        <div className="bg-[#0D0F11] border border-gray-200 rounded-2xl shadow-panel-elevated p-8 text-center">
           <div className="max-w-md mx-auto space-y-6">
-            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+            <div className="w-16 h-16 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
               <Upload className="w-8 h-8" />
             </div>
             <div>
@@ -83,7 +83,7 @@ export default function DpaAnalyzerPage() {
             <div className="flex flex-col gap-3">
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 rounded-xl transition-colors"
+                className="w-full bg-[#0D0F11] border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 rounded-xl transition-colors"
               >
                 {file ? file.name : 'Select PDF File'}
               </button>
@@ -91,7 +91,7 @@ export default function DpaAnalyzerPage() {
               <button 
                 onClick={handleAnalyze}
                 disabled={!file || analyzeMutation.isPending}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-panel-elevated"
               >
                 {analyzeMutation.isPending ? (
                   <>
@@ -111,13 +111,13 @@ export default function DpaAnalyzerPage() {
 
       {analysis && (
         <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 flex items-center justify-between">
+          <div className="bg-[#0D0F11] border border-gray-200 rounded-2xl shadow-panel-elevated p-6 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">Analysis Results</h2>
               <p className="text-sm text-gray-500 mt-1">File: {file?.name}</p>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-serif text-indigo-600">{analysis.overall_score}/100</div>
+              <div className="text-3xl font-serif text-indigo-400">{analysis.overall_score}/100</div>
               <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Compliance Score</div>
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function DpaAnalyzerPage() {
           <div className="flex justify-center mt-8">
             <button 
               onClick={() => { setAnalysis(null); setFile(null); }}
-              className="text-indigo-600 font-medium hover:underline"
+              className="text-indigo-400 font-medium hover:underline"
             >
               Analyze another document
             </button>
@@ -146,7 +146,7 @@ function ClauseItem({ clause, statusColors, statusIcons }: any) {
   const [expanded, setExpanded] = useState(false);
   
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all">
+    <div className="bg-[#0D0F11] border border-gray-200 rounded-xl shadow-panel-elevated overflow-hidden transition-all">
       <div 
         className="p-5 flex items-center gap-4 cursor-pointer hover:bg-gray-50"
         onClick={() => setExpanded(!expanded)}
@@ -177,7 +177,7 @@ function ClauseItem({ clause, statusColors, statusIcons }: any) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div>
               <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Analysis Notes</h5>
-              <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+              <p className="text-sm text-gray-700 leading-relaxed bg-[#0D0F11] p-3 rounded-lg border border-gray-200 shadow-panel-elevated">
                 {clause.notes || 'No specific notes provided. Clause appears compliant with Article 28.'}
               </p>
             </div>
@@ -186,7 +186,7 @@ function ClauseItem({ clause, statusColors, statusIcons }: any) {
                 <span>Extracted Excerpt</span>
                 {clause.location && <span className="text-gray-400 font-normal">Found in: {clause.location}</span>}
               </h5>
-              <div className="text-sm text-gray-600 leading-relaxed bg-white p-3 rounded-lg border border-gray-200 shadow-sm italic h-full">
+              <div className="text-sm text-gray-600 leading-relaxed bg-[#0D0F11] p-3 rounded-lg border border-gray-200 shadow-panel-elevated italic h-full">
                 {clause.excerpt ? `"${clause.excerpt}"` : 'No relevant excerpt extracted.'}
               </div>
             </div>

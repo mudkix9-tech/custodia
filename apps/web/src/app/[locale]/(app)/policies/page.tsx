@@ -33,14 +33,14 @@ export default function PoliciesDashboard() {
     }
   });
 
-  if (isLoading) return <div className="p-8 text-ink-500">Loading Policies...</div>;
+  if (isLoading) return <div className="p-8 text-[#6E747A]">Loading Policies...</div>;
 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-ink-900 mb-1">Privacy Policies</h1>
-          <p className="text-sm text-ink-600">Manage and auto-generate legal policies from your ROPA.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-1">Privacy Policies</h1>
+          <p className="text-sm text-[#9BA1A6]">Manage and auto-generate legal policies from your ROPA.</p>
         </div>
         <button 
           onClick={() => setIsCreating(true)}
@@ -51,20 +51,20 @@ export default function PoliciesDashboard() {
       </div>
 
       {isCreating && (
-        <div className="bg-white p-6 rounded-2xl border border-ink-900/10 mb-8 shadow-sm fade-up">
-          <h3 className="font-semibold text-ink-900 mb-4">Create New Policy</h3>
+        <div className="bg-[#0D0F11] p-6 rounded-2xl border border-white/10 mb-8 shadow-panel-elevated fade-up">
+          <h3 className="font-semibold text-[#F4F5F6] mb-4">Create New Policy</h3>
           <div className="flex gap-4">
             <input 
               type="text" 
               placeholder="e.g., Main Website Privacy Policy"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="flex-1 bg-bone-50 border border-ink-900/10 rounded-xl px-4 py-2 focus:ring-2 focus:ring-sage-500/20"
+              className="flex-1 bg-[#08090A] border border-white/10 rounded-xl px-4 py-2 focus:ring-2 focus:ring-sage-500/20"
             />
             <select 
               value={type}
               onChange={e => setType(e.target.value)}
-              className="bg-bone-50 border border-ink-900/10 rounded-xl px-4 py-2 focus:ring-2 focus:ring-sage-500/20"
+              className="bg-[#08090A] border border-white/10 rounded-xl px-4 py-2 focus:ring-2 focus:ring-sage-500/20"
             >
               <option value="website_visitors">Website Visitors</option>
               <option value="employees">Employees</option>
@@ -77,7 +77,7 @@ export default function PoliciesDashboard() {
             >
               {createMutation.isPending ? 'Creating...' : 'Create'}
             </button>
-            <button onClick={() => setIsCreating(false)} className="px-4 text-ink-500">Cancel</button>
+            <button onClick={() => setIsCreating(false)} className="px-4 text-[#6E747A]">Cancel</button>
           </div>
         </div>
       )}
@@ -89,43 +89,43 @@ export default function PoliciesDashboard() {
           
           return (
             <Link href={`/policies/${policy.id}`} key={policy.id} className="block group">
-              <div className="bg-white p-6 rounded-2xl border border-ink-900/10 shadow-sm hover:shadow-md transition-all h-full flex flex-col relative overflow-hidden">
+              <div className="bg-[#0D0F11] p-6 rounded-2xl border border-white/10 shadow-panel-elevated hover:shadow-md transition-all h-full flex flex-col relative overflow-hidden">
                 {isOutOfSync && (
-                  <div className="absolute top-0 left-0 w-full bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
+                  <div className="absolute top-0 left-0 w-full bg-amber-500/100 text-white text-[10px] font-bold uppercase tracking-wider text-center py-0.5">
                     Action Required - Out of Sync
                   </div>
                 )}
                 
                 <div className="flex items-start justify-between mb-4 mt-2">
-                  <div className="w-12 h-12 bg-sage-50 rounded-xl flex items-center justify-center text-sage-600">
+                  <div className="w-12 h-12 bg-[#C9A227]/10 rounded-xl flex items-center justify-center text-[#C9A227]">
                     <FileText className="w-6 h-6" />
                   </div>
-                  <span className="text-[11px] font-medium px-2 py-1 bg-bone-50 text-ink-500 rounded uppercase tracking-wider">
+                  <span className="text-[11px] font-medium px-2 py-1 bg-[#08090A] text-[#6E747A] rounded uppercase tracking-wider">
                     {policy.type.replace('_', ' ')}
                   </span>
                 </div>
                 
-                <h3 className="font-semibold text-ink-900 text-lg mb-2 group-hover:text-sage-600 transition-colors">{policy.name}</h3>
+                <h3 className="font-semibold text-[#F4F5F6] text-lg mb-2 group-hover:text-[#C9A227] transition-colors">{policy.name}</h3>
                 
                 <div className="mt-auto pt-4 flex items-center justify-between text-sm">
                   {policy.publishedAt ? (
-                    <div className="flex items-center gap-1.5 text-ink-500 text-[12px]">
+                    <div className="flex items-center gap-1.5 text-[#6E747A] text-[12px]">
                       <Clock className="w-3.5 h-3.5" /> Published {formatDistanceToNow(new Date(policy.publishedAt))} ago
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 text-amber-600 font-medium text-[12px]">
+                    <div className="flex items-center gap-1.5 text-amber-400 font-medium text-[12px]">
                       <AlertTriangle className="w-3.5 h-3.5" /> Draft - Never Published
                     </div>
                   )}
-                  {policy.syncWithRopa && <span className="w-2 h-2 rounded-full bg-sage-500" title="Auto-sync active"></span>}
+                  {policy.syncWithRopa && <span className="w-2 h-2 rounded-full bg-[#C9A227]/100" title="Auto-sync active"></span>}
                 </div>
               </div>
             </Link>
           );
         })}
         {(policies || [])?.length === 0 && !isCreating && (
-          <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-ink-900/10">
-            <p className="text-ink-500">No privacy policies created yet.</p>
+          <div className="col-span-full text-center py-12 bg-[#0D0F11] rounded-2xl border border-white/10">
+            <p className="text-[#6E747A]">No privacy policies created yet.</p>
           </div>
         )}
       </div>
@@ -135,7 +135,7 @@ export default function PoliciesDashboard() {
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="px-4 py-2 bg-white hover:bg-bone-100 text-ink-700 font-medium text-[13px] rounded-lg transition-colors border border-ink-900/10 shadow-sm disabled:opacity-50"
+            className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors border border-white/10 shadow-panel-elevated disabled:opacity-50"
           >
             {isFetchingNextPage ? 'Loading more...' : 'Load More'}
           </button>

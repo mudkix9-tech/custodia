@@ -10,10 +10,10 @@ export function AlternativesSection({ vendorId }: { vendorId: string }) {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm animate-pulse space-y-4">
-        <div className="h-5 bg-bone-200 rounded w-1/2"></div>
-        <div className="h-12 bg-bone-100 rounded"></div>
-        <div className="h-12 bg-bone-100 rounded"></div>
+      <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated animate-pulse space-y-4">
+        <div className="h-5 bg-white/10 rounded w-1/2"></div>
+        <div className="h-12 bg-white/5 rounded"></div>
+        <div className="h-12 bg-white/5 rounded"></div>
       </div>
     );
   }
@@ -21,34 +21,34 @@ export function AlternativesSection({ vendorId }: { vendorId: string }) {
   if (!alternatives || alternatives.length === 0) return null;
 
   return (
-    <div className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm space-y-4">
+    <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated space-y-4">
       <div className="flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-sage-600 shrink-0" />
-        <h3 className="text-base font-serif text-ink-900">Privacy Alternatives</h3>
+        <Sparkles className="w-5 h-5 text-[#C9A227] shrink-0" />
+        <h3 className="text-base font-serif text-[#F4F5F6]">Privacy Alternatives</h3>
       </div>
-      <p className="text-[13px] text-ink-500 leading-relaxed">
+      <p className="text-[13px] text-[#6E747A] leading-relaxed">
         Consider these lower-risk alternative vendors within the same category:
       </p>
 
       <div className="space-y-3">
         {alternatives.map((alt: any) => {
-          let riskColor = 'text-sage-600 bg-sage-50 border-sage-200';
-          if (alt.riskLevel === 'medium') riskColor = 'text-amber-700 bg-amber-50 border-amber-200';
+          let riskColor = 'text-[#C9A227] bg-[#C9A227]/10 border-[#C9A227]/30';
+          if (alt.riskLevel === 'medium') riskColor = 'text-amber-400 bg-amber-500/10 border-amber-900/50';
           if (alt.riskLevel === 'high' || alt.riskLevel === 'critical') riskColor = 'text-rose-700 bg-rose-50 border-rose-200';
 
           return (
             <div 
               key={alt.id} 
-              className="group relative flex flex-col p-4 rounded-xl border border-ink-900/5 bg-bone-50/30 hover:bg-bone-50/80 hover:border-ink-900/10 transition-all duration-300"
+              className="group relative flex flex-col p-4 rounded-xl border border-white/5 bg-[#08090A]/30 hover:bg-[#08090A]/80 hover:border-white/10 transition-all duration-300"
             >
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h4 className="font-semibold text-ink-900 text-sm">{alt.name}</h4>
+                  <h4 className="font-semibold text-[#F4F5F6] text-sm">{alt.name}</h4>
                   <a 
                     href={alt.website || '#'} 
                     target="_blank" 
                     rel="noreferrer" 
-                    className="text-[11px] text-sage-600 hover:underline flex items-center gap-1 mt-0.5"
+                    className="text-[11px] text-[#C9A227] hover:underline flex items-center gap-1 mt-0.5"
                   >
                     <span>{alt.website?.replace('https://', '')}</span>
                   </a>
@@ -66,7 +66,7 @@ export function AlternativesSection({ vendorId }: { vendorId: string }) {
                   </span>
                 )}
                 {alt.headquartersCountry && (
-                  <span className="bg-ink-900/5 text-ink-600 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="bg-ink-900/5 text-[#9BA1A6] text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Globe className="w-2.5 h-2.5 shrink-0" />
                     HQ: {alt.headquartersCountry}
                   </span>

@@ -10,7 +10,7 @@ import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 
 function Card({ children, className }: { children: React.ReactNode, className?: string }) {
-  return <div className={`bg-white rounded-lg shadow-sm border border-slate-200 p-6 ${className || ''}`}>{children}</div>;
+  return <div className={`bg-[#0D0F11] rounded-lg shadow-panel-elevated border border-slate-200 p-6 ${className || ''}`}>{children}</div>;
 }
 
 const ALL_EVENTS = [
@@ -103,7 +103,7 @@ export default function DevelopersSettingsPage() {
               <div>
                 <p className="font-medium text-slate-900 flex items-center gap-2">
                   {key.name}
-                  {key.revokedAt && <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">Revoked</span>}
+                  {key.revokedAt && <span className="bg-red-500/20 text-red-400 text-xs px-2 py-0.5 rounded-full">Revoked</span>}
                 </p>
                 <div className="text-sm font-mono text-slate-500 mt-1">{key.prefix}••••••••</div>
                 <div className="text-xs text-slate-400 mt-1">
@@ -114,7 +114,7 @@ export default function DevelopersSettingsPage() {
               </div>
               {!key.revokedAt && (
                 <button
-                  className="text-red-600 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1.5 rounded bg-white"
+                  className="text-red-400 hover:text-red-400 text-sm font-medium border border-red-900/50 px-3 py-1.5 rounded bg-[#0D0F11]"
                   onClick={async () => { const confirmed = await confirm({ title: 'Revoke API Key?', description: 'This will instantly disable the key. Any applications using it will lose access.', variant: 'destructive', confirmText: 'Revoke' }); if (confirmed) revokeKeyMutation.mutate({ id: key.id }); }}
                 >
                   Revoke
@@ -150,7 +150,7 @@ export default function DevelopersSettingsPage() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    className="text-slate-600 hover:text-slate-900 text-sm font-medium border border-slate-200 px-3 py-1.5 rounded bg-white"
+                    className="text-slate-600 hover:text-slate-900 text-sm font-medium border border-slate-200 px-3 py-1.5 rounded bg-[#0D0F11]"
                     onClick={() => {
                       testWebhookMutation.mutate({ id: hook.id }, {
                         onSuccess: () => alert('Test event successfully dispatched!'),
@@ -162,7 +162,7 @@ export default function DevelopersSettingsPage() {
                     Send Test
                   </button>
                   <button
-                    className="text-red-600 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1.5 rounded bg-white"
+                    className="text-red-400 hover:text-red-400 text-sm font-medium border border-red-900/50 px-3 py-1.5 rounded bg-[#0D0F11]"
                     onClick={async () => {
                       const confirmed = await confirm({ title: 'Delete webhook?', description: 'This will permanently delete the webhook and stop sending events.', variant: 'destructive' });
                       if (confirmed) deleteWebhookMutation.mutate({ id: hook.id });
@@ -180,7 +180,7 @@ export default function DevelopersSettingsPage() {
 
       {isKeyModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+          <div className="bg-[#0D0F11] rounded-lg p-6 max-w-md w-full shadow-panel-elevated">
             <h3 className="text-lg font-bold mb-4">Create API Key</h3>
             {!newKey ? (
               <div className="space-y-4">
@@ -234,7 +234,7 @@ export default function DevelopersSettingsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="p-3 bg-red-50 text-red-800 text-sm font-medium rounded-md border border-red-200">
+                <div className="p-3 bg-red-500/10 text-red-400 text-sm font-medium rounded-md border border-red-900/50">
                   This key will only be shown once. Copy it now and store it securely.
                 </div>
                 <div className="bg-slate-100 border border-slate-200 p-4 rounded-md font-mono text-sm break-all text-slate-900">
@@ -254,7 +254,7 @@ export default function DevelopersSettingsPage() {
 
       {isWebhookModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full shadow-xl">
+          <div className="bg-[#0D0F11] rounded-lg p-6 max-w-lg w-full shadow-panel-elevated">
             <h3 className="text-lg font-bold mb-4">Add Webhook</h3>
             <div className="space-y-4">
               <div>

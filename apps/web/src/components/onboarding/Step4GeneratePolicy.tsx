@@ -28,14 +28,14 @@ export function Step4GeneratePolicy({
   // Guard clause for missing preview data
   if (!policyPreview) {
     return (
-      <div className="bg-white p-8 rounded-xl shadow-sm border max-w-4xl mx-auto w-full text-center">
+      <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-4xl mx-auto w-full text-center">
         <h2 className="text-2xl font-bold mb-4 text-gray-900">Add processing activities first</h2>
         <p className="text-gray-500 mb-8">
           We need to know what data you process to generate a meaningful privacy policy.
         </p>
         <button
           onClick={() => handleNext(false)}
-          className="text-blue-600 hover:text-blue-800 font-medium px-4 py-2"
+          className="text-blue-400 hover:text-blue-800 font-medium px-4 py-2"
         >
           Skip for now
         </button>
@@ -44,7 +44,7 @@ export function Step4GeneratePolicy({
   }
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-sm border max-w-4xl mx-auto w-full">
+    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-4xl mx-auto w-full">
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2 text-gray-900">Review your generated privacy policy</h2>
         <p className="text-gray-500">

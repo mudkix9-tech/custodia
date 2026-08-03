@@ -24,7 +24,7 @@ export function OrgSwitcher() {
     <div className="relative mb-6">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-2 rounded-lg bg-bone-100 border border-bone-200 text-ink-700 hover:bg-bone-200 transition-colors"
+        className="w-full flex items-center justify-between p-2 rounded-lg bg-[#0D0F11]/5 border border-white/10 text-[#E6E8EA] hover:bg-[#0D0F11]/10 transition-colors"
       >
         <div className="flex items-center gap-2 overflow-hidden">
            <Building2 className="w-4 h-4 shrink-0" />
@@ -34,21 +34,21 @@ export function OrgSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-bone-200 rounded-lg shadow-lg z-50 py-1 max-h-60 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0D0F11] border border-white/10 rounded-lg shadow-panel-elevated z-50 py-1 max-h-60 overflow-y-auto">
           <Link
              href="/group"
              onClick={() => setIsOpen(false)}
-             className="block px-3 py-2 text-sm text-sage-700 font-medium hover:bg-bone-50 transition-colors"
+             className="block px-3 py-2 text-sm text-[#C9A227] font-medium hover:bg-[#0D0F11]/5 transition-colors"
           >
              Group Dashboard
           </Link>
-          <div className="h-px bg-bone-200 my-1" />
+          <div className="h-px bg-[#0D0F11]/10 my-1" />
           {childOrgs.map(org => (
             <Link
               key={org.id}
               href={`/group/${org.id}`}
               onClick={() => setIsOpen(false)}
-              className="block px-3 py-2 text-sm text-ink-700 hover:bg-bone-50 transition-colors truncate"
+              className="block px-3 py-2 text-sm text-[#E6E8EA] hover:bg-[#0D0F11]/5 transition-colors truncate"
             >
               {org.name}
             </Link>

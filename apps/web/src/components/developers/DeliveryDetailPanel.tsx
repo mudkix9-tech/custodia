@@ -38,7 +38,7 @@ export default function DeliveryDetailPanel({ delivery }: { delivery: any }) {
             <pre>{delivery.responseBody || 'No response body'}</pre>
           </div>
           {delivery.lastError && (
-            <div className="mt-2 text-xs text-red-600 font-medium">
+            <div className="mt-2 text-xs text-red-400 font-medium">
               Error: {delivery.lastError}
             </div>
           )}
@@ -50,13 +50,13 @@ export default function DeliveryDetailPanel({ delivery }: { delivery: any }) {
           Attempts: {delivery.attempts} / {delivery.maxAttempts}
         </div>
         <div className="flex items-center gap-3">
-          {redeliverSuccess === true && <span className="text-xs text-green-600 font-medium">Redelivery queued</span>}
-          {redeliverSuccess === false && <span className="text-xs text-red-600 font-medium">Failed to queue redelivery</span>}
+          {redeliverSuccess === true && <span className="text-xs text-green-400 font-medium">Redelivery queued</span>}
+          {redeliverSuccess === false && <span className="text-xs text-red-400 font-medium">Failed to queue redelivery</span>}
           {(delivery.status === 'failed' || delivery.status === 'exhausted') && (
             <button
               onClick={handleRedeliver}
               disabled={redeliverMutation.isPending}
-              className="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-slate-50 disabled:opacity-50"
+              className="bg-[#0D0F11] border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-slate-50 disabled:opacity-50"
             >
               Redeliver
             </button>

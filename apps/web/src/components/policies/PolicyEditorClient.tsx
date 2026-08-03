@@ -20,29 +20,29 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
 
   const [activeTab, setActiveTab] = useState<'rich' | 'markdown' | 'diff'>('rich');
 
-  if (isLoading || !data) return <div className="text-ink-500">Loading editor...</div>;
+  if (isLoading || !data) return <div className="text-[#6E747A]">Loading editor...</div>;
 
   const { policy, versions } = data;
   const currentDraft = versions[0];
   const isPublished = policy.currentVersionId === currentDraft?.id;
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-white rounded-3xl border border-ink-900/10 shadow-sm overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-[#0D0F11] rounded-3xl border border-white/10 shadow-panel-elevated overflow-hidden">
       {/* Header */}
-      <div className="border-b border-ink-900/10 bg-bone-50 p-4 flex items-center justify-between shrink-0">
+      <div className="border-b border-white/10 bg-[#08090A] p-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
-          <Link href="/policies" className="text-ink-400 hover:text-ink-900 transition-colors">
+          <Link href="/policies" className="text-[#6E747A] hover:text-[#F4F5F6] transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h2 className="font-semibold text-ink-900">{policy.name}</h2>
-            <div className="text-[12px] text-ink-500 flex items-center gap-2">
+            <h2 className="font-semibold text-[#F4F5F6]">{policy.name}</h2>
+            <div className="text-[12px] text-[#6E747A] flex items-center gap-2">
               <span className="uppercase tracking-wider font-bold">{policy.type.replace('_', ' ')}</span>
               <span>•</span>
               {isPublished ? (
-                <span className="text-sage-600 flex items-center gap-1 font-medium"><Check className="w-3 h-3"/> Published</span>
+                <span className="text-[#C9A227] flex items-center gap-1 font-medium"><Check className="w-3 h-3"/> Published</span>
               ) : (
-                <span className="text-amber-600 font-medium">Draft</span>
+                <span className="text-amber-400 font-medium">Draft</span>
               )}
             </div>
           </div>
@@ -52,7 +52,7 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
           <button 
             onClick={() => generateMutation.mutate({ policyId })}
             disabled={generateMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-ink-900/20 rounded-xl text-[13px] font-medium text-ink-700 hover:bg-bone-50 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-[#0D0F11] border border-white/20 rounded-xl text-[13px] font-medium text-[#E6E8EA] hover:bg-[#08090A] disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${generateMutation.isPending ? 'animate-spin' : ''}`} /> 
             {generateMutation.isPending ? 'Syncing...' : 'Sync with ROPA'}
@@ -70,25 +70,25 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
 
       <div className="flex-1 flex min-h-0">
         {/* Editor Area */}
-        <div className="flex-1 flex flex-col border-r border-ink-900/10 min-w-0">
-          <div className="border-b border-ink-900/5 bg-white px-6 py-3 flex gap-6 text-[13px] font-medium shrink-0">
+        <div className="flex-1 flex flex-col border-r border-white/10 min-w-0">
+          <div className="border-b border-white/5 bg-[#0D0F11] px-6 py-3 flex gap-6 text-[13px] font-medium shrink-0">
             <button 
               onClick={() => setActiveTab('rich')}
-              className={`pb-2 -mb-3 ${activeTab === 'rich' ? 'text-sage-600 border-b-2 border-sage-600' : 'text-ink-400 hover:text-ink-900'}`}
+              className={`pb-2 -mb-3 ${activeTab === 'rich' ? 'text-[#C9A227] border-b-2 border-sage-600' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
             >Rich Text</button>
             <button 
               onClick={() => setActiveTab('markdown')}
-              className={`pb-2 -mb-3 ${activeTab === 'markdown' ? 'text-sage-600 border-b-2 border-sage-600' : 'text-ink-400 hover:text-ink-900'}`}
+              className={`pb-2 -mb-3 ${activeTab === 'markdown' ? 'text-[#C9A227] border-b-2 border-sage-600' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
             >Markdown</button>
             <button 
               onClick={() => setActiveTab('diff')}
-              className={`pb-2 -mb-3 ${activeTab === 'diff' ? 'text-sage-600 border-b-2 border-sage-600' : 'text-ink-400 hover:text-ink-900'}`}
+              className={`pb-2 -mb-3 ${activeTab === 'diff' ? 'text-[#C9A227] border-b-2 border-sage-600' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
             >Diff View</button>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-8 bg-bone-50/30">
+          <div className="flex-1 overflow-y-auto p-8 bg-[#08090A]/30">
             {currentDraft ? (
-              <div className="max-w-3xl mx-auto bg-white border border-ink-900/10 rounded-2xl p-10 shadow-sm min-h-full">
+              <div className="max-w-3xl mx-auto bg-[#0D0F11] border border-white/10 rounded-2xl p-10 shadow-panel-elevated min-h-full">
                 {activeTab === 'rich' && (
                   <div 
                     className="prose prose-sm prose-ink max-w-none"
@@ -104,7 +104,7 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
                   currentDraft.diffFromPrevious && Array.isArray(currentDraft.diffFromPrevious) ? (
                     <div className="prose prose-sm max-w-none whitespace-pre-wrap font-mono text-sm">
                       {(currentDraft.diffFromPrevious as any[]).map((part, i) => (
-                        <span key={i} className={part.added ? 'bg-green-100 text-green-900' : part.removed ? 'bg-red-100 text-red-900 line-through' : 'text-gray-600'}>
+                        <span key={i} className={part.added ? 'bg-green-500/20 text-green-900' : part.removed ? 'bg-red-500/20 text-red-900 line-through' : 'text-gray-600'}>
                           {part.value}
                         </span>
                       ))}
@@ -115,7 +115,7 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
                 ) : null}
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-ink-400 flex-col">
+              <div className="h-full flex items-center justify-center text-[#6E747A] flex-col">
                 <FileText className="w-12 h-12 mb-4 text-ink-200" />
                 <p>No content yet. Click "Sync with ROPA" to generate the first draft.</p>
               </div>
@@ -124,25 +124,25 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
         </div>
 
         {/* Sidebar History */}
-        <div className="w-80 bg-bone-50 shrink-0 flex flex-col min-h-0">
-          <div className="p-4 border-b border-ink-900/10 font-medium text-sm flex items-center gap-2">
+        <div className="w-80 bg-[#08090A] shrink-0 flex flex-col min-h-0">
+          <div className="p-4 border-b border-white/10 font-medium text-sm flex items-center gap-2">
             <History className="w-4 h-4" /> Version History
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {versions.map(v => (
               <button 
                 key={v.id} 
-                className={`w-full text-left p-3 rounded-xl border ${currentDraft?.id === v.id ? 'bg-white border-[var(--org-primary,#2c3e38)] shadow-sm' : 'border-ink-900/10 hover:bg-white'}`}
+                className={`w-full text-left p-3 rounded-xl border ${currentDraft?.id === v.id ? 'bg-[#0D0F11] border-[var(--org-primary,#2c3e38)] shadow-panel-elevated' : 'border-white/10 hover:bg-[#0D0F11]'}`}
               >
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-medium text-ink-900 text-[13px]">v{v.versionNumber}.0</span>
-                  <span className="text-[11px] text-ink-500 font-mono">{format(new Date(v.createdAt!), 'MMM d, h:mm a')}</span>
+                  <span className="font-medium text-[#F4F5F6] text-[13px]">v{v.versionNumber}.0</span>
+                  <span className="text-[11px] text-[#6E747A] font-mono">{format(new Date(v.createdAt!), 'MMM d, h:mm a')}</span>
                 </div>
-                <div className="text-[12px] text-ink-600 line-clamp-2">
+                <div className="text-[12px] text-[#9BA1A6] line-clamp-2">
                   {v.changeSummary || 'Manual update'}
                 </div>
                 {v.changeType === 'auto_generated' && (
-                  <span className="inline-block mt-2 text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded uppercase font-bold tracking-wider">
+                  <span className="inline-block mt-2 text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded uppercase font-bold tracking-wider">
                     Auto-generated
                   </span>
                 )}

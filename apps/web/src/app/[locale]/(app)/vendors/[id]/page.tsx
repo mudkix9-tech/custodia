@@ -60,8 +60,8 @@ export default function VendorDetailsPage() {
   const draftDpaMutation = trpc.vendors.saveDpaAnalysisDraft.useMutation();
   const verifyProfileMutation = trpc.vendors.verifyVendorProfile.useMutation();
 
-  if (isLoading) return <div className="p-8 text-ink-500">Loading vendor intelligence...</div>;
-  if (!vendor) return <div className="p-8 text-ink-500">Vendor not found or not linked.</div>;
+  if (isLoading) return <div className="p-8 text-[#6E747A]">Loading vendor intelligence...</div>;
+  if (!vendor) return <div className="p-8 text-[#6E747A]">Vendor not found or not linked.</div>;
 
   // Set AI guidance context when vendor data is available
   useEffect(() => {
@@ -90,14 +90,14 @@ export default function VendorDetailsPage() {
 
   return (
     <div className="max-w-[1200px] mx-auto p-8 fade-up">
-      <Link href="/vendors" className="inline-flex items-center gap-2 text-[14px] font-medium text-ink-500 hover:text-ink-900 mb-8 transition-colors">
+      <Link href="/vendors" className="inline-flex items-center gap-2 text-[14px] font-medium text-[#6E747A] hover:text-[#F4F5F6] mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4" /> Back to Vendor Register
       </Link>
  
       {vendor.vendor.isAutoDiscovered && (
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4 text-amber-900">
+        <div className="bg-amber-500/100/5 border border-amber-500/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4 text-amber-300">
           <div className="flex gap-3 leading-relaxed">
-            <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" />
             <div className="text-xs">
               <span className="font-bold block mb-0.5 text-amber-950">Auto-Discovered Vendor Profile</span>
               This vendor profile was auto-created from a website or DNS scan. Please verify and complete their Headquarters country, EU Hosting options, and Security Certifications to ensure correct risk score modeling.
@@ -109,7 +109,7 @@ export default function VendorDetailsPage() {
               utils.vendors.getOrgVendorDetails.invalidate({ vendorId });
             }}
             disabled={verifyProfileMutation.isPending}
-            className="bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors shrink-0 shadow-sm self-start sm:self-center"
+            className="bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors shrink-0 shadow-panel-elevated self-start sm:self-center"
           >
             Verify &amp; Lock Profile
           </button>
@@ -119,49 +119,49 @@ export default function VendorDetailsPage() {
       <div className="grid md:grid-cols-3 gap-8 items-start">
         {/* Left Column: Global Intelligence */}
         <div className="md:col-span-1 space-y-6">
-          <div className="bg-white border border-ink-900/10 rounded-2xl p-6 shadow-sm">
-            <div className="w-16 h-16 bg-bone-100 rounded-2xl flex items-center justify-center border border-ink-900/10 mb-4 text-2xl font-bold text-ink-900">
+          <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
+            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 mb-4 text-2xl font-bold text-[#F4F5F6]">
               {vendor.vendor.name.charAt(0)}
             </div>
-            <h1 className="text-2xl font-serif text-ink-900 mb-1">{vendor.vendor.name}</h1>
-            <a href={vendor.vendor.website || '#'} target="_blank" className="text-[14px] text-sage-600 hover:underline">{vendor.vendor.website}</a>
+            <h1 className="text-2xl font-serif text-[#F4F5F6] mb-1">{vendor.vendor.name}</h1>
+            <a href={vendor.vendor.website || '#'} target="_blank" className="text-[14px] text-[#C9A227] hover:underline">{vendor.vendor.website}</a>
             
             <div className="mt-8 space-y-4">
               <div className="flex items-start gap-3">
-                <Globe className="w-5 h-5 text-ink-400 shrink-0" />
+                <Globe className="w-5 h-5 text-[#6E747A] shrink-0" />
                 <div>
-                  <div className="text-[13px] font-medium text-ink-900">Headquarters</div>
-                  <div className="text-[14px] text-ink-600">{vendor.vendor.headquartersCountry}</div>
+                  <div className="text-[13px] font-medium text-[#F4F5F6]">Headquarters</div>
+                  <div className="text-[14px] text-[#9BA1A6]">{vendor.vendor.headquartersCountry}</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-ink-400 shrink-0" />
+                <ShieldCheck className="w-5 h-5 text-[#6E747A] shrink-0" />
                 <div>
-                  <div className="text-[13px] font-medium text-ink-900">Certifications</div>
+                  <div className="text-[13px] font-medium text-[#F4F5F6]">Certifications</div>
                   <div className="flex flex-wrap gap-2 mt-1.5">
                     {(vendor.vendor.securityCertifications as string[])?.map((c: string) => (
-                      <span key={c} className="bg-sage-50 border border-sage-200 text-sage-700 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                      <span key={c} className="bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227] text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
                         {c.replace('_', ' ')}
                       </span>
-                    )) || <span className="text-[13px] text-ink-500">None detected</span>}
+                    )) || <span className="text-[13px] text-[#6E747A]">None detected</span>}
                   </div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Lock className="w-5 h-5 text-ink-400 shrink-0" />
+                <Lock className="w-5 h-5 text-[#6E747A] shrink-0" />
                 <div>
-                  <div className="text-[13px] font-medium text-ink-900">EU Data Residency</div>
-                  <div className="text-[14px] text-ink-600 mb-2">{vendor.vendor.euHostingAvailable ? 'Available' : 'Not Available'}</div>
+                  <div className="text-[13px] font-medium text-[#F4F5F6]">EU Data Residency</div>
+                  <div className="text-[14px] text-[#9BA1A6] mb-2">{vendor.vendor.euHostingAvailable ? 'Available' : 'Not Available'}</div>
                   {vendor.vendor.euHostingAvailable && (
-                    <label className="flex items-center gap-2 cursor-pointer bg-bone-50 p-2 rounded-lg border border-ink-900/10">
+                    <label className="flex items-center gap-2 cursor-pointer bg-[#08090A] p-2 rounded-lg border border-white/10">
                       <input 
                         type="checkbox" 
-                        className="rounded border-ink-300 text-sage-600 focus:ring-sage-600"
+                        className="rounded border-ink-300 text-[#C9A227] focus:ring-sage-600"
                         checked={vendor.orgVendor.usingEuHosting || false}
                         onChange={handleToggleEuHosting}
                         disabled={updateMutation.isPending}
                       />
-                      <span className="text-[12px] font-medium text-ink-900">We use the EU data center</span>
+                      <span className="text-[12px] font-medium text-[#F4F5F6]">We use the EU data center</span>
                     </label>
                   )}
                 </div>
@@ -170,13 +170,13 @@ export default function VendorDetailsPage() {
           </div>
 
           {/* Risk Dial */}
-          <div className="bg-ink-900 border border-ink-900 rounded-2xl p-6 shadow-xl text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-sage-500/20 rounded-full blur-[50px]"></div>
+          <div className="bg-ink-900 border border-ink-900 rounded-2xl p-6 shadow-panel-elevated text-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A227]/100/20 rounded-full blur-[50px]"></div>
             <div className="text-[12px] font-bold uppercase tracking-widest text-bone-50/50 mb-4">Calculated Risk Score</div>
             <div className="text-5xl font-black text-white mb-2">{vendor.orgVendor.riskScore}</div>
             <div className={`inline-block px-3 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider mb-6
-              ${vendor.orgVendor.riskLevel === 'low' ? 'bg-sage-500/20 text-sage-300' : 
-                vendor.orgVendor.riskLevel === 'critical' ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'}
+              ${vendor.orgVendor.riskLevel === 'low' ? 'bg-[#C9A227]/100/20 text-sage-300' : 
+                vendor.orgVendor.riskLevel === 'critical' ? 'bg-red-500/100/20 text-red-300' : 'bg-amber-500/100/20 text-amber-300'}
             `}>
               {vendor.orgVendor.riskLevel}
             </div>
@@ -200,7 +200,7 @@ export default function VendorDetailsPage() {
                         {factor.detail}
                       </div>
                       {/* Visual progress bar */}
-                      <div className="w-full bg-bone-100/10 h-1 rounded-full overflow-hidden">
+                      <div className="w-full bg-white/5/10 h-1 rounded-full overflow-hidden">
                         <div 
                           className={`h-full ${factor.points > (factor.maxPoints / 2) ? 'bg-red-400' : factor.points > 0 ? 'bg-amber-400' : 'bg-sage-400'}`}
                           style={{ width: `${(factor.points / factor.maxPoints) * 100}%` }}
@@ -218,35 +218,35 @@ export default function VendorDetailsPage() {
 
         {/* Right Column: Organization Context */}
         <div className="md:col-span-2">
-          <div className="bg-white border border-ink-900/10 rounded-2xl shadow-sm overflow-hidden">
-            <div className="flex border-b border-ink-900/10 bg-bone-50/50">
+          <div className="bg-[#0D0F11] border border-white/10 rounded-2xl shadow-panel-elevated overflow-hidden">
+            <div className="flex border-b border-white/10 bg-[#08090A]/50">
               <button 
                 onClick={() => setActiveTab('dpa')}
-                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'dpa' ? 'border-sage-600 text-sage-700 bg-white' : 'border-transparent text-ink-500 hover:text-ink-900 hover:bg-bone-50'}`}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'dpa' ? 'border-sage-600 text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 DPA Management
               </button>
               <button 
                 onClick={() => setActiveTab('tia')}
-                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'tia' ? 'border-sage-600 text-sage-700 bg-white' : 'border-transparent text-ink-500 hover:text-ink-900 hover:bg-bone-50'}`}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'tia' ? 'border-sage-600 text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 Transfer Impact
               </button>
               <button 
                 onClick={() => setActiveTab('sub-processors')}
-                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'sub-processors' ? 'border-sage-600 text-sage-700 bg-white' : 'border-transparent text-ink-500 hover:text-ink-900 hover:bg-bone-50'}`}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'sub-processors' ? 'border-sage-600 text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 Sub-processors
               </button>
               <button 
                 onClick={() => setActiveTab('incidents')}
-                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'incidents' ? 'border-sage-600 text-sage-700 bg-white' : 'border-transparent text-ink-500 hover:text-ink-900 hover:bg-bone-50'}`}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'incidents' ? 'border-sage-600 text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 Incidents &amp; Breaches
               </button>
               <button 
                 onClick={() => setActiveTab('questionnaire')}
-                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'questionnaire' ? 'border-sage-600 text-sage-700 bg-white' : 'border-transparent text-ink-500 hover:text-ink-900 hover:bg-bone-50'}`}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'questionnaire' ? 'border-sage-600 text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 Security Questionnaire
               </button>
@@ -256,8 +256,8 @@ export default function VendorDetailsPage() {
               {activeTab === 'dpa' && (
                 <div className="space-y-8 animate-in fade-in">
                   <div>
-                    <h3 className="text-xl font-serif text-ink-900 mb-2">Data Processing Agreement</h3>
-                    <p className="text-[14px] text-ink-600 mb-6">Track your legal relationship. A signed DPA is strictly required under GDPR Article 28.</p>
+                    <h3 className="text-xl font-serif text-[#F4F5F6] mb-2">Data Processing Agreement</h3>
+                    <p className="text-[14px] text-[#9BA1A6] mb-6">Track your legal relationship. A signed DPA is strictly required under GDPR Article 28.</p>
                     
                     <div className="flex flex-wrap gap-3 mb-8">
                       {['not_started', 'draft', 'sent', 'signed', 'expired'].map(status => (
@@ -266,25 +266,25 @@ export default function VendorDetailsPage() {
                           onClick={() => handleUpdateDpa(status)}
                           className={`px-4 py-2 rounded-lg text-[13px] font-medium uppercase tracking-wider border transition-all
                             ${vendor.orgVendor.dpaStatus === status 
-                              ? 'bg-sage-50 border-sage-300 text-sage-800 ring-2 ring-sage-500/20' 
-                              : 'bg-white border-ink-900/10 text-ink-500 hover:border-ink-900/30'}`}
+                              ? 'bg-[#C9A227]/10 border-sage-300 text-sage-800 ring-2 ring-sage-500/20' 
+                              : 'bg-[#0D0F11] border-white/10 text-[#6E747A] hover:border-ink-900/30'}`}
                         >
                           {status.replace('_', ' ')}
                         </button>
                       ))}
                     </div>
 
-                    <div className="bg-bone-50 rounded-xl border border-dashed border-ink-900/20 p-8 flex flex-col items-center justify-center text-center">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
-                        <Upload className="w-5 h-5 text-sage-600" />
+                    <div className="bg-[#08090A] rounded-xl border border-dashed border-white/20 p-8 flex flex-col items-center justify-center text-center">
+                      <div className="w-12 h-12 bg-[#0D0F11] rounded-full flex items-center justify-center mb-4 shadow-panel-elevated">
+                        <Upload className="w-5 h-5 text-[#C9A227]" />
                       </div>
-                      <h4 className="font-semibold text-ink-900 mb-1">Upload Signed Document</h4>
-                      <p className="text-[13px] text-ink-500 mb-4 max-w-sm">Securely store your executed DPA. This will automatically update your risk score and schedule expiry alerts.</p>
+                      <h4 className="font-semibold text-[#F4F5F6] mb-1">Upload Signed Document</h4>
+                      <p className="text-[13px] text-[#6E747A] mb-4 max-w-sm">Securely store your executed DPA. This will automatically update your risk score and schedule expiry alerts.</p>
                       
                       {isAnalyzingDpa ? (
                         <div className="flex flex-col items-center">
-                          <Loader2 className="w-8 h-8 text-sage-600 animate-spin mb-2" />
-                          <p className="text-xs text-ink-600 font-semibold animate-pulse">AI is parsing clauses and checking problematic language...</p>
+                          <Loader2 className="w-8 h-8 text-[#C9A227] animate-spin mb-2" />
+                          <p className="text-xs text-[#9BA1A6] font-semibold animate-pulse">AI is parsing clauses and checking problematic language...</p>
                         </div>
                       ) : (
                         <>
@@ -341,10 +341,10 @@ export default function VendorDetailsPage() {
                     </div>
 
                     {vendor.orgVendor.dpaStatus === 'signed' && (
-                      <div className="mt-8 border-t border-ink-900/5 pt-8 space-y-6 animate-in fade-in">
+                      <div className="mt-8 border-t border-white/5 pt-8 space-y-6 animate-in fade-in">
                         <div>
-                          <h4 className="font-semibold text-ink-900 text-sm mb-1">Article 28 Clause Review</h4>
-                          <p className="text-[13px] text-ink-500">
+                          <h4 className="font-semibold text-[#F4F5F6] text-sm mb-1">Article 28 Clause Review</h4>
+                          <p className="text-[13px] text-[#6E747A]">
                             Verify that your contract covers all mandatory processor requirements under GDPR Article 28(3).
                           </p>
                         </div>
@@ -367,13 +367,13 @@ export default function VendorDetailsPage() {
 
                           return (
                             <div className="space-y-2">
-                              <div className="flex justify-between items-center text-xs font-semibold text-ink-700">
+                              <div className="flex justify-between items-center text-xs font-semibold text-[#E6E8EA]">
                                 <span>COMPLETENESS</span>
                                 <span>{covered} / 8 CLAUSES ({pct}%)</span>
                               </div>
-                              <div className="w-full bg-bone-100 h-2.5 rounded-full overflow-hidden border border-ink-900/5">
+                              <div className="w-full bg-white/5 h-2.5 rounded-full overflow-hidden border border-white/5">
                                 <div 
-                                  className={`h-full transition-all duration-300 ${covered === 8 ? 'bg-sage-600' : covered >= 6 ? 'bg-indigo-500' : covered >= 4 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                  className={`h-full transition-all duration-300 ${covered === 8 ? 'bg-sage-600' : covered >= 6 ? 'bg-indigo-500/100' : covered >= 4 ? 'bg-amber-500/100' : 'bg-red-500/100'}`}
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
@@ -399,8 +399,8 @@ export default function VendorDetailsPage() {
                                 key={key}
                                 className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer select-none
                                   ${isChecked 
-                                    ? 'bg-sage-50/30 border-sage-200 hover:border-sage-300' 
-                                    : 'bg-white border-ink-900/10 hover:border-ink-900/20'}`}
+                                    ? 'bg-[#C9A227]/10/30 border-[#C9A227]/30 hover:border-sage-300' 
+                                    : 'bg-[#0D0F11] border-white/10 hover:border-white/20'}`}
                               >
                                 <input
                                   type="checkbox"
@@ -413,14 +413,14 @@ export default function VendorDetailsPage() {
                                     updateMutation.mutate({ vendorId, dpaClauseCoverage: nextCoverage });
                                   }}
                                   disabled={updateMutation.isPending}
-                                  className="rounded border-ink-300 text-sage-600 focus:ring-sage-600 mt-1"
+                                  className="rounded border-ink-300 text-[#C9A227] focus:ring-sage-600 mt-1"
                                 />
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-ink-900 text-[13px] leading-tight">{label}</span>
-                                    <span className="text-[10px] font-bold text-sage-600 bg-sage-50 border border-sage-200/50 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{citation}</span>
+                                    <span className="font-semibold text-[#F4F5F6] text-[13px] leading-tight">{label}</span>
+                                    <span className="text-[10px] font-bold text-[#C9A227] bg-[#C9A227]/10 border border-[#C9A227]/30/50 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{citation}</span>
                                   </div>
-                                  <p className="text-[11px] text-ink-500 leading-tight">{desc}</p>
+                                  <p className="text-[11px] text-[#6E747A] leading-tight">{desc}</p>
                                 </div>
                               </label>
                             );
@@ -429,20 +429,20 @@ export default function VendorDetailsPage() {
                       </div>
                     )}
 
-                    <div className="mt-8 border-t border-ink-900/5 pt-8 space-y-6">
-                      <h4 className="font-semibold text-ink-900 text-sm">Risk Assessment Inputs</h4>
+                    <div className="mt-8 border-t border-white/5 pt-8 space-y-6">
+                      <h4 className="font-semibold text-[#F4F5F6] text-sm">Risk Assessment Inputs</h4>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {/* Data Subject Volume */}
                         <div className="space-y-2">
-                          <label className="block text-xs font-medium text-ink-500 uppercase tracking-wider">
+                          <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
                             Data Subject Volume
                           </label>
                           <select
                             value={vendor.orgVendor.dataSubjectVolume || '<1K'}
                             onChange={(e) => updateMutation.mutate({ vendorId, dataSubjectVolume: e.target.value as any })}
                             disabled={updateMutation.isPending}
-                            className="w-full bg-white border border-ink-900/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                           >
                             <option value="<1K">&lt; 1,000 subjects</option>
                             <option value="1K-10K">1,000 - 10,000 subjects</option>
@@ -453,7 +453,7 @@ export default function VendorDetailsPage() {
 
                         {/* Contract Renewal Date */}
                         <div className="space-y-2">
-                          <label className="block text-xs font-medium text-ink-500 uppercase tracking-wider">
+                          <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
                             Contract Renewal Date
                           </label>
                           <input
@@ -461,13 +461,13 @@ export default function VendorDetailsPage() {
                             value={vendor.orgVendor.contractRenewalDate ? new Date(vendor.orgVendor.contractRenewalDate).toISOString().split('T')[0] : ''}
                             onChange={(e) => updateMutation.mutate({ vendorId, contractRenewalDate: e.target.value || null })}
                             disabled={updateMutation.isPending}
-                            className="w-full bg-white border border-ink-900/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                           />
                         </div>
 
                         {/* DPA Expiry Date */}
                         <div className="space-y-2">
-                          <label className="block text-xs font-medium text-ink-500 uppercase tracking-wider">
+                          <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
                             DPA Expiry Date
                           </label>
                           <input
@@ -475,17 +475,17 @@ export default function VendorDetailsPage() {
                             value={vendor.orgVendor.dpaExpiresAt ? new Date(vendor.orgVendor.dpaExpiresAt).toISOString().split('T')[0] : ''}
                             onChange={(e) => updateMutation.mutate({ vendorId, dpaExpiresAt: e.target.value || null })}
                             disabled={updateMutation.isPending}
-                            className="w-full bg-white border border-ink-900/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                           />
                         </div>
 
                         {/* Security Certifications */}
                         <div className="space-y-2">
-                          <label className="block text-xs font-medium text-ink-500 uppercase tracking-wider">
+                          <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
                             Security Certifications
                           </label>
                           <div className="flex gap-4 items-center h-10">
-                            <label className="flex items-center gap-2 text-xs font-medium text-ink-700 cursor-pointer">
+                            <label className="flex items-center gap-2 text-xs font-medium text-[#E6E8EA] cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={vendor.orgVendor.certifications?.includes('soc2') || false}
@@ -497,11 +497,11 @@ export default function VendorDetailsPage() {
                                   updateMutation.mutate({ vendorId, certifications: next });
                                 }}
                                 disabled={updateMutation.isPending}
-                                className="rounded border-ink-300 text-sage-600 focus:ring-sage-600"
+                                className="rounded border-ink-300 text-[#C9A227] focus:ring-sage-600"
                               />
                               SOC 2
                             </label>
-                            <label className="flex items-center gap-2 text-xs font-medium text-ink-700 cursor-pointer">
+                            <label className="flex items-center gap-2 text-xs font-medium text-[#E6E8EA] cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={vendor.orgVendor.certifications?.includes('iso27001') || false}
@@ -513,7 +513,7 @@ export default function VendorDetailsPage() {
                                   updateMutation.mutate({ vendorId, certifications: next });
                                 }}
                                 disabled={updateMutation.isPending}
-                                className="rounded border-ink-300 text-sage-600 focus:ring-sage-600"
+                                className="rounded border-ink-300 text-[#C9A227] focus:ring-sage-600"
                               />
                               ISO 27001
                             </label>
@@ -524,15 +524,15 @@ export default function VendorDetailsPage() {
                   </div>
 
                   {vendor.vendor.dpaUrl && (
-                    <div className="flex items-center justify-between bg-white border border-ink-900/10 p-4 rounded-xl shadow-sm">
+                    <div className="flex items-center justify-between bg-[#0D0F11] border border-white/10 p-4 rounded-xl shadow-panel-elevated">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-bone-100 rounded text-ink-600"><FileText className="w-5 h-5" /></div>
+                        <div className="p-2 bg-white/5 rounded text-[#9BA1A6]"><FileText className="w-5 h-5" /></div>
                         <div>
-                          <div className="font-medium text-ink-900 text-[14px]">Vendor DPA Template</div>
-                          <div className="text-[12px] text-ink-500">Publicly provided by {vendor.vendor.name}</div>
+                          <div className="font-medium text-[#F4F5F6] text-[14px]">Vendor DPA Template</div>
+                          <div className="text-[12px] text-[#6E747A]">Publicly provided by {vendor.vendor.name}</div>
                         </div>
                       </div>
-                      <a href={vendor.vendor.dpaUrl} target="_blank" className="text-[13px] font-medium text-sage-600 hover:text-sage-800">Review Template</a>
+                      <a href={vendor.vendor.dpaUrl} target="_blank" className="text-[13px] font-medium text-[#C9A227] hover:text-sage-800">Review Template</a>
                     </div>
                   )}
                 </div>

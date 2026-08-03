@@ -142,7 +142,7 @@ export function AiGuidancePanel() {
           href={linkUrl} 
           target="_blank" 
           rel="noopener noreferrer" 
-          className="text-sage-600 underline font-medium hover:text-sage-700 transition-colors"
+          className="text-[#C9A227] underline font-medium hover:text-[#C9A227] transition-colors"
         >
           {linkText}
         </a>
@@ -163,30 +163,30 @@ export function AiGuidancePanel() {
       {!isOpen && (
         <button
           onClick={openPanel}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-white border border-r-0 border-ink-900/10 rounded-l-xl shadow-md p-3.5 flex flex-col items-center gap-2 hover:bg-bone-50 transition-colors select-none cursor-pointer border-r-transparent"
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-[#0D0F11] border border-r-0 border-white/10 rounded-l-xl shadow-md p-3.5 flex flex-col items-center gap-2 hover:bg-[#08090A] transition-colors select-none cursor-pointer border-r-transparent"
           style={{ writingMode: 'vertical-lr' }}
         >
           <Lightbulb className="w-4 h-4 text-amber-500 rotate-180 shrink-0" />
-          <span className="text-[12.5px] font-semibold text-ink-800 tracking-wider">AI Guidance</span>
+          <span className="text-[12.5px] font-semibold text-[#E6E8EA] tracking-wider">AI Guidance</span>
         </button>
       )}
 
       {/* Slide-out Panel */}
-      <div className={`fixed top-0 right-0 h-screen w-[380px] bg-white border-l border-ink-900/10 shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${
+      <div className={`fixed top-0 right-0 h-screen w-[380px] bg-[#0D0F11] border-l border-white/10 shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         {/* Header */}
-        <div className="p-4 border-b border-ink-900/10 flex items-center justify-between bg-bone-50 shrink-0">
+        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-[#08090A] shrink-0">
           <div className="flex items-center gap-2">
-            <Compass className="w-5 h-5 text-sage-600" />
+            <Compass className="w-5 h-5 text-[#C9A227]" />
             <div>
-              <h3 className="font-semibold text-ink-900 text-sm">AI Guidance</h3>
-              <p className="text-[10px] text-ink-500">Grounded in GDPR & Org Context</p>
+              <h3 className="font-semibold text-[#F4F5F6] text-sm">AI Guidance</h3>
+              <p className="text-[10px] text-[#6E747A]">Grounded in GDPR & Org Context</p>
             </div>
           </div>
           <button 
             onClick={closePanel} 
-            className="p-1 rounded-lg hover:bg-ink-900/5 text-ink-500 hover:text-ink-900 transition-colors"
+            className="p-1 rounded-lg hover:bg-ink-900/5 text-[#6E747A] hover:text-[#F4F5F6] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -218,9 +218,9 @@ export function AiGuidancePanel() {
               {/* ROPA Suggestions */}
               {context.module === 'ropa' && (
                 <div className="space-y-4">
-                  <div className="bg-bone-50 p-4 rounded-xl border border-ink-900/5 space-y-3">
+                  <div className="bg-[#08090A] p-4 rounded-xl border border-white/5 space-y-3">
                     <div className="flex justify-between items-start">
-                      <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide">Suggested Lawful Basis</span>
+                      <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide">Suggested Lawful Basis</span>
                       <button 
                         onClick={() => applyField('lawfulBasis', suggestions.lawfulBasis)}
                         className="bg-sage-600 hover:bg-sage-700 text-white text-[11px] font-semibold px-2 py-1 rounded transition-colors"
@@ -228,15 +228,15 @@ export function AiGuidancePanel() {
                         Apply
                       </button>
                     </div>
-                    <div className="text-[13px] font-semibold text-ink-900 uppercase">
+                    <div className="text-[13px] font-semibold text-[#F4F5F6] uppercase">
                       {suggestions.lawfulBasis.replace('_', ' ')}
                     </div>
-                    <p className="text-[12px] text-ink-600 leading-relaxed">{suggestions.lawfulBasisNotes}</p>
+                    <p className="text-[12px] text-[#9BA1A6] leading-relaxed">{suggestions.lawfulBasisNotes}</p>
                   </div>
 
-                  <div className="bg-bone-50 p-4 rounded-xl border border-ink-900/5 space-y-3">
+                  <div className="bg-[#08090A] p-4 rounded-xl border border-white/5 space-y-3">
                     <div className="flex justify-between items-start">
-                      <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide">Suggested Retention</span>
+                      <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide">Suggested Retention</span>
                       <button 
                         onClick={() => applyField('retention', suggestions.retentionPeriod)}
                         className="bg-sage-600 hover:bg-sage-700 text-white text-[11px] font-semibold px-2 py-1 rounded transition-colors"
@@ -244,15 +244,15 @@ export function AiGuidancePanel() {
                         Apply
                       </button>
                     </div>
-                    <div className="text-[13px] font-semibold text-ink-900">
+                    <div className="text-[13px] font-semibold text-[#F4F5F6]">
                       {suggestions.retentionPeriod.replace('_', ' ')}
                     </div>
-                    <p className="text-[12px] text-ink-600 leading-relaxed">{suggestions.retentionJustification}</p>
+                    <p className="text-[12px] text-[#9BA1A6] leading-relaxed">{suggestions.retentionJustification}</p>
                   </div>
 
-                  <div className="bg-bone-50 p-4 rounded-xl border border-ink-900/5 space-y-3">
+                  <div className="bg-[#08090A] p-4 rounded-xl border border-white/5 space-y-3">
                     <div className="flex justify-between items-start">
-                      <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide">Suggested Categories</span>
+                      <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide">Suggested Categories</span>
                       <button 
                         onClick={() => applyField('dataCategories', suggestions.dataCategories)}
                         className="bg-sage-600 hover:bg-sage-700 text-white text-[11px] font-semibold px-2 py-1 rounded transition-colors"
@@ -262,19 +262,19 @@ export function AiGuidancePanel() {
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {suggestions.dataCategories.map((c: string) => (
-                        <span key={c} className="bg-white px-2 py-0.5 border border-ink-900/10 text-ink-700 text-[11.5px] rounded">
+                        <span key={c} className="bg-[#0D0F11] px-2 py-0.5 border border-white/10 text-[#E6E8EA] text-[11.5px] rounded">
                           {c}
                         </span>
                       ))}
                     </div>
-                    <p className="text-[12px] text-ink-600 leading-relaxed">{suggestions.dataCategoriesReasoning}</p>
+                    <p className="text-[12px] text-[#9BA1A6] leading-relaxed">{suggestions.dataCategoriesReasoning}</p>
                   </div>
 
                   {suggestions.warnings && suggestions.warnings.length > 0 && (
                     <div className="space-y-2">
                       <span className="text-[11px] font-bold text-red-500 uppercase tracking-wide">Completeness Alerts</span>
                       {suggestions.warnings.map((w: string, i: number) => (
-                        <div key={i} className="p-3 bg-red-50 border border-red-200 text-red-700 text-[12px] rounded-lg flex items-start gap-2">
+                        <div key={i} className="p-3 bg-red-500/10 border border-red-900/50 text-red-400 text-[12px] rounded-lg flex items-start gap-2">
                           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                           <span>{w}</span>
                         </div>
@@ -287,22 +287,22 @@ export function AiGuidancePanel() {
               {/* Vendor Suggestions */}
               {context.module === 'vendors' && (
                 <div className="space-y-4">
-                  <div className="p-4 bg-bone-50 rounded-xl border border-ink-900/5 space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Data Transfer Guidance</span>
-                    <p className="text-[12.5px] text-ink-700 leading-relaxed">{suggestions.transferGuidance}</p>
+                  <div className="p-4 bg-[#08090A] rounded-xl border border-white/5 space-y-2">
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Data Transfer Guidance</span>
+                    <p className="text-[12.5px] text-[#E6E8EA] leading-relaxed">{suggestions.transferGuidance}</p>
                   </div>
 
-                  <div className="p-4 bg-bone-50 rounded-xl border border-ink-900/5 space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Compliance Risk Analysis</span>
-                    <p className="text-[12.5px] text-ink-700 leading-relaxed">{suggestions.riskExplanation}</p>
+                  <div className="p-4 bg-[#08090A] rounded-xl border border-white/5 space-y-2">
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Compliance Risk Analysis</span>
+                    <p className="text-[12.5px] text-[#E6E8EA] leading-relaxed">{suggestions.riskExplanation}</p>
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Recommended Compliance Steps</span>
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Recommended Compliance Steps</span>
                     <ul className="space-y-1.5">
                       {suggestions.complianceChecklist?.map((item: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2 text-[12.5px] text-ink-600">
-                          <Check className="w-4 h-4 text-sage-600 mt-0.5 shrink-0" />
+                        <li key={idx} className="flex items-start gap-2 text-[12.5px] text-[#9BA1A6]">
+                          <Check className="w-4 h-4 text-[#C9A227] mt-0.5 shrink-0" />
                           <span>{item}</span>
                         </li>
                       ))}
@@ -314,25 +314,25 @@ export function AiGuidancePanel() {
               {/* Breach Suggestions */}
               {context.module === 'breaches' && (
                 <div className="space-y-4">
-                  <div className="p-4 bg-bone-50 rounded-xl border border-ink-900/5 space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Supervisory Authority notification</span>
-                    <p className="text-[12.5px] text-ink-700 leading-relaxed">{suggestions.supervisoryAuthorityDecision}</p>
+                  <div className="p-4 bg-[#08090A] rounded-xl border border-white/5 space-y-2">
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Supervisory Authority notification</span>
+                    <p className="text-[12.5px] text-[#E6E8EA] leading-relaxed">{suggestions.supervisoryAuthorityDecision}</p>
                   </div>
 
-                  <div className="p-4 bg-bone-50 rounded-xl border border-ink-900/5 space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Affected Individuals notification</span>
-                    <p className="text-[12.5px] text-ink-700 leading-relaxed">{suggestions.dataSubjectsDecision}</p>
+                  <div className="p-4 bg-[#08090A] rounded-xl border border-white/5 space-y-2">
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Affected Individuals notification</span>
+                    <p className="text-[12.5px] text-[#E6E8EA] leading-relaxed">{suggestions.dataSubjectsDecision}</p>
                   </div>
 
-                  <div className="p-4 bg-bone-50 rounded-xl border border-ink-900/5 space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">EDPB Breach Guidelines Context</span>
-                    <p className="text-[12px] text-ink-600 leading-relaxed">{suggestions.guidelines}</p>
+                  <div className="p-4 bg-[#08090A] rounded-xl border border-white/5 space-y-2">
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">EDPB Breach Guidelines Context</span>
+                    <p className="text-[12px] text-[#9BA1A6] leading-relaxed">{suggestions.guidelines}</p>
                   </div>
 
                   {suggestions.notificationTemplate && (
                     <div className="space-y-2">
-                      <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Template Notification Language</span>
-                      <pre className="bg-bone-100 p-3 rounded-lg border border-ink-900/10 text-[11.5px] text-ink-800 overflow-x-auto whitespace-pre-wrap font-mono max-h-48">
+                      <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Template Notification Language</span>
+                      <pre className="bg-white/5 p-3 rounded-lg border border-white/10 text-[11.5px] text-[#E6E8EA] overflow-x-auto whitespace-pre-wrap font-mono max-h-48">
                         {suggestions.notificationTemplate}
                       </pre>
                     </div>
@@ -343,21 +343,21 @@ export function AiGuidancePanel() {
               {/* DSAR Suggestions */}
               {context.module === 'dsar' && (
                 <div className="space-y-4">
-                  <div className="p-4 bg-bone-50 rounded-xl border border-ink-900/5 space-y-1">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Exercised Right Identified</span>
-                    <span className="text-[13px] font-semibold text-ink-900">{suggestions.rightType}</span>
+                  <div className="p-4 bg-[#08090A] rounded-xl border border-white/5 space-y-1">
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Exercised Right Identified</span>
+                    <span className="text-[13px] font-semibold text-[#F4F5F6]">{suggestions.rightType}</span>
                   </div>
 
-                  <div className="p-4 bg-bone-50 rounded-xl border border-ink-900/5 space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Applicable Deadline Details</span>
-                    <p className="text-[12.5px] text-ink-700 leading-relaxed">{suggestions.deadlineGuidance}</p>
+                  <div className="p-4 bg-[#08090A] rounded-xl border border-white/5 space-y-2">
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Applicable Deadline Details</span>
+                    <p className="text-[12.5px] text-[#E6E8EA] leading-relaxed">{suggestions.deadlineGuidance}</p>
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Suggested Data Packages</span>
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Suggested Data Packages</span>
                     <div className="flex flex-wrap gap-1.5">
                       {suggestions.suggestedData?.map((item: string, idx: number) => (
-                        <span key={idx} className="bg-bone-50 px-2 py-1 border border-ink-900/5 text-ink-700 text-[12px] rounded-lg">
+                        <span key={idx} className="bg-[#08090A] px-2 py-1 border border-white/5 text-[#E6E8EA] text-[12px] rounded-lg">
                           {item}
                         </span>
                       ))}
@@ -365,11 +365,11 @@ export function AiGuidancePanel() {
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">GDPR Exemptions Checklist</span>
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">GDPR Exemptions Checklist</span>
                     <ul className="space-y-1">
                       {suggestions.exemptions?.map((exemp: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2 text-[12px] text-ink-600 leading-relaxed">
-                          <Check className="w-3.5 h-3.5 text-sage-600 mt-0.5 shrink-0" />
+                        <li key={idx} className="flex items-start gap-2 text-[12px] text-[#9BA1A6] leading-relaxed">
+                          <Check className="w-3.5 h-3.5 text-[#C9A227] mt-0.5 shrink-0" />
                           <span>{exemp}</span>
                         </li>
                       ))}
@@ -381,17 +381,17 @@ export function AiGuidancePanel() {
               {/* Cookie Consent Suggestions */}
               {context.module === 'consent' && (
                 <div className="space-y-4">
-                  <div className="p-4 bg-bone-50 rounded-xl border border-ink-900/5 space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Cookie Compliance Scan Warning</span>
-                    <p className="text-[12.5px] text-ink-700 leading-relaxed">{suggestions.cookieAnalysis}</p>
+                  <div className="p-4 bg-[#08090A] rounded-xl border border-white/5 space-y-2">
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Cookie Compliance Scan Warning</span>
+                    <p className="text-[12.5px] text-[#E6E8EA] leading-relaxed">{suggestions.cookieAnalysis}</p>
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Recommended Banner Actions</span>
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Recommended Banner Actions</span>
                     <ul className="space-y-1.5">
                       {suggestions.actionSteps?.map((step: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2 text-[12.5px] text-ink-600">
-                          <Check className="w-4 h-4 text-sage-600 mt-0.5 shrink-0" />
+                        <li key={idx} className="flex items-start gap-2 text-[12.5px] text-[#9BA1A6]">
+                          <Check className="w-4 h-4 text-[#C9A227] mt-0.5 shrink-0" />
                           <span>{step}</span>
                         </li>
                       ))}
@@ -403,22 +403,22 @@ export function AiGuidancePanel() {
               {/* Compliance Scoring / Gap Explanation */}
               {context.module === 'compliance_scoring' && (
                 <div className="space-y-4">
-                  <div className="p-4 bg-bone-50 rounded-xl border border-ink-900/5 space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Regulatory Violation Explanation</span>
-                    <p className="text-[12.5px] text-ink-700 leading-relaxed">{suggestions.violationExplanation}</p>
+                  <div className="p-4 bg-[#08090A] rounded-xl border border-white/5 space-y-2">
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Regulatory Violation Explanation</span>
+                    <p className="text-[12.5px] text-[#E6E8EA] leading-relaxed">{suggestions.violationExplanation}</p>
                   </div>
 
-                  <div className="p-4 bg-bone-50 rounded-xl border border-ink-900/5 space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Enforcement Precedent & Fines</span>
-                    <p className="text-[12.5px] text-ink-700 leading-relaxed">{suggestions.riskLevelEnforcement}</p>
+                  <div className="p-4 bg-[#08090A] rounded-xl border border-white/5 space-y-2">
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Enforcement Precedent & Fines</span>
+                    <p className="text-[12.5px] text-[#E6E8EA] leading-relaxed">{suggestions.riskLevelEnforcement}</p>
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wide block">Remediation Roadmap</span>
+                    <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide block">Remediation Roadmap</span>
                     <ul className="space-y-1.5 mb-3">
                       {suggestions.remediationSteps?.map((step: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2 text-[12.5px] text-ink-600">
-                          <ArrowRight className="w-4 h-4 text-sage-600 mt-0.5 shrink-0" />
+                        <li key={idx} className="flex items-start gap-2 text-[12.5px] text-[#9BA1A6]">
+                          <ArrowRight className="w-4 h-4 text-[#C9A227] mt-0.5 shrink-0" />
                           <span>{step}</span>
                         </li>
                       ))}
@@ -438,24 +438,24 @@ export function AiGuidancePanel() {
               )}
 
               {/* Sources & Feedback Logging Card */}
-              <div className="border-t border-ink-900/10 pt-4 space-y-3">
+              <div className="border-t border-white/10 pt-4 space-y-3">
                 
                 {/* Confidence Meter */}
-                <div className="flex items-center justify-between text-[11px] font-medium text-ink-500">
+                <div className="flex items-center justify-between text-[11px] font-medium text-[#6E747A]">
                   <span>Confidence Level:</span>
                   <span className={`uppercase font-bold ${
-                    confidence === 'high' ? 'text-sage-600' :
-                    confidence === 'medium' ? 'text-amber-600' :
-                    'text-ink-600'
+                    confidence === 'high' ? 'text-[#C9A227]' :
+                    confidence === 'medium' ? 'text-amber-400' :
+                    'text-[#9BA1A6]'
                   }`}>{confidence}</span>
                 </div>
 
                 {/* Was this helpful feedback log */}
-                <div className="bg-bone-50 p-3.5 rounded-xl border border-ink-900/5 flex items-center justify-between">
-                  <span className="text-[12px] text-ink-700">Was this advice helpful?</span>
+                <div className="bg-[#08090A] p-3.5 rounded-xl border border-white/5 flex items-center justify-between">
+                  <span className="text-[12px] text-[#E6E8EA]">Was this advice helpful?</span>
                   <div className="flex items-center gap-1">
                     {feedbackSubmittedFor[logId || ''] ? (
-                      <span className="text-[11px] text-sage-600 font-semibold flex items-center gap-1">
+                      <span className="text-[11px] text-[#C9A227] font-semibold flex items-center gap-1">
                         <Check className="w-3.5 h-3.5" /> Thank you!
                       </span>
                     ) : (
@@ -463,14 +463,14 @@ export function AiGuidancePanel() {
                         <button 
                           onClick={() => handleFeedback(logId, 'helpful')}
                           disabled={feedbackMutation.isPending}
-                          className="p-1.5 rounded hover:bg-bone-200 text-ink-500 hover:text-ink-950 transition-colors"
+                          className="p-1.5 rounded hover:bg-white/10 text-[#6E747A] hover:text-ink-950 transition-colors"
                         >
                           <ThumbsUp className="w-4 h-4" />
                         </button>
                         <button 
                           onClick={() => handleFeedback(logId, 'not_helpful')}
                           disabled={feedbackMutation.isPending}
-                          className="p-1.5 rounded hover:bg-bone-200 text-ink-500 hover:text-clay-600 transition-colors"
+                          className="p-1.5 rounded hover:bg-white/10 text-[#6E747A] hover:text-clay-600 transition-colors"
                         >
                           <ThumbsDown className="w-4 h-4" />
                         </button>
@@ -482,7 +482,7 @@ export function AiGuidancePanel() {
                 {/* Sources References list */}
                 {sources.length > 0 && (
                   <div className="space-y-1.5">
-                    <span className="text-[10px] font-bold text-ink-400 uppercase tracking-wide block">Sources & Citations</span>
+                    <span className="text-[10px] font-bold text-[#6E747A] uppercase tracking-wide block">Sources & Citations</span>
                     <div className="text-[11px] space-y-1">
                       {sources.slice(0, 3).map((src: any, idx: number) => (
                         <div key={idx} className="truncate">
@@ -490,7 +490,7 @@ export function AiGuidancePanel() {
                             href={src.url || '#'} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="text-sage-600 hover:underline hover:text-sage-700 font-medium"
+                            className="text-[#C9A227] hover:underline hover:text-[#C9A227] font-medium"
                           >
                             [{idx + 1}] {src.title}
                           </a>
@@ -505,9 +505,9 @@ export function AiGuidancePanel() {
           )}
 
           {/* Follow-up Chat Area */}
-          <div className="border-t border-ink-900/10 pt-5 space-y-4">
-            <h4 className="font-semibold text-ink-900 text-xs flex items-center gap-1.5">
-              <Bot className="w-4 h-4 text-sage-600" />
+          <div className="border-t border-white/10 pt-5 space-y-4">
+            <h4 className="font-semibold text-[#F4F5F6] text-xs flex items-center gap-1.5">
+              <Bot className="w-4 h-4 text-[#C9A227]" />
               Ask follow-up questions
             </h4>
 
@@ -516,22 +516,22 @@ export function AiGuidancePanel() {
               {chatHistory.map((chat, idx) => (
                 <div key={idx} className={`flex gap-2.5 ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {chat.role === 'assistant' && (
-                    <div className="w-6 h-6 rounded-full bg-sage-50 border border-sage-100 flex items-center justify-center shrink-0">
-                      <Bot className="w-3.5 h-3.5 text-sage-600" />
+                    <div className="w-6 h-6 rounded-full bg-[#C9A227]/10 border border-sage-100 flex items-center justify-center shrink-0">
+                      <Bot className="w-3.5 h-3.5 text-[#C9A227]" />
                     </div>
                   )}
                   
                   <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-[12.5px] leading-relaxed ${
                     chat.role === 'user'
                       ? 'bg-sage-600 text-white rounded-tr-none'
-                      : 'bg-bone-100 text-ink-800 rounded-tl-none border border-ink-900/5'
+                      : 'bg-white/5 text-[#E6E8EA] rounded-tl-none border border-white/5'
                   }`}>
                     {chat.role === 'user' ? chat.content : renderTextWithLinks(chat.content)}
                   </div>
 
                   {chat.role === 'user' && (
-                    <div className="w-6 h-6 rounded-full bg-bone-200 flex items-center justify-center shrink-0">
-                      <User className="w-3.5 h-3.5 text-ink-600" />
+                    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                      <User className="w-3.5 h-3.5 text-[#9BA1A6]" />
                     </div>
                   )}
                 </div>
@@ -539,10 +539,10 @@ export function AiGuidancePanel() {
               
               {copilotMutation.isPending && (
                 <div className="flex gap-2.5 justify-start">
-                  <div className="w-6 h-6 rounded-full bg-sage-50 border border-sage-100 flex items-center justify-center shrink-0">
-                    <Bot className="w-3.5 h-3.5 text-sage-600" />
+                  <div className="w-6 h-6 rounded-full bg-[#C9A227]/10 border border-sage-100 flex items-center justify-center shrink-0">
+                    <Bot className="w-3.5 h-3.5 text-[#C9A227]" />
                   </div>
-                  <div className="bg-bone-100 border border-ink-900/5 rounded-2xl rounded-tl-none px-3 py-2 flex items-center gap-1.5">
+                  <div className="bg-white/5 border border-white/5 rounded-2xl rounded-tl-none px-3 py-2 flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 bg-ink-400 rounded-full animate-bounce"></div>
                     <div className="w-1.5 h-1.5 bg-ink-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     <div className="w-1.5 h-1.5 bg-ink-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
@@ -560,7 +560,7 @@ export function AiGuidancePanel() {
                 onChange={e => setChatInput(e.target.value)}
                 placeholder="Ask follow-up..."
                 disabled={copilotMutation.isPending}
-                className="flex-1 bg-bone-50 border border-ink-900/10 rounded-xl px-3 py-2 text-[12.5px] focus:outline-none focus:ring-2 focus:ring-sage-500/20 disabled:opacity-60"
+                className="flex-1 bg-[#08090A] border border-white/10 rounded-xl px-3 py-2 text-[12.5px] focus:outline-none focus:ring-2 focus:ring-sage-500/20 disabled:opacity-60"
               />
               <button
                 type="submit"
