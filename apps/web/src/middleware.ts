@@ -16,8 +16,26 @@ export async function middleware(request: NextRequest) {
 
   // 1. Check auth and onboarding redirects BEFORE intl routing
   const isPublicRoute = normalizedPath === '/login' || normalizedPath === '/register' || normalizedPath === '/' || normalizedPath.startsWith('/legal');
+  const isProtectedRoute = normalizedPath.startsWith('/dashboard') || 
+    normalizedPath.startsWith('/ropa') ||
+    normalizedPath.startsWith('/vendors') ||
+    normalizedPath.startsWith('/dsar') ||
+    normalizedPath.startsWith('/breaches') ||
+    normalizedPath.startsWith('/policies') ||
+    normalizedPath.startsWith('/audit') ||
+    normalizedPath.startsWith('/training') ||
+    normalizedPath.startsWith('/clients') ||
+    normalizedPath.startsWith('/settings') ||
+    normalizedPath.startsWith('/onboarding') ||
+    normalizedPath.startsWith('/consent');
+
   const cookieName = process.env.NODE_ENV === 'production' ? '__Secure-authjs.session-token' : 'authjs.session-token';
   const tokenStr = request.cookies.get(cookieName)?.value;
+
+  if (!tokenStr && isProtectedRoute) {
+    const targetPath = path.match(localePattern) ? `${path.match(localePattern)![0]}login` : '/login';
+    return NextResponse.redirect(new URL(targetPath.replace(/\/\/+/g, '/'), request.url));
+  }
 
   if (tokenStr && !isPublicRoute) {
     try {
