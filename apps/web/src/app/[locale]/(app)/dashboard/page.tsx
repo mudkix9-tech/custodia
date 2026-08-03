@@ -40,22 +40,22 @@ export default function DashboardPage() {
       {/* STATS ROW */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
         <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
-          <h3 className="text-[#6E747A] font-medium text-sm mb-2">{t('compliance_score')}</h3>
+          <h3 className="text-[#6E747A] font-medium text-sm mb-2 truncate" title={t('compliance_score')}>{t('compliance_score')}</h3>
           <p className="text-3xl font-serif text-[#E6E8EA] font-bold">85%</p>
         </div>
         <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
-          <h3 className="text-[#6E747A] font-medium text-sm mb-2">{t('active_processing')}</h3>
+          <h3 className="text-[#6E747A] font-medium text-sm mb-2 truncate" title={t('active_processing')}>{t('active_processing')}</h3>
           <p className="text-3xl font-serif text-[#E6E8EA] font-bold">12</p>
         </div>
         <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
-          <h3 className="text-[#6E747A] font-medium text-sm mb-2">{t('pending_dsars')}</h3>
+          <h3 className="text-[#6E747A] font-medium text-sm mb-2 truncate" title={t('pending_dsars')}>{t('pending_dsars')}</h3>
           <p className="text-3xl font-serif text-[#E6E8EA] font-bold">2</p>
         </div>
         <Link 
           href="/vendors" 
           className="bg-[#0D0F11] border border-white/10 hover:border-red-900/50 rounded-2xl p-6 shadow-panel-elevated block transition-all group"
         >
-          <h3 className="text-[#6E747A] group-hover:text-red-400 font-medium text-sm mb-2 transition-colors">
+          <h3 className="text-[#6E747A] group-hover:text-red-400 font-medium text-sm mb-2 transition-colors truncate" title={t('high_risk_vendors')}>
             {t('high_risk_vendors')}
           </h3>
           <p className={`text-3xl font-serif font-bold ${riskStats && riskStats.highOrCritical > 0 ? 'text-red-400' : 'text-[#E6E8EA]'}`}>
@@ -66,7 +66,7 @@ export default function DashboardPage() {
           href="/vendors?tab=discovery" 
           className="bg-[#0D0F11] border border-white/10 hover:border-indigo-900/50 rounded-2xl p-6 shadow-panel-elevated block transition-all group"
         >
-          <h3 className="text-[#6E747A] group-hover:text-indigo-400 font-medium text-sm mb-2 transition-colors">
+          <h3 className="text-[#6E747A] group-hover:text-indigo-400 font-medium text-sm mb-2 transition-colors truncate" title={t('undocumented_services')}>
             {t('undocumented_services')}
           </h3>
           <p className={`text-3xl font-serif font-bold ${undocumentedCount !== undefined && undocumentedCount > 0 ? 'text-indigo-400' : 'text-[#E6E8EA]'}`}>
