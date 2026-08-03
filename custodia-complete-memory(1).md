@@ -839,3 +839,16 @@ Refactored the initial lead-magnet GDPR Gap Assessment module to support dynamic
 - **Dynamic Denominator (`maxRiskWeight`)**: Fixed a mathematical bug where diagnostic/conditional questions (like "Do you process health data?") artificially inflated the maximum possible risk score. The schema (`assessmentTemplates`) now stores `maxRiskWeight`, ensuring the score denominator only sums the maximum severity of *answered* questions.
 - **Structured Article Mapping (`gdprArticles`)**: Replaced hardcoded string references with `gdprArticles: integer[]` in both `assessmentTemplates` and `actionItems`. This enables programmatic correlations (e.g., mapping a gap to Article 28) while dynamically generating human-readable labels for the frontend.
 - **Actionable UI Tiers**: Updated the `/assessment/results` page dial and styling to a 3-tier risk system (< 50% Red, 51-75% Amber, > 75% Green) providing clearer, actionable thresholds for potential clients.
+
+---
+
+## 30. 14-Day Free Trial Paywall & Expiry Lifecycle
+
+### Overview
+Transitioned the product from an indefinite trial model to a strict 14-day free trial. This enforces a paywall that requires users to convert to a paid subscription once their time-limited exploration period ends, maximizing conversion rate by exposing them to the product value first.
+
+### Components
+- **Schema & Backfill Migration**: Added `trialEndsAt` to the `organizations` table. Ran a targeted Drizzle migration to backfill all existing trialing users with a fresh 14-day window (`NOW() + 14 days`), ensuring they weren't abruptly locked out but rather grandfathered into the new timeline.
+- **Middleware Paywall Interception**: The Next.js middleware dynamically checks the `session.subscriptionStatus` and `session.trialEndsAt`. If a trial is expired (or status is `past_due`/`canceled`), users are forcibly redirected to `/settings/billing`, preventing access to the core application routes.
+- **Dynamic Locked UI**: When locked, the main navigation sidebar is hidden. The billing page renders contextual banners explaining the lockout reason and utilizes a `getUsageStats` tRPC procedure to remind users of the value they have built (e.g., number of ROPA entries, tracked vendors).
+- **Proactive Expiry Notifications**: Implemented a daily pg-boss background worker (`trialExpiry.ts`) that scans for organizations whose trial ends in exactly 4 days or 1 day. It dispatches targeted reminder emails via Resend to the organization owners/admins, inclusive of their usage statistics to drive conversion before the lockout occurs.
