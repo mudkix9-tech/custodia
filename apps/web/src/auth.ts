@@ -60,7 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           
           if (dbUser.organizationId) {
             const [org] = await db.select().from(organizations).where(eq(organizations.id, dbUser.organizationId));
-            token.tier = org?.subscriptionTier || 'starter';
+            token.tier = org?.subscriptionTier || 'professional';
             token.onboardingCompleted = org?.onboardingCompleted;
             token.onboardingDismissed = org?.onboardingDismissed;
           }

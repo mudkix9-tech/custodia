@@ -8,28 +8,12 @@ import { CheckCircle } from 'lucide-react';
 
 const TIERS = [
   {
-    id: 'starter',
-    name: 'Starter',
-    price: '€39',
-    description: 'Essential compliance for small businesses.',
-    features: ['1 Organization', 'Unlimited Users', 'Standard DPAs', 'Basic ROPA'],
-    paddlePriceId: process.env.NEXT_PUBLIC_PADDLE_STARTER_PRICE_ID || 'pri_01starter',
-  },
-  {
     id: 'professional',
     name: 'Professional',
-    price: '€89',
-    description: 'Advanced features and 100k consent pageviews.',
-    features: ['Everything in Starter', '100K Cookie Consent Views', 'DPIA Workflows', 'DSAR Automation'],
+    price: '€99',
+    description: 'The complete OS for growing agencies.',
+    features: ['Unlimited users & activities', 'Unlimited vendors & DPIAs', 'Cookie consent (50 domains)', 'AI compliance advisor (2,000 queries)'],
     paddlePriceId: process.env.NEXT_PUBLIC_PADDLE_PROFESSIONAL_PRICE_ID || 'pri_01professional',
-  },
-  {
-    id: 'agency',
-    name: 'Agency',
-    price: '€179',
-    description: 'Multi-tenant management for compliance agencies.',
-    features: ['Everything in Professional', '1M Cookie Consent Views', 'White-labeled Trust Portals', 'Cross-Org Vendor Intelligence'],
-    paddlePriceId: process.env.NEXT_PUBLIC_PADDLE_AGENCY_PRICE_ID || 'pri_01agency',
   }
 ];
 

@@ -27,12 +27,12 @@
   },
   "pricing": {
     "badge": "Tarifs",
-    "title": "Facturé par entité. Jamais par utilisateur.",
+    "title": "Une offre unique. Tout est inclus. Pas de facturation par utilisateur.",
     "subheadline": "Invitez toute l'agence, le responsable marketing du client et son conseil externe. La conformité échoue quand des personnes en sont exclues.",
     "monthlyLabel": "Mensuel",
     "annualLabel": "Annuel −20%",
     "footnote1": "Prix hors TVA · facturée automatiquement selon l'État membre",
-    "footnote2": "Utilisateurs illimités sur chaque offre",
+    "footnote2": "Utilisateurs illimités inclus",
     "footnote3": "Résiliez ou exportez votre registre à tout moment"
   },
   "trust": {

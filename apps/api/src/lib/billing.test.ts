@@ -47,11 +47,11 @@ describe('Billing Limit Engine', () => {
     });
 
     it('throws PRECONDITION_FAILED if limit reached', async () => {
-      mockTxn.for.mockResolvedValueOnce([{ id: 'org-id', subscriptionTier: 'free' }]);
-      mockTxn.for.mockResolvedValueOnce([{ count: 1 }]); // 1 user currently, limit is 1 for free tier
+      mockTxn.for.mockResolvedValueOnce([{ id: 'org-id', subscriptionTier: 'professional' }]);
+      mockTxn.for.mockResolvedValueOnce([{ count: 50 }]); // 50 domains currently, limit is 50
 
       try {
-        await enforceLimit(db, 'org-id', 'users', 1, mockTxn);
+        await enforceLimit(db, 'org-id', 'domains', 1, mockTxn);
         fail('Should have thrown PRECONDITION_FAILED');
       } catch (err: any) {
         expect(err).toBeInstanceOf(TRPCError);
@@ -60,10 +60,10 @@ describe('Billing Limit Engine', () => {
     });
 
     it('passes if limit not reached', async () => {
-      mockTxn.for.mockResolvedValueOnce([{ id: 'org-id', subscriptionTier: 'free' }]);
-      mockTxn.for.mockResolvedValueOnce([{ count: 0 }]); // 0 users currently, limit is 1
+      mockTxn.for.mockResolvedValueOnce([{ id: 'org-id', subscriptionTier: 'professional' }]);
+      mockTxn.for.mockResolvedValueOnce([{ count: 49 }]); // 49 domains currently, limit is 50
 
-      await enforceLimit(db, 'org-id', 'users', 1, mockTxn);
+      await enforceLimit(db, 'org-id', 'domains', 1, mockTxn);
       // If no error thrown, test passes
     });
   });
@@ -75,7 +75,7 @@ describe('Billing Limit Engine', () => {
 
       mockTxn.for.mockResolvedValueOnce([{
         id: 'org-id',
-        subscriptionTier: 'starter',
+        subscriptionTier: 'professional',
         aiQueriesUsed: 100,
         aiLastResetAt: lastMonth
       }]);
@@ -90,8 +90,8 @@ describe('Billing Limit Engine', () => {
       const now = new Date();
       mockTxn.for.mockResolvedValueOnce([{
         id: 'org-id',
-        subscriptionTier: 'free',
-        aiQueriesUsed: 10,
+        subscriptionTier: 'professional',
+        aiQueriesUsed: 2000,
         aiLastResetAt: now
       }]);
 
@@ -108,8 +108,8 @@ describe('Billing Limit Engine', () => {
       const now = new Date();
       mockTxn.for.mockResolvedValueOnce([{
         id: 'org-id',
-        subscriptionTier: 'free',
-        aiQueriesUsed: 5,
+        subscriptionTier: 'professional',
+        aiQueriesUsed: 1999,
         aiLastResetAt: now
       }]);
 

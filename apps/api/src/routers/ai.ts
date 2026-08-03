@@ -811,8 +811,7 @@ You MUST begin your response with the following exact disclaimer:
       });
       if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
       
-      let limit = 5;
-      if (org.subscriptionTier === 'agency') limit = 20;
+      let limit = 2000;
       
       if ((org.aiDpasAnalyzed || 0) >= limit) {
         throw new TRPCError({ 

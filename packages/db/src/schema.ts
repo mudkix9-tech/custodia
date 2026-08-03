@@ -77,7 +77,7 @@ export const organizations = pgTable('organizations', {
   paddleCustomerId: varchar('paddle_customer_id', { length: 255 }),
   deletionScheduledAt: timestamp('deletion_scheduled_at', { withTimezone: true }),
   paddleSubscriptionId: varchar('paddle_subscription_id', { length: 255 }),
-  subscriptionTier: subscriptionTierEnum('subscription_tier').default('starter'),
+  subscriptionTier: subscriptionTierEnum('subscription_tier').default('professional'),
   subscriptionStatus: varchar('subscription_status', { length: 50 }).default('trialing'),
   
   // AI Rate Limiting

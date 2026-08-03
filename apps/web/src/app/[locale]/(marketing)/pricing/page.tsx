@@ -5,11 +5,8 @@ import { Check, Info, ArrowRight, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 const PRICING = [
-  { name: 'Free', price: '0', yearly: '0', desc: 'Gap assessment only.', cta: 'Start assessment', href: '/assessment', features: ['Basic gap assessment', '1 User limit', 'Community support'] },
-  { name: 'Starter', price: '39', yearly: '31', desc: 'For small design agencies.', cta: 'Start 14-day free trial', href: '/signup', features: ['ROPA (20 activities)', 'Vendor tracker (30 tools)', 'Privacy policy generator', '2 Users'], popular: false },
-  { name: 'Professional', price: '89', yearly: '71', desc: 'The complete OS for growing agencies.', cta: 'Start 14-day free trial', href: '/signup', features: ['Everything in Starter', 'DSAR management', 'Breach workflow & DPIA', 'Cookie consent (5 domains)', 'Employee training', 'Client dashboards (10 clients)', '10 Users'], popular: true },
-  { name: 'Agency', price: '179', yearly: '143', desc: 'Unlimited scale for large operations.', cta: 'Start 14-day free trial', href: '/signup', features: ['Everything in Pro', 'Unlimited activities & vendors', 'Unlimited clients & domains', 'Unlimited users', 'API access & Audit file generator', 'Priority support'], popular: false },
-  { name: 'Enterprise', price: 'Custom', yearly: 'Custom', desc: 'For large organizations needing custom compliance controls.', cta: 'Contact us', href: '/enterprise', features: ['Everything in Agency', 'SSO & Custom Roles', 'Dedicated Database', 'SIEM Integration', 'Multi-entity support'], popular: false },
+  { name: 'Professional', price: '99', yearly: '79', desc: 'The complete OS for growing agencies.', cta: 'Start 14-day free trial', href: '/signup', features: ['Unlimited users & processing activities', 'Unlimited vendors & DPIAs', 'Cookie consent (50 domains)', 'AI compliance advisor (2,000 queries)'], popular: true },
+  { name: 'Enterprise', price: 'Custom', yearly: 'Custom', desc: 'For large organizations needing custom compliance controls.', cta: 'Contact us', href: '/contact', features: ['Everything in Professional', 'Custom data residency', 'SSO & Custom Roles', 'Dedicated Account Manager'], popular: false },
 ];
 
 const FAQS = [
@@ -46,7 +43,7 @@ export default function PricingPage() {
 
       {/* Pricing Cards */}
       <section className="max-w-7xl mx-auto px-6 mb-32">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-6">
           {PRICING.map((plan, i) => (
             <div key={i} className={`relative bg-bone-50 rounded-2xl p-8 flex flex-col shadow-sm ${plan.popular ? 'border border-sage-500/50 ring-1 ring-sage-500/20' : 'hairline'}`}>
               {plan.popular && (
@@ -77,60 +74,6 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Feature Comparison Matrix */}
-      <section className="max-w-7xl mx-auto px-6 mb-32 hidden md:block">
-        <h2 className="text-3xl font-serif text-ink-900 mb-10 text-center tracking-tight">Compare all features</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="w-[28%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-ink-900 bg-bone-50/50 rounded-tl-2xl">Feature</th>
-                <th className="w-[14%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50">Free</th>
-                <th className="w-[14%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50">Starter</th>
-                <th className="w-[14%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-sage-700 bg-sage-50 border-x border-sage-500/20 rounded-t-xl">Professional</th>
-                <th className="w-[14%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50">Agency</th>
-                <th className="w-[14%] py-4 px-6 border-b border-ink-900/10 text-sm font-semibold text-center text-ink-900 bg-bone-50/50 rounded-tr-2xl">Enterprise</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {[
-                { name: 'Users', free: '1', starter: '2', pro: '10', agency: 'Unlimited', enterprise: 'Unlimited' },
-                { name: 'Gap Assessment', free: true, starter: true, pro: true, agency: true, enterprise: true },
-                { name: 'ROPA Activities', free: '-', starter: '20', pro: 'Unlimited', agency: 'Unlimited', enterprise: 'Unlimited' },
-                { name: 'Vendor Tracker', free: '-', starter: '30 tools', pro: 'Unlimited', agency: 'Unlimited', enterprise: 'Unlimited' },
-                { name: 'Privacy Policy Generator', free: '-', starter: true, pro: true, agency: true, enterprise: true },
-                { name: 'Cookie Consent Domains', free: '-', starter: '-', pro: '5 domains', agency: 'Unlimited', enterprise: 'Unlimited' },
-                { name: 'DSAR Management', free: '-', starter: '-', pro: true, agency: true, enterprise: true },
-                { name: 'Breach Workflow', free: '-', starter: '-', pro: true, agency: true, enterprise: true },
-                { name: 'Client Dashboards', free: '-', starter: '-', pro: '10 clients', agency: 'Unlimited', enterprise: 'Unlimited' },
-                { name: 'API Access', free: '-', starter: '-', pro: '-', agency: true, enterprise: true },
-                { name: 'SSO & Custom Roles', free: '-', starter: '-', pro: '-', agency: '-', enterprise: true },
-                { name: 'Dedicated Database', free: '-', starter: '-', pro: '-', agency: '-', enterprise: true },
-                { name: 'SIEM Integration', free: '-', starter: '-', pro: '-', agency: '-', enterprise: true },
-              ].map((row, i) => (
-                <tr key={i} className="hover:bg-bone-100/30 transition-colors">
-                  <td className="py-4 px-6 border-b border-ink-900/5 text-ink-600 font-medium">{row.name}</td>
-                  <td className="py-4 px-6 border-b border-ink-900/5 text-center text-ink-500">
-                    {typeof row.free === 'boolean' ? (row.free ? <Check className="w-4 h-4 mx-auto text-ink-400" /> : '-') : row.free}
-                  </td>
-                  <td className="py-4 px-6 border-b border-ink-900/5 text-center text-ink-500">
-                    {typeof row.starter === 'boolean' ? (row.starter ? <Check className="w-4 h-4 mx-auto text-ink-400" /> : '-') : row.starter}
-                  </td>
-                  <td className="py-4 px-6 border-b border-sage-500/10 text-center text-sage-700 bg-sage-50/30 border-x border-sage-500/10 font-medium">
-                    {typeof row.pro === 'boolean' ? (row.pro ? <Check className="w-4 h-4 mx-auto text-sage-600" /> : '-') : row.pro}
-                  </td>
-                  <td className="py-4 px-6 border-b border-ink-900/5 text-center text-ink-500">
-                    {typeof row.agency === 'boolean' ? (row.agency ? <Check className="w-4 h-4 mx-auto text-ink-400" /> : '-') : row.agency}
-                  </td>
-                  <td className="py-4 px-6 border-b border-ink-900/5 text-center text-ink-500">
-                    {typeof row.enterprise === 'boolean' ? (row.enterprise ? <Check className="w-4 h-4 mx-auto text-ink-400" /> : '-') : row.enterprise}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
 
       {/* FAQs */}
       <section className="max-w-3xl mx-auto px-6 mb-32">

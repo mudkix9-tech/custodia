@@ -1,0 +1,2 @@
+UPDATE "organizations" SET "subscription_tier" = 'professional' WHERE "subscription_tier" IN ('starter', 'agency');--> statement-breakpoint
+ALTER TABLE "organizations" ALTER COLUMN "subscription_tier" SET DEFAULT 'professional';--> statement-breakpoint

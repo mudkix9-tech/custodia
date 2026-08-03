@@ -4,10 +4,12 @@ import { eq, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
 export const TIER_LIMITS = {
-  free: { users: 1, ropa: 10, vendors: 50, dpia: 5, domains: 1, ai: 10, customBranding: false, sso: false },
-  starter: { users: 5, ropa: 100, vendors: 150, dpia: 15, domains: 3, ai: 100, customBranding: false, sso: false },
-  professional: { users: 20, ropa: 500, vendors: 500, dpia: 50, domains: 10, ai: 500, customBranding: true, sso: false },
-  agency: { users: 100, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: 50, ai: 2000, customBranding: true, sso: false },
+  // Legacy mapping (just in case they somehow exist or sneak in)
+  free: { users: Infinity, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: 50, ai: 2000, customBranding: true, sso: false },
+  starter: { users: Infinity, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: 50, ai: 2000, customBranding: true, sso: false },
+  agency: { users: Infinity, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: 50, ai: 2000, customBranding: true, sso: false },
+  // Active Tiers
+  professional: { users: Infinity, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: 50, ai: 2000, customBranding: true, sso: false },
   enterprise: { users: Infinity, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: Infinity, ai: Infinity, customBranding: true, sso: true },
 };
 
@@ -32,8 +34,8 @@ export async function enforceLimit(
       .for('update');
 
     if (!orgRes.length) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization not found' });
-    const tier = (orgRes[0].subscriptionTier as keyof typeof TIER_LIMITS) || 'free';
-    const limits = TIER_LIMITS[tier] || TIER_LIMITS.free;
+    const tier = (orgRes[0].subscriptionTier as keyof typeof TIER_LIMITS) || 'professional';
+    const limits = TIER_LIMITS[tier] || TIER_LIMITS.professional;
     const limit = limits[resourceType];
 
     if (limit === Infinity) return;
@@ -97,8 +99,8 @@ export async function trackAiUsage(orgId: string, tokensOrQueries = 1, tx?: any)
     if (!orgRes.length) return;
     const org = orgRes[0];
 
-    const tier = (org.subscriptionTier as keyof typeof TIER_LIMITS) || 'free';
-    const limit = TIER_LIMITS[tier]?.ai || TIER_LIMITS.free.ai;
+    const tier = (org.subscriptionTier as keyof typeof TIER_LIMITS) || 'professional';
+    const limit = TIER_LIMITS[tier]?.ai || TIER_LIMITS.professional.ai;
 
     if (limit === Infinity) {
       // Still track usage

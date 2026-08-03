@@ -3,15 +3,13 @@
 import React, { useState } from 'react';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
-import { Trash2, Lock, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Trash2, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 export function TransfersTab({ activityId }: { activityId: string }) {
   const { data: session } = useSession();
-  const isStarter = (session?.user as any)?.tier === 'starter' || !(session?.user as any)?.tier;
-
   const utils = trpc.useUtils();
   const { data = [], isLoading } = trpc.ropa.transfers.list.useQuery({ processingActivityId: activityId });
   const { data: orgVendorsResp } = trpc.vendors.getOrgVendors.useQuery({ limit: 100 });
@@ -187,22 +185,6 @@ export function TransfersTab({ activityId }: { activityId: string }) {
     }
   ];
 
-  if (isStarter) {
-    return (
-      <div className="p-12 flex flex-col items-center justify-center text-center bg-bone-50/50 rounded-2xl border border-dashed border-ink-900/10">
-        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm">
-          <Lock className="w-8 h-8 text-sage-600" />
-        </div>
-        <h3 className="text-xl font-serif text-ink-900 mb-3">International Transfers Locked</h3>
-        <p className="text-[14px] text-ink-600 max-w-md mx-auto mb-8">
-          Documenting international data transfers and managing Transfer Impact Assessments (TIAs) is a Professional feature. Upgrade to manage cross-border data flows legally.
-        </p>
-        <Link href="/pricing" className="inline-flex bg-sage-700 hover:bg-sage-600 text-white font-medium py-2.5 px-6 rounded-lg transition-colors shadow-card">
-          Upgrade to Professional
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 fade-up">

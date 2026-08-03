@@ -131,39 +131,18 @@ const CORPUS = [
 
 // --- Pricing (aligned to the real Paddle tiers in settings/billing) ---
 
-const annualPrice = (monthly: number) => Math.round(monthly * 0.8);
-
 const TIERS = [
   {
-    name: 'Free', badge: '', bg: '#08090A',
-    price: 0, period: 'forever',
-    blurb: 'The gap assessment, in full. No trial clock.',
-    features: ['38-control gap assessment', 'Scored readiness report', 'Prioritised remediation list', '1 entity'],
-    cta: 'Start assessment', href: '/assessment', highlight: false,
-  },
-  {
-    name: 'Starter', badge: '', bg: '#08090A',
-    price: 39, period: '/mo', blurb: 'Essential compliance for a single business.',
-    features: ['1 organisation, unlimited users', 'Standard DPAs on file', 'Records of processing (ROPA)', 'Gap assessment reruns'],
-    cta: 'Choose Starter', href: '/assessment', highlight: false,
-  },
-  {
     name: 'Professional', badge: 'MOST CHOSEN', bg: '#0D0F11', highlight: true,
-    price: 89, period: '/mo', blurb: 'For agencies running compliance for a client book.',
-    features: ['Everything in Starter', '100K cookie consent views', 'DPIA workflows', 'DSAR automation'],
+    price: 99, period: '/mo', blurb: 'The complete OS for growing agencies.',
+    features: ['Unlimited users & processing activities', 'Unlimited vendors & DPIAs', 'Cookie consent (50 domains)', 'AI compliance advisor (2,000 queries)'],
     cta: 'Choose Professional', href: '/assessment',
   },
   {
-    name: 'Agency', badge: '', bg: '#08090A',
-    price: 179, period: '/mo', blurb: 'Multi-tenant management for compliance agencies.',
-    features: ['Everything in Professional', '1M cookie consent views', 'White-labelled trust portals', 'Cross-org vendor intelligence'],
-    cta: 'Choose Agency', href: '/assessment', highlight: false,
-  },
-  {
     name: 'Enterprise', badge: '', bg: '#08090A',
-    price: null, period: 'annual contract', blurb: 'For groups with regulatory scrutiny and procurement.',
-    features: ['Unlimited entities', 'Dedicated EU tenancy', 'Custom DPA & security review', 'SCIM provisioning', 'Named compliance engineer'],
-    cta: 'Talk to us', href: '/contact', highlight: false,
+    price: null, period: '', blurb: 'For large organizations needing custom compliance controls.',
+    features: ['Everything in Professional', 'Custom data residency', 'SSO & Custom Roles', 'Dedicated Account Manager'],
+    cta: 'Contact us', href: '/contact', highlight: false,
   },
 ];
 
@@ -180,6 +159,7 @@ const TRUST = [
 export default function MarketingSite() {
   const t = useTranslations('marketing');
   const [annual, setAnnual] = useState(true);
+  
   const [jurisdiction, setJurisdiction] = useState<JurisdictionCode>('IE');
   const advisor = ADVISOR_CONTENT[jurisdiction];
 
@@ -436,7 +416,7 @@ export default function MarketingSite() {
             </div>
           </div>
 
-          <div className="mt-11.5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-px bg-white/8 border border-white/8">
+          <div className="mt-11.5 grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-px bg-white/8 border border-white/8">
             {TIERS.map((tier, i) => (
               <div
                 key={i}
@@ -455,7 +435,7 @@ export default function MarketingSite() {
                   </div>
                   <div className="flex items-baseline gap-1.5 mt-4 flex-wrap">
                     <span className="text-[34px] font-light tracking-[-0.03em] leading-none text-text-heading [font-family:var(--font-plex-mono)]">
-                      {tier.price === null ? 'Custom' : `€${tier.price === 0 ? 0 : (annual ? annualPrice(tier.price) : tier.price)}`}
+                      {tier.price === null ? 'Custom' : `€${tier.price === 0 ? 0 : (annual ? Math.round(tier.price * 0.8) : tier.price)}`}
                     </span>
                     <span className="text-[13px] text-text-subtle">{tier.price === null || tier.price === 0 ? tier.period : (annual ? '/mo, billed yearly' : tier.period)}</span>
                   </div>

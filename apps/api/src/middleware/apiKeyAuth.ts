@@ -68,5 +68,5 @@ export async function apiKeyAuthMiddleware(request: FastifyRequest, reply: Fasti
   (request as any).orgId = apiKey.organizationId;
   // Fetch org tier
   const [org] = await db.select().from(schema.organizations).where(eq(schema.organizations.id, apiKey.organizationId));
-  (request as any).orgTier = org?.subscriptionTier || "starter";
+  (request as any).orgTier = org?.subscriptionTier || "professional";
 }
