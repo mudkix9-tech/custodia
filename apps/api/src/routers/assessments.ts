@@ -181,6 +181,7 @@ export const assessmentsRouter = router({
 
       await db.delete(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
 
+      const actionItemsToInsert: any[] = [];
       for (const ans of answers) {
         if (ans.riskScore >= 3) {
           const question = templates.find((t: any) => t.id === ans.questionId);
@@ -191,7 +192,7 @@ export const assessmentsRouter = router({
 
             let gdprRef = getGdprArticleReference(question.gdprArticles);
 
-            await db.insert(actionItems).values({
+            actionItemsToInsert.push({
               assessmentId: input.assessmentId,
               title: title,
               category: question.category,
@@ -202,6 +203,10 @@ export const assessmentsRouter = router({
             });
           }
         }
+      }
+
+      if (actionItemsToInsert.length > 0) {
+        await db.insert(actionItems).values(actionItemsToInsert);
       }
 
       const generatedActionItems = await db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));

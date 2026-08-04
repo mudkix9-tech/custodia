@@ -851,64 +851,82 @@ export const onboardingRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const resolvedVendorIds: string[] = [];
+      const slugsToLookup: string[] = [];
+      const customVendorSlugs: Map<string, string> = new Map();
 
       for (const id of input.vendorIds) {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
         if (isUuid) {
           resolvedVendorIds.push(id);
         } else {
-          // Normalize the name/slug
           const slug = id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-          
-          // Try to find an existing global or local vendor
-          const [found] = await ctx.db.select()
-            .from(vendors)
-            .where(eq(vendors.slug, slug));
+          slugsToLookup.push(slug);
+          customVendorSlugs.set(slug, id);
+        }
+      }
 
-          if (found) {
-            resolvedVendorIds.push(found.id);
-          } else {
-            // Create a custom vendor for this organization
-            const name = id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-            const [newVendor] = await ctx.db.insert(vendors).values({
-              organizationId: ctx.user!.orgId,
-              name,
-              slug,
-              isGlobal: false,
-              description: 'Manually added during onboarding',
-              category: 'Custom Tools',
-            }).returning();
-            resolvedVendorIds.push(newVendor.id);
+      await ctx.db.transaction(async (tx: any) => {
+        if (slugsToLookup.length > 0) {
+          const foundVendors = await tx.select()
+            .from(vendors)
+            .where(inArray(vendors.slug, slugsToLookup));
+          
+          const foundSlugs = new Set(foundVendors.map((v: any) => v.slug));
+          for (const vendor of foundVendors) {
+            resolvedVendorIds.push(vendor.id);
+          }
+
+          const newVendorsToInsert: any[] = [];
+          for (const slug of slugsToLookup) {
+            if (!foundSlugs.has(slug)) {
+              const originalId = customVendorSlugs.get(slug)!;
+              const name = originalId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+              newVendorsToInsert.push({
+                organizationId: ctx.user!.orgId,
+                name,
+                slug,
+                isGlobal: false,
+                description: 'Manually added during onboarding',
+                category: 'Custom Tools',
+              });
+            }
+          }
+
+          if (newVendorsToInsert.length > 0) {
+            const insertedVendors = await tx.insert(vendors).values(newVendorsToInsert).returning();
+            for (const v of insertedVendors) {
+              resolvedVendorIds.push(v.id);
+            }
           }
         }
-      }
 
-      if (resolvedVendorIds.length > 0) {
-        // Find existing organization vendors to avoid duplication
-        const existing = await ctx.db.select({ vendorId: organizationVendors.vendorId })
-          .from(organizationVendors)
-          .where(and(
-            eq(organizationVendors.organizationId, ctx.user!.orgId),
-            inArray(organizationVendors.vendorId, resolvedVendorIds)
-          ));
+        if (resolvedVendorIds.length > 0) {
+          // Find existing organization vendors to avoid duplication
+          const existing = await tx.select({ vendorId: organizationVendors.vendorId })
+            .from(organizationVendors)
+            .where(and(
+              eq(organizationVendors.organizationId, ctx.user!.orgId),
+              inArray(organizationVendors.vendorId, resolvedVendorIds)
+            ));
 
-        const existingIds = existing.map((e: any) => e.vendorId);
-        const toAdd = resolvedVendorIds.filter((id: any) => !existingIds.includes(id));
+          const existingIds = existing.map((e: any) => e.vendorId);
+          const toAdd = resolvedVendorIds.filter((id: any) => !existingIds.includes(id));
 
-        if (toAdd.length > 0) {
-          await ctx.db.insert(organizationVendors).values(
-            toAdd.map((id: any) => ({
-              organizationId: ctx.user!.orgId,
-              vendorId: id,
-              dpaStatus: 'not_started',
-            }))
-          );
+          if (toAdd.length > 0) {
+            await tx.insert(organizationVendors).values(
+              toAdd.map((id: any) => ({
+                organizationId: ctx.user!.orgId,
+                vendorId: id,
+                dpaStatus: 'not_started',
+              }))
+            );
+          }
         }
-      }
 
-      await ctx.db.update(organizations)
-        .set({ onboardingStep: 2 })
-        .where(eq(organizations.id, ctx.user!.orgId));
+        await tx.update(organizations)
+          .set({ onboardingStep: 2 })
+          .where(eq(organizations.id, ctx.user!.orgId));
+      });
 
       return { success: true };
     }),
@@ -983,9 +1001,12 @@ export const onboardingRouter = router({
           inArray(vendors.category, template.suggestedVendorCategories)
         ));
 
+        const recipientsToInsert: any[] = [];
+        const transfersToInsert: any[] = [];
+
         for (const vendor of matchingVendors) {
           // Add as recipient
-          await ctx.db.insert(processingRecipients).values({
+          recipientsToInsert.push({
             processingActivityId: activity!.id,
             recipientType: 'vendor',
             name: vendor.name,
@@ -998,7 +1019,7 @@ export const onboardingRouter = router({
           const hasEuHosting = vendor.usingEuHosting;
 
           if (!isEuHq && !hasEuHosting && hq) {
-            await ctx.db.insert(processingTransfers).values({
+            transfersToInsert.push({
               processingActivityId: activity!.id,
               destinationCountry: hq.substring(0, 2),
               destinationEntity: vendor.name,
@@ -1006,6 +1027,17 @@ export const onboardingRouter = router({
               transferMechanism: 'pending_assessment',
             });
           }
+        }
+
+        if (recipientsToInsert.length > 0 || transfersToInsert.length > 0) {
+          await ctx.db.transaction(async (tx: any) => {
+            if (recipientsToInsert.length > 0) {
+              await tx.insert(processingRecipients).values(recipientsToInsert);
+            }
+            if (transfersToInsert.length > 0) {
+              await tx.insert(processingTransfers).values(transfersToInsert);
+            }
+          });
         }
       }
 
@@ -1160,18 +1192,29 @@ If you have questions about this policy, your data rights, or how we handle your
       }))
     }))
     .mutation(async ({ ctx, input }) => {
-      // Just record they are invited (this would normally queue emails)
-      for (const invite of input.invites) {
-        // Check if user exists
-        const [existingUser] = await ctx.db.select().from(users).where(eq(users.email, invite.email));
-        if (!existingUser) {
-          await ctx.db.insert(users).values({
+      const emails = input.invites.map(i => i.email);
+
+      if (emails.length > 0) {
+        const existingUsers = await ctx.db.select({ email: users.email })
+          .from(users)
+          .where(inArray(users.email, emails));
+
+        const existingEmails = new Set(existingUsers.map((u: any) => u.email));
+        
+        const newUsersToInsert = input.invites
+          .filter(invite => !existingEmails.has(invite.email))
+          .map(invite => ({
             email: invite.email,
             role: invite.role,
             organizationId: ctx.user!.orgId,
             name: invite.email.split('@')[0],
             invitedAt: new Date(),
-          } as any);
+          } as any));
+
+        if (newUsersToInsert.length > 0) {
+          await ctx.db.transaction(async (tx: any) => {
+            await tx.insert(users).values(newUsersToInsert);
+          });
         }
       }
 

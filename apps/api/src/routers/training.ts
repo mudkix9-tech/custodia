@@ -186,15 +186,25 @@ export const trainingRouter = router({
       where: and(eq(trainingModules.isGlobal, true), eq(trainingModules.status, 'published'))
     });
 
+    const missingCompsToInsert: any[] = [];
+    const missingModules: any[] = [];
+
     for (const g of globals) {
       if (!myComps.find(c => c.moduleId === g.id)) {
-        const [newComp] = await ctx.db.insert(trainingCompletions).values({
+        missingCompsToInsert.push({
           organizationId: ctx.user!.orgId,
           userId: ctx.user!.id,
           moduleId: g.id,
           status: 'not_started'
-        }).returning();
-        myComps.push({ ...newComp, module: g } as any);
+        });
+        missingModules.push(g);
+      }
+    }
+
+    if (missingCompsToInsert.length > 0) {
+      const insertedComps = await ctx.db.insert(trainingCompletions).values(missingCompsToInsert).returning();
+      for (let i = 0; i < insertedComps.length; i++) {
+        myComps.push({ ...insertedComps[i], module: missingModules[i] } as any);
       }
     }
 

@@ -117,39 +117,42 @@ export const teamRouter = router({
       let sentCount = 0;
       let failedCount = 0;
 
-      for (const email of newValidEmails) {
-        const [newUser] = await ctx.db.insert(users).values({
+      if (newValidEmails.length > 0) {
+        const inviter = await ctx.db.query.users.findFirst({
+          where: eq(users.id, ctx.user!.id)
+        });
+        const inviterName = inviter?.name || inviter?.email || 'A colleague';
+        const orgName = 'Your Organization';
+        const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`;
+
+        const newUsersToInsert = newValidEmails.map(email => ({
           organizationId: ctx.user!.orgId,
           email: email,
           name: email.split('@')[0],
           role: input.role,
           invitedAt: new Date(),
           invitedBy: ctx.user!.id,
-        } as any).returning();
+        } as any));
 
-        const inviter = await ctx.db.query.users.findFirst({
-          where: eq(users.id, ctx.user!.id)
-        });
-        const inviterName = inviter?.name || inviter?.email || 'A colleague';
-        
-        const orgName = 'Your Organization';
-        const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`;
+        const newlyInsertedUsers = await ctx.db.insert(users).values(newUsersToInsert).returning();
 
-        try {
-          await sendEmail({
-            to: newUser.email,
-            subject: `${inviterName} invited you to join ${orgName}`,
-            template: React.createElement(TeamInvitation, {
-              inviterName,
-              orgName,
-              role: input.role,
-              url,
-            }),
-          });
-          sentCount++;
-        } catch (error) {
-          console.error(`Failed to send email to ${email}:`, error);
-          failedCount++;
+        for (const newUser of newlyInsertedUsers) {
+          try {
+            await sendEmail({
+              to: newUser.email,
+              subject: `${inviterName} invited you to join ${orgName}`,
+              template: React.createElement(TeamInvitation, {
+                inviterName,
+                orgName,
+                role: input.role,
+                url,
+              }),
+            });
+            sentCount++;
+          } catch (error) {
+            console.error(`Failed to send invite email to ${newUser.email}:`, error);
+            failedCount++;
+          }
         }
       }
 

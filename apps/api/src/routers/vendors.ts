@@ -106,14 +106,21 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
     ));
   }
 
-  for (const orgVendor of orgVendors) {
-    const assessments = await dbInstance.select()
+  let allAssessments: any[] = [];
+  if (orgIds.length > 0) {
+    allAssessments = await dbInstance.select()
       .from(vendorAssessments)
       .where(and(
-        eq(vendorAssessments.organizationId, orgVendor.organizationId),
-        eq(vendorAssessments.vendorId, orgVendor.id)
+        inArray(vendorAssessments.organizationId, orgIds),
+        eq(vendorAssessments.vendorId, vendorId)
       ))
       .orderBy(desc(vendorAssessments.completedAt), desc(vendorAssessments.expiresAt));
+  }
+
+  const updates: Array<{ id: string; score: number; level: string; factors: any }> = [];
+
+  for (const orgVendor of orgVendors) {
+    const assessments = allAssessments.filter((a: any) => a.organizationId === orgVendor.organizationId);
 
     let scoreModifier = 0;
     if (assessments.length > 0) {
@@ -140,14 +147,7 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
 
     const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount, scoreModifier, vendorGaps);
     
-    await dbInstance.update(organizationVendors)
-      .set({
-        riskScore: score,
-        riskLevel: level,
-        riskFactors: factors,
-        lastRiskAssessment: new Date()
-      })
-      .where(eq(organizationVendors.id, orgVendor.id));
+    updates.push({ id: orgVendor.id, score, level, factors });
 
     if (orgEmbeddingsQueue) {
       await orgEmbeddingsQueue.add('embed-vendor', {
@@ -157,6 +157,29 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
         action: 'upsert'
       });
     }
+  }
+
+  if (updates.length > 0) {
+    await dbInstance.update(organizationVendors)
+      .set({
+        riskScore: sql`
+          CASE id 
+          ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${u.score}`), sql` `)}
+          END
+        `,
+        riskLevel: sql`
+          CASE id 
+          ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${u.level}`), sql` `)}
+          END
+        `,
+        riskFactors: sql`
+          CASE id 
+          ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${JSON.stringify(u.factors)}::jsonb`), sql` `)}
+          END
+        `,
+        lastRiskAssessment: new Date()
+      })
+      .where(inArray(organizationVendors.id, updates.map(u => u.id)));
   }
 }
 
