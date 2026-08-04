@@ -48,11 +48,13 @@ export async function generateMetadata({
       url: `https://trycustodia.com/${locale}`,
       siteName: 'Custodia',
       type: 'website',
+      images: [{ url: 'https://trycustodia.com/api/og', width: 1200, height: 630, alt: 'Custodia — GDPR Compliance OS' }],
     },
     twitter: {
       card: 'summary_large_image',
       title: t('title'),
       description: t('desc'),
+      images: ['https://trycustodia.com/api/og'],
     },
     alternates: {
       canonical: `https://trycustodia.com/${locale}`,

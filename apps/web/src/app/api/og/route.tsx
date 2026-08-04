@@ -3,11 +3,8 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 
 export const runtime = 'nodejs';
-export const alt = 'Custodia — GDPR Compliance OS';
-export const size = { width: 1200, height: 630 };
-export const contentType = 'image/png';
 
-export default async function Image() {
+export async function GET() {
   const fontSemiBold = await readFile(
     join(process.cwd(), 'src/assets/fonts/Geist-SemiBold.ttf')
   );
@@ -99,7 +96,8 @@ export default async function Image() {
       </div>
     ),
     {
-      ...size,
+      width: 1200,
+      height: 630,
       fonts: [
         {
           name: 'Geist',
