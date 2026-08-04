@@ -22,38 +22,48 @@ async function processRollupForDate(startDate: Date, endDate: Date, targetDate: 
 
   // 1. Fetch domains to process
   const domains = await db.select({ id: consentDomains.id, orgId: consentDomains.organizationId }).from(consentDomains);
+  if (domains.length === 0) return;
 
-  for (const domain of domains) {
-    await db.transaction(async (tx) => {
-      // Idempotency: clear existing summary for this domain + date
-      await tx.delete(consentDailySummary).where(
-        and(
-          eq(consentDailySummary.domainId, domain.id),
-          eq(consentDailySummary.date, dateStr)
-        )
-      );
+  await db.transaction(async (tx) => {
+    // Idempotency: clear existing summary for all domains on this date
+    await tx.delete(consentDailySummary).where(
+      eq(consentDailySummary.date, dateStr)
+    );
 
-      // Aggregate in JS to avoid complicated SQL combinations with arrays.
-      const recordsQuery = sql`
-        SELECT 
-          categories_accepted,
-          categories_rejected,
-          interaction_type,
-          canonicalize_category_array(categories_accepted) as canonical_categories
-        FROM ${consentRecords}
-        WHERE domain_id = ${domain.id}
-          AND given_at >= ${startDate.toISOString()}
-          AND given_at <= ${endDate.toISOString()}
-      `;
-      
-      const result = await tx.execute(recordsQuery);
-      const rows = result.rows;
+    // Aggregate in JS to avoid complicated SQL combinations with arrays.
+    const recordsQuery = sql`
+      SELECT 
+        domain_id,
+        categories_accepted,
+        categories_rejected,
+        interaction_type,
+        canonicalize_category_array(categories_accepted) as canonical_categories
+      FROM ${consentRecords}
+      WHERE given_at >= ${startDate.toISOString()}
+        AND given_at <= ${endDate.toISOString()}
+    `;
+    
+    const result = await tx.execute(recordsQuery);
+    const rows = result.rows;
 
-      if (rows.length === 0) {
-        return; // No data for this day
-      }
+    if (rows.length === 0) {
+      return; // No data for this day
+    }
 
-      const totalSessions = rows.length;
+    const rowsByDomain = new Map<string, any[]>();
+    for (const row of rows) {
+      const domainId = row.domain_id as string;
+      if (!rowsByDomain.has(domainId)) rowsByDomain.set(domainId, []);
+      rowsByDomain.get(domainId)!.push(row);
+    }
+
+    const rowsToInsert = [];
+
+    for (const domain of domains) {
+      const domainRows = rowsByDomain.get(domain.id) || [];
+      if (domainRows.length === 0) continue;
+
+      const totalSessions = domainRows.length;
 
       // Category counters
       const catStats = {
@@ -71,7 +81,7 @@ async function processRollupForDate(startDate: Date, endDate: Date, targetDate: 
       // Combination counters
       const combinationCounts: Record<string, number> = {};
 
-      for (const row of rows) {
+      for (const row of domainRows) {
         const accepted = row.categories_accepted as string[] || [];
         const rejected = row.categories_rejected as string[] || [];
         
@@ -96,8 +106,6 @@ async function processRollupForDate(startDate: Date, endDate: Date, targetDate: 
           if (rejected.includes(cat)) catStats[cat as keyof typeof catStats].rejected++;
         }
       }
-
-      const rowsToInsert = [];
 
       // 1. Category rows
       for (const [cat, stats] of Object.entries(catStats)) {
@@ -153,10 +161,10 @@ async function processRollupForDate(startDate: Date, endDate: Date, targetDate: 
           categoryCombinationCount: count,
         });
       }
+    }
 
-      if (rowsToInsert.length > 0) {
-        await tx.insert(consentDailySummary).values(rowsToInsert as any);
-      }
-    });
-  }
+    if (rowsToInsert.length > 0) {
+      await tx.insert(consentDailySummary).values(rowsToInsert as any);
+    }
+  });
 }

@@ -1,6 +1,6 @@
 import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
-import { eq, and, lt, lte, ne } from 'drizzle-orm';
+import { eq, and, lt, lte, ne, inArray } from 'drizzle-orm';
 import { dsarRequests, users, organizations, notificationQueue } from 'db';
 import { queueNotification, NotificationType } from '../utils/notifications.js';
 
@@ -30,6 +30,19 @@ const dsarWorker = createWorker('dsar-automation', async job => {
     console.log('[DSAR Worker] Running daily deadline monitor...');
     const activeRequests = await db.select().from(dsarRequests).where(ne(dsarRequests.status, 'completed'));
     
+    const orgIds = [...new Set(activeRequests.map(r => r.organizationId))];
+    const relevantUsers = orgIds.length > 0 
+      ? await db.select().from(users).where(and(inArray(users.organizationId, orgIds), inArray(users.role, ['owner', 'admin'])))
+      : [];
+    
+    const usersByOrgId = new Map<string, { owners: typeof relevantUsers, admins: typeof relevantUsers }>();
+    for (const orgId of orgIds) {
+      usersByOrgId.set(orgId, {
+        owners: relevantUsers.filter(u => u.organizationId === orgId && u.role === 'owner'),
+        admins: relevantUsers.filter(u => u.organizationId === orgId && u.role === 'admin')
+      });
+    }
+    
     for (const req of activeRequests) {
       if (req.status === 'refused') continue;
 
@@ -40,7 +53,7 @@ const dsarWorker = createWorker('dsar-automation', async job => {
         await db.update(dsarRequests).set({ status: 'overdue' }).where(eq(dsarRequests.id, req.id));
         
         // Notify owner
-        const orgUsers = await db.select().from(users).where(and(eq(users.organizationId, req.organizationId), eq(users.role, 'owner')));
+        const orgUsers = usersByOrgId.get(req.organizationId)?.owners || [];
         for (const owner of orgUsers) {
           await notifyUser(owner.id, req.organizationId, 'dsar.overdue', '🚨 LEGAL WARNING: DSAR is Overdue', `
             <p>The Data Subject Access Request <strong>${req.referenceNumber}</strong> is now legally overdue by ${Math.abs(daysRemaining)} days.</p>
@@ -58,12 +71,12 @@ const dsarWorker = createWorker('dsar-automation', async job => {
       } else if (daysRemaining <= 7 && daysRemaining >= 4) {
         // Notify assigned and all admins
         await notifyUser(req.assignedTo, req.organizationId, 'dsar.deadline_warning_7d', `URGENT: DSAR Due in ${daysRemaining} days`, `DSAR ${req.referenceNumber} is approaching its deadline.`);
-        const admins = await db.select().from(users).where(and(eq(users.organizationId, req.organizationId), eq(users.role, 'admin')));
+        const admins = usersByOrgId.get(req.organizationId)?.admins || [];
         for (const admin of admins) {
           await notifyUser(admin.id, req.organizationId, 'dsar.deadline_warning_7d', `URGENT: DSAR Due in ${daysRemaining} days`, `DSAR ${req.referenceNumber} assigned to your team is approaching its deadline.`);
         }
       } else if (daysRemaining <= 3 && daysRemaining >= 1) {
-        const owners = await db.select().from(users).where(and(eq(users.organizationId, req.organizationId), eq(users.role, 'owner')));
+        const owners = usersByOrgId.get(req.organizationId)?.owners || [];
         for (const owner of owners) {
           await notifyUser(owner.id, req.organizationId, 'dsar.deadline_warning_3d', `CRITICAL: DSAR Due in ${daysRemaining} days`, `DSAR ${req.referenceNumber} must be completed immediately.`);
         }
@@ -77,6 +90,12 @@ const dsarWorker = createWorker('dsar-automation', async job => {
     const pendingRequests = await db.select().from(dsarRequests).where(eq(dsarRequests.status, 'new'));
     const now = Date.now();
 
+    const pendingOrgIds = [...new Set(pendingRequests.map(r => r.organizationId))];
+    const orgsList = pendingOrgIds.length > 0 
+      ? await db.select().from(organizations).where(inArray(organizations.id, pendingOrgIds))
+      : [];
+    const orgsMap = new Map(orgsList.map(o => [o.id, o]));
+
     for (const req of pendingRequests) {
       if (req.subjectVerified) continue;
       
@@ -84,7 +103,7 @@ const dsarWorker = createWorker('dsar-automation', async job => {
       
       if (daysSinceReceipt === 3) {
         // Send reminder to subject
-        const [org] = await db.select().from(organizations).where(eq(organizations.id, req.organizationId));
+        const org = orgsMap.get(req.organizationId);
         if (org) {
           await db.insert(notificationQueue).values({
             organizationId: req.organizationId,

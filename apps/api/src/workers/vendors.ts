@@ -1,7 +1,7 @@
 import { createWorker, createQueue, Job } from '../lib/queue.js';
 import { db } from '../db.js';
 import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates } from 'db';
-import { eq, and, isNotNull, lte, gt } from 'drizzle-orm';
+import { eq, and, isNotNull, lte, gt, inArray, sql } from 'drizzle-orm';
 import { calculateVendorRisk } from '../routers/vendors.js';
 import { getBrowserCluster, scanDomainForThirdParties } from '../lib/browserPool.js';
 import { queueNotification } from '../utils/notifications.js';
@@ -311,7 +311,7 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
       console.log('Simulating DPA page change detector...');
       break;
 
-    case 'vendor-risk-recalculation':
+    case 'vendor-risk-recalculation': {
       console.log('Running daily vendor risk recalculation...');
       // Find vendors changed in last 24h
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -323,25 +323,58 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
       .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
       .where(gt(organizationVendors.updatedAt, yesterday));
 
-      for (const record of recentlyChanged) {
-        const subs = await db.select()
-          .from(vendorSubProcessors)
-          .where(eq(vendorSubProcessors.parentVendorId, record.vendor.id));
-        const subProcessorsCount = subs.length;
+      if (recentlyChanged.length === 0) break;
 
+      const vendorIds = Array.from(new Set(recentlyChanged.map(r => r.vendor.id)));
+
+      // Fetch sub-processor counts in bulk
+      const subProcessorCounts = await db.execute(sql`
+        SELECT parent_vendor_id, COUNT(*) as count 
+        FROM vendor_sub_processors 
+        WHERE parent_vendor_id IN (${sql.join(vendorIds.map(id => sql`${id}`), sql`, `)})
+        GROUP BY parent_vendor_id
+      `);
+
+      const countMap = new Map();
+      for (const row of subProcessorCounts.rows) {
+        countMap.set(row.parent_vendor_id, Number(row.count));
+      }
+
+      const updates = [];
+
+      for (const record of recentlyChanged) {
+        const subProcessorsCount = countMap.get(record.vendor.id) || 0;
         const { score, level, factors } = calculateVendorRisk(record.vendor as any, record.orgVendor as any, subProcessorsCount);
+        
         if (score !== record.orgVendor.riskScore) {
-          await db.update(organizationVendors)
-            .set({ 
-              riskScore: score, 
-              riskLevel: level, 
-              riskFactors: factors, 
-              lastRiskAssessment: new Date() 
-            })
-            .where(eq(organizationVendors.id, record.orgVendor.id));
+          updates.push({ id: record.orgVendor.id, score, level, factors });
         }
       }
+
+      if (updates.length > 0) {
+        await db.update(organizationVendors)
+          .set({
+            riskScore: sql`
+              CASE id 
+              ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${u.score}`), sql` `)}
+              END
+            `,
+            riskLevel: sql`
+              CASE id 
+              ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${u.level}`), sql` `)}
+              END
+            `,
+            riskFactors: sql`
+              CASE id 
+              ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${JSON.stringify(u.factors)}::jsonb`), sql` `)}
+              END
+            `,
+            lastRiskAssessment: new Date()
+          })
+          .where(inArray(organizationVendors.id, updates.map(u => u.id)));
+      }
       break;
+    }
 
     case 'assessment-reminder-checker': {
       console.log('Running vendor assessment reminder checker...');

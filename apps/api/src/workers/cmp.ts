@@ -1,7 +1,7 @@
 import { createWorker, createQueue, getBoss } from '../lib/queue.js';
 import { db } from '../db.js';
 import { consentCookies, consentDomains, consentRecords } from 'db';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, inArray } from 'drizzle-orm';
 import { scanDomain } from '../lib/browserPool.js';
 
 export const cmpJobsQueue = createQueue('cmp-automation');
@@ -47,17 +47,23 @@ const cmpWorker = createWorker('cmp-automation', async job => {
       }
 
       // Bulk upsert into db
+      const existingCookies = await db.select()
+        .from(consentCookies)
+        .where(eq(consentCookies.domainId, domainId));
+      
+      const existingCookieMap = new Map(existingCookies.map(c => [c.cookieName, c]));
+
+      const cookiesToInsert: any[] = [];
+      const cookiesToUpdate: any[] = [];
+
       for (const [name, cookie] of allCookiesMap.entries()) {
         const classification = classifyCookie(name);
-        
-        // Simple upsert by name + domainId
-        const existing = await db.select().from(consentCookies).where(eq(consentCookies.cookieName, name));
-        const match = existing.find(e => e.domainId === domainId);
+        const match = existingCookieMap.get(name);
         
         if (match) {
-          await db.update(consentCookies).set({ lastSeenAt: new Date() }).where(eq(consentCookies.id, match.id));
+          cookiesToUpdate.push(match.id);
         } else {
-          await db.insert(consentCookies).values({
+          cookiesToInsert.push({
             domainId,
             cookieName: name,
             cookieDomain: cookie.domain,
@@ -69,6 +75,16 @@ const cmpWorker = createWorker('cmp-automation', async job => {
             classificationConfidence: classification.category === 'uncategorized' ? '0.00' : '0.90',
           });
         }
+      }
+
+      if (cookiesToUpdate.length > 0) {
+        await db.update(consentCookies)
+          .set({ lastSeenAt: new Date() })
+          .where(inArray(consentCookies.id, cookiesToUpdate));
+      }
+
+      if (cookiesToInsert.length > 0) {
+        await db.insert(consentCookies).values(cookiesToInsert);
       }
 
       await db.update(consentDomains).set({ lastScanAt: new Date() }).where(eq(consentDomains.id, domainId));

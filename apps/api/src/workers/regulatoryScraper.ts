@@ -1,7 +1,7 @@
 import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
 import { regulatoryUpdates, documentEmbeddings, organizations } from 'db';
-import { eq, and, sql, like } from 'drizzle-orm';
+import { eq, and, sql, like, inArray } from 'drizzle-orm';
 import crypto from 'crypto';
 import { GoogleGenAI } from '@google/genai';
 import { queueNotification } from '../utils/notifications.js';
@@ -99,16 +99,21 @@ export async function scrapeRegulatoryUpdates() {
         ];
       }
 
-      for (const article of articles) {
-        const hash = crypto.createHash('sha256')
-          .update(article.title + article.url)
-          .digest('hex');
-          
-        const existing = await db.query.regulatoryUpdates.findFirst({
-          where: eq(regulatoryUpdates.contentHash, hash)
-        });
+      const hashedArticles = articles.map(article => ({
+        ...article,
+        hash: crypto.createHash('sha256').update(article.title + article.url).digest('hex')
+      }));
+
+      const hashes = hashedArticles.map(a => a.hash);
+      const existingUpdates = hashes.length > 0 
+        ? await db.select().from(regulatoryUpdates).where(inArray(regulatoryUpdates.contentHash, hashes))
+        : [];
+      const existingHashes = new Set(existingUpdates.map(u => u.contentHash));
+
+      for (const article of hashedArticles) {
+        const hash = article.hash;
         
-        if (existing) {
+        if (existingHashes.has(hash)) {
           console.log(`[RegulatoryScraper] Article already exists: ${article.title}`);
           continue;
         }
@@ -145,11 +150,9 @@ export async function scrapeRegulatoryUpdates() {
 
         const documentId = insertedUpdate.id; // use the regulatory update ID as documentId
         
-        for (let i = 0; i < chunks.length; i++) {
-          const chunkText = chunks[i]!;
+        const chunkEmbeddings = await Promise.all(chunks.map(async (chunkText, i) => {
           const embeddingValues = await generateEmbedding(chunkText);
-          
-          await db.insert(documentEmbeddings).values({
+          return {
             documentId,
             source: source.name,
             authority: source.id,
@@ -164,7 +167,11 @@ export async function scrapeRegulatoryUpdates() {
             language: 'en',
             isCurrent: true,
             embedding: embeddingValues,
-          });
+          };
+        }));
+        
+        if (chunkEmbeddings.length > 0) {
+          await db.insert(documentEmbeddings).values(chunkEmbeddings);
         }
 
         // 3. Automated Supersession Detection
@@ -187,14 +194,14 @@ export async function scrapeRegulatoryUpdates() {
             like(documentEmbeddings.title, `%${referenceNumber}%`)
           ));
 
-          for (const oldChunk of oldChunks) {
-            console.log(`[RegulatoryScraper] Superseding old document: "${oldChunk.title}" (ID: ${oldChunk.documentId})`);
+          if (oldChunks.length > 0) {
+            console.log(`[RegulatoryScraper] Superseding ${oldChunks.length} old document chunks.`);
             await db.update(documentEmbeddings)
               .set({
                 isCurrent: false,
                 supersededBy: documentId,
               })
-              .where(eq(documentEmbeddings.id, oldChunk.id));
+              .where(inArray(documentEmbeddings.id, oldChunks.map(c => c.id)));
           }
         }
 
@@ -211,41 +218,39 @@ export async function scrapeRegulatoryUpdates() {
 
 export async function runQualityCheckAlerts() {
   console.log('[RegulatoryScraper] Running daily RAG quality checks...');
-  const orgs = await db.query.organizations.findMany();
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  for (const org of orgs) {
-    try {
-      const similarityStats = await db.execute(sql`
-        SELECT 
-          COUNT(*) as total_queries,
-          SUM(CASE WHEN top_similarity < 0.7 THEN 1 ELSE 0 END) as low_similarity_count
-        FROM ai_guidance_logs
-        WHERE created_at >= ${sevenDaysAgo}
-          AND organization_id = ${org.id}
-      `);
+  try {
+    const similarityStats = await db.execute(sql`
+      SELECT 
+        organization_id,
+        COUNT(*) as total_queries,
+        SUM(CASE WHEN top_similarity < 0.7 THEN 1 ELSE 0 END) as low_similarity_count
+      FROM ai_guidance_logs
+      WHERE created_at >= ${sevenDaysAgo}
+      GROUP BY organization_id
+    `);
 
-      const row = similarityStats.rows?.[0];
-      if (row) {
-        const total = Number(row.total_queries || 0);
-        const lowCount = Number(row.low_similarity_count || 0);
-        const percentage = total > 0 ? (lowCount / total) * 100 : 0;
+    for (const row of similarityStats.rows || []) {
+      const orgId = row.organization_id as string;
+      const total = Number(row.total_queries || 0);
+      const lowCount = Number(row.low_similarity_count || 0);
+      const percentage = total > 0 ? (lowCount / total) * 100 : 0;
 
-        if (percentage > 20) {
-          console.log(`[RegulatoryScraper] Alert: Org ${org.name} has ${percentage.toFixed(1)}% low-similarity queries. Dispatching alert...`);
-          
-          await queueNotification({
-            organizationId: org.id,
-            type: 'compliance.gap_critical',
-            title: 'Copilot Quality Alert: High Rate of Low Similarity Queries',
-            body: `Alert: More than ${percentage.toFixed(0)}% of AI Copilot queries in the past 7 days returned similarity scores below 0.7. This indicates potential gaps in your RAG knowledge base.`,
-            actionUrl: '/settings/copilot'
-          });
-        }
+      if (percentage > 20) {
+        console.log(`[RegulatoryScraper] Alert: Org ${orgId} has ${percentage.toFixed(1)}% low-similarity queries. Dispatching alert...`);
+        
+        await queueNotification({
+          organizationId: orgId,
+          type: 'compliance.gap_critical',
+          title: 'Copilot Quality Alert: High Rate of Low Similarity Queries',
+          body: `Alert: More than ${percentage.toFixed(0)}% of AI Copilot queries in the past 7 days returned similarity scores below 0.7. This indicates potential gaps in your RAG knowledge base.`,
+          actionUrl: '/settings/copilot'
+        });
       }
-    } catch (err) {
-      console.error(`[RegulatoryScraper] Failed to check quality metrics for organization ${org.id}:`, err);
     }
+  } catch (err) {
+    console.error('[RegulatoryScraper] Failed to check quality metrics:', err);
   }
 }
 

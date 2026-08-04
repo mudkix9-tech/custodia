@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/', '/dashboard/'],
+      disallow: ['/api/', '/dashboard/', '/onboarding/', '/settings/', '/auth/'],
     },
-    sitemap: 'https://custodia.io/sitemap.xml',
+    sitemap: 'https://trycustodia.com/sitemap.xml',
   };
 }

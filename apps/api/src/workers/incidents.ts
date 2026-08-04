@@ -163,44 +163,48 @@ export async function publishIncidentAndAlertOrgs(incidentId: string, matchedVen
 
   console.log(`[Incident Engine] Fanning out alerts to ${linkedOrgs.length} orgs for vendor ${matchedVendor.name}`);
 
-  for (const orgVendor of linkedOrgs) {
-    // 1. Create organization incident alert
-    const [alert] = await db.insert(organizationVendorIncidentAlerts).values({
+  if (linkedOrgs.length > 0) {
+    const alertsToInsert = linkedOrgs.map(orgVendor => ({
       organizationId: orgVendor.organizationId,
       orgVendorId: orgVendor.id,
       incidentId: incidentId,
       status: 'unread'
-    }).returning();
+    }));
 
-    if (!alert) continue;
+    const insertedAlerts = await db.insert(organizationVendorIncidentAlerts).values(alertsToInsert as any).returning();
 
-    // 2. Queue in-app + email notification
-    await queueNotification({
-      organizationId: orgVendor.organizationId,
-      type: 'vendor.incident_detected',
-      title: `${matchedVendor.name} - ${incident.incidentType.toUpperCase()} Detected`,
-      body: `${matchedVendor.name} is affected by a new incident: "${incident.title}". Please assess impact and review Article 33 obligations.`,
-      actionUrl: `/vendors/${matchedVendor.id}?tab=incidents`,
-      metadata: {
+    await Promise.all(insertedAlerts.map(async (alert) => {
+      const orgVendor = linkedOrgs.find(o => o.id === alert.orgVendorId);
+      if (!orgVendor) return;
+
+      // 2. Queue in-app + email notification
+      await queueNotification({
+        organizationId: orgVendor.organizationId,
+        type: 'vendor.incident_detected',
+        title: `${matchedVendor.name} - ${incident.incidentType.toUpperCase()} Detected`,
+        body: `${matchedVendor.name} is affected by a new incident: "${incident.title}". Please assess impact and review Article 33 obligations.`,
+        actionUrl: `/vendors/${matchedVendor.id}?tab=incidents`,
+        metadata: {
+          vendorId: matchedVendor.id,
+          orgVendorId: orgVendor.id,
+          incidentId,
+          alertId: alert.id
+        }
+      });
+
+      // 3. Dispatch webhook event
+      await dispatchWebhook(orgVendor.organizationId, 'vendor.incident_detected', {
         vendorId: matchedVendor.id,
+        vendorName: matchedVendor.name,
         orgVendorId: orgVendor.id,
         incidentId,
-        alertId: alert.id
-      }
-    });
-
-    // 3. Dispatch webhook event
-    await dispatchWebhook(orgVendor.organizationId, 'vendor.incident_detected', {
-      vendorId: matchedVendor.id,
-      vendorName: matchedVendor.name,
-      orgVendorId: orgVendor.id,
-      incidentId,
-      alertId: alert.id,
-      incidentType: incident.incidentType,
-      title: incident.title,
-      severity: incident.severity,
-      detectedAt: incident.detectedAt
-    });
+        alertId: alert.id,
+        incidentType: incident.incidentType,
+        title: incident.title,
+        severity: incident.severity,
+        detectedAt: incident.detectedAt
+      });
+    }));
   }
 
   // 4. Auto-escalate vendor risk score

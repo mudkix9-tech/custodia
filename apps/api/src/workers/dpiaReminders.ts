@@ -2,7 +2,7 @@ import { createWorker } from '../lib/queue.js';
 import { Job, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
 import { dpias, organizations, users } from 'db';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, inArray } from 'drizzle-orm';
 import { queueNotification } from '../utils/notifications.js';
 
 export const dpiaRemindersQueue = process.env.NODE_ENV === 'test'
@@ -32,6 +32,18 @@ export const dpiaRemindersWorker = createWorker('dpia-reminders', async (job: Jo
     console.log(`Checking DPIA mitigation reminders for org ${orgId}...`);
 
     const orgDpias = await db.select().from(dpias).where(eq(dpias.organizationId, orgId));
+
+    const allOwnerIds = Array.from(new Set(
+      orgDpias.flatMap(dpia => ((dpia.residualRisks || []) as any[])
+        .map(r => r.mitigationOwner)
+        .filter(id => id && isUUID(id))
+      )
+    )) as string[];
+
+    const orgUsers = allOwnerIds.length > 0
+      ? await db.select().from(users).where(inArray(users.id, allOwnerIds))
+      : [];
+    const usersMap = new Map(orgUsers.filter(u => u.organizationId === orgId).map(u => [u.id, u]));
 
     for (const dpia of orgDpias) {
       const residualRisks = (dpia.residualRisks || []) as any[];
@@ -78,9 +90,8 @@ export const dpiaRemindersWorker = createWorker('dpia-reminders', async (job: Jo
         // Determine recipient
         let userId: string | null = null;
         if (risk.mitigationOwner && isUUID(risk.mitigationOwner)) {
-          // Verify user exists and is in the org
-          const [user] = await db.select().from(users).where(eq(users.id, risk.mitigationOwner));
-          if (user && user.organizationId === orgId) {
+          const user = usersMap.get(risk.mitigationOwner);
+          if (user) {
             userId = user.id;
           }
         }

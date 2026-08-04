@@ -1,7 +1,7 @@
 import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
 import { breaches, breachRemediationTasks, users, organizations } from 'db';
-import { eq, and, lt, isNull } from 'drizzle-orm';
+import { eq, and, lt, isNull, inArray } from 'drizzle-orm';
 import { queueNotification, NotificationType } from '../utils/notifications.js';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -81,9 +81,15 @@ export const breachTaskTracker = createWorker(
       }
     });
 
+    const userIds = overdueTasks.map(t => t.assignedTo).filter(Boolean) as string[];
+    const assignedUsers = userIds.length > 0
+      ? await db.select().from(users).where(inArray(users.id, userIds))
+      : [];
+    const usersMap = new Map(assignedUsers.map(u => [u.id, u]));
+
     for (const task of overdueTasks) {
       if (task.assignedTo && task.breach?.organization) {
-        const [assignedUser] = await db.select().from(users).where(eq(users.id, task.assignedTo));
+        const assignedUser = usersMap.get(task.assignedTo);
         if (assignedUser) {
           const dpoEmail = task.breach.organization.dpoEmail || 'support@trycustodia.online';
           await queueNotification({

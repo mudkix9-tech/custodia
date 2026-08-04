@@ -259,10 +259,11 @@ Custodia is a GDPR compliance operating system targeting EU businesses of all si
 12. ✅ Full audit file export (PDF + CSV for every module: ROPA Article 30, vendor register, DSAR register, breach register, training report, consent analytics, compliance summary, DPIAs, policies, gap history, score history — uses Puppeteer browser pool)
 13. ✅ Regulatory update impact assessment generation (runs on publish, matches impact_rules against each org's ROPA, generates per-org impact assessments)
 
-### Performance fixes (Fixes 14-16)
+### Performance fixes (Fixes 14-17)
 14. ✅ Puppeteer browser pool via puppeteer-cluster (shared across PDF generation and cookie scanning)
 15. ✅ Audit log export streams to S3 (no more 10K record memory load)
 16. ✅ Pagination on all list endpoints using shared `paginatedQuery` utility with cursor-based pagination
+17. ✅ Complete elimination of N+1 database queries across all background workers (hoisted bulk lookups using Drizzle `inArray`, implemented batch insertions via arrays, introduced explicit chunking for massive memory-bound scans like `compliance.ts`, and converted massive sequential loop updates into a single roundtrip using `CASE WHEN` template literals in `vendors.ts`).
 
 ### UX fixes (Fixes 17-25)
 17. ✅ Skeleton loaders on every page (Skeleton component + per-page skeleton compositions)

@@ -63,8 +63,11 @@ export async function generateGroupAuditArchive(parentOrgId: string, childOrgIds
   archive.append(groupPdf, { name: 'Group Executive Summary.pdf' });
 
   // 2. Generate per-entity audits and bundle them into child_entities/
+  const childOrgsList = childOrgIds.length > 0 ? await db.select().from(organizations).where(inArray(organizations.id, childOrgIds)) : [];
+  const childOrgsMap = new Map(childOrgsList.map(o => [o.id, o]));
+
   for (const childOrgId of childOrgIds) {
-    const childOrg = await db.query.organizations.findFirst({ where: eq(organizations.id, childOrgId) });
+    const childOrg = childOrgsMap.get(childOrgId);
     if (!childOrg) continue;
     
     try {
@@ -243,31 +246,62 @@ export async function generateAuditFile(
   archive.append(vendorCsv, { name: 'vendors/vendor-register.csv' });
 
   // DPA documents from S3
-  for (const ov of orgVendors) {
+  const limit = (concurrency: number) => {
+    let active = 0;
+    const queue: (() => void)[] = [];
+    const next = () => {
+      active--;
+      if (queue.length > 0) queue.shift()!();
+    };
+    return <T>(fn: () => Promise<T>): Promise<T> => new Promise<T>((resolve, reject) => {
+      const run = async () => {
+        active++;
+        try { resolve(await fn()); } catch (err) { reject(err); } finally { next(); }
+      };
+      if (active < concurrency) run();
+      else queue.push(run);
+    });
+  };
+
+  const pLimit = limit(5);
+
+  const docIds = orgVendors.map((ov: any) => ov.dpaDocumentId).filter(Boolean);
+  const docsList = docIds.length > 0 ? await db.select().from(documents).where(inArray(documents.id, docIds)) : [];
+  const docsMap = new Map(docsList.map(d => [d.id, d]));
+
+  await Promise.all(orgVendors.map((ov: any) => pLimit(async () => {
     if (ov.dpaDocumentId) {
       try {
-        const doc = await db.query.documents.findFirst({ where: eq(documents.id, ov.dpaDocumentId) });
-        if (doc) {
-          const s3Obj = await s3Client.send(new GetObjectCommand({ Bucket: S3_BUCKET, Key: doc.s3Key! }));
+        const doc = docsMap.get(ov.dpaDocumentId);
+        if (doc && doc.s3Key) {
+          const s3Obj = await s3Client.send(new GetObjectCommand({ Bucket: S3_BUCKET, Key: doc.s3Key }));
           if (s3Obj.Body) {
-            const vendorName = (ov as any).vendor?.name || 'UnknownVendor';
+            const vendorName = ov.vendor?.name || 'UnknownVendor';
             archive.append(s3Obj.Body as any, { name: `vendors/dpas/${vendorName.replace(/[^a-zA-Z0-9]/g, '_')}-dpa.pdf` });
           }
         }
       } catch (e) { /* skip missing documents */ }
     }
-  }
+  })));
 
   // ── POLICIES ──────────────────────────────────────────────
   const policies = await db.query.privacyPolicies.findMany({
     where: and(eq(privacyPolicies.organizationId, orgId), isNull(privacyPolicies.deletedAt)),
   });
 
+  const policyIds = policies.map(p => p.id);
+  const allPolicyVersions = policyIds.length > 0
+    ? await db.query.policyVersions.findMany({ where: inArray(policyVersions.policyId, policyIds), orderBy: desc(policyVersions.versionNumber) })
+    : [];
+  
+  const versionsByPolicy = new Map<string, typeof allPolicyVersions>();
+  for (const v of allPolicyVersions) {
+    if (!versionsByPolicy.has(v.policyId)) versionsByPolicy.set(v.policyId, []);
+    versionsByPolicy.get(v.policyId)!.push(v);
+  }
+
   for (const policy of policies) {
-    const versions = await db.query.policyVersions.findMany({
-      where: eq(policyVersions.policyId, policy.id),
-      orderBy: desc(policyVersions.versionNumber),
-    });
+    const versions = versionsByPolicy.get(policy.id) || [];
     for (const version of versions) {
       const safeName = policy.name.replace(/[^a-zA-Z0-9]/g, '_');
       archive.append(version.contentHtml || '', { name: `policies/${safeName}-v${version.versionNumber}.html` });
@@ -279,16 +313,29 @@ export async function generateAuditFile(
     where: eq(dpias.organizationId, orgId),
   });
 
+  const dpiaIds = orgDpias.map(d => d.id);
+  const allRisks = dpiaIds.length > 0 
+    ? await db.query.dpiaRisks.findMany({ where: inArray(dpiaRisks.dpiaId, dpiaIds) })
+    : [];
+  const riskIds = allRisks.map(r => r.id);
+  const allMeasures = riskIds.length > 0
+    ? await db.query.dpiaMeasures.findMany({ where: inArray(dpiaMeasures.dpiaRiskId, riskIds) })
+    : [];
+
+  const measuresByRiskId = new Map<string, typeof allMeasures>();
+  for (const m of allMeasures) {
+    if (!measuresByRiskId.has(m.dpiaRiskId)) measuresByRiskId.set(m.dpiaRiskId, []);
+    measuresByRiskId.get(m.dpiaRiskId)!.push(m);
+  }
+
+  const risksByDpiaId = new Map<string, any[]>();
+  for (const r of allRisks) {
+    if (!risksByDpiaId.has(r.dpiaId)) risksByDpiaId.set(r.dpiaId, []);
+    risksByDpiaId.get(r.dpiaId)!.push({ ...r, measures: measuresByRiskId.get(r.id) || [] });
+  }
+
   for (const dpia of orgDpias) {
-    const risks = await db.query.dpiaRisks.findMany({
-      where: eq(dpiaRisks.dpiaId, dpia.id),
-    });
-    const risksWithMeasures = await Promise.all(risks.map(async (risk) => ({
-      ...risk,
-      measures: await db.query.dpiaMeasures.findMany({
-        where: eq(dpiaMeasures.dpiaRiskId, risk.id),
-      }),
-    })));
+    const risksWithMeasures = risksByDpiaId.get(dpia.id) || [];
 
     const linkedActivityIds = (dpia.processingActivityIds as string[]) || [];
     const linkedNames = activities
