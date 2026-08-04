@@ -1,0 +1,42 @@
+{
+  "name": "HealthcareService54",
+  "headquartersCountry": "NL",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://healthcareservice54.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "without undue delay",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "healthcareservice54",
+  "website": "https://healthcareservice54.com",
+  "logoUrl": "https://logo.clearbit.com/healthcareservice54.com",
+  "description": "HealthcareService54 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Healthcare",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://healthcareservice54.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "derivedRiskFlags": [
+    "undue_delay_breach_terms"
+  ],
+  "suggestedForIndustries": [
+    "marketing_agency"
+  ]
+}

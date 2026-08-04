@@ -1,0 +1,40 @@
+{
+  "name": "AdvertisingService81",
+  "headquartersCountry": "FR",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://advertisingservice81.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "advertisingservice81",
+  "website": "https://advertisingservice81.com",
+  "logoUrl": "https://logo.clearbit.com/advertisingservice81.com",
+  "description": "AdvertisingService81 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Advertising",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://advertisingservice81.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "derivedRiskFlags": [],
+  "suggestedForIndustries": [
+    "marketing_agency"
+  ]
+}

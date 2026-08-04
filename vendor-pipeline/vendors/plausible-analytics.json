@@ -1,0 +1,38 @@
+{
+  "name": "Plausible Analytics",
+  "headquartersCountry": "EE",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://plausible-analytics.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "72 hours",
+  "dataDeletionOnTermination": "immediately",
+  "subProcessorObjectionWindow": "30 days",
+  "slug": "plausible-analytics",
+  "website": "https://plausible-analytics.com",
+  "logoUrl": "https://logo.clearbit.com/plausible-analytics.com",
+  "description": "Plausible Analytics is a leading provider in the Analytics category, offering compliant enterprise services.",
+  "category": "Analytics",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001",
+    "soc2_type2"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "European Union residency option supported",
+  "subProcessorListUrl": "https://plausible-analytics.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "derivedRiskFlags": []
+}

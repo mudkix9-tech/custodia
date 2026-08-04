@@ -1,0 +1,40 @@
+{
+  "name": "PaymentsService31",
+  "headquartersCountry": "FR",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://paymentsservice31.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "paymentsservice31",
+  "website": "https://paymentsservice31.com",
+  "logoUrl": "https://logo.clearbit.com/paymentsservice31.com",
+  "description": "PaymentsService31 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Payments",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://paymentsservice31.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "derivedRiskFlags": [],
+  "suggestedForIndustries": [
+    "recruitment"
+  ]
+}

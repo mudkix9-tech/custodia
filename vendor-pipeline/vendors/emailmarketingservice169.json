@@ -1,0 +1,40 @@
+{
+  "name": "EmailMarketingService169",
+  "headquartersCountry": "ES",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://emailmarketingservice169.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "emailmarketingservice169",
+  "website": "https://emailmarketingservice169.com",
+  "logoUrl": "https://logo.clearbit.com/emailmarketingservice169.com",
+  "description": "EmailMarketingService169 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Email Marketing",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://emailmarketingservice169.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "derivedRiskFlags": [],
+  "suggestedForIndustries": [
+    "construction"
+  ]
+}

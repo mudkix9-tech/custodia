@@ -1,0 +1,43 @@
+{
+  "name": "CloudInfrastructureService152",
+  "headquartersCountry": "IE",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://cloudinfrastructureservice152.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "webpage",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "vague",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "cloudinfrastructureservice152",
+  "website": "https://cloudinfrastructureservice152.com",
+  "logoUrl": "https://logo.clearbit.com/cloudinfrastructureservice152.com",
+  "description": "CloudInfrastructureService152 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Cloud Infrastructure",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://cloudinfrastructureservice152.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "derivedRiskFlags": [
+    "passive_subprocessor_notification",
+    "no_deletion_timeline"
+  ],
+  "suggestedForIndustries": [
+    "generic"
+  ]
+}

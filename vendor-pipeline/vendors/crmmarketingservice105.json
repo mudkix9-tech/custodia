@@ -1,0 +1,44 @@
+{
+  "name": "CRMMarketingService105",
+  "headquartersCountry": "EE",
+  "parentCompanyCountry": "US",
+  "dpaUrl": null,
+  "isDpfCertified": false,
+  "sccsInDpa": false,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": null,
+  "slug": "crmmarketingservice105",
+  "website": "https://crmmarketingservice105.com",
+  "logoUrl": "https://logo.clearbit.com/crmmarketingservice105.com",
+  "description": "CRMMarketingService105 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "CRM & Marketing",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://crmmarketingservice105.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "derivedRiskFlags": [
+    "no_sccs",
+    "no_dpa",
+    "no_objection_window"
+  ],
+  "suggestedForIndustries": [
+    "accounting"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "RecruitmentService160",
+  "headquartersCountry": "DE",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://recruitmentservice160.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": false,
+  "subProcessorNotificationType": "webpage",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "vague",
+  "subProcessorObjectionWindow": null,
+  "slug": "recruitmentservice160",
+  "website": "https://recruitmentservice160.com",
+  "logoUrl": "https://logo.clearbit.com/recruitmentservice160.com",
+  "description": "RecruitmentService160 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Recruitment",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://recruitmentservice160.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "derivedRiskFlags": [
+    "no_sccs",
+    "passive_subprocessor_notification",
+    "no_deletion_timeline",
+    "no_objection_window"
+  ],
+  "suggestedForIndustries": [
+    "construction"
+  ]
+}

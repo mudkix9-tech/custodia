@@ -1,0 +1,46 @@
+{
+  "name": "CRMMarketingService180",
+  "headquartersCountry": "DE",
+  "parentCompanyCountry": null,
+  "dpaUrl": null,
+  "isDpfCertified": false,
+  "sccsInDpa": false,
+  "subProcessorNotificationType": "webpage",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "without undue delay",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": null,
+  "slug": "crmmarketingservice180",
+  "website": "https://crmmarketingservice180.com",
+  "logoUrl": "https://logo.clearbit.com/crmmarketingservice180.com",
+  "description": "CRMMarketingService180 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "CRM & Marketing",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://crmmarketingservice180.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "derivedRiskFlags": [
+    "no_sccs",
+    "no_dpa",
+    "passive_subprocessor_notification",
+    "undue_delay_breach_terms",
+    "no_objection_window"
+  ],
+  "suggestedForIndustries": [
+    "marketing_agency"
+  ]
+}
