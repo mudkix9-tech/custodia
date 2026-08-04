@@ -1,0 +1,43 @@
+{
+  "name": "Amazon Web Services",
+  "headquartersCountry": "US",
+  "parentCompanyCountry": "US",
+  "dpaUrl": "https://amazon-web-services.com/legal/dpa",
+  "isDpfCertified": true,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu",
+    "us",
+    "ap"
+  ],
+  "breachNotificationTerms": "without undue delay and in any event within 72 hours",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "amazon-web-services",
+  "website": "https://amazon-web-services.com",
+  "logoUrl": "https://logo.clearbit.com/amazon-web-services.com",
+  "description": "Amazon Web Services is a leading provider in the Cloud Infrastructure category, offering compliant enterprise services.",
+  "category": "Cloud Infrastructure",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001",
+    "soc2_type2"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "European Union residency option supported",
+  "subProcessorListUrl": "https://amazon-web-services.com/legal/subprocessors",
+  "transferMechanisms": [
+    "data_privacy_framework",
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "derivedRiskFlags": [
+    "us_parent_company"
+  ]
+}

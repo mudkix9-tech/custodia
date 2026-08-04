@@ -1,0 +1,42 @@
+{
+  "name": "Asana",
+  "headquartersCountry": "US",
+  "parentCompanyCountry": "US",
+  "dpaUrl": "https://asana.com/legal/dpa",
+  "isDpfCertified": true,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "us",
+    "eu"
+  ],
+  "breachNotificationTerms": "72 hours",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "asana",
+  "website": "https://asana.com",
+  "logoUrl": "https://logo.clearbit.com/asana.com",
+  "description": "Asana is a leading provider in the Productivity category, offering compliant enterprise services.",
+  "category": "Productivity",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001",
+    "soc2_type2"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "European Union residency option supported",
+  "subProcessorListUrl": "https://asana.com/legal/subprocessors",
+  "transferMechanisms": [
+    "data_privacy_framework",
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "derivedRiskFlags": [
+    "us_parent_company"
+  ]
+}

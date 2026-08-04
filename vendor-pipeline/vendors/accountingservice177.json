@@ -1,0 +1,40 @@
+{
+  "name": "AccountingService177",
+  "headquartersCountry": "CA",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://accountingservice177.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "accountingservice177",
+  "website": "https://accountingservice177.com",
+  "logoUrl": "https://logo.clearbit.com/accountingservice177.com",
+  "description": "AccountingService177 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Accounting",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://accountingservice177.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "derivedRiskFlags": [],
+  "suggestedForIndustries": [
+    "accounting"
+  ]
+}

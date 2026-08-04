@@ -1,0 +1,43 @@
+{
+  "name": "ConstructionService88",
+  "headquartersCountry": "CH",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://constructionservice88.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "webpage",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "vague",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "constructionservice88",
+  "website": "https://constructionservice88.com",
+  "logoUrl": "https://logo.clearbit.com/constructionservice88.com",
+  "description": "ConstructionService88 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Construction",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://constructionservice88.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "derivedRiskFlags": [
+    "passive_subprocessor_notification",
+    "no_deletion_timeline"
+  ],
+  "suggestedForIndustries": [
+    "construction"
+  ]
+}

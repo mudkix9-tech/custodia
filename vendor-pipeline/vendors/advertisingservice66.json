@@ -1,0 +1,42 @@
+{
+  "name": "AdvertisingService66",
+  "headquartersCountry": "UK",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://advertisingservice66.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "without undue delay",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "advertisingservice66",
+  "website": "https://advertisingservice66.com",
+  "logoUrl": "https://logo.clearbit.com/advertisingservice66.com",
+  "description": "AdvertisingService66 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Advertising",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://advertisingservice66.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "derivedRiskFlags": [
+    "undue_delay_breach_terms"
+  ],
+  "suggestedForIndustries": [
+    "healthcare"
+  ]
+}

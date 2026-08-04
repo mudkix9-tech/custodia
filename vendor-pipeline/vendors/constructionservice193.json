@@ -1,0 +1,44 @@
+{
+  "name": "ConstructionService193",
+  "headquartersCountry": "US",
+  "parentCompanyCountry": "US",
+  "dpaUrl": "https://constructionservice193.com/legal/dpa",
+  "isDpfCertified": true,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "us",
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "constructionservice193",
+  "website": "https://constructionservice193.com",
+  "logoUrl": "https://logo.clearbit.com/constructionservice193.com",
+  "description": "ConstructionService193 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Construction",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://constructionservice193.com/legal/subprocessors",
+  "transferMechanisms": [
+    "data_privacy_framework",
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "derivedRiskFlags": [
+    "us_parent_company"
+  ],
+  "suggestedForIndustries": [
+    "recruitment"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "name": "EmailMarketingService64",
+  "headquartersCountry": "NL",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://emailmarketingservice64.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "webpage",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "vague",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "emailmarketingservice64",
+  "website": "https://emailmarketingservice64.com",
+  "logoUrl": "https://logo.clearbit.com/emailmarketingservice64.com",
+  "description": "EmailMarketingService64 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Email Marketing",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://emailmarketingservice64.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "derivedRiskFlags": [
+    "passive_subprocessor_notification",
+    "no_deletion_timeline"
+  ],
+  "suggestedForIndustries": [
+    "ecommerce"
+  ]
+}

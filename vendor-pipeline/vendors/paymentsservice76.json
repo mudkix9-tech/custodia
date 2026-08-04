@@ -1,0 +1,42 @@
+{
+  "name": "PaymentsService76",
+  "headquartersCountry": "UK",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://paymentsservice76.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "webpage",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "paymentsservice76",
+  "website": "https://paymentsservice76.com",
+  "logoUrl": "https://logo.clearbit.com/paymentsservice76.com",
+  "description": "PaymentsService76 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Payments",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://paymentsservice76.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "derivedRiskFlags": [
+    "passive_subprocessor_notification"
+  ],
+  "suggestedForIndustries": [
+    "recruitment"
+  ]
+}

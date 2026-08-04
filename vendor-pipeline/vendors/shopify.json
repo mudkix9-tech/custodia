@@ -1,0 +1,39 @@
+{
+  "name": "Shopify",
+  "headquartersCountry": "CA",
+  "parentCompanyCountry": "CA",
+  "dpaUrl": "https://shopify.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "us",
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "shopify",
+  "website": "https://shopify.com",
+  "logoUrl": "https://logo.clearbit.com/shopify.com",
+  "description": "Shopify is a leading provider in the E-commerce category, offering compliant enterprise services.",
+  "category": "E-commerce",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001",
+    "soc2_type2"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "European Union residency option supported",
+  "subProcessorListUrl": "https://shopify.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "derivedRiskFlags": []
+}

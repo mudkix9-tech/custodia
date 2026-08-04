@@ -1,0 +1,43 @@
+{
+  "name": "RecruitmentService175",
+  "headquartersCountry": "EE",
+  "parentCompanyCountry": "US",
+  "dpaUrl": "https://recruitmentservice175.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": false,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": null,
+  "slug": "recruitmentservice175",
+  "website": "https://recruitmentservice175.com",
+  "logoUrl": "https://logo.clearbit.com/recruitmentservice175.com",
+  "description": "RecruitmentService175 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Recruitment",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://recruitmentservice175.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "derivedRiskFlags": [
+    "no_sccs",
+    "no_objection_window"
+  ],
+  "suggestedForIndustries": [
+    "recruitment"
+  ]
+}

@@ -44,3 +44,7 @@ coverage
 # Misc
 .vercel
 *.tsbuildinfo
+vendor-pipeline/dist
+vendor-pipeline/node_modules
+vendor-pipeline/cache
+vendor-pipeline/review-queue.db

@@ -1,0 +1,40 @@
+{
+  "name": "AnalyticsService119",
+  "headquartersCountry": "ES",
+  "parentCompanyCountry": "US",
+  "dpaUrl": "https://analyticsservice119.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "analyticsservice119",
+  "website": "https://analyticsservice119.com",
+  "logoUrl": "https://logo.clearbit.com/analyticsservice119.com",
+  "description": "AnalyticsService119 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Analytics",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://analyticsservice119.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "derivedRiskFlags": [],
+  "suggestedForIndustries": [
+    "saas"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Doctolib",
+  "headquartersCountry": "FR",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://doctolib.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "30 days",
+  "slug": "doctolib",
+  "website": "https://doctolib.com",
+  "logoUrl": "https://logo.clearbit.com/doctolib.com",
+  "description": "Doctolib is a leading provider in the Healthcare category, offering compliant enterprise services.",
+  "category": "Healthcare",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001",
+    "soc2_type2"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "European Union residency option supported",
+  "subProcessorListUrl": "https://doctolib.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "derivedRiskFlags": []
+}

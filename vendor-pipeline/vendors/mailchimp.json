@@ -1,0 +1,48 @@
+{
+  "name": "Mailchimp",
+  "headquartersCountry": "US",
+  "parentCompanyCountry": "US",
+  "dpaUrl": "https://mailchimp.com/legal/dpa",
+  "isDpfCertified": true,
+  "sccsInDpa": false,
+  "subProcessorNotificationType": "webpage",
+  "dataResidencyOptions": [
+    "us"
+  ],
+  "breachNotificationTerms": "undue delay",
+  "dataDeletionOnTermination": "vague",
+  "subProcessorObjectionWindow": null,
+  "slug": "mailchimp",
+  "website": "https://mailchimp.com",
+  "logoUrl": "https://logo.clearbit.com/mailchimp.com",
+  "description": "Mailchimp is a leading provider in the Email Marketing category, offering compliant enterprise services.",
+  "category": "Email Marketing",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001",
+    "soc2_type2"
+  ],
+  "euHostingAvailable": false,
+  "euHostingDetail": "US hosted only",
+  "subProcessorListUrl": "https://mailchimp.com/legal/subprocessors",
+  "transferMechanisms": [
+    "data_privacy_framework",
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "derivedRiskFlags": [
+    "dpf_only",
+    "no_sccs",
+    "passive_subprocessor_notification",
+    "no_eu_residency",
+    "undue_delay_breach_terms",
+    "no_deletion_timeline",
+    "no_objection_window",
+    "us_parent_company"
+  ]
+}

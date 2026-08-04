@@ -1,0 +1,45 @@
+{
+  "name": "Notion",
+  "headquartersCountry": "US",
+  "parentCompanyCountry": "US",
+  "dpaUrl": "https://notion.com/legal/dpa",
+  "isDpfCertified": true,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "webpage",
+  "dataResidencyOptions": [
+    "us"
+  ],
+  "breachNotificationTerms": "undue delay and in any event within 72 hours",
+  "dataDeletionOnTermination": "unspecified",
+  "subProcessorObjectionWindow": null,
+  "slug": "notion",
+  "website": "https://notion.com",
+  "logoUrl": "https://logo.clearbit.com/notion.com",
+  "description": "Notion is a leading provider in the Productivity category, offering compliant enterprise services.",
+  "category": "Productivity",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001",
+    "soc2_type2"
+  ],
+  "euHostingAvailable": false,
+  "euHostingDetail": "US hosted only",
+  "subProcessorListUrl": "https://notion.com/legal/subprocessors",
+  "transferMechanisms": [
+    "data_privacy_framework",
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "derivedRiskFlags": [
+    "passive_subprocessor_notification",
+    "no_eu_residency",
+    "no_deletion_timeline",
+    "no_objection_window",
+    "us_parent_company"
+  ]
+}

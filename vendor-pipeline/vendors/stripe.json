@@ -1,0 +1,46 @@
+{
+  "name": "Stripe",
+  "headquartersCountry": "US",
+  "parentCompanyCountry": "US",
+  "dpaUrl": "https://stripe.com/legal/dpa",
+  "isDpfCertified": true,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "webpage",
+  "dataResidencyOptions": [
+    "us",
+    "eu"
+  ],
+  "breachNotificationTerms": "without undue delay",
+  "dataDeletionOnTermination": "unspecified",
+  "subProcessorObjectionWindow": null,
+  "slug": "stripe",
+  "website": "https://stripe.com",
+  "logoUrl": "https://logo.clearbit.com/stripe.com",
+  "description": "Stripe is a leading provider in the Payments category, offering compliant enterprise services.",
+  "category": "Payments",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001",
+    "soc2_type2"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "European Union residency option supported",
+  "subProcessorListUrl": "https://stripe.com/legal/subprocessors",
+  "transferMechanisms": [
+    "data_privacy_framework",
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.863Z",
+  "derivedRiskFlags": [
+    "passive_subprocessor_notification",
+    "undue_delay_breach_terms",
+    "no_deletion_timeline",
+    "no_objection_window",
+    "us_parent_company"
+  ]
+}

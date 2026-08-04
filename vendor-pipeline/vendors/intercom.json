@@ -1,0 +1,39 @@
+{
+  "name": "Intercom",
+  "headquartersCountry": "IE",
+  "parentCompanyCountry": "US",
+  "dpaUrl": "https://intercom.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu",
+    "us"
+  ],
+  "breachNotificationTerms": "within 72 hours",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "30 days",
+  "slug": "intercom",
+  "website": "https://intercom.com",
+  "logoUrl": "https://logo.clearbit.com/intercom.com",
+  "description": "Intercom is a leading provider in the Communication category, offering compliant enterprise services.",
+  "category": "Communication",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001",
+    "soc2_type2"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "European Union residency option supported",
+  "subProcessorListUrl": "https://intercom.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.864Z",
+  "derivedRiskFlags": []
+}

@@ -1,0 +1,40 @@
+{
+  "name": "AnalyticsService134",
+  "headquartersCountry": "NL",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://analyticsservice134.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "analyticsservice134",
+  "website": "https://analyticsservice134.com",
+  "logoUrl": "https://logo.clearbit.com/analyticsservice134.com",
+  "description": "AnalyticsService134 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Analytics",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://analyticsservice134.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "derivedRiskFlags": [],
+  "suggestedForIndustries": [
+    "generic"
+  ]
+}

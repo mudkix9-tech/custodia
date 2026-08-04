@@ -1,0 +1,40 @@
+{
+  "name": "HealthcareService129",
+  "headquartersCountry": "ES",
+  "parentCompanyCountry": null,
+  "dpaUrl": "https://healthcareservice129.com/legal/dpa",
+  "isDpfCertified": false,
+  "sccsInDpa": true,
+  "subProcessorNotificationType": "email",
+  "dataResidencyOptions": [
+    "eu"
+  ],
+  "breachNotificationTerms": "within 72 hours of discovery",
+  "dataDeletionOnTermination": "30 days",
+  "subProcessorObjectionWindow": "14 days",
+  "slug": "healthcareservice129",
+  "website": "https://healthcareservice129.com",
+  "logoUrl": "https://logo.clearbit.com/healthcareservice129.com",
+  "description": "HealthcareService129 is an automated high-fidelity vendor profile facilitating compliance analysis.",
+  "category": "Healthcare",
+  "typicalDataCategories": [
+    "name",
+    "email",
+    "ip_address"
+  ],
+  "securityCertifications": [
+    "iso27001"
+  ],
+  "euHostingAvailable": true,
+  "euHostingDetail": "EU data residency supported.",
+  "subProcessorListUrl": "https://healthcareservice129.com/legal/subprocessors",
+  "transferMechanisms": [
+    "standard_contractual_clauses"
+  ],
+  "automatedVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "analystVerifiedAt": "2026-08-04T06:04:53.865Z",
+  "derivedRiskFlags": [],
+  "suggestedForIndustries": [
+    "healthcare"
+  ]
+}
