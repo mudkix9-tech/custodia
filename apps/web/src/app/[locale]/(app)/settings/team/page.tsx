@@ -31,11 +31,13 @@ export default function TeamSettingsPage() {
   const removeMember = trpc.team.remove.useMutation();
   const { confirm, dialog } = useConfirm();
   const inviteMember = trpc.team.bulkInvite.useMutation(); // using bulk invite for single and multiple
+  const resendInvite = trpc.team.resendInvite.useMutation();
 
   const [inviteEmails, setInviteEmails] = useState('');
   const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('member');
-  const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'sent' | 'error' | 'partial'>('idle');
   const [inviteError, setInviteError] = useState('');
+  const [inviteResult, setInviteResult] = useState<any>(null);
   const [isBulk, setIsBulk] = useState(false);
 
   const [selectedUser, setSelectedUser] = useState<any /* eslint-disable-line @typescript-eslint/no-explicit-any */ | null>(null);
@@ -68,17 +70,37 @@ export default function TeamSettingsPage() {
     }
   };
 
+  const handleResend = async (userId: string, email: string) => {
+    try {
+      await resendInvite.mutateAsync({ userId });
+      alert(`Invitation resent to ${email}`);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to resend invitation');
+    }
+  };
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setInviteStatus('sending');
     setInviteError('');
+    setInviteResult(null);
     try {
       const emails = isBulk ? inviteEmails.split('\n').map(e => e.trim()).filter(e => e) : [inviteEmails];
-      await inviteMember.mutateAsync({ emails, role: inviteRole });
-      setInviteStatus('sent');
+      const result = await inviteMember.mutateAsync({ emails, role: inviteRole }) as any;
+      
+      setInviteResult(result);
+      if (result.invalidCount > 0 && result.sentCount === 0) {
+        setInviteStatus('error');
+      } else if (result.invalidCount > 0 || result.duplicateCount > 0 || result.failedCount > 0) {
+        setInviteStatus('partial');
+      } else {
+        setInviteStatus('sent');
+      }
+
       setInviteEmails('');
       refetch();
-      setTimeout(() => setInviteStatus('idle'), 3000);
+      setTimeout(() => setInviteStatus('idle'), 5000);
     } catch (e: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
       setInviteStatus('error');
       setInviteError(e.message || 'Failed to send invite');
@@ -183,7 +205,22 @@ export default function TeamSettingsPage() {
                 </Button>
               </form>
               {inviteStatus === 'sent' && <p className="text-sm text-[#C9A227] mt-2">{t('invite.success')}</p>}
-              {inviteStatus === 'error' && <p className="text-sm text-red-400 mt-2">{inviteError}</p>}
+              {inviteStatus === 'partial' && inviteResult && (
+                <p className="text-sm text-amber-500 mt-2">
+                  {inviteResult.failedCount > 0 
+                    ? t('invite.send_failures', { sent: inviteResult.sentCount, failed: inviteResult.failedCount, duplicates: inviteResult.duplicateCount, invalid: inviteResult.invalidCount })
+                    : t('invite.partial_success', { sent: inviteResult.sentCount, duplicates: inviteResult.duplicateCount, invalid: inviteResult.invalidCount })
+                  }
+                </p>
+              )}
+              {inviteStatus === 'error' && (
+                <p className="text-sm text-red-400 mt-2">
+                  {inviteResult?.invalidCount > 0 && inviteResult?.sentCount === 0 
+                    ? t('invite.invalid_only', { invalid: inviteResult.invalidCount })
+                    : inviteError
+                  }
+                </p>
+              )}
             </div>
           )}
 
@@ -305,7 +342,7 @@ export default function TeamSettingsPage() {
                       <td className="px-6 py-4 font-medium text-[#F4F5F6]">{member.email}</td>
                       <td className="px-6 py-4 capitalize text-[#9BA1A6]">{member.role}</td>
                       <td className="px-6 py-4 text-[#6E747A] text-right">
-                        <Button variant="outline" size="sm" className="mr-2">{t('pending.resend')}</Button>
+                        <Button variant="outline" size="sm" className="mr-2" onClick={() => handleResend(member.id, member.email)}>{t('pending.resend')}</Button>
                         <Button variant="destructive" size="sm" onClick={() => handleRemove(member.id, member.email)}>{t('pending.cancel')}</Button>
                       </td>
                     </tr>
@@ -394,6 +431,7 @@ export default function TeamSettingsPage() {
           </div>
         )}
       </div>
+      {dialog}
     </div>
   );
 }
