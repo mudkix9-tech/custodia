@@ -1,32 +1,10 @@
 import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { IBM_Plex_Sans, IBM_Plex_Mono, Spectral } from 'next/font/google';
 import { Lock, Server } from 'lucide-react';
 import { MarketingHeader, Logo } from '@/components/layout/MarketingHeader';
 import { FooterLocaleSwitcher } from '@/components/layout/FooterLocaleSwitcher';
-
-const plexSans = IBM_Plex_Sans({
-  subsets: ['latin'],
-  variable: '--font-plex-sans',
-  weight: ['300', '400', '500', '600'],
-  display: 'swap',
-});
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  variable: '--font-plex-mono',
-  weight: ['400', '500'],
-  display: 'swap',
-});
-
-const spectral = Spectral({
-  subsets: ['latin'],
-  variable: '--font-spectral',
-  weight: ['300', '400'],
-  style: ['normal', 'italic'],
-  display: 'swap',
-});
+import { plexSans, plexMono, spectral } from '../fonts';
 
 import { getTranslations } from 'next-intl/server';
 
