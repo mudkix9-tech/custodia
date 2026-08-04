@@ -45,30 +45,21 @@ export async function generateMetadata({
     openGraph: {
       title: t('title'),
       description: t('desc'),
-      url: `https://custodia.io/${locale}`,
+      url: `https://trycustodia.com/${locale}`,
       siteName: 'Custodia',
-      images: [
-        {
-          url: 'https://custodia.io/og/homepage.png',
-          width: 1200,
-          height: 630,
-          alt: t('title'),
-        }
-      ],
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
       title: t('title'),
       description: t('desc'),
-      images: ['https://custodia.io/og/homepage.png'],
     },
     alternates: {
-      canonical: `https://custodia.io/${locale}`,
+      canonical: `https://trycustodia.com/${locale}`,
       languages: {
-        'en': 'https://custodia.io/en',
-        'de': 'https://custodia.io/de',
-        'fr': 'https://custodia.io/fr',
+        'en': 'https://trycustodia.com/en',
+        'de': 'https://trycustodia.com/de',
+        'fr': 'https://trycustodia.com/fr',
       }
     },
   };

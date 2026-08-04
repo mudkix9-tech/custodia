@@ -63,8 +63,8 @@ export default async function RootLayout({
               "@context": "https://schema.org",
               "@type": "Organization",
               "name": "Custodia",
-              "url": "https://custodia.io",
-              "logo": "https://custodia.io/logo.png",
+              "url": "https://trycustodia.com",
+              "logo": "https://trycustodia.com/logo.png",
               "sameAs": [
                 "https://x.com/custodia",
                 "https://github.com/mudkix9-tech/custodia"

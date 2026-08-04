@@ -3,6 +3,54 @@
     "title": "Custodia — GDPR Compliance Operating System for EU Agencies",
     "desc": "The complete GDPR compliance platform built for EU marketing, digital, and design agencies. Replace consultants and spreadsheets."
   },
+  "hero": {
+    "badge": "GDPR compliance OS for EU agencies",
+    "titlePrefix": "The GDPR compliance",
+    "titleAccent": "operating system",
+    "titleSuffix": "for EU agencies.",
+    "subheadline": "Replace the spreadsheet, the consultant retainer, and the shared drive with one platform that keeps your records, vendors, and DSARs audit-ready — automatically.",
+    "ctaAssessment": "Start free assessment",
+    "ctaPlatform": "Explore the platform",
+    "note": "No credit card required"
+  },
+  "pains": {
+    "title": "The old way of doing compliance doesn't scale.",
+    "subheadline": "Three failure modes we see in every agency before they switch."
+  },
+  "modules": {
+    "badge": "Platform",
+    "title": "One system for every compliance obligation.",
+    "subheadline": "Eight modules that cover records, vendors, requests, consent, and breach response — connected, not siloed."
+  },
+  "advisor": {
+    "badge": "AI advisor",
+    "title": "Ask a question. Get a cited answer.",
+    "subheadline": "Grounded in the Regulation, EDPB guidance, and national DPA decisions — scoped to the jurisdiction you're working in.",
+    "quote": "It's the first tool that answers like someone who actually read the guidance.",
+    "corpusNote": "Corpus last updated"
+  },
+  "pricing": {
+    "badge": "Pricing",
+    "title": "Simple pricing, built for agencies.",
+    "subheadline": "One plan for growing teams, one for enterprises with custom requirements.",
+    "monthlyLabel": "Monthly",
+    "annualLabel": "Annual",
+    "footnote1": "Cancel anytime",
+    "footnote2": "20% off billed annually",
+    "footnote3": "VAT calculated at checkout"
+  },
+  "trust": {
+    "title": "Built to survive an audit.",
+    "subheadline": "Security and residency controls that hold up under scrutiny — from a supervisory authority or an enterprise procurement team."
+  },
+  "assessment": {
+    "badge": "Get started",
+    "title": "See where your compliance programme actually stands.",
+    "subheadline": "A free assessment maps your gaps against the Regulation in under 15 minutes — no sales call required.",
+    "ctaAssessment": "Start free assessment",
+    "ctaWalkthrough": "Book a walkthrough",
+    "usedBy": "Trusted by compliance teams at EU digital agencies"
+  },
   "layout": {
     "skip_to_content": "Skip to main content",
     "footer_description": "The compliance automation platform designed for modern agencies.",

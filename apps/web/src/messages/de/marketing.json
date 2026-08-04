@@ -6,6 +6,54 @@
     "title": "Custodia — GDPR-Compliance-Betriebssystem für EU-Agenturen",
     "desc": "Die komplette GDPR-Compliance-Plattform für EU-Marketing-, Digital- und Design-Agenturen. Ersetzen Sie Berater und Tabellen."
   },
+  "hero": {
+    "badge": "GDPR-Compliance-OS für EU-Agenturen",
+    "titlePrefix": "Das GDPR-Compliance-",
+    "titleAccent": "Betriebssystem",
+    "titleSuffix": "für EU-Agenturen.",
+    "subheadline": "Ersetzen Sie die Tabelle, das Berater-Retainer und das geteilte Laufwerk durch eine Plattform, die Ihre Verzeichnisse, Dienstleister und Betroffenenanfragen automatisch prüfungsbereit hält.",
+    "ctaAssessment": "Kostenlose Bewertung starten",
+    "ctaPlatform": "Plattform entdecken",
+    "note": "Keine Kreditkarte erforderlich"
+  },
+  "pains": {
+    "title": "Die alte Art der Compliance skaliert nicht.",
+    "subheadline": "Drei Fehlermuster, die wir bei jeder Agentur vor dem Wechsel sehen."
+  },
+  "modules": {
+    "badge": "Plattform",
+    "title": "Ein System für jede Compliance-Pflicht.",
+    "subheadline": "Acht Module für Verzeichnisse, Dienstleister, Anfragen, Einwilligungen und Vorfallmanagement — verbunden, nicht isoliert."
+  },
+  "advisor": {
+    "badge": "KI-Berater",
+    "title": "Frage stellen. Zitierte Antwort erhalten.",
+    "subheadline": "Basierend auf der Verordnung, EDPB-Leitlinien und nationalen Aufsichtsbehörden-Entscheidungen — passend zur jeweiligen Rechtsordnung.",
+    "quote": "Das erste Tool, das antwortet wie jemand, der die Leitlinien wirklich gelesen hat.",
+    "corpusNote": "Korpus zuletzt aktualisiert am"
+  },
+  "pricing": {
+    "badge": "Preise",
+    "title": "Einfache Preise, gemacht für Agenturen.",
+    "subheadline": "Ein Plan für wachsende Teams, einer für Unternehmen mit individuellen Anforderungen.",
+    "monthlyLabel": "Monatlich",
+    "annualLabel": "Jährlich",
+    "footnote1": "Jederzeit kündbar",
+    "footnote2": "20 % Rabatt bei jährlicher Abrechnung",
+    "footnote3": "MwSt. wird beim Checkout berechnet"
+  },
+  "trust": {
+    "title": "Gebaut, um eine Prüfung zu bestehen.",
+    "subheadline": "Sicherheits- und Standortkontrollen, die einer genauen Prüfung standhalten — durch eine Aufsichtsbehörde oder ein Enterprise-Einkaufsteam."
+  },
+  "assessment": {
+    "badge": "Loslegen",
+    "title": "Sehen Sie, wo Ihr Compliance-Programm wirklich steht.",
+    "subheadline": "Eine kostenlose Bewertung ordnet Ihre Lücken der Verordnung in unter 15 Minuten zu — kein Verkaufsgespräch nötig.",
+    "ctaAssessment": "Kostenlose Bewertung starten",
+    "ctaWalkthrough": "Demo vereinbaren",
+    "usedBy": "Vertraut von Compliance-Teams bei EU-Digitalagenturen"
+  },
   "layout": {
     "skip_to_content": "Zum Hauptinhalt springen",
     "footer_description": "Die Compliance-Automatisierungsplattform für moderne Agenturen.",

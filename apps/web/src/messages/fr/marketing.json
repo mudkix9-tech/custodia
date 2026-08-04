@@ -6,6 +6,54 @@
     "title": "Custodia — Système d'exploitation de conformité RGPD pour les agences de l'UE",
     "desc": "La plateforme de conformité RGPD complète conçue pour les agences de marketing, de numérique et de design de l'UE. Remplacez les consultants et les feuilles de calcul."
   },
+  "hero": {
+    "badge": "L'OS de conformité RGPD pour les agences de l'UE",
+    "titlePrefix": "Le système d'exploitation",
+    "titleAccent": "de conformité RGPD",
+    "titleSuffix": "pour les agences de l'UE.",
+    "subheadline": "Remplacez le tableur, le forfait consultant et le drive partagé par une plateforme unique qui garde vos registres, prestataires et demandes d'accès prêts pour un audit — automatiquement.",
+    "ctaAssessment": "Démarrer l'évaluation gratuite",
+    "ctaPlatform": "Découvrir la plateforme",
+    "note": "Aucune carte bancaire requise"
+  },
+  "pains": {
+    "title": "L'ancienne façon de gérer la conformité ne tient pas la charge.",
+    "subheadline": "Trois modes de défaillance que nous observons dans chaque agence avant qu'elle ne change."
+  },
+  "modules": {
+    "badge": "Plateforme",
+    "title": "Un seul système pour chaque obligation de conformité.",
+    "subheadline": "Huit modules couvrant les registres, prestataires, demandes, consentement et gestion des violations — connectés, non cloisonnés."
+  },
+  "advisor": {
+    "badge": "Conseiller IA",
+    "title": "Posez une question. Obtenez une réponse sourcée.",
+    "subheadline": "Fondé sur le Règlement, les lignes directrices du CEPD et les décisions des autorités nationales — adapté à la juridiction sur laquelle vous travaillez.",
+    "quote": "Le premier outil qui répond comme quelqu'un ayant vraiment lu les lignes directrices.",
+    "corpusNote": "Corpus mis à jour le"
+  },
+  "pricing": {
+    "badge": "Tarification",
+    "title": "Une tarification simple, pensée pour les agences.",
+    "subheadline": "Un plan pour les équipes en croissance, un autre pour les entreprises aux besoins spécifiques.",
+    "monthlyLabel": "Mensuel",
+    "annualLabel": "Annuel",
+    "footnote1": "Annulable à tout moment",
+    "footnote2": "20 % de réduction en facturation annuelle",
+    "footnote3": "TVA calculée au paiement"
+  },
+  "trust": {
+    "title": "Conçu pour résister à un audit.",
+    "subheadline": "Des contrôles de sécurité et de résidence des données qui tiennent bon face à l'examen — d'une autorité de contrôle ou d'une équipe achats en entreprise."
+  },
+  "assessment": {
+    "badge": "Commencer",
+    "title": "Découvrez où en est réellement votre programme de conformité.",
+    "subheadline": "Une évaluation gratuite cartographie vos écarts par rapport au Règlement en moins de 15 minutes — sans appel commercial.",
+    "ctaAssessment": "Démarrer l'évaluation gratuite",
+    "ctaWalkthrough": "Réserver une démonstration",
+    "usedBy": "Adopté par des équipes conformité d'agences numériques de l'UE"
+  },
   "layout": {
     "skip_to_content": "Passer au contenu principal",
     "footer_description": "La plateforme d'automatisation de la conformité conçue pour les agences modernes.",

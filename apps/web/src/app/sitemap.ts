@@ -22,7 +22,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
   
   const competitors = ['iubenda', 'onetrust', 'cookieyes', 'usercentrics', 'cookiebot'];
-  const blogPosts = ['google-consent-mode-v2', 'gdpr-compliance-guide-agencies', 'what-is-ropa-template'];
+  const gdprRoutes = [
+    '/gdpr/consent-mode-v2',
+    '/gdpr/compliance-guide-agencies',
+    '/gdpr/ropa-template',
+  ];
   
   const vendors = await db.query.vendors.findMany({
     columns: { slug: true }
@@ -51,10 +55,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
 
-    // Add blog posts
-    for (const post of blogPosts) {
+    // Add GDPR guide pages
+    for (const route of gdprRoutes) {
       entries.push({
-        url: `${baseUrl}/${locale}/blog/${post}`,
+        url: `${baseUrl}/${locale}${route}`,
         lastModified: new Date(),
         changeFrequency: 'weekly',
         priority: 0.8,
