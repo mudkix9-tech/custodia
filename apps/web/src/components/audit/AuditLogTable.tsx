@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { format } from 'date-fns';
 import { Download, Search, Settings, Server, User, Clock, ShieldAlert, FileJson } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function AuditLogTable() {
   const [cursor, setCursor] = useState<string | null>(null);
@@ -31,24 +34,29 @@ export function AuditLogTable() {
         <div className="flex items-center gap-4">
           <div className="relative">
             <Search className="w-4 h-4 text-[#6E747A] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input 
+            <Input 
               type="text" 
               placeholder="Search logs..." 
-              className="pl-9 pr-4 py-1.5 text-sm rounded-lg border border-white/20 focus:border-sage-500 focus:ring-1 focus:ring-sage-500 outline-none w-64 bg-[#0D0F11]"
+              className="pl-9 pr-4 w-64"
             />
           </div>
-          <select className="text-sm rounded-lg border border-white/20 py-1.5 px-3 bg-[#0D0F11] outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500">
-            <option value="">All Resource Types</option>
-            <option value="processing_activity">Processing Activity</option>
-            <option value="vendor">Vendor</option>
-            <option value="dsar_request">DSAR Request</option>
-            <option value="breach">Breach</option>
-          </select>
+          <Select>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All Resource Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Resource Types</SelectItem>
+              <SelectItem value="processing_activity">Processing Activity</SelectItem>
+              <SelectItem value="vendor">Vendor</SelectItem>
+              <SelectItem value="dsar_request">DSAR Request</SelectItem>
+              <SelectItem value="breach">Breach</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#E6E8EA] bg-[#0D0F11] border border-white/20 rounded-lg hover:bg-white/5 transition-colors">
+        <Button variant="outline" className="flex items-center gap-2">
           <Download className="w-4 h-4" />
           Export CSV
-        </button>
+        </Button>
       </div>
 
       <div className="overflow-x-auto">
@@ -97,13 +105,14 @@ export function AuditLogTable() {
                 </td>
                 <td className="px-6 py-3 text-right">
                   {(log.changes || log.metadata) && (
-                    <button 
+                    <Button 
+                      variant="link"
                       onClick={() => setSelectedLog(log)}
-                      className="text-[#C9A227] hover:text-[#C9A227] font-medium inline-flex items-center gap-1"
+                      className="text-[#C9A227] hover:text-[#C9A227]/80 font-medium inline-flex items-center gap-1 p-0 h-auto"
                     >
                       <FileJson className="w-4 h-4" />
                       View Diff
-                    </button>
+                    </Button>
                   )}
                 </td>
               </tr>
@@ -115,19 +124,19 @@ export function AuditLogTable() {
       <div className="p-4 border-t border-white/5 flex items-center justify-between bg-[#08090A]">
         <span className="text-sm text-[#6E747A]">Showing {((logs as any)?.data || []).length} entries</span>
         <div className="flex gap-2">
-          <button 
+          <Button 
+            variant="outline"
             disabled={!cursor}
             onClick={() => setCursor(((logs as any)?.pagination?.previous_cursor) || null)}
-            className="px-3 py-1.5 text-sm font-medium text-[#E6E8EA] bg-[#0D0F11] border border-white/20 rounded-lg hover:bg-white/5 disabled:opacity-50"
           >
             Previous
-          </button>
-          <button 
+          </Button>
+          <Button 
+            variant="outline"
             onClick={() => setCursor(((logs as any)?.pagination?.next_cursor) || null)}
-            className="px-3 py-1.5 text-sm font-medium text-[#E6E8EA] bg-[#0D0F11] border border-white/20 rounded-lg hover:bg-white/5"
           >
             Next
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -139,12 +148,13 @@ export function AuditLogTable() {
                 <h3 className="text-lg font-serif text-[#F4F5F6]">Audit Entry Details</h3>
                 <p className="text-xs text-[#6E747A] mt-1 font-mono">{selectedLog.id}</p>
               </div>
-              <button 
+              <Button 
+                variant="ghost"
                 onClick={() => setSelectedLog(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-ink-900/10 transition-colors text-[#6E747A]"
+                className="w-8 h-8 p-0 flex items-center justify-center rounded-full hover:bg-ink-900/10 transition-colors text-[#6E747A]"
               >
                 ✕
-              </button>
+              </Button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-6 space-y-6">

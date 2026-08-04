@@ -5,6 +5,8 @@ import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { Trash2 } from 'lucide-react';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export function DataCategoriesTab({ activityId }: { activityId: string }) {
   const utils = trpc.useUtils();
@@ -56,11 +58,11 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
     };
 
     return (
-      <input
+      <Input
         value={value || ''}
         onChange={e => setValue(e.target.value)}
         onBlur={onBlur}
-        className="bg-transparent border-none outline-none focus:ring-2 focus:ring-sage-500/20 rounded px-2 py-1 w-full text-[#F4F5F6] placeholder:text-white/20"
+        className="bg-transparent border-none shadow-none focus-visible:ring-1 focus-visible:ring-sage-500/20 rounded px-2 py-1 h-8 w-full text-[#F4F5F6] placeholder:text-white/20"
       />
     );
   };
@@ -99,8 +101,15 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
       id: 'actions',
       header: '',
       cell: ({ row }: any) => (
-        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-[#6E747A] hover:text-clay-600 hover:bg-white/5 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
-        </button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          aria-label="Delete" 
+          onClick={() => handleDelete(row.original.id)} 
+          className="w-7 h-7 text-[#6E747A] hover:text-clay-600 hover:bg-white/5"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
       ),
       size: 50,
     }

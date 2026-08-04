@@ -8,6 +8,9 @@ import { format } from 'date-fns';
 import { ArrowLeft, Code, Settings, Cookie, BarChart3, Globe, Copy, Check, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
   const searchParams = useSearchParams();
@@ -81,16 +84,17 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
           { id: 'cookies', icon: Cookie, label: 'Cookies' },
           { id: 'analytics', icon: BarChart3, label: 'Analytics' },
         ].map(tab => (
-          <button
+          <Button
             key={tab.id}
+            variant="ghost"
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-6 py-4 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === tab.id ? 'border-sage-600 text-[#C9A227]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-ink-900/5'
+            className={`flex items-center gap-2 px-6 py-4 h-auto rounded-none text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap ${
+              activeTab === tab.id ? 'border-sage-600 text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-ink-900/5'
             }`}
           >
             <tab.icon className="w-4 h-4" />
             {tab.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -109,12 +113,13 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
               <div className="relative bg-[#1e1e1e] rounded-xl overflow-hidden border border-white/10 shadow-inner">
                 <div className="flex items-center justify-between px-4 py-2 bg-[#0D0F11]/5 border-b border-white/5">
                   <span className="text-xs font-mono text-white/50">index.html</span>
-                  <button 
+                  <Button
+                    variant="ghost" 
                     onClick={handleCopy}
-                    className="flex items-center gap-1.5 text-xs font-medium text-white/70 hover:text-white transition-colors bg-[#0D0F11]/10 px-2 py-1 rounded"
+                    className="flex items-center gap-1.5 text-xs font-medium text-white/70 hover:text-white transition-colors bg-[#0D0F11]/10 px-2 py-1 h-auto rounded"
                   >
                     {copied ? <><Check className="w-3.5 h-3.5"/> Copied</> : <><Copy className="w-3.5 h-3.5"/> Copy</>}
-                  </button>
+                  </Button>
                 </div>
                 <div className="p-4 overflow-x-auto">
                   <pre className="text-[13px] font-mono leading-relaxed text-blue-300">
@@ -150,19 +155,24 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
                     <label className="text-[13px] font-medium text-[#E6E8EA]">Primary Color</label>
                     <div className="flex gap-2 mt-1">
                       <input type="color" defaultValue="#2c3e38" className="w-10 h-10 rounded cursor-pointer border-0 p-0" />
-                      <input type="text" defaultValue="#2c3e38" className="flex-1 bg-[#08090A] border border-white/10 rounded-lg px-3 text-[13px]" />
+                      <Input type="text" defaultValue="#2c3e38" className="flex-1" />
                     </div>
                   </div>
                   <div>
                     <label className="text-[13px] font-medium text-[#E6E8EA] block mb-1">Banner Position</label>
-                    <select className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-[13px]">
-                      <option>Bottom Modal</option>
-                      <option>Center Modal</option>
-                      <option>Bottom Bar</option>
-                    </select>
+                    <Select defaultValue="Bottom Modal">
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Bottom Modal">Bottom Modal</SelectItem>
+                        <SelectItem value="Center Modal">Center Modal</SelectItem>
+                        <SelectItem value="Bottom Bar">Bottom Bar</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <button className="mt-4 bg-ink-900 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">Save Changes</button>
+                <Button className="mt-4 w-full">Save Changes</Button>
               </div>
             </div>
             
@@ -173,8 +183,8 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
                   <h4 className="font-bold text-[#F4F5F6] mb-1">We value your privacy</h4>
                   <p className="text-[13px] text-[#9BA1A6] mb-4">We use cookies to enhance your browsing experience and analyze our traffic.</p>
                   <div className="flex flex-col gap-2">
-                    <button className="w-full bg-[#2c3e38] text-white py-2.5 rounded-lg text-sm font-medium">Accept All</button>
-                    <button className="w-full bg-[#0D0F11] border border-white/20 text-[#F4F5F6] py-2.5 rounded-lg text-sm font-medium">Reject All</button>
+                    <Button className="w-full">Accept All</Button>
+                    <Button variant="outline" className="w-full">Reject All</Button>
                   </div>
                 </div>
               </div>
@@ -192,13 +202,12 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
                   {domain.lastScanAt ? `Last scanned: ${format(new Date(domain.lastScanAt), 'MMM dd, h:mm a')}` : 'Never scanned.'}
                 </p>
               </div>
-              <button 
+              <Button 
                 onClick={() => scanMutation.mutate({ domainId })}
                 disabled={scanMutation.isPending}
-                className="flex items-center gap-2 bg-ink-900 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50"
               >
-                <Search className="w-4 h-4" /> {scanMutation.isPending ? 'Queuing Scan...' : 'Run Scanner Now'}
-              </button>
+                <Search className="w-4 h-4 mr-2" /> {scanMutation.isPending ? 'Queuing Scan...' : 'Run Scanner Now'}
+              </Button>
             </div>
 
             <div className="bg-[#0D0F11] rounded-2xl border border-white/10 shadow-panel-elevated overflow-hidden">
@@ -217,16 +226,20 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
                       <td className="px-6 py-4 font-mono text-[12px] text-[#F4F5F6] font-bold">{cookie.cookieName}</td>
                       <td className="px-6 py-4 font-mono text-[12px] text-[#9BA1A6]">{cookie.cookieDomain}</td>
                       <td className="px-6 py-4">
-                        <select 
-                          className="bg-[#08090A] border border-white/10 rounded px-2 py-1 text-[12px]"
+                        <Select 
                           defaultValue={cookie.category}
                         >
-                          <option value="necessary">Necessary</option>
-                          <option value="analytics">Analytics</option>
-                          <option value="marketing">Marketing</option>
-                          <option value="functional">Functional</option>
-                          <option value="uncategorized">Uncategorized</option>
-                        </select>
+                          <SelectTrigger className="w-32 h-8 text-[12px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="necessary">Necessary</SelectItem>
+                            <SelectItem value="analytics">Analytics</SelectItem>
+                            <SelectItem value="marketing">Marketing</SelectItem>
+                            <SelectItem value="functional">Functional</SelectItem>
+                            <SelectItem value="uncategorized">Uncategorized</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </td>
                       <td className="px-6 py-4 text-[#9BA1A6] text-[13px]">{cookie.provider || 'Unknown'}</td>
                     </tr>

@@ -3,10 +3,14 @@
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { CheckCircle2, ShieldAlert } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { FieldError } from '@/components/ui/FieldError';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 
 
 const REQUEST_TYPES = [
@@ -29,7 +33,7 @@ const dsarSchema = z.object({
 
 export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName: string }) {
   const [step, setStep] = useState(1);
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
+  const { register, handleSubmit, formState: { errors }, watch, setValue, control } = useForm({
     resolver: zodResolver(dsarSchema),
     defaultValues: {
       requestType: 'access',
@@ -120,14 +124,14 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
           </div>
 
           <div className="pt-6 border-t border-white/10 flex justify-end">
-            <button 
+            <Button 
               type="button"
               disabled={!formData.requestType}
               onClick={() => setStep(2)}
-              className="px-6 py-2.5 bg-[var(--org-primary)] text-white rounded-xl font-medium disabled:opacity-50 transition-opacity"
+              className="px-6 py-2.5 bg-[var(--org-primary)] text-white rounded-xl font-medium hover:bg-[var(--org-primary)]/90"
             >
               Continue
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -137,20 +141,18 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[13px] font-medium text-[#E6E8EA]">Full Name</label>
-              <input 
+              <Input 
                 required
                 type="text"
                 {...register('subjectName')}
-                className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--org-primary)]/20 focus:border-[var(--org-primary)]"
               />
             </div>
             <div className="space-y-2">
               <label className="text-[13px] font-medium text-[#E6E8EA]">Email Address</label>
-              <input 
+              <Input 
                 required
                 type="email"
                 {...register('subjectEmail')}
-                className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--org-primary)]/20 focus:border-[var(--org-primary)]"
               />
             </div>
           </div>
@@ -158,30 +160,33 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
           <div className="space-y-2">
             <label className="text-[13px] font-medium text-[#E6E8EA]">Account ID or Username (Optional)</label>
             <p className="text-[12px] text-[#6E747A] mb-2">How can we identify your data in our systems?</p>
-            <input 
+            <Input 
               type="text"
               {...register('identifier')}
-              className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--org-primary)]/20 focus:border-[var(--org-primary)]"
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-[13px] font-medium text-[#E6E8EA]">Specific Details (Optional)</label>
             <p className="text-[12px] text-[#6E747A] mb-2">Is there anything specific you want us to address?</p>
-            <textarea 
+            <Textarea 
               rows={4}
               {...register('details')}
-              className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--org-primary)]/20 focus:border-[var(--org-primary)]"
             />
           </div>
 
           <div className="pt-4">
             <label className="flex items-start gap-3 cursor-pointer">
-              <input 
-                required
-                type="checkbox"
-                {...register('consentVerified')}
-                className="mt-1 text-[var(--org-primary)] focus:ring-[var(--org-primary)] rounded border-white/20"
+              <Controller
+                name="consentVerified"
+                control={control}
+                render={({ field }) => (
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    className="mt-1"
+                  />
+                )}
               />
               <span className="text-[13px] text-[#9BA1A6] leading-relaxed">
                 I confirm that I am the data subject (or I am legally authorized to submit this request on their behalf), and the information provided is accurate. I understand that {orgName} must verify my identity before processing this request.
@@ -190,20 +195,21 @@ export function DsarIntakeForm({ orgSlug, orgName }: { orgSlug: string, orgName:
           </div>
 
           <div className="pt-6 border-t border-white/10 flex justify-between items-center">
-            <button 
+            <Button 
               type="button"
+              variant="ghost"
               onClick={() => setStep(1)}
               className="text-[14px] font-medium text-[#6E747A] hover:text-[#F4F5F6]"
             >
               Back
-            </button>
-            <button 
+            </Button>
+            <Button 
               type="submit"
               disabled={!formData.consentVerified || submitMutation.isPending}
-              className="px-6 py-2.5 bg-[var(--org-primary)] text-white rounded-xl font-medium disabled:opacity-50 transition-opacity"
+              className="px-6 py-2.5 bg-[var(--org-primary)] text-white rounded-xl font-medium hover:bg-[var(--org-primary)]/90"
             >
               {submitMutation.isPending ? 'Submitting...' : 'Submit Request'}
-            </button>
+            </Button>
           </div>
         </div>
       )}

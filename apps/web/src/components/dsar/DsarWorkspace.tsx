@@ -6,6 +6,11 @@ import { trpc } from '@/utils/trpc';
 import { differenceInDays, format } from 'date-fns';
 import { Clock, CheckCircle2, AlertCircle, FileText, Send, Mail, Download, History, User, Paperclip } from 'lucide-react';
 import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 
 export function DsarWorkspace({ dsarId }: { dsarId: string }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'comms' | 'package' | 'timeline'>('overview');
@@ -107,16 +112,17 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
           { id: 'package', icon: Download, label: 'Data Package' },
           { id: 'timeline', icon: History, label: 'Timeline' },
         ].map(tab => (
-          <button
+          <Button
             key={tab.id}
+            variant="ghost"
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-6 py-4 text-[13px] font-medium border-b-2 transition-colors ${
-              activeTab === tab.id ? 'border-ink-900 text-[#F4F5F6] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-ink-900/5'
+            className={`flex items-center gap-2 px-6 py-4 h-auto rounded-none text-[13px] font-medium border-b-2 transition-colors ${
+              activeTab === tab.id ? 'border-ink-900 text-[#F4F5F6] bg-[#0D0F11] hover:bg-[#0D0F11] hover:text-[#F4F5F6]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-ink-900/5'
             }`}
           >
             <tab.icon className="w-4 h-4" />
             {tab.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -149,18 +155,22 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
                   <div className="flex justify-between"><span className="text-[#6E747A]">Received</span> <span className="font-medium text-[#F4F5F6]">{format(new Date(dsar.receivedAt), 'MMM dd, yyyy')}</span></div>
                   <div className="flex justify-between">
                     <span className="text-[#6E747A]">Status</span> 
-                    <select 
+                    <Select 
                       value={dsar.status || 'new'}
-                      onChange={(e) => updateStatusMutation.mutate({ id: dsar.id, status: e.target.value })}
-                      className="bg-[#08090A] border border-white/10 rounded px-2 py-0.5 text-[#F4F5F6] text-[13px]"
+                      onValueChange={(val) => updateStatusMutation.mutate({ id: dsar.id, status: val })}
                     >
-                      <option value="new">New</option>
-                      <option value="identity_verification">Verification</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="pending_review">Pending Review</option>
-                      <option value="completed">Completed</option>
-                      <option value="refused">Refused</option>
-                    </select>
+                      <SelectTrigger className="w-[180px] h-8 text-[13px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="identity_verification">Verification</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="pending_review">Pending Review</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="refused">Refused</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -182,13 +192,12 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
           <div className="fade-up">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-medium text-[#F4F5F6]">System Search Tasks</h3>
-              <button 
+              <Button 
                 onClick={() => generateTasksMutation.mutate({ dsarId })}
                 disabled={generateTasksMutation.isPending}
-                className="bg-ink-900 text-white px-4 py-2 rounded-xl text-[13px] font-medium hover:bg-ink-800 disabled:opacity-50"
               >
                 {generateTasksMutation.isPending ? 'Generating...' : 'Auto-Generate from ROPA'}
-              </button>
+              </Button>
             </div>
             
             {((tasks as any)?.data || [])?.length === 0 ? (
@@ -209,16 +218,20 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
                         </div>
                         <div className="text-[12px] text-[#6E747A]">Related Activities: {(task.relatedActivities as string[])?.join(', ')}</div>
                       </div>
-                      <select 
+                      <Select 
                         value={task.status || 'pending'}
-                        onChange={(e) => updateTaskMutation.mutate({ id: task.id, data: { status: e.target.value } })}
-                        className="bg-[#08090A] border border-white/10 rounded-lg px-3 py-1 text-[13px]"
+                        onValueChange={(val) => updateTaskMutation.mutate({ id: task.id, data: { status: val } })}
                       >
-                        <option value="pending">Pending</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                        <option value="not_applicable">Not Applicable</option>
-                      </select>
+                        <SelectTrigger className="w-[140px] h-8 text-[13px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="not_applicable">Not Applicable</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     {task.searchInstructions && (
                       <div className="bg-[#08090A] p-3 rounded-lg text-[13px] text-[#E6E8EA] font-mono mb-3">
@@ -227,10 +240,13 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
                       </div>
                     )}
                     <div className="flex gap-4 items-center">
-                       <label className="flex items-center gap-2 text-[13px] text-[#E6E8EA]">
-                         <input type="checkbox" checked={task.dataFound || false} onChange={e => updateTaskMutation.mutate({ id: task.id, data: { dataFound: e.target.checked }})} className="rounded border-white/20 text-[#C9A227] focus:ring-sage-600"/>
-                         Data Found
-                       </label>
+                       <div className="flex items-center gap-2">
+                         <Switch 
+                           checked={task.dataFound || false} 
+                           onCheckedChange={checked => updateTaskMutation.mutate({ id: task.id, data: { dataFound: checked }})} 
+                         />
+                         <span className="text-[13px] text-[#E6E8EA]">Data Found</span>
+                       </div>
                     </div>
                   </div>
                 ))}
@@ -268,28 +284,27 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
             </div>
 
             <div className="bg-[#08090A] p-4 rounded-2xl border border-white/10">
-              <input 
+              <Input 
                 type="text" 
                 placeholder="Subject" 
                 value={commsSubject}
                 onChange={e => setCommsSubject(e.target.value)}
-                className="w-full bg-[#0D0F11] border border-white/10 rounded-xl px-4 py-2 mb-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                className="mb-3"
               />
-              <textarea 
+              <Textarea 
                 placeholder="Write a message to the data subject..." 
                 rows={4}
                 value={commsBody}
                 onChange={e => setCommsBody(e.target.value)}
-                className="w-full bg-[#0D0F11] border border-white/10 rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20 mb-3"
+                className="mb-3"
               />
               <div className="flex justify-end">
-                <button 
+                <Button 
                   onClick={() => sendEmailMutation.mutate({ dsarId, subject: commsSubject, body: commsBody })}
                   disabled={!commsSubject || !commsBody || sendEmailMutation.isPending}
-                  className="flex items-center gap-2 bg-[var(--org-primary,#2c3e38)] text-white px-5 py-2 rounded-xl text-[13px] font-medium disabled:opacity-50"
                 >
-                  <Send className="w-4 h-4" /> {sendEmailMutation.isPending ? 'Sending...' : 'Send Message'}
-                </button>
+                  <Send className="w-4 h-4 mr-2" /> {sendEmailMutation.isPending ? 'Sending...' : 'Send Message'}
+                </Button>
               </div>
             </div>
           </div>
@@ -317,22 +332,22 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
                   <span className="bg-sage-100 text-[#C9A227] px-3 py-1 rounded-full text-[12px] font-medium">Ready</span>
                 </div>
                 <div className="flex gap-3">
-                  <button className="flex-1 bg-[#0D0F11] border border-white/20 text-[#F4F5F6] py-2 rounded-xl text-[13px] font-medium hover:bg-[#08090A]">
+                  <Button variant="outline" className="flex-1">
                     Preview Package
-                  </button>
-                  <button className="flex-1 bg-ink-900 text-white py-2 rounded-xl text-[13px] font-medium hover:bg-ink-800 flex items-center justify-center gap-2">
+                  </Button>
+                  <Button className="flex-1 flex items-center justify-center gap-2">
                     <Send className="w-4 h-4"/> Send Secure Link
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
-              <button 
+              <Button 
                 onClick={() => exportPackageMutation.mutate({ id: dsar.id })}
                 disabled={exportPackageMutation.isPending}
-                className="bg-ink-900 text-white px-8 py-3 rounded-xl font-medium hover:bg-ink-800 transition-colors disabled:opacity-50"
+                className="px-8"
               >
                 {exportPackageMutation.isPending ? 'Compiling...' : 'Generate Data Package'}
-              </button>
+              </Button>
             )}
           </div>
         )}

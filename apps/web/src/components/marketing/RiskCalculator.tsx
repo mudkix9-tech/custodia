@@ -10,6 +10,8 @@ import Link from 'next/link';
 
 import { useRiskCalculator } from '@/hooks/useRiskCalculator';
 import { requestLeadPdf } from '@/actions/lead-assessment';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const CALCULATOR_QUESTIONS = [
   {
@@ -104,12 +106,14 @@ export default function RiskCalculator() {
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
                   {calcStep > 0 && (
-                    <button 
+                    <Button 
+                      variant="outline"
+                      size="sm"
                       onClick={() => setCalcStep(prev => prev - 1)}
-                      className="text-[10px] text-[#9CA297] hover:text-[#F5F3ED] flex items-center gap-1 bg-[#141712]/50 border border-[#2F362D] px-2.5 py-1 rounded transition-colors touch-manipulation"
+                      className="text-[10px] text-[#9CA297] hover:text-[#F5F3ED] flex items-center gap-1 bg-[#141712]/50 border border-[#2F362D] px-2.5 py-1 rounded transition-colors h-auto touch-manipulation"
                     >
                       <ArrowLeft className="w-3 h-3" /> Back
-                    </button>
+                    </Button>
                   )}
                   <span className="text-[10px] font-bold text-[#8BA381] uppercase tracking-wider">
                     Question {calcStep + 1} of {CALCULATOR_QUESTIONS.length}
@@ -160,14 +164,15 @@ export default function RiskCalculator() {
 
               <div className="space-y-3">
                 {CALCULATOR_QUESTIONS[calcStep].options.map((opt, idx) => (
-                  <button
+                  <Button
                     key={idx}
+                    variant="ghost"
                     onClick={() => handleCalculatorSelect(CALCULATOR_QUESTIONS[calcStep].id, opt.value, opt.score)}
-                    className="w-full text-left bg-[#141712]/55 hover:bg-[#252B21]/80 border border-[#2F362D]/60 hover:border-[#8BA381]/40 p-4.5 rounded-xl transition-all duration-200 text-xs sm:text-sm text-[#C5C8C1] hover:text-[#F5F3ED] font-semibold flex items-center justify-between group focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.01] active:scale-[0.99]"
+                    className="w-full h-auto text-left bg-[#141712]/55 hover:bg-[#252B21]/80 border border-[#2F362D]/60 hover:border-[#8BA381]/40 p-4.5 rounded-xl transition-all duration-200 text-xs sm:text-sm text-[#C5C8C1] hover:text-[#F5F3ED] font-semibold flex items-center justify-between group focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.01] active:scale-[0.99] whitespace-normal"
                   >
                     <span>{opt.text}</span>
                     <ChevronRight className="w-4 h-4 text-[#5F655A] group-hover:text-[#8BA381] group-hover:translate-x-0.5 transition-all" />
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -253,21 +258,22 @@ export default function RiskCalculator() {
                   <p className="font-bold text-[#F5F3ED] text-sm mb-2 text-center">Get Your Detailed Exposure Report</p>
                   <p className="text-[#9CA297] text-xs text-center mb-4">We'll email you a full PDF breakdown of your gap analysis.</p>
                   <div className="flex gap-2">
-                    <input 
+                    <Input 
                       type="email" 
                       required 
                       placeholder="work@email.com" 
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      className="flex-1 bg-[#141712] border border-[#2F362D] rounded-lg px-4 py-2 text-sm text-[#F5F3ED] focus:outline-none focus:border-[#8BA381] placeholder-[#484E43]"
+                      className="flex-1 bg-[#141712] border border-[#2F362D] rounded-lg px-4 py-2 text-sm text-[#F5F3ED] focus:outline-none focus:border-[#8BA381] placeholder-[#484E43] h-auto"
                     />
-                    <button 
+                    <Button 
                       type="submit" 
+                      variant="outline"
                       disabled={isPdfLoading}
-                      className="bg-[#2A2920] hover:bg-[#38372D] border border-[#444034] text-[#C9C3AC] px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap disabled:opacity-50"
+                      className="bg-[#2A2920] hover:bg-[#38372D] border border-[#444034] text-[#C9C3AC] hover:text-[#C9C3AC] px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap disabled:opacity-50 h-auto"
                     >
                       {isPdfLoading ? 'Sending...' : 'Send PDF'}
-                    </button>
+                    </Button>
                   </div>
                 </form>
               ) : pdfRequested ? (
@@ -283,22 +289,24 @@ export default function RiskCalculator() {
                 <Link href={prefillUrl} className="w-full sm:w-auto bg-gradient-to-r from-[#596E51] to-[#788F6F] hover:from-[#495B42] hover:to-[#677B5D] text-[#F5F3ED] text-xs sm:text-sm font-bold py-3.5 px-6 rounded-lg transition-all flex items-center justify-center gap-2 border border-[#8BA381]/20 focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] touch-manipulation">
                   Verify Exposure in Assessment <ArrowRight className="w-4 h-4" />
                 </Link>
-                <button 
+                <Button 
+                  variant="outline"
                   onClick={handleCopyCalculatorLink}
-                  className="w-full sm:w-auto bg-[#1F241D] hover:bg-[#2A3127] text-[#C5C8C1] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 touch-manipulation"
+                  className="w-full sm:w-auto h-auto bg-[#1F241D] hover:bg-[#2A3127] text-[#C5C8C1] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 touch-manipulation"
                 >
                   {copiedCalculatorLink ? (
                     <>Copied! <Check className="w-3.5 h-3.5 text-[#8BA381]" /></>
                   ) : (
                     <>Share Result Link <Copy className="w-3.5 h-3.5" /></>
                   )}
-                </button>
-                <button 
+                </Button>
+                <Button 
+                  variant="outline"
                   onClick={resetCalculator}
-                  className="w-full sm:w-auto bg-[#141712]/50 hover:bg-[#141712] text-[#9CA297] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
+                  className="w-full sm:w-auto h-auto bg-[#141712]/50 hover:bg-[#141712] text-[#9CA297] hover:text-[#F5F3ED] border border-[#2F362D] text-xs font-semibold py-3.5 px-6 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#8BA381] focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-[#191D17] hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
                 >
                   Reset Calculator
-                </button>
+                </Button>
               </div>
             </motion.div>
           )}

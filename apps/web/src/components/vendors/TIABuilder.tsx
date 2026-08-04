@@ -8,6 +8,10 @@ import * as z from 'zod';
 import { FieldError } from '@/components/ui/FieldError';
 import { FileText, CheckCircle2, AlertTriangle, ShieldCheck, Download, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 const tiaSchema = z.object({
   transferMechanism: z.string().min(1, 'Transfer mechanism is required'),
@@ -121,16 +125,17 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
               { id: 4, name: 'Residual Risk' },
               { id: 5, name: 'Conclusion' }
             ].map((s) => (
-              <button 
+              <Button
+                variant="ghost" 
                 key={s.id}
                 onClick={() => setStep(s.id)}
-                className={`w-full flex items-center gap-3 p-2 rounded-xl transition-colors relative z-10 ${step === s.id ? 'bg-[#0D0F11] shadow-panel-elevated border border-white/10 text-[#C9A227]' : 'text-[#6E747A] hover:bg-white/5 hover:text-[#F4F5F6]'}`}
+                className={`w-full flex items-center justify-start gap-3 p-2 h-auto rounded-xl transition-colors relative z-10 ${step === s.id ? 'bg-[#0D0F11] shadow-panel-elevated border border-white/10 text-[#C9A227] hover:bg-[#0D0F11] hover:text-[#C9A227]' : 'text-[#6E747A] hover:bg-white/5 hover:text-[#F4F5F6]'}`}
               >
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === s.id ? 'bg-sage-600 text-white' : 'bg-white/10 text-[#6E747A]'}`}>
+                <div className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${step === s.id ? 'bg-sage-600 text-white' : 'bg-white/10 text-[#6E747A]'}`}>
                   {tia?.status === 'completed' ? <CheckCircle2 className="w-4 h-4 text-[#C9A227] bg-[#0D0F11] rounded-full" /> : s.id}
                 </div>
                 <span className="text-sm font-medium text-left">{s.name}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -141,12 +146,13 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
               <ShieldCheck className="w-5 h-5 mb-2 text-[#C9A227]" />
               <div className="font-bold mb-1">TIA Completed</div>
               <div className="text-xs opacity-80 mb-3">Approved on {format(new Date(tia.approvedAt!), 'MMM d, yyyy')}</div>
-              <button 
+              <Button 
+                variant="outline"
                 onClick={handleExport}
-                className="w-full flex items-center justify-center gap-2 bg-[#0D0F11] border border-[#C9A227]/30 text-[#C9A227] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#C9A227]/20 transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-[#0D0F11] border-[#C9A227]/30 text-[#C9A227] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#C9A227]/20 transition-colors"
               >
                 <Download className="w-4 h-4" /> Export PDF
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -162,26 +168,32 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Destination Country</label>
-                <input 
+                <Input 
                   type="text" 
                   maxLength={2}
-                  className="w-full max-w-xs px-4 py-2 border border-white/20 rounded-xl focus:border-sage-500 outline-none uppercase"
+                  className="w-full max-w-xs uppercase"
                   value={formData.destinationCountry}
                   onChange={e => setFormData({...formData, destinationCountry: e.target.value.toUpperCase()})}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Transfer Mechanism</label>
-                <select 
-                  className="w-full max-w-xs px-4 py-2 border border-white/20 rounded-xl focus:border-sage-500 outline-none"
-                  value={formData.transferMechanism}
-                  onChange={e => setFormData({...formData, transferMechanism: e.target.value})}
-                >
-                  <option value="sccs">Standard Contractual Clauses (SCCs)</option>
-                  <option value="bcrs">Binding Corporate Rules (BCRs)</option>
-                  <option value="derogation">Article 49 Derogation</option>
-                  <option value="adequacy">Adequacy Decision</option>
-                </select>
+                <div className="w-full max-w-xs">
+                  <Select 
+                    value={formData.transferMechanism || 'sccs'}
+                    onValueChange={val => setFormData({...formData, transferMechanism: val})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select transfer mechanism" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sccs">Standard Contractual Clauses (SCCs)</SelectItem>
+                      <SelectItem value="bcrs">Binding Corporate Rules (BCRs)</SelectItem>
+                      <SelectItem value="derogation">Article 49 Derogation</SelectItem>
+                      <SelectItem value="adequacy">Adequacy Decision</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -221,16 +233,20 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
 
               <div>
                 <label className="block text-sm font-medium text-[#F4F5F6] mb-2">Conclusion of Legal Assessment</label>
-                <select 
-                  className="w-full px-4 py-2 border border-white/20 rounded-xl focus:border-sage-500 outline-none"
-                  value={formData.legalAssessmentConclusion}
-                  onChange={e => setFormData({...formData, legalAssessmentConclusion: e.target.value})}
+                <Select 
+                  value={formData.legalAssessmentConclusion || 'none'}
+                  onValueChange={val => setFormData({...formData, legalAssessmentConclusion: val === 'none' ? '' : val})}
                 >
-                  <option value="">Select conclusion...</option>
-                  <option value="equivalent">Laws provide essentially equivalent protection (No supplementary measures needed)</option>
-                  <option value="not_equivalent">Laws do not provide essentially equivalent protection</option>
-                  <option value="uncertain">Uncertain / Problematic legislation exists</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select conclusion..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" disabled>Select conclusion...</SelectItem>
+                    <SelectItem value="equivalent">Laws provide essentially equivalent protection (No supplementary measures needed)</SelectItem>
+                    <SelectItem value="not_equivalent">Laws do not provide essentially equivalent protection</SelectItem>
+                    <SelectItem value="uncertain">Uncertain / Problematic legislation exists</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -262,7 +278,7 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
                         <div className="flex-1">
                           <div className="text-sm font-medium">{m.label}</div>
                           {m.implemented && (
-                            <input type="text" placeholder="Details..." className="w-full mt-2 px-3 py-1.5 text-xs border border-white/20 rounded" {...register(`technicalMeasures.${i}.detail` as const)} />
+                            <Input type="text" placeholder="Details..." className="w-full mt-2 text-xs" {...register(`technicalMeasures.${i}.detail` as const)} />
                           )}
                         </div>
                       </div>
@@ -284,25 +300,25 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
                 <label className="block text-sm font-medium text-[#F4F5F6] mb-2">Residual Risk Level</label>
                 <div className="flex gap-3">
                   {['low', 'medium', 'high', 'critical'].map(level => (
-                    <button 
+                    <Button 
                       key={level}
+                      variant="outline"
                       onClick={() => setFormData({...formData, residualRiskLevel: level})}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium uppercase tracking-wider border transition-all ${formData.residualRiskLevel === level ? 'bg-ink-900 text-white border-ink-900' : 'bg-[#0D0F11] text-[#6E747A] border-white/20 hover:border-white/50'}`}
+                      className={`uppercase tracking-wider transition-all ${formData.residualRiskLevel === level ? 'bg-ink-900 text-white border-ink-900 hover:bg-ink-900 hover:text-white' : 'bg-[#0D0F11] text-[#6E747A] border-white/20 hover:border-white/50 hover:bg-[#0D0F11] hover:text-[#6E747A]'}`}
                     >
                       {level}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Justification</label>
-                <textarea 
-                  className="w-full px-4 py-3 border border-white/20 rounded-xl focus:border-sage-500 outline-none min-h-[120px] text-sm"
+                <Textarea 
                   placeholder="Explain why the residual risk is acceptable or unacceptable..."
                   value={formData.residualRiskJustification}
                   onChange={e => setFormData({...formData, residualRiskJustification: e.target.value})}
-                ></textarea>
+                />
               </div>
             </div>
           </div>
@@ -338,49 +354,49 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
               {formData.conclusion === 'proceed_with_conditions' && (
                 <div>
                   <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Specify Conditions</label>
-                  <textarea 
-                    className="w-full px-4 py-2 border border-white/20 rounded-xl focus:border-sage-500 outline-none text-sm"
+                  <Textarea 
                     value={formData.conditions}
                     onChange={e => setFormData({...formData, conditions: e.target.value})}
-                  ></textarea>
+                  />
                 </div>
               )}
             </div>
 
             <div className="pt-6 border-t border-white/10 flex justify-end gap-3">
-              <button 
+              <Button 
+                variant="outline"
                 onClick={() => handleSave('draft')}
-                className="px-5 py-2.5 text-sm font-medium text-[#9BA1A6] bg-[#08090A] border border-white/10 rounded-xl hover:bg-white/5 transition-colors"
+                className="bg-[#08090A] border-white/10 hover:bg-white/5"
               >
                 Save Draft
-              </button>
-              <button 
+              </Button>
+              <Button 
                 onClick={() => handleSave('completed')}
                 disabled={!formData.conclusion}
-                className="px-5 py-2.5 text-sm font-medium text-white bg-sage-700 rounded-xl hover:bg-sage-600 transition-colors disabled:opacity-50"
               >
                 Approve & Complete TIA
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
         {/* Navigation Footer */}
         <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
-          <button 
+          <Button 
+            variant="ghost"
             disabled={step === 1}
             onClick={() => setStep(step - 1)}
-            className="px-4 py-2 text-sm font-medium text-[#9BA1A6] disabled:opacity-0"
+            className="text-[#9BA1A6]"
           >
             ← Previous Step
-          </button>
-          <button 
+          </Button>
+          <Button 
             disabled={step === 5}
             onClick={() => setStep(step + 1)}
-            className="px-6 py-2 bg-ink-900 text-white rounded-lg text-sm font-medium hover:bg-ink-800 disabled:hidden"
+            className={`${step === 5 ? 'hidden' : ''}`}
           >
             Next Step →
-          </button>
+          </Button>
         </div>
       </div>
     </div>

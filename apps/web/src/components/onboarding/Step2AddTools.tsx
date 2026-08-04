@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { getToolIcon } from './toolIcons';
 import { Search, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const COMMON_TOOLS = [
   // Cross-Industry Universals
@@ -145,10 +147,10 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
   );
 
   return (
-    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-4xl mx-auto w-full">
+    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border border-white/10 max-w-4xl mx-auto w-full">
       <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold mb-2 text-gray-900">What tools do you use?</h2>
-        <p className="text-gray-500 max-w-lg mx-auto">Select the tools you use to process data. We'll use this to build your data map.</p>
+        <h2 className="text-2xl font-serif text-[#F4F5F6] mb-2">What tools do you use?</h2>
+        <p className="text-[#6E747A] max-w-lg mx-auto">Select the tools you use to process data. We'll use this to build your data map.</p>
       </div>
 
       {/* Suggested Section */}
@@ -165,14 +167,14 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
                   onClick={() => toggleTool(tool.id)}
                   className={`relative p-4 border rounded-xl flex flex-col items-center justify-center gap-3 transition-all select-none min-h-[110px] ${
                     isSelected
-                      ? 'border-blue-600 bg-blue-500/10/50 ring-2 ring-blue-100'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+                      ? 'border-[#C9A227] bg-[#C9A227]/10 ring-1 ring-[#C9A227]'
+                      : 'border-white/10 hover:border-white/20 hover:bg-[#08090A]'
                   }`}
                 >
                   <div className="shrink-0">{getToolIcon(tool.id, "w-8 h-8")}</div>
-                  <div className="font-semibold text-xs text-gray-700 text-center">{tool.name}</div>
+                  <div className="font-semibold text-xs text-[#E6E8EA] text-center">{tool.name}</div>
                   {isSelected && (
-                    <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white rounded-full p-0.5 shadow-panel-elevated shrink-0">
+                    <div className="absolute top-2.5 right-2.5 bg-[#C9A227] text-[#08090A] rounded-full p-0.5 shadow-panel-elevated shrink-0">
                       <svg className="w-3 h-3 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
@@ -200,14 +202,14 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
                 onClick={() => toggleTool(tool.id)}
                 className={`relative p-4 border rounded-xl flex flex-col items-center justify-center gap-3 transition-all select-none min-h-[110px] ${
                   isSelected
-                    ? 'border-blue-600 bg-blue-500/10/50 ring-2 ring-blue-100'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+                    ? 'border-[#C9A227] bg-[#C9A227]/10 ring-1 ring-[#C9A227]'
+                    : 'border-white/10 hover:border-white/20 hover:bg-[#08090A]'
                 }`}
               >
                 <div className="shrink-0">{getToolIcon(tool.id, "w-8 h-8")}</div>
-                <div className="font-semibold text-xs text-gray-700 text-center">{tool.name}</div>
+                <div className="font-semibold text-xs text-[#E6E8EA] text-center">{tool.name}</div>
                 {isSelected && (
-                  <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white rounded-full p-0.5 shadow-panel-elevated shrink-0">
+                  <div className="absolute top-2.5 right-2.5 bg-[#C9A227] text-[#08090A] rounded-full p-0.5 shadow-panel-elevated shrink-0">
                     <svg className="w-3 h-3 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
@@ -220,29 +222,30 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
       </div>
 
       {/* Expandable All Tools Section */}
-      <div className="mb-8 border-t pt-6">
-        <button
+      <div className="mb-8 border-t border-white/10 pt-6">
+        <Button
+          variant="outline"
           type="button"
           onClick={() => setShowAll(!showAll)}
-          className="w-full py-2.5 px-4 bg-gray-50 border rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100/80 transition flex justify-between items-center"
+          className="w-full py-2.5 px-4 flex justify-between items-center"
         >
           <span>{showAll ? 'Hide other tools' : 'Show all tools'}</span>
-          <svg className={`w-4 h-4 text-gray-500 transition-transform ${showAll ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-4 h-4 text-[#6E747A] transition-transform ${showAll ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
           </svg>
-        </button>
+        </Button>
 
         {showAll && (
           <div className="mt-6 space-y-4">
             {/* Search Input for All Tools */}
             <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6E747A] w-4 h-4" />
+              <Input
                 type="text"
                 placeholder="Search other tools..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="pl-9"
               />
             </div>
 
@@ -257,14 +260,14 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
                       onClick={() => toggleTool(tool.id)}
                       className={`relative p-4 border rounded-xl flex flex-col items-center justify-center gap-3 transition-all select-none min-h-[110px] ${
                         isSelected
-                          ? 'border-blue-600 bg-blue-500/10/50 ring-2 ring-blue-100'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+                          ? 'border-[#C9A227] bg-[#C9A227]/10 ring-1 ring-[#C9A227]'
+                          : 'border-white/10 hover:border-white/20 hover:bg-[#08090A]'
                       }`}
                     >
                       <div className="shrink-0">{getToolIcon(tool.id, "w-8 h-8")}</div>
-                      <div className="font-semibold text-xs text-gray-700 text-center">{tool.name}</div>
+                      <div className="font-semibold text-xs text-[#E6E8EA] text-center">{tool.name}</div>
                       {isSelected && (
-                        <div className="absolute top-2.5 right-2.5 bg-blue-600 text-white rounded-full p-0.5 shadow-panel-elevated shrink-0">
+                        <div className="absolute top-2.5 right-2.5 bg-[#C9A227] text-[#08090A] rounded-full p-0.5 shadow-panel-elevated shrink-0">
                           <svg className="w-3 h-3 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
@@ -274,7 +277,7 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
                   );
                 })
               ) : (
-                <div className="col-span-full py-6 text-center text-sm text-gray-400">
+                <div className="col-span-full py-6 text-center text-sm text-[#6E747A]">
                   No other tools match your search
                 </div>
               )}
@@ -284,22 +287,22 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
       </div>
 
       {/* Add Custom Tool Section */}
-      <div className="mb-8 border-t pt-6">
-        <h4 className="text-sm font-semibold text-gray-800 mb-3">Don't see a tool you use?</h4>
+      <div className="mb-8 border-t border-white/10 pt-6">
+        <h4 className="text-sm font-semibold text-[#F4F5F6] mb-3">Don't see a tool you use?</h4>
         <form onSubmit={handleAddCustomTool} className="flex gap-2 max-w-md">
-          <input
+          <Input
             type="text"
             placeholder="Enter custom tool name..."
             value={newCustomTool}
             onChange={(e) => setNewCustomTool(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="flex-1"
           />
-          <button
+          <Button
             type="submit"
-            className="bg-gray-900 text-white font-medium text-sm py-2 px-4 rounded-lg hover:bg-gray-800 transition flex items-center gap-1.5 shrink-0"
+            className="flex items-center gap-1.5 shrink-0"
           >
             <Plus className="w-4 h-4" /> Add Tool
-          </button>
+          </Button>
         </form>
 
         {/* Selected Custom Badges */}
@@ -308,13 +311,13 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
             {customTools.map(name => (
               <span
                 key={name}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-200"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-sage-100/20 text-[#C9A227] border border-[#C9A227]/30"
               >
                 <span>{name}</span>
                 <button
                   type="button"
                   onClick={() => removeCustomTool(name)}
-                  className="hover:text-blue-900 text-blue-500 font-bold ml-1.5 focus:outline-none text-sm leading-none"
+                  className="hover:text-white text-[#C9A227] font-bold ml-1.5 focus:outline-none text-sm leading-none"
                 >
                   &times;
                 </button>
@@ -325,21 +328,21 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
       </div>
 
       {/* Footer Actions */}
-      <div className="flex justify-between items-center border-t pt-6">
-        <button
+      <div className="flex justify-between items-center border-t border-white/10 pt-6">
+        <Button
+          variant="ghost"
           type="button"
           onClick={() => onNext([])}
-          className="text-gray-500 hover:text-gray-700 font-medium px-4 py-2"
+          className="text-[#9BA1A6] hover:text-[#F4F5F6]"
         >
           Skip for now
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={() => onNext(selectedTools)}
-          className="bg-blue-600 text-white font-medium py-2.5 px-8 rounded-md hover:bg-blue-700 transition"
         >
           Continue {selectedTools.length > 0 ? `with ${selectedTools.length} tool${selectedTools.length === 1 ? '' : 's'}` : ''}
-        </button>
+        </Button>
       </div>
     </div>
   );

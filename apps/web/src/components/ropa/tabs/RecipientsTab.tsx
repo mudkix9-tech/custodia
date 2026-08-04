@@ -5,6 +5,9 @@ import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { Trash2, Building2, Globe, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 
 import Link from 'next/link';
 
@@ -133,8 +136,15 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
       id: 'actions',
       header: '',
       cell: ({ row }: any) => (
-        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-[#6E747A] hover:text-clay-600 hover:bg-white/5 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
-        </button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          aria-label="Delete" 
+          onClick={() => handleDelete(row.original.id)} 
+          className="w-7 h-7 text-[#6E747A] hover:text-clay-600 hover:bg-white/5"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
       ),
       size: 50,
     }
@@ -151,23 +161,26 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
           <div className="space-y-3">
             <label className="text-[13px] font-medium text-[#E6E8EA] block">Link an Existing Vendor</label>
             <div className="flex gap-3">
-              <select 
-                value={selectedVendorId}
-                onChange={e => setSelectedVendorId(e.target.value)}
-                className="flex-1 bg-[#0D0F11] border border-white/10 rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+              <Select 
+                value={selectedVendorId || 'none'}
+                onValueChange={val => setSelectedVendorId(val === 'none' ? '' : val)}
               >
-                <option value="">Select a vendor from your register...</option>
-                {orgVendors.map((v: any) => (
-                  <option key={v.id} value={v.id}>{v.name}</option>
-                ))}
-              </select>
-              <button 
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Select a vendor from your register..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Select a vendor from your register...</SelectItem>
+                  {orgVendors.map((v: any) => (
+                    <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
                 onClick={handleAddVendor}
                 disabled={!selectedVendorId || createMutation.isPending}
-                className="bg-sage-700 text-white px-4 py-2 rounded-xl text-[14px] font-medium hover:bg-sage-600 transition-colors disabled:opacity-50"
               >
                 Link Vendor
-              </button>
+              </Button>
             </div>
             <p className="text-[12px] text-[#6E747A]">
               Linking a vendor automatically synchronizes DPA status and generates cross-border transfer records if required.
@@ -178,20 +191,20 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
           <div className="space-y-3 md:border-l md:border-white/10 md:pl-8">
             <label className="text-[13px] font-medium text-[#E6E8EA] block">Add Other Recipient</label>
             <div className="flex gap-3">
-              <input 
+              <Input 
                 type="text"
                 value={customName}
                 onChange={e => setCustomName(e.target.value)}
                 placeholder="E.g. Internal HR Team, Local Auditor"
-                className="flex-1 bg-[#0D0F11] border border-white/10 rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                className="flex-1"
               />
-              <button 
+              <Button 
+                variant="outline"
                 onClick={handleAddCustom}
                 disabled={!customName.trim() || createMutation.isPending}
-                className="bg-[#0D0F11] border border-white/10 text-[#E6E8EA] px-4 py-2 rounded-xl text-[14px] font-medium hover:bg-[#08090A] transition-colors disabled:opacity-50"
               >
                 Add Manual
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface Template {
   id: string;
@@ -76,10 +78,10 @@ export function Step3CreateActivities({ templates, onNext }: Step3Props) {
   const totalCount = selected.length + selectedCustom.length;
 
   return (
-    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-4xl mx-auto w-full">
+    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border border-white/10 max-w-4xl mx-auto w-full">
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold mb-2 text-gray-900">Let's document your first data processing activities</h2>
-        <p className="text-gray-500 max-w-lg mx-auto">Based on your industry, we've prepared standard processing activities. Review and select the ones you do.</p>
+        <h2 className="text-2xl font-serif text-[#F4F5F6] mb-2">Let's document your first data processing activities</h2>
+        <p className="text-[#6E747A] max-w-lg mx-auto">Based on your industry, we've prepared standard processing activities. Review and select the ones you do.</p>
       </div>
 
       {/* Grid of Templates (Deduplicated, Sorted, Compact) */}
@@ -92,25 +94,25 @@ export function Step3CreateActivities({ templates, onNext }: Step3Props) {
               onClick={() => toggleTemplate(template.id)}
               className={`p-3.5 border rounded-xl cursor-pointer transition-all flex items-start justify-between select-none ${
                 isSelected
-                  ? 'border-blue-600 bg-blue-500/10/50 ring-1 ring-blue-100'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+                  ? 'border-[#C9A227] bg-[#C9A227]/10 ring-1 ring-[#C9A227]'
+                  : 'border-white/10 hover:border-white/20 hover:bg-[#08090A]'
               }`}
             >
               <div className="pr-4">
-                <h3 className="font-semibold text-base text-gray-900 mb-0.5">{template.name}</h3>
-                <p className="text-xs text-gray-600 mb-2">{template.description}</p>
+                <h3 className="font-semibold text-base text-[#F4F5F6] mb-0.5">{template.name}</h3>
+                <p className="text-xs text-[#9BA1A6] mb-2">{template.description}</p>
                 <div className="flex flex-wrap gap-2 text-[10px]">
-                  <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600 font-medium">
-                    <span className="text-gray-400">Basis:</span> {formatLawfulBasis(template.lawfulBasis)}
+                  <span className="bg-[#08090A] border border-white/10 px-2 py-0.5 rounded text-[#E6E8EA] font-medium">
+                    <span className="text-[#6E747A]">Basis:</span> {formatLawfulBasis(template.lawfulBasis)}
                   </span>
-                  <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600 font-medium">
-                    <span className="text-gray-400">Data Categories:</span> {template.dataCategories.length}
+                  <span className="bg-[#08090A] border border-white/10 px-2 py-0.5 rounded text-[#E6E8EA] font-medium">
+                    <span className="text-[#6E747A]">Data Categories:</span> {template.dataCategories.length}
                   </span>
                 </div>
               </div>
               <div className="ml-4 shrink-0">
                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                  isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                  isSelected ? 'bg-[#C9A227] border-[#C9A227]' : 'border-white/20'
                 }`}>
                   {isSelected && (
                     <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
@@ -132,19 +134,19 @@ export function Step3CreateActivities({ templates, onNext }: Step3Props) {
               onClick={() => toggleCustom(name)}
               className={`p-3.5 border rounded-xl cursor-pointer transition-all flex items-start justify-between select-none ${
                 isSelected
-                  ? 'border-blue-600 bg-blue-500/10/50 ring-1 ring-blue-100'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+                  ? 'border-[#C9A227] bg-[#C9A227]/10 ring-1 ring-[#C9A227]'
+                  : 'border-white/10 hover:border-white/20 hover:bg-[#08090A]'
               }`}
             >
               <div>
-                <h3 className="font-semibold text-base text-gray-900 mb-0.5">{name}</h3>
-                <p className="text-xs text-gray-500 mb-2">Custom Activity</p>
+                <h3 className="font-semibold text-base text-[#F4F5F6] mb-0.5">{name}</h3>
+                <p className="text-xs text-[#6E747A] mb-2">Custom Activity</p>
                 <div className="flex flex-wrap gap-2 text-[10px]">
-                  <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600 font-medium">
+                  <span className="bg-[#08090A] border border-white/10 px-2 py-0.5 rounded text-[#E6E8EA] font-medium">
                     Source: Manually added
                   </span>
-                  <span className="bg-amber-500/10 text-amber-800 border border-amber-900/50 px-2 py-0.5 rounded font-semibold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/100 animate-pulse"></span> Needs Review
+                  <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Needs Review
                   </span>
                 </div>
               </div>
@@ -155,12 +157,12 @@ export function Step3CreateActivities({ templates, onNext }: Step3Props) {
                     e.stopPropagation();
                     removeCustom(name);
                   }}
-                  className="text-gray-400 hover:text-red-500 font-medium text-xs focus:outline-none"
+                  className="text-[#6E747A] hover:text-red-400 font-medium text-xs focus:outline-none"
                 >
                   Remove
                 </button>
                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                  isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                  isSelected ? 'bg-[#C9A227] border-[#C9A227]' : 'border-white/20'
                 }`}>
                   {isSelected && (
                     <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
@@ -175,46 +177,42 @@ export function Step3CreateActivities({ templates, onNext }: Step3Props) {
       </div>
 
       {/* Add Custom Activity Section */}
-      <div className="mb-8 border-t pt-6">
-        <h4 className="text-sm font-semibold text-gray-800 mb-3">Add a custom processing activity</h4>
+      <div className="mb-8 border-t border-white/10 pt-6">
+        <h4 className="text-sm font-semibold text-[#F4F5F6] mb-3">Add a custom processing activity</h4>
         <form onSubmit={handleAddCustomActivity} className="flex gap-2 max-w-md">
-          <input
+          <Input
             type="text"
             placeholder="e.g., CCTV monitoring, Employee payroll processing..."
             value={newActivityName}
             onChange={(e) => setNewActivityName(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="flex-1"
           />
-          <button
+          <Button
             type="submit"
-            className="bg-gray-900 text-white font-medium text-sm py-2 px-4 rounded-lg hover:bg-gray-800 transition flex items-center gap-1.5 shrink-0"
+            className="flex items-center gap-1.5 shrink-0"
           >
             <Plus className="w-4 h-4" /> Add Activity
-          </button>
+          </Button>
         </form>
       </div>
 
       {/* Footer Actions */}
-      <div className="flex justify-between items-center border-t pt-6">
-        <button
+      <div className="flex justify-between items-center border-t border-white/10 pt-6">
+        <Button
+          variant="ghost"
           type="button"
           onClick={() => onNext([], [])}
-          className="text-gray-500 hover:text-gray-700 font-medium px-4 py-2"
+          className="text-[#9BA1A6] hover:text-[#F4F5F6]"
         >
           Skip for now
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={() => onNext(selected, selectedCustom)}
-          className={`font-semibold py-2.5 px-8 rounded-md transition ${
-            totalCount > 0
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          }`}
           disabled={totalCount === 0}
         >
           Create {totalCount > 0 ? `${totalCount} activit${totalCount === 1 ? 'y' : 'ies'}` : 'Activities'}
-        </button>
+        </Button>
       </div>
     </div>
   );

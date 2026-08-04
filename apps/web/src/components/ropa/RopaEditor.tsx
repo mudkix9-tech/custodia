@@ -13,6 +13,12 @@ import { announce } from '@/components/layout/Announcer';
 import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
 import { useTranslations } from 'next-intl';
 
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+
 import { DataCategoriesTab } from './tabs/DataCategoriesTab';
 import { RecipientsTab } from './tabs/RecipientsTab';
 import { TransfersTab } from './tabs/TransfersTab';
@@ -61,7 +67,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
       setActiveTab(tab);
     }
   }, [searchParams]);
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
+  const { register, control, handleSubmit, formState: { errors }, watch, setValue } = useForm({
     resolver: zodResolver(ropaSchema),
     defaultValues: initialData || {
       name: '',
@@ -236,12 +242,14 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
       <div className="border-b border-ink-900/8 bg-[#08090A]/90 backdrop-blur sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-              <button 
+              <Button 
+              variant="ghost"
+              size="icon"
               onClick={() => router.push('/ropa')}
-              className="p-2 hover:bg-white/5 rounded-lg text-[#6E747A] hover:text-[#F4F5F6] transition-colors"
+              className="text-[#6E747A] hover:text-[#F4F5F6]"
             >
               <ArrowLeft className="w-5 h-5" />
-            </button>
+            </Button>
             <div>
               <h1 className="text-[20px] font-serif tracking-tight text-[#F4F5F6]">
                 {isNew ? t('new_activity') : formData.name || t('untitled')}
@@ -270,22 +278,23 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           
           <div className="flex items-center gap-2">
             {!isNew && (
-              <button
+              <Button
+                variant="outline"
                 type="button"
                 onClick={handleAiAssist}
-                className="px-3 py-2 bg-amber-500/10 hover:bg-amber-100 border border-amber-900/50 text-amber-800 text-[13px] font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                className="bg-amber-500/10 hover:bg-amber-100 border-amber-900/50 text-amber-800 transition-colors flex items-center gap-1.5"
               >
                 <Lightbulb className="w-4 h-4" /> {t('help_me_fill')}
-              </button>
+              </Button>
             )}
             {isNew && (
-              <button 
+              <Button 
                 onClick={handleCreate}
                 disabled={!formData.name || !formData.purpose}
-                className="px-3 py-2 bg-sage-700 hover:bg-sage-600 disabled:opacity-50 text-bone-50 text-[13px] font-medium rounded-lg shadow-card transition-colors flex items-center gap-1.5"
+                className="flex items-center gap-1.5"
               >
                 <Save className="w-4 h-4" /> {t('create_activity')}
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -370,10 +379,8 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.activity_name')} <span className="text-clay-600">*</span></label>
-                <input 
-                  type="text" 
+                <Input 
                   {...register('name')}
-                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder={t('general.activity_name_ph')}
                 />
                 {errors.name && <FieldError>{errors.name.message as string}</FieldError>}
@@ -381,21 +388,19 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
 
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.purpose')} <span className="text-clay-600">*</span></label>
-                <textarea 
+                <Textarea 
                   {...register('purpose')}
                   rows={3}
-                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder={t('general.purpose_ph')}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.description')}</label>
-                <textarea 
+                <Textarea 
                   value={formData.description || ''}
                   onChange={(e) => handleFieldChange('description', e.target.value)}
                   rows={2}
-                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                 />
               </div>
 
@@ -408,10 +413,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                       <label key={client.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
                         assignedClientIds.includes(client.id) ? 'border-indigo-300 bg-indigo-500/10/50' : 'border-white/10 hover:border-ink-900/30'
                       }`}>
-                        <input 
-                          type="checkbox"
+                        <Switch 
                           checked={assignedClientIds.includes(client.id)}
-                          onChange={() => handleClientToggle(client.id)}
+                          onCheckedChange={() => handleClientToggle(client.id)}
                           className="mt-0.5"
                         />
                         <div>
@@ -426,40 +430,47 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-ink-900/8">
                 <div className="space-y-2">
                   <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.status')}</label>
-                  <select 
+                  <Select 
                     value={formData.status}
-                    onChange={(e) => handleFieldChange('status', e.target.value)}
-                    className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                    onValueChange={(value) => handleFieldChange('status', value)}
                   >
-                    <option value="draft">{t('general.status_draft')}</option>
-                    <option value="active">{t('general.status_active')}</option>
-                    <option value="under_review">{t('general.status_under_review')}</option>
-                    <option value="archived">{t('general.status_archived')}</option>
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">{t('general.status_draft')}</SelectItem>
+                      <SelectItem value="active">{t('general.status_active')}</SelectItem>
+                      <SelectItem value="under_review">{t('general.status_under_review')}</SelectItem>
+                      <SelectItem value="archived">{t('general.status_archived')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="space-y-2">
                   <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.risk_level')}</label>
-                  <select 
+                  <Select 
                     value={formData.riskLevel}
-                    onChange={(e) => handleFieldChange('riskLevel', e.target.value)}
-                    className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                    onValueChange={(value) => handleFieldChange('riskLevel', value)}
                   >
-                    <option value="low">{t('general.risk_low')}</option>
-                    <option value="medium">{t('general.risk_medium')}</option>
-                    <option value="high">{t('general.risk_high')}</option>
-                    <option value="critical">{t('general.risk_critical')}</option>
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">{t('general.risk_low')}</SelectItem>
+                      <SelectItem value="medium">{t('general.risk_medium')}</SelectItem>
+                      <SelectItem value="high">{t('general.risk_high')}</SelectItem>
+                      <SelectItem value="critical">{t('general.risk_critical')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="space-y-2 pt-2 border-t border-ink-900/8">
                 <label className="flex items-start gap-3 p-3 bg-white/5/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
-                  <input 
-                    type="checkbox"
+                  <Switch 
                     checked={formData.isSystematicMonitoring || false}
-                    onChange={(e) => handleFieldChange('isSystematicMonitoring', e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded border-white/20 text-[#C9A227] focus:ring-sage-500/20"
+                    onCheckedChange={(checked) => handleFieldChange('isSystematicMonitoring', checked)}
+                    className="mt-0.5"
                   />
                   <div>
                     <p className="text-[13.5px] font-medium text-[#F4F5F6]">{t('general.systematic_monitoring')}</p>
@@ -479,18 +490,25 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('legal.lawful_basis')} <span className="text-clay-600">*</span></label>
-                <select 
-                  {...register('lawfulBasis')}
-                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
-                >
-                  <option value="" disabled>{t('legal.select_lawful_basis')}</option>
-                  <option value="consent">{t('legal.consent')}</option>
-                  <option value="contract">{t('legal.contract')}</option>
-                  <option value="legal_obligation">{t('legal.legal_obligation')}</option>
-                  <option value="vital_interests">{t('legal.vital_interests')}</option>
-                  <option value="public_task">{t('legal.public_task')}</option>
-                  <option value="legitimate_interest">{t('legal.legitimate_interest')}</option>
-                </select>
+                <Controller
+                  name="lawfulBasis"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('legal.select_lawful_basis')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="consent">{t('legal.consent')}</SelectItem>
+                        <SelectItem value="contract">{t('legal.contract')}</SelectItem>
+                        <SelectItem value="legal_obligation">{t('legal.legal_obligation')}</SelectItem>
+                        <SelectItem value="vital_interests">{t('legal.vital_interests')}</SelectItem>
+                        <SelectItem value="public_task">{t('legal.public_task')}</SelectItem>
+                        <SelectItem value="legitimate_interest">{t('legal.legitimate_interest')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
                 {errors.lawfulBasis && <FieldError>{errors.lawfulBasis.message as string}</FieldError>}
               </div>
 
@@ -498,9 +516,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                   <h3 className="text-[13px] font-medium text-amber-400 mb-1">{t('legal.lia_required')}</h3>
                   <p className="text-[12.5px] text-[#9BA1A6] mb-3">{t('legal.lia_desc')}</p>
-                  <button className="px-3 py-1.5 bg-[#0D0F11] text-[#E6E8EA] text-[12.5px] hairline rounded-md hover:bg-white/5 transition-colors">
+                  <Button variant="outline" className="px-3 py-1.5 h-auto text-[12.5px]">
                     {t('legal.start_lia')}
-                  </button>
+                  </Button>
                 </div>
               )}
 
@@ -531,29 +549,31 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.retention_period')} <span className="text-clay-600">*</span></label>
-                <select 
+                <Select 
                   value={formData.retentionPeriod || ''}
-                  onChange={(e) => handleFieldChange('retentionPeriod', e.target.value)}
-                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  onValueChange={(value) => handleFieldChange('retentionPeriod', value)}
                 >
-                  <option value="" disabled>{t('retention.select_retention')}</option>
-                  <option value="6_months">{t('retention.6_months')}</option>
-                  <option value="1_year">{t('retention.1_year')}</option>
-                  <option value="3_years">{t('retention.3_years')}</option>
-                  <option value="5_years">{t('retention.5_years')}</option>
-                  <option value="duration_of_contract">{t('retention.duration_of_contract')}</option>
-                  <option value="indefinite">{t('retention.indefinite')}</option>
-                  <option value="custom">{t('retention.custom')}</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('retention.select_retention')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="6_months">{t('retention.6_months')}</SelectItem>
+                    <SelectItem value="1_year">{t('retention.1_year')}</SelectItem>
+                    <SelectItem value="3_years">{t('retention.3_years')}</SelectItem>
+                    <SelectItem value="5_years">{t('retention.5_years')}</SelectItem>
+                    <SelectItem value="duration_of_contract">{t('retention.duration_of_contract')}</SelectItem>
+                    <SelectItem value="indefinite">{t('retention.indefinite')}</SelectItem>
+                    <SelectItem value="custom">{t('retention.custom')}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.justification')} <span className="text-clay-600">*</span></label>
-                <textarea 
+                <Textarea 
                   value={formData.retentionJustification || ''}
                   onChange={(e) => handleFieldChange('retentionJustification', e.target.value)}
                   rows={3}
-                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder={t('retention.justification_ph')}
                 />
               </div>
@@ -561,22 +581,20 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.next_review')}</label>
-                  <input 
+                  <Input 
                     type="date"
                     value={formData.retentionReviewDate ? new Date(formData.retentionReviewDate).toISOString().split('T')[0] : ''}
                     onChange={(e) => handleFieldChange('retentionReviewDate', e.target.value ? new Date(e.target.value) : null)}
-                    className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.deletion_procedure')}</label>
-                <textarea 
+                <Textarea 
                   value={formData.deletionProcedure || ''}
                   onChange={(e) => handleFieldChange('deletionProcedure', e.target.value)}
                   rows={2}
-                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder={t('retention.deletion_procedure_ph')}
                 />
               </div>
@@ -604,17 +622,16 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     { id: 'audit_logging', label: t('security.audit_logs') },
                   ].map(measure => (
                     <label key={measure.id} className="flex items-start gap-3 p-3 bg-white/5/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
-                      <input 
-                        type="checkbox"
+                      <Switch 
                         checked={Array.isArray(formData.securityMeasures) && formData.securityMeasures.includes(measure.id)}
-                        onChange={(e) => {
+                        onCheckedChange={(checked) => {
                           const current = Array.isArray(formData.securityMeasures) ? formData.securityMeasures : [];
-                          const updated = e.target.checked 
+                          const updated = checked 
                             ? [...current, measure.id]
                             : current.filter((m: string) => m !== measure.id);
                           handleFieldChange('securityMeasures', updated);
                         }}
-                        className="mt-0.5 w-4 h-4 rounded border-white/20 text-[#C9A227] focus:ring-sage-500/20"
+                        className="mt-0.5"
                       />
                       <span className="text-[13px] font-medium text-[#F4F5F6]">{measure.label}</span>
                     </label>
@@ -624,11 +641,10 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
 
               <div className="space-y-2 mt-4">
                 <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('security.additional_notes')}</label>
-                <textarea 
+                <Textarea 
                   value={formData.securityMeasuresDetail || ''}
                   onChange={(e) => handleFieldChange('securityMeasuresDetail', e.target.value)}
                   rows={3}
-                  className="w-full bg-[#08090A] hairline rounded-lg px-3 py-2 text-[13.5px] text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                   placeholder={t('security.additional_notes_ph')}
                 />
               </div>

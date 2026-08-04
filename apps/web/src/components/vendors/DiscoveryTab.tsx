@@ -6,6 +6,9 @@ import {
   Sparkles, ShieldCheck, Trash2, CheckCircle2, AlertTriangle, 
   HelpCircle, Loader2, Play, Archive, Inbox, Globe, Building2 
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function DiscoveryTab() {
   const utils = trpc.useUtils();
@@ -110,21 +113,21 @@ export function DiscoveryTab() {
         </div>
         <div className="flex flex-col gap-2 shrink-0 w-full md:w-auto">
           <div className="flex gap-2">
-            <input
+            <Input
               type="url"
               placeholder="https://example.com"
               value={scanUrl}
               onChange={(e) => setScanUrl(e.target.value)}
-              className="bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sage-500/20 w-full md:w-64"
+              className="w-full md:w-64"
             />
-            <button
+            <Button
               onClick={handleStartScan}
               disabled={isScanning}
-              className="bg-sage-700 hover:bg-sage-600 disabled:opacity-50 text-white font-medium text-xs px-4 py-2.5 rounded-lg flex items-center gap-1.5 transition-colors shrink-0 shadow-panel-elevated"
+              className="shrink-0"
             >
               {isScanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
               Scan Website
-            </button>
+            </Button>
           </div>
           {scanError && <p className="text-[11px] text-rose-600 font-semibold">{scanError}</p>}
         </div>
@@ -136,20 +139,22 @@ export function DiscoveryTab() {
         {/* Navigation Sub-Tabs */}
         <div className="border-b border-white/10 bg-[#08090A]/50 flex px-6 justify-between items-center">
           <div className="flex gap-4">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setSubTab('inbox')}
-              className={`py-4 text-xs font-semibold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${subTab === 'inbox' ? 'border-sage-600 text-[#C9A227]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'}`}
+              className={`py-4 px-0 h-auto rounded-none text-xs font-semibold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${subTab === 'inbox' ? 'border-sage-600 text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-transparent'}`}
             >
               <Inbox className="w-4 h-4" />
               Actionable Inbox
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               onClick={() => setSubTab('archive')}
-              className={`py-4 text-xs font-semibold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${subTab === 'archive' ? 'border-sage-600 text-[#C9A227]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'}`}
+              className={`py-4 px-0 h-auto rounded-none text-xs font-semibold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${subTab === 'archive' ? 'border-sage-600 text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-transparent'}`}
             >
               <Archive className="w-4 h-4" />
               Scan Logs & Archive
-            </button>
+            </Button>
           </div>
           <span className="text-[10px] text-[#6E747A] font-bold uppercase tracking-widest">
             {displayDiscoveries.length} items
@@ -235,27 +240,29 @@ export function DiscoveryTab() {
 
                   {discovery.status === 'undocumented' && (
                     <div className="flex items-center gap-2.5">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleDismiss(discovery.id)}
-                        className="p-2 border border-white/10 text-[#6E747A] hover:text-ink-950 hover:bg-white/5 rounded-lg transition-colors"
+                        className="text-[#6E747A] hover:text-ink-950 hover:bg-white/5 transition-colors border border-white/10"
                         title="Dismiss / Ignore"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </Button>
                       {matchedVendor ? (
-                        <button
+                        <Button
                           onClick={() => handleConfirmGlobal(discovery.id, matchedVendor.id)}
-                          className="bg-sage-700 hover:bg-sage-600 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-panel-elevated transition-colors"
                         >
                           Link {matchedVendor.name}
-                        </button>
+                        </Button>
                       ) : (
-                        <button
+                        <Button
+                          variant="outline"
                           onClick={() => handleOpenCustomModal({ discovery })}
-                          className="bg-indigo-500/10 text-indigo-400 border border-indigo-900/50 hover:bg-indigo-100 font-semibold text-xs px-4 py-2 rounded-lg shadow-panel-elevated transition-colors"
+                          className="bg-indigo-500/10 text-indigo-400 border-indigo-900/50 hover:bg-indigo-100 hover:text-indigo-900"
                         >
                           Add Custom Vendor
-                        </button>
+                        </Button>
                       )}
                     </div>
                   )}
@@ -272,46 +279,49 @@ export function DiscoveryTab() {
           <div className="bg-[#0D0F11] border border-white/10 rounded-2xl w-full max-w-[450px] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-white/10 flex justify-between items-center">
               <h3 className="font-serif text-lg text-[#F4F5F6]">Add Discovered Vendor</h3>
-              <button 
+              <Button
+                variant="ghost" 
                 onClick={() => { setIsCustomModalOpen(false); setSelectedDiscovery(null); }} 
-                className="text-[#6E747A] hover:text-[#F4F5F6] text-xl"
+                className="text-[#6E747A] hover:text-[#F4F5F6] text-xl h-auto px-2 py-1"
               >
                 &times;
-              </button>
+              </Button>
             </div>
             <div className="p-6 space-y-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-[#6E747A] uppercase tracking-wider">Service Name</label>
-                <input
+                <Input
                   type="text"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sage-500/20"
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-[#6E747A] uppercase tracking-wider">Domain (Website)</label>
-                <input
+                <Input
                   type="text"
                   value={selectedDiscovery.discovery.detectedDomain}
                   disabled
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-[#6E747A]"
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-[#6E747A] uppercase tracking-wider">Category</label>
-                <select
+                <Select
                   value={customCategory}
-                  onChange={(e) => setCustomCategory(e.target.value)}
-                  className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  onValueChange={(val) => setCustomCategory(val)}
                 >
-                  <option value="Analytics">Analytics</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Hosting">Hosting / Infrastructure</option>
-                  <option value="Customer Support">Customer Support</option>
-                  <option value="HR / Payroll">HR / Payroll</option>
-                  <option value="Other">Other</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Analytics">Analytics</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Hosting">Hosting / Infrastructure</SelectItem>
+                    <SelectItem value="Customer Support">Customer Support</SelectItem>
+                    <SelectItem value="HR / Payroll">HR / Payroll</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="bg-amber-500/10 border border-amber-900/50 text-amber-300 rounded-xl p-3.5 text-xs flex gap-2.5 leading-relaxed">
@@ -323,18 +333,17 @@ export function DiscoveryTab() {
               </div>
             </div>
             <div className="p-4 border-t border-white/10 bg-[#08090A]/50 flex justify-end gap-2.5">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => { setIsCustomModalOpen(false); setSelectedDiscovery(null); }}
-                className="px-3.5 py-2 border border-white/10 hover:bg-white/5 rounded-lg text-xs font-semibold text-[#E6E8EA] transition-colors shadow-panel-elevated"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleConfirmCustom}
-                className="bg-sage-700 hover:bg-sage-600 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-panel-elevated transition-colors"
               >
                 Create and Link
-              </button>
+              </Button>
             </div>
           </div>
         </div>

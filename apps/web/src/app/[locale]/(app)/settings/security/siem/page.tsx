@@ -92,17 +92,17 @@ export default function SiemSettingsPage() {
       )}
 
       <div>
-        <h1 className="text-2xl font-bold mb-2">SIEM Integration</h1>
-        <p className="text-gray-500">
+        <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">SIEM Integration</h1>
+        <p className="text-[#6E747A]">
           Stream audit logs to your security tool (Splunk, Datadog, Microsoft Sentinel) in real-time.
         </p>
       </div>
 
-      <div className="bg-[#0D0F11] p-6 rounded-lg border border-gray-200 space-y-6">
+      <div className="bg-[#0D0F11] p-6 rounded-lg border border-white/10 space-y-6 shadow-panel-elevated">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label htmlFor="siem-enabled" className="text-base font-medium text-gray-900">Enable SIEM Integration</Label>
-            <p className="text-sm text-gray-500">
+            <Label htmlFor="siem-enabled" className="text-base font-medium text-[#F4F5F6]">Enable SIEM Integration</Label>
+            <p className="text-sm text-[#6E747A]">
               When enabled, audit logs will be pushed to the configured endpoint.
             </p>
           </div>
@@ -114,9 +114,9 @@ export default function SiemSettingsPage() {
         </div>
 
         {siemEnabled && (
-          <div className="space-y-4 pt-4 border-t border-gray-100">
+          <div className="space-y-4 pt-4 border-t border-white/10">
             <div className="space-y-2">
-              <Label htmlFor="endpoint-url">Endpoint URL</Label>
+              <Label htmlFor="endpoint-url" className="text-[#E6E8EA]">Endpoint URL</Label>
               <Input
                 id="endpoint-url"
                 placeholder="https://your-siem-instance.com/api/v1/logs"
@@ -126,7 +126,7 @@ export default function SiemSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="payload-format">Payload Format</Label>
+              <Label htmlFor="payload-format" className="text-[#E6E8EA]">Payload Format</Label>
               <Select value={siemFormat} onValueChange={setSiemFormat}>
                 <SelectTrigger id="payload-format">
                   <SelectValue placeholder="Select a format" />
@@ -140,7 +140,7 @@ export default function SiemSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="auth-header">Authorization Header (Optional)</Label>
+              <Label htmlFor="auth-header" className="text-[#E6E8EA]">Authorization Header (Optional)</Label>
               <Input
                 id="auth-header"
                 placeholder="Bearer your_token_here"

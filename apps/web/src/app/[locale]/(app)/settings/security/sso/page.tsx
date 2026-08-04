@@ -3,6 +3,11 @@
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 
 export default function SSOSettingsPage() {
   const { data: orgSettings, isLoading, refetch } = trpc.settings.getOrgSettings.useQuery();
@@ -47,35 +52,37 @@ export default function SSOSettingsPage() {
 
           <div className="space-y-6 max-w-lg">
             <div>
-              <label className="block text-sm font-medium text-[#E6E8EA] mb-1">Identity Provider</label>
-              <select
+              <Label className="block text-sm font-medium text-[#E6E8EA] mb-1.5">Identity Provider</Label>
+              <Select
                 value={provider}
-                onChange={(e) => setProvider(e.target.value)}
-                className="w-full px-3 py-2 bg-[#08090A] hairline rounded-lg text-sm text-[#F4F5F6] focus:ring-2 focus:ring-sage-500/20 outline-none"
+                onValueChange={setProvider}
               >
-                <option value="OktaSAML">Okta</option>
-                <option value="AzureSAML">Azure AD</option>
-                <option value="GoogleOAuth">Google Workspace</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="OktaSAML">Okta</SelectItem>
+                  <SelectItem value="AzureSAML">Azure AD</SelectItem>
+                  <SelectItem value="GoogleOAuth">Google Workspace</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#E6E8EA] mb-1">IdP Metadata URL</label>
-              <input
+              <Label className="block text-sm font-medium text-[#E6E8EA] mb-1.5">IdP Metadata URL</Label>
+              <Input
                 type="url"
                 value={metadataUrl}
                 onChange={(e) => setMetadataUrl(e.target.value)}
                 placeholder="https://..."
-                className="w-full px-3 py-2 bg-[#08090A] hairline rounded-lg text-sm text-[#F4F5F6] focus:ring-2 focus:ring-sage-500/20 outline-none"
               />
             </div>
 
-            <button
+            <Button
               onClick={handleSaveSSO}
-              className="px-4 py-2 bg-sage-600 hover:bg-sage-700 text-white rounded-lg text-sm font-medium transition-colors"
             >
               Configure Connection
-            </button>
+            </Button>
           </div>
 
           <div className="mt-12 pt-8 border-t border-ink-100">
@@ -85,10 +92,9 @@ export default function SSOSettingsPage() {
                   <div className="text-sm font-medium text-[#F4F5F6]">Enforce SSO</div>
                   <div className="text-sm text-[#6E747A]">Require all members to use SSO. Password login will be disabled.</div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" />
-                  <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#0D0F11] after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sage-600"></div>
-                </label>
+                <Switch 
+                  onCheckedChange={handleToggleEnforce}
+                />
              </div>
           </div>
         </div>

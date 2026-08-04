@@ -1,6 +1,6 @@
 # Custodia — Complete Product Memory
 
-> **Last updated:** July 31, 2026 (Implemented "Custos Brackets" logo mark across marketing header and app sidebar)
+> **Last updated:** August 4, 2026 (Unified Design System & UI Migration, API Marketing Standardization)
 > **Owner:** Nisarg (solo founder, Pune, India)
 > **Domain:** trycustodia.com
 > **Status:** Pre-launch, core product built, polishing for production
@@ -852,3 +852,15 @@ Transitioned the product from an indefinite trial model to a strict 14-day free 
 - **Middleware Paywall Interception**: The Next.js middleware dynamically checks the `session.subscriptionStatus` and `session.trialEndsAt`. If a trial is expired (or status is `past_due`/`canceled`), users are forcibly redirected to `/settings/billing`, preventing access to the core application routes.
 - **Dynamic Locked UI**: When locked, the main navigation sidebar is hidden. The billing page renders contextual banners explaining the lockout reason and utilizes a `getUsageStats` tRPC procedure to remind users of the value they have built (e.g., number of ROPA entries, tracked vendors).
 - **Proactive Expiry Notifications**: Implemented a daily pg-boss background worker (`trialExpiry.ts`) that scans for organizations whose trial ends in exactly 4 days or 1 day. It dispatches targeted reminder emails via Resend to the organization owners/admins, inclusive of their usage statistics to drive conversion before the lockout occurs.
+
+---
+
+## 31. Unified Design System & UI Migration
+
+### Overview
+Completed an exhaustive migration of all form inputs, selects, switches, and buttons across the entire application (Phases 1-4) to use the new standardized Radix-based design system components (`@/components/ui`).
+
+### Components
+- **Radix Select & react-hook-form**: Wrapped all Radix Select components in `Controller` from `react-hook-form` to ensure proper state management and validation since Radix doesn't emit native HTML `onChange` events.
+- **Accessibility & Consistency**: Replaced raw HTML `<input>`, `<select>`, and `<button>` tags with standardized UI components, ensuring consistent focus rings, hover states, and dark mode contrast across ROPA, Vendors, DSAR, Consent, and Settings modules.
+- **API Marketing Standardization**: Nuked the unfinished `/settings/developers` route and navigation tab to prevent dead code exposure. Standardized the Enterprise API feature copy to "REST APIs (Enterprise only)" across all marketing and pricing pages.

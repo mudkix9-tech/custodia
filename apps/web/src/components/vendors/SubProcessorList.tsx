@@ -6,6 +6,9 @@ import { trpc } from '@/utils/trpc';
 import { Network, Plus, Trash2, ShieldCheck, AlertTriangle, Link as LinkIcon, Search, Calendar, Check, X, ChevronDown, ChevronUp, AlertOctagon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 
 export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; orgVendorId: string }) {
@@ -64,13 +67,13 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
           <h3 className="text-xl font-serif text-[#F4F5F6] mb-1">Sub-processors Chain</h3>
           <p className="text-[14px] text-[#9BA1A6]">Track third-party vendors used by this vendor to process your data.</p>
         </div>
-        <button 
+        <Button 
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-sage-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sage-600 transition-colors shadow-panel-elevated"
+          className="flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add Sub-processor
-        </button>
+        </Button>
       </div>
 
       <div className="bg-[#0D0F11] border border-white/10 rounded-2xl overflow-hidden shadow-panel-elevated">
@@ -127,12 +130,14 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                     {format(new Date(sp.addedAt!), 'MMM d, yyyy')}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button 
+                    <Button 
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleRemove(sp.id)}
-                      className="text-[#6E747A] hover:text-red-500 transition-colors"
+                      className="text-[#6E747A] hover:text-red-500 hover:bg-transparent transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))
@@ -150,29 +155,31 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
             </div>
             
             <div className="flex border-b border-white/10 bg-[#08090A]">
-              <button 
+              <Button 
+                variant="ghost"
                 onClick={() => setAddMode('linked')}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${addMode === 'linked' ? 'bg-[#0D0F11] text-[#C9A227] border-b-2 border-sage-600' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
+                className={`flex-1 rounded-none px-4 py-3 h-auto text-sm font-medium transition-colors ${addMode === 'linked' ? 'bg-[#0D0F11] text-[#C9A227] border-b-2 border-sage-600 hover:bg-[#0D0F11] hover:text-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
               >
                 Search Database
-              </button>
-              <button 
+              </Button>
+              <Button 
+                variant="ghost"
                 onClick={() => setAddMode('unlinked')}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${addMode === 'unlinked' ? 'bg-[#0D0F11] text-[#C9A227] border-b-2 border-sage-600' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
+                className={`flex-1 rounded-none px-4 py-3 h-auto text-sm font-medium transition-colors ${addMode === 'unlinked' ? 'bg-[#0D0F11] text-[#C9A227] border-b-2 border-sage-600 hover:bg-[#0D0F11] hover:text-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
               >
                 Manual Entry
-              </button>
+              </Button>
             </div>
 
             <div className="p-6">
               {addMode === 'linked' ? (
                 <div className="space-y-4">
                   <div className="relative">
-                    <Search className="w-5 h-5 text-[#6E747A] absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input 
+                    <Search className="w-5 h-5 text-[#6E747A] absolute left-3 top-1/2 -translate-y-1/2 z-10" />
+                    <Input 
                       type="text" 
                       placeholder="Search global vendor database..." 
-                      className="w-full pl-10 pr-4 py-2 border border-white/20 rounded-xl outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500"
+                      className="w-full pl-10 pr-4"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -203,19 +210,18 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Company Name</label>
-                    <input 
+                    <Input 
                       type="text" 
-                      className="w-full px-4 py-2 border border-white/20 rounded-xl outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500"
                       value={manualName}
                       onChange={(e) => setManualName(e.target.value)}
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Country Code (e.g., US, IE)</label>
-                    <input 
+                    <Input 
                       type="text" 
                       maxLength={2}
-                      className="w-full px-4 py-2 border border-white/20 rounded-xl outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500 uppercase"
+                      className="uppercase"
                       value={manualCountry}
                       onChange={(e) => setManualCountry(e.target.value)}
                     />
@@ -225,19 +231,19 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
             </div>
 
             <div className="p-4 border-t border-white/10 flex justify-end gap-3 bg-[#08090A]">
-              <button 
+              <Button 
+                variant="ghost"
                 onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 text-sm font-medium text-[#9BA1A6] hover:text-[#F4F5F6]"
+                className="text-[#9BA1A6] hover:text-[#F4F5F6]"
               >
                 Cancel
-              </button>
-              <button 
+              </Button>
+              <Button 
                 onClick={handleAdd}
                 disabled={addMode === 'linked' ? !selectedSubProcessorId : !manualName}
-                className="bg-sage-700 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-sage-600 transition-colors disabled:opacity-50"
               >
                 Add Sub-processor
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -295,15 +301,14 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                       </div>
 
                       {ch.status === 'pending_review' && (
-                        <button
+                        <Button
                           onClick={() => {
                             setReviewingChange(ch);
                             setReviewNotes('');
                           }}
-                          className="bg-ink-900 text-white hover:bg-ink-800 text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-panel-elevated"
                         >
                           Review &amp; Respond
-                        </button>
+                        </Button>
                       )}
                     </div>
 
@@ -312,16 +317,17 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                         <span className="text-xs font-medium text-[#6E747A] uppercase tracking-wider">
                           Summary of Changes ({addedLines.length} additions, {removedLines.length} removals)
                         </span>
-                        <button
+                        <Button
+                          variant="ghost"
                           onClick={() => setExpandedChangeId(isExpanded ? null : ch.id)}
-                          className="flex items-center gap-1 text-xs font-medium text-[#C9A227] hover:text-sage-800 transition-colors"
+                          className="flex items-center gap-1 text-xs font-medium text-[#C9A227] hover:text-sage-800 hover:bg-transparent transition-colors"
                         >
                           {isExpanded ? (
                             <>Hide Changes <ChevronUp className="w-3.5 h-3.5" /></>
                           ) : (
                             <>Show Changes <ChevronDown className="w-3.5 h-3.5" /></>
                           )}
-                        </button>
+                        </Button>
                       </div>
 
                       {isExpanded && (
@@ -413,8 +419,8 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
 
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-[#F4F5F6]">Review Notes</label>
-                <textarea
-                  className="w-full min-h-24 px-4 py-2 border border-white/20 rounded-xl outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500 text-sm"
+                <Textarea
+                  className="min-h-[96px]"
                   placeholder="Record your assessment, e.g. 'AWS Dublin region added; complies with hosting preferences.'"
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
@@ -435,14 +441,16 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
             </div>
 
             <div className="p-4 border-t border-white/10 flex justify-between items-center bg-[#08090A]">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => setReviewingChange(null)}
-                className="px-4 py-2 text-sm font-medium text-[#9BA1A6] hover:text-[#F4F5F6]"
+                className="text-[#9BA1A6] hover:text-[#F4F5F6]"
               >
                 Cancel
-              </button>
+              </Button>
               <div className="flex gap-2">
-                <button
+                <Button
+                  variant="destructive"
                   onClick={async () => {
                     await reviewMutation.mutateAsync({
                       changeId: reviewingChange.id,
@@ -452,11 +460,10 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                     setReviewingChange(null);
                   }}
                   disabled={reviewMutation.isPending}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-500/100 transition-colors shadow-panel-elevated disabled:opacity-50"
                 >
                   Object to Change
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={async () => {
                     await reviewMutation.mutateAsync({
                       changeId: reviewingChange.id,
@@ -466,10 +473,9 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                     setReviewingChange(null);
                   }}
                   disabled={reviewMutation.isPending}
-                  className="bg-sage-700 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-sage-600 transition-colors shadow-panel-elevated disabled:opacity-50"
                 >
                   Acknowledge Change
-                </button>
+                </Button>
               </div>
             </div>
           </div>

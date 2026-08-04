@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Step5Props {
   onNext: (invites: any[]) => void;
@@ -46,88 +49,95 @@ export function Step5InviteTeam({ onNext, companySize }: Step5Props) {
   };
 
   return (
-    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-2xl mx-auto w-full">
+    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border border-white/10 max-w-2xl mx-auto w-full">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2 text-gray-900">Invite your team</h2>
-        <p className="text-gray-500">Compliance is a team effort. Invite your colleagues to help manage privacy requests and data processing activities.</p>
+        <h2 className="text-2xl font-serif text-[#F4F5F6] mb-2">Invite your team</h2>
+        <p className="text-[#6E747A]">Compliance is a team effort. Invite your colleagues to help manage privacy requests and data processing activities.</p>
       </div>
 
       <form onSubmit={handleSubmit}>
         {/* Workspace Owner Context Indicator */}
-        <div className="mb-6 p-3 bg-gray-50 border border-gray-200/60 rounded-xl text-xs text-gray-600 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-blue-500/100 shrink-0"></span>
+        <div className="mb-6 p-3 bg-[#08090A] border border-white/10 rounded-xl text-xs text-[#E6E8EA] flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#C9A227] shrink-0"></span>
           <span>You are logged in as the <strong>Workspace Owner</strong>. Invites will be sent to the colleagues below.</span>
         </div>
 
         <div className="space-y-3 mb-6">
           {invites.map((invite, index) => (
             <div key={index} className="flex gap-3 items-center">
-              <input
+              <Input
                 type="email"
                 placeholder="colleague@example.com"
                 value={invite.email}
                 onChange={(e) => handleChange(index, 'email', e.target.value)}
-                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="flex-1"
               />
-              <select
+              <Select
                 value={invite.role}
-                onChange={(e) => handleChange(index, 'role', e.target.value)}
-                className="w-32 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-[#0D0F11] font-normal text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                onValueChange={(value) => handleChange(index, 'role', value)}
               >
-                <option value="admin">Admin</option>
-                <option value="member">Member</option>
-                <option value="viewer">Viewer</option>
-              </select>
-              <button
+                <SelectTrigger className="w-32 bg-[#0D0F11]">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="member">Member</SelectItem>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="ghost"
+                size="icon"
                 type="button"
                 onClick={() => handleRemove(index)}
-                className="text-gray-400 hover:text-red-500 p-2 transition-colors shrink-0"
+                className="text-[#6E747A] hover:text-red-400 shrink-0"
                 title={invites.length <= 1 ? 'Clear row' : 'Remove row'}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
-              </button>
+              </Button>
             </div>
           ))}
         </div>
 
         {invites.length < 10 && (
-          <button
+          <Button
+            variant="ghost"
             type="button"
             onClick={handleAdd}
-            className="text-blue-400 font-semibold text-sm flex items-center hover:text-blue-800 mb-8 transition-colors"
+            className="text-[#C9A227] hover:text-[#C9A227]/80 hover:bg-transparent font-semibold text-sm flex items-center p-0 h-auto mb-8 transition-colors"
           >
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
             Add another team member
-          </button>
+          </Button>
         )}
 
-        <div className="bg-blue-500/10 p-4 border border-blue-900/50 rounded-xl mb-8 text-sm text-blue-800">
+        <div className="bg-[#08090A] p-4 border border-white/10 rounded-xl mb-8 text-sm text-[#E6E8EA]">
           <p className="font-semibold mb-1">Why invite your team?</p>
-          <ul className="list-disc pl-5 space-y-1 text-xs">
+          <ul className="list-disc pl-5 space-y-1 text-xs text-[#9BA1A6]">
             <li>Everyone can report data breaches (72-hour deadline requires fast response)</li>
             <li>Team members can complete mandatory GDPR training</li>
             <li>Audit trail shows individual accountability</li>
           </ul>
         </div>
 
-        <div className="flex justify-between items-center border-t pt-6">
-          <button
+        <div className="flex justify-between items-center border-t border-white/10 pt-6">
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => onNext([])}
-            className="text-gray-500 hover:text-gray-700 font-medium px-4 py-2"
+            className="text-[#9BA1A6] hover:text-[#F4F5F6]"
           >
             Skip for now
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-lg hover:bg-blue-700 transition"
           >
             Send invitations and continue
-          </button>
+          </Button>
         </div>
       </form>
     </div>

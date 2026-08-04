@@ -9,6 +9,10 @@ import { trpc } from '@/utils/trpc';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { Users, MoreVertical, Shield, UserPlus, Mail, ShieldAlert, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 
 const MODULES = ['ROPA', 'Vendors', 'DSARs', 'Breaches', 'Training', 'Billing', 'Users'];
@@ -119,59 +123,64 @@ export default function TeamSettingsPage() {
                 <h2 className="text-lg font-medium text-[#F4F5F6] flex items-center gap-2">
                   <UserPlus className="w-5 h-5" /> {t('invite.title')}
                 </h2>
-                <button
+                <Button
+                  variant="ghost"
                   type="button"
                   onClick={() => { setIsBulk(!isBulk); setInviteEmails(''); }}
-                  className="text-sm text-[#C9A227] hover:text-[#C9A227] font-medium"
+                  className="text-sm text-[#C9A227] hover:text-[#C9A227] hover:bg-[#C9A227]/10 font-medium"
                 >
                   {isBulk ? t('invite.single_invite') : t('invite.bulk_invite')}
-                </button>
+                </Button>
               </div>
 
               <form onSubmit={handleInvite} className={`flex gap-4 ${isBulk ? 'flex-col' : 'items-end'}`}>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{isBulk ? t('invite.email_bulk') : t('invite.email_single')}</label>
+                  <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{isBulk ? t('invite.email_bulk') : t('invite.email_single')}</Label>
                   {isBulk ? (
                     <textarea
                       required
                       value={inviteEmails}
                       onChange={e => setInviteEmails(e.target.value)}
-                      className="w-full bg-[#08090A] border border-white/10 rounded-lg p-3 text-sm h-32 resize-none"
+                      className="w-full bg-[#08090A] border border-white/10 rounded-lg p-3 text-sm h-32 resize-none text-[#F4F5F6] focus:outline-none focus:ring-1 focus:border-[#C9A227] focus:ring-[#C9A227]"
                       placeholder={t('invite.email_placeholder_bulk')}
                     />
                   ) : (
                     <div className="relative">
-                      <Mail className="w-4 h-4 absolute left-3 top-3 text-[#6E747A]" />
-                      <input
+                      <Mail className="w-4 h-4 absolute left-3 top-2.5 text-[#6E747A]" />
+                      <Input
                         type="email"
                         required
                         value={inviteEmails}
                         onChange={e => setInviteEmails(e.target.value)}
-                        className="w-full bg-[#08090A] border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm"
+                        className="pl-9"
                         placeholder={t('invite.email_placeholder_single')}
                       />
                     </div>
                   )}
                 </div>
                 <div className={`${isBulk ? 'w-full' : 'w-48'}`}>
-                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('invite.role')}</label>
-                  <select
+                  <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('invite.role')}</Label>
+                  <Select
                     value={inviteRole}
-                    onChange={e => setInviteRole(e.target.value as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)}
-                    className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm"
+                    onValueChange={v => setInviteRole(v as any)}
                   >
-                    <option value="admin">{t('invite.roles.admin')}</option>
-                    <option value="member">{t('invite.roles.member')}</option>
-                    <option value="viewer">{t('invite.roles.viewer')}</option>
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">{t('invite.roles.admin')}</SelectItem>
+                      <SelectItem value="member">{t('invite.roles.member')}</SelectItem>
+                      <SelectItem value="viewer">{t('invite.roles.viewer')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <button
+                <Button
                   type="submit"
                   disabled={inviteStatus === 'sending'}
-                  className={`bg-ink-900 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 ${isBulk ? 'w-full' : 'h-[38px]'}`}
+                  className={`${isBulk ? 'w-full' : ''}`}
                 >
                   {inviteStatus === 'sending' ? t('invite.sending') : t('invite.send')}
-                </button>
+                </Button>
               </form>
               {inviteStatus === 'sent' && <p className="text-sm text-[#C9A227] mt-2">{t('invite.success')}</p>}
               {inviteStatus === 'error' && <p className="text-sm text-red-400 mt-2">{inviteError}</p>}
@@ -209,26 +218,32 @@ export default function TeamSettingsPage() {
                       <td className="px-6 py-4 text-[#9BA1A6]">{member.email}</td>
                       <td className="px-6 py-4">
                         {isAdmin && member.id !== (session?.user as { id?: string })?.id ? (
-                          <select
+                          <Select
                             value={member.customRoleId || member.role}
-                            onChange={(e) => handleUpdateRole(member.id, e.target.value)}
-                            className="bg-transparent border border-white/20 rounded text-sm text-[#E6E8EA] focus:ring-sage-500 py-1 pl-2 pr-6 max-w-[120px]"
+                            onValueChange={(v) => handleUpdateRole(member.id, v as any)}
                             disabled={member.role === 'owner' && !isOwner}
                           >
-                            <optgroup label={t('members.roles.basic_roles')}>
-                              <option value="owner" disabled>{t('members.roles.owner')}</option>
-                              <option value="admin">{t('members.roles.admin')}</option>
-                              <option value="member">{t('members.roles.member')}</option>
-                              <option value="viewer">{t('members.roles.viewer')}</option>
-                            </optgroup>
-                            {customRoles && customRoles.length > 0 && (
-                              <optgroup label={t('members.roles.custom_roles')}>
-                                {customRoles.map((cr: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => (
-                                  <option key={cr.id} value={cr.id}>{cr.name}</option>
-                                ))}
-                              </optgroup>
-                            )}
-                          </select>
+                            <SelectTrigger className="w-32 bg-transparent h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <div className="px-2 py-1 text-[11px] font-semibold text-[#6E747A] uppercase">{t('members.roles.basic_roles')}</div>
+                                <SelectItem value="owner" disabled>{t('members.roles.owner')}</SelectItem>
+                                <SelectItem value="admin">{t('members.roles.admin')}</SelectItem>
+                                <SelectItem value="member">{t('members.roles.member')}</SelectItem>
+                                <SelectItem value="viewer">{t('members.roles.viewer')}</SelectItem>
+                              </SelectGroup>
+                              {typeof customRoles !== 'undefined' && customRoles && customRoles.length > 0 && (
+                                <SelectGroup>
+                                  <div className="px-2 py-1 text-[11px] font-semibold text-[#6E747A] uppercase mt-2">{t('members.roles.custom_roles')}</div>
+                                  {customRoles.map((cr: any) => (
+                                    <SelectItem key={cr.id} value={cr.id}>{cr.name}</SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              )}
+                            </SelectContent>
+                          </Select>
                         ) : (
                           <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-ink-100 text-[#E6E8EA] capitalize">
                             {member.role}
@@ -245,19 +260,22 @@ export default function TeamSettingsPage() {
                       {isAdmin && (
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => setSelectedUser(selectedUser?.id === member.id ? null : member)}
-                              className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${selectedUser?.id === member.id ? 'bg-sage-100 text-[#C9A227]' : 'bg-[#0D0F11] border border-white/10 text-[#9BA1A6] hover:bg-ink-900/5'}`}
+                              className={`${selectedUser?.id === member.id ? 'bg-sage-100/20 text-[#C9A227] border-[#C9A227]/50' : ''}`}
                             >
                               {t('members.permissions')}
-                            </button>
+                            </Button>
                             {member.id !== (session?.user as { id?: string })?.id && member.role !== 'owner' && (
-                              <button
+                              <Button
+                                variant="destructive"
+                                size="sm"
                                 onClick={() => handleRemove(member.id, member.name || member.email)}
-                                className="text-xs font-medium text-red-400 hover:bg-red-500/10 bg-[#0D0F11] border border-red-900/50 px-3 py-1.5 rounded-md transition-colors"
                               >
                                 {t('members.remove')}
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </td>
@@ -287,8 +305,8 @@ export default function TeamSettingsPage() {
                       <td className="px-6 py-4 font-medium text-[#F4F5F6]">{member.email}</td>
                       <td className="px-6 py-4 capitalize text-[#9BA1A6]">{member.role}</td>
                       <td className="px-6 py-4 text-[#6E747A] text-right">
-                        <button className="text-xs font-medium bg-[#0D0F11] border border-white/10 text-[#9BA1A6] hover:bg-ink-900/5 px-3 py-1.5 rounded-md mr-2">{t('pending.resend')}</button>
-                        <button onClick={() => handleRemove(member.id, member.email)} className="text-xs font-medium text-red-400 hover:bg-red-500/10 bg-[#0D0F11] border border-red-900/50 px-3 py-1.5 rounded-md">{t('pending.cancel')}</button>
+                        <Button variant="outline" size="sm" className="mr-2">{t('pending.resend')}</Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleRemove(member.id, member.email)}>{t('pending.cancel')}</Button>
                       </td>
                     </tr>
                   ))}
@@ -312,9 +330,9 @@ export default function TeamSettingsPage() {
                 <h3 className="text-lg font-medium text-[#F4F5F6]">{t('permissions.title')}</h3>
                 <p className="text-sm text-[#6E747A] mt-1">{selectedUser.name}</p>
               </div>
-              <button onClick={() => setSelectedUser(null)} className="text-[#6E747A] hover:text-[#F4F5F6] bg-ink-900/5 hover:bg-ink-900/10 p-2 rounded-full transition-colors">
+              <Button variant="ghost" size="icon" onClick={() => setSelectedUser(null)} className="text-[#6E747A] hover:text-[#F4F5F6] rounded-full">
                 <Plus className="w-5 h-5 rotate-45" />
-              </button>
+              </Button>
             </div>
 
             <div className="p-6">
@@ -348,16 +366,18 @@ export default function TeamSettingsPage() {
 
                             return (
                               <td key={`${module}-${action}`} className="py-3 text-center">
-                                <button
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() => handlePermissionChange(module, action, state === 'inherit' ? 'allow' : state === 'allow' ? 'deny' : 'inherit')}
                                   className={`w-6 h-6 rounded-full inline-flex items-center justify-center transition-colors ${
-                                    state === 'allow' ? 'bg-sage-100 text-[#C9A227]' :
-                                    state === 'deny' ? 'bg-red-500/20 text-red-400' :
+                                    state === 'allow' ? 'bg-sage-100 text-[#C9A227] hover:bg-[#C9A227]/20' :
+                                    state === 'deny' ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' :
                                     'bg-white/5 text-white/20 hover:bg-white/10'
                                   }`}
                                 >
                                   {state === 'allow' ? '✓' : state === 'deny' ? '×' : '-'}
-                                </button>
+                                </Button>
                               </td>
                             );
                           })}

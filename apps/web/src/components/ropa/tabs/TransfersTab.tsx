@@ -7,6 +7,9 @@ import { Trash2, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 
 export function TransfersTab({ activityId }: { activityId: string }) {
   const { data: session } = useSession();
@@ -60,11 +63,11 @@ export function TransfersTab({ activityId }: { activityId: string }) {
     };
 
     return (
-      <input
+      <Input
         value={value || ''}
         onChange={e => setValue(e.target.value)}
         onBlur={onBlur}
-        className="bg-transparent border-none outline-none focus:ring-2 focus:ring-sage-500/20 rounded px-2 py-1 w-full text-[#F4F5F6] placeholder:text-white/20"
+        className="bg-transparent border-none shadow-none focus-visible:ring-1 focus-visible:ring-sage-500/20 rounded px-2 py-1 h-8 w-full text-[#F4F5F6] placeholder:text-white/20"
       />
     );
   };
@@ -72,32 +75,40 @@ export function TransfersTab({ activityId }: { activityId: string }) {
   const SelectCell = ({ getValue, row, column, table, options }: any) => {
     const value = getValue();
     return (
-      <select
-        value={value || ''}
-        onChange={(e) => table.options.meta?.updateData(row.index, column.id, e.target.value)}
-        className="bg-transparent hairline rounded px-2 py-1 w-full text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+      <Select
+        value={value || 'none'}
+        onValueChange={(val) => table.options.meta?.updateData(row.index, column.id, val === 'none' ? '' : val)}
       >
-        <option value="" disabled>Select...</option>
-        {options.map((opt: string) => (
-          <option key={opt} value={opt}>{opt}</option>
-        ))}
-      </select>
+        <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-sage-500/20">
+          <SelectValue placeholder="Select..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none" disabled>Select...</SelectItem>
+          {options.map((opt: string) => (
+            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     );
   };
 
   const VendorSelectCell = ({ getValue, row, column, table }: any) => {
     const value = getValue();
     return (
-      <select
-        value={value || ''}
-        onChange={(e) => table.options.meta?.updateData(row.index, column.id, e.target.value)}
-        className="bg-transparent hairline rounded px-2 py-1 w-full text-[#F4F5F6] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+      <Select
+        value={value || 'none'}
+        onValueChange={(val) => table.options.meta?.updateData(row.index, column.id, val === 'none' ? null : val)}
       >
-        <option value="">No vendor linked</option>
-        {orgVendors.map((ov: any) => (
-          <option key={ov.vendorId} value={ov.vendorId}>{ov.name}</option>
-        ))}
-      </select>
+        <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-sage-500/20">
+          <SelectValue placeholder="No vendor linked" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none">No vendor linked</SelectItem>
+          {orgVendors.map((ov: any) => (
+            <SelectItem key={ov.vendorId} value={ov.vendorId}>{ov.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     );
   };
 
@@ -178,8 +189,15 @@ export function TransfersTab({ activityId }: { activityId: string }) {
       id: 'actions',
       header: '',
       cell: ({ row }: any) => (
-        <button aria-label="Delete" onClick={() => handleDelete(row.original.id)} className="p-1.5 text-[#6E747A] hover:text-clay-600 hover:bg-white/5 rounded-md transition-colors"><Trash2 className="w-4 h-4" />
-        </button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          aria-label="Delete" 
+          onClick={() => handleDelete(row.original.id)} 
+          className="w-7 h-7 text-[#6E747A] hover:text-clay-600 hover:bg-white/5"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
       ),
       size: 50,
     }

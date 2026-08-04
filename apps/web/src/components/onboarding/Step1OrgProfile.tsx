@@ -2,6 +2,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Search, Check } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 const EU_EEA_COUNTRIES = [
   { code: 'AT', name: 'Austria' },
@@ -270,13 +275,13 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
   );
 
   return (
-    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border max-w-2xl mx-auto w-full">
-      <h2 className="text-2xl font-bold mb-6 text-gray-900">Organization profile</h2>
+    <div className="bg-[#0D0F11] p-8 rounded-xl shadow-panel-elevated border border-white/10 max-w-2xl mx-auto w-full">
+      <h2 className="text-2xl font-serif text-[#F4F5F6] mb-6">Organization profile</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Organization Name *</label>
-          <input
+          <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Organization Name *</Label>
+          <Input
             type="text"
             name="name"
             value={formData.name}
@@ -286,9 +291,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                 setErrors(prev => ({ ...prev, name: undefined }));
               }
             }}
-            className={`w-full px-4 py-2 border rounded-md shadow-panel-elevated focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.name ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className={`${errors.name ? 'border-red-500' : ''}`}
             placeholder="Acme Agency"
           />
           {errors.name && (
@@ -297,83 +300,88 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
-          <input
+          <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Website URL (Optional)</Label>
+          <Input
             type="url"
             name="websiteUrl"
             value={formData.websiteUrl}
             onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-md"
             placeholder="https://example.com"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
-            <select
-              name="industry"
+            <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Industry</Label>
+            <Select
               value={formData.industry}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-md font-normal text-gray-900 bg-[#0D0F11]"
+              onValueChange={(v) => setFormData(prev => ({ ...prev, industry: v }))}
             >
-              <option value="marketing_agency">Marketing / Digital Agency</option>
-              <option value="design_agency">Design / Creative Agency</option>
-              <option value="web_development">Web Development</option>
-              <option value="ecommerce">E-commerce</option>
-              <option value="saas">SaaS / Technology</option>
-              <option value="recruitment">Recruitment / Staffing</option>
-              <option value="healthcare">Healthcare / Medical</option>
-              <option value="legal">Legal / Law Firm</option>
-              <option value="consulting">Consulting / Professional Services</option>
-              <option value="real_estate">Real Estate</option>
-              <option value="education">Education / Training</option>
-              <option value="accounting">Accounting / Finance</option>
-              <option value="hospitality">Hospitality / Travel</option>
-              <option value="construction">Construction / Engineering</option>
-              <option value="nonprofit">Non-profit / NGO</option>
-              <option value="other">Other</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="marketing_agency">Marketing / Digital Agency</SelectItem>
+                <SelectItem value="design_agency">Design / Creative Agency</SelectItem>
+                <SelectItem value="web_development">Web Development</SelectItem>
+                <SelectItem value="ecommerce">E-commerce</SelectItem>
+                <SelectItem value="saas">SaaS / Technology</SelectItem>
+                <SelectItem value="recruitment">Recruitment / Staffing</SelectItem>
+                <SelectItem value="healthcare">Healthcare / Medical</SelectItem>
+                <SelectItem value="legal">Legal / Law Firm</SelectItem>
+                <SelectItem value="consulting">Consulting / Professional Services</SelectItem>
+                <SelectItem value="real_estate">Real Estate</SelectItem>
+                <SelectItem value="education">Education / Training</SelectItem>
+                <SelectItem value="accounting">Accounting / Finance</SelectItem>
+                <SelectItem value="hospitality">Hospitality / Travel</SelectItem>
+                <SelectItem value="construction">Construction / Engineering</SelectItem>
+                <SelectItem value="nonprofit">Non-profit / NGO</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
-            <select
-              name="companySize"
+            <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Company Size</Label>
+            <Select
               value={formData.companySize}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-md font-normal text-gray-900 bg-[#0D0F11]"
+              onValueChange={(v) => setFormData(prev => ({ ...prev, companySize: v }))}
             >
-              <option value="1-4">1-4</option>
-              <option value="5-10">5-10</option>
-              <option value="11-25">11-25</option>
-              <option value="26-50">26-50</option>
-              <option value="51-100">51-100</option>
-              <option value="100+">100+</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1-4">1-4</SelectItem>
+                <SelectItem value="5-10">5-10</SelectItem>
+                <SelectItem value="11-25">11-25</SelectItem>
+                <SelectItem value="26-50">26-50</SelectItem>
+                <SelectItem value="51-100">51-100</SelectItem>
+                <SelectItem value="100+">100+</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div className="relative" ref={dropdownRef}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+          <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">Country</Label>
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="w-full px-4 py-2 border rounded-md text-left flex justify-between items-center bg-[#0D0F11] shadow-panel-elevated hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-white/10 rounded-lg text-left flex justify-between items-center bg-[#08090A] shadow-sm hover:border-[#C9A227]/50 focus:outline-none focus:ring-1 focus:ring-[#C9A227] focus:border-[#C9A227] transition-all"
           >
-            <span className="text-gray-900 font-normal">{selectedCountryName}</span>
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+            <span className="text-[#F4F5F6] text-sm font-normal">{selectedCountryName}</span>
+            <ChevronDown className="w-4 h-4 text-[#6E747A]" />
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute z-50 left-0 right-0 mt-1 bg-[#0D0F11] border rounded-md shadow-panel-elevated max-h-64 flex flex-col overflow-hidden">
-              <div className="p-2 border-b flex items-center bg-gray-50">
-                <Search className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
+            <div className="absolute z-50 left-0 right-0 mt-1 bg-[#08090A] border border-white/10 rounded-lg shadow-panel-elevated max-h-64 flex flex-col overflow-hidden">
+              <div className="p-2 border-b border-white/10 flex items-center bg-[#0D0F11]">
+                <Search className="w-4 h-4 text-[#6E747A] mr-2 shrink-0" />
                 <input
                   type="text"
                   placeholder="Search country..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full text-sm bg-transparent outline-none border-none py-1 focus:ring-0"
+                  className="w-full text-sm text-[#F4F5F6] bg-transparent outline-none border-none py-1 focus:ring-0 placeholder:text-[#6E747A]"
                   autoFocus
                 />
               </div>
@@ -386,16 +394,16 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                           key={c.code}
                           type="button"
                           onClick={() => selectCountry(c.code)}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-500/10 hover:text-blue-900 flex justify-between items-center"
+                          className="w-full text-left px-4 py-2 text-sm text-[#E6E8EA] hover:bg-sage-100 hover:text-[#C9A227] flex justify-between items-center"
                         >
                           <span>{c.name}</span>
                           {formData.countryCode === c.code && (
-                            <Check className="w-4 h-4 text-blue-400 shrink-0" />
+                            <Check className="w-4 h-4 text-[#C9A227] shrink-0" />
                           )}
                         </button>
                       ))
                     ) : (
-                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      <div className="px-4 py-3 text-sm text-[#6E747A] text-center">
                         No matches found
                       </div>
                     )}
@@ -404,7 +412,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                   <div>
                     {filteredEU.length > 0 && (
                       <div>
-                        <div className="px-3 py-1.5 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider sticky top-0 border-b border-gray-100 font-bold">
+                        <div className="px-3 py-1.5 bg-[#0D0F11] text-[11px] font-semibold text-[#6E747A] uppercase tracking-wider sticky top-0 border-b border-white/10">
                           EU / EEA Countries
                         </div>
                         {filteredEU.map((c) => (
@@ -412,11 +420,11 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                             key={c.code}
                             type="button"
                             onClick={() => selectCountry(c.code)}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-500/10 hover:text-blue-900 flex justify-between items-center"
+                            className="w-full text-left px-4 py-2 text-sm text-[#E6E8EA] hover:bg-sage-100 hover:text-[#C9A227] flex justify-between items-center"
                           >
                             <span>{c.name}</span>
                             {formData.countryCode === c.code && (
-                              <Check className="w-4 h-4 text-blue-400 shrink-0" />
+                              <Check className="w-4 h-4 text-[#C9A227] shrink-0" />
                             )}
                           </button>
                         ))}
@@ -425,7 +433,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
 
                     {filteredROW.length > 0 && (
                       <div>
-                        <div className="px-3 py-1.5 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider sticky top-0 border-b border-gray-100 font-bold">
+                        <div className="px-3 py-1.5 bg-[#0D0F11] text-[11px] font-semibold text-[#6E747A] uppercase tracking-wider sticky top-0 border-b border-white/10 mt-1">
                           Rest of the World
                         </div>
                         {filteredROW.map((c) => (
@@ -433,11 +441,11 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                             key={c.code}
                             type="button"
                             onClick={() => selectCountry(c.code)}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-500/10 hover:text-blue-900 flex justify-between items-center"
+                            className="w-full text-left px-4 py-2 text-sm text-[#E6E8EA] hover:bg-sage-100 hover:text-[#C9A227] flex justify-between items-center"
                           >
                             <span>{c.name}</span>
                             {formData.countryCode === c.code && (
-                              <Check className="w-4 h-4 text-blue-400 shrink-0" />
+                              <Check className="w-4 h-4 text-[#C9A227] shrink-0" />
                             )}
                           </button>
                         ))}
@@ -450,56 +458,49 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
           )}
         </div>
 
-        <div className="pt-2">
-          <label className="flex items-start cursor-pointer select-none">
-            <input
-              type="checkbox"
-              name="hasDpo"
-              checked={formData.hasDpo}
-              onChange={handleChange}
-              className="rounded text-blue-400 w-4 h-4 mr-2.5 mt-0.5 shrink-0"
-            />
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-gray-700">We have a Data Protection Officer (DPO)</span>
-              <span className="text-xs text-gray-500 mt-1 leading-relaxed">
-                Required under GDPR Article 37 for certain core activities, regular monitoring, or public bodies.
-              </span>
-            </div>
-          </label>
+        <div className="pt-2 flex items-start gap-3">
+          <Switch
+            checked={formData.hasDpo}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hasDpo: checked }))}
+          />
+          <div className="flex flex-col">
+            <Label className="text-sm font-medium text-[#F4F5F6] leading-none">We have a Data Protection Officer (DPO)</Label>
+            <span className="text-xs text-[#6E747A] mt-1.5 leading-relaxed">
+              Required under GDPR Article 37 for certain core activities, regular monitoring, or public bodies.
+            </span>
+          </div>
         </div>
 
         {formData.hasDpo && (
           <div className="grid grid-cols-2 gap-4 pt-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">DPO Name</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">DPO Name</Label>
+              <Input
                 type="text"
                 name="dpoName"
                 value={formData.dpoName}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-md"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">DPO Email</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">DPO Email</Label>
+              <Input
                 type="email"
                 name="dpoEmail"
                 value={formData.dpoEmail}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-md"
               />
             </div>
           </div>
         )}
 
         <div className="pt-6">
-          <button
+          <Button
             type="submit"
-            className="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-md hover:bg-blue-700 transition"
+            className="w-full"
           >
             Continue
-          </button>
+          </Button>
         </div>
       </form>
     </div>

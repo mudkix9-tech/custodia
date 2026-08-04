@@ -3,6 +3,10 @@ import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 import React, { useState, useEffect } from "react";
 
 import { User, Bell, Save } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
@@ -75,13 +79,13 @@ export default function ProfileSettingsPage() {
         </div>
         <div className="flex items-center gap-4">
           {saveStatus === 'saved' && <span className="text-sm text-[#C9A227] font-medium">Saved</span>}
-          <button
+          <Button
             onClick={handleSave}
             disabled={saveStatus === 'saving'}
             className="flex items-center gap-2 bg-ink-900 text-white px-5 py-2.5 rounded-xl font-medium disabled:opacity-50"
           >
             <Save className="w-4 h-4" /> {saveStatus === 'saving' ? t('saving') : t('save_changes')}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -95,58 +99,64 @@ export default function ProfileSettingsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.full_name')}</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.full_name')}</Label>
+              <Input
                 type="text"
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm text-[#F4F5F6] focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227] outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.email_address')}</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.email_address')}</Label>
+              <Input
                 type="email"
                 value={session?.user?.email || ''}
                 disabled
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm text-[#9BA1A6] opacity-60 cursor-not-allowed"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.language')}</label>
-              <select
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.language')}</Label>
+              <Select
                 value={formData.language}
-                onChange={e => setFormData({ ...formData, language: e.target.value })}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm text-[#F4F5F6] focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227] outline-none transition-all"
+                onValueChange={v => setFormData({ ...formData, language: v })}
               >
-                <option value="en">English</option>
-                <option value="de">German (Deutsch)</option>
-                <option value="fr">French (Français)</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="de">German (Deutsch)</SelectItem>
+                  <SelectItem value="fr">French (Français)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.timezone')}</label>
-              <select
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.timezone')}</Label>
+              <Select
                 value={formData.timezone}
-                onChange={e => setFormData({ ...formData, timezone: e.target.value })}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm text-[#F4F5F6] focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227] outline-none transition-all"
+                onValueChange={v => setFormData({ ...formData, timezone: v })}
               >
-                <option value="UTC">UTC</option>
-                <option value="Europe/London">Europe/London (GMT/BST)</option>
-                <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
-                <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
-                <option value="Europe/Helsinki">Europe/Helsinki (EET/EEST)</option>
-                <option value="Europe/Athens">Europe/Athens (EET/EEST)</option>
-                <option value="Europe/Bucharest">Europe/Bucharest (EET/EEST)</option>
-                <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
-                <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
-                <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
-                <option value="Australia/Sydney">Australia/Sydney (AEST/AEDT)</option>
-                <option value="America/New_York">America/New_York (EST/EDT)</option>
-                <option value="America/Chicago">America/Chicago (CST/CDT)</option>
-                <option value="America/Denver">America/Denver (MST/MDT)</option>
-                <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="UTC">UTC</SelectItem>
+                  <SelectItem value="Europe/London">Europe/London (GMT/BST)</SelectItem>
+                  <SelectItem value="Europe/Paris">Europe/Paris (CET/CEST)</SelectItem>
+                  <SelectItem value="Europe/Berlin">Europe/Berlin (CET/CEST)</SelectItem>
+                  <SelectItem value="Europe/Helsinki">Europe/Helsinki (EET/EEST)</SelectItem>
+                  <SelectItem value="Europe/Athens">Europe/Athens (EET/EEST)</SelectItem>
+                  <SelectItem value="Europe/Bucharest">Europe/Bucharest (EET/EEST)</SelectItem>
+                  <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem>
+                  <SelectItem value="Asia/Singapore">Asia/Singapore (SGT)</SelectItem>
+                  <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST)</SelectItem>
+                  <SelectItem value="Australia/Sydney">Australia/Sydney (AEST/AEDT)</SelectItem>
+                  <SelectItem value="America/New_York">America/New_York (EST/EDT)</SelectItem>
+                  <SelectItem value="America/Chicago">America/Chicago (CST/CDT)</SelectItem>
+                  <SelectItem value="America/Denver">America/Denver (MST/MDT)</SelectItem>
+                  <SelectItem value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -183,13 +193,14 @@ export default function ProfileSettingsPage() {
                         <td className="py-3 px-3 font-medium text-[#E6E8EA]">{tNotifications(`events.${nt.key}` as any)}</td>
                         {['email', 'slack', 'in_app'].map(channel => (
                           <td key={channel} className="py-3 text-center align-middle">
-                            <button
+                            <Button
+                              variant="ghost"
                               onClick={() => handleUserToggle(nt.key, channel)}
-                              className={`w-5 h-5 flex items-center justify-center rounded-full mx-auto transition-colors ${isUserMuted(nt.key, channel) ? 'text-red-500 bg-red-500/10' : 'text-sage-500 bg-[#C9A227]/10 hover:bg-[#C9A227]/20'}`}
+                              className={`w-6 h-6 p-0 rounded-full mx-auto transition-colors ${isUserMuted(nt.key, channel) ? 'text-red-500 bg-red-500/10 hover:bg-red-500/20' : 'text-sage-500 bg-[#C9A227]/10 hover:bg-[#C9A227]/20'}`}
                               title={isUserMuted(nt.key, channel) ? t('notification_preferences.unmute') : t('notification_preferences.mute')}
                             >
                               {isUserMuted(nt.key, channel) ? <Bell className="w-3 h-3 line-through" /> : <Bell className="w-3 h-3" />}
-                            </button>
+                            </Button>
                           </td>
                         ))}
                       </tr>

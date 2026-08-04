@@ -4,6 +4,11 @@ import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 import { useState, useEffect, useCallback } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Save, Building2, MapPin, UserCheck, Shield, Palette, Upload } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import debounce from 'lodash.debounce';
@@ -123,44 +128,40 @@ export default function OrganizationSettingsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.name')}</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.name')}</Label>
+              <Input
                 type="text"
                 value={formData.name}
                 onChange={e => handleChange('name', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.legal_name')}</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.legal_name')}</Label>
+              <Input
                 type="text"
                 value={formData.legalName}
                 onChange={e => handleChange('legalName', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.slug')}</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.slug')}</Label>
+              <Input
                 type="text"
                 value={formData.slug}
                 onChange={e => handleChange('slug', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
               <p className="text-xs text-[#6E747A] mt-1.5">{t('basic_information.slug_hint', { slug: formData.slug || 'slug' })}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.registration_number')}</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.registration_number')}</Label>
+              <Input
                 type="text"
                 value={formData.registrationNumber}
                 onChange={e => handleChange('registrationNumber', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
           </div>
@@ -175,61 +176,59 @@ export default function OrganizationSettingsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.country')}</label>
-              <select
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.country')}</Label>
+              <Select
                 value={formData.countryCode}
-                onChange={e => handleChange('countryCode', e.target.value)}
+                onValueChange={v => handleChange('countryCode', v)}
                 disabled={!isEditable}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50 max-w-sm"
               >
-                <option value="">{t('location.select_country')}</option>
-                <option value="DE">{t('location.countries.DE')}</option>
-                <option value="FR">{t('location.countries.FR')}</option>
-                <option value="NL">{t('location.countries.NL')}</option>
-                <option value="IE">{t('location.countries.IE')}</option>
-                <option value="GB">{t('location.countries.GB')}</option>
-                <option value="US">{t('location.countries.US')}</option>
-                {/* Expand later */}
-              </select>
+                <SelectTrigger className="max-w-sm">
+                  <SelectValue placeholder={t('location.select_country')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DE">{t('location.countries.DE')}</SelectItem>
+                  <SelectItem value="FR">{t('location.countries.FR')}</SelectItem>
+                  <SelectItem value="NL">{t('location.countries.NL')}</SelectItem>
+                  <SelectItem value="IE">{t('location.countries.IE')}</SelectItem>
+                  <SelectItem value="GB">{t('location.countries.GB')}</SelectItem>
+                  <SelectItem value="US">{t('location.countries.US')}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.street')}</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.street')}</Label>
+              <Input
                 type="text"
                 value={formData.address?.street}
                 onChange={e => handleAddressChange('street', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.city')}</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.city')}</Label>
+              <Input
                 type="text"
                 value={formData.address?.city}
                 onChange={e => handleAddressChange('city', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.postal_code')}</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.postal_code')}</Label>
+              <Input
                 type="text"
                 value={formData.address?.postalCode}
                 onChange={e => handleAddressChange('postalCode', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.lead_authority')}</label>
-              <input
+              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.lead_authority')}</Label>
+              <Input
                 type="text"
                 value={formData.leadSupervisoryAuthority}
                 onChange={e => handleChange('leadSupervisoryAuthority', e.target.value)}
                 disabled={!isEditable}
-                className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
                 placeholder={t('location.lead_authority_placeholder')}
               />
             </div>
@@ -244,51 +243,45 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div className="mb-6">
-            <label className="flex items-center gap-2 text-sm font-medium text-[#F4F5F6]">
-              <input
-                type="checkbox"
+            <label className="flex items-center gap-3 text-sm font-medium text-[#F4F5F6]">
+              <Switch
                 checked={formData.hasDpo}
-                onChange={e => handleChange('hasDpo', e.target.checked)}
+                onCheckedChange={checked => handleChange('hasDpo', checked)}
                 disabled={!isEditable}
-                className="rounded border-white/20 text-[#C9A227] focus:ring-sage-600"
               />
               {t('dpo.has_dpo')}
             </label>
-            <p className="text-xs text-[#6E747A] mt-2 ml-6">
+            <p className="text-xs text-[#6E747A] mt-2 ml-12">
               {t('dpo.dpo_hint')}
             </p>
           </div>
 
           {formData.hasDpo && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6 border-l-2 border-white/10 ml-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6 border-l-2 border-white/10 ml-2">
               <div>
-                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('dpo.name')}</label>
-                <input
+                <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('dpo.name')}</Label>
+                <Input
                   type="text"
                   value={formData.dpoName}
                   onChange={e => handleChange('dpoName', e.target.value)}
                   disabled={!isEditable}
-                  className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('dpo.email')}</label>
-                <input
+                <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('dpo.email')}</Label>
+                <Input
                   type="email"
                   value={formData.dpoEmail}
                   onChange={e => handleChange('dpoEmail', e.target.value)}
                   disabled={!isEditable}
-                  className="w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-[#F4F5F6]">
-                  <input
-                    type="checkbox"
+                <label className="flex items-center gap-3 text-sm font-medium text-[#F4F5F6]">
+                  <Switch
                     checked={formData.dpoIsExternal}
-                    onChange={e => handleChange('dpoIsExternal', e.target.checked)}
+                    onCheckedChange={checked => handleChange('dpoIsExternal', checked)}
                     disabled={!isEditable}
-                    className="rounded border-white/20 text-[#C9A227] focus:ring-sage-600"
                   />
                   {t('dpo.is_external')}
                 </label>
@@ -307,7 +300,7 @@ export default function OrganizationSettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('branding.logo')}</label>
+                <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('branding.logo')}</Label>
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-xl bg-[#08090A] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                     {formData.branding.logoUrl ? (
@@ -317,20 +310,22 @@ export default function OrganizationSettingsPage() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       disabled={!isEditable}
                       onClick={handleUploadLogo}
-                      className="text-sm bg-[#0D0F11] border border-white/20 text-[#F4F5F6] px-3 py-1.5 rounded-lg font-medium hover:bg-[#08090A] transition-colors flex items-center gap-2 disabled:opacity-50"
+                      className="flex items-center gap-2"
                     >
                       <Upload className="w-4 h-4" /> {t('branding.upload_logo')}
-                    </button>
+                    </Button>
                     <p className="text-xs text-[#6E747A] mt-2">{t('branding.logo_hint')}</p>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('branding.primary_color')}</label>
+                <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('branding.primary_color')}</Label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -339,12 +334,12 @@ export default function OrganizationSettingsPage() {
                     disabled={!isEditable}
                     className="w-10 h-10 p-1 bg-[#0D0F11] border border-white/10 rounded cursor-pointer disabled:opacity-50"
                   />
-                  <input
+                  <Input
                     type="text"
                     value={formData.branding.primaryColor || '#2c3e38'}
                     onChange={e => handleBrandingChange('primaryColor', e.target.value)}
                     disabled={!isEditable}
-                    className="w-24 bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-sm font-mono disabled:opacity-50"
+                    className="w-28 font-mono"
                   />
                 </div>
               </div>
