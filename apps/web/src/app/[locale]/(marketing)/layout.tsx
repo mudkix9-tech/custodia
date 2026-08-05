@@ -1,12 +1,27 @@
 import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { Lock, Server } from 'lucide-react';
 import { MarketingHeader, Logo } from '@/components/marketing/MarketingHeader';
 import { FooterLocaleSwitcher } from '@/components/marketing/FooterLocaleSwitcher';
 import { plexSans, plexMono, spectral } from '../fonts';
+import { routing } from '@/i18n/routing';
 
 import { getTranslations } from 'next-intl/server';
+
+const SITE_ORIGIN = 'https://trycustodia.com';
+const LOCALE_PREFIX_PATTERN = /^\/(en|de|fr)(?=\/|$)/;
+
+// `routing.localePrefix` is 'as-needed': the default locale is served
+// unprefixed (e.g. /pricing), while others are prefixed (e.g. /de/pricing).
+// Canonical/hreflang URLs must match that exactly, or Google sees the
+// canonical as pointing to a different page than the one being served.
+function buildLocaleUrl(pathWithoutLocale: string, locale: string) {
+  const prefix = locale === routing.defaultLocale ? '' : `/${locale}`;
+  const path = pathWithoutLocale === '/' ? '' : pathWithoutLocale;
+  return `${SITE_ORIGIN}${prefix}${path}` || SITE_ORIGIN;
+}
 
 export async function generateMetadata({
   params
@@ -16,6 +31,12 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'marketing.seo' });
 
+  const headersList = await headers();
+  const rawPathname = headersList.get('x-pathname') || '/';
+  const pathWithoutLocale = rawPathname.replace(LOCALE_PREFIX_PATTERN, '') || '/';
+
+  const canonicalUrl = buildLocaleUrl(pathWithoutLocale, locale);
+
   return {
     title: t('title'),
     description: t('desc'),
@@ -23,7 +44,7 @@ export async function generateMetadata({
     openGraph: {
       title: t('title'),
       description: t('desc'),
-      url: `https://trycustodia.com/${locale}`,
+      url: canonicalUrl,
       siteName: 'Custodia',
       type: 'website',
       images: [{ url: 'https://trycustodia.com/api/og', width: 1200, height: 630, alt: 'Custodia — GDPR Compliance OS' }],
@@ -35,11 +56,12 @@ export async function generateMetadata({
       images: ['https://trycustodia.com/api/og'],
     },
     alternates: {
-      canonical: `https://trycustodia.com/${locale}`,
+      canonical: canonicalUrl,
       languages: {
-        'en': 'https://trycustodia.com/en',
-        'de': 'https://trycustodia.com/de',
-        'fr': 'https://trycustodia.com/fr',
+        en: buildLocaleUrl(pathWithoutLocale, 'en'),
+        de: buildLocaleUrl(pathWithoutLocale, 'de'),
+        fr: buildLocaleUrl(pathWithoutLocale, 'fr'),
+        'x-default': buildLocaleUrl(pathWithoutLocale, routing.defaultLocale),
       }
     },
   };

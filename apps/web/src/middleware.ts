@@ -80,6 +80,10 @@ export async function middleware(request: NextRequest) {
   // 2. Apply intl routing
   const response = intlMiddleware(request);
 
+  // Expose the actual requested pathname so generateMetadata can build
+  // a self-referencing canonical URL per page (see (marketing)/layout.tsx).
+  response.headers.set('x-pathname', path);
+
   // 3. Apply post-intl response modifications (like cookies)
   if (normalizedPath.startsWith('/assessment')) {
     const existing = request.cookies.get('pvr_anon_session');
