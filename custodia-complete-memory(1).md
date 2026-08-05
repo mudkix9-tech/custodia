@@ -1,6 +1,6 @@
 # Custodia — Complete Product Memory
 
-> **Last updated:** August 4, 2026 (Unified Design System & UI Migration, API Marketing Standardization)
+> **Last updated:** August 5, 2026 (Render-Blocking CSS Investigation)
 > **Owner:** Nisarg (solo founder, Pune, India)
 > **Domain:** trycustodia.com
 > **Status:** Pre-launch, core product built, polishing for production
@@ -865,3 +865,26 @@ Completed an exhaustive migration of all form inputs, selects, switches, and but
 - **Radix Select & react-hook-form**: Wrapped all Radix Select components in `Controller` from `react-hook-form` to ensure proper state management and validation since Radix doesn't emit native HTML `onChange` events.
 - **Accessibility & Consistency**: Replaced raw HTML `<input>`, `<select>`, and `<button>` tags with standardized UI components, ensuring consistent focus rings, hover states, and dark mode contrast across ROPA, Vendors, DSAR, Consent, and Settings modules.
 - **API Marketing Standardization**: Nuked the unfinished `/settings/developers` route and navigation tab to prevent dead code exposure. Standardized the Enterprise API feature copy to "REST APIs (Enterprise only)" across all marketing and pricing pages.
+
+---
+
+## 32. Render-Blocking CSS Investigation (Aug 5, 2026)
+
+### Overview
+Lighthouse/PageSpeed flagged ~700-750ms of render-blocking CSS on the trycustodia.com homepage, dominated by a single ~24.6KB (gzipped) Tailwind v4 utility bundle plus two small `next/font/google` chunks. Investigated and partially fixed; one real architectural dead end found and documented so it isn't re-attempted.
+
+### What shipped
+- **Font loader dedup**: `(marketing)` and `(public)` layouts each independently instantiated the identical `IBM_Plex_Sans`/`IBM_Plex_Mono`/`Spectral` `next/font/google` config, producing two duplicate `@font-face` CSS chunks. Consolidated into a single shared `apps/web/src/app/[locale]/fonts.ts` module imported by both. Real, harmless savings (~1 fewer render-blocking request).
+- **Component directory cleanup**: `MarketingHeader.tsx`, `FooterLocaleSwitcher.tsx`, `GdprGuideLayout.tsx` moved from `components/layout/` (otherwise dashboard-only) into `components/marketing/`; `DsarIntakeForm.tsx` moved from `components/dsar/` (otherwise dashboard-only) into `components/public/`. This was prep work for a CSS-splitting attempt (below) that was abandoned, but the directory boundary cleanup is a standalone improvement and was kept.
+
+### What was tried and reverted: `experimental.optimizeCss`
+Enabled Next's critical-CSS inlining (`experimental.optimizeCss` + `beasties` package) to target the 24.6KB chunk. **Made production LCP/FCP measurably worse** (LCP jumped to 4.2s) without reducing the render-blocking classification at all — likely because it adds per-request HTML post-processing overhead on SSR routes without actually removing the CSS from the blocking path here. Fully reverted (`beasties` dependency removed, `next.config.ts` flag removed). **Do not re-enable without a way to actually measure before/after in a real environment first** — this was pushed once, regressed prod, and had to be reverted live.
+
+### What was tried and abandoned: route-scoped Tailwind CSS splitting
+Attempted to split the single global Tailwind bundle into a lean "public" bundle (marketing/public/onboarding/login/signup/portal) and a separate "app" bundle (authenticated dashboard), importing a second Tailwind entry (`app.css`) in the nested `(app)/layout.tsx` on top of the root-level `globals.css`, using `@import "tailwindcss" source(none)` + explicit `@source` paths per bundle to avoid Tailwind's default whole-project auto-detection.
+
+**This does not work in Next.js App Router and should not be re-attempted the same way.** Next's own docs (`node_modules/next/dist/docs/01-app/01-getting-started/11-css.md`) state global stylesheets imported in nested layouts are **not** removed/scoped per route when navigating — "we recommend... import[ing] global styles and Tailwind stylesheets in the root of your application" only. Confirmed empirically: after the split, both output CSS chunks still contained dashboard-only utility classes (e.g. `bg-rose-500`, `divide-blue-200`) that should have been excluded from the public bundle, and the combined output was *larger* (~218KB) than the original single bundle (153KB) — not smaller. Root cause is architectural (Next's CSS handling model), not a `@source`/`source(none)` syntax mistake.
+- If CSS-payload reduction is revisited, it needs a different strategy — e.g. actually auditing/removing unused design tokens or utility variants, not per-route stylesheet splitting via nested layout imports.
+
+### Open item
+The original 24.6KB/~750ms Tailwind chunk is still fully render-blocking — no viable in-repo fix was found in this session. Considered and set aside: Cloudflare in front of the origin (DNS-only wouldn't help at all; a proxied/CDN setup could shave some latency off the request via edge caching/compression but doesn't address why the request is render-blocking in the first place — not a real fix, just a partial mitigant). Note: this repo's `render.yaml` only defines the `custodia-api` backend service (Render, free tier) — where the `apps/web` Next.js frontend that actually serves trycustodia.com is hosted is not defined anywhere in-repo.
