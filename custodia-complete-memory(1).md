@@ -1,6 +1,6 @@
 # Custodia — Complete Product Memory
 
-> **Last updated:** August 5, 2026 (Render-Blocking CSS Investigation)
+> **Last updated:** August 5, 2026 (Render-Blocking CSS Investigation, Canonical URL / hreflang Fix)
 > **Owner:** Nisarg (solo founder, Pune, India)
 > **Domain:** trycustodia.com
 > **Status:** Pre-launch, core product built, polishing for production
@@ -888,3 +888,22 @@ Attempted to split the single global Tailwind bundle into a lean "public" bundle
 
 ### Open item
 The original 24.6KB/~750ms Tailwind chunk is still fully render-blocking — no viable in-repo fix was found in this session. Considered and set aside: Cloudflare in front of the origin (DNS-only wouldn't help at all; a proxied/CDN setup could shave some latency off the request via edge caching/compression but doesn't address why the request is render-blocking in the first place — not a real fix, just a partial mitigant). Note: this repo's `render.yaml` only defines the `custodia-api` backend service (Render, free tier) — where the `apps/web` Next.js frontend that actually serves trycustodia.com is hosted is not defined anywhere in-repo.
+
+### Discovered gap: marketing pages are not statically prerendered
+While testing (both before and after all changes in this session), inspecting `.next/server/app/[locale]/(marketing)/` after a full production build showed **zero `.html` output** for any marketing route (homepage, pricing, GDPR guides, etc.) — every page is server-rendered per-request, not SSG. This contradicts the stated goal in [§10 SEO Strategy](#10-seo-strategy) ("SSG for all marketing pages"), which was apparently never actually achieved. Confirmed this is pre-existing and unrelated to any change made this session (verified via `git stash` A/B comparison). Root cause not investigated — worth a dedicated look, since SSG would help both SEO and the render-blocking/LCP work above.
+
+---
+
+## 33. Canonical URL / hreflang Fix (Aug 5, 2026)
+
+### Overview
+Lighthouse flagged the trycustodia.com homepage's `rel=canonical` as invalid ("points to another hreflang location"). Root cause: `(marketing)/layout.tsx`'s `generateMetadata` hardcoded `canonical: https://trycustodia.com/${locale}` and `languages.en: https://trycustodia.com/en` unconditionally — but `routing.ts` sets `localePrefix: 'as-needed'`, so the default locale (`en`) is actually served unprefixed (`https://trycustodia.com/`, not `/en`). On the real homepage, the canonical tag pointed to a URL that was simultaneously declared as its own hreflang alternate.
+
+**Bigger than the reported bug**: because this canonical was set at the *layout* level and 35 of 36 marketing pages are `"use client"` (client components can't export `metadata`/`generateMetadata` in Next.js at all), no individual page could override it — every marketing page (pricing, features, all GDPR guides, etc.) shared the exact same canonical pointing at the homepage, not itself. Confirmed via `grep` that only the layout declared `canonical` anywhere under `(marketing)`.
+
+### Fix
+- `apps/web/src/middleware.ts`: forwards the real request pathname via an `x-pathname` response header on every request.
+- `(marketing)/layout.tsx`: `generateMetadata` reads `x-pathname` via `headers()`, strips any locale prefix, and rebuilds a correct self-referencing canonical + per-locale hreflang alternates (including `x-default`) for whatever page is actually being rendered — respecting `as-needed` prefixing (no prefix for `en`, `/de` and `/fr` for the others).
+- `apps/web/src/app/sitemap.ts` had the identical bug (submitted `/en/...`-prefixed URLs for every route, which don't match the real unprefixed pages or their now-correct canonicals) — fixed with the same locale-prefix-aware URL builder.
+- Verified against a running dev server: homepage, `/pricing`, `/de/pricing`, `/gdpr/dpia-guide` all emit correct, distinct, self-referencing canonical tags with correct hreflang alternates.
+- Confirmed via `git stash` A/B build comparison that this fix does **not** newly break static generation for marketing pages — see the SSG gap noted in §32, which predates this fix entirely.
