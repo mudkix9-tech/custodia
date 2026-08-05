@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { GdprGuideLayout } from '@/components/layout/GdprGuideLayout';
+import { GdprGuideLayout } from '@/components/marketing/GdprGuideLayout';
 
 export default function DataPortabilityPage() {
   return (

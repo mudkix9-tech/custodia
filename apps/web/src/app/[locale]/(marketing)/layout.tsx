@@ -2,8 +2,8 @@ import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Lock, Server } from 'lucide-react';
-import { MarketingHeader, Logo } from '@/components/layout/MarketingHeader';
-import { FooterLocaleSwitcher } from '@/components/layout/FooterLocaleSwitcher';
+import { MarketingHeader, Logo } from '@/components/marketing/MarketingHeader';
+import { FooterLocaleSwitcher } from '@/components/marketing/FooterLocaleSwitcher';
 import { plexSans, plexMono, spectral } from '../fonts';
 
 import { getTranslations } from 'next-intl/server';

@@ -5,7 +5,7 @@ import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { Mail, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { Logo } from '@/components/layout/MarketingHeader';
+import { Logo } from '@/components/marketing/MarketingHeader';
 
 function SignupPageContent() {
   const searchParams = useSearchParams();

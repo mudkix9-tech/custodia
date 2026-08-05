@@ -9,7 +9,7 @@ import { Send, Copy, ArrowRight, Clock, Download, Loader2, CheckCircle2 } from '
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 import { captureLeadEmail } from '@/actions/lead-assessment';
-import { Logo } from '@/components/layout/MarketingHeader';
+import { Logo } from '@/components/marketing/MarketingHeader';
 
 const categoryRouteMap: Record<string, string> = {
   'Data Mapping': '/ropa',

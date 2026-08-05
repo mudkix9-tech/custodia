@@ -3,7 +3,7 @@ import { organizations } from 'db';
 import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { DsarIntakeForm } from '@/components/dsar/DsarIntakeForm';
+import { DsarIntakeForm } from '@/components/public/DsarIntakeForm';
 
 const queryClient = postgres(process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/gdpr_db');
 const db = drizzle(queryClient);

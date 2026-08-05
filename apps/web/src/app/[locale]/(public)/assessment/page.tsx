@@ -6,7 +6,7 @@ import { trpc } from '@/utils/trpc';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
-import { Logo } from '@/components/layout/MarketingHeader';
+import { Logo } from '@/components/marketing/MarketingHeader';
 import { evaluateDependsOn } from '@/utils/assessment';
 import { saveLeadAssessment } from '@/actions/lead-assessment';
 
