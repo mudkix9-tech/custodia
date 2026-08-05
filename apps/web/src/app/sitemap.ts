@@ -1,5 +1,15 @@
 import { MetadataRoute } from 'next';
 import { db } from '../db';
+import { routing } from '../i18n/routing';
+
+// `routing.localePrefix` is 'as-needed': the default locale is served
+// unprefixed (e.g. /pricing), while others are prefixed (e.g. /de/pricing).
+// Sitemap URLs must match the actual served URLs or they won't align with
+// each page's self-referencing canonical tag.
+function buildUrl(baseUrl: string, locale: string, route: string) {
+  const prefix = locale === routing.defaultLocale ? '' : `/${locale}`;
+  return `${baseUrl}${prefix}${route}` || baseUrl;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://trycustodia.com';
@@ -38,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Add static routes
     for (const route of staticRoutes) {
       entries.push({
-        url: `${baseUrl}/${locale}${route}`,
+        url: buildUrl(baseUrl, locale, route),
         lastModified: new Date(),
         changeFrequency: 'weekly',
         priority: route === '' ? 1.0 : 0.8,
@@ -48,7 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Add competitors
     for (const competitor of competitors) {
       entries.push({
-        url: `${baseUrl}/${locale}/compare/${competitor}`,
+        url: buildUrl(baseUrl, locale, `/compare/${competitor}`),
         lastModified: new Date(),
         changeFrequency: 'weekly',
         priority: 0.8,
@@ -58,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Add GDPR guide pages
     for (const route of gdprRoutes) {
       entries.push({
-        url: `${baseUrl}/${locale}${route}`,
+        url: buildUrl(baseUrl, locale, route),
         lastModified: new Date(),
         changeFrequency: 'weekly',
         priority: 0.8,
@@ -69,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const vendor of vendors) {
       if (vendor.slug) {
         entries.push({
-          url: `${baseUrl}/${locale}/gdpr/vendors/${vendor.slug}`,
+          url: buildUrl(baseUrl, locale, `/gdpr/vendors/${vendor.slug}`),
           lastModified: new Date(),
           changeFrequency: 'weekly',
           priority: 0.8,
