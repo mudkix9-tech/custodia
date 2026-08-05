@@ -33,6 +33,10 @@ export const metadata: Metadata = {
   description: "A single platform that replaces the need for a dedicated DPO, expensive legal consultants, and spreadsheets.",
 };
 
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
 export default async function RootLayout({
   children,
   params

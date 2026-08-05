@@ -1,3 +1,9 @@
+// Authenticated dashboard: always needs per-request auth/session data,
+// never statically prerender it (also avoids Next attempting to
+// prerender every dashboard route at build time -- see e.g. the
+// useSearchParams()-without-Suspense crash on /ropa/new).
+export const dynamic = 'force-dynamic';
+
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { CommandPalette } from "@/components/layout/CommandPalette";

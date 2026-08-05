@@ -1,71 +1,17 @@
 import React from 'react';
-import { Metadata } from 'next';
 import Link from 'next/link';
-import { headers } from 'next/headers';
 import { Lock, Server } from 'lucide-react';
 import { MarketingHeader, Logo } from '@/components/marketing/MarketingHeader';
 import { FooterLocaleSwitcher } from '@/components/marketing/FooterLocaleSwitcher';
 import { plexSans, plexMono, spectral } from '../fonts';
-import { routing } from '@/i18n/routing';
 
 import { getTranslations } from 'next-intl/server';
 
-const SITE_ORIGIN = 'https://trycustodia.com';
-const LOCALE_PREFIX_PATTERN = /^\/(en|de|fr)(?=\/|$)/;
-
-// `routing.localePrefix` is 'as-needed': the default locale is served
-// unprefixed (e.g. /pricing), while others are prefixed (e.g. /de/pricing).
-// Canonical/hreflang URLs must match that exactly, or Google sees the
-// canonical as pointing to a different page than the one being served.
-function buildLocaleUrl(pathWithoutLocale: string, locale: string) {
-  const prefix = locale === routing.defaultLocale ? '' : `/${locale}`;
-  const path = pathWithoutLocale === '/' ? '' : pathWithoutLocale;
-  return `${SITE_ORIGIN}${prefix}${path}` || SITE_ORIGIN;
-}
-
-export async function generateMetadata({
-  params
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'marketing.seo' });
-
-  const headersList = await headers();
-  const rawPathname = headersList.get('x-pathname') || '/';
-  const pathWithoutLocale = rawPathname.replace(LOCALE_PREFIX_PATTERN, '') || '/';
-
-  const canonicalUrl = buildLocaleUrl(pathWithoutLocale, locale);
-
-  return {
-    title: t('title'),
-    description: t('desc'),
-    keywords: ['GDPR', 'ROPA', 'Consent Management', 'ePrivacy', 'Data Protection', 'Privacy Policy', 'DSAR', 'Compliance OS', 'Agency Compliance'],
-    openGraph: {
-      title: t('title'),
-      description: t('desc'),
-      url: canonicalUrl,
-      siteName: 'Custodia',
-      type: 'website',
-      images: [{ url: 'https://trycustodia.com/api/og', width: 1200, height: 630, alt: 'Custodia — GDPR Compliance OS' }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: t('title'),
-      description: t('desc'),
-      images: ['https://trycustodia.com/api/og'],
-    },
-    alternates: {
-      canonical: canonicalUrl,
-      languages: {
-        en: buildLocaleUrl(pathWithoutLocale, 'en'),
-        de: buildLocaleUrl(pathWithoutLocale, 'de'),
-        fr: buildLocaleUrl(pathWithoutLocale, 'fr'),
-        'x-default': buildLocaleUrl(pathWithoutLocale, routing.defaultLocale),
-      }
-    },
-  };
-}
+// Metadata (including canonical/hreflang) is set per-page now -- see
+// each page.tsx's own generateMetadata using buildMarketingMetadata()
+// from ./seo.ts. Doing it here at the layout level would apply the same
+// canonical to every page (see git history) and, if done via headers(),
+// would force every marketing page into dynamic rendering (no SSG).
 
 export default async function MarketingLayout({
   children,

@@ -1,6 +1,10 @@
 import React from 'react';
 import { plexSans, plexMono, spectral } from '../fonts';
 
+// DSAR intake, assessment flow, client portal auth funnel -- session/token
+// gated, never statically prerender it.
+export const dynamic = 'force-dynamic';
+
 export default function PublicLayout({
   children,
 }: {
