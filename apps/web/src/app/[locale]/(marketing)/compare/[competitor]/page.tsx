@@ -1,6 +1,17 @@
 import React from 'react';
 import Link from 'next/link';
+import { Metadata } from 'next';
 import { ArrowRight, Check, X } from 'lucide-react';
+import { buildMarketingMetadata } from '../../seo';
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string; competitor: string }>;
+}): Promise<Metadata> {
+  const { locale, competitor } = await params;
+  return buildMarketingMetadata({ locale, path: `/compare/${competitor}` });
+}
 
 export default async function CompetitorComparison({ params }: { params: Promise<{ competitor: string }> }) {
   const resolvedParams = await params;

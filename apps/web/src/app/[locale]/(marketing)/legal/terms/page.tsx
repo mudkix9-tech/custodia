@@ -1,4 +1,15 @@
 import React from 'react';
+import { Metadata } from 'next';
+import { buildMarketingMetadata } from '../../seo';
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return buildMarketingMetadata({ locale, path: '/legal/terms' });
+}
 
 export default function TermsOfServicePage() {
   return (

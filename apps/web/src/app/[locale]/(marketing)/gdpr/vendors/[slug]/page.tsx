@@ -1,6 +1,17 @@
 import React from 'react';
 import Link from 'next/link';
+import { Metadata } from 'next';
 import { ShieldCheck, Server, AlertTriangle, ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
+import { buildMarketingMetadata } from '../../../seo';
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  return buildMarketingMetadata({ locale, path: `/gdpr/vendors/${slug}` });
+}
 
 export default async function VendorGDPRPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
