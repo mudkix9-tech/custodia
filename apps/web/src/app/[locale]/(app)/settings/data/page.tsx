@@ -56,23 +56,23 @@ export default function DataPrivacySettingsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-8 fade-up">
-      <div className="flex justify-between items-center mb-8">
+    <div className="mx-auto max-w-[1040px] px-8 pt-10 pb-24 rise-in">
+      <div className="flex flex-wrap items-end justify-between gap-6 pb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
-          <p className="text-[#9BA1A6]">{t('subtitle')}</p>
+          <h1 className="mb-2.5 font-serif text-[34px] leading-[1.05] tracking-[-0.015em] text-set-fg md:text-[44px]">{t('title')}</h1>
+          <p className="max-w-[52ch] text-sm leading-[1.55] text-set-fg-muted text-pretty">{t('subtitle')}</p>
         </div>
       </div>
 
       <div className="space-y-8">
         {/* Data Export */}
-        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
-          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
-            <Download className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">{t('export.title')}</h2>
+        <div className="rounded-[14px] border border-set-line bg-set-panel p-[22px]">
+          <div className="flex items-center gap-2 mb-6 text-set-fg">
+            <Download className="w-4 h-4 text-set-gold" />
+            <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{t('export.title')}</h2>
           </div>
 
-          <p className="text-sm text-[#9BA1A6] mb-6 max-w-2xl">
+          <p className="text-sm text-set-fg-muted mb-6 max-w-2xl">
             {t('export.description')}
           </p>
 
@@ -80,35 +80,35 @@ export default function DataPrivacySettingsPage() {
             <button
               onClick={handleExport}
               disabled={exportStatus === 'loading'}
-              className="bg-[#0D0F11] border border-white/20 text-[#F4F5F6] px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/5 shadow-panel-elevated flex items-center gap-2 disabled:opacity-50"
+              className="bg-set-panel border border-set-line-strong text-set-fg px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/5 shadow-panel-elevated flex items-center gap-2 disabled:opacity-50"
             >
               <Download className="w-4 h-4" /> {exportStatus === 'loading' ? t('export.requesting') : t('export.download')}
             </button>
-            <p className="text-xs text-[#6E747A]">
+            <p className="text-xs text-set-fg-subtle">
               {t('export.email_notice')}
             </p>
           </div>
 
           {exportStatus === 'success' && (
-            <div className="mt-4 p-3 bg-[#C9A227]/10 text-sage-800 text-sm rounded-lg border border-[#C9A227]/30">
+            <div className="mt-4 p-3 bg-set-gold/10 text-set-fg text-sm rounded-lg border border-set-gold/30">
               {t('export.success')}
             </div>
           )}
           {exportStatus === 'error' && (
-            <div className="mt-4 p-3 bg-red-500/10 text-red-400 text-sm rounded-lg border border-red-900/50">
+            <div className="mt-4 p-3 bg-set-danger/12 text-set-danger text-sm rounded-lg border border-red-900/50">
               {t('export.error')}
             </div>
           )}
         </div>
 
         {/* Data Retention Information */}
-        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
-          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
-            <Database className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">{t('retention.title')}</h2>
+        <div className="rounded-[14px] border border-set-line bg-set-panel p-[22px]">
+          <div className="flex items-center gap-2 mb-6 text-set-fg">
+            <Database className="w-4 h-4 text-set-gold" />
+            <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{t('retention.title')}</h2>
           </div>
 
-          <ul className="list-disc pl-5 space-y-2 text-sm text-[#9BA1A6]">
+          <ul className="list-disc pl-5 space-y-2 text-sm text-set-fg-muted">
             <li><strong>{t('retention.active_label')}</strong> {t('retention.active')}</li>
             <li><strong>{t('retention.consent_label')}</strong> {t('retention.consent')}</li>
             <li><strong>{t('retention.audit_label')}</strong> {t('retention.audit')}</li>
@@ -119,13 +119,13 @@ export default function DataPrivacySettingsPage() {
 
         {/* Account Deletion */}
         {isOwner && (
-          <div className="bg-red-500/10/50 rounded-2xl border border-red-900/50 p-6">
-            <div className="flex items-center gap-2 mb-6 text-red-400">
+          <div className="bg-set-danger/12/50 rounded-2xl border border-red-900/50 p-6">
+            <div className="flex items-center gap-2 mb-6 text-set-danger">
               <AlertTriangle className="w-5 h-5" />
-              <h2 className="text-lg font-medium">{t('deletion.title')}</h2>
+              <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{t('deletion.title')}</h2>
             </div>
 
-            <p className="text-sm text-red-400 mb-6 max-w-2xl">
+            <p className="text-sm text-set-danger mb-6 max-w-2xl">
               {t('deletion.description')}
             </p>
 
@@ -138,12 +138,12 @@ export default function DataPrivacySettingsPage() {
             </button>
 
             {deleteStatus === 'success' && (
-              <div className="mt-4 p-3 bg-red-500/20 text-red-400 text-sm rounded-lg border border-red-300">
+              <div className="mt-4 p-3 bg-set-danger/20 text-set-danger text-sm rounded-lg border border-red-300">
                 {t('deletion.success')}
               </div>
             )}
             {deleteStatus === 'error' && (
-              <div className="mt-4 p-3 bg-red-500/10 text-red-400 text-sm rounded-lg border border-red-900/50">
+              <div className="mt-4 p-3 bg-set-danger/12 text-set-danger text-sm rounded-lg border border-red-900/50">
                 {t('deletion.error')}
               </div>
             )}

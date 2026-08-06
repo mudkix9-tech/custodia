@@ -90,19 +90,19 @@ export default function RolesPage() {
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
+    <div className="mx-auto max-w-[1040px] px-8 pt-10 pb-24 rise-in">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/settings/team" className="text-[#6E747A] hover:text-[#F4F5F6] transition-colors">
+        <Link href="/settings/team" className="text-set-fg-subtle hover:text-set-fg transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-semibold text-[#F4F5F6]">Custom Roles</h1>
-          <p className="text-[#6E747A] mt-1">Configure granular permissions for your team members.</p>
+          <h1 className="text-2xl font-semibold text-set-fg">Custom Roles</h1>
+          <p className="text-set-fg-subtle mt-1">Configure granular permissions for your team members.</p>
         </div>
         {!isCreating && !selectedRole && (
           <button
             onClick={handleCreate}
-            className="ml-auto flex items-center gap-2 bg-sage-600 text-white px-4 py-2 rounded-lg hover:bg-sage-700 transition-colors"
+            className="ml-auto flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-set-gold text-[#0A0A0A] hover:bg-set-gold-hi transition-colors"
           >
             <Plus className="w-4 h-4" /> Create Role
           </button>
@@ -111,30 +111,30 @@ export default function RolesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-1 space-y-4">
-          <div className="bg-[#0D0F11] rounded-xl border border-white/10 shadow-panel-elevated overflow-hidden">
-            <div className="p-4 border-b border-white/10 font-medium">Existing Roles</div>
-            <div className="divide-y divide-ink-900/10">
+          <div className="rounded-xl border border-set-line bg-set-panel shadow-panel-elevated overflow-hidden">
+            <div className="p-4 border-b border-set-line font-medium">Existing Roles</div>
+            <div className="divide-y divide-set-line-soft">
               {roles?.map((role: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => (
                 <div
                   key={role.id}
-                  className={`p-4 cursor-pointer transition-colors ${selectedRole?.id === role.id ? 'bg-[#C9A227]/10 border-l-4 border-sage-600' : 'hover:bg-ink-50'}`}
+                  className={`p-4 cursor-pointer transition-colors ${selectedRole?.id === role.id ? 'bg-set-gold/10 border-l-2 border-set-gold' : 'hover:bg-set-row-hover'}`}
                   onClick={() => handleEdit(role)}
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-medium text-[#F4F5F6] flex items-center gap-2">
+                      <div className="font-medium text-set-fg flex items-center gap-2">
                         {role.name}
                         {role.isDefault && (
-                          <span className="text-[10px] bg-ink-100 text-[#9BA1A6] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Default</span>
+                          <span className="text-[10px] bg-ink-100 text-set-fg-muted px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Default</span>
                         )}
                       </div>
-                      <div className="text-sm text-[#6E747A] mt-1">{role.description}</div>
+                      <div className="text-sm text-set-fg-subtle mt-1">{role.description}</div>
                     </div>
                   </div>
                 </div>
               ))}
               {roles?.length === 0 && (
-                <div className="p-8 text-center text-[#6E747A] text-sm">No custom roles found.</div>
+                <div className="p-8 text-center text-set-fg-subtle text-sm">No custom roles found.</div>
               )}
             </div>
           </div>
@@ -142,20 +142,20 @@ export default function RolesPage() {
 
         {(isCreating || selectedRole) && (
           <div className="md:col-span-2">
-            <div className="bg-[#0D0F11] rounded-xl border border-white/10 shadow-panel-elevated overflow-hidden">
-              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-ink-50">
-                <h2 className="text-lg font-medium">{isCreating ? 'Create New Role' : 'Edit Role'}</h2>
+            <div className="rounded-xl border border-set-line bg-set-panel shadow-panel-elevated overflow-hidden">
+              <div className="p-6 border-b border-set-line flex justify-between items-center bg-set-sunken">
+                <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{isCreating ? 'Create New Role' : 'Edit Role'}</h2>
                 <div className="flex gap-2">
                   <button
                     onClick={() => { setIsCreating(false); setSelectedRole(null); }}
-                    className="px-4 py-2 text-sm border border-white/10 rounded-lg hover:bg-[#0D0F11] transition-colors"
+                    className="px-4 py-2 text-sm border border-set-line rounded-lg hover:bg-set-panel transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSave}
                     disabled={createRole.isPending || updateRole.isPending}
-                    className="px-4 py-2 text-sm bg-sage-600 text-white rounded-lg hover:bg-sage-700 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 text-sm rounded-lg font-semibold bg-set-gold text-[#0A0A0A] hover:bg-set-gold-hi transition-colors flex items-center gap-2"
                   >
                     <Save className="w-4 h-4" /> Save Role
                   </button>
@@ -165,22 +165,22 @@ export default function RolesPage() {
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-[#E6E8EA] mb-1">Role Name</label>
+                    <label className="block text-sm font-medium text-set-fg mb-1">Role Name</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
-                      className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-sage-500 focus:border-transparent outline-none"
+                      className="w-full px-3 py-2 border border-set-line-strong rounded-lg focus:ring-2 focus:ring-set-gold focus:border-transparent outline-none"
                       disabled={selectedRole?.isDefault}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#E6E8EA] mb-1">Description</label>
+                    <label className="block text-sm font-medium text-set-fg mb-1">Description</label>
                     <input
                       type="text"
                       value={formData.description}
                       onChange={e => setFormData({...formData, description: e.target.value})}
-                      className="w-full px-3 py-2 border border-white/20 rounded-lg focus:ring-2 focus:ring-sage-500 focus:border-transparent outline-none"
+                      className="w-full px-3 py-2 border border-set-line-strong rounded-lg focus:ring-2 focus:ring-set-gold focus:border-transparent outline-none"
                       disabled={selectedRole?.isDefault}
                     />
                   </div>
@@ -188,7 +188,7 @@ export default function RolesPage() {
 
                 <div>
                   <div className="flex justify-between items-end mb-4">
-                    <h3 className="text-sm font-medium text-[#F4F5F6]">Permissions Matrix</h3>
+                    <h3 className="text-sm font-medium text-set-fg">Permissions Matrix</h3>
                     {selectedRole && !selectedRole.isDefault && (
                       <button
                         onClick={() => {
@@ -196,25 +196,25 @@ export default function RolesPage() {
                             deleteRole.mutate({ id: selectedRole.id });
                           }
                         }}
-                        className="text-xs text-red-400 hover:text-red-400 flex items-center gap-1"
+                        className="text-xs text-set-danger hover:text-set-danger flex items-center gap-1"
                       >
                         <Trash2 className="w-3 h-3" /> Delete Role
                       </button>
                     )}
                   </div>
 
-                  <div className="border border-white/10 rounded-lg overflow-hidden">
+                  <div className="border border-set-line rounded-lg overflow-hidden">
                     <table className="w-full text-left text-sm">
-                      <thead className="bg-ink-50 border-b border-white/10">
+                      <thead className="bg-set-sunken border-b border-set-line">
                         <tr>
-                          <th className="px-4 py-3 font-medium text-[#6E747A]">Module</th>
-                          <th className="px-4 py-3 font-medium text-[#6E747A]">Permissions</th>
+                          <th className="px-4 py-3 font-medium text-set-fg-subtle">Module</th>
+                          <th className="px-4 py-3 font-medium text-set-fg-subtle">Permissions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-ink-900/5">
+                      <tbody className="divide-y divide-set-line-soft">
                         {MODULES.map(module => (
-                          <tr key={module} className="hover:bg-ink-50/50">
-                            <td className="px-4 py-3 font-medium text-[#F4F5F6] capitalize w-1/4 align-top pt-4">
+                          <tr key={module} className="hover:bg-set-row-hover/50">
+                            <td className="px-4 py-3 font-medium text-set-fg capitalize w-1/4 align-top pt-4">
                               {module}
                             </td>
                             <td className="px-4 py-3">
@@ -223,11 +223,11 @@ export default function RolesPage() {
                                   <label key={`${module}-${action}`} className="flex items-center gap-2 cursor-pointer">
                                     <input
                                       type="checkbox"
-                                      className="rounded border-white/20 text-[#C9A227] focus:ring-sage-500 w-4 h-4"
+                                      className="rounded border-set-line-strong text-set-gold focus:ring-set-gold w-4 h-4"
                                       checked={!!formData.permissions?.[module]?.[action]}
                                       onChange={(e) => handlePermissionChange(module, action, e.target.checked)}
                                     />
-                                    <span className="text-[#9BA1A6] capitalize">{action}</span>
+                                    <span className="text-set-fg-muted capitalize">{action}</span>
                                   </label>
                                 ))}
                               </div>

@@ -8,9 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { toast } from 'react-hot-toast';
+import { useSettingsToast } from '@/components/settings/SettingsToast';
 
 export default function SiemSettingsPage() {
+  const toast = useSettingsToast();
+  const toastError = (msg: string) => toast(msg, 'error');
   const [siemEnabled, setSiemEnabled] = useState(false);
   const [siemEndpointUrl, setSiemEndpointUrl] = useState('');
   const [siemFormat, setSiemFormat] = useState('json');
@@ -38,10 +40,10 @@ export default function SiemSettingsPage() {
         siemFormat,
         siemAuthHeader,
       });
-      toast.success('SIEM settings saved successfully');
+      toast('SIEM settings saved successfully');
       refetch();
     } catch (error: any) {
-      toast.error(`Failed to save settings: ${error.message}`);
+      toastError(`Failed to save settings: ${error.message}`);
     }
   };
 
@@ -50,12 +52,12 @@ export default function SiemSettingsPage() {
     try {
       const result = await testMutation.mutateAsync();
       if (result.success) {
-        toast.success(result.message || 'Test connection successful');
+        toast(result.message || 'Test connection successful');
       } else {
-        toast.error(result.message || 'Test connection failed');
+        toastError(result.message || 'Test connection failed');
       }
     } catch (error: any) {
-      toast.error(`Test connection failed: ${error.message}`);
+      toastError(`Test connection failed: ${error.message}`);
     } finally {
       setIsTesting(false);
     }
@@ -70,9 +72,9 @@ export default function SiemSettingsPage() {
       {siemSettings?.deliveryStatus && (
         <div className={`p-4 rounded-md border ${
           siemSettings.deliveryStatus.status === 'sent'
-            ? 'bg-green-500/10 border-green-200 text-green-400'
+            ? 'bg-set-ok/12 border-green-200 text-set-ok'
             : siemSettings.deliveryStatus.status === 'failed'
-            ? 'bg-red-500/10 border-red-900/50 text-red-400'
+            ? 'bg-set-danger/12 border-red-900/50 text-set-danger'
             : 'bg-yellow-50 border-yellow-200 text-yellow-800'
         }`}>
           <div className="font-semibold">
@@ -92,17 +94,17 @@ export default function SiemSettingsPage() {
       )}
 
       <div>
-        <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">SIEM Integration</h1>
-        <p className="text-[#6E747A]">
+        <h1 className="mb-2.5 font-serif text-[34px] leading-[1.05] tracking-[-0.015em] text-set-fg md:text-[44px]">SIEM Integration</h1>
+        <p className="text-set-fg-subtle">
           Stream audit logs to your security tool (Splunk, Datadog, Microsoft Sentinel) in real-time.
         </p>
       </div>
 
-      <div className="bg-[#0D0F11] p-6 rounded-lg border border-white/10 space-y-6 shadow-panel-elevated">
+      <div className="bg-set-panel p-6 rounded-lg border border-set-line space-y-6 shadow-panel-elevated">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label htmlFor="siem-enabled" className="text-base font-medium text-[#F4F5F6]">Enable SIEM Integration</Label>
-            <p className="text-sm text-[#6E747A]">
+            <Label htmlFor="siem-enabled" className="text-base font-medium text-set-fg">Enable SIEM Integration</Label>
+            <p className="text-sm text-set-fg-subtle">
               When enabled, audit logs will be pushed to the configured endpoint.
             </p>
           </div>
@@ -114,9 +116,9 @@ export default function SiemSettingsPage() {
         </div>
 
         {siemEnabled && (
-          <div className="space-y-4 pt-4 border-t border-white/10">
+          <div className="space-y-4 pt-4 border-t border-set-line">
             <div className="space-y-2">
-              <Label htmlFor="endpoint-url" className="text-[#E6E8EA]">Endpoint URL</Label>
+              <Label htmlFor="endpoint-url" className="text-set-fg">Endpoint URL</Label>
               <Input
                 id="endpoint-url"
                 placeholder="https://your-siem-instance.com/api/v1/logs"
@@ -126,7 +128,7 @@ export default function SiemSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="payload-format" className="text-[#E6E8EA]">Payload Format</Label>
+              <Label htmlFor="payload-format" className="text-set-fg">Payload Format</Label>
               <Select value={siemFormat} onValueChange={setSiemFormat}>
                 <SelectTrigger id="payload-format">
                   <SelectValue placeholder="Select a format" />
@@ -140,7 +142,7 @@ export default function SiemSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="auth-header" className="text-[#E6E8EA]">Authorization Header (Optional)</Label>
+              <Label htmlFor="auth-header" className="text-set-fg">Authorization Header (Optional)</Label>
               <Input
                 id="auth-header"
                 placeholder="Bearer your_token_here"

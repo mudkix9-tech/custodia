@@ -70,7 +70,7 @@ export default function BillingPage() {
       return (
         <a
           href="/contact"
-          className="block text-center w-full py-2.5 px-4 bg-transparent border border-ink-700 text-[#F4F5F6] rounded-lg hover:bg-ink-800 transition-colors font-medium text-sm"
+          className="block text-center w-full py-2.5 px-4 bg-transparent border border-set-line-strong text-set-fg rounded-lg hover:bg-[#131316] transition-colors font-medium text-sm"
         >
           {t('cta.contact_us')}
         </a>
@@ -81,7 +81,7 @@ export default function BillingPage() {
       return (
         <button
           onClick={() => handleUpgrade(tier.paddlePriceId)}
-          className="w-full py-2.5 px-4 bg-ink-900 text-white rounded-lg hover:bg-ink-800 transition-colors font-medium text-sm"
+          className="w-full py-2.5 px-4 bg-set-gold text-[#0A0A0A] hover:bg-set-gold-hi rounded-lg transition-colors font-medium text-sm"
         >
           {t('cta.subscribe', { name: tier.name })}
         </button>
@@ -89,21 +89,21 @@ export default function BillingPage() {
     }
 
     let badgeText = t('cta.current_plan');
-    let badgeColors = "bg-green-500/10 text-green-500 border border-green-500/20";
+    let badgeColors = "bg-set-ok/12 text-set-ok border border-green-500/20";
 
     switch (subscriptionStatus) {
       case 'active':
         badgeText = t('cta.current_plan');
-        badgeColors = "bg-green-500/10 text-green-500 border border-green-500/20";
+        badgeColors = "bg-set-ok/12 text-set-ok border border-green-500/20";
         break;
       case 'past_due':
       case 'unpaid':
         badgeText = t('cta.payment_failed');
-        badgeColors = "bg-red-500/10 text-red-500 border border-red-500/20";
+        badgeColors = "bg-set-danger/12 text-set-danger border border-set-danger/30";
         break;
       case 'canceled':
         badgeText = t('cta.canceled');
-        badgeColors = "bg-[#2D3135] text-[#9BA1A6] border border-white/10";
+        badgeColors = "bg-[#2D3135] text-set-fg-muted border border-set-line";
         break;
       case 'paused':
         badgeText = t('cta.paused');
@@ -119,33 +119,33 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-12">
+    <div className="mx-auto max-w-[1040px] space-y-5 px-8 pt-10 pb-24 rise-in">
       {isLocked && (
         <div className="bg-accent-500/10 border border-accent-500/20 rounded-2xl p-6 mb-8 text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent-500/20 mb-4">
             <CheckCircle className="w-6 h-6 text-accent-500" />
           </div>
-          <h2 className="text-xl font-bold text-[#F4F5F6] mb-2">
+          <h2 className="text-xl font-bold text-set-fg mb-2">
             {isExpiredTrial && t('locked.trial_ended')}
             {isPastDue && t('locked.payment_failed')}
             {isCanceled && t('locked.canceled')}
           </h2>
-          <p className="text-[#9BA1A6] max-w-lg mx-auto mb-6">
+          <p className="text-set-fg-muted max-w-lg mx-auto mb-6">
             {isExpiredTrial && t('locked.trial_ended_desc')}
             {isPastDue && t('locked.payment_failed_desc')}
             {isCanceled && t('locked.canceled_desc')}
           </p>
           
           {stats && (
-             <div className="flex items-center justify-center gap-8 border-t border-white/10 pt-6 mt-6">
+             <div className="flex items-center justify-center gap-8 border-t border-set-line pt-6 mt-6">
                <div className="text-center">
-                 <div className="text-2xl font-serif text-[#F4F5F6]">{stats.ropaEntries}</div>
-                 <div className="text-xs text-[#9BA1A6] uppercase tracking-wider mt-1">{t('stats.ropa_entries')}</div>
+                 <div className="text-2xl font-serif text-set-fg">{stats.ropaEntries}</div>
+                 <div className="text-xs text-set-fg-muted uppercase tracking-wider mt-1">{t('stats.ropa_entries')}</div>
                </div>
-               <div className="w-px h-10 bg-white/10"></div>
+               <div className="w-px h-10 bg-set-line"></div>
                <div className="text-center">
-                 <div className="text-2xl font-serif text-[#F4F5F6]">{stats.vendorsTracked}</div>
-                 <div className="text-xs text-[#9BA1A6] uppercase tracking-wider mt-1">{t('stats.vendors_tracked')}</div>
+                 <div className="text-2xl font-serif text-set-fg">{stats.vendorsTracked}</div>
+                 <div className="text-xs text-set-fg-muted uppercase tracking-wider mt-1">{t('stats.vendors_tracked')}</div>
                </div>
              </div>
           )}
@@ -153,31 +153,31 @@ export default function BillingPage() {
       )}
 
       <div>
-        <h1 className="text-2xl font-serif text-[#F4F5F6]">{t('title')}</h1>
-        <p className="text-[#9BA1A6] mt-2">{t('subtitle')}</p>
+        <h1 className="text-2xl font-serif text-set-fg">{t('title')}</h1>
+        <p className="text-set-fg-muted mt-2">{t('subtitle')}</p>
       </div>
 
-      <div className="bg-[#0D0F11] border border-white/10 rounded-3xl p-8 shadow-panel-elevated">
-        <h2 className="text-lg font-bold text-[#F4F5F6] mb-6">{t('available_plans')}</h2>
+      <div className="bg-set-panel border border-set-line rounded-3xl p-8 shadow-panel-elevated">
+        <h2 className="text-lg font-bold text-set-fg mb-6">{t('available_plans')}</h2>
         
         {isInitializing ? (
-           <div className="text-[#6E747A] animate-pulse">{t('initializing')}</div>
+           <div className="text-set-fg-subtle animate-pulse">{t('initializing')}</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {TIERS.map(tier => {
               const features: string[] = t.raw(`plans.${tier.id}.features`);
               const name = t(`plans.${tier.id}.name`);
               return (
-              <div key={tier.id} className="border border-white/10 rounded-2xl p-6 flex flex-col hover:border-accent-500 transition-colors">
+              <div key={tier.id} className="border border-set-line rounded-2xl p-6 flex flex-col hover:border-accent-500 transition-colors">
                 <div className="mb-4">
-                  <h3 className="text-xl font-bold text-[#F4F5F6]">{name}</h3>
-                  <div className="text-3xl font-serif font-medium text-[#F4F5F6] mt-2">{t(`plans.${tier.id}.price`)}<span className="text-sm font-sans text-[#6E747A]">/mo</span></div>
-                  <p className="text-sm text-[#9BA1A6] mt-2 min-h-[40px]">{t(`plans.${tier.id}.description`)}</p>
+                  <h3 className="text-xl font-bold text-set-fg">{name}</h3>
+                  <div className="text-3xl font-serif font-medium text-set-fg mt-2">{t(`plans.${tier.id}.price`)}<span className="text-sm font-sans text-set-fg-subtle">/mo</span></div>
+                  <p className="text-sm text-set-fg-muted mt-2 min-h-[40px]">{t(`plans.${tier.id}.description`)}</p>
                 </div>
                 
                 <ul className="space-y-3 mb-8 flex-1">
                   {features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-[#E6E8EA]">
+                    <li key={i} className="flex items-start gap-2 text-sm text-set-fg">
                       <CheckCircle className="w-5 h-5 text-accent-500 flex-shrink-0" />
                       {feature}
                     </li>

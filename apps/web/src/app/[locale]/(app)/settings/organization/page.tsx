@@ -106,29 +106,29 @@ export default function OrganizationSettingsPage() {
   if (isLoading) return <GenericWorkspaceSkeleton />;
 
   return (
-    <div className="max-w-4xl mx-auto p-8 fade-up">
-      <div className="flex justify-between items-center mb-8">
+    <div className="mx-auto max-w-[1040px] px-8 pt-10 pb-24 rise-in">
+      <div className="flex flex-wrap items-end justify-between gap-6 pb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
-          <p className="text-[#9BA1A6]">{t('subtitle')}</p>
+          <h1 className="mb-2.5 font-serif text-[34px] leading-[1.05] tracking-[-0.015em] text-set-fg md:text-[44px]">{t('title')}</h1>
+          <p className="max-w-[52ch] text-sm leading-[1.55] text-set-fg-muted text-pretty">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          {saveStatus === 'saving' && <span className="text-sm text-[#6E747A]">{t('saving')}</span>}
-          {saveStatus === 'saved' && <span className="text-sm text-[#C9A227] font-medium">{t('saved')}</span>}
+          {saveStatus === 'saving' && <span className="text-sm text-set-fg-subtle">{t('saving')}</span>}
+          {saveStatus === 'saved' && <span className="text-sm text-set-gold font-medium">{t('saved')}</span>}
         </div>
       </div>
 
       <div className="space-y-8">
         {/* Basic Information */}
-        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
-          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
-            <Building2 className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">{t('basic_information.title')}</h2>
+        <div className="rounded-[14px] border border-set-line bg-set-panel p-[22px]">
+          <div className="flex items-center gap-2 mb-6 text-set-fg">
+            <Building2 className="w-4 h-4 text-set-gold" />
+            <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{t('basic_information.title')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.name')}</Label>
+              <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('basic_information.name')}</Label>
               <Input
                 type="text"
                 value={formData.name}
@@ -137,7 +137,7 @@ export default function OrganizationSettingsPage() {
               />
             </div>
             <div>
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.legal_name')}</Label>
+              <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('basic_information.legal_name')}</Label>
               <Input
                 type="text"
                 value={formData.legalName}
@@ -146,17 +146,17 @@ export default function OrganizationSettingsPage() {
               />
             </div>
             <div>
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.slug')}</Label>
+              <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('basic_information.slug')}</Label>
               <Input
                 type="text"
                 value={formData.slug}
                 onChange={e => handleChange('slug', e.target.value)}
                 disabled={!isEditable}
               />
-              <p className="text-xs text-[#6E747A] mt-1.5">{t('basic_information.slug_hint', { slug: formData.slug || 'slug' })}</p>
+              <p className="text-xs text-set-fg-subtle mt-1.5">{t('basic_information.slug_hint', { slug: formData.slug || 'slug' })}</p>
             </div>
             <div>
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('basic_information.registration_number')}</Label>
+              <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('basic_information.registration_number')}</Label>
               <Input
                 type="text"
                 value={formData.registrationNumber}
@@ -168,15 +168,15 @@ export default function OrganizationSettingsPage() {
         </div>
 
         {/* Location & Jurisdiction */}
-        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
-          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
-            <MapPin className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">{t('location.title')}</h2>
+        <div className="rounded-[14px] border border-set-line bg-set-panel p-[22px]">
+          <div className="flex items-center gap-2 mb-6 text-set-fg">
+            <MapPin className="w-4 h-4 text-set-gold" />
+            <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{t('location.title')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.country')}</Label>
+              <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('location.country')}</Label>
               <Select
                 value={formData.countryCode}
                 onValueChange={v => handleChange('countryCode', v)}
@@ -196,7 +196,7 @@ export default function OrganizationSettingsPage() {
               </Select>
             </div>
             <div className="md:col-span-2">
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.street')}</Label>
+              <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('location.street')}</Label>
               <Input
                 type="text"
                 value={formData.address?.street}
@@ -205,7 +205,7 @@ export default function OrganizationSettingsPage() {
               />
             </div>
             <div>
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.city')}</Label>
+              <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('location.city')}</Label>
               <Input
                 type="text"
                 value={formData.address?.city}
@@ -214,7 +214,7 @@ export default function OrganizationSettingsPage() {
               />
             </div>
             <div>
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.postal_code')}</Label>
+              <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('location.postal_code')}</Label>
               <Input
                 type="text"
                 value={formData.address?.postalCode}
@@ -223,7 +223,7 @@ export default function OrganizationSettingsPage() {
               />
             </div>
             <div className="md:col-span-2">
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('location.lead_authority')}</Label>
+              <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('location.lead_authority')}</Label>
               <Input
                 type="text"
                 value={formData.leadSupervisoryAuthority}
@@ -236,14 +236,14 @@ export default function OrganizationSettingsPage() {
         </div>
 
         {/* Data Protection Officer */}
-        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
-          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
-            <UserCheck className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">{t('dpo.title')}</h2>
+        <div className="rounded-[14px] border border-set-line bg-set-panel p-[22px]">
+          <div className="flex items-center gap-2 mb-6 text-set-fg">
+            <UserCheck className="w-4 h-4 text-set-gold" />
+            <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{t('dpo.title')}</h2>
           </div>
 
           <div className="mb-6">
-            <label className="flex items-center gap-3 text-sm font-medium text-[#F4F5F6]">
+            <label className="flex items-center gap-3 text-sm font-medium text-set-fg">
               <Switch
                 checked={formData.hasDpo}
                 onCheckedChange={checked => handleChange('hasDpo', checked)}
@@ -251,15 +251,15 @@ export default function OrganizationSettingsPage() {
               />
               {t('dpo.has_dpo')}
             </label>
-            <p className="text-xs text-[#6E747A] mt-2 ml-12">
+            <p className="text-xs text-set-fg-subtle mt-2 ml-12">
               {t('dpo.dpo_hint')}
             </p>
           </div>
 
           {formData.hasDpo && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6 border-l-2 border-white/10 ml-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6 border-l-2 border-set-line ml-2">
               <div>
-                <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('dpo.name')}</Label>
+                <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('dpo.name')}</Label>
                 <Input
                   type="text"
                   value={formData.dpoName}
@@ -268,7 +268,7 @@ export default function OrganizationSettingsPage() {
                 />
               </div>
               <div>
-                <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('dpo.email')}</Label>
+                <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('dpo.email')}</Label>
                 <Input
                   type="email"
                   value={formData.dpoEmail}
@@ -277,7 +277,7 @@ export default function OrganizationSettingsPage() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="flex items-center gap-3 text-sm font-medium text-[#F4F5F6]">
+                <label className="flex items-center gap-3 text-sm font-medium text-set-fg">
                   <Switch
                     checked={formData.dpoIsExternal}
                     onCheckedChange={checked => handleChange('dpoIsExternal', checked)}
@@ -291,22 +291,22 @@ export default function OrganizationSettingsPage() {
         </div>
 
         {/* Branding */}
-        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
-          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
-            <Palette className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">{t('branding.title')}</h2>
+        <div className="rounded-[14px] border border-set-line bg-set-panel p-[22px]">
+          <div className="flex items-center gap-2 mb-6 text-set-fg">
+            <Palette className="w-4 h-4 text-set-gold" />
+            <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{t('branding.title')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <div>
-                <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('branding.logo')}</Label>
+                <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('branding.logo')}</Label>
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-xl bg-[#08090A] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="w-16 h-16 rounded-xl bg-set-sunken border border-set-line flex items-center justify-center overflow-hidden shrink-0">
                     {formData.branding.logoUrl ? (
                       <img src={formData.branding.logoUrl} alt="Logo" className="w-full h-full object-contain p-2" />
                     ) : (
-                      <Building2 className="w-6 h-6 text-white/20" />
+                      <Building2 className="w-6 h-6 text-set-fg-subtle/50" />
                     )}
                   </div>
                   <div className="flex-1">
@@ -319,20 +319,20 @@ export default function OrganizationSettingsPage() {
                     >
                       <Upload className="w-4 h-4" /> {t('branding.upload_logo')}
                     </Button>
-                    <p className="text-xs text-[#6E747A] mt-2">{t('branding.logo_hint')}</p>
+                    <p className="text-xs text-set-fg-subtle mt-2">{t('branding.logo_hint')}</p>
                   </div>
                 </div>
               </div>
 
               <div>
-                <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('branding.primary_color')}</Label>
+                <Label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('branding.primary_color')}</Label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
                     value={formData.branding.primaryColor || '#2c3e38'}
                     onChange={e => handleBrandingChange('primaryColor', e.target.value)}
                     disabled={!isEditable}
-                    className="w-10 h-10 p-1 bg-[#0D0F11] border border-white/10 rounded cursor-pointer disabled:opacity-50"
+                    className="w-10 h-10 p-1 bg-set-panel border border-set-line rounded cursor-pointer disabled:opacity-50"
                   />
                   <Input
                     type="text"
@@ -346,8 +346,8 @@ export default function OrganizationSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('branding.trust_portal_preview')}</label>
-              <div className="border border-white/10 rounded-xl overflow-hidden h-32 bg-[#08090A] flex flex-col">
+              <label className="mb-[7px] block text-[11.5px] font-medium text-set-fg-muted">{t('branding.trust_portal_preview')}</label>
+              <div className="border border-set-line rounded-xl overflow-hidden h-32 bg-set-sunken flex flex-col">
                 {/* Mock Header */}
                 <div
                   className="h-10 px-4 flex items-center shadow-panel-elevated"
@@ -360,8 +360,8 @@ export default function OrganizationSettingsPage() {
                   )}
                 </div>
                 <div className="p-4 flex-1">
-                  <div className="w-1/3 h-2 bg-ink-900/10 rounded mb-2"></div>
-                  <div className="w-1/2 h-2 bg-ink-900/10 rounded"></div>
+                  <div className="w-1/3 h-2 bg-set-line rounded mb-2"></div>
+                  <div className="w-1/2 h-2 bg-set-line rounded"></div>
                 </div>
               </div>
             </div>

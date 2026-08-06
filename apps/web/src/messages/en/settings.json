@@ -34,7 +34,8 @@
       "in_app": "In-App",
       "unmute": "Unmute for me",
       "mute": "Mute for me"
-    }
+    },
+    "saved": "Saved"
   },
   "organization": {
     "title": "Organization Profile",
@@ -87,18 +88,23 @@
   },
   "team": {
     "title": "Team Management",
-    "subtitle": "Manage organization members, roles, and granular access permissions.",
+    "subtitle": "Members, roles, and granular access permissions for this workspace.",
+    "meter": {
+      "label": "Members active",
+      "pending_note": "{count, plural, one {# invitation awaiting a response} other {# invitations awaiting a response}}",
+      "all_active": "Everyone has accepted their invitation."
+    },
     "invite": {
-      "title": "Invite New Members",
-      "single_invite": "Single invite",
-      "bulk_invite": "Bulk invite",
+      "title": "Invite new members",
+      "bulk_csv": "Bulk invite via CSV",
+      "csv_empty": "No email addresses found in that file.",
+      "needs_email": "Add at least one email address.",
+      "email_placeholder": "name@company.com — press Enter to add",
+      "remove_recipient": "Remove {email}",
+      "footnote": "Invitations expire after 7 days. Roles can be changed at any time after joining.",
       "partial_success": "Sent {sent} invitations. {duplicates} already exist, {invalid} were invalid.",
       "send_failures": "Sent {sent} invitations. {failed} failed to send, {duplicates} already exist, {invalid} were invalid.",
       "invalid_only": "No invitations sent. {invalid} emails were invalid.",
-      "email_single": "Email Address",
-      "email_bulk": "Email Addresses (one per line)",
-      "email_placeholder_single": "colleague@example.com",
-      "email_placeholder_bulk": "colleague1@example.com\\ncolleague2@example.com",
       "role": "Role",
       "roles": {
         "admin": "Admin",
@@ -106,15 +112,19 @@
         "viewer": "Viewer"
       },
       "sending": "Sending...",
-      "send": "Send Invitations",
-      "success": "Invitations sent successfully!"
+      "send": "Send invite",
+      "send_many": "Send {count} invites",
+      "sent": "{count, plural, one {Invitation sent} other {# invitations sent}}",
+      "failed": "Failed to send invitations."
     },
     "members": {
-      "title": "Current Members",
+      "title": "Members",
+      "filter_placeholder": "Filter by name or email",
       "columns": {
-        "name": "Name",
+        "name": "Member",
         "email": "Email",
         "role": "Role",
+        "status": "Status",
         "joined": "Joined",
         "actions": "Actions"
       },
@@ -126,24 +136,48 @@
         "basic_roles": "Basic Roles",
         "custom_roles": "Custom Roles"
       },
+      "status": {
+        "active": "Active",
+        "invited": "Invited"
+      },
+      "meta_you": "You · Workspace owner",
+      "meta_awaiting": "Awaiting acceptance",
+      "invited_on": "Invited {date}",
+      "joined_on": "Joined {date}",
       "invited_user": "Invited User",
       "unknown": "Unknown",
       "permissions": "Permissions",
       "remove": "Remove",
-      "no_members": "No team members found."
+      "removed": "{name} removed from workspace",
+      "remove_failed": "Failed to remove member.",
+      "remove_confirm": {
+        "title": "Remove {name}?",
+        "description": "{name} will lose access to this workspace immediately."
+      },
+      "role_updated": "{name} is now {role}",
+      "role_failed": "Failed to update role.",
+      "no_members": "No team members found.",
+      "no_matches": "No members match that filter."
     },
     "pending": {
-      "title": "Pending Invitations",
+      "title": "Pending invitations",
       "resend": "Resend",
-      "cancel": "Cancel",
-      "no_pending": "No pending invitations."
+      "resent": "Invitation resent to {email}",
+      "resend_failed": "Failed to resend invitation.",
+      "cancel": "Revoke",
+      "sent_on": "Sent {date} · expires after 7 days",
+      "no_pending": "No invitations awaiting a response."
     },
     "permissions": {
       "title": "Edit Permissions",
+      "granular_access": "Granular access",
+      "override_summary": "{count, plural, =0 {No overrides — inheriting from role} one {# override} other {# overrides}}",
+      "cycle_hint": "{action} — currently {state}. Click to cycle.",
       "owner_warning": "Owner permissions cannot be restricted. They have full access to all modules.",
-      "description": "Override role-based access for specific modules. Green check grants access, red cross denies, gray dash inherits from role.",
+      "description": "Override role-based access per module: allow grants, deny blocks, and inherit falls back to the role.",
       "module": "Module",
-      "footer": "Changes save automatically and will invalidate the user's current session to enforce new permissions."
+      "failed": "Failed to update permissions.",
+      "footer": "Changes save automatically and invalidate the member's current session."
     }
   },
   "notifications": {

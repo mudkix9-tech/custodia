@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
-import { Building2, Users, Bell, Plug, Code, CreditCard, Shield, Database, User, Cpu } from 'lucide-react';
+import { Building2, Users, Bell, Plug, CreditCard, Shield, Database, User } from 'lucide-react';
+import { SettingsToastProvider } from '@/components/settings/SettingsToast';
+import { cn } from '@/utils/cn';
 
 const SETTINGS_NAV = [
   { id: 'organization', icon: Building2, href: '/settings/organization', roles: ['viewer', 'member', 'admin', 'owner'] },
@@ -17,62 +19,80 @@ const SETTINGS_NAV = [
   { id: 'data_privacy', icon: Database, href: '/settings/data', roles: ['admin', 'owner'] },
 ];
 
-export default function SettingsLayout({
-  children,
+function NavItem({
+  href,
+  icon: Icon,
+  label,
+  isActive,
 }: {
-  children: React.ReactNode;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  isActive: boolean;
 }) {
+  return (
+    <Link
+      href={href}
+      aria-current={isActive ? 'page' : undefined}
+      className={cn(
+        'relative flex items-center gap-[11px] rounded-lg px-2.5 py-[9px] text-[13.5px] transition-colors',
+        isActive
+          ? 'bg-gradient-to-r from-set-gold/10 to-transparent font-medium text-set-fg'
+          : 'text-set-fg-muted hover:bg-[#0D0D10] hover:text-set-fg'
+      )}
+    >
+      {isActive ? (
+        <span className="absolute top-2 bottom-2 left-0 w-0.5 rounded-sm bg-set-gold" />
+      ) : null}
+      <Icon className={cn('h-4 w-4 flex-none', isActive ? 'text-set-gold' : 'text-current')} />
+      {label}
+    </Link>
+  );
+}
+
+export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const t = useTranslations('settings');
-  const userRole = (session?.user as any)?.role || 'member';
+  const userRole = (session?.user as { role?: string } | undefined)?.role || 'member';
 
-  const visibleNav = SETTINGS_NAV.filter(nav => nav.roles.includes(userRole));
+  const visibleNav = SETTINGS_NAV.filter((nav) => nav.roles.includes(userRole));
+  const isProfile = pathname.includes('/settings/profile');
 
   return (
-    <div className="flex min-h-full">
-      <aside className="w-64 border-r border-white/10 bg-[#0D0F11] hidden md:block">
-        <div className="p-6">
-          <h2 className="text-lg font-serif text-[#F4F5F6] mb-6">{t('navigation.header')}</h2>
-          <nav className="space-y-1">
-            <div className="text-xs font-medium text-[#6E747A] uppercase tracking-wider mb-2 px-3">{t('navigation.organization')}</div>
-            {visibleNav.map((item) => {
-              const isActive = pathname.startsWith(item.href);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-ink-900/5 text-[#F4F5F6]'
-                      : 'text-[#9BA1A6] hover:bg-ink-900/5 hover:text-[#F4F5F6]'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-[#F4F5F6]' : 'text-[#6E747A]'}`} />
-                  {t(`navigation.${item.id}`)}
-                </Link>
-              );
-            })}
+    <SettingsToastProvider>
+      <div className="settings-scope flex min-h-full">
+        <aside className="sticky top-0 hidden max-h-screen w-[252px] flex-none self-start overflow-y-auto border-r border-set-line-rail bg-set-rail px-4 py-[22px] md:block">
+          <div className="px-2 pb-[22px] font-serif text-[30px] tracking-[-0.01em] text-set-fg">
+            {t('navigation.header')}
+          </div>
 
-            <div className="mt-8 mb-2 px-3 text-xs font-medium text-[#6E747A] uppercase tracking-wider">{t('navigation.personal')}</div>
-            <Link
-              href="/settings/profile"
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                pathname.startsWith('/settings/profile')
-                  ? 'bg-ink-900/5 text-[#F4F5F6]'
-                  : 'text-[#9BA1A6] hover:bg-ink-900/5 hover:text-[#F4F5F6]'
-              }`}
-            >
-              <User className={`w-5 h-5 ${pathname.startsWith('/settings/profile') ? 'text-[#F4F5F6]' : 'text-[#6E747A]'}`} />
-              {t('navigation.my_profile')}
-            </Link>
+          <div className="set-eyebrow px-2 pb-2.5">{t('navigation.organization')}</div>
+          <nav className="flex flex-col gap-px pb-[22px]">
+            {visibleNav.map((item) => (
+              <NavItem
+                key={item.id}
+                href={item.href}
+                icon={item.icon}
+                label={t(`navigation.${item.id}`)}
+                isActive={pathname.includes(item.href)}
+              />
+            ))}
           </nav>
-        </div>
-      </aside>
-      <main className="flex-1">
-        {children}
-      </main>
-    </div>
+
+          <div className="set-eyebrow px-2 pb-2.5">{t('navigation.personal')}</div>
+          <nav className="flex flex-col gap-px">
+            <NavItem
+              href="/settings/profile"
+              icon={User}
+              label={t('navigation.my_profile')}
+              isActive={isProfile}
+            />
+          </nav>
+        </aside>
+
+        <div className="min-w-0 flex-1">{children}</div>
+      </div>
+    </SettingsToastProvider>
   );
 }

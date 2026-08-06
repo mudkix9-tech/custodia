@@ -34,7 +34,8 @@
       "in_app": "In-App",
       "unmute": "Stummschaltung aufheben",
       "mute": "Stumm schalten"
-    }
+    },
+    "saved": "Gespeichert"
   },
   "organization": {
     "title": "Organisationsprofil",
@@ -87,18 +88,23 @@
   },
   "team": {
     "title": "Team-Verwaltung",
-    "subtitle": "Verwalten Sie Organisationsmitglieder, Rollen und granulare Zugriffsberechtigungen.",
+    "subtitle": "Mitglieder, Rollen und granulare Zugriffsberechtigungen für diesen Workspace.",
+    "meter": {
+      "label": "Mitglieder aktiv",
+      "pending_note": "{count, plural, one {# Einladung wartet auf Antwort} other {# Einladungen warten auf Antwort}}",
+      "all_active": "Alle haben ihre Einladung angenommen."
+    },
     "invite": {
       "title": "Neue Mitglieder einladen",
-      "single_invite": "Einzelne Einladung",
-      "bulk_invite": "Masseneinladung",
+      "bulk_csv": "Masseneinladung per CSV",
+      "csv_empty": "In dieser Datei wurden keine E-Mail-Adressen gefunden.",
+      "needs_email": "Fügen Sie mindestens eine E-Mail-Adresse hinzu.",
+      "email_placeholder": "name@firma.de — Enter drücken zum Hinzufügen",
+      "remove_recipient": "{email} entfernen",
+      "footnote": "Einladungen laufen nach 7 Tagen ab. Rollen können nach dem Beitritt jederzeit geändert werden.",
       "partial_success": "{sent} Einladungen gesendet. {duplicates} existieren bereits, {invalid} waren ungültig.",
       "send_failures": "{sent} Einladungen gesendet. {failed} fehlgeschlagen, {duplicates} existieren bereits, {invalid} waren ungültig.",
       "invalid_only": "Keine Einladungen gesendet. {invalid} E-Mails waren ungültig.",
-      "email_single": "E-Mail-Adresse",
-      "email_bulk": "E-Mail-Adressen (eine pro Zeile)",
-      "email_placeholder_single": "kollege@beispiel.de",
-      "email_placeholder_bulk": "kollege1@beispiel.de\\nkollege2@beispiel.de",
       "role": "Rolle",
       "roles": {
         "admin": "Administrator",
@@ -106,15 +112,19 @@
         "viewer": "Betrachter"
       },
       "sending": "Sende...",
-      "send": "Einladungen senden",
-      "success": "Einladungen erfolgreich gesendet!"
+      "send": "Einladung senden",
+      "send_many": "{count} Einladungen senden",
+      "sent": "{count, plural, one {Einladung gesendet} other {# Einladungen gesendet}}",
+      "failed": "Einladungen konnten nicht gesendet werden."
     },
     "members": {
-      "title": "Aktuelle Mitglieder",
+      "title": "Mitglieder",
+      "filter_placeholder": "Nach Name oder E-Mail filtern",
       "columns": {
-        "name": "Name",
+        "name": "Mitglied",
         "email": "E-Mail",
         "role": "Rolle",
+        "status": "Status",
         "joined": "Beigetreten",
         "actions": "Aktionen"
       },
@@ -126,24 +136,48 @@
         "basic_roles": "Grundrollen",
         "custom_roles": "Benutzerdefinierte Rollen"
       },
+      "status": {
+        "active": "Aktiv",
+        "invited": "Eingeladen"
+      },
+      "meta_you": "Sie · Workspace-Eigentümer",
+      "meta_awaiting": "Wartet auf Annahme",
+      "invited_on": "Eingeladen am {date}",
+      "joined_on": "Beigetreten am {date}",
       "invited_user": "Eingeladener Benutzer",
       "unknown": "Unbekannt",
       "permissions": "Berechtigungen",
       "remove": "Entfernen",
-      "no_members": "Keine Teammitglieder gefunden."
+      "removed": "{name} wurde aus dem Workspace entfernt",
+      "remove_failed": "Mitglied konnte nicht entfernt werden.",
+      "remove_confirm": {
+        "title": "{name} entfernen?",
+        "description": "{name} verliert sofort den Zugriff auf diesen Workspace."
+      },
+      "role_updated": "{name} ist jetzt {role}",
+      "role_failed": "Rolle konnte nicht aktualisiert werden.",
+      "no_members": "Keine Teammitglieder gefunden.",
+      "no_matches": "Keine Mitglieder entsprechen diesem Filter."
     },
     "pending": {
       "title": "Ausstehende Einladungen",
       "resend": "Erneut senden",
-      "cancel": "Abbrechen",
-      "no_pending": "Keine ausstehenden Einladungen."
+      "resent": "Einladung erneut an {email} gesendet",
+      "resend_failed": "Einladung konnte nicht erneut gesendet werden.",
+      "cancel": "Widerrufen",
+      "sent_on": "Gesendet am {date} · läuft nach 7 Tagen ab",
+      "no_pending": "Keine Einladungen warten auf eine Antwort."
     },
     "permissions": {
       "title": "Berechtigungen bearbeiten",
+      "granular_access": "Granularer Zugriff",
+      "override_summary": "{count, plural, =0 {Keine Überschreibungen — von der Rolle geerbt} one {# Überschreibung} other {# Überschreibungen}}",
+      "cycle_hint": "{action} — aktuell {state}. Klicken zum Wechseln.",
       "owner_warning": "Die Berechtigungen des Eigentümers können nicht eingeschränkt werden. Sie haben vollen Zugriff auf alle Module.",
-      "description": "Überschreiben Sie den rollenbasierten Zugriff für bestimmte Module. Grünes Häkchen gewährt Zugriff, rotes Kreuz verweigert, grauer Strich übernimmt von der Rolle.",
+      "description": "Rollenbasierten Zugriff pro Modul überschreiben: allow gewährt, deny blockiert, inherit übernimmt die Rolle.",
       "module": "Modul",
-      "footer": "Änderungen werden automatisch gespeichert und entwerten die aktuelle Sitzung des Benutzers, um neue Berechtigungen durchzusetzen."
+      "failed": "Berechtigungen konnten nicht aktualisiert werden.",
+      "footer": "Änderungen werden automatisch gespeichert und entwerten die aktuelle Sitzung des Mitglieds."
     }
   },
   "notifications": {

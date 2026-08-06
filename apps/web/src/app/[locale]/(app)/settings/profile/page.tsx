@@ -5,12 +5,13 @@ import React, { useState, useEffect } from "react";
 import { User, Bell, Save } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { NOTIFICATION_GROUPS } from '../notifications/page';
+import { SettingsPage, SettingsHeader } from '@/components/settings/SettingsPage';
+import { SettingsCard, SettingsCardHeader, SettingsField } from '@/components/settings/SettingsCard';
 
 export default function ProfileSettingsPage() {
   const { data: session } = useSession();
@@ -71,51 +72,43 @@ export default function ProfileSettingsPage() {
   if (isLoading) return <GenericWorkspaceSkeleton />;
 
   return (
-    <div className="max-w-4xl mx-auto p-8 fade-up">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
-          <p className="text-[#9BA1A6]">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-4">
-          {saveStatus === 'saved' && <span className="text-sm text-[#C9A227] font-medium">Saved</span>}
-          <Button
-            onClick={handleSave}
-            disabled={saveStatus === 'saving'}
-            className="flex items-center gap-2 bg-ink-900 text-white px-5 py-2.5 rounded-xl font-medium disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" /> {saveStatus === 'saving' ? t('saving') : t('save_changes')}
-          </Button>
-        </div>
-      </div>
+    <SettingsPage>
+      <SettingsHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={
+          <>
+            {saveStatus === 'saved' && (
+              <span className="text-[12.5px] font-medium text-set-gold">{t('saved')}</span>
+            )}
+            <Button onClick={handleSave} disabled={saveStatus === 'saving'} className="gap-2">
+              <Save className="w-4 h-4" /> {saveStatus === 'saving' ? t('saving') : t('save_changes')}
+            </Button>
+          </>
+        }
+      />
 
-      <div className="space-y-8">
+      <div className="space-y-5">
         {/* Personal Info */}
-        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated">
-          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
-            <User className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">{t('personal_information.title')}</h2>
-          </div>
+        <SettingsCard className="rise-in">
+          <SettingsCardHeader icon={User} title={t('personal_information.title')} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
-            <div>
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.full_name')}</Label>
+          <div className="grid max-w-2xl grid-cols-1 gap-5 px-[22px] pb-[22px] md:grid-cols-2">
+            <SettingsField label={t('personal_information.full_name')}>
               <Input
                 type="text"
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
               />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.email_address')}</Label>
+            </SettingsField>
+            <SettingsField label={t('personal_information.email_address')}>
               <Input
                 type="email"
                 value={session?.user?.email || ''}
                 disabled
               />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.language')}</Label>
+            </SettingsField>
+            <SettingsField label={t('personal_information.language')}>
               <Select
                 value={formData.language}
                 onValueChange={v => setFormData({ ...formData, language: v })}
@@ -129,9 +122,8 @@ export default function ProfileSettingsPage() {
                   <SelectItem value="fr">French (Français)</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-[#F4F5F6] mb-1.5">{t('personal_information.timezone')}</Label>
+            </SettingsField>
+            <SettingsField label={t('personal_information.timezone')}>
               <Select
                 value={formData.timezone}
                 onValueChange={v => setFormData({ ...formData, timezone: v })}
@@ -157,49 +149,46 @@ export default function ProfileSettingsPage() {
                   <SelectItem value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </SettingsField>
           </div>
-        </div>
+        </SettingsCard>
 
         {/* Personal Notification Overrides */}
-        <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-6 shadow-panel-elevated overflow-hidden">
-          <div className="flex items-center gap-2 mb-6 text-[#F4F5F6]">
-            <Bell className="w-5 h-5 text-[#6E747A]" />
-            <h2 className="text-lg font-medium">{t('notification_preferences.title')}</h2>
-          </div>
-
-          <p className="text-sm text-[#9BA1A6] mb-6">
-            {t('notification_preferences.description')}
-          </p>
+        <SettingsCard className="overflow-hidden">
+          <SettingsCardHeader
+            icon={Bell}
+            title={t('notification_preferences.title')}
+            description={t('notification_preferences.description')}
+          />
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider">{t('notification_preferences.event_type')}</th>
-                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">{t('notification_preferences.email')}</th>
-                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">{t('notification_preferences.slack')}</th>
-                  <th className="pb-3 text-[12px] font-bold text-[#6E747A] uppercase tracking-wider text-center w-24">{t('notification_preferences.in_app')}</th>
+                <tr className="border-b border-set-line-rail">
+                  <th className="set-eyebrow px-[22px] pb-2.5 tracking-[0.14em]">{t('notification_preferences.event_type')}</th>
+                  <th className="set-eyebrow w-24 pb-2.5 text-center tracking-[0.14em]">{t('notification_preferences.email')}</th>
+                  <th className="set-eyebrow w-24 pb-2.5 text-center tracking-[0.14em]">{t('notification_preferences.slack')}</th>
+                  <th className="set-eyebrow w-24 pb-2.5 text-center tracking-[0.14em]">{t('notification_preferences.in_app')}</th>
                 </tr>
               </thead>
-              <tbody className="text-[14px] text-[#F4F5F6]">
+              <tbody className="text-[13.5px] text-set-fg">
                 {NOTIFICATION_GROUPS.map((group, gIdx) => (
                   <React.Fragment key={gIdx}>
-                    <tr className="bg-[#08090A]">
-                      <td colSpan={4} className="py-2 px-3 text-[11px] font-bold text-[#9BA1A6] uppercase tracking-wider">{tNotifications(`events.${group.categoryKey}` as any)}</td>
+                    <tr className="bg-set-sunken">
+                      <td colSpan={4} className="set-eyebrow px-[22px] py-2 tracking-[0.14em]">{tNotifications(`events.${group.categoryKey}` as any)}</td>
                     </tr>
                     {group.types.map(nt => (
-                      <tr key={nt.key} className="border-b border-white/5 last:border-0 hover:bg-ink-900/5">
-                        <td className="py-3 px-3 font-medium text-[#E6E8EA]">{tNotifications(`events.${nt.key}` as any)}</td>
+                      <tr key={nt.key} className="border-b border-set-line-soft transition-colors last:border-0 hover:bg-set-row-hover">
+                        <td className="px-[22px] py-3 font-medium text-set-fg">{tNotifications(`events.${nt.key}` as any)}</td>
                         {['email', 'slack', 'in_app'].map(channel => (
                           <td key={channel} className="py-3 text-center align-middle">
                             <Button
                               variant="ghost"
                               onClick={() => handleUserToggle(nt.key, channel)}
-                              className={`w-6 h-6 p-0 rounded-full mx-auto transition-colors ${isUserMuted(nt.key, channel) ? 'text-red-500 bg-red-500/10 hover:bg-red-500/20' : 'text-sage-500 bg-[#C9A227]/10 hover:bg-[#C9A227]/20'}`}
+                              className={`mx-auto h-6 w-6 rounded-full p-0 transition-colors ${isUserMuted(nt.key, channel) ? 'bg-set-danger/12 text-set-danger hover:bg-set-danger/20' : 'bg-set-gold/12 text-set-gold hover:bg-set-gold/20'}`}
                               title={isUserMuted(nt.key, channel) ? t('notification_preferences.unmute') : t('notification_preferences.mute')}
                             >
-                              {isUserMuted(nt.key, channel) ? <Bell className="w-3 h-3 line-through" /> : <Bell className="w-3 h-3" />}
+                              {isUserMuted(nt.key, channel) ? <Bell className="h-3 w-3 line-through" /> : <Bell className="h-3 w-3" />}
                             </Button>
                           </td>
                         ))}
@@ -210,9 +199,9 @@ export default function ProfileSettingsPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </SettingsCard>
 
       </div>
-    </div>
+    </SettingsPage>
   );
 }

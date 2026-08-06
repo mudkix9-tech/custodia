@@ -56,14 +56,61 @@
   --color-accent-transparent: rgba(201, 162, 39, 0.16);
 
   --shadow-panel-elevated: 0 -1px 0 rgba(201,162,39,0.18) inset, 0 40px 120px -40px rgba(0,0,0,0.9);
+
+  /* Settings surface tokens — warm-neutral, near-black console treatment */
+  --color-set-bg: #000000;
+  --color-set-rail: #050506;
+  --color-set-panel: #070708;
+  --color-set-panel-alt: #060607;
+  --color-set-sunken: #030304;
+  --color-set-field: #0B0B0D;
+  --color-set-hover: #0E0E11;
+  --color-set-row-hover: #0B0B0E;
+
+  --color-set-line: #16161A;
+  --color-set-line-soft: #101012;
+  --color-set-line-rail: #141416;
+  --color-set-line-strong: #1E1E22;
+
+  --color-set-fg: #F2F0EC;
+  --color-set-fg-muted: #8A8780;
+  --color-set-fg-subtle: #807D76;
+  --color-set-fg-faint: #7C7A74;
+
+  --color-set-gold: #D7B45A;
+  --color-set-gold-hi: #EBCB7E;
+  --color-set-danger: #E5484D;
+  --color-set-ok: #6E9E7A;
+
+  --shadow-set-toast: 0 16px 40px rgba(0,0,0,0.6);
 }
 
 @layer base {
   :root {
     --background: #FBF8F3;
     --foreground: #1F1B16;
+
+    /* Form-control tokens. Surfaces remap these to restyle shared primitives
+       without forking them (see .settings-scope below). */
+    --ui-field-bg: #0A0B0D;
+    --ui-field-border: rgba(255,255,255,0.12);
+    --ui-field-fg: #F4F5F6;
+    --ui-field-placeholder: #6E747A;
+    --ui-field-accent: #C9A227;
+    --ui-field-radius: 0.375rem;
+    --ui-panel-bg: #0D0F11;
+    --ui-panel-fg: #E6E8EA;
+    --ui-hover-bg: rgba(255,255,255,0.05);
+
+    --ui-accent: #C9A227;
+    --ui-accent-hover: #E5C463;
+    --ui-accent-fg: #08090A;
+    --ui-fg: #F4F5F6;
+    --ui-fg-muted: #9BA1A6;
+    --ui-danger: #EF4444;
+    --ui-control-radius: 0.375rem;
   }
-  
+
   html, body {
     background: var(--background);
     color: var(--foreground);
@@ -76,7 +123,94 @@
   }
 }
 
+@layer components {
+  /* Remaps the shared form-control tokens so Input/Select/Textarea/Button pick
+     up the settings palette everywhere inside the settings tab. */
+  .settings-scope {
+    --ui-field-bg: var(--color-set-field);
+    --ui-field-border: var(--color-set-line-strong);
+    --ui-field-fg: var(--color-set-fg);
+    --ui-field-placeholder: var(--color-set-fg-subtle);
+    --ui-field-accent: var(--color-set-gold);
+    --ui-field-radius: 0.625rem;
+    --ui-panel-bg: var(--color-set-hover);
+    --ui-panel-fg: var(--color-set-fg);
+    --ui-hover-bg: #131316;
+
+    --ui-accent: var(--color-set-gold);
+    --ui-accent-hover: var(--color-set-gold-hi);
+    --ui-accent-fg: #0A0A0A;
+    --ui-fg: var(--color-set-fg);
+    --ui-fg-muted: var(--color-set-fg-muted);
+    --ui-danger: var(--color-set-danger);
+    --ui-control-radius: 0.5rem;
+
+    /* Deliberately transparent: the app shell's backdrop (and its grid/glow)
+       shows through, so settings still reads as part of the product. The
+       panels and the nav rail carry the solid surfaces. */
+    color: var(--color-set-fg);
+  }
+
+  /* Element defaults sit in the components layer, so any Tailwind utility on
+     the element still wins. */
+  .settings-scope :where(h1, h2, h3) {
+    color: var(--color-set-fg);
+  }
+  .settings-scope :where(p, label) {
+    color: var(--color-set-fg-muted);
+  }
+  .settings-scope :where(a) {
+    color: var(--color-set-gold);
+  }
+  .settings-scope :where(a):hover {
+    color: var(--color-set-gold-hi);
+  }
+  .settings-scope :where(hr) {
+    border-color: var(--color-set-line);
+  }
+  .settings-scope :where(table) {
+    color: var(--color-set-fg);
+  }
+  .settings-scope :where(thead tr) {
+    background: var(--color-set-sunken);
+    border-color: var(--color-set-line);
+    color: var(--color-set-fg-faint);
+  }
+  .settings-scope :where(tbody tr) {
+    border-color: var(--color-set-line-soft);
+  }
+  .settings-scope :where(th) {
+    color: var(--color-set-fg-faint);
+  }
+  .settings-scope :where(select) {
+    appearance: none;
+  }
+  .settings-scope ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .settings-scope ::-webkit-scrollbar-thumb {
+    background: #1a1a1e;
+    border: 3px solid var(--color-set-bg);
+    border-radius: 10px;
+  }
+  .settings-scope ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
 @layer utilities {
+  /* 10px / 600 / 0.16em uppercase section label used across the settings tab */
+  .set-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-set-fg-subtle);
+  }
+  .rise-in {
+    animation: rise-in 400ms cubic-bezier(.2,.7,.2,1) both;
+  }
   .hairline {
     box-shadow: inset 0 0 0 1px rgba(31,27,22,0.07);
   }
@@ -90,6 +224,11 @@
   .fade-up {
     animation: fade-up 480ms cubic-bezier(.2,.7,.2,1) both;
   }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fade-up {

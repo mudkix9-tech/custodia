@@ -34,7 +34,8 @@
       "in_app": "Dans l'application",
       "unmute": "Activer le son",
       "mute": "Mettre en sourdine"
-    }
+    },
+    "saved": "Enregistré"
   },
   "organization": {
     "title": "Profil de l'Organisation",
@@ -87,18 +88,23 @@
   },
   "team": {
     "title": "Gestion de l'équipe",
-    "subtitle": "Gérez les membres de l'organisation, les rôles et les autorisations d'accès granulaires.",
+    "subtitle": "Membres, rôles et autorisations d'accès granulaires de cet espace de travail.",
+    "meter": {
+      "label": "Membres actifs",
+      "pending_note": "{count, plural, one {# invitation en attente de réponse} other {# invitations en attente de réponse}}",
+      "all_active": "Tout le monde a accepté son invitation."
+    },
     "invite": {
       "title": "Inviter de nouveaux membres",
-      "single_invite": "Invitation unique",
-      "bulk_invite": "Invitation en masse",
+      "bulk_csv": "Invitation en masse via CSV",
+      "csv_empty": "Aucune adresse e-mail trouvée dans ce fichier.",
+      "needs_email": "Ajoutez au moins une adresse e-mail.",
+      "email_placeholder": "nom@entreprise.fr — appuyez sur Entrée pour ajouter",
+      "remove_recipient": "Supprimer {email}",
+      "footnote": "Les invitations expirent après 7 jours. Les rôles peuvent être modifiés à tout moment après l'adhésion.",
       "partial_success": "Envoyé {sent} invitations. {duplicates} existent déjà, {invalid} étaient invalides.",
       "send_failures": "Envoyé {sent} invitations. {failed} ont échoué, {duplicates} existent déjà, {invalid} étaient invalides.",
       "invalid_only": "Aucune invitation envoyée. {invalid} e-mails étaient invalides.",
-      "email_single": "Adresse e-mail",
-      "email_bulk": "Adresses e-mail (une par ligne)",
-      "email_placeholder_single": "collegue@exemple.fr",
-      "email_placeholder_bulk": "collegue1@exemple.fr\\ncollegue2@exemple.fr",
       "role": "Rôle",
       "roles": {
         "admin": "Admin",
@@ -106,15 +112,19 @@
         "viewer": "Spectateur"
       },
       "sending": "Envoi...",
-      "send": "Envoyer les invitations",
-      "success": "Invitations envoyées avec succès !"
+      "send": "Envoyer l'invitation",
+      "send_many": "Envoyer {count} invitations",
+      "sent": "{count, plural, one {Invitation envoyée} other {# invitations envoyées}}",
+      "failed": "Échec de l'envoi des invitations."
     },
     "members": {
-      "title": "Membres actuels",
+      "title": "Membres",
+      "filter_placeholder": "Filtrer par nom ou e-mail",
       "columns": {
-        "name": "Nom",
+        "name": "Membre",
         "email": "E-mail",
         "role": "Rôle",
+        "status": "Statut",
         "joined": "Rejoint",
         "actions": "Actions"
       },
@@ -126,24 +136,48 @@
         "basic_roles": "Rôles de base",
         "custom_roles": "Rôles personnalisés"
       },
+      "status": {
+        "active": "Actif",
+        "invited": "Invité"
+      },
+      "meta_you": "Vous · Propriétaire de l'espace",
+      "meta_awaiting": "En attente d'acceptation",
+      "invited_on": "Invité le {date}",
+      "joined_on": "Rejoint le {date}",
       "invited_user": "Utilisateur invité",
       "unknown": "Inconnu",
       "permissions": "Autorisations",
       "remove": "Supprimer",
-      "no_members": "Aucun membre de l'équipe trouvé."
+      "removed": "{name} a été retiré de l'espace de travail",
+      "remove_failed": "Échec de la suppression du membre.",
+      "remove_confirm": {
+        "title": "Supprimer {name} ?",
+        "description": "{name} perdra immédiatement l'accès à cet espace de travail."
+      },
+      "role_updated": "{name} est maintenant {role}",
+      "role_failed": "Échec de la mise à jour du rôle.",
+      "no_members": "Aucun membre de l'équipe trouvé.",
+      "no_matches": "Aucun membre ne correspond à ce filtre."
     },
     "pending": {
       "title": "Invitations en attente",
       "resend": "Renvoyer",
-      "cancel": "Annuler",
-      "no_pending": "Aucune invitation en attente."
+      "resent": "Invitation renvoyée à {email}",
+      "resend_failed": "Échec du renvoi de l'invitation.",
+      "cancel": "Révoquer",
+      "sent_on": "Envoyé le {date} · expire après 7 jours",
+      "no_pending": "Aucune invitation en attente de réponse."
     },
     "permissions": {
       "title": "Modifier les autorisations",
+      "granular_access": "Accès granulaire",
+      "override_summary": "{count, plural, =0 {Aucune dérogation — hérité du rôle} one {# dérogation} other {# dérogations}}",
+      "cycle_hint": "{action} — actuellement {state}. Cliquez pour changer.",
       "owner_warning": "Les autorisations du propriétaire ne peuvent pas être restreintes. Ils ont un accès complet à tous les modules.",
-      "description": "Remplacer l'accès basé sur le rôle pour des modules spécifiques. Une coche verte accorde l'accès, une croix rouge le refuse, un tiret gris hérite du rôle.",
+      "description": "Remplacer l'accès basé sur le rôle par module : allow accorde, deny bloque, inherit reprend le rôle.",
       "module": "Module",
-      "footer": "Les modifications sont enregistrées automatiquement et invalideront la session actuelle de l'utilisateur pour appliquer de nouvelles autorisations."
+      "failed": "Échec de la mise à jour des autorisations.",
+      "footer": "Les modifications sont enregistrées automatiquement et invalident la session actuelle du membre."
     }
   },
   "notifications": {

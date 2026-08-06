@@ -915,3 +915,48 @@ Initial fix read the real request pathname via a `x-pathname` header injected in
 34 of 36 marketing pages build as real static HTML (`● SSG` in the Next.js build route table) with correct, distinct, self-referencing canonical tags baked directly into the `.html` output — spot-checked across multiple pages and all 3 locales (e.g. `.next/server/app/en/pricing.html`, `de/security.html`, `fr/gdpr/dpia-guide.html`). The remaining 2 (`blog/[slug]`, `blog/category/[slug]`) stay dynamic — no fixed slug/category list exists to statically enumerate (no `generateStaticParams` for them before this either; unrelated to this change, could be a future enhancement if the blog post list becomes fixed/known).
 
 Local builds can't fully complete in this environment (`sitemap.ts` needs a live DB connection that isn't available locally) — verification builds temporarily stubbed that one query, confirmed output, then reverted it immediately (confirmed via clean `git diff`/`git status` on `sitemap.ts` afterward).
+
+---
+
+## 34. Settings Tab Redesign — Claude Design Import (Aug 7, 2026)
+
+### Overview
+Imported the `Team Management.dc.html` design from a claude.ai/design project (via the `claude_design` MCP / `DesignSync`) and applied its visual language across the **entire** settings tab, not just the Team page. The design is a warm-neutral, near-black "console" treatment: Instrument Serif display headings, 10px/0.16em uppercase eyebrow labels, hairline-bordered panels, a brighter gold accent (`#D7B45A`/`#EBCB7E`), and gold left-bar active nav states.
+
+### Token architecture (the important part)
+- **New `--color-set-*` theme tokens** in `apps/web/src/app/globals.css` (`@theme` block) carry the design palette: surfaces `#000`→`#0B0B0D`, hairlines `#101012`/`#141416`/`#16161A`/`#1E1E22`, text `#F2F0EC`/`#8A8780`/`#807D76`/`#7C7A74`, gold `#D7B45A`/`#EBCB7E`, danger `#E5484D`, ok `#6E9E7A`. Tailwind v4 generates `bg-set-panel`, `text-set-fg-muted`, `border-set-line` etc. from these automatically.
+- **Shared UI primitives were NOT forked.** `components/ui/{button,input,textarea,select}.tsx` had their hardcoded hexes replaced with `var(--ui-*)` indirection (`--ui-field-bg`, `--ui-accent`, `--ui-control-radius`, …). Defaults are declared in `:root` and are byte-identical to the old hardcoded values, so **the rest of the app renders unchanged**. `.settings-scope` (applied once, in the settings layout) simply remaps those `--ui-*` variables to the `set-*` palette. This is the pattern to reuse if another surface ever needs its own control styling — do not fork the primitives.
+- Element-level defaults inside `.settings-scope` live in `@layer components` using `:where(...)`, so **Tailwind utilities always win** over them (utilities layer sorts after components in v4). Deliberate — it lets per-element overrides keep working.
+- `.settings-scope` is **intentionally transparent** (no `background`). The `(app)` shell's backdrop grid + gold radial glow still shows through, so settings stays visually part of the product; the panels and nav rail carry the solid surfaces instead.
+- New utilities: `.set-eyebrow` (the 10px/600/0.16em uppercase label) and `.rise-in` (the design's 8px/400ms entrance).
+
+### New components
+`apps/web/src/components/settings/`:
+- `SettingsPage.tsx` — `SettingsPage` (measure/padding shell), `SettingsHeader` (serif title + subtitle + `aside`/`actions` slots), `SettingsEyebrow`.
+- `SettingsCard.tsx` — `SettingsCard`, `SettingsCardHeader` (gold icon + title + count chip + action slot), `CountChip`, `SettingsCardDivider`, `SettingsEmptyState`, `SettingsField`.
+- `SettingsBits.tsx` — `SettingsToggle` (gold pill switch), `StatusDot`, `GoldBadge`, `InitialAvatar`, `IconAction`, `SettingsMeter`.
+- `SettingsToast.tsx` — `SettingsToastProvider` (mounted once by `settings/layout.tsx`) + `useSettingsToast()`. Gold-bordered bottom-right toast per the design.
+
+### Team page rebuild
+`settings/team/page.tsx` rewritten to the design (and `@ts-nocheck` removed): serif header with a meter aside, chip-based invite row (Enter/comma/space commits, backspace pops, real CSV file parsing behind "Bulk invite via CSV"), member grid with avatars/mono emails/inline role selects/status dots/icon actions, and the design's **inline expanding "Granular access" panel** replacing the old fixed 380px slide-over.
+
+Three deliberate deviations from the design file — do not "fix" these back:
+- **Seat meter → member meter.** The design shows a seat-limit meter (`8 / 10 seats`), but every plan in `apps/api/src/lib/billing.ts` sets `users: Infinity`. A seat cap would be fiction, so the same visual treatment shows active-vs-invited members instead.
+- **Permissions stay tri-state.** The design shows boolean toggles per area; the real model is `Module:Action:allow|deny|inherit` strings (7 modules × 3 actions) persisted via `team.updatePermissions`. Kept the real model, styled into the expanded panel.
+- **Fonts.** The design specifies IBM Plex Sans/Mono; the app's existing Geist + JetBrains Mono fill those roles and Instrument Serif already matches exactly. Not worth two extra `next/font/google` families for one tab (and cuts directly against §32's render-blocking work).
+
+### Two live bugs fixed in passing
+- `settings/team/page.tsx` referenced `customRoles` that was **never fetched** — a `typeof customRoles !== 'undefined'` guard made the dead branch silently no-op under `@ts-nocheck`. Now wired to `trpc.customRoles.list` (the router existed and was mounted in `apps/api/src/router.ts` all along), so custom roles finally appear in the member role dropdown.
+- `settings/security/siem/page.tsx` called `react-hot-toast`, but **no `<Toaster/>` is mounted anywhere in the app** — every one of those success/error toasts was a silent no-op. Repointed to `useSettingsToast()`, which is mounted. `react-hot-toast` now has zero consumers repo-wide; the dependency could be dropped.
+
+### Coverage
+All settings routes migrated: `layout.tsx` (nav rail rebuilt — serif title, ORGANIZATION/PERSONAL groups, gold left-bar + gradient active state, sticky), organization, team, team/roles, notifications, integrations, billing, security, security/sso, security/siem, data, data/region, profile, plus every `error.tsx` boundary. Message keys for the new Team UI added to `en`/`de`/`fr` (`src/messages/*/settings.json`), including ICU plurals for invite counts and permission-override summaries.
+
+Nav active-state matching also changed from `pathname.startsWith(item.href)` to `.includes(...)` — `startsWith` was broken for non-default locales, since `localePrefix: 'as-needed'` means `de`/`fr` paths are `/de/settings/...` (see §33).
+
+### Verification status
+`tsc --noEmit` clean; `next build` compiles successfully and generates all 308 static pages. Build then fails at `/sitemap.xml` for the **known pre-existing local-DB reason documented at the end of §33** — unrelated. New `set-*` utilities and the `.settings-scope` variable remapping confirmed present in the built CSS chunk.
+
+**Not visually verified in a browser** — rendering the settings tab needs a live DB plus an authenticated session. Worth a look before trusting the layout, particularly the members grid below 880px (it scrolls horizontally by design).
+
+`npx eslint` cannot run in this repo at all: `apps/web/eslint.config.mjs` throws `TypeError: tailwind.configs.flat/recommended is not iterable` (ESLint 9.39.4). Pre-existing plugin incompatibility, left alone — but it means **no settings-tab code in this repo has been lint-checked**.
