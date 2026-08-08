@@ -1,8 +1,7 @@
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
-
-const SITE_ORIGIN = 'https://trycustodia.com';
+import { SITE_ORIGIN } from '@/lib/siteUrl';
 
 // `routing.localePrefix` is 'as-needed': the default locale is served
 // unprefixed (e.g. /pricing), while others are prefixed (e.g. /de/pricing).

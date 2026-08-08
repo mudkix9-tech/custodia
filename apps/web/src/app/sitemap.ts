@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { db } from '../db';
 import { routing } from '../i18n/routing';
+import { SITE_ORIGIN } from '../lib/siteUrl';
 
 // `routing.localePrefix` is 'as-needed': the default locale is served
 // unprefixed (e.g. /pricing), while others are prefixed (e.g. /de/pricing).
@@ -12,7 +13,7 @@ function buildUrl(baseUrl: string, locale: string, route: string) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://trycustodia.com';
+  const baseUrl = SITE_ORIGIN;
   const locales = ['en', 'de', 'fr'];
   const staticRoutes = [
     '', 

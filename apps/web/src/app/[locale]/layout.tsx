@@ -5,6 +5,7 @@ import Provider from "../Provider";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
+import { SITE_ORIGIN } from '@/lib/siteUrl';
 
 const geist = Geist({
   subsets: ["latin"],
@@ -67,8 +68,8 @@ export default async function RootLayout({
               "@context": "https://schema.org",
               "@type": "Organization",
               "name": "Custodia",
-              "url": "https://trycustodia.com",
-              "logo": "https://trycustodia.com/logo.png",
+              "url": SITE_ORIGIN,
+              "logo": `${SITE_ORIGIN}/logo.png`,
               "sameAs": [
                 "https://x.com/custodia",
                 "https://github.com/mudkix9-tech/custodia"
