@@ -207,7 +207,7 @@ export async function generateAuditFile(
     lastReviewedAt: ov.lastReviewedAt,
   }));
 
-  const vendorData = {
+  const vendorReport = {
     orgName: org.name,
     logoUrl,
     generatedAt,
@@ -220,7 +220,7 @@ export async function generateAuditFile(
       highRisk: vendorData.filter(v => v.riskLevel === 'high' || v.riskLevel === 'critical').length,
     },
   };
-  const vendorPdf = await renderPdf('vendors', vendorData);
+  const vendorPdf = await renderPdf('vendors', vendorReport);
   archive.append(vendorPdf, { name: 'vendors/vendor-register.pdf' });
 
   const vendorCsv = await generateCsv(vendorData.map(v => ({
@@ -406,7 +406,7 @@ export async function generateAuditFile(
   });
 
   const completedDsars = dsarData.filter(d => d.completedAt);
-  const dsarData = {
+  const dsarReport = {
     orgName: org.name,
     logoUrl,
     generatedAt,
@@ -424,7 +424,7 @@ export async function generateAuditFile(
         : 100,
     },
   };
-  const dsarPdf = await renderPdf('dsar', dsarData);
+  const dsarPdf = await renderPdf('dsar', dsarReport);
   archive.append(dsarPdf, { name: 'dsars/dsar-register.pdf' });
 
   const dsarCsv = await generateCsv(dsarData.map(d => ({
@@ -462,7 +462,7 @@ export async function generateAuditFile(
   }));
 
   const notifiableBreaches = breachData.filter(b => b.notifyAuthority);
-  const breachData = {
+  const breachReport = {
     orgName: org.name,
     logoUrl,
     generatedAt,
@@ -478,7 +478,7 @@ export async function generateAuditFile(
       averageResolutionDays: 0, // calculate if needed
     },
   };
-  const breachPdf = await renderPdf('breaches', breachData);
+  const breachPdf = await renderPdf('breaches', breachReport);
   archive.append(breachPdf, { name: 'breaches/breach-register.pdf' });
 
   const breachCsv = await generateCsv(breachData.map(b => ({
