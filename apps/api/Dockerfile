@@ -1,14 +1,21 @@
-# Runtime image for `custodia-api` (WORKER_ROLE=web).
+# Runtime image for the whole backend in one service: Fastify and the
+# background workers in a single process.
 #
-# No Chromium. Every PDF the API used to render in-process now renders on the
-# Next.js app via lib/pdfClient.ts, so this service is a plain Node process
-# again. puppeteer is still imported transitively — routers pull worker modules
-# in for their queue handles — but importing it neither launches a browser nor
-# needs the binary, and createWorker() is a no-op under WORKER_ROLE=web.
+# The split is controlled entirely by WORKER_ROLE. Unset (as here), index.ts
+# registers every worker via the workers/index.js barrel and calls
+# scheduleGlobalJobs() after listen(); set to `web`, createWorker() becomes a
+# no-op and this serves HTTP only. Setting it in the platform is all that is
+# needed to split the API and workers apart again later.
 #
-# The worker image is Dockerfile.workers; it still needs a browser for consent
-# and vendor scanning.
+# Chromium is present because three of the twenty-eight workers drive a real
+# page — consentScan, vendors and cmp. It comes from apt rather than
+# Puppeteer's own download so the package pulls its runtime libraries with it,
+# and so this image builds on arm64 where Chrome-for-Testing has no release.
 FROM node:20-bookworm-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends chromium ca-certificates fonts-liberation \
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -17,13 +24,13 @@ WORKDIR /app
 COPY . .
 
 # --ignore-scripts skips the root postinstall (`puppeteer browsers install
-# chrome`), a ~150MB download this image has no use for. node-pty is the only
-# other package with a build script and apps/api never imports it.
+# chrome`), which would fetch a second browser on top of the apt one.
 # NODE_ENV is set afterwards so this install keeps devDependencies.
 RUN npm ci --ignore-scripts
 
+# puppeteer.executablePath() reads this, which is what browserPool.ts calls.
 ENV NODE_ENV=production \
-    WORKER_ROLE=web \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
     PORT=8080 \
     HOST=0.0.0.0
 
