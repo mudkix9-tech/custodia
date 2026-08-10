@@ -23,10 +23,13 @@ WORKDIR /app
 # and the `db` package resolves to its index.ts source rather than a dist/.
 COPY . .
 
+# `npm install`, not `npm ci`: ci adds a strict lockfile/manifest agreement check
+# that the lockfile (written by npm 11) does not survive under the npm 10 in
+# node:20. Resolution still comes from package-lock.json either way.
 # --ignore-scripts skips the root postinstall (`puppeteer browsers install
 # chrome`), which would fetch a second browser on top of the apt one.
 # NODE_ENV is set afterwards so this install keeps devDependencies.
-RUN npm ci --ignore-scripts
+RUN npm install --ignore-scripts --no-audit --no-fund
 
 # puppeteer.executablePath() reads this, which is what browserPool.ts calls.
 ENV NODE_ENV=production \
