@@ -1,0 +1,70 @@
+{
+  "name": "One host, two vendors, two undeclared categories",
+  "note": "First-party tag proxying: the site routes several third-party tags through a single host of its own to survive blockers, so one host legitimately carries two trackers from two vendors in two categories. missing_category dedupes hosts inside each category bucket rather than across them, and vendor_undocumented is keyed per vendor but filed under the host it was seen at — so both emit two findings that share a host. Before `subject` carried the category and the slug, each pair collided on (domain, type, host, '') and the second silently overwrote the first. Both trackers are also server-side here (no cookies), and untracked_cookie deduped on the host alone, so only one of the two was ever reported.",
+  "run": {
+    "postConsentMethod": "seeded_cookies"
+  },
+  "domain": {
+    "domain": "shared-proxy.test",
+    "categories": [
+      "necessary"
+    ],
+    "gcmV2Enabled": false,
+    "tcfEnabled": false,
+    "cmp": null,
+    "knownVendorSlugs": []
+  },
+  "observations": [
+    {
+      "observedHost": "metrics.shared-proxy.test",
+      "trackerKey": "google_analytics",
+      "provider": "Google",
+      "requiredCategory": "analytics",
+      "vendorSlug": "google",
+      "pass": "pre_consent",
+      "resourceType": "script",
+      "carriedIdentifiers": false,
+      "consentSignal": "absent",
+      "requestCount": 2,
+      "sampleUrl": "https://metrics.shared-proxy.test/ga/collect"
+    },
+    {
+      "observedHost": "metrics.shared-proxy.test",
+      "trackerKey": "meta_pixel",
+      "provider": "Meta",
+      "requiredCategory": "marketing",
+      "vendorSlug": "meta",
+      "pass": "pre_consent",
+      "resourceType": "script",
+      "carriedIdentifiers": false,
+      "consentSignal": "absent",
+      "requestCount": 3,
+      "sampleUrl": "https://metrics.shared-proxy.test/fb/events"
+    }
+  ],
+  "cookies": [],
+  "expect": {
+    "findingTypes": [
+      "missing_category",
+      "missing_category",
+      "vendor_undocumented",
+      "vendor_undocumented",
+      "untracked_cookie",
+      "untracked_cookie",
+      "consent_mode_gap"
+    ],
+    "mustNotContain": [
+      "prior_consent_violation",
+      "consent_mode_only",
+      "cmp_no_enforcement"
+    ],
+    "distinctSubjects": [
+      "analytics",
+      "marketing",
+      "google",
+      "meta",
+      "google_analytics",
+      "meta_pixel"
+    ]
+  }
+}

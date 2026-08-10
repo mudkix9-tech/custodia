@@ -31,7 +31,7 @@ import { complianceWorker } from './workers/compliance.js';
 import { paddleWebhookHandler } from './webhooks/paddle.js';
 import { inboundEmailWebhookHandler } from './webhooks/inbound.js';
 import { pool } from './db.js';
-import { getBoss } from './lib/queue.js';
+import { getBoss, shouldRegisterWorkers } from './lib/queue.js';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -156,7 +156,9 @@ const start = async () => {
     const host = process.env.HOST || '0.0.0.0';
     const address = await server.listen({ port, host });
     console.log(`API Server listening on ${address}`);
-    if (process.env.NODE_ENV !== 'test') {
+    // Scheduling belongs to the worker service (see apps/api/src/workers/main.ts).
+    // The web role skips it so two schedulers are not racing on boot.
+    if (process.env.NODE_ENV !== 'test' && shouldRegisterWorkers()) {
       console.log('Workers initialized');
       // Schedule all background workers centrally
       await scheduleGlobalJobs();

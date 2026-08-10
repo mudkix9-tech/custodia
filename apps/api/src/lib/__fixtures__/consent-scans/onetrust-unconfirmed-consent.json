@@ -1,0 +1,48 @@
+{
+  "name": "OneTrust, pass 2 could not be confirmed",
+  "note": "postConsentMethod=unknown, so anything inferred from the post-consent set drops to 0.5 confidence and the UI must not present it as definitive. Meta is present server-side only (no _fbp written), which a cookie-only audit would miss entirely.",
+  "run": { "postConsentMethod": "unknown" },
+  "domain": {
+    "domain": "onetrust-example.test",
+    "categories": ["necessary", "analytics"],
+    "gcmV2Enabled": false,
+    "tcfEnabled": false,
+    "cmp": "onetrust",
+    "knownVendorSlugs": ["google"]
+  },
+  "observations": [
+    {
+      "observedHost": "connect.facebook.net",
+      "trackerKey": "meta_pixel",
+      "provider": "Meta",
+      "requiredCategory": "marketing",
+      "vendorSlug": "meta",
+      "pass": "post_consent",
+      "resourceType": "xhr",
+      "carriedIdentifiers": true,
+      "consentSignal": "absent",
+      "requestCount": 1,
+      "sampleUrl": "https://connect.facebook.net/tr"
+    }
+  ],
+  "cookies": [
+    { "cookieName": "ajs_anonymous_id", "category": "uncategorized", "provider": null, "isThirdParty": false }
+  ],
+  "expect": {
+    "findingTypes": ["missing_category", "unclassified_cookie", "untracked_cookie", "consent_mode_gap", "vendor_undocumented"],
+    "mustNotContain": ["prior_consent_violation", "consent_mode_only", "cmp_no_enforcement"],
+    "severities": {
+      "missing_category": "high",
+      "unclassified_cookie": "medium",
+      "untracked_cookie": "medium",
+      "consent_mode_gap": "medium",
+      "vendor_undocumented": "low"
+    },
+    "confidences": {
+      "missing_category": 0.5,
+      "untracked_cookie": 0.5,
+      "vendor_undocumented": 0.5,
+      "unclassified_cookie": 0.9
+    }
+  }
+}

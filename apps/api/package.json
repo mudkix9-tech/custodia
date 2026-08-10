@@ -6,7 +6,14 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
-    "postinstall": "npx puppeteer browsers install chrome"
+    "dev:workers": "tsx watch src/workers/main.ts",
+    "start:workers": "tsx src/workers/main.ts",
+    "postinstall": "npx puppeteer browsers install chrome",
+    "typecheck": "tsc --noEmit",
+    "check:tenancy": "tsx src/scripts/check-tenant-scoping.ts",
+    "test:fixtures": "tsx src/lib/consentEvaluator.fixtures.test.ts",
+    "test:consent-cookies": "tsx src/workers/consentScan.cookies.test.ts",
+    "test:scoring": "tsx src/lib/scoring.test.ts"
   },
   "keywords": [],
   "author": "",

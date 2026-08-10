@@ -16,7 +16,8 @@
     "dsar": "DSARs",
     "breaches": "Breaches",
     "training": "Training",
-    "transfers": "Transfers"
+    "transfers": "Transfers",
+    "consent": "Consent"
   },
   "detected_gaps": "Detected Gaps",
   "active_gaps": "{total} Active",

@@ -4,6 +4,7 @@ import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorCh
 import { eq, and, isNotNull, lte, gt, inArray, sql } from 'drizzle-orm';
 import { calculateVendorRisk } from '../routers/vendors.js';
 import { getBrowserCluster, scanDomainForThirdParties } from '../lib/browserPool.js';
+import { getRootDomain } from '../lib/domains.js';
 import { queueNotification } from '../utils/notifications.js';
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import crypto from 'crypto';
@@ -774,20 +775,8 @@ async function performDnsAnalysis(domain: string) {
 async function findMatchedVendor(dbInstance: any, detectedDomain: string, serviceName: string) {
   const allVendors = await dbInstance.select().from(vendors);
 
-  // Normalization: strip subdomains
-  const getRootDomain = (d: string): string => {
-    const parts = d.toLowerCase().replace(/^www\./, '').split('.');
-    if (parts.length > 2) {
-      const lastTwo = parts.slice(-2).join('.');
-      const commonTlds = ['co.uk', 'com.br', 'com.au', 'or.jp', 'net.uk'];
-      if (commonTlds.includes(lastTwo) && parts.length > 3) {
-        return parts.slice(-3).join('.');
-      }
-      return parts.slice(-2).join('.');
-    }
-    return d;
-  };
-
+  // getRootDomain now lives in lib/domains.ts so that tracker matching and vendor
+  // matching cannot drift apart on the same host.
   const cleanDomain = getRootDomain(detectedDomain);
 
   let bestMatch: any = null;

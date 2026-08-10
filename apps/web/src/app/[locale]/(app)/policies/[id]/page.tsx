@@ -1,9 +1,11 @@
 import { PolicyEditorClient } from '@/components/policies/PolicyEditorClient';
 
-export default function PolicyPage({ params }: { params: { id: string } }) {
+export default async function PolicyPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
   return (
     <div className="p-8 h-[calc(100vh-64px)] flex flex-col">
-      <PolicyEditorClient policyId={params.id} />
+      <PolicyEditorClient policyId={id} />
     </div>
   );
 }

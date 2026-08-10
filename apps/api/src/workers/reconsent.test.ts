@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { reconsentWorker } from './reconsent.js';
-import { db, reconsentFlags } from 'db';
+import { reconsentFlags } from 'db';
+import { db } from '../db.js';
 
-vi.mock('db', () => ({
+// reconsent.ts imports the drizzle instance from ../db.js, not from the "db"
+// package (which exports only the schema). Mocking "db" left the real instance in
+// place, so this never intercepted anything.
+vi.mock('../db.js', () => ({
   db: {
     insert: vi.fn(() => ({
       values: vi.fn().mockResolvedValue([{ id: 'mock-id' }])
     }))
-  },
-  reconsentFlags: {}
+  }
 }));
 
 const mockMessagesCreate = vi.fn();

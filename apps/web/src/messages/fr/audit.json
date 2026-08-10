@@ -19,7 +19,8 @@
     "dsar": "Demandes",
     "breaches": "Violations",
     "training": "Formation",
-    "transfers": "Transferts"
+    "transfers": "Transferts",
+    "consent": "Consentement"
   },
   "detected_gaps": "Écarts détectés",
   "active_gaps": "{total} Actifs",

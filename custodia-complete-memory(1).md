@@ -1,6 +1,6 @@
 # Custodia — Complete Product Memory
 
-> **Last updated:** August 5, 2026 (Render-Blocking CSS Investigation, Canonical URL / hreflang Fix, Marketing Site SSG)
+> **Last updated:** August 8, 2026 (Consent/Tracker Reconciliation built — Phases 0–6; queue substrate fixed; worker service added)
 > **Owner:** Nisarg (solo founder, Pune, India)
 > **Domain:** trycustodia.com
 > **Status:** Pre-launch, core product built, polishing for production
@@ -960,3 +960,303 @@ Nav active-state matching also changed from `pathname.startsWith(item.href)` to 
 **Not visually verified in a browser** — rendering the settings tab needs a live DB plus an authenticated session. Worth a look before trusting the layout, particularly the members grid below 880px (it scrolls horizontally by design).
 
 `npx eslint` cannot run in this repo at all: `apps/web/eslint.config.mjs` throws `TypeError: tailwind.configs.flat/recommended is not iterable` (ESLint 9.39.4). Pre-existing plugin incompatibility, left alone — but it means **no settings-tab code in this repo has been lint-checked**.
+
+---
+
+## 35. Integration Strategy — Beyond-DSAR Brainstorm + Signal Collection Architecture (Aug 7–8, 2026)
+
+### Overview
+Strategy session, **no product code changed**. Produced two things: a new repo-root file `integration-feature-brainstorm.md` (121 candidate features), and the signal-collection architecture spec recorded below (specced only, not written to code or its own file). Along the way, reading the queue layer surfaced **two defects that block every recurring automation already in the product** — documented at the end of this section, and more immediately actionable than anything in the brainstorm.
+
+### The framing thesis (the part worth keeping)
+Today the SaaS integrations do exactly one job: DSAR discovery. That is a narrow use of a broad connection. The reframe:
+
+> Every other GDPR tool asks the customer what's true. Custodia would be the one that **checks**.
+
+Almost none of the 121 ideas are new modules. They convert **existing** modules — ROPA, vendor register, breach, TIA, training, compliance score — from *self-declared* to *observed*. That's the positioning, and it's only buildable because the connectors already exist. `§20 Key Principles` should be read alongside this.
+
+### Current integration reality (as-is, Aug 2026)
+`apps/api/src/integrations/registry.ts` (130 lines) defines `ProviderConfig` with exactly three capability functions: `searchContacts`, `searchDocuments`, `discoverDataProfile`. All three model one question — *"find this person"*. Provider status:
+- **HubSpot** — only one actually implemented (`crm.objects.contacts.read`, `companies.read`; contacts search via `crm/v3/objects/contacts/search`).
+- **Salesforce** — stub. Needs `instance_url` persisted alongside the token before it can work at all.
+- **Google Workspace** — stub. Requests user-level `drive.readonly` + `gmail.readonly`; `extractAccountInfo` is mocked.
+- **Mailchimp** — stub.
+
+Onboarding (`apps/web/src/components/onboarding/toolIcons.tsx`) separately collects ~45 **self-declared** tools spanning verticals the connector list doesn't cover: ATS (Greenhouse, Lever, Workable, Bullhorn), legal practice (Clio, MyCase, PracticePanther, LawPay), health (Doctolib, Healthie, DrChrono), construction (Procore, PlanGrid, CoConstruct), ecommerce (Shopify, WooCommerce, BigCommerce), payments (Stripe, Adyen, Klarna).
+
+**The cheapest possible first feature falls out of that gap:** diff *declared at onboarding* against *observed via Google OAuth grants* → "6 tools you never told us about, 3 you declared with no activity." One existing connector, data already collected, no new integrations.
+
+### `integration-feature-brainstorm.md` (new file, repo root)
+121 ideas, numbered sequentially and stable for cross-reference, tagged `live` (webhook/near-real-time) / `sched` (recurring) / `scan` (periodic deep scan). Sections: Google Workspace (1–24), HubSpot/Salesforce (25–41), Mailchimp (42–46), Slack (47–56), Cloud/infra (57–70), HR systems (71–80), Identity/SSO (81–85), Support & engineering tools (86–92), Finance (93–94), **vertical-specific (95–107)**, cross-platform (108–121), plus a write-access enforcement tier.
+
+Recommended first five, if the list gets filtered to nothing else:
+| # | Idea | Why first |
+|---|---|---|
+| 71 | Leaver access revocation (HRIS termination date × still-active accounts everywhere) | Uses every connector, near-certain finding at every customer, demos in 30 seconds |
+| 86 | DSAR detection in Zendesk/Intercom inboxes | "delete my account and all my data" in a support ticket is a legal DSAR with a 30-day clock that nobody logs — the #1 source of real regulatory complaints |
+| 8 + 81 | OAuth-grant → shadow vendor discovery | Makes the **existing** vendor module self-populating; `vendorDiscoveries` (`packages/db/src/schema.ts:549`) and the `vendors.json` enrichment pipeline already exist to receive it |
+| 25 + 58 | CRM property + prod DB schema → PII data dictionary | Makes the **existing** ROPA module self-populating; kills the most expensive manual step in GDPR consulting |
+| 47 | Slack breach-chatter early warning ("sent it to the wrong client") | Breaches surface in Slack hours before the DPO hears; nothing on the market does it |
+
+#108 (ROPA drift engine — continuously diff declared ROPA vs observed reality) is where the thesis lands as a headline feature, once signal collection exists.
+
+### Signal Collection Architecture (specced, NOT built)
+The DSAR-shaped `ProviderConfig` cannot carry any of the above. Without a second capability surface, every idea becomes a bespoke code path per provider and the surface never scales past three connectors. Five layers, deliberately separated so **connectors never know what compliance means, and compliance features never know what an API is**:
+
+```
+Provider collectors → Collection runner → Signal store → Evaluators → Compliance objects
+  (capability +        (cursors, budgets,  (normalized,   (rules over    (ROPA / vendor /
+   scopes)              retries, health)    deduped)       signals)       task / incident)
+```
+
+**1. Capability contract.** `PROVIDERS` becomes provider → `Collector[]`, where each `Collector` declares `{ id, capability, requiredScopes, mode: 'sweep'|'delta', defaultInterval, collect(ctx) }`. Capabilities: `directory | files | apps | audit_log | schema | consent | messages | infra`. `collect()` takes `{ orgId, connectionId, cursor, since, budget, client }` and returns `{ signals, nextCursor, hasMore, watermark }`.
+→ Because collectors declare their own scopes, the **OAuth consent screen is derived from enabled features** instead of the hardcoded scope array at `registry.ts:93-96`. Design this in from day one — retrofitting scope-driven gating means re-consenting every customer.
+
+**2. Signal store — one table, doing more work than it looks.**
+```
+integration_signals (
+  id, org_id, connection_id, provider, collector_id,
+  signal_type,          -- 'oauth.grant' | 'file.external_share' | 'schema.field' | 'user.suspended'
+  subject_type, subject_id, subject_hash,
+  observed_at, first_seen_at, last_seen_at,
+  attributes jsonb, content_class jsonb,   -- {pii:true, art9:['health'], confidence:0.82}
+  state,                -- 'open' | 'resolved' | 'suppressed'
+  resolved_at,
+  UNIQUE (connection_id, collector_id, subject_hash)
+)
+```
+That single unique constraint buys three things at once: **idempotency** (re-running a collector is free, retries and overlapping windows are safe), **disappearance detection** (after a full sweep, anything not touched this run flips to `resolved` — that's "the external share was revoked" and "the leaver is now disabled" with zero extra code, and it *is* the remediation-tracking story), and **novelty** (`first_seen_at` gives the weekly digest and "new since your last audit" for free). Partition by month like `audit_logs` already is (`schema.ts:857`); reuse the `partition-manager` pattern in `workers/cmp.ts`. This table will outgrow everything else in the DB combined.
+
+**3. Hard rule — no personal data in signals.** Store classifications, counts, field *names*, and hashes; never values. Classification happens in memory during collection, only the verdict persists. A compliance product that becomes the largest PII aggregator in its customer's estate is an own-goal and makes *our own* ROPA and DPIA far harder to defend. This is also precisely what makes brainstorm #4 (spreadsheet headers only) and #58 (DB column names only) safe to ship.
+
+**4. Run tracking is what makes evidence defensible.** `integration_collection_runs (id, connection_id, collector_id, status, started_at, finished_at, cursor_before, cursor_after, signals_upserted, signals_resolved, requests_made, error, next_run_at)`. Every evidence claim cites a `collection_run_id`, not a bare timestamp — "encryption at rest verified" is worthless in an audit without *when it was last actually checked and whether that check succeeded*. Corollary: **a stale connection is worse than an absent one.** A dashboard reading "0 external shares" because the token expired six weeks ago is actively dangerous. On `invalid_grant`, mark the connection `degraded`, stop asserting freshness on anything derived from it, and raise a reconnect task.
+
+**5. Cursors + the sweep/delta split.** Drive → `changes.startPageToken` (true incremental). Reports API → `startTime` watermark **minus ~6h overlap** (Google backfills; the unique constraint dedupes). CRM properties → full sweep, it's cheap. CloudTrail/Config → event-history window. Run `delta` hourly for freshness and `sweep` weekly to drive auto-resolve — delta alone can never tell you something *stopped* being true, and sweep alone is too expensive to run often.
+
+**6. Scheduling.** pg-boss has `schedule()` built in. One `apps/api/src/workers/scheduler.ts` at boot: `boss.schedule('signal-dispatch', '*/15 * * * *')`. The dispatcher selects `(connection, collector)` pairs where `next_run_at <= now()` and enqueues one job each with `singletonKey = ${connectionId}:${collectorId}`, so a slow run can't stack behind itself. **Jitter `next_run_at` by hashing `connectionId`** into the interval or every org hits Google at midnight. Jobs stay short and restartable: when `hasMore`, re-enqueue rather than looping for an hour. Per-connection request budgets stop one customer's 400k-file Drive starving everyone else.
+
+**7. Evaluators — where signals become compliance.** Strictly separate layer; it's what lets features ship without touching connectors. `{ id, consumes: SignalType[], evaluate(signals, org) → Finding[] }`. Event-driven on signal insert/resolve, not timed. Findings land in tables that already exist, via utilities that already exist (`queueNotification`, `dispatchWebhook`):
+
+| Signal | Evaluator | Lands in |
+|---|---|---|
+| `oauth.grant` | vendor discovery | `vendorDiscoveries` (`schema.ts:549`) — not a new table |
+| `schema.field` | ROPA category drift | ROPA suggestion + task |
+| `file.external_share` | exposure | task + weekly digest |
+| `user.suspended` × `user.active` | leaver revocation | task + evidence record |
+| `infra.resource.region` | transfer | TIA queue |
+
+**8. Build order.** Phase 0: fix the two defects below. Phase 1: signal + runs tables, **exactly one** collector (`google.admin.oauth_grants`) and **one** evaluator (→ `vendorDiscoveries`) — proves the whole spine on the highest-ROI feature. Phase 2: `hubspot.crm.properties` → ROPA drift; different provider, different capability, same spine — if the abstraction is wrong, this is where it shows, while it's still cheap to change. Phase 3: sweep/delta + auto-resolve + the weekly digest (#119). After that every feature is one collector + one evaluator.
+
+**9. Known landmines.** (a) Most Workspace collectors need **domain-wide delegation** or admin consent, not the user-level `drive.readonly` currently requested — materially different install flow (admin console, service account, customer ID), needs designing before Workspace features get promised. (b) Slack Discovery, HubSpot audit logs, and Salesforce EventLogFile are **enterprise-plan-gated** — probe capability at connect time, store what's actually available, degrade the feature list per customer rather than failing at runtime. (c) `workers/residencyProvisioner.ts` exists, so signals inherit region-routing constraints — settle that before the table has a billion rows.
+
+### Two substrate defects found (static analysis — NOT runtime-verified)
+Both derived by reading the code, not by observing a running system. Worth confirming against a live queue before acting, but the code path is unambiguous.
+
+**(a) Job-name routing is broken; multiplexed workers never run their branches.**
+`apps/api/src/lib/queue.ts:21-32` — `createQueue(name).add(jobName, data, opts)` accepts `jobName` and then **discards it**, calling `boss.send(name, data, opts)`. pg-boss sets `job.name` to the *queue/topic* name, and `queue.ts:47-52` passes that straight through to the processor. So every worker that dispatches on `job.name` compares the queue name against a job name that never arrives:
+- `workers/cmp.ts:31` registers on `'cmp-automation'`, branches on `job.name === 'cookie-scanner'` → never true
+- `workers/vendors.ts:21-24` registers on `'vendor-intelligence'`, switches on `'vendor-discovery'` / `'sub-processor-change-detector'` → never matches
+- same shape in `workers/compliance.ts:22` (gap-scanner, scheduled-reports), `workers/dsar.ts:29` (deadline monitor, verification reminder, package cleanup), `workers/dpiaReminders.ts:25,152`, `workers/policies.ts:11`, `workers/rateLimitCleanup.ts:6`, `workers/regulatoryScraper.ts:259`, `workers/impactAssessmentWorker.ts:20`, `workers/incidents.ts:298`
+
+Single-purpose workers (`data-export`, `org-embeddings`, `compliance-score`, `webhook-deliveries`) are unaffected — they ignore `job.name` entirely. Separately, `workers/dpiaReminders.ts:22` and `:151` both register handlers on the **same** `'dpia-reminders'` queue, so pg-boss round-robins between them.
+*Fix:* carry the job name in the payload (`boss.send(queue, { __job: jobName, ...data })`, reconstruct in `createWorker`) — two-file change, every existing worker keeps working unmodified. Alternative (give each job type its own queue) touches far more call sites.
+
+**(b) Partially scheduled; no worker process.** *(Corrected Aug 8 — an earlier version of this line claimed no scheduler existed at all. That was wrong, from a truncated grep.)*
+`scheduleGlobalJobs()` in `workers/index.ts` **does** exist and is called at `index.ts:162`, scheduling 6 cron jobs. Five land on single-purpose workers that ignore `job.name` and therefore work (gap-scanner, compliance-score, consent-rollup, consent-rollup-drift-check, trial-expiry). Two are broken by defect (a) (`impact-assessment`, `maintenance-jobs`). **Not scheduled at all:** `cookie-scanner`, `vendor-discovery`, `sub-processor-change-detector`, DSAR deadline monitoring, DPIA reminders — those only run if a tRPC route enqueues them inline. Separately, `render.yaml` defines a **single** `type: web` service on `plan: free` (which sleeps), so there is no dedicated worker process. Free-tier Render web services also sleep, which stops in-process workers regardless. `REDIS_URL` is still declared in `render.yaml` but nothing consumes it since the BullMQ→pg-boss move (note: `future-roadmap.md` still says BullMQ throughout — stale).
+
+Net effect of (a)+(b): DSAR deadline monitoring, sub-processor change detection, DPIA reminders, and cookie scanning are believed-shipped but effectively dead in production. (Gap scanning and trial expiry do work — they're on the single-purpose path.) **This is Phase 0 and it is worth more than any feature in the brainstorm** — signal collection is 100% recurring work and cannot exist on top of it.
+
+### Status
+Nothing implemented. `integration-feature-brainstorm.md` is the only file added; no source file was modified this session. The architecture above exists only in this document. The two defects are **not fixed**.
+
+### Addendum — consent module reconciliation (the actual first build)
+Reviewing the brainstorm surfaced a gap it had framed wrongly. Tracker detection was described as a *new* capability that would feed the consent module (#46, #107). It is not new — **it already exists twice, and the two halves never talk.** Both are Puppeteer page loads of the same customer domain, both defined in `apps/api/src/lib/browserPool.ts`:
+- `scanDomain()` → `workers/cmp.ts` `cookie-scanner` → cookies → `classifyCookie()` → `consentCookies` (category/provider) → **consent module**
+- `scanDomainForThirdParties()` → `workers/vendors.ts` `vendor-discovery` (line 486) → intercepted network request domains → `findMatchedVendor()` → `vendorDiscoveries` → **vendor module**
+
+So `connect.facebook.net` / `facebook.com/tr` is *already observed* on every vendor-discovery run; the consent implication is dropped on the floor. No code-dependency scan needed. Two details make the join cheap: `consentDomains.categories` (`schema.ts:1033`) is already a JSONB array defaulting to `['necessary','analytics','marketing','functional']`, so "does the banner declare Marketing?" is array membership on an existing column; and `classifyCookie` (`cmp.ts:24-30`) knows only **11 hardcoded cookie prefixes** — everything else lands as `uncategorized` / `Unknown` / confidence `0.00`, which the network scan can largely resolve.
+
+Added as **§13 of `integration-feature-brainstorm.md`** (ideas #122–#125): category coverage gap, prior-consent enforcement test, cookie-classification backfill, and Consent Mode/TCF gap check (`gcmV2Enabled`/`tcfEnabled` already exist on `consentDomains` and nothing validates them against observed reality).
+
+**Decided first build: #122 + #123.** Rationale over the previously-recommended #8: zero new integrations, zero new OAuth scopes, no domain-wide-delegation flow, no customer re-consent — both data sources already exist and are already populated. It is also the cheapest possible pilot for the evaluator layer, so an architecture mistake surfaces for the price of one worker.
+
+**The one thing that must not ship naively:** #123's prior-consent test loads the page twice (no consent / consent granted) and diffs. But under Google Consent Mode v2 and Meta's equivalent, tags legitimately *load* before consent and transmit a denial signal (`gcs=G100`) instead of identifiers. "Request fired pre-consent" is therefore **not** proof of violation — the check must distinguish a request carrying identifiers/cookies from one carrying a denial signal, or it produces confident false positives precisely at the customers who implemented consent correctly. That nuance is the whole difference between a credible feature and an embarrassing one.
+
+Note this also makes the queue defect (a) a **blocker on the first feature rather than background debt** — `cookie-scanner` and `vendor-discovery` are both dead branches today, and this build needs both.
+
+### Addendum 2 — third defect, and the implementation plan (Aug 8, 2026)
+Writing the build plan surfaced a **third** defect, inside the exact function this feature depends on: `apps/api/src/lib/browserPool.ts:69` calls `page.waitForTimeout(3000)`, **removed in Puppeteer v22**; `apps/api/package.json:75` pins `^24.42.0`. Every `scanDomain()` call throws, retries twice via the cluster's `retryLimit`, and dies in `cmp.ts`'s catch block. So `cookie-scanner` is dead **twice over** — dead branch *and* dead API. `scanDomainForThirdParties()` does not use it and is fine. A fourth, smaller one: `parseCookieHeaders` returns `domain: ''`, so `cmp.ts:47` records every header-set cookie as first-party.
+
+**The finding that shapes v1:** `apps/api/src/routes/cmp.ts` — the served banner — stores only a `pvr_consent_id` UUID cookie and carries the comment *"For MVP, we'll assume Accept All if cookie exists"* (line 252). **Our CMP records consent; it does not gate anything.** No script blocking, no client-side category enforcement. So the prior-consent test will correctly report that every tracker fires pre-consent on Custodia-CMP domains — cause being our own script. Decision: ship detection anyway (it's CMP-agnostic and works against Cookiebot/OneTrust/Usercentrics, which is what prospects actually run), and emit a distinct `cmp_no_enforcement` finding that names the real cause instead of blaming the customer. Adding real gating to `routes/cmp.ts` is tracked separately as P1 — it's a genuine product gap this feature exposes.
+
+Full plan in **`consent-reconciliation-plan.md`** (7 phases, ~8–11 days solo): Phase 0 unblock (queue adapter accepting all three payload shapes, `waitForTimeout` fix, Render worker service), tracker registry replacing the 11-entry map, two-pass scanner, 3 tables (`consent_scan_runs` / `consent_tracker_observations` / `consent_findings` — the last two piloting the signal-table and run-tracking patterns from §35), pure-function evaluator, tRPC + UI, scheduling.
+
+**Two things in that plan that must not be skipped:** (1) Phase 0 revives ~8 workers that have never run in production, some of which send customer email — ship behind a per-job allowlist env var and enable incrementally, or the first deploy blasts backdated notifications at real customers. (2) The Consent Mode v2 discriminator: tags legitimately load pre-consent and send `gcs=G100` instead of identifiers, so a violation requires `carried_identifiers = true`, not merely "request fired". Get that wrong and the feature generates confident false positives at precisely the customers who implemented consent correctly.
+
+---
+
+## 36. Consent / Tracker Reconciliation — BUILT (Aug 8, 2026)
+
+### Status
+**Implemented, not yet run against a live database, queue, or real scan.** The plan in
+`consent-reconciliation-plan.md` was executed end to end (Phases 0–6). Verification is
+`tsc --noEmit` per workspace (`apps/api` at its 37-error baseline, `apps/web` at 0) plus
+`scoring.test.ts` passing 16/16. No browser, no live queue, no production data.
+
+This section supersedes §35's closing line *"Nothing implemented."*
+
+Three companion documents were written alongside the code:
+- **`consent-reconciliation-ops.md`** — deploy order, the `WORKERS_ENABLED_JOBS` trap, monitoring SQL, rollback, known operational gaps.
+- **`consent-reconciliation-decisions.md`** — every judgement call not specified by the plan, each with the condition that would make it wrong.
+- **`CLAUDE.md`** (repo root) — the repo-wide conventions this work depended on: no root tsconfig, org scoping is manual, the pg-boss job envelope, Next 16's removed sync `params`.
+- **`known-concerns.md`** — every defect and risk, prioritised, with status. Includes the finding that mattered most and was unrelated to consent: **47 tRPC procedures let any authenticated user read or write another organisation's rows** (all now fixed and guarded).
+
+### What shipped, by phase
+
+**Phase 0 — substrate.** The three defects in §35 are fixed.
+- `apps/api/src/lib/queue.ts` now wraps a job-name envelope (`{__job, __v, data}`), accepts the legacy `{name, data}` shape from `boss.schedule()`, and falls back to the queue name for raw payloads. **No existing worker needed editing.** `translateJobOptions()` additionally converts BullMQ-shaped options (`delay`, `attempts`, `backoff`) into pg-boss's vocabulary — every retry and delay in the repo had been a silent no-op.
+- `browserPool.ts` — `page.waitForTimeout` (removed in Puppeteer v22) replaced; `parseCookieHeaders` now parses the `Domain=` attribute so `isThirdParty` is computable.
+- `dpiaReminders.ts` no longer registers two handlers on one queue.
+- **`render.yaml` gained a second service.** `custodia-workers`, `type: worker`, **plan `starter` (paid)** — Puppeteer plus the browser cluster does not fit the free tier's 512MB, and free web services sleep. `custodia-api` gets `WORKER_ROLE=web`, which makes `createWorker()` a no-op there.
+- **`WORKERS_ENABLED_JOBS`** gates the revival. 19 jobs that have never executed in production are in a `DORMANT_JOBS` set and stay off until listed. Several email customers on a schedule.
+
+**Phases 1–3 — data.** `tracker_registry` (64 seeded entries, `npm run seed:trackers --workspace=packages/db`) replaces the 11-entry hardcoded `KNOWN_COOKIES` map and serves both the cookie classifier and the network scanner. Migration `0042_familiar_banshee.sql` adds `consent_scan_runs`, `consent_tracker_observations`, `consent_findings`. `lib/domains.ts` extracts the root-domain helper that `findMatchedVendor` and the new matcher both use.
+
+**Phase 2 — two-pass scanner.** `scanDomainTwoPass()` loads the page twice in one `cluster.execute`, fresh `BrowserContext` per pass. Pass 2 seeds **every** known CMP's acceptance cookie at once (a page ignores cookies for a CMP it does not run), falling back to clicking common accept selectors. `scanDomain` and `scanDomainForThirdParties` are untouched, so nothing else broke.
+
+**Phase 4 — evaluator.** `lib/consentEvaluator.ts` is pure in / pure out — no DB, no network, no clock — so it is testable against recorded fixtures. Eight finding types. `workers/consentScan.ts` owns persistence and the upsert/auto-resolve cycle.
+
+**Phase 5 — surface.** Six tRPC procedures on `routers/consent.ts` (`listFindings`, `getFinding`, `resolveFinding`, `runReconciliation`, `getScanRuns`, plus `getCoverage`, which was not in the plan — see below). New `components/consent/CoveragePanel.tsx` as a Coverage tab on the consent workspace. Compliance score gained a **ninth pillar**.
+
+**Phase 6 — scheduling.** `boss.schedule('consent-scan', '0 5 * * 1', …)`. The dispatcher selects domains due by `scanFrequency`, enqueues one job each with `singletonKey = domainId` and a deterministic `startAfter = sha1(domainId) % 3h`, so a single-concurrency browser is not hit by every domain at 05:00.
+
+### The three consequences that outlive the feature
+
+1. **Every organisation's compliance score changes.** Adding a ninth pillar required rebalancing: ropa 0.25→0.23, vendors 0.20→0.19, dpia 0.15→0.14, training 0.10→0.09, consent 0.05. The `complianceReports` history will show a step change on the deploy date that is an artefact, not a regression. A regression test now asserts the weights still sum to 1 (all pillars at 100 → total exactly 100), which would otherwise be silently violated by the next pillar someone adds.
+
+2. **~19 dormant jobs are one env var away from firing at real customers.** This is the largest deploy risk in the whole change and it has nothing to do with consent. The allowlist inverts its default when set: unset means "everything except the dormant set", set means "only this list", so enabling one dormant job silently disables consent scanning and everything else. It logs and returns rather than erroring.
+
+3. **A second Render service is now required, and it costs money.** Scanning cannot live in the web dyno.
+
+### Two bugs found while building, both invisible to `tsc`
+
+- **`consent.getDomain` had no organisation check.** Any authenticated user with `ropa:view` could read any org's consent domain, its full cookie inventory, and its consent-record count from a UUID. Fixed. **`requirePermission` checks what a user may do, never which tenant's data they may touch** — org filtering is manual in every procedure, and this was one of the places it had been forgotten. `updateBannerConfig` still has the same gap.
+- **The consent detail page was broken at runtime under Next 16.** It read `params.id` synchronously; Next 16 removed sync `params` access entirely, so the id was `undefined` and the workspace never received a domain. `tsc` cannot catch this — the page declares the sync type itself, and `apps/web` reports 0 errors either way. Fixed for `consent/[id]`. **Four pages still have it**: `dsar/[id]`, `policies/[id]`, `legal/[org_slug]/privacy`, `[org_slug]/request`.
+
+### Judgement calls worth remembering
+Full list with falsifiers in `consent-reconciliation-decisions.md`. The three that shape the product:
+
+- **Consent Mode correctness is recorded, never flagged.** A tag that loads pre-consent while signalling `gcs=G100` and carrying no identifier emits an `info` finding saying it is behaving correctly. It cannot deduct score. This was the single failure mode §35 identified as capable of discrediting the feature, and the whole `carried_identifiers` discriminator exists to serve it. **It is still not proven by a test** — see gaps below.
+- **Low-confidence findings do not cost points.** Below 0.7 confidence (which is what a `post_consent_method='unknown'` scan produces) the UI labels a finding "Needs verification" and the score ignores it. Telling a customer "we could not verify this" while charging them for it would be incoherent.
+- **`cmp_no_enforcement` names Custodia as the cause.** On a domain running our own banner, every tracker fires pre-consent because **our CMP records consent but does not gate anything** (`routes/cmp.ts:252`). Rather than blaming the customer's configuration, one finding replaces the per-host set and says so. Adding real script blocking to `routes/cmp.ts` remains a genuine P1 product gap that this feature exposes.
+
+### Known gaps carried forward
+- **No evaluator fixture tests.** The plan called for recorded two-pass output from a Cookiebot site, a OneTrust site, a no-CMP site, and a Consent Mode v2 site, run against `evaluateConsentScan` in CI. This is the highest-value missing test in the feature: nothing currently proves the Consent Mode false-positive case does not fire.
+- No queue-adapter or `matchTrackerByDomain` unit tests either.
+- No alerting on the worker service; a dead worker stops all scanning silently.
+- `consent_tracker_observations` has no retention policy.
+- **Nothing has been run against a real domain.** The plan's suggested first target is trycustodia.com itself — if the marketing site carries any tracker, this feature's first real finding is about us, which is worth knowing before a prospect finds it.
+
+### Addendum — hardening pass (Aug 8, 2026, same day)
+
+Everything flagged as fixable in `known-concerns.md` was fixed in a follow-up pass. The
+consent feature itself did not change; what changed is the ground it sits on.
+
+**Tenant isolation — 47 procedures, not 22.** The first audit only matched
+`eq(x.id, input.id)` and so missed every procedure filtering on a client-supplied
+*foreign* key (`input.breachId`, `input.dsarId`, `input.processingActivityId`), which leak
+identically. The widened audit found 47: 34 fixed, 13 reviewed and allowlisted as
+genuinely cross-tenant (shared vendor/regulatory catalogues, user-scoped rows, the public
+lead-assessment flow). The worst let any authenticated user rewrite, approve and mark-sent
+**another organisation's regulator breach notification**. New `apps/api/src/lib/tenancy.ts`
+provides `assertOwned` / `assertParentOwned`, which walk the join chain for the many child
+tables carrying no `organization_id` of their own (`dpia_measures` → `dpia_risks` →
+`dpias`); they throw NOT_FOUND rather than FORBIDDEN, so a probe cannot confirm an id is
+real.
+
+Two of the 47 turned out to be broken rather than leaky: `dsar.tasks.list` and
+`dsar.comms.list` passed organization-less tables to `paginatedQuery`, producing
+`eq(undefined, orgId)` — those endpoints were throwing, not leaking. Two others were
+missing authorisation on *shared* data, where an organisation filter is the wrong tool:
+`vendors.subProcessors.remove` and `vendors.publishIncident` had no permission check at
+all, and both affect every tenant at once.
+
+**The gates now aim at the failure modes this codebase actually has.** Both bugs found
+this session were structurally invisible to `tsc`. There are now two guard scripts —
+`check:tenancy` and `check:params` — each verified to fail on a synthetic regression, plus
+`npm run check` at the root running typecheck, both guards, and the evaluator fixtures.
+
+**`apps/api` is at 0 type errors, down from the 37 treated as a permanent baseline.** All
+37 were in test files; the cause was `"types": []` in `tsconfig.json` suppressing an
+already-installed `@types/jest`. Two were real bugs hiding in that noise: a test inserting
+a `country` column that does not exist (it is `countryCode`), and `reconsent.test.ts`
+mocking the module `'db'` while the worker under test imports its handle from `'../db.js'`
+— so that mock never intercepted anything.
+
+**The Consent Mode false-positive path is now tested.** Four fixtures in
+`src/lib/__fixtures__/consent-scans/`, 37 assertions, including that a correctly
+configured Consent Mode site emits nothing critical or high and therefore cannot lose
+compliance score. There is also a standing assertion that no finding's evidence carries a
+query parameter outside the scanner's allowlist. Caveat: these are hand-built fixtures
+modelling four deployment shapes, **not recordings from live sites** — the plan asks for
+real captures, and a recording can replace one unchanged.
+
+**Also fixed:** all four remaining Next 16 sync-`params` pages, two of them public — the
+DSAR request form and the published privacy notice.
+
+**Still open and unchanged:** nothing has been run against a live database, queue or
+browser; the 19 dormant jobs and the `WORKERS_ENABLED_JOBS` inversion trap; our own CMP
+still not gating anything; no CI to run `npm run check`; no alerting on the worker service.
+Two new items were logged — `vendorSubProcessors.notifiedAt` is shared across tenants (a
+data-model bug an access-control fix cannot address), and `apps/api` has three test styles
+of which only the standalone `tsx` scripts execute, so four suites cited in the plan as
+regression coverage have never run.
+
+### Addendum 2 — first live run (Aug 8, 2026)
+
+Run against the real Supabase instance (1 org, 3 users, no customers). Migration 0042
+applied, tracker registry seeded with 64 entries, then **trycustodia.com** scanned three
+times as the plan recommended. 12–13s per two-pass scan, against a ~15–20s estimate.
+
+**The marketing site is clean.** Zero third-party trackers — every request on both passes
+went to `trycustodia.com` itself. The predicted "the first finding is about us" scenario
+did happen, but not as feared: the three findings are all first-party session cookies
+(`__Host-authjs.csrf-token`, `__Secure-authjs.callback-url`, `pvr_anon_session`), not
+tracking. Also worth noting: **no CMP was detected, because we do not run our own consent
+banner on our own marketing site.**
+
+**The run found three bugs that no unit test could have.**
+
+1. *Consent seeding was failing outright.* CDP rejected the whole 14-cookie batch with
+   `Invalid cookie fields` — five acceptance cookies carry `,`, `;` or `"` in their values
+   (the shapes CookieYes, Osano, Usercentrics and Iubenda actually use), which are not
+   legal cookie octets. Pass 2 therefore never reached a consented state and every
+   post-consent finding silently sat at 0.5 confidence. Fixed by percent-encoding just the
+   illegal octets, plus a per-cookie fallback so one bad registry entry cannot disable
+   pass 2 wholesale.
+2. *The scanner counted its own seeded cookies as the site's.* A spotless site reported 17
+   cookies (3 real, 14 planted) and raised findings about cookies the scanner had placed.
+3. *Eleven findings persisted as one row.* Every `unclassified_cookie` shared the upsert
+   key `(domain, type, '')`, so the database kept whichever the loop wrote last. Fixed by
+   **migration 0043**, adding a `subject` column to the unique key; the stale-finding
+   sweep had to key on it too, or every per-cookie finding but one would be auto-resolved
+   by the run that created it.
+
+**What the run confirmed working:** the full pipeline end to end, and — visibly on real
+data — auto-resolution. The third scan closed the stale finding left by the second, with a
+dated `resolved_at`. That was previously only a claim about the unique-key design.
+
+**New product question, logged as `known-concerns.md` §15.** The registry holds 64
+trackers and no first-party session patterns, so ordinary auth cookies land as
+`uncategorized` and become medium findings. Every customer will hit this on day one, for
+their own cookies, before the feature says anything about actual tracking. Recognising
+`__Host-`/`__Secure-` prefixes and common framework patterns would remove most of it, but
+what the feature reports is a product decision and was left open.
+
+**Still unexercised:** pg-boss dispatch (the scan was invoked directly), the tRPC
+procedures, the Coverage panel in a browser, and any site that actually carries
+third-party trackers — so `prior_consent_violation`, `missing_category` and the Consent
+Mode discriminator remain proven only by fixtures.
+
+`first-party-only.json` records this scan as a fifth evaluator fixture, so bugs 2 and 3
+cannot silently return.

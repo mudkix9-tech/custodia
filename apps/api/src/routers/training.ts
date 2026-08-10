@@ -7,7 +7,7 @@ import { db } from '../db.js';
 import { trainingModules, trainingCompletions, users, documents, organizations } from 'db';
 import { eq, and, desc, inArray, isNull, or, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import puppeteer from 'puppeteer';
+import { renderPdf } from '../lib/pdfClient.js';
 import crypto from 'crypto';
 
 // Helpers
@@ -317,39 +317,14 @@ export const trainingRouter = router({
           const org = await ctx.db.query.organizations.findFirst({ where: eq(organizations.id, ctx.user!.orgId) });
           const user = await ctx.db.query.users.findFirst({ where: eq(users.id, ctx.user!.id) });
           
-          const htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <style>
-                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; text-align: center; border: 10px solid #294036; padding: 50px; margin: 0; height: 100vh; box-sizing: border-box; }
-                h1 { color: #294036; font-size: 48px; margin-top: 50px; }
-                h2 { color: #57534e; font-weight: normal; margin-bottom: 50px; }
-                p { font-size: 20px; color: #1c1917; }
-                .name { font-size: 36px; font-weight: bold; color: #294036; text-decoration: underline; margin: 20px 0; }
-                .module { font-size: 28px; font-weight: bold; color: #294036; margin: 20px 0; }
-                .footer { margin-top: 100px; font-size: 14px; color: #78716c; }
-              </style>
-            </head>
-            <body>
-              <h1>Certificate of Completion</h1>
-              <h2>GDPR & Data Protection Training</h2>
-              <p>This certifies that</p>
-              <div class="name">${user?.name || 'Employee'}</div>
-              <p>has successfully completed the course</p>
-              <div class="module">${comp.module.title}</div>
-              <p>Score: ${score}% | Date: ${new Date().toLocaleDateString()}</p>
-              <p>Issued by: ${org?.name || 'Organization'}</p>
-              <div class="footer">Certificate ID: ${payload.certificateId}</div>
-            </body>
-            </html>
-          `;
-
-          const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
-          const page = await browser.newPage();
-          await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-          const pdfBuffer = await page.pdf({ format: 'A4', landscape: true, printBackground: true });
-          await browser.close();
+          const pdfBuffer = await renderPdf('training-certificate', {
+            recipientName: user?.name || 'Employee',
+            moduleTitle: comp.module.title,
+            score,
+            completedAt: new Date().toISOString(),
+            organizationName: org?.name || 'Organization',
+            certificateId: payload.certificateId,
+          });
 
           // Mock Document Creation
           const [doc] = await ctx.db.insert(documents).values({

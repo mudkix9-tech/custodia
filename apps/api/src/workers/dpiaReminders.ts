@@ -147,8 +147,10 @@ export const dpiaRemindersWorker = createWorker('dpia-reminders', async (job: Jo
 // Helper to queue org jobs
 
 
-// Another worker for the dispatcher
-export const dpiaDispatcherWorker = createWorker('dpia-reminders', async (job: Job) => {
+// The dispatcher runs on its own queue. Registering two workers on 'dpia-reminders'
+// made pg-boss round-robin between them, so roughly half of each job type went to
+// the handler that ignores it.
+export const dpiaDispatcherWorker = createWorker('dpia-dispatcher', async (job: Job) => {
   if (job.name === 'dpia-dispatcher') {
     console.log('[DPIA Reminders] Dispatching per-org jobs...');
     const allOrgs = await db.select({ id: organizations.id }).from(organizations);

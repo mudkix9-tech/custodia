@@ -16,6 +16,8 @@ async function runTests() {
     trainingCompletions: db.query.trainingCompletions.findMany,
     users: db.query.users.findMany,
     processingTransfers: db.query.processingTransfers.findMany,
+    consentDomains: db.query.consentDomains.findMany,
+    consentFindings: db.query.consentFindings.findMany,
   };
 
   try {
@@ -27,6 +29,8 @@ async function runTests() {
     db.query.trainingCompletions.findMany = (async () => []) as any;
     db.query.users.findMany = (async () => []) as any;
     db.query.processingTransfers.findMany = (async () => []) as any;
+    db.query.consentDomains.findMany = (async () => []) as any;
+    db.query.consentFindings.findMany = (async () => []) as any;
 
     // Mock 1 processing activity that requires a DPIA and is complete enough for ROPA
     db.query.processingActivities.findMany = (async () => [
@@ -125,7 +129,71 @@ async function runTests() {
     console.log('Test 9 — Scanner gaps filtered out by DB. DPIA sub-score:', res.breakdown.dpia);
     assertEqual(res.breakdown.dpia, 100, 'Test 9: DPIA sub-score');
 
-    console.log('\n✅ All 9 scoring tests passed!');
+    // ── Consent pillar ──────────────────────────────────────────────────
+    // Deductions are only meaningful once the org actually has a domain to
+    // scan; with no domains there is nothing to assess and the pillar is 100.
+
+    // Test 10: a domain exists but the scan found nothing → full marks.
+    db.query.consentDomains.findMany = (async () => [{ id: 'domain-1' }]) as any;
+    db.query.consentFindings.findMany = (async () => []) as any;
+
+    res = await calculateComplianceScore('test-org');
+    console.log('Test 10 — Domain with no findings. Consent sub-score:', res.breakdown.consent);
+    assertEqual(res.breakdown.consent, 100, 'Test 10: consent sub-score');
+
+    // Test 11: one critical and one high → 100 - 25 - 10.
+    db.query.consentFindings.findMany = (async () => [
+      { severity: 'critical', confidence: '0.90' },
+      { severity: 'high', confidence: '0.90' },
+    ]) as any;
+
+    res = await calculateComplianceScore('test-org');
+    console.log('Test 11 — 1 critical + 1 high. Consent sub-score:', res.breakdown.consent);
+    assertEqual(res.breakdown.consent, 65, 'Test 11: consent sub-score');
+
+    // Test 12: a low-confidence finding costs nothing. A scan that could not
+    // confirm it reached a consented state must not quietly move the score.
+    db.query.consentFindings.findMany = (async () => [
+      { severity: 'critical', confidence: '0.50' },
+      { severity: 'high', confidence: '0.90' },
+    ]) as any;
+
+    res = await calculateComplianceScore('test-org');
+    console.log('Test 12 — Low-confidence critical ignored. Consent sub-score:', res.breakdown.consent);
+    assertEqual(res.breakdown.consent, 90, 'Test 12: consent sub-score');
+
+    // Test 13: a null confidence is treated as trustworthy, not as unreliable.
+    db.query.consentFindings.findMany = (async () => [
+      { severity: 'high', confidence: null },
+    ]) as any;
+
+    res = await calculateComplianceScore('test-org');
+    console.log('Test 13 — Null confidence counted. Consent sub-score:', res.breakdown.consent);
+    assertEqual(res.breakdown.consent, 90, 'Test 13: consent sub-score');
+
+    // Test 14: deductions floor at zero rather than going negative.
+    db.query.consentFindings.findMany = (async () => (
+      Array.from({ length: 6 }, () => ({ severity: 'critical', confidence: '0.90' }))
+    )) as any;
+
+    res = await calculateComplianceScore('test-org');
+    console.log('Test 14 — Floor at zero. Consent sub-score:', res.breakdown.consent);
+    assertEqual(res.breakdown.consent, 0, 'Test 14: consent sub-score');
+
+    // Test 15: no consent domains at all → nothing to assess.
+    db.query.consentDomains.findMany = (async () => []) as any;
+
+    res = await calculateComplianceScore('test-org');
+    console.log('Test 15 — No consent domains. Consent sub-score:', res.breakdown.consent);
+    assertEqual(res.breakdown.consent, 100, 'Test 15: consent sub-score');
+
+    // Test 16: the pillar weights still add up to 1, so a perfect score is 100.
+    db.query.complianceGaps.findMany = (async () => []) as any;
+    res = await calculateComplianceScore('test-org');
+    console.log('Test 16 — All pillars at 100. Total:', res.total);
+    assertEqual(res.total, 100, 'Test 16: total');
+
+    console.log('\n✅ All 16 scoring tests passed!');
   } finally {
     // Restore originals
     db.query.processingActivities.findMany = originals.processingActivities;
@@ -138,6 +206,8 @@ async function runTests() {
     db.query.trainingCompletions.findMany = originals.trainingCompletions;
     db.query.users.findMany = originals.users;
     db.query.processingTransfers.findMany = originals.processingTransfers;
+    db.query.consentDomains.findMany = originals.consentDomains;
+    db.query.consentFindings.findMany = originals.consentFindings;
   }
 }
 

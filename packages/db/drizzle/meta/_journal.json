@@ -218,6 +218,20 @@
       "when": 1785762445024,
       "tag": "0041_large_maginty",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1786177350294,
+      "tag": "0042_familiar_banshee",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1786213864882,
+      "tag": "0043_silent_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

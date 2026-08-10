@@ -3,30 +3,10 @@ import { db } from '../db.js';
 import { consentCookies, consentDomains, consentRecords } from 'db';
 import { eq, sql, inArray } from 'drizzle-orm';
 import { scanDomain } from '../lib/browserPool.js';
+import { loadTrackerRegistry, classifyCookieName } from '../lib/trackerRegistry.js';
+import { isSameSite } from '../lib/domains.js';
 
 export const cmpJobsQueue = createQueue('cmp-automation');
-
-// Known cookie database for rule-based classification
-const KNOWN_COOKIES: Record<string, { category: string, provider: string }> = {
-  '_ga': { category: 'analytics', provider: 'Google Analytics' },
-  '_gid': { category: 'analytics', provider: 'Google Analytics' },
-  '_gat': { category: 'analytics', provider: 'Google Analytics' },
-  '_fbp': { category: 'marketing', provider: 'Meta/Facebook' },
-  '_gcl_au': { category: 'marketing', provider: 'Google Ads' },
-  'hubspotutk': { category: 'marketing', provider: 'HubSpot' },
-  '__stripe_mid': { category: 'functional', provider: 'Stripe' },
-  '__stripe_sid': { category: 'functional', provider: 'Stripe' },
-  'intercom-id': { category: 'functional', provider: 'Intercom' },
-  'intercom-session': { category: 'functional', provider: 'Intercom' },
-  'pvr_consent_id': { category: 'necessary', provider: 'Custodia' },
-};
-
-function classifyCookie(name: string) {
-  for (const [key, val] of Object.entries(KNOWN_COOKIES)) {
-    if (name.startsWith(key)) return val;
-  }
-  return { category: 'uncategorized', provider: 'Unknown' };
-}
 
 const cmpWorker = createWorker('cmp-automation', async job => {
   
@@ -39,27 +19,34 @@ const cmpWorker = createWorker('cmp-automation', async job => {
     
     try {
       const mergedCookies = await scanDomain(`https://${domainData.domain}`);
+      const registry = await loadTrackerRegistry();
 
-      // Merge cookies mapping
+      // Merge cookies mapping. isSameSite compares registrable domains, so a cookie
+      // on `.example.co.uk` is not called third-party on `shop.example.co.uk`, and
+      // `notexample.com` is no longer treated as first-party for `example.com` the
+      // way a substring check did.
       const allCookiesMap = new Map();
       for (const bc of mergedCookies) {
-        allCookiesMap.set(bc.name, { ...bc, isThirdParty: bc.domain ? !bc.domain.includes(domainData.domain) : false });
+        allCookiesMap.set(bc.name, {
+          ...bc,
+          isThirdParty: bc.domain ? !isSameSite(bc.domain, domainData.domain) : false,
+        });
       }
 
       // Bulk upsert into db
       const existingCookies = await db.select()
         .from(consentCookies)
         .where(eq(consentCookies.domainId, domainId));
-      
+
       const existingCookieMap = new Map(existingCookies.map(c => [c.cookieName, c]));
 
       const cookiesToInsert: any[] = [];
       const cookiesToUpdate: any[] = [];
 
       for (const [name, cookie] of allCookiesMap.entries()) {
-        const classification = classifyCookie(name);
+        const classification = classifyCookieName(name, registry);
         const match = existingCookieMap.get(name);
-        
+
         if (match) {
           cookiesToUpdate.push(match.id);
         } else {
@@ -72,7 +59,7 @@ const cmpWorker = createWorker('cmp-automation', async job => {
             provider: classification.provider,
             isThirdParty: cookie.isThirdParty,
             autoClassified: true,
-            classificationConfidence: classification.category === 'uncategorized' ? '0.00' : '0.90',
+            classificationConfidence: classification.confidence.toFixed(2),
           });
         }
       }

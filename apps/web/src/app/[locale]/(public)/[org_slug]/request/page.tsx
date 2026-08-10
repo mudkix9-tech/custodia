@@ -8,8 +8,10 @@ import { DsarIntakeForm } from '@/components/public/DsarIntakeForm';
 const queryClient = postgres(process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/gdpr_db');
 const db = drizzle(queryClient);
 
-export default async function BrandedDsarRequestPage({ params }: { params: { org_slug: string } }) {
-  const [org] = await db.select().from(organizations).where(eq(organizations.slug, params.org_slug));
+export default async function BrandedDsarRequestPage({ params }: { params: Promise<{ org_slug: string }> }) {
+  const { org_slug } = await params;
+
+  const [org] = await db.select().from(organizations).where(eq(organizations.slug, org_slug));
   
   if (!org) {
     notFound();
@@ -34,7 +36,7 @@ export default async function BrandedDsarRequestPage({ params }: { params: { org
         </div>
 
         <div className="bg-white rounded-3xl shadow-sm border border-ink-900/10 overflow-hidden">
-          <DsarIntakeForm orgSlug={params.org_slug} orgName={org.name} />
+          <DsarIntakeForm orgSlug={org_slug} orgName={org.name} />
         </div>
         
         <div className="mt-8 text-center text-[13px] text-ink-400">

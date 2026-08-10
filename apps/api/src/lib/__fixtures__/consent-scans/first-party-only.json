@@ -1,0 +1,49 @@
+{
+  "name": "Clean first-party site (recorded from trycustodia.com, 2026-08-08)",
+  "note": "The shape of a real scan of trycustodia.com: no third-party trackers at all, three first-party cookies. Two bugs were found here that no unit test had caught — the scanner's 14 seeded acceptance cookies were being counted as site cookies, and every unclassified_cookie shared the upsert key (domain, type, '') so eleven findings collapsed into one row. This fixture locks in one finding per cookie.",
+  "run": { "postConsentMethod": "unknown" },
+  "domain": {
+    "domain": "trycustodia.com",
+    "categories": ["necessary", "analytics", "marketing", "functional"],
+    "gcmV2Enabled": false,
+    "tcfEnabled": false,
+    "cmp": null,
+    "knownVendorSlugs": []
+  },
+  "observations": [
+    {
+      "observedHost": "trycustodia.com",
+      "trackerKey": null,
+      "provider": null,
+      "requiredCategory": null,
+      "pass": "pre_consent",
+      "resourceType": "document",
+      "carriedIdentifiers": true,
+      "consentSignal": "absent",
+      "requestCount": 38,
+      "sampleUrl": "https://trycustodia.com/"
+    },
+    {
+      "observedHost": "trycustodia.com",
+      "trackerKey": null,
+      "provider": null,
+      "requiredCategory": null,
+      "pass": "post_consent",
+      "resourceType": "document",
+      "carriedIdentifiers": true,
+      "consentSignal": "absent",
+      "requestCount": 38,
+      "sampleUrl": "https://trycustodia.com/"
+    }
+  ],
+  "cookies": [
+    { "cookieName": "__Host-authjs.csrf-token", "category": "uncategorized", "provider": null, "isThirdParty": false },
+    { "cookieName": "__Secure-authjs.callback-url", "category": "uncategorized", "provider": null, "isThirdParty": false },
+    { "cookieName": "pvr_anon_session", "category": "uncategorized", "provider": null, "isThirdParty": false }
+  ],
+  "expect": {
+    "findingTypes": ["unclassified_cookie", "unclassified_cookie", "unclassified_cookie"],
+    "mustNotContain": ["prior_consent_violation", "missing_category", "consent_mode_gap", "untracked_cookie", "vendor_undocumented"],
+    "distinctSubjects": ["__Host-authjs.csrf-token", "__Secure-authjs.callback-url", "pvr_anon_session"]
+  }
+}

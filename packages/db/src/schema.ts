@@ -1944,3 +1944,149 @@ export const consentDailySummary = pgTable('consent_daily_summary', {
 
 
 export const rateLimits = pgTable('rate_limits', { key: varchar('key', { length: 255 }).primaryKey(), hits: integer('hits').default(1), expiresAt: timestamp('expires_at', { withTimezone: true }).notNull() });
+
+// ============================================================================
+// CONSENT / TRACKER RECONCILIATION
+// ============================================================================
+
+/**
+ * Global catalogue of trackers, keyed by the hosts they call and the cookies they
+ * write. Replaces the 11-entry KNOWN_COOKIES map that used to live in the cookie
+ * scanner, and is shared by the cookie classifier and the network scanner so both
+ * agree on what a given host is.
+ */
+export const trackerRegistry = pgTable('tracker_registry', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  trackerKey: varchar('tracker_key', { length: 100 }).notNull().unique(),
+  provider: varchar('provider', { length: 255 }).notNull(),
+  /** Hosts, or host+path prefixes, that identify this tracker on the network. */
+  matchDomains: jsonb('match_domains').notNull().default([]),
+  /** Cookie name prefixes this tracker writes. */
+  cookiePrefixes: jsonb('cookie_prefixes').notNull().default([]),
+  requiredCategory: varchar('required_category', { length: 50 }).notNull(),
+
+  consentModeSupported: boolean('consent_mode_supported').default(false),
+  /** Query params that carry the tracker's own consent signal, e.g. gcs, dpo. */
+  consentSignalParams: jsonb('consent_signal_params').default([]),
+  /** Links a finding through to the vendor record and its DPA status. */
+  vendorSlug: varchar('vendor_slug', { length: 100 }),
+
+  purpose: text('purpose'),
+  isActive: boolean('is_active').default(true),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    categoryIdx: index('idx_tracker_registry_category').on(table.requiredCategory),
+    vendorSlugIdx: index('idx_tracker_registry_vendor_slug').on(table.vendorSlug),
+  };
+});
+
+/**
+ * One reconciliation scan of one domain. Findings cite the run that produced them,
+ * so every claim shown to a customer is traceable to a dated, successful scan.
+ */
+export const consentScanRuns = pgTable('consent_scan_runs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  domainId: uuid('domain_id').notNull().references(() => consentDomains.id, { onDelete: 'cascade' }),
+
+  startedAt: timestamp('started_at', { withTimezone: true }).defaultNow(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+  status: varchar('status', { length: 20 }).notNull().default('running'), // running|ok|failed
+
+  cmpDetected: varchar('cmp_detected', { length: 50 }),
+  /** seeded_cookies|clicked|seeded_and_clicked|unknown — drives finding confidence. */
+  postConsentMethod: varchar('post_consent_method', { length: 20 }),
+
+  preRequestCount: integer('pre_request_count').default(0),
+  postRequestCount: integer('post_request_count').default(0),
+  cookiesFound: integer('cookies_found').default(0),
+  findingsOpen: integer('findings_open').default(0),
+  error: text('error'),
+}, (table) => {
+  return {
+    domainStartedIdx: index('idx_consent_scan_runs_domain_started').on(table.domainId, table.startedAt),
+    orgIdx: index('idx_consent_scan_runs_org').on(table.organizationId),
+  };
+});
+
+/** What a single host did during a single pass of a scan. */
+export const consentTrackerObservations = pgTable('consent_tracker_observations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  scanRunId: uuid('scan_run_id').notNull().references(() => consentScanRuns.id, { onDelete: 'cascade' }),
+  domainId: uuid('domain_id').notNull().references(() => consentDomains.id, { onDelete: 'cascade' }),
+
+  observedHost: varchar('observed_host', { length: 255 }).notNull(),
+  trackerKey: varchar('tracker_key', { length: 100 }),
+  provider: varchar('provider', { length: 255 }),
+  requiredCategory: varchar('required_category', { length: 50 }),
+  matchedVendorId: uuid('matched_vendor_id').references(() => vendors.id, { onDelete: 'set null' }),
+
+  pass: varchar('pass', { length: 20 }).notNull(), // pre_consent|post_consent
+  resourceType: varchar('resource_type', { length: 30 }),
+  /** The request sent cookies or identifier-shaped params. The Consent Mode discriminator. */
+  carriedIdentifiers: boolean('carried_identifiers').default(false),
+  consentSignal: varchar('consent_signal', { length: 20 }), // granted|denied|absent
+  requestCount: integer('request_count').default(1),
+  /** Sanitised: origin + path with an allowlisted query only. Never a raw tracker URL. */
+  sampleUrl: text('sample_url'),
+
+  observedAt: timestamp('observed_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    uniquePerPass: unique('uq_consent_observation_run_host_pass').on(table.scanRunId, table.observedHost, table.pass),
+    runIdx: index('idx_consent_observations_run').on(table.scanRunId),
+    domainHostIdx: index('idx_consent_observations_domain_host').on(table.domainId, table.observedHost),
+  };
+});
+
+/**
+ * Open findings for a domain. The unique key means a repeat scan upserts and bumps
+ * last_seen_at, and anything a completed scan did not touch flips to resolved — so
+ * remediation tracking, and dated evidence of it, falls out of the scan itself.
+ */
+export const consentFindings = pgTable('consent_findings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  domainId: uuid('domain_id').notNull().references(() => consentDomains.id, { onDelete: 'cascade' }),
+
+  findingType: varchar('finding_type', { length: 50 }).notNull(),
+  severity: varchar('severity', { length: 20 }).notNull(), // critical|high|medium|low|info
+
+  trackerKey: varchar('tracker_key', { length: 100 }),
+  provider: varchar('provider', { length: 255 }),
+  // Part of the upsert key, so it must not be null: Postgres treats NULLs in a
+  // unique constraint as distinct, which would let domain-level findings duplicate
+  // on every scan. Findings that are not about one host use the empty string.
+  observedHost: varchar('observed_host', { length: 255 }).notNull().default(''),
+  // Discriminator for findings that are not about a host — the cookie name, for
+  // one. Without it every unclassified_cookie on a domain shared the upsert key
+  // (domain, type, '') and all but one were silently overwritten.
+  subject: varchar('subject', { length: 255 }).notNull().default(''),
+  requiredCategory: varchar('required_category', { length: 50 }),
+  matchedVendorId: uuid('matched_vendor_id').references(() => vendors.id, { onDelete: 'set null' }),
+
+  /** Sanitised evidence only: hosts, cookie names, gcs values. No raw URLs, no identifiers. */
+  evidence: jsonb('evidence').default({}),
+  confidence: numeric('confidence', { precision: 3, scale: 2 }),
+
+  state: varchar('state', { length: 20 }).notNull().default('open'), // open|resolved|dismissed|false_positive
+  resolutionNote: text('resolution_note'),
+
+  firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).defaultNow(),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).defaultNow(),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  resolvedBy: uuid('resolved_by').references(() => users.id, { onDelete: 'set null' }),
+
+  firstScanRunId: uuid('first_scan_run_id').references(() => consentScanRuns.id, { onDelete: 'set null' }),
+  lastScanRunId: uuid('last_scan_run_id').references(() => consentScanRuns.id, { onDelete: 'set null' }),
+}, (table) => {
+  return {
+    uniqueFinding: unique('uq_consent_finding_domain_type_host').on(table.domainId, table.findingType, table.observedHost, table.subject),
+    domainStateIdx: index('idx_consent_findings_domain_state').on(table.domainId, table.state),
+    orgStateSeverityIdx: index('idx_consent_findings_org_state_severity').on(table.organizationId, table.state, table.severity),
+  };
+});

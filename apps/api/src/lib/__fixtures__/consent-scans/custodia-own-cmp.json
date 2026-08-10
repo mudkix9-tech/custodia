@@ -1,0 +1,51 @@
+{
+  "name": "Custodia's own banner, which does not gate scripts",
+  "note": "routes/cmp.ts records consent but blocks nothing, so every tracker fires pre-consent on a Custodia-CMP domain. The cause is our script, not the customer's setup, so one cmp_no_enforcement finding must replace the per-host prior_consent_violation set.",
+  "run": { "postConsentMethod": "seeded_cookies" },
+  "domain": {
+    "domain": "custodia-cmp-example.test",
+    "categories": ["necessary", "analytics", "marketing"],
+    "gcmV2Enabled": true,
+    "tcfEnabled": false,
+    "cmp": "custodia",
+    "knownVendorSlugs": ["google", "meta"]
+  },
+  "observations": [
+    {
+      "observedHost": "connect.facebook.net",
+      "trackerKey": "meta_pixel",
+      "provider": "Meta",
+      "requiredCategory": "marketing",
+      "vendorSlug": "meta",
+      "pass": "pre_consent",
+      "resourceType": "script",
+      "carriedIdentifiers": true,
+      "consentSignal": "absent",
+      "requestCount": 2,
+      "sampleUrl": "https://connect.facebook.net/en_US/fbevents.js"
+    },
+    {
+      "observedHost": "google-analytics.com",
+      "trackerKey": "google_analytics",
+      "provider": "Google",
+      "requiredCategory": "analytics",
+      "vendorSlug": "google",
+      "pass": "pre_consent",
+      "resourceType": "script",
+      "carriedIdentifiers": true,
+      "consentSignal": "absent",
+      "requestCount": 1,
+      "sampleUrl": "https://google-analytics.com/g/collect"
+    }
+  ],
+  "cookies": [
+    { "cookieName": "_fbp", "category": "marketing", "provider": "Meta", "isThirdParty": true },
+    { "cookieName": "_ga", "category": "analytics", "provider": "Google", "isThirdParty": false }
+  ],
+  "expect": {
+    "findingTypes": ["cmp_no_enforcement"],
+    "mustNotContain": ["prior_consent_violation", "missing_category"],
+    "severities": { "cmp_no_enforcement": "high" },
+    "confidences": { "cmp_no_enforcement": 0.9 }
+  }
+}

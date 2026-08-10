@@ -1,0 +1,55 @@
+{
+  "name": "No CMP, Meta pixel ungated",
+  "note": "The unambiguous violation: a marketing tracker fires before any consent and carries an identifier, on a banner that offers no marketing category at all.",
+  "run": { "postConsentMethod": "clicked" },
+  "domain": {
+    "domain": "no-cmp-example.test",
+    "categories": ["necessary"],
+    "gcmV2Enabled": false,
+    "tcfEnabled": false,
+    "cmp": null,
+    "knownVendorSlugs": []
+  },
+  "observations": [
+    {
+      "observedHost": "connect.facebook.net",
+      "trackerKey": "meta_pixel",
+      "provider": "Meta",
+      "requiredCategory": "marketing",
+      "vendorSlug": "meta",
+      "pass": "pre_consent",
+      "resourceType": "script",
+      "carriedIdentifiers": true,
+      "consentSignal": "absent",
+      "requestCount": 4,
+      "sampleUrl": "https://connect.facebook.net/en_US/fbevents.js"
+    },
+    {
+      "observedHost": "connect.facebook.net",
+      "trackerKey": "meta_pixel",
+      "provider": "Meta",
+      "requiredCategory": "marketing",
+      "vendorSlug": "meta",
+      "pass": "post_consent",
+      "resourceType": "script",
+      "carriedIdentifiers": true,
+      "consentSignal": "absent",
+      "requestCount": 4,
+      "sampleUrl": "https://connect.facebook.net/en_US/fbevents.js"
+    }
+  ],
+  "cookies": [
+    { "cookieName": "_fbp", "category": "marketing", "provider": "Meta", "isThirdParty": true }
+  ],
+  "expect": {
+    "findingTypes": ["prior_consent_violation", "missing_category", "consent_mode_gap", "vendor_undocumented"],
+    "mustNotContain": ["consent_mode_only", "cmp_no_enforcement", "untracked_cookie"],
+    "severities": {
+      "prior_consent_violation": "critical",
+      "missing_category": "high",
+      "consent_mode_gap": "medium",
+      "vendor_undocumented": "low"
+    },
+    "confidences": { "prior_consent_violation": 0.9, "missing_category": 0.9 }
+  }
+}

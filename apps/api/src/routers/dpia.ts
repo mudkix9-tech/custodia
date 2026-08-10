@@ -5,6 +5,7 @@ import { db } from '../db.js';
 import { dpias, dpiaRisks, dpiaMeasures, auditLogs, processingRecipients, organizationVendors, vendors, complianceGaps } from 'db';
 import { eq, and, desc, inArray, lt } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import { assertOwned, assertParentOwned } from '../lib/tenancy.js';
 import { syncDpiaGaps } from '../lib/dpiaGapSync.js';
 import { enforceLimit } from '../lib/billing.js';
 
@@ -320,6 +321,7 @@ export const dpiaRouter = router({
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ dpiaId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
+        await assertParentOwned(ctx.db, dpias, input.dpiaId, ctx.user!.orgId, 'DPIA');
         return ctx.db.select().from(dpiaRisks).where(eq(dpiaRisks.dpiaId, input.dpiaId));
       }),
       
@@ -356,6 +358,14 @@ export const dpiaRouter = router({
         data: z.record(z.any()),
       }))
       .mutation(async ({ ctx, input }) => {
+        await assertOwned(ctx.db, {
+          table: dpiaRisks,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Risk',
+          via: [{ table: dpias, on: eq(dpiaRisks.dpiaId, dpias.id) }],
+        });
+
         // If updating likelihood or severity, recalculate initialRiskScore
         const [updated] = await ctx.db.update(dpiaRisks)
           .set(input.data)
@@ -376,6 +386,14 @@ export const dpiaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
+        await assertOwned(ctx.db, {
+          table: dpiaRisks,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Risk',
+          via: [{ table: dpias, on: eq(dpiaRisks.dpiaId, dpias.id) }],
+        });
+
         const [deleted] = await ctx.db.delete(dpiaRisks).where(eq(dpiaRisks.id, input.id)).returning();
 
         if (deleted) {
@@ -396,6 +414,13 @@ export const dpiaRouter = router({
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ dpiaRiskId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
+        await assertOwned(ctx.db, {
+          table: dpiaRisks,
+          id: input.dpiaRiskId,
+          orgId: ctx.user!.orgId,
+          label: 'Risk',
+          via: [{ table: dpias, on: eq(dpiaRisks.dpiaId, dpias.id) }],
+        });
         return ctx.db.select().from(dpiaMeasures).where(eq(dpiaMeasures.dpiaRiskId, input.dpiaRiskId));
       }),
       
@@ -429,6 +454,17 @@ export const dpiaRouter = router({
         data: z.record(z.any()),
       }))
       .mutation(async ({ ctx, input }) => {
+        await assertOwned(ctx.db, {
+          table: dpiaMeasures,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Measure',
+          via: [
+            { table: dpiaRisks, on: eq(dpiaMeasures.dpiaRiskId, dpiaRisks.id) },
+            { table: dpias, on: eq(dpiaRisks.dpiaId, dpias.id) },
+          ],
+        });
+
         const [updated] = await ctx.db.update(dpiaMeasures)
           .set(input.data)
           .where(eq(dpiaMeasures.id, input.id))
@@ -451,6 +487,17 @@ export const dpiaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
+        await assertOwned(ctx.db, {
+          table: dpiaMeasures,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Measure',
+          via: [
+            { table: dpiaRisks, on: eq(dpiaMeasures.dpiaRiskId, dpiaRisks.id) },
+            { table: dpias, on: eq(dpiaRisks.dpiaId, dpias.id) },
+          ],
+        });
+
         const [deleted] = await ctx.db.delete(dpiaMeasures).where(eq(dpiaMeasures.id, input.id)).returning();
 
         if (deleted) {

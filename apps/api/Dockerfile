@@ -1,43 +1,32 @@
-FROM node:20-alpine AS builder
+# Runtime image for `custodia-api` (WORKER_ROLE=web).
+#
+# No Chromium. Every PDF the API used to render in-process now renders on the
+# Next.js app via lib/pdfClient.ts, so this service is a plain Node process
+# again. puppeteer is still imported transitively — routers pull worker modules
+# in for their queue handles — but importing it neither launches a browser nor
+# needs the binary, and createWorker() is a no-op under WORKER_ROLE=web.
+#
+# The worker image is Dockerfile.workers; it still needs a browser for consent
+# and vendor scanning.
+FROM node:20-bookworm-slim
 
 WORKDIR /app
-RUN npm install -g turbo
 
-# Install dependencies needed for node-gyp
-RUN apk add --no-cache libc6-compat python3 make g++
-
+# The whole tree, because there is no build step: start is `tsx src/index.ts`
+# and the `db` package resolves to its index.ts source rather than a dist/.
 COPY . .
-RUN turbo prune --scope=api --docker
 
-# Add lockfile and package.json's of isolated subworkspace
-FROM node:20-alpine AS installer
-WORKDIR /app
-RUN apk add --no-cache libc6-compat python3 make g++
+# --ignore-scripts skips the root postinstall (`puppeteer browsers install
+# chrome`), a ~150MB download this image has no use for. node-pty is the only
+# other package with a build script and apps/api never imports it.
+# NODE_ENV is set afterwards so this install keeps devDependencies.
+RUN npm ci --ignore-scripts
 
-# First install dependencies
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/package-lock.json ./package-lock.json
-RUN npm ci
+ENV NODE_ENV=production \
+    WORKER_ROLE=web \
+    PORT=8080 \
+    HOST=0.0.0.0
 
-# Build the project
-COPY --from=builder /app/out/full/ .
-RUN npm run build --workspace=packages/db
-
-FROM node:20-alpine AS runner
-WORKDIR /app
-
-# Don't run production as root
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 api
-
-COPY --from=installer /app .
-
-# Set up env
-ENV NODE_ENV=production
-
-# Expose API port
-EXPOSE 4000
-
-USER api
+EXPOSE 8080
 
 CMD ["npm", "run", "start", "--workspace=apps/api"]

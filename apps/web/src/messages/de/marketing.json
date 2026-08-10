@@ -3,8 +3,138 @@
     "title": "REVIEW: 'Marketing'"
   },
   "seo": {
-    "title": "Custodia — GDPR-Compliance-Betriebssystem für EU-Agenturen",
-    "desc": "Die komplette GDPR-Compliance-Plattform für EU-Marketing-, Digital- und Design-Agenturen. Ersetzen Sie Berater und Tabellen."
+    "title": "Custodia — DSGVO-Compliance-Betriebssystem für EU-Agenturen",
+    "desc": "Die komplette DSGVO-Compliance-Plattform für EU-Marketing-, Digital- und Design-Agenturen. Ersetzen Sie Berater und Tabellen.",
+    "pages": {
+      "home": {
+        "title": "DSGVO-Software für EU-Agenturen | Custodia",
+        "desc": "Custodia ist die DSGVO-Plattform für EU-Unternehmen: Verarbeitungsverzeichnis, Auskunftsersuchen, Cookie-Consent, Meldepflichten und Dienstleisterprüfung."
+      },
+      "features": {
+        "title": "Funktionen: VVT, Auskunftsersuchen, CMP | Custodia",
+        "desc": "Alle Module von Custodia: Verzeichnis von Verarbeitungstätigkeiten, Gap-Analyse, Auskunftsersuchen, Cookie-Consent, Meldewesen, DSFA und Schulungen."
+      },
+      "pricing": {
+        "title": "DSGVO-Software Preise — 99 €/Monat | Custodia",
+        "desc": "Custodia kostet 99 € pro Monat im Professional-Tarif, oder 79 € pro Monat bei jährlicher Zahlung. Enterprise auf Anfrage. Start ohne Kreditkarte."
+      },
+      "for-agencies": {
+        "title": "DSGVO-Software für Digitalagenturen | Custodia",
+        "desc": "Verwalten Sie die DSGVO für alle Mandanten in einem Dashboard: Verarbeitungsverzeichnis, Consent, Auskunftsersuchen und Dienstleister je Kunde."
+      },
+      "enterprise": {
+        "title": "DSGVO-Plattform für Konzerne | Custodia",
+        "desc": "DSGVO-Compliance im großen Maßstab: Mandantenverwaltung, SSO, EU-Datenhaltung, dedizierter Support und prüfungssichere Berichte."
+      },
+      "cookie-consent": {
+        "title": "Cookie-Consent-Management-Plattform (CMP) für die DSGVO",
+        "desc": "Eine DSGVO- und ePrivacy-konforme Consent-Management-Plattform mit Google Consent Mode v2, automatischem Tracker-Scan und lückenloser Consent-Historie."
+      },
+      "security": {
+        "title": "Sicherheit bei Custodia — EU-Hosting & Verschlüsselung",
+        "desc": "Wie Custodia Ihre Daten schützt: Hosting ausschließlich in der EU (AWS Dublin), Verschlüsselung, feingranulare Zugriffskontrolle und vollständige Audit-Logs."
+      },
+      "about": {
+        "title": "Über Custodia — DSGVO-Software für die EU",
+        "desc": "Custodia entwickelt DSGVO-Software für EU-Unternehmen und die Agenturen, die sie betreuen. Wer wir sind, was wir bauen und wie die Plattform funktioniert."
+      },
+      "contact": {
+        "title": "Kontakt — Custodia DSGVO-Software",
+        "desc": "Kontaktieren Sie das Custodia-Team zur DSGVO-Plattform, zu Produktdemos, Enterprise-Preisen oder Partnerschaftsanfragen."
+      },
+      "blog": {
+        "title": "DSGVO-Blog: Leitfäden und Updates | Custodia",
+        "desc": "Praxisnahe DSGVO-Hinweise für Agenturen und EU-Unternehmen: regulatorische Updates, Analysen und Schritt-für-Schritt-Anleitungen."
+      },
+      "changelog": {
+        "title": "Custodia Changelog — Produkt-Updates und Releases",
+        "desc": "Alle Funktionen, Verbesserungen und Fehlerbehebungen der Custodia-DSGVO-Plattform, mit Veröffentlichungsdatum und Release Notes."
+      },
+      "gdpr": {
+        "title": "DSGVO-Leitfäden: Artikel, Vorlagen und Anleitungen",
+        "desc": "Kostenlose Praxisleitfäden zur DSGVO: Rechtsgrundlagen, DSFA, VVT-Vorlagen, Auskunftsersuchen, Meldepflichten und Drittlandtransfers."
+      },
+      "gdpr_lawful-bases": {
+        "title": "Die 6 Rechtsgrundlagen der DSGVO im Überblick",
+        "desc": "Einwilligung, Vertrag, rechtliche Verpflichtung, lebenswichtige Interessen, öffentliche Aufgabe und berechtigtes Interesse: wann welche Grundlage gilt."
+      },
+      "gdpr_legitimate-interest-vs-consent": {
+        "title": "Berechtigtes Interesse oder Einwilligung? DSGVO-Vergleich",
+        "desc": "Wann Sie sich auf das berechtigte Interesse statt auf eine Einwilligung stützen können, wie eine Interessenabwägung abläuft und wo die Grenzen liegen."
+      },
+      "gdpr_dpia-guide": {
+        "title": "DSFA-Leitfaden: Datenschutz-Folgenabschätzung durchführen",
+        "desc": "Wann eine DSFA nach Artikel 35 erforderlich ist, welche Schritte dazugehören, wie Sie Restrisiken bewerten und wann die Aufsichtsbehörde einzubinden ist."
+      },
+      "gdpr_ropa-template": {
+        "title": "VVT-Vorlage: Verarbeitungsverzeichnis nach Art. 30 (gratis)",
+        "desc": "Eine kostenlose Vorlage für das Verzeichnis von Verarbeitungstätigkeiten, plus was Artikel 30 verlangt, wer ausgenommen ist und wie Sie es aktuell halten."
+      },
+      "gdpr_right-to-erasure": {
+        "title": "Recht auf Löschung (Art. 17 DSGVO): Praxisleitfaden",
+        "desc": "Wann das Recht auf Vergessenwerden greift, die sechs Löschgründe, zulässige Ablehnungen, der Umgang mit Backups und die Frist von einem Monat."
+      },
+      "gdpr_data-portability": {
+        "title": "Recht auf Datenübertragbarkeit (Art. 20 DSGVO)",
+        "desc": "Was das Recht auf Datenübertragbarkeit umfasst, wann es gilt, welche Dateiformate Artikel 20 erfüllen und wie Sie eine Anfrage beantworten."
+      },
+      "gdpr_dsar-controller-processor": {
+        "title": "Auskunftsersuchen: Verantwortlicher oder Auftragsverarbeiter?",
+        "desc": "Wie sich die Pflichten bei Auskunftsersuchen zwischen Verantwortlichem und Auftragsverarbeiter aufteilen und was der AV-Vertrag regeln muss."
+      },
+      "gdpr_breach-timeline": {
+        "title": "DSGVO-Meldefrist: Die 72-Stunden-Regel erklärt",
+        "desc": "Wann die 72-Stunden-Frist für die Meldung einer Datenschutzverletzung beginnt, wen Sie informieren müssen, was die Meldung enthält und was bei Fristablauf droht."
+      },
+      "gdpr_data-breach-response": {
+        "title": "Datenschutzverletzung: Reaktion Schritt für Schritt",
+        "desc": "Wie Sie auf eine Verletzung des Schutzes personenbezogener Daten reagieren: Eindämmung, Risikobewertung, Meldung, Benachrichtigung und Dokumentation."
+      },
+      "gdpr_incident-response-plan": {
+        "title": "DSGVO-Notfallplan: Vorlage und Checkliste",
+        "desc": "So erstellen Sie einen Incident-Response-Plan nach DSGVO: Rollen, Schweregrad-Einstufung, Eskalationswege, Meldung und Nachbereitung."
+      },
+      "gdpr_consent-mode-v2": {
+        "title": "Google Consent Mode v2: Bedeutung und Umsetzung",
+        "desc": "Was Google Consent Mode v2 verlangt, wie die Consent-Signale funktionieren und wie Sie ihn korrekt einbinden, ohne Analyse- und Werbedaten zu verlieren."
+      },
+      "gdpr_eprivacy-and-gdpr": {
+        "title": "ePrivacy-Richtlinie und DSGVO: das Zusammenspiel",
+        "desc": "Wie ePrivacy-Richtlinie und DSGVO bei Cookies, Tracking und elektronischer Werbung zusammenwirken und welche Regel bei Überschneidungen vorgeht."
+      },
+      "gdpr_sccs-dpf-schrems": {
+        "title": "Standardvertragsklauseln, EU-US-Datenschutzrahmen, Schrems II",
+        "desc": "Wie Sie personenbezogene Daten rechtssicher in Drittländer übermitteln: Standardvertragsklauseln, EU-US Data Privacy Framework und Transfer-Folgenabschätzung."
+      },
+      "gdpr_vendor-audit": {
+        "title": "Dienstleisterprüfung nach DSGVO: Auftragsverarbeiter bewerten",
+        "desc": "So prüfen Sie Dienstleister und Unterauftragsverarbeiter auf DSGVO-Konformität: Prüffragen, AV-Vertrag, Drittlandtransfers und laufende Kontrolle."
+      },
+      "gdpr_compliance-guide-agencies": {
+        "title": "DSGVO-Leitfaden für Digitalagenturen",
+        "desc": "Praxisleitfaden zur DSGVO für Agenturen: Rollen als Verantwortlicher und Auftragsverarbeiter, Mandantenverträge, Unterauftragsverarbeiter und Nachweispflichten."
+      },
+      "legal_privacy": {
+        "title": "Datenschutzerklärung | Custodia",
+        "desc": "Wie Custodia personenbezogene Daten erhebt, nutzt, speichert und schützt, auf welche Rechtsgrundlagen wir uns stützen und wie Sie Ihre Rechte ausüben."
+      },
+      "legal_terms": {
+        "title": "Allgemeine Geschäftsbedingungen | Custodia",
+        "desc": "Die Bedingungen für die Nutzung der Custodia-DSGVO-Plattform: Abonnements, zulässige Nutzung, Haftung und Kündigung."
+      },
+      "legal_cookies": {
+        "title": "Cookie-Richtlinie | Custodia",
+        "desc": "Welche Cookies und ähnlichen Technologien Custodia einsetzt, wozu sie dienen, wie lange sie gespeichert werden und wie Sie Ihre Einwilligung ändern."
+      },
+      "legal_dpa": {
+        "title": "Auftragsverarbeitungsvertrag (AVV) | Custodia",
+        "desc": "Der Auftragsverarbeitungsvertrag von Custodia: die Regelungen nach Artikel 28 zu Weisungen, Sicherheit, Unterauftragsverarbeitern und Kontrollrechten."
+      },
+      "legal_subprocessors": {
+        "title": "Unterauftragsverarbeiter | Custodia",
+        "desc": "Die aktuelle Liste der Unterauftragsverarbeiter von Custodia, was sie jeweils verarbeiten, wo sie sitzen und wie wir über Änderungen informieren."
+      }
+    }
   },
   "hero": {
     "badge": "GDPR-Compliance-OS für EU-Agenturen",

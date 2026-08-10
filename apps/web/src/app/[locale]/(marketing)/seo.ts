@@ -18,41 +18,69 @@ export function buildLocaleUrl(path: string, locale: string) {
   return `${SITE_ORIGIN}${prefix}${normalizedPath}` || SITE_ORIGIN;
 }
 
-// TODO: marketing.seo only has one shared title/desc pair today, reused
-// across every marketing page. Per-page title/desc would be a real SEO
-// improvement (duplicate titles/descriptions across 36 pages hurts
-// ranking) but is a content-writing task, not a code change -- out of
-// scope here. This keeps title/desc as-is while fixing canonical/hreflang
-// per page.
+// Per-page title/description live in `marketing.seo.pages.<key>` and the key is
+// derived from the route path, so the 32 static marketing pages need no change
+// beyond the `path` they already pass. '/' is 'home'; everything else is the
+// path with separators flattened ('/gdpr/dpia-guide' -> 'gdpr_dpia-guide').
+//
+// Flattening with '_' rather than nesting on '.' matters: next-intl treats '.'
+// as a namespace separator, so a nested key would collide with the namespace
+// lookup for any path prefix that is itself a page (e.g. '/gdpr').
+export function metadataKeyFor(path: string) {
+  if (path === '/') return 'home';
+  return path.replace(/^\//, '').replace(/\//g, '_');
+}
+
+// Routes with a slug in the path (/compare/[competitor], /gdpr/vendors/[slug],
+// /blog/[slug]) can't have a static message key, so they pass `title` and
+// `description` explicitly. Everything else resolves from the message catalogue
+// and falls back to the shared pair only if a page's key is missing -- which is
+// the state the whole site was in until August 2026, when all 36 pages shared
+// one title and one description and therefore targeted no keyword at all.
 export async function buildMarketingMetadata({
   locale,
   path,
+  title: titleOverride,
+  description: descriptionOverride,
 }: {
   locale: string;
   path: string;
+  title?: string;
+  description?: string;
 }): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: 'marketing.seo' });
-  const title = t('title');
-  const description = t('desc');
+  const key = metadataKeyFor(path);
+
+  const titleKey = `pages.${key}.title`;
+  const descKey = `pages.${key}.desc`;
+
+  const title = titleOverride ?? (t.has(titleKey) ? t(titleKey) : t('title'));
+  const description =
+    descriptionOverride ?? (t.has(descKey) ? t(descKey) : t('desc'));
+
   const canonicalUrl = buildLocaleUrl(path, locale);
+
+  // The OG route renders the headline it is given, so each page gets a distinct
+  // social card instead of 36 pages sharing one image.
+  const ogImage = `${SITE_ORIGIN}/api/og?title=${encodeURIComponent(title)}`;
 
   return {
     title,
     description,
-    keywords: ['GDPR', 'ROPA', 'Consent Management', 'ePrivacy', 'Data Protection', 'Privacy Policy', 'DSAR', 'Compliance OS', 'Agency Compliance'],
     openGraph: {
       title,
       description,
       url: canonicalUrl,
       siteName: 'Custodia',
       type: 'website',
-      images: [{ url: `${SITE_ORIGIN}/api/og`, width: 1200, height: 630, alt: 'Custodia — GDPR Compliance OS' }],
+      locale,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [`${SITE_ORIGIN}/api/og`],
+      images: [ogImage],
     },
     alternates: {
       canonical: canonicalUrl,

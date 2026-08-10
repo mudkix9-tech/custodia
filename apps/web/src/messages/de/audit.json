@@ -19,7 +19,8 @@
     "dsar": "DSARs",
     "breaches": "Datenpannen",
     "training": "Schulung",
-    "transfers": "Übermittlungen"
+    "transfers": "Übermittlungen",
+    "consent": "Einwilligung"
   },
   "detected_gaps": "Erkannte Lücken",
   "active_gaps": "{total} Aktiv",

@@ -7,8 +7,8 @@ import { processingActivities, organizations } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { dataExportQueue } from '../lib/queue.js';
-import { renderHtmlToPdf } from '../lib/browserPool.js';
-import { generateExecutiveReportHtml, ExecutiveReportData } from '../lib/auditTemplates/executiveReport.js';
+import { renderPdf } from '../lib/pdfClient.js';
+import type { ExecutiveReportData } from '../lib/auditTemplates/executiveReport.js';
 
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
@@ -34,93 +34,36 @@ export const exportRouter = router({
       // If client_summary, filter by client (assuming we add a where clause if needed)
       const activities = await query;
 
-      // 1. Generate HTML string
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1c1917; line-height: 1.6; }
-            h1 { color: #294036; border-bottom: 2px solid #294036; padding-bottom: 8px; }
-            h2 { color: #294036; margin-top: 24px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
-            th, td { border: 1px solid #e7e5e4; padding: 8px 12px; text-align: left; }
-            th { background-color: #f5f5f4; font-weight: 600; }
-            .cover { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-            .page-break { page-break-before: always; }
-            .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 10px; color: #78716c; padding: 10px 0; border-top: 1px solid #e7e5e4; }
-          </style>
-        </head>
-        <body>
-          <div class="cover">
-            <h1>Record of Processing Activities (Article 30 GDPR)</h1>
-            <h2>${org?.name || 'Organization'}</h2>
-            <p>Generated on: ${new Date().toLocaleDateString()}</p>
-            <p>Report Type: ${input.type === 'full_audit' ? 'Full Audit Report' : 'Client Summary'}</p>
-          </div>
-          
-          <div class="page-break"></div>
-
-          <h2>Processing Activities Inventory</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Purpose</th>
-                <th>Lawful Basis</th>
-                <th>Status</th>
-                <th>Risk Level</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${activities.map((a: any) => `
-                <tr>
-                  <td><strong>${a.name}</strong></td>
-                  <td>${a.purpose}</td>
-                  <td>${a.lawfulBasis || 'N/A'}</td>
-                  <td>${a.status}</td>
-                  <td>${a.riskLevel}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-
-          <div class="page-break"></div>
-          <h2>Detailed Activity Records</h2>
-          ${activities.map((a: any) => `
-            <div style="margin-bottom: 32px; border: 1px solid #e7e5e4; padding: 16px; border-radius: 8px;">
-              <h3 style="margin-top: 0;">${a.name}</h3>
-              <p><strong>Purpose:</strong> ${a.purpose}</p>
-              <p><strong>Description:</strong> ${a.description || 'None'}</p>
-              <p><strong>Lawful Basis:</strong> ${a.lawfulBasis || 'N/A'}</p>
-              <p><strong>Retention Period:</strong> ${a.retentionPeriod || 'Not specified'} - ${a.retentionJustification || ''}</p>
-              <p><strong>Security Measures:</strong> ${(Array.isArray(a.securityMeasures) ? a.securityMeasures : []).join(', ') || 'None specified'}</p>
-            </div>
-          `).join('')}
-          
-        </body>
-        </html>
-      `;
-
-      // 2. Launch Puppeteer and generate PDF
+      // The template lives in apps/web/src/lib/pdf/templates/ropaRecord.tsx and
+      // renders with @react-pdf/renderer, so this process needs no browser.
       try {
-        const pdfBuffer = await renderHtmlToPdf(htmlContent, {
-          margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
-          displayHeaderFooter: true,
-          headerTemplate: '<div></div>',
-          footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%;">Custodia OS - Generated securely</div>'
+        const pdfBuffer = await renderPdf('ropa-record', {
+          organizationName: org?.name || 'Organization',
+          reportDate: new Date().toLocaleDateString(),
+          reportType: input.type,
+          activities: activities.map((a: any) => ({
+            name: a.name,
+            purpose: a.purpose,
+            description: a.description,
+            lawfulBasis: a.lawfulBasis,
+            status: a.status,
+            riskLevel: a.riskLevel,
+            retentionPeriod: a.retentionPeriod,
+            retentionJustification: a.retentionJustification,
+            securityMeasures: Array.isArray(a.securityMeasures) ? a.securityMeasures : [],
+          })),
         });
 
-        // Normally, we would upload this to S3 and return a URL.
-        // For now, we return it as a base64 string so the frontend can download it.
-        const base64Pdf = Buffer.from(pdfBuffer).toString('base64');
-        return { 
-          success: true, 
+        // Still base64 so the frontend can download it directly; uploading to S3
+        // and returning a URL remains the intended end state.
+        const base64Pdf = pdfBuffer.toString('base64');
+        return {
+          success: true,
           pdfData: base64Pdf,
           filename: `ropa_audit_${org?.slug || 'export'}_${new Date().getTime()}.pdf`
         };
       } catch (err) {
-        console.error("Puppeteer PDF generation failed:", err);
+        console.error('ROPA PDF generation failed:', err);
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to generate PDF' });
       }
     }),
@@ -188,24 +131,16 @@ export const exportRouter = router({
         ]
       };
 
-      const htmlContent = generateExecutiveReportHtml(reportData);
-
       try {
-        const pdfBuffer = await renderHtmlToPdf(htmlContent, {
-          margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
-          displayHeaderFooter: true,
-          headerTemplate: '<div></div>',
-          footerTemplate: '<div style="font-size: 10px; text-align: center; width: 100%; color: #78716c;">Custodia OS - Executive Summary Report</div>'
-        });
-
-        const base64Pdf = Buffer.from(pdfBuffer).toString('base64');
+        const pdfBuffer = await renderPdf('executive', reportData);
+        const base64Pdf = pdfBuffer.toString('base64');
         return {
           success: true,
           pdfData: base64Pdf,
           filename: `executive_report_${org?.slug || 'export'}_${new Date().getTime()}.pdf`
         };
       } catch (err) {
-        console.error("Puppeteer PDF generation failed:", err);
+        console.error('Executive report PDF generation failed:', err);
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to generate PDF' });
       }
     }),
@@ -296,26 +231,13 @@ export const exportRouter = router({
         answersWithTemplates
       );
 
-      const frontendUrl = process.env.FRONTEND_INTERNAL_URL || 'http://localhost:3000';
-      const apiKey = process.env.INTERNAL_API_KEY || 'development_key';
-      
-      const response = await fetch(`${frontendUrl}/api/internal/pdf/assessment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'INTERNAL_API_KEY': apiKey,
-        },
-        body: JSON.stringify({ reportData }),
-        signal: AbortSignal.timeout(15000), // 15-second timeout
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error("Vercel PDF error:", errText);
+      let pdfBuffer: Buffer;
+      try {
+        pdfBuffer = await renderPdf('assessment', reportData, { timeoutMs: 15000 });
+      } catch (err) {
+        console.error('Assessment PDF generation failed:', err);
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to generate PDF' });
       }
-
-      const pdfBuffer = await response.arrayBuffer();
       
       await ctx.db.insert(auditLogs).values({
         organizationId: orgId,
@@ -327,7 +249,7 @@ export const exportRouter = router({
         metadata: { assessmentId }
       });
       
-      const base64Pdf = Buffer.from(pdfBuffer).toString('base64');
+      const base64Pdf = pdfBuffer.toString('base64');
 
       return { 
         success: true, 

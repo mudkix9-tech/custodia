@@ -918,7 +918,10 @@ Use this EXACT JSON schema:
               dpaAiAnalysis: jsonResponse,
               dpaAnalysisStatus: 'pending_review'
             })
-            .where(eq(organizationVendors.id, input.orgVendorId));
+            .where(and(
+              eq(organizationVendors.id, input.orgVendorId),
+              eq(organizationVendors.organizationId, orgId),
+            ));
         }
  
         return jsonResponse;

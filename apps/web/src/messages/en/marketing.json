@@ -1,7 +1,137 @@
 {
   "seo": {
     "title": "Custodia — GDPR Compliance Operating System for EU Agencies",
-    "desc": "The complete GDPR compliance platform built for EU marketing, digital, and design agencies. Replace consultants and spreadsheets."
+    "desc": "The complete GDPR compliance platform built for EU marketing, digital, and design agencies. Replace consultants and spreadsheets.",
+    "pages": {
+      "home": {
+        "title": "GDPR Compliance Software for EU Agencies | Custodia",
+        "desc": "Custodia is a GDPR compliance platform for EU businesses: records of processing, DSAR automation, cookie consent, breach management and vendor risk in one system."
+      },
+      "features": {
+        "title": "GDPR Platform Features: ROPA, DSAR, CMP | Custodia",
+        "desc": "Every Custodia module in one place: records of processing, gap assessments, DSAR automation, cookie consent, breach management, DPIAs, training and vendor risk."
+      },
+      "pricing": {
+        "title": "GDPR Compliance Software Pricing — €99/month",
+        "desc": "Custodia costs €99 per month on the Professional plan, or €79 per month billed annually. Enterprise pricing on request. Start free, no credit card required."
+      },
+      "for-agencies": {
+        "title": "GDPR Compliance Software for Digital Agencies",
+        "desc": "Run GDPR for every client from one dashboard. Multi-client records of processing, consent, DSARs and vendor tracking, with white-labelled client trust portals."
+      },
+      "enterprise": {
+        "title": "Enterprise GDPR Compliance Platform | Custodia",
+        "desc": "GDPR compliance at scale: multi-entity management, SSO, EU data residency, dedicated support and audit-ready reporting for enterprise privacy teams."
+      },
+      "cookie-consent": {
+        "title": "Cookie Consent Management Platform (CMP) for GDPR",
+        "desc": "A GDPR and ePrivacy-compliant cookie consent management platform with Google Consent Mode v2, automatic tracker scanning and durable consent records."
+      },
+      "security": {
+        "title": "Security at Custodia — EU Hosting & Encryption",
+        "desc": "How Custodia protects your data: EU-only hosting in AWS Dublin, encryption in transit and at rest, granular access control and full audit logging."
+      },
+      "about": {
+        "title": "About Custodia — GDPR Compliance Software for the EU",
+        "desc": "Custodia builds GDPR compliance software for EU businesses and the agencies that serve them. Who we are, what we build and how the platform works."
+      },
+      "contact": {
+        "title": "Contact Custodia — GDPR Compliance Software",
+        "desc": "Get in touch with the Custodia team about the GDPR compliance platform, product demos, enterprise pricing or partnership enquiries."
+      },
+      "blog": {
+        "title": "GDPR Compliance Blog: Guides & Updates | Custodia",
+        "desc": "Practical GDPR guidance for agencies and EU businesses: regulatory updates, compliance deep dives and step-by-step operational guides."
+      },
+      "changelog": {
+        "title": "Custodia Changelog — Product Updates & Releases",
+        "desc": "Every feature, improvement and fix shipped to the Custodia GDPR compliance platform, with release dates and detailed notes."
+      },
+      "gdpr": {
+        "title": "GDPR Guides: Articles, Templates & Compliance How-Tos",
+        "desc": "Free, practical guides to GDPR compliance: lawful bases, DPIAs, ROPA templates, DSAR handling, breach notification and international data transfers."
+      },
+      "gdpr_lawful-bases": {
+        "title": "The 6 GDPR Lawful Bases for Processing Explained",
+        "desc": "Consent, contract, legal obligation, vital interests, public task and legitimate interests: when each lawful basis applies and how to document your choice."
+      },
+      "gdpr_legitimate-interest-vs-consent": {
+        "title": "Legitimate Interest vs Consent: Which GDPR Basis?",
+        "desc": "When to rely on legitimate interests instead of consent, how to run a legitimate interests assessment (LIA), and where regulators draw the line."
+      },
+      "gdpr_dpia-guide": {
+        "title": "DPIA Guide: How to Run a Data Protection Impact Assessment",
+        "desc": "When a DPIA is required under Article 35, the steps to complete one, how to score residual risk and when you must consult your supervisory authority."
+      },
+      "gdpr_ropa-template": {
+        "title": "ROPA Template: Article 30 Records of Processing (Free)",
+        "desc": "A free records of processing activities (ROPA) template, plus what Article 30 requires, who is exempt and how to keep your register current."
+      },
+      "gdpr_right-to-erasure": {
+        "title": "GDPR Right to Erasure (Article 17): A Practical Guide",
+        "desc": "When the right to be forgotten applies, the six grounds for erasure, valid refusals, what to do about backups, and how to respond within one month."
+      },
+      "gdpr_data-portability": {
+        "title": "GDPR Right to Data Portability (Article 20) Explained",
+        "desc": "What the right to data portability covers, when it applies, which file formats satisfy Article 20 and how to respond to a portability request."
+      },
+      "gdpr_dsar-controller-processor": {
+        "title": "DSARs for Controllers and Processors: Who Responds?",
+        "desc": "How data subject access request duties split between controller and processor, what your contracts must say, and how to handle requests you receive."
+      },
+      "gdpr_breach-timeline": {
+        "title": "GDPR Breach Notification Timeline: The 72-Hour Rule",
+        "desc": "When the GDPR's 72-hour breach notification clock starts, who you must tell, what the notification must contain and what happens if you miss it."
+      },
+      "gdpr_data-breach-response": {
+        "title": "GDPR Data Breach Response: A Step-by-Step Guide",
+        "desc": "How to respond to a personal data breach under the GDPR: containment, risk assessment, regulator notification, informing individuals and keeping evidence."
+      },
+      "gdpr_incident-response-plan": {
+        "title": "GDPR Incident Response Plan: Template & Checklist",
+        "desc": "How to build a GDPR incident response plan: roles and responsibilities, severity triage, escalation paths, regulator notification and post-incident review."
+      },
+      "gdpr_consent-mode-v2": {
+        "title": "Google Consent Mode v2: What It Is & How to Implement It",
+        "desc": "What Google Consent Mode v2 requires, how the consent signals work, and how to implement it correctly without losing your analytics and ads data."
+      },
+      "gdpr_eprivacy-and-gdpr": {
+        "title": "ePrivacy Directive vs GDPR: How the Two Interact",
+        "desc": "How the ePrivacy Directive and the GDPR interact on cookies, tracking and electronic marketing, and which rules take precedence where they overlap."
+      },
+      "gdpr_sccs-dpf-schrems": {
+        "title": "SCCs, the EU-US Data Privacy Framework & Schrems II",
+        "desc": "How to transfer personal data outside the EU lawfully: standard contractual clauses, the EU-US Data Privacy Framework and transfer impact assessments."
+      },
+      "gdpr_vendor-audit": {
+        "title": "GDPR Vendor Audit: How to Assess Your Processors",
+        "desc": "How to audit vendors and sub-processors for GDPR compliance: due diligence questions, DPA requirements, transfer checks and ongoing monitoring."
+      },
+      "gdpr_compliance-guide-agencies": {
+        "title": "GDPR Compliance Guide for Digital Agencies",
+        "desc": "A practical GDPR guide for agencies: controller and processor roles, client contracts, sub-processors, consent, and the records you are required to keep."
+      },
+      "legal_privacy": {
+        "title": "Privacy Policy | Custodia",
+        "desc": "How Custodia collects, uses, stores and protects personal data, the lawful bases we rely on, and how to exercise your rights under the GDPR."
+      },
+      "legal_terms": {
+        "title": "Terms of Service | Custodia",
+        "desc": "The terms governing use of the Custodia GDPR compliance platform, covering subscriptions, acceptable use, liability, and termination."
+      },
+      "legal_cookies": {
+        "title": "Cookie Policy | Custodia",
+        "desc": "Which cookies and similar technologies Custodia uses, what each one does, how long it lasts, and how to change your consent choices at any time."
+      },
+      "legal_dpa": {
+        "title": "Data Processing Agreement (DPA) | Custodia",
+        "desc": "Custodia's data processing agreement: the Article 28 terms we enter into with customers, covering instructions, security, sub-processors and audits."
+      },
+      "legal_subprocessors": {
+        "title": "Sub-processors | Custodia",
+        "desc": "The current list of Custodia sub-processors, what each one processes, where it is located, and how we notify customers before changes take effect."
+      }
+    }
   },
   "hero": {
     "badge": "GDPR compliance OS for EU agencies",

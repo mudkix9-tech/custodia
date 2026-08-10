@@ -30,7 +30,11 @@ export function decodeCursor(cursor: string): { sortValue: string; id: string } 
 
 export async function paginatedQuery<T>(
   table: any,
-  orgId: string | string[],
+  /**
+   * Pass `null` only for a table that has no organization_id of its own, and only
+   * once the caller has proved ownership through the parent — see lib/tenancy.ts.
+   */
+  orgId: string | string[] | null,
   params: PaginationParams,
   sortField: string = 'createdAt',
   sortOrder: 'asc' | 'desc' = 'desc',
@@ -38,9 +42,22 @@ export async function paginatedQuery<T>(
 ): Promise<PaginatedResponse<T>> {
   const limit = Math.min(params.limit || 25, 100);
 
-  let whereConditions: any[] = [
-    Array.isArray(orgId) ? inArray(table.organizationId, orgId) : eq(table.organizationId, orgId)
-  ];
+  let whereConditions: any[] = [];
+
+  if (orgId !== null) {
+    if (!table.organizationId) {
+      // Previously this produced eq(undefined, orgId) and threw somewhere less
+      // obvious. Fail here instead, naming the actual mistake.
+      throw new Error(
+        'paginatedQuery: table has no organizationId column. Prove ownership via the ' +
+        'parent (lib/tenancy.ts) and pass null.'
+      );
+    }
+    whereConditions.push(
+      Array.isArray(orgId) ? inArray(table.organizationId, orgId) : eq(table.organizationId, orgId)
+    );
+  }
+
   if (additionalWhere) whereConditions.push(...additionalWhere);
 
   if (params.after) {

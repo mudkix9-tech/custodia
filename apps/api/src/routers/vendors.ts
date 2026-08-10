@@ -5,7 +5,7 @@ import { vendorJobsQueue } from '../workers/vendors.js';
 import { db } from '../db.js';
 import { vendors, organizationVendors, users, vendorSubProcessors, vendorSubProcessorChanges, vendorIncidents, organizationVendorIncidentAlerts, vendorQuestionnaires, vendorDiscoveries, organizations, vendorAssessments, complianceGaps } from 'db';
 import { eq, and, isNull, inArray, or, sql, desc } from 'drizzle-orm';
-import { router, publicProcedure, protectedProcedure } from '../trpc.js';
+import { router, publicProcedure, protectedProcedure, requirePermission } from '../trpc.js';
 import { TRPCError } from '@trpc/server';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
 
@@ -431,7 +431,10 @@ export const vendorsRouter = router({
 
   // SUB-PROCESSORS
   subProcessors: router({
+    // Sub-processor records describe a vendor, not a tenant, so these are readable
+    // across organisations by design.
     list: protectedProcedure
+      .use(requirePermission('vendors', 'view'))
       .input(z.object({ parentVendorId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
         // Fetch sub-processors and join with vendors if linked
@@ -486,10 +489,21 @@ export const vendorsRouter = router({
       }),
 
     remove: protectedProcedure
+      .use(requirePermission('vendors', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
-        const [existing] = await ctx.db.select().from(vendorSubProcessors).where(eq(vendorSubProcessors.id, input.id));
-        if (!existing) throw new Error("Sub-processor not found");
+        // Only sub-processors of a vendor this organisation owns. Deleting a row
+        // under a global catalogue vendor would silently change every other
+        // tenant's sub-processor list and their derived risk scores.
+        const [existing] = await ctx.db.select({ row: vendorSubProcessors })
+          .from(vendorSubProcessors)
+          .innerJoin(vendors, eq(vendorSubProcessors.parentVendorId, vendors.id))
+          .where(and(
+            eq(vendorSubProcessors.id, input.id),
+            eq(vendors.organizationId, ctx.user!.orgId),
+          ))
+          .then((rows: any[]) => rows.map(r => r.row));
+        if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Sub-processor not found' });
 
         const [removed] = await ctx.db.delete(vendorSubProcessors)
           .where(eq(vendorSubProcessors.id, input.id))
@@ -499,7 +513,14 @@ export const vendorsRouter = router({
         return removed;
       }),
       
+    // NOTE: `notifiedAt` lives on the shared row, so one organisation acknowledging
+    // a sub-processor change marks it acknowledged for every organisation. That is a
+    // data-model bug (the flag belongs on a per-org join), not something an
+    // organisation filter here can fix -- scoping this to org-owned vendors would
+    // instead break the change-notification flow, which exists for global vendors.
+    // Gated on permission for now and recorded in known-concerns.md.
     markNotified: protectedProcedure
+      .use(requirePermission('vendors', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
         const [updated] = await ctx.db.update(vendorSubProcessors)
@@ -657,7 +678,12 @@ export const vendorsRouter = router({
       return updated;
     }),
 
+  // Publishing fans an alert out to every organisation subscribed to this vendor,
+  // so this is a platform-operator action sitting on a tenant-facing router. It had
+  // no permission check at all; `manage` is the narrowest gate available today.
+  // Recorded in known-concerns.md -- it wants a real platform-admin role.
   publishIncident: protectedProcedure
+    .use(requirePermission('vendors', 'manage'))
     .input(z.object({ incidentId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const [incident] = await ctx.db.select().from(vendorIncidents).where(eq(vendorIncidents.id, input.incidentId));
@@ -911,7 +937,27 @@ export const vendorsRouter = router({
       .orderBy(desc(vendorDiscoveries.lastDetectedAt))
       .limit(input.limit);
 
-      return list;
+      // Resolve each detected host against the tracker registry, so a discovery
+      // arrives with the consent category it needs already attached. Whoever
+      // triages this inbox is the person who has to decide whether the banner
+      // covers it, and that decision is unanswerable from a bare hostname.
+      const { loadTrackerRegistry, matchTrackerByDomain } = await import('../lib/trackerRegistry.js');
+      const registry = await loadTrackerRegistry(ctx.db);
+
+      return list.map((row: any) => {
+        const tracker = matchTrackerByDomain(row.discovery.detectedDomain, registry);
+        return {
+          ...row,
+          tracker: tracker
+            ? {
+                trackerKey: tracker.trackerKey,
+                provider: tracker.provider,
+                requiredCategory: tracker.requiredCategory,
+                consentModeSupported: tracker.consentModeSupported,
+              }
+            : null,
+        };
+      });
     }),
 
   getUndocumentedCount: protectedProcedure

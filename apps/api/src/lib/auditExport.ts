@@ -7,7 +7,7 @@ import { Upload } from '@aws-sdk/lib-storage';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getS3BucketForOrg, getS3ClientForRegion } from '../lib/s3.js';
-import { renderHtmlToPdf } from '../lib/browserPool.js';
+import { renderPdf } from '../lib/pdfClient.js';
 import { db } from '../db.js';
 import { eq, and, isNull, desc, inArray } from 'drizzle-orm';
 import {
@@ -20,15 +20,6 @@ import {
   clients,
 } from 'db';
 
-import { renderRopaReportHtml } from './auditTemplates/ropa.js';
-import { renderVendorRegisterHtml } from './auditTemplates/vendors.js';
-import { renderDsarRegisterHtml } from './auditTemplates/dsars.js';
-import { renderBreachRegisterHtml } from './auditTemplates/breaches.js';
-import { renderTrainingReportHtml } from './auditTemplates/training.js';
-import { renderConsentReportHtml } from './auditTemplates/consent.js';
-import { renderComplianceReportHtml } from './auditTemplates/compliance.js';
-import { renderDpiaReportHtml } from './auditTemplates/dpias.js';
-import { renderGroupExecutiveSummaryHtml } from './auditTemplates/group.js';
 import { computeGroupComplianceScores, computeGroupVendorConsistency } from './groupMetrics.js';
 
 export async function generateGroupAuditArchive(parentOrgId: string, childOrgIds: string[], requestedBy: string): Promise<string> {
@@ -52,14 +43,14 @@ export async function generateGroupAuditArchive(parentOrgId: string, childOrgIds
   const complianceScores = await computeGroupComplianceScores(db, parentOrgId, childOrgIds);
   const vendorConsistency = await computeGroupVendorConsistency(db, parentOrgId, childOrgIds);
   
-  const groupHtml = renderGroupExecutiveSummaryHtml({
+  const groupData = {
     orgName: org.name,
     logoUrl,
     generatedAt,
     complianceScores,
     vendorConsistency
-  });
-  const groupPdf = await renderHtmlToPdf(groupHtml);
+  };
+  const groupPdf = await renderPdf('group', groupData);
   archive.append(groupPdf, { name: 'Group Executive Summary.pdf' });
 
   // 2. Generate per-entity audits and bundle them into child_entities/
@@ -165,7 +156,7 @@ export async function generateAuditFile(
     .filter(a => a.clientId)
     .map(a => ({ ...a, clientName: clientMap.get(a.clientId!) || 'Unknown Client' }));
 
-  const ropaHtml = renderRopaReportHtml({
+  const ropaData = {
     orgName: org.name,
     orgLegalName: org.legalName || org.name,
     orgCountry: org.countryCode || '',
@@ -177,8 +168,8 @@ export async function generateAuditFile(
     controllerActivities,
     processorActivities,
     locale: (org as any).defaultLanguage || 'en',
-  });
-  const ropaPdf = await renderHtmlToPdf(ropaHtml);
+  };
+  const ropaPdf = await renderPdf('ropa-register', ropaData);
   archive.append(ropaPdf, { name: 'ropa/article-30-report.pdf' });
 
   const ropaCsv = await generateCsv(activities.map((a: any) => ({
@@ -216,7 +207,7 @@ export async function generateAuditFile(
     lastReviewedAt: ov.lastReviewedAt,
   }));
 
-  const vendorHtml = renderVendorRegisterHtml({
+  const vendorData = {
     orgName: org.name,
     logoUrl,
     generatedAt,
@@ -228,8 +219,8 @@ export async function generateAuditFile(
       dpasMissing: vendorData.filter(v => v.dpaStatus === 'not_started').length,
       highRisk: vendorData.filter(v => v.riskLevel === 'high' || v.riskLevel === 'critical').length,
     },
-  });
-  const vendorPdf = await renderHtmlToPdf(vendorHtml);
+  };
+  const vendorPdf = await renderPdf('vendors', vendorData);
   archive.append(vendorPdf, { name: 'vendors/vendor-register.pdf' });
 
   const vendorCsv = await generateCsv(vendorData.map(v => ({
@@ -342,7 +333,7 @@ export async function generateAuditFile(
       .filter((a: any) => linkedActivityIds.includes(a.id))
       .map((a: any) => a.name);
 
-    const dpiaHtml = renderDpiaReportHtml({
+    const dpiaData = {
       orgName: org.name,
       logoUrl,
       generatedAt,
@@ -371,8 +362,8 @@ export async function generateAuditFile(
         })),
         linkedActivities: linkedNames,
       },
-    });
-    const dpiaPdf = await renderHtmlToPdf(dpiaHtml);
+    };
+    const dpiaPdf = await renderPdf('dpia', dpiaData);
     const safeName = dpia.title.replace(/[^a-zA-Z0-9]/g, '_');
     archive.append(dpiaPdf, { name: `dpias/${safeName}.pdf` });
   }
@@ -415,7 +406,7 @@ export async function generateAuditFile(
   });
 
   const completedDsars = dsarData.filter(d => d.completedAt);
-  const dsarHtml = renderDsarRegisterHtml({
+  const dsarData = {
     orgName: org.name,
     logoUrl,
     generatedAt,
@@ -432,8 +423,8 @@ export async function generateAuditFile(
         ? Math.round((completedDsars.filter(d => d.withinDeadline).length / completedDsars.length) * 100)
         : 100,
     },
-  });
-  const dsarPdf = await renderHtmlToPdf(dsarHtml);
+  };
+  const dsarPdf = await renderPdf('dsar', dsarData);
   archive.append(dsarPdf, { name: 'dsars/dsar-register.pdf' });
 
   const dsarCsv = await generateCsv(dsarData.map(d => ({
@@ -471,7 +462,7 @@ export async function generateAuditFile(
   }));
 
   const notifiableBreaches = breachData.filter(b => b.notifyAuthority);
-  const breachHtml = renderBreachRegisterHtml({
+  const breachData = {
     orgName: org.name,
     logoUrl,
     generatedAt,
@@ -486,8 +477,8 @@ export async function generateAuditFile(
       vendorOriginated: breachData.filter(b => b.vendorOriginated).length,
       averageResolutionDays: 0, // calculate if needed
     },
-  });
-  const breachPdf = await renderHtmlToPdf(breachHtml);
+  };
+  const breachPdf = await renderPdf('breaches', breachData);
   archive.append(breachPdf, { name: 'breaches/breach-register.pdf' });
 
   const breachCsv = await generateCsv(breachData.map(b => ({
@@ -528,7 +519,7 @@ export async function generateAuditFile(
   const userMap = new Map(orgUsers.map((u: any) => [u.id, { name: u.name, email: u.email }]));
   const moduleMap = new Map(allModules.map((m: any) => [m.id, m]));
 
-  const trainingHtml = renderTrainingReportHtml({
+  const trainingData = {
     orgName: org.name,
     logoUrl,
     generatedAt,
@@ -566,8 +557,8 @@ export async function generateAuditFile(
       totalCompletions: completions.filter(c => c.status === 'passed').length,
       overdueCount: completions.filter(c => c.expiresAt && new Date(c.expiresAt) < new Date() && c.status !== 'passed').length,
     },
-  });
-  const trainingPdf = await renderHtmlToPdf(trainingHtml);
+  };
+  const trainingPdf = await renderPdf('training-report', trainingData);
   archive.append(trainingPdf, { name: 'training/training-report.pdf' });
 
   const trainingCsv = await generateCsv(completions.map((c: any) => {
@@ -606,7 +597,7 @@ export async function generateAuditFile(
     };
   }));
 
-  const consentHtml = renderConsentReportHtml({
+  const consentData = {
     orgName: org.name,
     logoUrl,
     generatedAt,
@@ -619,8 +610,8 @@ export async function generateAuditFile(
       totalPageviews: domainsWithCookies.reduce((s, d) => s + d.totalPageviews30d, 0),
       totalCookiesTracked: domainsWithCookies.reduce((s, d) => s + d.cookieCount, 0),
     },
-  });
-  const consentPdf = await renderHtmlToPdf(consentHtml);
+  };
+  const consentPdf = await renderPdf('consent', consentData);
   archive.append(consentPdf, { name: 'consent/consent-analytics.pdf' });
 
   const consentCsv = await generateCsv(domainsWithCookies.map(d => ({
@@ -653,7 +644,7 @@ export async function generateAuditFile(
     ),
   });
 
-  const complianceHtml = renderComplianceReportHtml({
+  const complianceData = {
     orgName: org.name,
     logoUrl,
     generatedAt,
@@ -675,8 +666,8 @@ export async function generateAuditFile(
       highGaps: activeGaps.filter(g => g.severity === 'high').length,
       mediumGaps: activeGaps.filter(g => g.severity === 'medium').length,
     },
-  });
-  const compliancePdf = await renderHtmlToPdf(complianceHtml);
+  };
+  const compliancePdf = await renderPdf('compliance', complianceData);
   archive.append(compliancePdf, { name: 'compliance/compliance-report.pdf' });
 
   const scoreCsv = await generateCsv(scoreHistory.map(s => ({

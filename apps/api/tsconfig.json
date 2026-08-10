@@ -10,7 +10,10 @@
     "moduleResolution": "Bundler",
     "target": "esnext",
     "esModuleInterop": true,
-    "types": [],
+    // @types/jest is a devDependency and *.test.ts relies on its globals; with an
+    // empty array TypeScript pulls in no @types at all and every describe/it/expect
+    // in the suite is an error.
+    "types": ["jest"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],

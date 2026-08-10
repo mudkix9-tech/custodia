@@ -4,13 +4,21 @@ import { join } from 'path';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: Request) {
   const fontSemiBold = await readFile(
     join(process.cwd(), 'src/assets/fonts/Geist-SemiBold.ttf')
   );
   const fontRegular = await readFile(
     join(process.cwd(), 'src/assets/fonts/Geist-Regular.ttf')
   );
+
+  // Each marketing page passes its own title so social cards differ per page
+  // rather than 36 pages sharing one image. Capped because the layout has room
+  // for roughly two lines at 56px before it collides with the subheadline.
+  const requested = new URL(request.url).searchParams.get('title')?.trim();
+  const headline =
+    requested && requested.length <= 90 ? requested : 'GDPR Compliance OS';
+  const headlineSize = headline.length > 55 ? '44px' : '56px';
 
   return new ImageResponse(
     (
@@ -57,8 +65,8 @@ export async function GET() {
         <div style={{ width: '64px', height: '3px', backgroundColor: '#C9A227', marginBottom: '32px', borderRadius: '2px' }} />
 
         {/* Headline */}
-        <h1 style={{ fontFamily: 'Geist', fontWeight: 600, fontSize: '56px', color: '#F4F5F6', lineHeight: 1.15, margin: '0 0 20px 0', letterSpacing: '-0.03em', maxWidth: '900px' }}>
-          GDPR Compliance OS
+        <h1 style={{ fontFamily: 'Geist', fontWeight: 600, fontSize: headlineSize, color: '#F4F5F6', lineHeight: 1.15, margin: '0 0 20px 0', letterSpacing: '-0.03em', maxWidth: '900px' }}>
+          {headline}
         </h1>
 
         {/* Subheadline */}
@@ -98,6 +106,12 @@ export async function GET() {
     {
       width: 1200,
       height: 630,
+      // Rendering this costs ~2s, and crawlers fetch it synchronously while
+      // unfurling a link -- long enough for some to give up. The output is a
+      // pure function of `title`, so it caches indefinitely at the edge.
+      headers: {
+        'Cache-Control': 'public, immutable, no-transform, max-age=31536000',
+      },
       fonts: [
         {
           name: 'Geist',

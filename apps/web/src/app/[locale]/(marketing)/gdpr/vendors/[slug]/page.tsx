@@ -4,19 +4,32 @@ import { Metadata } from 'next';
 import { ShieldCheck, Server, AlertTriangle, ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
 import { buildMarketingMetadata } from '../../../seo';
 
+function vendorNameFromSlug(slug: string) {
+  return slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ');
+}
+
 export async function generateMetadata({
   params
 }: {
   params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
   const { locale, slug } = await params;
-  return buildMarketingMetadata({ locale, path: `/gdpr/vendors/${slug}` });
+  const name = vendorNameFromSlug(slug);
+
+  // A slug-derived path can't resolve to a static message key, so this route
+  // passes its title and description explicitly.
+  return buildMarketingMetadata({
+    locale,
+    path: `/gdpr/vendors/${slug}`,
+    title: `Is ${name} GDPR Compliant? DPA, Transfers & Sub-processors`,
+    description: `A GDPR assessment of ${name}: whether a data processing agreement is available, where data is hosted, which transfer mechanism applies and what to check before you use it.`,
+  });
 }
 
 export default async function VendorGDPRPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
   const vendorSlug = resolvedParams.slug;
-  const vendorName = vendorSlug.charAt(0).toUpperCase() + vendorSlug.slice(1).replace(/-/g, ' ');
+  const vendorName = vendorNameFromSlug(vendorSlug);
 
   // Mock data for the template
   const vendorData = {

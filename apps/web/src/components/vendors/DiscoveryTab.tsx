@@ -10,6 +10,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+// Mirrors the category palette in the consent Coverage panel, so the same category
+// reads the same way in both places.
+const CONSENT_CATEGORY_STYLES: Record<string, string> = {
+  necessary: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+  functional: 'bg-sky-500/10 text-sky-300 border-sky-500/30',
+  analytics: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30',
+  marketing: 'bg-rose-500/10 text-rose-300 border-rose-500/30',
+  default: 'bg-white/5 text-[#9BA1A6] border-white/10',
+};
+
 export function DiscoveryTab() {
   const utils = trpc.useUtils();
   const [subTab, setSubTab] = useState<'inbox' | 'archive'>('inbox');
@@ -173,7 +183,7 @@ export function DiscoveryTab() {
           </div>
         ) : (
           <div className="divide-y divide-ink-900/5">
-            {displayDiscoveries.map(({ discovery, matchedVendor }: any) => {
+            {displayDiscoveries.map(({ discovery, matchedVendor, tracker }: any) => {
               // Deduce confidence matching if undocumented
               let matchBadge = null;
               if (discovery.status === 'undocumented') {
@@ -234,6 +244,23 @@ export function DiscoveryTab() {
                         </span>
                         <span className="text-ink-200 text-xs">|</span>
                         {matchBadge}
+                        {/* The consent category this host needs, resolved from the
+                            tracker registry. Whoever triages this inbox has to
+                            decide whether the banner covers it, and a bare
+                            hostname does not answer that. */}
+                        {tracker?.requiredCategory && (
+                          <>
+                            <span className="text-ink-200 text-xs">|</span>
+                            <span
+                              className={`inline-flex items-center gap-1 border text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                CONSENT_CATEGORY_STYLES[tracker.requiredCategory] ?? CONSENT_CATEGORY_STYLES.default
+                              }`}
+                              title={`${tracker.provider} requires consent for "${tracker.requiredCategory}" before it may run.`}
+                            >
+                              Needs {tracker.requiredCategory} consent
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

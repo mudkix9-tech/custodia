@@ -5,18 +5,19 @@ import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { ArrowLeft, Code, Settings, Cookie, BarChart3, Globe, Copy, Check, Search } from 'lucide-react';
+import { ArrowLeft, Code, Settings, Cookie, BarChart3, Globe, Copy, Check, Search, ShieldAlert } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CoveragePanel } from '@/components/consent/CoveragePanel';
 
 export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as any) || 'install';
   
-  const [activeTab, setActiveTab] = useState<'install' | 'customize' | 'cookies' | 'analytics'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'install' | 'customize' | 'cookies' | 'coverage' | 'analytics'>(initialTab);
   const [copied, setCopied] = useState(false);
   
   const utils = trpc.useContext();
@@ -82,6 +83,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
           { id: 'install', icon: Code, label: 'Installation' },
           { id: 'customize', icon: Settings, label: 'Customization' },
           { id: 'cookies', icon: Cookie, label: 'Cookies' },
+          { id: 'coverage', icon: ShieldAlert, label: 'Coverage' },
           { id: 'analytics', icon: BarChart3, label: 'Analytics' },
         ].map(tab => (
           <Button
@@ -256,6 +258,9 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
             </div>
           </div>
         )}
+
+        {/* COVERAGE TAB */}
+        {activeTab === 'coverage' && <CoveragePanel domainId={domainId} />}
 
         {/* ANALYTICS TAB */}
         {activeTab === 'analytics' && (

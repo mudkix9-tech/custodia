@@ -1,17 +1,21 @@
 import { db } from '../db.js';
-import { processingActivities, organizationVendors, privacyPolicies, dpias, dsarRequests, breaches, trainingModules, trainingCompletions, processingTransfers, complianceReports, complianceGaps } from 'db';
+import { processingActivities, organizationVendors, privacyPolicies, dpias, dsarRequests, breaches, trainingModules, trainingCompletions, processingTransfers, complianceReports, complianceGaps, consentDomains, consentFindings } from 'db';
 import { and, eq, isNull, inArray } from 'drizzle-orm';
 import { users } from 'db';
 
+// The consent pillar was added after the fact, so its 5 points are taken from the
+// four heaviest existing pillars rather than from any single one. Scores move
+// slightly for every organisation on the first run after this change.
 const PILLAR_WEIGHTS = {
-  ropa: 0.25,
-  vendors: 0.20,
-  dpia: 0.15,
+  ropa: 0.23,
+  vendors: 0.19,
+  dpia: 0.14,
   policies: 0.10,
   dsar: 0.10,
   breach: 0.05,
-  training: 0.10,
+  training: 0.09,
   transfers: 0.05,
+  consent: 0.05,
 };
 
 export async function calculateComplianceScore(orgId: string) {
@@ -29,7 +33,7 @@ export async function calculateComplianceScore(orgId: string) {
     }
   });
 
-  const [ropa, vendors, dpia, policies, dsar, breach, training, transfers] = await Promise.all([
+  const [ropa, vendors, dpia, policies, dsar, breach, training, transfers, consent] = await Promise.all([
     calculateRopaScore(activities),
     calculateVendorScore(orgId),
     calculateDpiaScore(orgId, activities),
@@ -38,6 +42,7 @@ export async function calculateComplianceScore(orgId: string) {
     calculateBreachScore(orgId),
     calculateTrainingScore(orgId),
     calculateTransferScore(activities),
+    calculateConsentScore(orgId),
   ]);
 
   const total = Math.round(
@@ -48,13 +53,62 @@ export async function calculateComplianceScore(orgId: string) {
     dsar * PILLAR_WEIGHTS.dsar +
     breach * PILLAR_WEIGHTS.breach +
     training * PILLAR_WEIGHTS.training +
-    transfers * PILLAR_WEIGHTS.transfers
+    transfers * PILLAR_WEIGHTS.transfers +
+    consent * PILLAR_WEIGHTS.consent
   );
 
   return {
     total,
-    breakdown: { ropa, vendors, dpia, policies, dsar, breach, training, transfers },
+    breakdown: { ropa, vendors, dpia, policies, dsar, breach, training, transfers, consent },
   };
+}
+
+/**
+ * Consent pillar: open critical and high findings from the tracker reconciliation
+ * scan (apps/api/src/workers/consentScan.ts).
+ *
+ * Only critical and high count. Medium and low are real, but they describe
+ * documentation gaps rather than trackers running without a lawful basis, and
+ * letting them move a headline score would make the number noisy enough to ignore.
+ *
+ * Findings below 0.7 confidence are excluded for the same reason the UI refuses to
+ * present them as definitive: they come from a scan that could not reliably reach a
+ * consented state, so they must not silently cost an organisation points.
+ *
+ * An organisation with no consent domains scores 100, matching how every other
+ * pillar here treats "nothing to assess". Note this also means a domain that has
+ * never been scanned scores 100 — absence of findings is not evidence of
+ * compliance, and the Coverage panel is where that distinction is visible.
+ */
+const CONSENT_FINDING_DEDUCTIONS: Record<string, number> = {
+  critical: 25,
+  high: 10,
+};
+
+async function calculateConsentScore(orgId: string) {
+  const domains = await db.query.consentDomains.findMany({
+    where: eq(consentDomains.organizationId, orgId),
+    columns: { id: true },
+  });
+
+  if (domains.length === 0) return 100;
+
+  const openFindings = await db.query.consentFindings.findMany({
+    where: and(
+      eq(consentFindings.organizationId, orgId),
+      eq(consentFindings.state, 'open'),
+      inArray(consentFindings.severity, ['critical', 'high']),
+    ),
+    columns: { severity: true, confidence: true },
+  });
+
+  let score = 100;
+  for (const finding of openFindings) {
+    if (finding.confidence !== null && Number(finding.confidence) < 0.7) continue;
+    score -= CONSENT_FINDING_DEDUCTIONS[finding.severity] ?? 0;
+  }
+
+  return Math.max(0, score);
 }
 
 async function calculateRopaScore(activities: any[]) {

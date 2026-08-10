@@ -2,7 +2,18 @@ import React from 'react';
 import Link from 'next/link';
 import { Metadata } from 'next';
 import { ArrowRight, Check, X } from 'lucide-react';
+import { notFound } from 'next/navigation';
 import { buildMarketingMetadata } from '../../seo';
+import { COMPETITOR_NAMES, COMPETITOR_SLUGS } from '../competitors';
+
+// Only the five competitors we have actually written a comparison for get a
+// page; `dynamicParams = false` turns every other slug into a 404 instead of a
+// thin auto-generated page.
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return COMPETITOR_SLUGS.map((competitor) => ({ competitor }));
+}
 
 export async function generateMetadata({
   params
@@ -10,12 +21,25 @@ export async function generateMetadata({
   params: Promise<{ locale: string; competitor: string }>;
 }): Promise<Metadata> {
   const { locale, competitor } = await params;
-  return buildMarketingMetadata({ locale, path: `/compare/${competitor}` });
+  const name = COMPETITOR_NAMES[competitor];
+
+  // A slug-derived path can't resolve to a static message key, so this route
+  // passes its title and description explicitly.
+  return buildMarketingMetadata({
+    locale,
+    path: `/compare/${competitor}`,
+    title: `Custodia vs ${name}: GDPR Platform Comparison`,
+    description: `A feature-by-feature comparison of Custodia and ${name} for GDPR compliance: records of processing, DSAR automation, cookie consent, vendor tracking and pricing.`,
+  });
 }
 
 export default async function CompetitorComparison({ params }: { params: Promise<{ competitor: string }> }) {
   const resolvedParams = await params;
-  const competitorName = resolvedParams.competitor.charAt(0).toUpperCase() + resolvedParams.competitor.slice(1);
+  const competitorName = COMPETITOR_NAMES[resolvedParams.competitor];
+
+  if (!competitorName) {
+    notFound();
+  }
 
   return (
     <div className="pt-24 pb-32">
@@ -93,15 +117,4 @@ export default async function CompetitorComparison({ params }: { params: Promise
 
     </div>
   );
-}
-
-// Generate static params for the 5 specified competitors
-export async function generateStaticParams() {
-  return [
-    { competitor: 'iubenda' },
-    { competitor: 'onetrust' },
-    { competitor: 'cookieyes' },
-    { competitor: 'usercentrics' },
-    { competitor: 'cookiebot' },
-  ];
 }

@@ -37,7 +37,10 @@ export const integrationsRouter = router({
     .mutation(async ({ input, ctx }) => {
       const [integration] = await ctx.db.select()
         .from(organizationIntegrations)
-        .where(eq(organizationIntegrations.id, input.id));
+        .where(and(
+          eq(organizationIntegrations.id, input.id),
+          eq(organizationIntegrations.organizationId, ctx.user!.orgId),
+        ));
 
       if (!integration) {
         throw new Error('Integration not found');
@@ -54,7 +57,10 @@ export const integrationsRouter = router({
           refreshToken: 'REVOKED',
           updatedAt: new Date()
         })
-        .where(eq(organizationIntegrations.id, input.id));
+        .where(and(
+          eq(organizationIntegrations.id, input.id),
+          eq(organizationIntegrations.organizationId, ctx.user!.orgId),
+        ));
 
       // 3. Log in audit trail (mocked)
       console.log(`Integration ${integration.provider} disconnected`);

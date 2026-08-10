@@ -6,8 +6,10 @@ import { eq, and, desc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { Shield } from 'lucide-react';
 
-export default async function PublicPrivacyPolicy({ params }: { params: { org_slug: string } }) {
-  const [org] = await db.select().from(organizations).where(eq(organizations.slug, params.org_slug));
+export default async function PublicPrivacyPolicy({ params }: { params: Promise<{ org_slug: string }> }) {
+  const { org_slug } = await params;
+
+  const [org] = await db.select().from(organizations).where(eq(organizations.slug, org_slug));
   
   if (!org) {
     notFound();

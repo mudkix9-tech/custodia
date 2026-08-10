@@ -1,9 +1,11 @@
 import { DsarWorkspace } from '@/components/dsar/DsarWorkspace';
 
-export default function DsarWorkspacePage({ params }: { params: { id: string } }) {
+export default async function DsarWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
   return (
     <div className="p-8">
-      <DsarWorkspace dsarId={params.id} />
+      <DsarWorkspace dsarId={id} />
     </div>
   );
 }

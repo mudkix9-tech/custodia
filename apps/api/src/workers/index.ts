@@ -20,9 +20,10 @@ export * from './rateLimitCleanup.js';
 export * from './generateLeadPdf.js';
 export * from './generateAssessmentPdf.js';
 export * from './trialExpiry.js';
+export * from './consentScan.js';
 import { createQueue } from '../lib/queue.js';
 
-import { getBoss } from '../lib/queue.js';
+import { getBoss, wrapJobPayload } from '../lib/queue.js';
 
 export const gapScannerQueue = createQueue('gap-scanner');
 export const complianceScoreQueue = createQueue('compliance-score');
@@ -33,15 +34,22 @@ export const trialExpiryQueue = createQueue('trial-expiry');
 export async function scheduleGlobalJobs() {
   const boss = await getBoss();
 
-  await boss.schedule('gap-scanner', '0 2 * * *', { name: 'daily-scan', data: {} });
-  await boss.schedule('compliance-score', '0 3 * * *', { name: 'daily-calculation', data: {} });
-  await boss.schedule('consent-rollup', '0 1 * * *', { name: 'daily-rollup', data: {} });
-  await boss.schedule('consent-rollup-drift-check', '0 4 * * 0', { name: 'weekly-drift-check', data: {} });
-  await boss.schedule('impact-assessment', '*/15 * * * *', { name: 'impact-assessment-dispatcher', data: {} });
-  await boss.schedule('trial-expiry', '0 8 * * *', { name: 'daily-trial-expiry', data: {} });
-  
+  await boss.schedule('gap-scanner', '0 2 * * *', wrapJobPayload('daily-scan', {}));
+  await boss.schedule('compliance-score', '0 3 * * *', wrapJobPayload('daily-calculation', {}));
+  await boss.schedule('consent-rollup', '0 1 * * *', wrapJobPayload('daily-rollup', {}));
+  await boss.schedule('consent-rollup-drift-check', '0 4 * * 0', wrapJobPayload('weekly-drift-check', {}));
+  await boss.schedule('impact-assessment', '*/15 * * * *', wrapJobPayload('impact-assessment-dispatcher', {}));
+  await boss.schedule('trial-expiry', '0 8 * * *', wrapJobPayload('daily-trial-expiry', {}));
+
   // Rate limit cleanup every hour
-  await boss.schedule('maintenance-jobs', '0 * * * *', { name: 'rate-limit-cleanup', data: {} });
+  await boss.schedule('maintenance-jobs', '0 * * * *', wrapJobPayload('rate-limit-cleanup', {}));
+
+  // Fans out per-org DPIA mitigation reminder checks. Previously registered on the
+  // 'dpia-reminders' queue alongside the checker and never scheduled at all.
+  await boss.schedule('dpia-dispatcher', '0 7 * * *', wrapJobPayload('dpia-dispatcher', {}));
+
+  // Weekly consent/tracker reconciliation dispatch.
+  await boss.schedule('consent-scan', '0 5 * * 1', wrapJobPayload('weekly-reconcile-dispatch', {}));
 }
 
 

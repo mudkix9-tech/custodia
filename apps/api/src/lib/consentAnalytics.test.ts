@@ -149,7 +149,7 @@ describe('consentAnalytics - getGranularCategoryDistribution', () => {
         interactionType: 'customized',
         categoriesAccepted: ['analytics', 'marketing'], // order 1
         categoriesRejected: ['functional'],
-        country: 'FR',
+        countryCode: 'FR',
         givenAt: new Date(),
       },
       {
@@ -160,7 +160,7 @@ describe('consentAnalytics - getGranularCategoryDistribution', () => {
         interactionType: 'customized',
         categoriesAccepted: ['marketing', 'analytics'], // order 2 (reversed)
         categoriesRejected: ['functional'],
-        country: 'FR',
+        countryCode: 'FR',
         givenAt: new Date(),
       }
     ]);
@@ -170,6 +170,6 @@ describe('consentAnalytics - getGranularCategoryDistribution', () => {
     // Should be ONE combined bucket, not two
     const combos = result.filter((r: any) => r.combination === 'analytics,marketing');
     expect(combos).toHaveLength(1);
-    expect(combos[0].count).toBe(2);
+    expect(combos[0]!.count).toBe(2);
   });
 });

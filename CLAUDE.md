@@ -1,0 +1,220 @@
+# Custodia — Working Notes
+
+GDPR compliance platform. npm-workspaces monorepo: `apps/api` (Fastify + tRPC),
+`apps/web` (Next.js), `packages/db` (Drizzle schema, imported everywhere as `db`).
+
+This file records the things that are **not** obvious from reading the code and that
+have cost time before. Product context lives in `custodia-complete-memory(1).md`.
+Open defects and risks — including a tenant-isolation gap affecting 22 procedures —
+are in `known-concerns.md`; read it before adding a tRPC procedure.
+
+---
+
+## Verification — what actually gates anything
+
+Run everything with:
+
+```bash
+npm run check     # typecheck both workspaces + tenancy guard + params guard + evaluator fixtures
+```
+
+**Both workspaces are at 0 type errors. Keep them there.** (`apps/api` carried a
+37-error "baseline" until August 2026; all 37 were in test files, caused by `"types": []`
+in `tsconfig.json` suppressing the `@types/jest` that was already installed. Two were real
+bugs hiding in the noise.)
+
+**There is no root `tsconfig.json`,** so a bare `tsc --noEmit` at the root checks nothing
+and exits 0. Anything treating that as CI is testing nothing — use `npm run check`.
+
+The two guards exist because the only two bugs that reached production-shaped code in this
+repo were both invisible to `tsc`: see the multi-tenancy and `apps/web` sections below.
+
+**`npx eslint` cannot run at all.** `apps/web/eslint.config.mjs` throws
+`TypeError: tailwind.configs.flat/recommended is not iterable` on ESLint 9.39.4.
+Pre-existing plugin incompatibility. **No code in this repo has been lint-checked**, so
+`tsc` is the only static gate — and see the Next.js note below for what it misses.
+
+**`apps/api` has three test styles and only one of them runs.** Standalone `tsx`
+scripts execute; the vitest files do not (vitest is installed in `apps/web` only) and
+`billing.test.ts` needs jest, which is not installed at all. They all typecheck, which is
+what makes it easy to believe the suite exists. Write new tests in the standalone style:
+
+```bash
+npm run test:fixtures --workspace=apps/api    # pure, no env needed
+npm run test:scoring  --workspace=apps/api    # needs DATABASE_URL set (never dialled)
+```
+
+Standalone tests mock `db.query.*` and restore in a `finally`. `NODE_ENV=test` makes
+`createQueue`/`createWorker` no-ops and `getBoss()` return null. `DATABASE_URL` must be
+*set* for anything importing `db.js` (it throws on import) but is never connected to if
+every query is mocked.
+
+**Consequence for new code in `apps/api`:** if you add a function that reads the
+database, use `db.query.<table>.findMany()` rather than `db.select().from()` wherever the
+surrounding file already does. `db.query` is what the existing tests can mock; a
+`db.select()` call silently escapes the mock and tries to open a real connection.
+
+---
+
+## Multi-tenancy — the sharpest edge in this codebase
+
+`requirePermission('resource', 'action')` checks **what the user may do**. It does
+**not** scope anything to an organisation, and neither does `checkOrgContext`, which only
+asserts the user has an org id. Org filtering is manual, per query, in every procedure.
+
+An audit in August 2026 found **47 procedures** with no ownership check — including ones
+that let any authenticated user rewrite and approve another organisation's regulator
+breach notification. All are fixed. Do not add the 48th.
+
+For a table that carries `organization_id`:
+
+```ts
+const [row] = await ctx.db.select().from(consentDomains)
+  .where(and(
+    eq(consentDomains.id, input.id),
+    eq(consentDomains.organizationId, ctx.user!.orgId),
+  ));
+```
+
+For a child table that does not — most of them — use `src/lib/tenancy.ts`, which walks
+the chain to whatever holds `organization_id`:
+
+```ts
+await assertOwned(ctx.db, {
+  table: dpiaMeasures,
+  id: input.id,
+  orgId: ctx.user!.orgId,
+  label: 'Measure',
+  via: [
+    { table: dpiaRisks, on: eq(dpiaMeasures.dpiaRiskId, dpiaRisks.id) },
+    { table: dpias, on: eq(dpiaRisks.dpiaId, dpias.id) },
+  ],
+});
+```
+
+It throws `NOT_FOUND`, never `FORBIDDEN` — "this exists but is not yours" confirms the id
+is real, which is the one thing a caller probing other tenants' ids does not already know.
+
+This applies to client-supplied **foreign** keys too (`input.breachId`, `input.dsarId`),
+not just `input.id`. That distinction is exactly what the first version of the audit
+missed, which is why it reported 22 instead of 47.
+
+`npm run check:tenancy --workspace=apps/api` fails on any procedure that filters on a
+client-supplied id without proving ownership. Genuine cross-tenant reads (shared vendor
+and regulatory catalogues, user-scoped rows, the public assessment flow) go in the
+`ALLOWED` map in that script **with a reason**; a stale entry fails too.
+
+`ctx.user.orgId` is already the *effective* org after impersonation (`trpc.ts` resolves
+`effectiveOrgId`), so all of this is safe for admin/support paths.
+
+`paginatedQuery(table, orgId, …)` filters on `table.organizationId`. Pass `null` — never
+an org id — for a table that has no such column, and prove ownership through the parent
+first. It throws a named error rather than building `eq(undefined, …)`, which is what two
+DSAR endpoints were silently doing.
+
+## Background jobs (pg-boss)
+
+Not BullMQ. `future-roadmap.md` still says BullMQ throughout and is stale.
+
+**Job names travel inside the payload.** pg-boss has no per-job name — `boss.send(queue,
+data)` leaves `job.name` set to the *queue* name. `apps/api/src/lib/queue.ts` wraps an
+envelope so workers can branch on a real job name. Three shapes are accepted:
+
+| Shape | Written by |
+|---|---|
+| `{ __job, __v, data }` | `createQueue().add(jobName, data, opts)` |
+| `{ name, data }` | `boss.schedule()` via `wrapJobPayload()` |
+| anything else | treated as a raw payload; queue name stands in as job name |
+
+Use `createQueue(q).add(jobName, data, opts)` to enqueue and `wrapJobPayload(jobName, {})`
+inside `scheduleGlobalJobs()`. Never call `boss.send()` directly — the envelope is the
+only reason multiplexed workers route correctly.
+
+`translateJobOptions()` converts BullMQ-shaped options to pg-boss ones: `delay` (ms) →
+`startAfter` (s), `attempts` → `retryLimit` (minus one), `backoff` → `retryDelay` /
+`retryBackoff`. Pass pg-boss names (`singletonKey`, `startAfter`, `retryLimit`) directly
+and they go through untouched.
+
+**Two services, and only one runs jobs.** `WORKER_ROLE=web` makes `createWorker()` a
+no-op, which is how `custodia-api` avoids running Puppeteer. `custodia-workers`
+(`npm run start:workers` → `apps/api/src/workers/main.ts`) leaves it unset and does all
+the work. Importing the worker barrel is what registers workers — that is a side effect
+of `createWorker()` at module scope, so importing a worker module from a router (to get
+its queue handle) is safe but not free of that coupling.
+
+**`WORKERS_ENABLED_JOBS` is an allowlist that inverts the default.** Unset: everything
+runs except the 19 entries in `DORMANT_JOBS`. Set: *only* what is listed runs and
+`DORMANT_JOBS` is ignored — so enabling one job disables everything else, silently
+(`[queue] Skipping disabled job …`). Full detail in `consent-reconciliation-ops.md` §3.
+
+New recurring job checklist: add the worker, export it from `workers/index.ts`, add a
+`boss.schedule()` line with `wrapJobPayload`, and decide whether it belongs in
+`DORMANT_JOBS` (it does if it emails or notifies customers).
+
+---
+
+## Database
+
+Schema is one file: `packages/db/src/schema.ts`. The package is imported as `db`
+(`import { consentFindings } from 'db'`) and exports tables, relations, and the Drizzle
+instance's schema in one namespace.
+
+```bash
+npm run generate --workspace=packages/db     # drizzle-kit generate → drizzle/NNNN_*.sql
+npm run migrate  --workspace=packages/db     # apply
+npm run check:schema --workspace=packages/db # fails if schema.ts and drizzle/ have drifted
+```
+
+Edit `schema.ts` and generate. Never hand-write a migration file — `check:schema` will
+fail on the drift.
+
+**Unique constraints carry logic here, not just integrity.** The pattern used by
+`consent_findings` and specced for `integration_signals`: a `UNIQUE` on the natural key
+means an upsert bumps `last_seen_at`, and anything a completed run did **not** touch
+flips to `resolved`. That gives idempotent re-runs, disappearance detection, and dated
+remediation evidence with no extra code. When a column is part of such a key it must be
+`NOT NULL` — Postgres treats NULLs in a unique constraint as distinct, which would let
+rows duplicate on every run (hence `observed_host` defaulting to `''`).
+
+---
+
+## `apps/web`
+
+**Read `apps/web/AGENTS.md` first.** Next 16 differs from training data; the bundled docs
+at `node_modules/next/dist/docs/` are the authority.
+
+The one that bites hardest: **synchronous `params` access was removed in Next 16.** A
+page typed `{ params: { id: string } }` reads `params.id` as `undefined` at runtime. The
+page renders, the data query gets no id, and **`tsc` does not catch it** — the page
+declares the sync type itself, so there is nothing to disagree with. Correct form:
+
+```tsx
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  ...
+}
+```
+
+`npm run check:params --workspace=apps/web` fails on any route file that declares
+`params` or `searchParams` as a plain object. It skips client components, which correctly
+receive an already-awaited object as a prop.
+
+**Styling** is Tailwind v4 with hard-coded hex for the dark surfaces — `#0D0F11` panel,
+`#08090A` recessed, `#F4F5F6` / `#9BA1A6` / `#6E747A` text, `#C9A227` accent,
+`border-white/10`, `rounded-2xl`, `shadow-panel-elevated`. Match the neighbouring file
+rather than introducing theme tokens.
+
+**i18n** is `next-intl` with per-namespace JSON in `src/messages/{en,de,fr}/`. Adding a
+key means adding it to all three. Missing keys render as the raw key path.
+
+Several older client components carry `// @ts-nocheck`. Do not add it to new files — the
+web workspace is at 0 errors and new code should be genuinely typechecked.
+
+---
+
+## Style
+
+Match the file you are in. Comments explain *why* a non-obvious choice was made, not what
+the line does; the existing code is fairly heavily commented in that register and thin,
+uncommented additions read as foreign. British spelling in prose and comments
+("organisation", "normalise", "behaviour").

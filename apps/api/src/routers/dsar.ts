@@ -1,4 +1,5 @@
 import { paginatedQuery } from '../utils/pagination.js';
+import { assertOwned, assertParentOwned } from '../lib/tenancy.js';
 import { z } from 'zod';
 import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { router, publicProcedure, protectedProcedure, requirePermission, verifyGroupScopeAndLog } from '../trpc.js';
@@ -160,9 +161,11 @@ const tasksRouter = router({
     .input(paginationInput.extend({ dsarId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      // dsar_tasks has no organization_id; the request it belongs to does.
+      await assertParentOwned(ctx.db, dsarRequests, input.dsarId, ctx.user!.orgId, 'Request');
       return paginatedQuery(
         dsarTasks,
-        ctx.user!.orgId,
+        null,
         { limit: input.limit, after: input.cursor || undefined },
         'createdAt',
         'desc',
@@ -178,6 +181,13 @@ const tasksRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await assertOwned(ctx.db, {
+        table: dsarTasks,
+        id: input.id,
+        orgId: ctx.user!.orgId,
+        label: 'Task',
+        via: [{ table: dsarRequests, on: eq(dsarTasks.dsarId, dsarRequests.id) }],
+      });
       const [updated] = await ctx.db.update(dsarTasks).set({ ...input.data, updatedAt: new Date() }).where(eq(dsarTasks.id, input.id)).returning();
       return updated;
     }),
@@ -186,6 +196,7 @@ const tasksRouter = router({
     .input(z.object({ dsarId: z.string().uuid(), systemName: z.string(), searchInstructions: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await assertParentOwned(ctx.db, dsarRequests, input.dsarId, ctx.user!.orgId, 'Request');
       const [inserted] = await ctx.db.insert(dsarTasks).values({
         dsarId: input.dsarId,
         systemName: input.systemName,
@@ -202,9 +213,10 @@ const commsRouter = router({
     .input(paginationInput.extend({ dsarId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await assertParentOwned(ctx.db, dsarRequests, input.dsarId, ctx.user!.orgId, 'Request');
       return paginatedQuery(
         dsarCommunications,
-        ctx.user!.orgId,
+        null,
         { limit: input.limit, after: input.cursor || undefined },
         'sentAt',
         'desc',

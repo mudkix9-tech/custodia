@@ -1,0 +1,42 @@
+[
+  {
+    "trackerKey": "google_analytics",
+    "provider": "Google",
+    "matchDomains": ["google-analytics.com", "analytics.google.com"],
+    "cookiePrefixes": ["_ga", "_gid"],
+    "requiredCategory": "analytics",
+    "consentModeSupported": true,
+    "consentSignalParams": ["gcs", "gcd"],
+    "vendorSlug": "google"
+  },
+  {
+    "trackerKey": "meta_pixel",
+    "provider": "Meta",
+    "matchDomains": ["connect.facebook.net", "facebook.com/tr"],
+    "cookiePrefixes": ["_fbp", "_fbc"],
+    "requiredCategory": "marketing",
+    "consentModeSupported": true,
+    "consentSignalParams": ["dpo", "ldu"],
+    "vendorSlug": "meta"
+  },
+  {
+    "trackerKey": "hotjar",
+    "provider": "Hotjar",
+    "matchDomains": ["static.hotjar.com", "script.hotjar.com"],
+    "cookiePrefixes": ["_hj"],
+    "requiredCategory": "analytics",
+    "consentModeSupported": false,
+    "consentSignalParams": [],
+    "vendorSlug": "hotjar"
+  },
+  {
+    "trackerKey": "intercom",
+    "provider": "Intercom",
+    "matchDomains": ["widget.intercom.io"],
+    "cookiePrefixes": ["intercom-"],
+    "requiredCategory": "functional",
+    "consentModeSupported": false,
+    "consentSignalParams": [],
+    "vendorSlug": "intercom"
+  }
+]

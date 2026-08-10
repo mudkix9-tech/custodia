@@ -21,12 +21,19 @@ export default function BlogIndex() {
 
       <section className="relative max-w-7xl mx-auto px-6 z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+           {/*
+             These three link straight to /gdpr/* rather than to /blog/<slug>.
+             next.config.ts permanently redirects each of those blog URLs to the
+             guide that replaced it, so linking to the old path made every card
+             on this page cost a redirect hop and diluted the link equity
+             reaching the guides.
+           */}
            {[
-             { title: "The Complete GDPR Compliance Guide for Agencies", slug: "gdpr-compliance-guide-agencies", category: "GDPR Basics", date: "June 1, 2026", readTime: "10 min" },
-             { title: "What is a ROPA? A Practical Template for Marketing Teams", slug: "what-is-ropa-template", category: "Guides & Templates", date: "May 15, 2026", readTime: "8 min" },
-             { title: "Why Google Consent Mode v2 Matters for Your Clients", slug: "google-consent-mode-v2", category: "Cookie Consent", date: "May 2, 2026", readTime: "6 min" }
+             { title: "The Complete GDPR Compliance Guide for Agencies", href: "/gdpr/compliance-guide-agencies", category: "GDPR Basics", date: "June 1, 2026", readTime: "10 min" },
+             { title: "What is a ROPA? A Practical Template for Marketing Teams", href: "/gdpr/ropa-template", category: "Guides & Templates", date: "May 15, 2026", readTime: "8 min" },
+             { title: "Why Google Consent Mode v2 Matters for Your Clients", href: "/gdpr/consent-mode-v2", category: "Cookie Consent", date: "May 2, 2026", readTime: "6 min" }
            ].map((post, i) => (
-              <Link href={`/blog/${post.slug}`} key={i} className="group bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom p-6 flex flex-col h-full border border-white/9 shadow-panel-elevated hover:border-white/20 transition-colors">
+              <Link href={post.href} key={i} className="group bg-gradient-to-b from-surface-panel-top to-surface-panel-bottom p-6 flex flex-col h-full border border-white/9 shadow-panel-elevated hover:border-white/20 transition-colors">
                  <div className="flex items-center gap-3 mb-6">
                     <span className="text-xs font-medium text-accent-gold bg-accent-gold/10 px-2.5 py-1 rounded-full border border-accent-gold/20">{post.category}</span>
                     <span className="text-[13px] text-text-muted">{post.readTime} read</span>

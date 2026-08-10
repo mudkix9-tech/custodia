@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "../globals.css";
 import Provider from "../Provider";
-import { NextIntlClientProvider } from 'next-intl';
+import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { SITE_ORIGIN } from '@/lib/siteUrl';
 
@@ -46,9 +47,16 @@ export default async function RootLayout({
   params: Promise<{ locale: string }>;
 }>) {
   const { locale } = await params;
-  
-  if (!routing.locales.includes(locale as typeof routing.locales[number])) {
-    // Return early or handle unknown locale. next-intl middleware usually prevents this.
+
+  // This guard is load-bearing, not defensive. The middleware matcher excludes any
+  // path containing a dot (to skip static assets), so requests like /llms.txt or
+  // /wp-login.php never reach next-intl's locale validation -- they fall straight
+  // through to this segment. Without the notFound() below, `locale` was bound to
+  // "llms.txt" and the marketing homepage rendered at HTTP 200 with
+  // `<html lang="llms.txt">` and a self-referencing canonical, which made every
+  // dotted URL an indexable duplicate of the homepage.
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
   }
 
   setRequestLocale(locale);
@@ -61,6 +69,21 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/*
+          `sameAs` is deliberately absent. It previously listed
+          https://x.com/custodia (which belongs to an unrelated private
+          individual) and a github.com/mudkix9-tech/custodia repo that 404s.
+          `sameAs` is the primary entity-reconciliation signal for search
+          engines and LLMs, so a wrong entry is worse than no entry -- and the
+          name "Custodia" is already contested by a Swiss privacy consultancy,
+          a data-archiving firm, a spend-management product and a US bank.
+          Re-add it only with profile URLs we own and have verified: LinkedIn
+          first, then Crunchbase, G2 and a real X handle.
+
+          `foundingDate`, `legalName` and `address` are omitted for the same
+          reason -- add them once the legal entity details are confirmed rather
+          than guessing.
+        */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -68,13 +91,23 @@ export default async function RootLayout({
               "@context": "https://schema.org",
               "@type": "Organization",
               "name": "Custodia",
+              "alternateName": "Custodia GDPR Compliance",
               "url": SITE_ORIGIN,
               "logo": `${SITE_ORIGIN}/logo.png`,
-              "sameAs": [
-                "https://x.com/custodia",
-                "https://github.com/mudkix9-tech/custodia"
-              ],
-              "description": "Dynamic compliance operating system for digital agencies to automate GDPR, ROPA registers, and consent management."
+              "description": "Custodia is a GDPR compliance platform for EU businesses. It covers records of processing (ROPA), gap assessments, DSAR automation, cookie consent management, breach management, vendor risk assessment, DPIAs and employee training in one system.",
+              // schema.org's designated field for separating an entity from
+              // similarly named ones. Load-bearing here, not decorative.
+              "disambiguatingDescription": "GDPR compliance software operated at trycustodia.com. Not affiliated with Custodia Bank, Custodia Privacy (custodia-privacy.com), Custodia Technology (custodiatechnology.com) or Custodia Continuity.",
+              "areaServed": { "@type": "Place", "name": "European Union" },
+              "availableLanguage": ["en", "de", "fr"],
+              "knowsAbout": [
+                "General Data Protection Regulation",
+                "Records of Processing Activities",
+                "Data Subject Access Requests",
+                "Data Protection Impact Assessment",
+                "Cookie consent management",
+                "Personal data breach notification"
+              ]
             })
           }}
         />

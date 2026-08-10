@@ -1,0 +1,24 @@
+# Runtime image for `custodia-workers`.
+#
+# Unlike the API image this one keeps a browser, because consent scanning and
+# third-party discovery in lib/browserPool.ts genuinely drive a page. Chromium
+# comes from apt rather than Puppeteer's own download so the package pulls its
+# runtime libraries with it — and so this image builds on arm64, where
+# Chrome-for-Testing has no release.
+FROM node:20-bookworm-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends chromium ca-certificates fonts-liberation \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY . .
+
+RUN npm ci --ignore-scripts
+
+# puppeteer.executablePath() reads this, which is what browserPool.ts calls.
+ENV NODE_ENV=production \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+CMD ["npm", "run", "start:workers", "--workspace=apps/api"]

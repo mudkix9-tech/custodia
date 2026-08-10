@@ -4,7 +4,137 @@
   },
   "seo": {
     "title": "Custodia — Système d'exploitation de conformité RGPD pour les agences de l'UE",
-    "desc": "La plateforme de conformité RGPD complète conçue pour les agences de marketing, de numérique et de design de l'UE. Remplacez les consultants et les feuilles de calcul."
+    "desc": "La plateforme de conformité RGPD complète conçue pour les agences de marketing, de numérique et de design de l'UE. Remplacez les consultants et les feuilles de calcul.",
+    "pages": {
+      "home": {
+        "title": "Logiciel de conformité RGPD pour agences | Custodia",
+        "desc": "Custodia est la plateforme RGPD des entreprises européennes : registre des traitements, demandes d'accès, consentement cookies, violations et sous-traitants."
+      },
+      "features": {
+        "title": "Fonctionnalités : registre, demandes d'accès, CMP",
+        "desc": "Tous les modules Custodia : registre des traitements, analyse des écarts, demandes d'accès, consentement cookies, violations, AIPD et formation."
+      },
+      "pricing": {
+        "title": "Tarifs du logiciel RGPD — 99 €/mois | Custodia",
+        "desc": "Custodia coûte 99 € par mois avec l'offre Professional, ou 79 € par mois en facturation annuelle. Tarif Enterprise sur demande. Sans carte bancaire."
+      },
+      "for-agencies": {
+        "title": "Logiciel RGPD pour agences digitales | Custodia",
+        "desc": "Pilotez le RGPD de tous vos clients depuis un seul tableau de bord : registre, consentement, demandes d'accès et sous-traitants, avec portails en marque blanche."
+      },
+      "enterprise": {
+        "title": "Plateforme RGPD pour grandes entreprises | Custodia",
+        "desc": "La conformité RGPD à grande échelle : gestion multi-entités, SSO, hébergement dans l'UE, support dédié et rapports prêts pour l'audit."
+      },
+      "cookie-consent": {
+        "title": "Plateforme de gestion du consentement (CMP) RGPD",
+        "desc": "Une plateforme de gestion du consentement conforme au RGPD et à la directive ePrivacy : Google Consent Mode v2, analyse automatique des traceurs et preuves."
+      },
+      "security": {
+        "title": "Sécurité chez Custodia — hébergement UE et chiffrement",
+        "desc": "Comment Custodia protège vos données : hébergement exclusivement dans l'UE (AWS Dublin), chiffrement, contrôle des accès et journalisation complète."
+      },
+      "about": {
+        "title": "À propos de Custodia — logiciel RGPD pour l'UE",
+        "desc": "Custodia développe des logiciels de conformité RGPD pour les entreprises européennes et les agences qui les accompagnent. Qui nous sommes et ce que nous construisons."
+      },
+      "contact": {
+        "title": "Contact — Custodia, logiciel de conformité RGPD",
+        "desc": "Contactez l'équipe Custodia au sujet de la plateforme RGPD, d'une démonstration, des tarifs Enterprise ou d'un partenariat."
+      },
+      "blog": {
+        "title": "Blog RGPD : guides et actualités | Custodia",
+        "desc": "Des conseils RGPD concrets pour les agences et les entreprises de l'UE : actualités réglementaires, analyses de fond et guides pas à pas."
+      },
+      "changelog": {
+        "title": "Journal des modifications — Custodia",
+        "desc": "Toutes les fonctionnalités, améliorations et corrections livrées sur la plateforme RGPD Custodia, avec les dates et les notes de version."
+      },
+      "gdpr": {
+        "title": "Guides RGPD : articles, modèles et modes d'emploi",
+        "desc": "Des guides pratiques et gratuits sur le RGPD : bases légales, AIPD, modèles de registre, demandes d'accès, notification de violation et transferts hors UE."
+      },
+      "gdpr_lawful-bases": {
+        "title": "Les 6 bases légales du RGPD expliquées",
+        "desc": "Consentement, contrat, obligation légale, intérêts vitaux, mission d'intérêt public et intérêt légitime : quand appliquer chaque base et comment la documenter."
+      },
+      "gdpr_legitimate-interest-vs-consent": {
+        "title": "Intérêt légitime ou consentement : quelle base RGPD ?",
+        "desc": "Quand invoquer l'intérêt légitime plutôt que le consentement, comment mener une évaluation de l'intérêt légitime et où les autorités placent la limite."
+      },
+      "gdpr_dpia-guide": {
+        "title": "Guide AIPD : réaliser une analyse d'impact RGPD",
+        "desc": "Quand une AIPD est obligatoire au titre de l'article 35, les étapes à suivre, comment évaluer le risque résiduel et quand consulter l'autorité de contrôle."
+      },
+      "gdpr_ropa-template": {
+        "title": "Modèle de registre des traitements (article 30, gratuit)",
+        "desc": "Un modèle gratuit de registre des activités de traitement, ce qu'exige l'article 30, qui en est dispensé et comment le tenir à jour."
+      },
+      "gdpr_right-to-erasure": {
+        "title": "Droit à l'effacement (article 17 du RGPD) : guide pratique",
+        "desc": "Quand le droit à l'oubli s'applique, les six motifs d'effacement, les refus légitimes, le cas des sauvegardes et le délai d'un mois pour répondre."
+      },
+      "gdpr_data-portability": {
+        "title": "Droit à la portabilité des données (article 20 du RGPD)",
+        "desc": "Ce que couvre le droit à la portabilité, quand il s'applique, quels formats satisfont à l'article 20 et comment répondre à une demande."
+      },
+      "gdpr_dsar-controller-processor": {
+        "title": "Demandes d'accès : responsable ou sous-traitant ?",
+        "desc": "Comment se répartissent les obligations liées aux demandes d'accès entre responsable de traitement et sous-traitant, et ce que le contrat doit prévoir."
+      },
+      "gdpr_breach-timeline": {
+        "title": "Notification de violation RGPD : la règle des 72 heures",
+        "desc": "Quand démarre le délai de 72 heures, qui prévenir, ce que doit contenir la notification et les conséquences d'un dépassement du délai."
+      },
+      "gdpr_data-breach-response": {
+        "title": "Violation de données RGPD : la marche à suivre",
+        "desc": "Comment réagir à une violation de données à caractère personnel : confinement, évaluation du risque, notification à l'autorité, information des personnes."
+      },
+      "gdpr_incident-response-plan": {
+        "title": "Plan de réponse aux incidents RGPD : modèle et checklist",
+        "desc": "Comment bâtir un plan de réponse aux incidents conforme au RGPD : rôles, classification de gravité, escalade, notification et retour d'expérience."
+      },
+      "gdpr_consent-mode-v2": {
+        "title": "Google Consent Mode v2 : principe et mise en œuvre",
+        "desc": "Ce qu'exige Google Consent Mode v2, comment fonctionnent les signaux de consentement et comment l'implémenter sans perdre vos données analytics et publicitaires."
+      },
+      "gdpr_eprivacy-and-gdpr": {
+        "title": "Directive ePrivacy et RGPD : comment ils s'articulent",
+        "desc": "Comment la directive ePrivacy et le RGPD s'articulent sur les cookies, le traçage et la prospection électronique, et quelle règle prévaut en cas de chevauchement."
+      },
+      "gdpr_sccs-dpf-schrems": {
+        "title": "CCT, cadre de protection des données UE-États-Unis et Schrems II",
+        "desc": "Comment transférer légalement des données hors de l'UE : clauses contractuelles types, cadre de protection des données UE-États-Unis et analyse d'impact du transfert."
+      },
+      "gdpr_vendor-audit": {
+        "title": "Audit RGPD des fournisseurs : évaluer ses sous-traitants",
+        "desc": "Comment auditer vos fournisseurs et sous-traitants ultérieurs : questions de due diligence, exigences contractuelles, transferts et suivi dans la durée."
+      },
+      "gdpr_compliance-guide-agencies": {
+        "title": "Guide de conformité RGPD pour les agences digitales",
+        "desc": "Un guide RGPD concret pour les agences : rôles de responsable et de sous-traitant, contrats clients, sous-traitance ultérieure et registres obligatoires."
+      },
+      "legal_privacy": {
+        "title": "Politique de confidentialité | Custodia",
+        "desc": "Comment Custodia collecte, utilise, conserve et protège les données personnelles, les bases légales retenues et comment exercer vos droits au titre du RGPD."
+      },
+      "legal_terms": {
+        "title": "Conditions générales d'utilisation | Custodia",
+        "desc": "Les conditions régissant l'utilisation de la plateforme RGPD Custodia : abonnements, usage acceptable, responsabilité et résiliation."
+      },
+      "legal_cookies": {
+        "title": "Politique relative aux cookies | Custodia",
+        "desc": "Quels cookies et technologies similaires Custodia utilise, à quoi ils servent, leur durée de conservation et comment modifier vos choix à tout moment."
+      },
+      "legal_dpa": {
+        "title": "Contrat de sous-traitance (DPA) | Custodia",
+        "desc": "Le contrat de sous-traitance de Custodia : les clauses de l'article 28 conclues avec nos clients, couvrant instructions, sécurité, sous-traitants et audits."
+      },
+      "legal_subprocessors": {
+        "title": "Sous-traitants ultérieurs | Custodia",
+        "desc": "La liste à jour des sous-traitants ultérieurs de Custodia, ce que chacun traite, où il est situé et comment nous informons nos clients des changements."
+      }
+    }
   },
   "hero": {
     "badge": "L'OS de conformité RGPD pour les agences de l'UE",

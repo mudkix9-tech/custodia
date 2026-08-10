@@ -6,7 +6,7 @@ import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { z } from 'zod';
 import { db } from '../db.js';
 import { privacyPolicies, policyVersions, organizations, vendors, organizationVendors, processingActivities } from 'db';
-import { eq, desc } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { diffWords } from 'diff';
 import { Anthropic } from '@anthropic-ai/sdk';
@@ -131,7 +131,10 @@ export const policiesRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [policy] = await ctx.db.select().from(privacyPolicies).where(eq(privacyPolicies.id, input.id));
+      const [policy] = await ctx.db.select().from(privacyPolicies).where(and(
+        eq(privacyPolicies.id, input.id),
+        eq(privacyPolicies.organizationId, ctx.user!.orgId),
+      ));
       if (!policy) return null;
       
       const versions = await ctx.db.select().from(policyVersions)
@@ -160,7 +163,10 @@ export const policiesRouter = router({
     .input(z.object({ policyId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [policy] = await ctx.db.select().from(privacyPolicies).where(eq(privacyPolicies.id, input.policyId));
+      const [policy] = await ctx.db.select().from(privacyPolicies).where(and(
+        eq(privacyPolicies.id, input.policyId),
+        eq(privacyPolicies.organizationId, ctx.user!.orgId),
+      ));
       if (!policy) throw new TRPCError({ code: 'NOT_FOUND', message: 'Policy not found' });
       
       const [currentVersion] = policy.currentVersionId 
@@ -189,9 +195,23 @@ export const policiesRouter = router({
     .input(z.object({ policyId: z.string().uuid(), versionId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+
+      const [version] = await ctx.db.select({ id: policyVersions.id })
+        .from(policyVersions)
+        .innerJoin(privacyPolicies, eq(policyVersions.policyId, privacyPolicies.id))
+        .where(and(
+          eq(policyVersions.id, input.versionId),
+          eq(policyVersions.policyId, input.policyId),
+          eq(privacyPolicies.organizationId, ctx.user!.orgId),
+        ));
+      if (!version) throw new TRPCError({ code: 'NOT_FOUND', message: 'Policy version not found' });
+
       await ctx.db.update(privacyPolicies)
         .set({ currentVersionId: input.versionId, publishedAt: new Date() })
-        .where(eq(privacyPolicies.id, input.policyId));
+        .where(and(
+          eq(privacyPolicies.id, input.policyId),
+          eq(privacyPolicies.organizationId, ctx.user!.orgId),
+        ));
       await dispatchWebhook(ctx.user!.orgId, 'policy.published', { policyId: input.policyId });
       
       await orgEmbeddingsQueue.add('embed-policy', {

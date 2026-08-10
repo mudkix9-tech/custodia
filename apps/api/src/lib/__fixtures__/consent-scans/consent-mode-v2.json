@@ -1,0 +1,50 @@
+{
+  "name": "Consent Mode v2, implemented correctly",
+  "note": "Google Analytics loads before consent and signals denial (gcs=G100) while sending no identifier. This is the compliant pattern. If the evaluator ever reports prior_consent_violation here, the feature is punishing the customers who got it right — which is the failure mode consent-reconciliation-plan.md called out as capable of discrediting the whole thing.",
+  "run": { "postConsentMethod": "seeded_cookies" },
+  "domain": {
+    "domain": "consent-mode-example.test",
+    "categories": ["necessary", "analytics", "marketing"],
+    "gcmV2Enabled": true,
+    "tcfEnabled": false,
+    "cmp": "cookiebot",
+    "knownVendorSlugs": ["google", "meta"]
+  },
+  "observations": [
+    {
+      "observedHost": "google-analytics.com",
+      "trackerKey": "google_analytics",
+      "provider": "Google",
+      "requiredCategory": "analytics",
+      "vendorSlug": "google",
+      "pass": "pre_consent",
+      "resourceType": "script",
+      "carriedIdentifiers": false,
+      "consentSignal": "denied",
+      "requestCount": 2,
+      "sampleUrl": "https://google-analytics.com/g/collect?gcs=G100"
+    },
+    {
+      "observedHost": "google-analytics.com",
+      "trackerKey": "google_analytics",
+      "provider": "Google",
+      "requiredCategory": "analytics",
+      "vendorSlug": "google",
+      "pass": "post_consent",
+      "resourceType": "script",
+      "carriedIdentifiers": true,
+      "consentSignal": "granted",
+      "requestCount": 3,
+      "sampleUrl": "https://google-analytics.com/g/collect?gcs=G111"
+    }
+  ],
+  "cookies": [
+    { "cookieName": "_ga", "category": "analytics", "provider": "Google", "isThirdParty": false }
+  ],
+  "expect": {
+    "findingTypes": ["consent_mode_only"],
+    "mustNotContain": ["prior_consent_violation", "missing_category", "cmp_no_enforcement"],
+    "severities": { "consent_mode_only": "info" },
+    "confidences": { "consent_mode_only": 0.9 }
+  }
+}

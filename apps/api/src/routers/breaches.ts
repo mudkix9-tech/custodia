@@ -5,6 +5,7 @@ import { router, protectedProcedure, requirePermission, verifyGroupScopeAndLog }
 import { breaches, breachNotifications, breachRemediationTasks, organizations, users } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import { assertOwned, assertParentOwned } from '../lib/tenancy.js';
 
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
@@ -111,6 +112,7 @@ const notificationsRouter = router({
     .input(z.object({ breachId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await assertParentOwned(ctx.db, breaches, input.breachId, ctx.user!.orgId, 'Breach');
       return ctx.db.select().from(breachNotifications).where(eq(breachNotifications.breachId, input.breachId));
     }),
   update: protectedProcedure
@@ -118,6 +120,13 @@ const notificationsRouter = router({
     .input(z.object({ id: z.string().uuid(), content: z.any() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await assertOwned(ctx.db, {
+        table: breachNotifications,
+        id: input.id,
+        orgId: ctx.user!.orgId,
+        label: 'Notification',
+        via: [{ table: breaches, on: eq(breachNotifications.breachId, breaches.id) }],
+      });
       const [updated] = await ctx.db.update(breachNotifications).set({ contentJson: input.content }).where(eq(breachNotifications.id, input.id)).returning();
       return updated;
     }),
@@ -126,6 +135,13 @@ const notificationsRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await assertOwned(ctx.db, {
+        table: breachNotifications,
+        id: input.id,
+        orgId: ctx.user!.orgId,
+        label: 'Notification',
+        via: [{ table: breaches, on: eq(breachNotifications.breachId, breaches.id) }],
+      });
       const [updated] = await ctx.db.update(breachNotifications).set({ status: 'approved' }).where(eq(breachNotifications.id, input.id)).returning();
       return updated;
     }),
@@ -134,8 +150,14 @@ const notificationsRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
-      const [notif] = await ctx.db.select().from(breachNotifications).where(eq(breachNotifications.id, input.id));
-      if (!notif || notif.status !== 'approved') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Notification must be approved first.' });
+      const notif = await assertOwned(ctx.db, {
+        table: breachNotifications,
+        id: input.id,
+        orgId: ctx.user!.orgId,
+        label: 'Notification',
+        via: [{ table: breaches, on: eq(breachNotifications.breachId, breaches.id) }],
+      });
+      if (notif.status !== 'approved') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Notification must be approved first.' });
       const [updated] = await ctx.db.update(breachNotifications).set({ status: 'sent', sentAt: new Date() }).where(eq(breachNotifications.id, input.id)).returning();
       return updated;
     }),
@@ -147,6 +169,7 @@ const tasksRouter = router({
     .input(z.object({ breachId: z.string().uuid(), title: z.string(), description: z.string().optional(), priority: z.string().default('medium'), dueAt: z.date().optional() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await assertParentOwned(ctx.db, breaches, input.breachId, ctx.user!.orgId, 'Breach');
       const [task] = await ctx.db.insert(breachRemediationTasks).values({
         breachId: input.breachId,
         title: input.title,
@@ -161,6 +184,7 @@ const tasksRouter = router({
     .input(z.object({ breachId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await assertParentOwned(ctx.db, breaches, input.breachId, ctx.user!.orgId, 'Breach');
       return ctx.db.select().from(breachRemediationTasks).where(eq(breachRemediationTasks.breachId, input.breachId)).orderBy(breachRemediationTasks.createdAt);
     }),
   update: protectedProcedure
@@ -168,6 +192,13 @@ const tasksRouter = router({
     .input(z.object({ id: z.string().uuid(), status: z.string(), completionNotes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await assertOwned(ctx.db, {
+        table: breachRemediationTasks,
+        id: input.id,
+        orgId: ctx.user!.orgId,
+        label: 'Task',
+        via: [{ table: breaches, on: eq(breachRemediationTasks.breachId, breaches.id) }],
+      });
       const [updated] = await ctx.db.update(breachRemediationTasks).set({
         status: input.status, 
         completionNotes: input.completionNotes,
@@ -180,6 +211,13 @@ const tasksRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      await assertOwned(ctx.db, {
+        table: breachRemediationTasks,
+        id: input.id,
+        orgId: ctx.user!.orgId,
+        label: 'Task',
+        via: [{ table: breaches, on: eq(breachRemediationTasks.breachId, breaches.id) }],
+      });
       await ctx.db.delete(breachRemediationTasks).where(eq(breachRemediationTasks.id, input.id));
       return { success: true };
     }),

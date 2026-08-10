@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+doc-page:not(:defined){visibility:hidden}
+body{margin:0;background:#F7F5EF;color:#16181A;font-family:Inter,sans-serif}
+a{color:#3F5B3C;text-decoration:none}
+a:hover{color:#2B3F29}
+.badge-owner { background: rgba(198, 138, 42, 0.12); color: #A26F1E; border: 1px solid rgba(198, 138, 42, 0.3); }
+.badge-admin { background: rgba(63, 91, 60, 0.12); color: #3F5B3C; border: 1px solid rgba(63, 91, 60, 0.25); }
+.badge-member { background: rgba(90, 95, 87, 0.1); color: #3A342C; border: 1px solid rgba(90, 95, 87, 0.2); }
+.badge-viewer { background: rgba(122, 112, 98, 0.08); color: #5A5247; border: 1px solid rgba(122, 112, 98, 0.18); }
+.perm-allow { background: rgba(46, 125, 79, 0.12); color: #2E7D4F; border: 1px solid rgba(46, 125, 79, 0.3); }
+.perm-deny { background: rgba(176, 42, 32, 0.1); color: #B02A20; border: 1px solid rgba(176, 42, 32, 0.25); }
+.perm-inherit { background: transparent; color: #7A7062; border: 1px dashed #D8D6CE; }
+</style>
+<script src="./doc-page.js"></script>
+</helmet>
+<doc-page size="a4">
+
+<!-- Page 1: Team Overview & Seat Allocation -->
+<section class="page" data-screen-label="01 Team Overview" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <!-- Top Bar -->
+  <div style="position:absolute;top:0;left:0;right:0;height:4mm;background:#3F5B3C"></div>
+  <div style="position:absolute;top:18mm;left:18mm;right:18mm;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:3mm">
+      <div style="width:7mm;height:7mm;background:#3F5B3C;display:flex;align-items:center;justify-content:center">
+        <div style="width:2.4mm;height:2.4mm;background:#F7F5EF"></div>
+      </div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:0.16em;color:#16181A">CUSTODIA</div>
+    </div>
+    <div style="font-size:8pt;letter-spacing:0.1em;text-transform:uppercase;color:#5A5F57">GDPR Compliance Platform</div>
+  </div>
+
+  <!-- Header Content -->
+  <div style="position:absolute;top:38mm;left:18mm;right:18mm">
+    <div style="font-size:8.5pt;letter-spacing:0.16em;text-transform:uppercase;color:#5A5F57;margin-bottom:3mm">Workspace Administration · Internal Record</div>
+    <div style="font-family:Geist,sans-serif;font-weight:600;font-size:26pt;line-height:1.15;letter-spacing:-0.01em;max-width:140mm">Team Management & Access Control</div>
+    <div style="height:0.8pt;background:#16181A;margin:6mm 0 6mm 0;width:32mm"></div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,auto);gap:0 10mm;justify-content:start;margin-bottom:8mm">
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:1.5mm">Organization</div>
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:10.5pt">{{ orgName }}</div>
+      </div>
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:1.5mm">Workspace Owner</div>
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:10.5pt">{{ ownerName }}</div>
+      </div>
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:1.5mm">Export Date</div>
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:10.5pt">{{ exportDate }}</div>
+      </div>
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#5A5F57;margin-bottom:1.5mm">Plan Tier</div>
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:10.5pt">{{ planTier }}</div>
+      </div>
+    </div>
+
+    <!-- Seat Allocation Meter Card -->
+    <div style="border:1pt solid #D8D6CE;background:#FBF8F3;padding:6mm 8mm;margin-bottom:8mm">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4mm">
+        <div>
+          <div style="font-family:Geist,sans-serif;font-weight:600;font-size:12pt;color:#16181A">Seat Allocation & Usage</div>
+          <div style="font-size:8.5pt;color:#5A5F57;margin-top:1mm">{{ activeCount }} active members of {{ totalSeats }} total seats allocated</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:Geist,sans-serif;font-weight:700;font-size:20pt;color:#3F5B3C">{{ seatPct }}%</div>
+          <div style="font-size:7.5pt;letter-spacing:0.08em;text-transform:uppercase;color:#5A5F57">Capacity Used</div>
+        </div>
+      </div>
+
+      <!-- Meter Bar -->
+      <div style="height:6pt;background:#EDE6D7;position:relative;margin-bottom:4mm">
+        <div style="height:6pt;background:#3F5B3C;width:{{ seatPct }}%"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:8.5pt;color:#3A342C">
+        <span>Active: <strong>{{ activeCount }}</strong></span>
+        <span>Pending Invites: <strong>{{ pendingCount }}</strong></span>
+        <span>Available Seats: <strong>{{ availableSeats }}</strong></span>
+        <span style="color:#5A5F57;font-size:8pt">Refreshed automatically</span>
+      </div>
+    </div>
+
+    <!-- Role Distribution Summary -->
+    <div style="margin-bottom:6mm">
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:13pt;margin-bottom:3mm">Role Distribution</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4mm">
+        <sc-for list="{{ roleCounts }}" as="r">
+          <div style="border:0.8pt solid #E4E2DA;padding:4mm;background:#FFFFFF;text-align:center">
+            <div style="font-family:Geist,sans-serif;font-weight:700;font-size:16pt;color:{{ r.color }}">{{ r.count }}</div>
+            <div style="font-size:8pt;font-weight:500;color:#5A5F57;margin-top:1mm">{{ r.name }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Custodia | Team Management Module | Confidential</span><span>Page 1 of 4</span>
+  </div>
+</section>
+
+<!-- Page 2: Active Team Members Roster -->
+<section class="page" data-screen-label="02 Member Roster" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <div style="position:absolute;top:14mm;left:18mm;right:18mm;display:flex;justify-content:space-between;border-bottom:0.5pt solid #D8D6CE;padding-bottom:3mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+    <span style="font-family:Geist,sans-serif;font-weight:600;letter-spacing:0.16em">CUSTODIA</span><span>Team Management · {{ orgName }}</span>
+  </div>
+
+  <div style="position:absolute;top:28mm;left:18mm;right:18mm">
+    <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:4mm">
+      <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">01</div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Active Team Roster</div>
+    </div>
+    <div style="font-size:9pt;color:#3D4142;margin-bottom:5mm">Active workspace members, assigned roles, security status, and joining timestamps.</div>
+
+    <!-- Table Header -->
+    <div style="display:grid;grid-template-columns:2fr 2fr 1.2fr 1fr 1fr;gap:3mm;border-bottom:1pt solid #16181A;padding-bottom:2mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#5A5F57;font-weight:600">
+      <div>Member Name</div>
+      <div>Email Address</div>
+      <div>Assigned Role</div>
+      <div>Status</div>
+      <div style="text-align:right">Joined Date</div>
+    </div>
+
+    <!-- Roster Rows -->
+    <sc-for list="{{ activeMembers }}" as="m" hint-placeholder-count="8">
+      <div style="display:grid;grid-template-columns:2fr 2fr 1.2fr 1fr 1fr;gap:3mm;align-items:center;border-bottom:0.5pt solid #E4E2DA;padding:3.5mm 0;font-size:9pt">
+        <div style="display:flex;align-items:center;gap:2.5mm">
+          <div style="width:7mm;height:7mm;border-radius:50%;background:#EDE6D7;display:flex;align-items:center;justify-content:center;font-family:Geist,sans-serif;font-weight:600;font-size:8.5pt;color:#3A342C">
+            {{ m.initials }}
+          </div>
+          <div>
+            <div style="font-weight:500;color:#16181A">{{ m.name }}</div>
+            <sc-if condition="{{ m.isOwner }}">
+              <div style="font-size:7.5pt;color:#A26F1E;font-weight:500">Workspace Owner</div>
+            </sc-if>
+          </div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8.5pt;color:#5A5F57">{{ m.email }}</div>
+        <div>
+          <span style="display:inline-block;padding:1mm 2.5mm;font-size:7.5pt;font-weight:600;border-radius:3px" class="{{ m.badgeClass }}">{{ m.roleLabel }}</span>
+        </div>
+        <div>
+          <span style="display:inline-flex;align-items:center;gap:1.5mm;font-size:8pt;color:#2E7D4F;font-weight:500">
+            <span style="width:2mm;height:2mm;border-radius:50%;background:#2E7D4F"></span>{{ m.status }}
+          </span>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8pt;color:#5A5F57;text-align:right">{{ m.joinedDate }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Custodia | Team Management Module | Confidential</span><span>Page 2 of 4</span>
+  </div>
+</section>
+
+<!-- Page 3: Role-Based Access Control (RBAC) Matrix -->
+<section class="page" data-screen-label="03 Permission Matrix" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <div style="position:absolute;top:14mm;left:18mm;right:18mm;display:flex;justify-content:space-between;border-bottom:0.5pt solid #D8D6CE;padding-bottom:3mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+    <span style="font-family:Geist,sans-serif;font-weight:600;letter-spacing:0.16em">CUSTODIA</span><span>Team Management · {{ orgName }}</span>
+  </div>
+
+  <div style="position:absolute;top:28mm;left:18mm;right:18mm">
+    <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:3mm">
+      <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">02</div>
+      <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Granular Access Control Matrix</div>
+    </div>
+    <div style="font-size:9pt;color:#3D4142;margin-bottom:6mm">Module-level permission mapping across basic and custom roles. Governed by GDPR Art. 24 & 32.</div>
+
+    <!-- Matrix Table -->
+    <div style="border:1pt solid #D8D6CE;background:#FFFFFF">
+      <div style="display:grid;grid-template-columns:2.5fr repeat(5, 1fr);background:#FBF8F3;border-bottom:1pt solid #16181A;padding:3mm 4mm;font-size:8pt;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">
+        <div>Platform Module</div>
+        <div style="text-align:center">Owner</div>
+        <div style="text-align:center">Admin</div>
+        <div style="text-align:center">DPO</div>
+        <div style="text-align:center">Member</div>
+        <div style="text-align:center">Viewer</div>
+      </div>
+
+      <sc-for list="{{ rbacMatrix }}" as="row">
+        <div style="display:grid;grid-template-columns:2.5fr repeat(5, 1fr);border-bottom:0.5pt solid #E4E2DA;padding:3.5mm 4mm;align-items:center;font-size:8.5pt">
+          <div>
+            <div style="font-weight:600;color:#16181A">{{ row.module }}</div>
+            <div style="font-size:7.5pt;color:#5A5F57">{{ row.desc }}</div>
+          </div>
+          <div style="text-align:center"><span style="font-size:7.5pt;font-weight:600;padding:0.8mm 2mm;border-radius:3px" class="perm-allow">Manage</span></div>
+          <div style="text-align:center"><span style="font-size:7.5pt;font-weight:600;padding:0.8mm 2mm;border-radius:3px" class="{{ row.adminPermClass }}">{{ row.adminPerm }}</span></div>
+          <div style="text-align:center"><span style="font-size:7.5pt;font-weight:600;padding:0.8mm 2mm;border-radius:3px" class="{{ row.dpoPermClass }}">{{ row.dpoPerm }}</span></div>
+          <div style="text-align:center"><span style="font-size:7.5pt;font-weight:600;padding:0.8mm 2mm;border-radius:3px" class="{{ row.memberPermClass }}">{{ row.memberPerm }}</span></div>
+          <div style="text-align:center"><span style="font-size:7.5pt;font-weight:600;padding:0.8mm 2mm;border-radius:3px" class="{{ row.viewerPermClass }}">{{ row.viewerPerm }}</span></div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- Override Protocol Note -->
+    <div style="margin-top:6mm;padding:4mm 5mm;background:#F7F5EF;border:0.8pt solid #E4E2DA;font-size:8.5pt;line-height:1.5;color:#3A342C">
+      <strong style="font-weight:600;color:#16181A">Per-Member Permission Overrides:</strong> Admins can customize individual access for specific team members (Allow, Deny, or Inherit from role). Owner access remains unrestrictable across all modules.
+    </div>
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Custodia | Team Management Module | Confidential</span><span>Page 3 of 4</span>
+  </div>
+</section>
+
+<!-- Page 4: Pending Invites, Security Protocols & Audit Log -->
+<section class="page" data-screen-label="04 Pending & Audit" style="position:relative;font-family:Inter,sans-serif;color:#16181A;background:#FFFFFF">
+  <div style="position:absolute;top:14mm;left:18mm;right:18mm;display:flex;justify-content:space-between;border-bottom:0.5pt solid #D8D6CE;padding-bottom:3mm;font-size:7.5pt;letter-spacing:0.1em;text-transform:uppercase;color:#4C5150">
+    <span style="font-family:Geist,sans-serif;font-weight:600;letter-spacing:0.16em">CUSTODIA</span><span>Team Management · {{ orgName }}</span>
+  </div>
+
+  <div style="position:absolute;top:28mm;left:18mm;right:18mm">
+    <!-- Pending Invites Section -->
+    <div style="margin-bottom:8mm">
+      <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:3mm">
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">03</div>
+        <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Pending Workspace Invitations</div>
+      </div>
+
+      <div style="border:1pt solid #D8D6CE">
+        <div style="display:grid;grid-template-columns:2.5fr 1.2fr 1.5fr 1fr;background:#FBF8F3;border-bottom:1pt solid #16181A;padding:2.5mm 4mm;font-size:7.5pt;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#5A5F57">
+          <div>Recipient Email</div>
+          <div>Invited Role</div>
+          <div>Sent Date</div>
+          <div style="text-align:right">Expiration</div>
+        </div>
+
+        <sc-for list="{{ pendingInvites }}" as="inv">
+          <div style="display:grid;grid-template-columns:2.5fr 1.2fr 1.5fr 1fr;border-bottom:0.5pt solid #E4E2DA;padding:3mm 4mm;align-items:center;font-size:8.5pt">
+            <div style="font-family:'JetBrains Mono',monospace;color:#16181A">{{ inv.email }}</div>
+            <div><span style="font-size:7.5pt;font-weight:600;padding:0.8mm 2mm;border-radius:3px" class="badge-member">{{ inv.role }}</span></div>
+            <div style="font-size:8pt;color:#5A5F57">{{ inv.sentDate }}</div>
+            <div style="font-size:8pt;color:#B06A00;font-weight:500;text-align:right">{{ inv.expiresIn }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Governance & Audit Log -->
+    <div>
+      <div style="display:flex;align-items:baseline;gap:4mm;margin-bottom:3mm">
+        <div style="font-family:Geist,sans-serif;font-weight:500;font-size:8.5pt;color:#5A5F57">04</div>
+        <div style="font-family:Geist,sans-serif;font-weight:600;font-size:15pt;letter-spacing:-0.01em">Recent Security & Membership Audit Log</div>
+      </div>
+
+      <div style="border:1pt solid #D8D6CE">
+        <div style="display:grid;grid-template-columns:1.5fr 2.5fr 1.5fr 1.2fr;background:#FBF8F3;border-bottom:1pt solid #16181A;padding:2.5mm 4mm;font-size:7.5pt;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#5A5F57">
+          <div>Timestamp</div>
+          <div>Action Performed</div>
+          <div>Target Member</div>
+          <div style="text-align:right">Actor</div>
+        </div>
+
+        <sc-for list="{{ auditLog }}" as="log">
+          <div style="display:grid;grid-template-columns:1.5fr 2.5fr 1.5fr 1.2fr;border-bottom:0.5pt solid #E4E2DA;padding:3mm 4mm;align-items:center;font-size:8pt">
+            <div style="font-family:'JetBrains Mono',monospace;color:#5A5F57">{{ log.timestamp }}</div>
+            <div style="font-weight:500;color:#16181A">{{ log.action }}</div>
+            <div style="color:#3A342C">{{ log.target }}</div>
+            <div style="font-family:'JetBrains Mono',monospace;color:#5A5F57;text-align:right">{{ log.actor }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;border-top:0.5pt solid #D8D6CE;padding-top:3mm;font-size:7.5pt;letter-spacing:0.05em;color:#4C5150">
+    <span>Generated by Custodia | Team Management Module | Confidential</span><span>Page 4 of 4</span>
+  </div>
+</section>
+
+</doc-page>
+</x-dc>
+
+<script data-dc-script data-props='{
+  "orgName": "Nordwind Logistik GmbH",
+  "ownerName": "Helena Vance",
+  "exportDate": "7 August 2026",
+  "planTier": "Enterprise GDPR Suite",
+  "totalSeats": 20,
+  "activeCount": 14,
+  "pendingCount": 2,
+  "availableSeats": 4
+}'>
+class Component extends DCLogic {
+  renderVals() {
+    const totalSeats = this.props.totalSeats ?? 20;
+    const activeCount = this.props.activeCount ?? 14;
+    const pendingCount = this.props.pendingCount ?? 2;
+    const availableSeats = Math.max(0, totalSeats - activeCount - pendingCount);
+    const seatPct = Math.round((activeCount / totalSeats) * 100);
+
+    const activeMembers = [
+      { name: "Helena Vance", email: "h.vance@nordwind-logistik.de", roleLabel: "Owner", badgeClass: "badge-owner", isOwner: true, status: "Active", joinedDate: "12 Jan 2025", initials: "HV" },
+      { name: "Marcus Thorne", email: "m.thorne@nordwind-logistik.de", roleLabel: "Admin", badgeClass: "badge-admin", isOwner: false, status: "Active", joinedDate: "15 Jan 2025", initials: "MT" },
+      { name: "Dr. Sophie Althaus", email: "dpo@nordwind-logistik.de", roleLabel: "DPO (Custom)", badgeClass: "badge-admin", isOwner: false, status: "Active", joinedDate: "01 Feb 2025", initials: "SA" },
+      { name: "Lukas Weber", email: "l.weber@nordwind-logistik.de", roleLabel: "Member", badgeClass: "badge-member", isOwner: false, status: "Active", joinedDate: "10 Feb 2025", initials: "LW" },
+      { name: "Clara Zimmer", email: "c.zimmer@nordwind-logistik.de", roleLabel: "Member", badgeClass: "badge-member", isOwner: false, status: "Active", joinedDate: "18 Mar 2025", initials: "CZ" },
+      { name: "Jan Neumann", email: "j.neumann@nordwind-logistik.de", roleLabel: "Viewer", badgeClass: "badge-viewer", isOwner: false, status: "Active", joinedDate: "04 Apr 2025", initials: "JN" },
+      { name: "Elena Fischer", email: "e.fischer@nordwind-logistik.de", roleLabel: "Member", badgeClass: "badge-member", isOwner: false, status: "Active", joinedDate: "22 May 2025", initials: "EF" },
+      { name: "David Richter", email: "d.richter@nordwind-logistik.de", roleLabel: "Viewer", badgeClass: "badge-viewer", isOwner: false, status: "Active", joinedDate: "11 Jun 2025", initials: "DR" }
+    ];
+
+    const roleCounts = [
+      { name: "Workspace Owner", count: 1, color: "#A26F1E" },
+      { name: "Admins", count: 2, color: "#3F5B3C" },
+      { name: "Members", count: 7, color: "#3A342C" },
+      { name: "Viewers", count: 4, color: "#5A5247" },
+      { name: "Pending", count: pendingCount, color: "#B06A00" }
+    ];
+
+    const rbacMatrix = [
+      { module: "ROPA & Processing Records", desc: "Art. 30 Data mapping & inventory", adminPerm: "Manage", adminPermClass: "perm-allow", dpoPerm: "Manage", dpoPermClass: "perm-allow", memberPerm: "Edit", memberPermClass: "perm-allow", viewerPerm: "View", viewerPermClass: "perm-inherit" },
+      { module: "Vendor Risk & DPAs", desc: "Art. 28 Sub-processor tracking", adminPerm: "Manage", adminPermClass: "perm-allow", dpoPerm: "Manage", dpoPermClass: "perm-allow", memberPerm: "View", memberPermClass: "perm-inherit", viewerPerm: "View", viewerPermClass: "perm-inherit" },
+      { module: "DSAR Request Portal", desc: "Art. 15-22 Rights fulfillment", adminPerm: "Manage", adminPermClass: "perm-allow", dpoPerm: "Manage", dpoPermClass: "perm-allow", memberPerm: "Manage", memberPermClass: "perm-allow", viewerPerm: "View", viewerPermClass: "perm-inherit" },
+      { module: "Breach Register & 72h Escalations", desc: "Art. 33 Incident reporting", adminPerm: "Manage", adminPermClass: "perm-allow", dpoPerm: "Manage", dpoPermClass: "perm-allow", memberPerm: "Edit", memberPermClass: "perm-allow", viewerPerm: "Deny", viewerPermClass: "perm-deny" },
+      { module: "Training & Awareness", desc: "Art. 39 Staff compliance tracking", adminPerm: "Manage", adminPermClass: "perm-allow", dpoPerm: "View", dpoPermClass: "perm-inherit", memberPerm: "View", memberPermClass: "perm-inherit", viewerPerm: "View", viewerPermClass: "perm-inherit" },
+      { module: "Platform Settings & Team Roles", desc: "Art. 24 Controller governance", adminPerm: "Manage", adminPermClass: "perm-allow", dpoPerm: "View", dpoPermClass: "perm-inherit", memberPerm: "Deny", memberPermClass: "perm-deny", viewerPerm: "Deny", viewerPermClass: "perm-deny" }
+    ];
+
+    const pendingInvites = [
+      { email: "a.schmidt@nordwind-logistik.de", role: "Member", sentDate: "03 Aug 2026", expiresIn: "3 days remaining" },
+      { email: "k.muller@nordwind-logistik.de", role: "Viewer", sentDate: "05 Aug 2026", expiresIn: "5 days remaining" }
+    ];
+
+    const auditLog = [
+      { timestamp: "2026-08-06 14:32", action: "Updated role to Admin", target: "Marcus Thorne", actor: "Helena Vance" },
+      { timestamp: "2026-08-04 09:15", action: "Invited new member", target: "a.schmidt@nordwind-logistik.de", actor: "Marcus Thorne" },
+      { timestamp: "2026-08-01 16:45", action: "Customized ROPA module permission", target: "Lukas Weber", actor: "Helena Vance" },
+      { timestamp: "2026-07-28 11:20", action: "Revoked invitation", target: "old.contractor@external.com", actor: "Marcus Thorne" }
+    ];
+
+    return {
+      orgName: this.props.orgName ?? "Nordwind Logistik GmbH",
+      ownerName: this.props.ownerName ?? "Helena Vance",
+      exportDate: this.props.exportDate ?? "7 August 2026",
+      planTier: this.props.planTier ?? "Enterprise GDPR Suite",
+      totalSeats,
+      activeCount,
+      pendingCount,
+      availableSeats,
+      seatPct,
+      activeMembers,
+      roleCounts,
+      rbacMatrix,
+      pendingInvites,
+      auditLog
+    };
+  }
+}
+</script>
+</body>
+</html>

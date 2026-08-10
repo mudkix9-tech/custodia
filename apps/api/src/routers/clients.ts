@@ -321,6 +321,15 @@ export const clientsRouter = router({
   getComplianceScore: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      // client_processing_activities has no organization_id; the client does.
+      const [client] = await ctx.db.select({ id: clients.id })
+        .from(clients)
+        .where(and(
+          eq(clients.id, input.id),
+          eq(clients.organizationId, ctx.user.orgId),
+        ));
+      if (!client) throw new TRPCError({ code: 'NOT_FOUND', message: 'Client not found' });
+
       // Similar to portal score calculation
       const cpa = await ctx.db.query.clientProcessingActivities.findMany({
         where: eq(clientProcessingActivities.clientId, input.id),

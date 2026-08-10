@@ -77,6 +77,7 @@ export default function AuditPage() {
             <PillarCard title={t('pillars.breaches')} score={(metrics?.latestReport?.categoryScores as any)?.breach || 100} />
             <PillarCard title={t('pillars.training')} score={(metrics?.latestReport?.categoryScores as any)?.training || 100} />
             <PillarCard title={t('pillars.transfers')} score={(metrics?.latestReport?.categoryScores as any)?.transfers || 100} />
+            <PillarCard title={t('pillars.consent')} score={(metrics?.latestReport?.categoryScores as any)?.consent || 100} />
           </div>
         </div>
       </div>

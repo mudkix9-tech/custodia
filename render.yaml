@@ -26,3 +26,40 @@ services:
         sync: false
       - key: PORT
         value: "10000"
+      # Registers no workers and skips scheduling; both belong to custodia-workers
+      # below. Without this the web dyno would also run Puppeteer scans.
+      - key: WORKER_ROLE
+        value: web
+
+  - type: worker
+    name: custodia-workers
+    env: node
+    # Puppeteer plus the browser cluster does not fit the free tier's 512MB.
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm run start:workers --workspace=apps/api
+    envVars:
+      - key: PUPPETEER_CACHE_DIR
+        value: /opt/render/project/src/node_modules/.puppeteer_cache
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      # Allowlist of `queue:job` (or bare `job`, or `*`) that may execute. Fixing the
+      # queue adapter revived ~25 job branches that had never run; the ones that
+      # email customers stay off until they are listed here, one at a time.
+      # Leaving this unset keeps that dormant set disabled.
+      - key: WORKERS_ENABLED_JOBS
+        sync: false

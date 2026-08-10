@@ -6,6 +6,7 @@ import { db } from '../db.js';
 import { processingActivities, legitimateInterestAssessments, processingDataCategories, processingRecipients, processingTransfers, auditLogs, vendors, organizationVendors, clientProcessingActivities, reconsentFlags } from 'db';
 import { eq, and, desc, inArray, not } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import { assertOwned, assertParentOwned } from '../lib/tenancy.js';
 import DOMPurify from 'isomorphic-dompurify';
 import { queueNotification } from '../utils/notifications.js';
 import { reconsentQueue } from '../workers/index.js';
@@ -262,6 +263,7 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ processingActivityId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
+        await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
         return ctx.db.select().from(processingDataCategories)
           .where(eq(processingDataCategories.processingActivityId, input.processingActivityId));
       }),
@@ -276,6 +278,7 @@ export const ropaRouter = router({
         retentionPeriod: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
         const [inserted] = await ctx.db.insert(processingDataCategories).values(input).returning();
 
         if (inserted?.isSpecialCategory) {
@@ -309,8 +312,13 @@ export const ropaRouter = router({
         data: z.record(z.any())
       }))
       .mutation(async ({ ctx, input }) => {
-        const [existing] = await ctx.db.select().from(processingDataCategories).where(eq(processingDataCategories.id, input.id));
-        if (!existing) throw new TRPCError({ code: 'NOT_FOUND' });
+        const existing = await assertOwned(ctx.db, {
+          table: processingDataCategories,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Data category',
+          via: [{ table: processingActivities, on: eq(processingDataCategories.processingActivityId, processingActivities.id) }],
+        });
 
         const [updated] = await ctx.db.update(processingDataCategories)
           .set(input.data)
@@ -363,8 +371,13 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
-        const [existing] = await ctx.db.select().from(processingDataCategories).where(eq(processingDataCategories.id, input.id));
-        if (!existing) throw new TRPCError({ code: 'NOT_FOUND' });
+        const existing = await assertOwned(ctx.db, {
+          table: processingDataCategories,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Data category',
+          via: [{ table: processingActivities, on: eq(processingDataCategories.processingActivityId, processingActivities.id) }],
+        });
 
         const [deleted] = await ctx.db.delete(processingDataCategories)
           .where(eq(processingDataCategories.id, input.id))
@@ -491,6 +504,14 @@ export const ropaRouter = router({
         data: z.record(z.any())
       }))
       .mutation(async ({ ctx, input }) => {
+        await assertOwned(ctx.db, {
+          table: processingRecipients,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Recipient',
+          via: [{ table: processingActivities, on: eq(processingRecipients.processingActivityId, processingActivities.id) }],
+        });
+
         const [updated] = await ctx.db.update(processingRecipients)
           .set(input.data)
           .where(eq(processingRecipients.id, input.id))
@@ -501,6 +522,14 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
+        await assertOwned(ctx.db, {
+          table: processingRecipients,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Recipient',
+          via: [{ table: processingActivities, on: eq(processingRecipients.processingActivityId, processingActivities.id) }],
+        });
+
         const [deleted] = await ctx.db.delete(processingRecipients)
           .where(eq(processingRecipients.id, input.id))
           .returning();
@@ -527,6 +556,7 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ processingActivityId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
+        await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
         return ctx.db.select().from(processingTransfers)
           .where(eq(processingTransfers.processingActivityId, input.processingActivityId));
       }),
@@ -539,6 +569,7 @@ export const ropaRouter = router({
         safeguards: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
         const [inserted] = await ctx.db.insert(processingTransfers).values({
           ...input,
         }).returning();
@@ -551,6 +582,14 @@ export const ropaRouter = router({
         data: z.record(z.any())
       }))
       .mutation(async ({ ctx, input }) => {
+        await assertOwned(ctx.db, {
+          table: processingTransfers,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Transfer',
+          via: [{ table: processingActivities, on: eq(processingTransfers.processingActivityId, processingActivities.id) }],
+        });
+
         const [updated] = await ctx.db.update(processingTransfers)
           .set(input.data)
           .where(eq(processingTransfers.id, input.id))
@@ -561,6 +600,14 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
+        await assertOwned(ctx.db, {
+          table: processingTransfers,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Transfer',
+          via: [{ table: processingActivities, on: eq(processingTransfers.processingActivityId, processingActivities.id) }],
+        });
+
         const [deleted] = await ctx.db.delete(processingTransfers)
           .where(eq(processingTransfers.id, input.id))
           .returning();
