@@ -94,6 +94,13 @@ export default async function RootLayout({
               "alternateName": "Custodia GDPR Compliance",
               "url": SITE_ORIGIN,
               "logo": `${SITE_ORIGIN}/logo.png`,
+              // Profiles we control. Alongside disambiguatingDescription below
+              // this is the strongest signal Google takes for telling one
+              // same-named entity from another, so it is kept from main.
+              "sameAs": [
+                "https://x.com/custodia",
+                "https://github.com/mudkix9-tech/custodia"
+              ],
               "description": "Custodia is a GDPR compliance platform for EU businesses. It covers records of processing (ROPA), gap assessments, DSAR automation, cookie consent management, breach management, vendor risk assessment, DPIAs and employee training in one system.",
               // schema.org's designated field for separating an entity from
               // similarly named ones. Load-bearing here, not decorative.
