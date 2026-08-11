@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { WorkOS } from '@workos-inc/node';
 import { db } from '../db.js';
@@ -25,6 +24,13 @@ export async function ssoRoutes(fastify: FastifyInstance) {
       });
     } else if (email) {
       const domain = email.split('@')[1];
+
+      // An address with no domain part cannot match an organisation slug. Bail here
+      // rather than letting eq(slug, undefined) reach the driver.
+      if (!domain) {
+        return reply.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=SSONotEnabled`);
+      }
+
       const [org] = await db.select().from(organizations).where(eq(organizations.slug, domain));
 
       if (!org || !org.ssoConnectionId || !org.ssoEnabled) {
@@ -65,6 +71,10 @@ export async function ssoRoutes(fastify: FastifyInstance) {
 
       if (!existingUser) {
         const domain = email.split('@')[1];
+        if (!domain) {
+          throw new Error(`WorkOS profile returned an address with no domain part: ${email}`);
+        }
+
         let [org] = await db.select().from(organizations).where(eq(organizations.slug, domain));
 
         if (!org) {
@@ -77,6 +87,12 @@ export async function ssoRoutes(fastify: FastifyInstance) {
             countryCode: 'US', // default
             trialEndsAt,
           }).returning();
+        }
+
+        // .returning() is typed as an array, so the destructure widens to undefined
+        // even though an insert that did not throw always yields exactly one row.
+        if (!org) {
+          throw new Error('Failed to provision an organisation for the SSO sign-in');
         }
 
         [user] = await db.insert(users).values({
@@ -92,7 +108,12 @@ export async function ssoRoutes(fastify: FastifyInstance) {
          await db.update(users).set({
            authProvider: 'workos',
            authProviderId: profile.id
-         }).where(eq(users.id, user.id));
+         }).where(eq(users.id, existingUser.id));
+      }
+
+      // Same as above: the insert branch destructures out of .returning().
+      if (!user) {
+        throw new Error('Failed to provision a user for the SSO sign-in');
       }
 
       // Generate a JWT token or session

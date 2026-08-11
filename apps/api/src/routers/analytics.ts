@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { TRPCError } from '@trpc/server';
@@ -11,16 +10,19 @@ export const analyticsRouter = router({
       // Return 12-month history of compliance scores + projected trajectory
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const currentMonth = new Date().getMonth();
-      const trend = [];
+      const trend: Array<{ month: string; score: number }> = [];
       let baseScore = 60;
 
       for (let i = 0; i < 12; i++) {
         const monthIndex = (currentMonth - 11 + i + 12) % 12;
-        trend.push({
-          month: months[monthIndex],
+        // months is a 12-element literal and monthIndex is taken mod 12, so this
+        // cannot miss; the assertion is only to satisfy noUncheckedIndexedAccess.
+        const entry = {
+          month: months[monthIndex]!,
           score: Math.min(100, Math.max(0, baseScore + Math.floor(Math.random() * 10 - 2)))
-        });
-        baseScore = trend[trend.length - 1].score + 2; // Generally improving trend
+        };
+        trend.push(entry);
+        baseScore = entry.score + 2; // Generally improving trend
       }
 
       const projected = [

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as archiverModule from 'archiver';
 const archiver = (archiverModule as any).default || archiverModule;
 import { PassThrough } from 'stream';
@@ -689,7 +688,9 @@ export async function generateAuditFile(
   archive.append(gapCsv, { name: 'compliance/gap-history.csv' });
 
   // ── Finalize and upload ───────────────────────────────────
-  if (!providedArchive) {
+  // passThrough is created under exactly this condition above; naming it in the
+  // guard is what lets the Upload below see it as non-null.
+  if (!providedArchive && passThrough) {
     archive.finalize();
 
     const exportKey = `audit-files/${orgId}/${Date.now()}-audit-file.zip`;

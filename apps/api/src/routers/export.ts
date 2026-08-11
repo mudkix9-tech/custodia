@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
@@ -96,21 +95,24 @@ export const exportRouter = router({
       // Gather mock data for the executive report
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const currentMonth = new Date().getMonth();
-      const trendData = [];
+      const trendData: Array<{ month: string; score: number }> = [];
       let baseScore = 60;
       for (let i = 0; i < 6; i++) {
         const monthIndex = (currentMonth - 5 + i + 12) % 12;
-        trendData.push({
-          month: months[monthIndex],
+        // months is a 12-element literal and monthIndex is taken mod 12, so this
+        // cannot miss; the assertion is only to satisfy noUncheckedIndexedAccess.
+        const entry = {
+          month: months[monthIndex]!,
           score: Math.min(100, Math.max(0, baseScore + Math.floor(Math.random() * 10 - 2)))
-        });
-        baseScore = trendData[trendData.length - 1].score + 2;
+        };
+        trendData.push(entry);
+        baseScore = entry.score + 2;
       }
 
       const reportData: ExecutiveReportData = {
         organizationName: org?.name || 'Organization',
         reportDate: new Date().toLocaleDateString(),
-        overallScore: trendData[trendData.length - 1].score, // Use latest score
+        overallScore: trendData[trendData.length - 1]!.score, // Use latest score
         industryAverage: 58,
         topQuartile: 85,
         trendData,
@@ -192,7 +194,7 @@ export const exportRouter = router({
           const templates = await ctx.db.select().from(assessmentTemplates).where(
             inArray(assessmentTemplates.id, questionIds)
           );
-          templates.forEach(t => templatesMap.set(t.id, t));
+          templates.forEach((t: any) => templatesMap.set(t.id, t));
         }
 
         answersWithTemplates = snapshot.map((s: any) => {

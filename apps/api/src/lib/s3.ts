@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -11,7 +10,7 @@ export function getS3BucketForOrg(dataRegion: string): string {
     'eu-west-3': 'custodia-documents-eu-west-3',
     'eu-north-1': 'custodia-documents-eu-north-1',
   };
-  return bucketMap[dataRegion] || bucketMap['eu-central-1'];
+  return bucketMap[dataRegion] ?? 'custodia-documents-eu-central-1';
 }
 
 export function getS3ClientForRegion(region: string): S3Client {
