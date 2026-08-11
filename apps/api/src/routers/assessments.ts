@@ -14,7 +14,7 @@ import {
   actionItems,
   pendingSignups
 } from 'db';
-import { eq, and, desc, inArray } from 'drizzle-orm';
+import { eq, and, desc, inArray, isNull } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import React from 'react';
@@ -285,8 +285,13 @@ export const assessmentsRouter = router({
   }),
 
   getSystemTemplates: publicProcedure.query(async () => {
+    // organizationId IS NULL is what makes a template a *system* one (schema.ts:580).
+    // Without this predicate the query returned every organisation's private
+    // templates, to anyone, unauthenticated — getTemplates above is the org-scoped
+    // counterpart and is the only way a caller should reach their own rows.
     return await db.select()
       .from(vendorAssessmentTemplates)
+      .where(isNull(vendorAssessmentTemplates.organizationId))
       .orderBy(desc(vendorAssessmentTemplates.createdAt));
   }),
 
