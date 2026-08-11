@@ -1,4 +1,3 @@
-// @ts-nocheck
 import 'dotenv/config';
 import fastify, { FastifyRequest } from 'fastify';
 
@@ -13,13 +12,11 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import * as Sentry from '@sentry/node';
 import { randomUUID } from 'crypto';
-import { fastifyTRPCPlugin, CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
+import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import fastifyCookie from '@fastify/cookie';
-import { Context } from './trpc.js';
+import { createContext } from './trpc.js';
 import { appRouter } from './router.js';
 import { emailWorker } from './workers/emails.js';
-import { emailSenderWorker } from './workers/emailSenderWorker.js';
-import { vendorAssessmentWorker } from './workers/vendorAssessmentWorker.js';
 import { impactAssessmentWorker } from './workers/impactAssessmentWorker.js';
 import { regulatoryNotificationWorker } from './workers/regulatoryNotificationWorker.js';
 import { generateAssessmentPdfWorker } from './workers/generateAssessmentPdf.js';
@@ -144,9 +141,12 @@ server.register(fastifyTRPCPlugin, {
   prefix: '/api/trpc',
   trpcOptions: {
     router: appRouter,
-    createContext: ({ req, res }: CreateFastifyContextOptions): Context => {
-      return { req, res };
-    },
+    // Built in trpc.ts so there is exactly one definition. The inline version that
+    // used to live here packed only { req, res }, so ctx.db was undefined on every
+    // publicProcedure — isAuthed is the only other thing that ever sets it, and
+    // public procedures never reach it. The client portal, the public DSAR form and
+    // the vendor questionnaire all threw on every call as a result.
+    createContext,
   },
 });
 
