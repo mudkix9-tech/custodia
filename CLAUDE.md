@@ -15,7 +15,7 @@ are in `known-concerns.md`; read it before adding a tRPC procedure.
 Run everything with:
 
 ```bash
-npm run check     # typecheck both workspaces + tenancy guard + params guard + evaluator fixtures
+npm run check     # typecheck both workspaces + tenancy/relations/params guards + evaluator fixtures
 ```
 
 **Both workspaces are at 0 type errors. Keep them there.** (`apps/api` carried a
@@ -26,8 +26,8 @@ bugs hiding in the noise.)
 **There is no root `tsconfig.json`,** so a bare `tsc --noEmit` at the root checks nothing
 and exits 0. Anything treating that as CI is testing nothing — use `npm run check`.
 
-The two guards exist because the only two bugs that reached production-shaped code in this
-repo were both invisible to `tsc`: see the multi-tenancy and `apps/web` sections below.
+The guards exist because every bug that has reached production-shaped code in this repo
+was invisible to `tsc`: see the multi-tenancy, database and `apps/web` sections below.
 
 **`npx eslint` cannot run at all.** `apps/web/eslint.config.mjs` throws
 `TypeError: tailwind.configs.flat/recommended is not iterable` on ESLint 9.39.4.
@@ -167,6 +167,19 @@ npm run check:schema --workspace=packages/db # fails if schema.ts and drizzle/ h
 
 Edit `schema.ts` and generate. Never hand-write a migration file — `check:schema` will
 fail on the drift.
+
+**`with:` in a relational query is not typechecked.** For a table with no
+`relations()` block, Drizzle widens the `with` key type and `tsc` accepts any name.
+At runtime the dialect looks the key up, gets `undefined`, and throws
+`Cannot read properties of undefined (reading 'referencedTable')` while *building* the
+query — so the caller fails on every invocation, not on some unlucky row. Fourteen call
+sites across nine files were in that state until August 2026, including the nightly
+`gap-scanner` and every webhook delivery. The same throw covers a `many()` whose target
+declares no `one()` back, because that is what Drizzle infers the join from.
+
+`npm run check:relations --workspace=apps/api` resolves every `with` key against
+`schema.ts`. Relations are TS-only metadata — adding one is not a schema change and
+`check:schema` stays clean.
 
 **Unique constraints carry logic here, not just integrity.** The pattern used by
 `consent_findings` and specced for `integration_signals`: a `UNIQUE` on the natural key
