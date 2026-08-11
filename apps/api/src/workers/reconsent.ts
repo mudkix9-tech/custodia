@@ -111,7 +111,9 @@ JSON format only:`;
     }
   },
   {
-    connection: (reconsentQueue as any).client,
+    // No `connection` here: opts goes straight to pg-boss work(), which has no such
+    // option — it was a BullMQ leftover, and it dereferenced reconsentQueue, which is
+    // null under NODE_ENV=test. That made the worker barrel unimportable from tests.
     concurrency: 2,
   }
 );
