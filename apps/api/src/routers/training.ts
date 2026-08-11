@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
@@ -190,7 +189,7 @@ export const trainingRouter = router({
     const missingModules: any[] = [];
 
     for (const g of globals) {
-      if (!myComps.find(c => c.moduleId === g.id)) {
+      if (!myComps.find((c: any) => c.moduleId === g.id)) {
         missingCompsToInsert.push({
           organizationId: ctx.user!.orgId,
           userId: ctx.user!.id,

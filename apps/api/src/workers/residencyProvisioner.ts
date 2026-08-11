@@ -1,5 +1,4 @@
 import { createWorker, createQueue } from '../lib/queue.js';
-// @ts-nocheck
 import { RDSClient, CreateDBInstanceCommand, DescribeDBInstancesCommand } from '@aws-sdk/client-rds';
 import { db as primaryDb } from '../db.js';
 import { organizations } from 'db';

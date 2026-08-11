@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
