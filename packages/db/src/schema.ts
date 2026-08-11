@@ -1697,6 +1697,16 @@ export const processingActivitiesRelations = relations(processingActivities, ({ 
   reconsentFlags: many(reconsentFlags),
 }));
 
+// The `many(processingDataCategories)` above can only be resolved if the child
+// declares the matching `one()` — without it Drizzle has no fields/references to
+// infer the join from and throws while building the query.
+export const processingDataCategoriesRelations = relations(processingDataCategories, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [processingDataCategories.processingActivityId],
+    references: [processingActivities.id],
+  }),
+}));
+
 export const processingRecipientsRelations = relations(processingRecipients, ({ one }) => ({
   activity: one(processingActivities, {
     fields: [processingRecipients.processingActivityId],
@@ -1844,6 +1854,37 @@ export const organizationsRelations = relations(organizations, ({ one, many }) =
   }),
   children: many(organizations, { relationName: 'parentOrganization' }),
   reconsentFlags: many(reconsentFlags),
+}));
+
+export const organizationVendorsRelations = relations(organizationVendors, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [organizationVendors.organizationId],
+    references: [organizations.id],
+  }),
+  vendor: one(vendors, {
+    fields: [organizationVendors.vendorId],
+    references: [vendors.id],
+  }),
+}));
+
+export const webhookDeliveriesRelations = relations(webhookDeliveries, ({ one }) => ({
+  webhook: one(webhooks, {
+    fields: [webhookDeliveries.webhookId],
+    references: [webhooks.id],
+  }),
+}));
+
+// `assignee`, not `assignedTo`: a relation sharing a column's name overwrites that
+// column in the result, which would turn the uuid into a user object.
+export const dsarRequestsRelations = relations(dsarRequests, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [dsarRequests.organizationId],
+    references: [organizations.id],
+  }),
+  assignee: one(users, {
+    fields: [dsarRequests.assignedTo],
+    references: [users.id],
+  }),
 }));
 
 export const account = pgTable('account', {

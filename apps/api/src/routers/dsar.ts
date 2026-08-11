@@ -440,7 +440,7 @@ export const dsarRouter = router({
       const dsar = await ctx.db.query.dsarRequests.findFirst({
         where: and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)),
         with: {
-          assignedTo: true
+          assignee: true
         }
       });
       if (!dsar) throw new TRPCError({ code: 'NOT_FOUND' });
