@@ -12,6 +12,9 @@
     "typecheck": "tsc --noEmit",
     "check:tenancy": "tsx src/scripts/check-tenant-scoping.ts",
     "check:relations": "tsx src/scripts/check-relations.ts",
+    "check:nocheck": "tsx src/scripts/check-ts-nocheck.ts",
+    "probe": "tsx src/scripts/probe-procedures.ts",
+    "mint-token": "tsx src/scripts/mint-probe-token.ts",
     "test:fixtures": "tsx src/lib/consentEvaluator.fixtures.test.ts",
     "test:consent-cookies": "tsx src/workers/consentScan.cookies.test.ts",
     "test:scoring": "tsx src/lib/scoring.test.ts"

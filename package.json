@@ -12,7 +12,7 @@
     "lint": "npm run lint --workspaces",
     "postinstall": "npm run --workspace=apps/api postinstall",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "check": "npm run typecheck --workspaces --if-present && npm run check:tenancy --workspace=apps/api && npm run check:relations --workspace=apps/api && npm run check:params --workspace=apps/web && npm run check:sitemap --workspace=apps/web && npm run test:fixtures --workspace=apps/api && npm run test:consent-cookies --workspace=apps/api"
+    "check": "npm run typecheck --workspaces --if-present && npm run check:tenancy --workspace=apps/api && npm run check:relations --workspace=apps/api && npm run check:nocheck --workspace=apps/api && npm run check:params --workspace=apps/web && npm run check:sitemap --workspace=apps/web && npm run test:fixtures --workspace=apps/api && npm run test:consent-cookies --workspace=apps/api"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
