@@ -1,6 +1,9 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+// Loads the FastifyReply.clearCookie augmentation. apps/web typechecks this file via
+// the AppRouter type, and without the import it does not see the plugin's types.
+import '@fastify/cookie';
 import { decode } from '@auth/core/jwt';
 import { db } from './db.js';
 import { getDbForOrg, getPrimaryDb } from './lib/dbRouter.js';
@@ -99,22 +102,54 @@ export const isAuthed = t.middleware(async ({ ctx, type, next }) => {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
   }
 
-  const decoded = await decode({
-    token: tokenStr,
-    secret: process.env.AUTH_SECRET || 'secret',
-    salt: cookieName,
-  });
+  /**
+   * Rejecting a dead session is not the same as ending it. Without clearing the
+   * cookie the browser keeps presenting it forever, so the user sees an application
+   * that fails on every request rather than one that returns them to sign-in.
+   *
+   * The `__Secure-` prefix obliges the Secure attribute — a deletion sent without it
+   * is rejected outright and the cookie survives. Everything else must match what
+   * apps/web set (NextAuth defaults: path '/', httpOnly, sameSite lax), because a
+   * browser matches deletions on name, domain and path.
+   */
+  const endSession = (message?: string) => {
+    ctx.res.clearCookie(cookieName, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: cookieName.startsWith('__Secure-'),
+    });
+    return new TRPCError({ code: 'UNAUTHORIZED', ...(message ? { message } : {}) });
+  };
+
+  // decode() *throws* on a token it cannot decrypt ("no matching decryption secret"),
+  // it does not return null. Uncaught, that surfaced as INTERNAL_SERVER_ERROR on every
+  // procedure, so a session minted under a previous AUTH_SECRET produced 500s across
+  // the whole application instead of logging the user out.
+  let decoded;
+  try {
+    decoded = await decode({
+      token: tokenStr,
+      secret: process.env.AUTH_SECRET || 'secret',
+      salt: cookieName,
+    });
+  } catch {
+    throw endSession();
+  }
 
   if (!decoded || !decoded.sub || !decoded.org) {
-    throw new TRPCError({ code: 'UNAUTHORIZED' });
+    throw endSession();
   }
 
   // Check Token Invalidation
   const [userRec] = await db.select({ tokenInvalidatedAt: users.tokenInvalidatedAt })
     .from(users).where(eq(users.id, decoded.sub));
 
+  // The deliberate force-logout path — the user was signed out server-side, or the row
+  // is gone. Leaving the cookie in place here meant "log out everywhere" never actually
+  // logged anyone out of their own browser; it only made every request fail.
   if (!userRec || (userRec.tokenInvalidatedAt && (decoded.iat as number) * 1000 < userRec.tokenInvalidatedAt.getTime())) {
-    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Token invalidated' });
+    throw endSession('Token invalidated');
   }
 
   let entityScope: 'own' | 'group' = 'own';
