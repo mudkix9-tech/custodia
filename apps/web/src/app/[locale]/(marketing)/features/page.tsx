@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { setRequestLocale } from 'next-intl/server';
 import { buildMarketingMetadata } from '../seo';
 import FeaturesClient from './FeaturesClient';
 
@@ -11,6 +12,12 @@ export async function generateMetadata({
   return buildMarketingMetadata({ locale, path: '/features' });
 }
 
-export default function FeaturesPage() {
+export default async function FeaturesPage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return <FeaturesClient />;
 }

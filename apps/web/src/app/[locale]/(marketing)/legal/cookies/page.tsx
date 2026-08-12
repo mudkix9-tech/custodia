@@ -13,11 +13,11 @@ export async function generateMetadata({
 
 export default function CookiePolicyPage() {
   return (
-    <div className="pt-24 pb-32 max-w-3xl mx-auto px-6 font-sans">
-      <h1 className="text-4xl font-serif text-ink-900 mb-4">Cookie Policy</h1>
-      <p className="text-sm text-ink-500 mb-12">Last updated: {new Date().toLocaleDateString()}</p>
+    <div className="pt-24 pb-32 max-w-3xl mx-auto px-6 [font-family:var(--font-plex-sans)]">
+      <h1 className="text-4xl text-text-heading mb-4">Cookie Policy</h1>
+      <p className="text-sm text-text-muted mb-12">Last updated: {new Date().toLocaleDateString()}</p>
 
-      <div className="prose prose-sage max-w-none text-ink-600">
+      <div className="marketing-prose">
         <h2>1. What are cookies?</h2>
         <p>Cookies are small text files placed on your device to store data that can be recalled by a web server in the domain that placed the cookie.</p>
 

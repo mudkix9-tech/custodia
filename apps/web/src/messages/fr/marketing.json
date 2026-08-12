@@ -133,6 +133,10 @@
       "legal_subprocessors": {
         "title": "Sous-traitants ultérieurs | Custodia",
         "desc": "La liste à jour des sous-traitants ultérieurs de Custodia, ce que chacun traite, où il est situé et comment nous informons nos clients des changements."
+      },
+      "assessment": {
+        "title": "Évaluation gratuite de conformité RGPD | Custodia",
+        "desc": "Évaluez votre conformité RGPD en quelques minutes. Chaque écart est rattaché à l’article concerné, noté par gravité et détaillé par catégorie. Aucun compte requis pour commencer."
       }
     }
   },
@@ -209,6 +213,821 @@
       "privacy": "Politique de confidentialité",
       "cookies": "Politique relative aux cookies",
       "dpa": "Accord de traitement des données"
-    }
+    },
+    "nav": {
+      "platform": "Plateforme",
+      "advisor": "Conseiller IA",
+      "pricing": "Tarifs",
+      "security": "Sécurité"
+    },
+    "nav_aria_label": "Navigation principale",
+    "nav_open": "Ouvrir le menu de navigation",
+    "nav_close": "Fermer le menu de navigation",
+    "sign_in": "Se connecter",
+    "cta_assessment": "Lancer l’analyse gratuite"
+  },
+  "assessmentFlow": {
+    "headerBadge": "Analyse des écarts gratuite",
+    "resumed": "Repris — vous continuez là où vous vous étiez arrêté",
+    "answered": "{answered} sur {total} répondues",
+    "unanswered": "Aucun compte requis · ~10 min",
+    "introReqs": "{reqs} exigences · {categories} catégories · ~10 minutes",
+    "introTitle": "Découvrez où vous en êtes avant que quelqu'un d'autre ne le fasse.",
+    "introDesc": "Une analyse structurée de vos opérations par rapport au RGPD tel qu'il est réellement appliqué. Répondez à {reqs} questions ; Custodia évalue chaque exigence, associe chaque écart à son article et ordonne les résultats par catégorie.",
+    "resumeBtn": "Reprendre l'analyse",
+    "startOverBtn": "Recommencer",
+    "beginBtn": "Commencer l'analyse",
+    "introFootnote": "Aucun compte. Pas de carte de crédit. Pas d'appel de vente. La progression est enregistrée dans votre navigateur — vous pouvez quitter et revenir.",
+    "usedBy": "Utilisé par les agences et leurs clients dans toute l'UE.",
+    "whatYouGet": "Ce que vous obtenez, immédiatement",
+    "d1Title": "Un score de préparation évalué",
+    "d1Desc": "Un chiffre, comparé aux agences européennes similaires.",
+    "d2Title": "Chaque écart associé à son article",
+    "d2Desc": "Les résultats citent la disposition qu'ils ne respectent pas, et non une catégorie vague.",
+    "d3Title": "Sévérité par résultat",
+    "d3Desc": "Pour que vous sachiez ce qui nécessite de l'attention ce trimestre et ce qui peut attendre.",
+    "d4Title": "Une répartition par catégorie",
+    "d4Desc": "Registres, consentement, fournisseurs, sécurité et plus, évalués indépendamment.",
+    "statsReqs": "Exigences vérifiées",
+    "statsCats": "Catégories évaluées",
+    "statsEU": "Données stockées et traitées",
+    "questionHeader": "Question {current} / {total}",
+    "back": "← Retour",
+    "keyboardHint": "Appuyez sur 1–{count} pour répondre · les réponses sont enregistrées au fur et à mesure"
+  },
+  "assessmentResults": {
+    "shareLink": "Partager les résultats",
+    "copied": "Copié",
+    "expiredTitle": "Analyse expirée",
+    "expiredDesc": "Cette analyse a été complétée il y a plus de 30 jours et n'est plus disponible.",
+    "startNewBtn": "Nouvelle analyse",
+    "assessmentComplete": "Analyse terminée",
+    "ref": "Réf {ref}",
+    "medianScore": "Score médian pour les agences à la première analyse : 55",
+    "highSeverity": "Sévérité élevée",
+    "mediumSeverity": "Sévérité moyenne",
+    "totalFindings": "Total des résultats",
+    "scoreByCategory": "Score par catégorie",
+    "findings": "Résultats",
+    "findingsDesc": "Ordonnés par sévérité — le rapport complet inclut chaque résultat et son étape de remédiation.",
+    "furtherFindings": "{count} résultat(s) supplémentaire(s) figure(nt) dans le rapport complet.",
+    "unlockBelow": "Déverrouiller ci-dessous ↓",
+    "sendReportHeader": "Envoyer mon rapport",
+    "sendReportDesc": "Un e-mail contenant votre PDF. Pas de séquence, pas d'appel de vente — le désabonnement se fait en un clic et votre analyse reste valide de toute façon.",
+    "emailPlaceholder": "nom@entreprise.eu",
+    "companyPlaceholder": "Entreprise (optionnel)",
+    "marketingConsent": "Tenez-moi informé sur Custodia, y compris les actualités des produits et les offres",
+    "emailMeBtn": "M'envoyer le rapport complet par e-mail",
+    "emailMeProcessing": "Traitement en cours…",
+    "emailNoteError": "Entrez une adresse e-mail valide pour que nous puissions envoyer le rapport.",
+    "emailNote": "Nous vous enverrons un lien magique sécurisé par e-mail. Aucun mot de passe requis.",
+    "storedEU": "Données stockées et traitées dans l'UE",
+    "deleted90Days": "Analyses supprimées après 90 jours",
+    "checkEmailTitle": "Vérifiez vos e-mails",
+    "checkEmailDesc1": "Nous avons envoyé un lien magique à ",
+    "checkEmailDesc2": "Cliquez sur le lien sur cet appareil pour accéder à vos résultats complets.",
+    "resendLink": "Renvoyer le lien",
+    "wrongEmail": "Mauvais e-mail ?",
+    "fullReportBadge": "Rapport complet",
+    "fullReportTitle": "Rapport de préparation à l'audit RGPD",
+    "bandDefensible": "Défendable",
+    "bandMaterialExposure": "Risque matériel",
+    "bandHighExposure": "Risque élevé",
+    "verdictDefensible": "Votre programme est globalement défendable. Les résultats ci-dessous sont des améliorations plutôt que des risques — corrigez-les pour passer d'une conformité de fond à une conformité démontrable sur demande.",
+    "verdictMaterialExposure": "Vous avez les grandes lignes d'un programme de conformité sans les preuves pour le démontrer. Lors d'une enquête, la responsabilité se situe dans l'écart entre ce que vous faites et ce que vous pouvez prouver — et la plupart des résultats ci-dessous concernent la documentation, pas de nouveaux travaux.",
+    "verdictHighExposure": "Plusieurs obligations fondamentales ne sont pas respectées, y compris celles qu'une autorité de contrôle peut vérifier sans vous contacter. Traitez les résultats à gravité élevée comme priorité pour ce trimestre.",
+    "btnEmailReport": "Envoyez-moi le rapport complet",
+    "btnProcessing": "En cours…",
+    "btnDownloadPdf": "Télécharger le rapport PDF",
+    "btnGenerating": "Génération en cours…",
+    "downloadPdf": "Télécharger le rapport PDF",
+    "generatingPdf": "Génération en cours…",
+    "actionPlan": "Votre plan d'action",
+    "fixIssue": "Corriger le problème",
+    "fixAutomaticallyTitle": "Corrigez ces problèmes automatiquement.",
+    "fixAutomaticallyDesc": "Custodia remplace vos feuilles de calcul par un système d'exploitation de conformité dynamique. Commencez à résoudre ces points d'action aujourd'hui.",
+    "viewPlans": "Voir les plans Custodia"
+  },
+  "pdfReport": {
+    "confidential": "Analyse des écarts · Confidentiel",
+    "title": "Rapport d'évaluation de conformité RGPD",
+    "orgLabel": "Organisation",
+    "dateLabel": "Date d'évaluation",
+    "idLabel": "ID du rapport",
+    "overallScoreLabel": "Score global de conformité",
+    "assessedDesc": "{questions} questions évaluées dans {categories} catégories de conformité.",
+    "disclaimerLine1": "Custodia agit en tant que fournisseur de logiciels de conformité, et non comme un cabinet d'avocats. Ce rapport est une évaluation automatisée basée sur vos réponses et ne constitue pas un avis juridique formel. Bien qu'il identifie une exposition réglementaire potentielle, nous recommandons de consulter un conseiller qualifié pour des conseils définitifs.",
+    "actionItemPrefix": "Traiter le risque concernant : ",
+    "disclaimer": "Ce rapport reflète des réponses auto-déclarées et vise à soutenir la planification interne de la conformité. Il ne constitue pas un avis juridique ou une certification de conformité au Règlement (UE) 2016/679.",
+    "footerText": "Généré par Custodia | trycustodia.com | Confidentiel",
+    "footerPage": "Page {pageNumber} sur {totalPages}",
+    "headerText": "Rapport d'évaluation de conformité RGPD · {orgName}",
+    "execSummaryTitle": "Résumé exécutif",
+    "execSummaryText": "{orgName} a obtenu un score global de conformité de {score}%, plaçant l'organisation à un risque {risk} de non-conformité avec le RGPD.",
+    "scoreBreakdownTitle": "Répartition des scores par catégorie",
+    "catHeaderCategory": "Catégorie",
+    "catHeaderScore": "Score",
+    "catHeaderRisk": "Niveau de risque",
+    "riskLow": "Risque faible",
+    "riskModerate": "Risque modéré",
+    "riskHigh": "Risque élevé",
+    "legendLow": "Risque faible — 76–100%",
+    "legendModerate": "Risque modéré — 51–75%",
+    "legendHigh": "Risque élevé — 0–50%",
+    "findingsTitle": "Résultats détaillés",
+    "findingsDesc": "Réponses telles que soumises, regroupées par catégorie. L'indicateur reflète le risque résiduel associé à chaque réponse.",
+    "questionsLabel": "{count} QUESTIONS",
+    "responseLabel": "RÉPONSE",
+    "actionTitle": "Mesures recommandées",
+    "actionDesc": "{count} actions générées à partir des lacunes identifiées, classées par priorité.",
+    "actionHeaderPriority": "Priorité",
+    "actionHeaderAction": "Action",
+    "actionHeaderArticle": "Article RGPD",
+    "nextStepsTitle": "Prochaines étapes",
+    "nextStepsSummary": "Vous avez {highCount} lacunes très prioritaires. {moduleText} peuvent résoudre automatiquement {autoCount} d'entre elles.",
+    "nextStepsModules_1": "{m1} de Custodia",
+    "nextStepsModules_2": "{m1} et {m2} de Custodia",
+    "nextStepsModules_multi": "{modules}, et {last} de Custodia",
+    "nextStepsCTA": "Commencez un essai gratuit sur trycustodia.com pour résoudre ces problèmes et générer un certificat de conformité.",
+    "module_ropa": "moteur ROPA",
+    "module_cookie": "gestionnaire de consentement aux cookies",
+    "module_vendor": "suivi des risques liés aux fournisseurs",
+    "module_dsar": "automatisation des demandes d'accès",
+    "module_security": "module Sécurité & Violations"
+  },
+  "pricingPage": {
+    "badge": "Tarifs",
+    "title": "Une offre, pensée pour les agences.",
+    "subheadline": "Commencez par l’analyse gratuite, puis passez à Professional lorsque vous voulez que le registre, les délais et le dossier de preuves soient tenus à jour pour vous.",
+    "monthlyLabel": "Mensuel",
+    "annualLabel": "Annuel",
+    "annualSaveBadge": "−20 %",
+    "savingsNote": "Économisez {amount} € par an en facturation annuelle.",
+    "perMonth": "/mois",
+    "perMonthAnnual": "/mois, facturé annuellement",
+    "custom": "Sur mesure",
+    "included": "Ce qui est inclus",
+    "professionalName": "Professional",
+    "professionalBadge": "Le plus choisi",
+    "professionalBlurb": "Le système complet pour les agences en croissance.",
+    "professionalCta": "Essai gratuit",
+    "enterpriseName": "Enterprise",
+    "enterpriseBlurb": "Pour les groupes gérant plusieurs entités juridiques ou des contrôles sur mesure.",
+    "enterpriseCta": "Nous contacter",
+    "professionalFeatures": [
+      "Utilisateurs et traitements illimités",
+      "Sous-traitants et AIPD illimités",
+      "Consentement aux cookies (50 domaines)",
+      "Conseiller IA conformité (2 000 requêtes)"
+    ],
+    "enterpriseFeatures": [
+      "Tout Professional",
+      "Localisation des données sur mesure",
+      "SSO et rôles personnalisés",
+      "Gestionnaire de compte dédié",
+      "API REST (Enterprise uniquement)"
+    ],
+    "footnote1": "Résiliable à tout moment",
+    "footnote2": "Aucuns frais de mise en service",
+    "footnote3": "TVA calculée au paiement",
+    "faqTitle": "Questions fréquentes",
+    "faqs": [
+      {
+        "q": "Proposez-vous un essai gratuit sur les offres payantes ?",
+        "a": "Oui. L’essai est limité dans le temps et ne demande aucune carte bancaire."
+      },
+      {
+        "q": "Puis-je changer d’offre à tout moment ?",
+        "a": "Oui. Les changements prennent effet immédiatement et la différence est calculée au prorata automatiquement."
+      },
+      {
+        "q": "Y a-t-il des frais de mise en service ?",
+        "a": "Non. Aucun frais d’intégration ni de mise en service — vous payez uniquement l’abonnement mensuel ou annuel."
+      },
+      {
+        "q": "Avez-vous des tarifs pour les associations ?",
+        "a": "Oui, les organismes à but non lucratif enregistrés bénéficient de 50 %. Contactez-nous avec votre numéro d’enregistrement."
+      },
+      {
+        "q": "Que se passe-t-il si je dépasse les limites de mon offre ?",
+        "a": "Nous vous prévenons à l’approche d’une limite. Rien n’est coupé ; vous décidez de passer à l’offre supérieure ou non."
+      },
+      {
+        "q": "Mes données sont-elles sécurisées ?",
+        "a": "Toutes les données sont chiffrées au repos et en transit, hébergées sur AWS à Dublin (eu-west-1). Nos contrôles sont alignés sur ISO 27001 et SOC 2 Type II est en préparation."
+      },
+      {
+        "q": "Signez-vous un accord de traitement des données (DPA) ?",
+        "a": "Oui. Un DPA au titre de l’article 28 est inclus dans les conditions de toute offre payante."
+      },
+      {
+        "q": "Puis-je exporter mes données si je résilie ?",
+        "a": "Oui. Registre, liste de sous-traitants, évaluations et politiques s’exportent à tout moment, y compris après résiliation."
+      }
+    ],
+    "ctaTitle": "Commencez par l’analyse gratuite.",
+    "ctaDesc": "Voyez où vous en êtes en quelques minutes. Passez à l’offre payante quand vous êtes prêt à combler les écarts.",
+    "ctaBtn": "Lancer l’analyse"
+  },
+  "featuresPage": {
+    "badge": "Plateforme",
+    "title": "Dix modules. Une seule source de vérité.",
+    "subheadline": "Chaque module écrit dans le même registre : une preuve produite à un endroit est disponible partout ailleurs. Rien n’est ressaisi, rien ne dérive.",
+    "producesLabel": "Produit",
+    "ctaTitle": "Confrontez-le à votre propre activité.",
+    "ctaDesc": "L’analyse gratuite note les dix domaines et indique lequel traiter en premier.",
+    "ctaBtn": "Lancer l’analyse",
+    "items": [
+      {
+        "id": "gap-assessment",
+        "ref": "Art. 24 · 32",
+        "title": "Analyse des écarts",
+        "subtitle": "Savoir où vous en êtes.",
+        "desc": "Ne devinez plus votre niveau de conformité. Le moteur d’analyse pose des questions simples sur votre gestion réelle des données, puis renvoie une feuille de route notée et priorisée.",
+        "highlights": [
+          "Questionnaire dynamique adapté au profil de votre agence.",
+          "Notation du risque sur dix catégories de conformité distinctes.",
+          "Remédiation étape par étape, classée par risque et par effort.",
+          "Rapports PDF présentables au client, prouvant une démarche proactive."
+        ],
+        "cta": "Lancer l’analyse",
+        "href": "/assessment",
+        "output": "Un score de maturité et une liste d’écarts datée"
+      },
+      {
+        "id": "ropa",
+        "ref": "Art. 30",
+        "title": "Registre des traitements",
+        "subtitle": "Documenter vos traitements.",
+        "desc": "La pierre angulaire du règlement, sans tableur. Une cartographie vivante de la circulation des données dans votre agence et vos projets clients.",
+        "highlights": [
+          "Modèles prêts à l’emploi pour les activités courantes d’agence.",
+          "Sous-traitants et systèmes rattachés aux activités qui les utilisent.",
+          "Base légale, durée de conservation et catégorie de données par activité.",
+          "Registres au titre de l’article 30 exportés en quelques secondes."
+        ],
+        "cta": "Commencer à documenter",
+        "href": "/signup",
+        "output": "Un registre article 30 versionné"
+      },
+      {
+        "id": "vendor-intelligence",
+        "ref": "Art. 28 · 44",
+        "title": "Veille sous-traitants",
+        "subtitle": "Suivre vos tiers.",
+        "desc": "Les agences reposent sur des dizaines d’outils. Custodia suit leur conformité pour vous, à partir d’une fiche tenue à jour pour chaque sous-traitant courant.",
+        "highlights": [
+          "Région d’hébergement, sous-traitants ultérieurs et mécanisme de transfert par prestataire.",
+          "Alertes lorsqu’un prestataire modifie ses conditions ou déclare une violation.",
+          "Un référentiel unique pour chaque DPA signé.",
+          "Risque évalué avant l’adoption d’un outil, pas après."
+        ],
+        "cta": "Voir le registre des sous-traitants",
+        "href": "/signup",
+        "output": "Une fiche transfert et DPA par sous-traitant"
+      },
+      {
+        "id": "privacy-policies",
+        "ref": "Art. 13–14",
+        "title": "Mentions d’information dynamiques",
+        "subtitle": "Générer des mentions conformes.",
+        "desc": "Ni modèles génériques ni frais de rédaction. Custodia génère mentions d’information, politiques cookies et conditions à partir de vos traitements réels.",
+        "highlights": [
+          "Les mentions se mettent à jour dès qu’une activité ou un prestataire est ajouté.",
+          "Des widgets intégrables gardent les pages publiées synchronisées.",
+          "Sortie multilingue pour les agences actives dans plusieurs pays.",
+          "Une rédaction pensée pour les agences de marketing et de design."
+        ],
+        "cta": "Générer une mention",
+        "href": "/signup",
+        "output": "Une mention d’information publiée et versionnée"
+      },
+      {
+        "id": "cookie-consent",
+        "ref": "ePrivacy",
+        "title": "Consentement aux cookies",
+        "subtitle": "Gérer le consentement du site.",
+        "desc": "Une plateforme de gestion du consentement qui ne ruine pas votre design. Obligations ePrivacy et RGPD remplies, bandeau toujours à votre image.",
+        "highlights": [
+          "Google Consent Mode v2 et IAB TCF v2.2 pris en charge.",
+          "Analyse et catégorisation automatiques des cookies chaque semaine.",
+          "Journaux de consentement granulaires opposables en cas de contrôle.",
+          "Plusieurs domaines clients pilotés depuis un seul endroit."
+        ],
+        "cta": "Configurer le consentement",
+        "href": "/signup",
+        "output": "Un journal de preuve de consentement inaltérable"
+      },
+      {
+        "id": "dsar-automation",
+        "ref": "Art. 15–22",
+        "title": "Automatisation des demandes",
+        "subtitle": "Traiter les demandes d’exercice de droits.",
+        "desc": "Transformez vingt heures de panique en un flux suivi. Réception, vérification d’identité et traitement au même endroit, face au délai légal.",
+        "highlights": [
+          "Portail de réception sécurisé et configurable pour les personnes concernées.",
+          "Vérification d’identité avant toute collecte.",
+          "Tâches de collecte réparties système par système.",
+          "Remise sécurisée du dossier de données finalisé."
+        ],
+        "cta": "Automatiser les demandes",
+        "href": "/signup",
+        "output": "Un dossier clos avec l’historique des délais"
+      },
+      {
+        "id": "breach-management",
+        "ref": "Art. 33 · 34",
+        "title": "Gestion des violations",
+        "subtitle": "Réagir aux incidents.",
+        "desc": "Quand cela arrive, la vitesse décide de l’issue. Custodia déroule l’obligation de notification sous 72 heures pour que la réponse tienne après coup.",
+        "highlights": [
+          "Procédures de réponse avec responsables désignés.",
+          "Gravité évaluée selon les critères de l’EDPB pour décider de la notification.",
+          "Modèles de notification pré-remplis pour l’autorité de contrôle.",
+          "Un journal des incidents qui satisfait l’obligation de registre."
+        ],
+        "cta": "Se préparer aux incidents",
+        "href": "/signup",
+        "output": "Un dossier d’incident opposable et sa chronologie 72 h"
+      },
+      {
+        "id": "dpia",
+        "ref": "Art. 35",
+        "title": "Analyses d’impact (AIPD)",
+        "subtitle": "Évaluer les traitements à risque.",
+        "desc": "Menez les analyses exigées par le règlement avant le lancement d’un projet, pas après. Identifier, évaluer et réduire le risque avec un cadre plutôt qu’une page blanche.",
+        "highlights": [
+          "Questionnaires guidés fondés sur les lignes directrices des autorités.",
+          "Revue collaborative avec votre DPO et les parties prenantes.",
+          "Matrice de risque qui ordonne les mesures par gravité.",
+          "Rapports exportables pour la consultation préalable."
+        ],
+        "cta": "Démarrer une AIPD",
+        "href": "/signup",
+        "output": "Une AIPD validée et son registre de mesures"
+      },
+      {
+        "id": "training",
+        "ref": "Art. 39",
+        "title": "Formation des équipes",
+        "subtitle": "Former vos collaborateurs.",
+        "desc": "L’erreur humaine reste le premier risque. Inscrivez votre équipe à une sensibilisation pensée pour les agences et conservez les preuves de suivi.",
+        "highlights": [
+          "Modules courts, écrits pour les métiers d’agence.",
+          "Inscription et suivi de progression automatisés.",
+          "Quiz qui vérifient la compréhension, pas la présence.",
+          "Attestations de fin conservées comme preuve."
+        ],
+        "cta": "Former votre équipe",
+        "href": "/signup",
+        "output": "Des attestations datées par collaborateur"
+      },
+      {
+        "id": "audit-readiness",
+        "ref": "Art. 5(2)",
+        "title": "Préparation aux audits",
+        "subtitle": "Prouver la conformité à la demande.",
+        "desc": "Faites de la conformité quelque chose que vous pouvez montrer. Générez un dossier d’audit complet ou partagez une page de confiance quand les achats le demandent.",
+        "highlights": [
+          "Pages de confiance client publiques ou protégées par mot de passe.",
+          "Dossier de preuves complet généré en un clic.",
+          "Répondez aux questionnaires fournisseurs à partir de l’existant.",
+          "Un référentiel unique pour chaque preuve de conformité."
+        ],
+        "cta": "Créer une page de confiance",
+        "href": "/signup",
+        "output": "Un dossier de preuves exportable par demande"
+      }
+    ]
+  },
+  "securityPage": {
+    "badge": "Sécurité et confiance",
+    "title": "Nous protégeons vos données comme vous protégez celles de vos clients.",
+    "subheadline": "Nous vendons des logiciels de conformité : notre propre dispositif doit donc résister au même examen. Voici exactement comment Custodia est exploité.",
+    "principles": [
+      {
+        "label": "Localisation",
+        "title": "Infrastructure européenne",
+        "desc": "Hébergé sur AWS Dublin (eu-west-1). Aucune donnée ne quitte l’EEE, y compris pour l’accès support."
+      },
+      {
+        "label": "Chiffrement",
+        "title": "Chiffré de bout en bout",
+        "desc": "AES-256 au repos, TLS 1.3 en transit, clés gérées séparément des données."
+      },
+      {
+        "label": "Accès",
+        "title": "Contrôle d’accès",
+        "desc": "Sécurité au niveau des lignes, droits par rôle et par entité, MFA sur chaque compte."
+      },
+      {
+        "label": "Assurance",
+        "title": "Tests indépendants",
+        "desc": "Tests d’intrusion annuels par un tiers. Les constats sont corrigés puis retestés avant clôture."
+      },
+      {
+        "label": "Isolation",
+        "title": "Isolation des locataires",
+        "desc": "Multi-tenant avec isolation au niveau de la base, appliquée par organisation à chaque requête."
+      },
+      {
+        "label": "Normes",
+        "title": "Aligné sur ISO 27001",
+        "desc": "Contrôles alignés sur ISO 27001. SOC 2 Type II est en préparation, pas encore certifié."
+      }
+    ],
+    "gdprTitle": "Notre propre conformité RGPD",
+    "gdprBody": "Nous tenons les registres que nous vous demandons de tenir. Custodia maintient son propre registre article 30, évalue ses propres sous-traitants et applique sa propre politique de conservation.",
+    "gdprPoints": [
+      "Un accord de traitement au titre de l’article 28 est disponible pour chaque client.",
+      "Les sous-traitants ultérieurs sont évalués avant intégration puis suivis en continu.",
+      "Un délégué à la protection des données nommément désigné est responsable du dispositif."
+    ],
+    "subTitle": "Sous-traitants ultérieurs",
+    "subBody": "Chaque tiers qui traite des données pour notre compte est listé publiquement, avec ce qu’il traite et sa localisation. Nous prévenons les clients avant toute modification.",
+    "subLink": "Voir la liste des sous-traitants",
+    "contactTitle": "Questions de sécurité",
+    "contactBody": "Pour un questionnaire de sécurité, une copie du DPA ou le signalement d’une vulnérabilité, écrivez directement à l’équipe sécurité. Nous accusons réception sous un jour ouvré.",
+    "contactCta": "Écrire à l’équipe sécurité"
+  },
+  "enterprisePage": {
+    "badge": "Enterprise",
+    "title": "Pour les groupes, pas seulement les agences.",
+    "subheadline": "Plusieurs entités juridiques, une revue de sécurité à passer et un système interne à alimenter. Enterprise couvre ce que Professional laisse volontairement de côté.",
+    "blocks": [
+      {
+        "label": "Structure",
+        "title": "Gouvernance multi-entités",
+        "desc": "Un seul dispositif pour toutes les filiales — chacune avec son registre, ses bases légales et ses durées de conservation, consolidés en une vue unique pour le groupe.",
+        "points": [
+          "Rôles par entité : chacun ne voit que ses propres enregistrements.",
+          "Reporting consolidé sur l’ensemble des entités.",
+          "Des registres séparés qui restent réconciliables."
+        ]
+      },
+      {
+        "label": "Accès",
+        "title": "SSO et rôles personnalisés",
+        "desc": "Authentification unique SAML et OIDC avec provisionnement SCIM, et des rôles que vous définissez plutôt que ceux que nous livrons.",
+        "points": [
+          "SAML 2.0 et OIDC.",
+          "Provisionnement et retrait des comptes via SCIM.",
+          "Jeux de permissions sur mesure par entité."
+        ]
+      },
+      {
+        "label": "Intégration",
+        "title": "API REST et SIEM",
+        "desc": "Lisez et écrivez le registre depuis vos propres systèmes, et transmettez le journal d’audit au SIEM que votre équipe sécurité exploite déjà.",
+        "points": [
+          "Accès API REST (Enterprise uniquement).",
+          "Transmission du journal d’audit vers un SIEM.",
+          "Base de données dédiée sur demande."
+        ]
+      },
+      {
+        "label": "Assurance",
+        "title": "Accompagnement des revues de sécurité",
+        "desc": "Localisation des données sur mesure là où vous en avez besoin, et un interlocuteur nommé pour traiter votre questionnaire achats plutôt qu’une file de support.",
+        "points": [
+          "Options de localisation des données sur mesure.",
+          "Gestionnaire de compte dédié.",
+          "Contrôles alignés sur ISO 27001 ; SOC 2 Type II en préparation."
+        ]
+      }
+    ],
+    "ctaTitle": "Dites-nous comment votre groupe est structuré.",
+    "ctaDesc": "Nous passons en revue structure, modèle d’accès et localisation des données, et vous disons franchement si Professional suffit déjà.",
+    "ctaBtn": "Nous contacter"
+  },
+  "agenciesPage": {
+    "badge": "Conçu pour les agences",
+    "title": "Vous construisez le web.",
+    "titleAccent": "Nous le gardons conforme.",
+    "subheadline": "Les agences sont des deux côtés du règlement à la fois — responsable pour leurs propres données, sous-traitant pour celles de leurs clients. Les outils génériques ne modélisent pas cela. Custodia si.",
+    "ctaHero": "Lancer l’analyse gratuite pour agences",
+    "blocks": [
+      {
+        "label": "Double rôle",
+        "title": "Vous êtes responsable de traitement et sous-traitant en même temps.",
+        "desc": "Gérez la newsletter d’un client et vous êtes sous-traitant. Recrutez et vous êtes responsable. Custodia sépare nativement les deux contextes, pour que registre et mentions reflètent le rôle réellement tenu pour chaque activité.",
+        "points": [
+          "Génération du registre sensible au contexte.",
+          "Accords de traitement produits par client."
+        ],
+        "panelLabel": "Modèle de rôles",
+        "panelA": "Vous",
+        "panelARole": "Responsable",
+        "panelB": "Clients",
+        "panelBRole": "Sous-traitant"
+      },
+      {
+        "label": "Confiance client",
+        "title": "Vos clients posent déjà la question de la conformité.",
+        "desc": "Les grands comptes ne signent pas tant que vous ne pouvez pas prouver votre conformité. Custodia transforme le registre que vous tenez déjà en une page de confiance à envoyer pendant l’appel d’offres.",
+        "points": [
+          "Pages de confiance partageables, publiques ou protégées.",
+          "Répondre aux questionnaires fournisseurs à partir de l’existant."
+        ],
+        "panelLabel": "Page de confiance",
+        "panelA": "",
+        "panelARole": "",
+        "panelB": "",
+        "panelBRole": ""
+      },
+      {
+        "label": "Prolifération d’outils",
+        "title": "Vous utilisez vingt outils qui touchent des données personnelles.",
+        "desc": "Entre design, développement, marketing et opérations, la liste des sous-traitants grandit plus vite que personne ne la tient. Custodia maintient une fiche pour les outils que les agences utilisent réellement.",
+        "points": [
+          "Région d’hébergement et mécanisme de transfert par outil.",
+          "Alertes en cas de changement de conditions ou de violation déclarée."
+        ],
+        "panelLabel": "Registre des sous-traitants",
+        "panelA": "",
+        "panelARole": "",
+        "panelB": "",
+        "panelBRole": ""
+      },
+      {
+        "label": "Préparation aux audits",
+        "title": "Prouvez-le en minutes, pas en semaines.",
+        "desc": "Quand un client ou une autorité demande des preuves, la réponse devrait déjà exister. Custodia rassemble registre, mentions, accords et liste de sous-traitants en un dossier de preuves daté.",
+        "points": [
+          "Un dossier de preuves par demande, daté et complet.",
+          "Toujours à jour, car construit à partir des données vivantes."
+        ],
+        "panelLabel": "Dossier de preuves",
+        "panelA": "",
+        "panelARole": "",
+        "panelB": "",
+        "panelBRole": ""
+      }
+    ],
+    "ctaTitle": "Voyez où votre agence en est réellement.",
+    "ctaDesc": "L’analyse note dix domaines au regard du règlement et indique quel écart combler en premier.",
+    "ctaBtn": "Lancer l’analyse gratuite"
+  },
+  "home": {
+    "mock": {
+      "org": "custodia / nordlicht-agency.eu",
+      "view": "Préparation à l’audit",
+      "region": "EU-WEST · FRA1",
+      "scoreLabel": "Score de maturité",
+      "scoreDelta": "14 ce trimestre",
+      "actionExport": "Exporter le dossier de preuves",
+      "actionRegister": "Registre art. 30"
+    },
+    "nav": [
+      "Vue d’ensemble",
+      "Registre des traitements",
+      "Analyse des écarts",
+      "Sous-traitants & transferts",
+      "Demandes des personnes",
+      "Consentement",
+      "Registre des violations",
+      "Conseiller"
+    ],
+    "rows": [
+      {
+        "name": "Registre art. 30 — Nordlicht GmbH",
+        "meta": "12 traitements",
+        "status": "COMPLET",
+        "due": "—"
+      },
+      {
+        "name": "Demande · effacement #1184",
+        "meta": "jour 6 sur 30",
+        "status": "EN COURS",
+        "due": "14 août"
+      },
+      {
+        "name": "Analyse de transfert — Segment (US)",
+        "meta": "CCT module 2",
+        "status": "REVUE À FAIRE",
+        "due": "02 août"
+      },
+      {
+        "name": "Bandeau cookies — 4 domaines clients",
+        "meta": "TCF v2.2",
+        "status": "EN LIGNE",
+        "due": "—"
+      },
+      {
+        "name": "Journal — incident sous-traitant 0042",
+        "meta": "délai 72 h respecté",
+        "status": "NOTIFIÉ",
+        "due": "—"
+      }
+    ],
+    "pains": [
+      {
+        "tag": "Fragmentation",
+        "title": "Votre conformité tient dans onze fichiers et la mémoire d’une seule personne.",
+        "body": "Le registre dans un tableur, les DPA sur un disque partagé, les évaluations dans le modèle Word d’un consultant, les décisions dans les e-mails. Rien ne se recoupe, et personne ne peut prouver ce qui était vrai à une date donnée.",
+        "stat": "Agence moyenne : 4 outils, 0 piste d’audit"
+      },
+      {
+        "tag": "Exposition",
+        "title": "Les autorités n’attendent plus une violation de données.",
+        "body": "Partout dans l’UE, les autorités ouvrent des procédures à partir de plaintes, de contrôles cookies et de chaînes de sous-traitance. Les amendes atteignent 4 % du chiffre d’affaires mondial, et « nous avions l’intention de le documenter » n’a jamais constitué une défense.",
+        "stat": "Plus d’1,2 Md€ d’amendes RGPD en 2025"
+      },
+      {
+        "tag": "Coût du travail manuel",
+        "title": "Les demandes d’exercice de droits et le registre consomment des semaines facturables.",
+        "body": "Chaque demande implique de courir après les systèmes, exporter les données, occulter les tiers et tenir un délai légal à la main. Chaque nouveau sous-traitant implique de relire un registre que personne n’a mis à jour depuis l’intégration.",
+        "stat": "9 à 14 heures par demande"
+      }
+    ],
+    "modules": [
+      {
+        "title": "Registre des traitements",
+        "ref": "Art. 30",
+        "body": "Un registre article 30 vivant, avec base légale, conservation, destinataires et voies de transfert par activité. Versionné : vous pouvez montrer ce que la fiche disait en mars dernier."
+      },
+      {
+        "title": "Analyse des écarts",
+        "ref": "Art. 24 · 32",
+        "body": "38 contrôles rattachés au règlement, notés et priorisés par risque et par effort. À relancer chaque trimestre pour prouver l’amélioration continue."
+      },
+      {
+        "title": "Veille sous-traitants",
+        "ref": "Art. 28 · 44",
+        "body": "Une fiche tenue à jour pour chaque sous-traitant courant : sous-traitants ultérieurs, région d’hébergement, mécanisme de transfert, lien vers le DPA et historique de sanctions connu."
+      },
+      {
+        "title": "Automatisation des demandes",
+        "ref": "Art. 15–22",
+        "body": "Formulaire de réception, vérification d’identité, tâches de collecte système par système, flux d’occultation et un délai légal qui alerte avant le 30e jour."
+      },
+      {
+        "title": "Consentement aux cookies (CMP)",
+        "ref": "ePrivacy",
+        "body": "Bandeau certifié IAB TCF v2.2, configuration par domaine, signaux Google Consent Mode et journal de preuve de consentement inaltérable."
+      },
+      {
+        "title": "Gestion des violations",
+        "ref": "Art. 33 · 34",
+        "body": "Évaluation de gravité selon les critères de l’EDPB, délai de notification de 72 heures, routage vers l’autorité compétente et dossier d’incident opposable."
+      },
+      {
+        "title": "Tableau de bord de préparation",
+        "ref": "Art. 5(2)",
+        "body": "Un score par entité, un dossier de preuves par demande. Tout ce qu’une autorité ou un service achats réclame, exporté en un clic."
+      },
+      {
+        "title": "Conseiller IA conformité",
+        "ref": "RAG · sourcé",
+        "body": "Des réponses ancrées dans le corpus juridique réel, cadrées sur la juridiction concernée et sourcées jusqu’au paragraphe."
+      }
+    ],
+    "advisorPanelLabel": "Conseiller · juridiction",
+    "advisorActions": [
+      "Rattacher au registre",
+      "Créer une action corrective",
+      "Exporter en note client"
+    ],
+    "advisorJurisdictions": {
+      "IE": {
+        "q": "Un client veut organiser un jeu-concours à partir de sa liste newsletter. Le consentement reste-t-il valable ?",
+        "a": "Non. Le consentement recueilli pour l’envoi d’une newsletter ne s’étend pas à un jeu-concours : la nouvelle finalité est incompatible avec celle annoncée lors de la collecte, et la DPC considère la réaffectation d’une liste marketing comme un traitement distinct exigeant un consentement nouveau et spécifique.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Test de compatibilité pour un traitement ultérieur"
+          },
+          {
+            "ref": "EDPB 05/2020",
+            "text": "Le consentement doit être spécifique à chaque finalité (§ 56)"
+          },
+          {
+            "ref": "DPC IE",
+            "text": "Lignes directrices prospection directe, 2023 — § 4.2"
+          }
+        ]
+      },
+      "FR": {
+        "q": "Un client veut organiser un jeu-concours à partir de sa liste newsletter. Le consentement reste-t-il valable ?",
+        "a": "Non. La position de la CNIL est plus stricte que le socle : une prospection pour une opération distincte exige son propre opt-in, et la mention d’information doit nommer la finalité promotionnelle. La réutilisation d’une liste existante expose le client à une sanction au titre de l’article 82 de la loi Informatique et Libertés.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Test de compatibilité pour un traitement ultérieur"
+          },
+          {
+            "ref": "CNIL",
+            "text": "Référentiel prospection commerciale, § 2.1"
+          },
+          {
+            "ref": "LIL art. 82",
+            "text": "Exigence nationale de consentement au traçage"
+          }
+        ]
+      },
+      "DE": {
+        "q": "Un client veut organiser un jeu-concours à partir de sa liste newsletter. Le consentement reste-t-il valable ?",
+        "a": "Non, et s’y ajoute une dimension nationale : l’interdiction de couplage du § 7 UWG et la jurisprudence du BGH sur le Kopplungsverbot interdisent de subordonner la participation à un consentement marketing. Un opt-in distinct et documenté est requis, horodatage à l’appui.",
+        "cites": [
+          {
+            "ref": "Art. 7(4)",
+            "text": "Consentement libre — pas de couplage"
+          },
+          {
+            "ref": "§ 7 UWG",
+            "text": "Unzumutbare Belästigung — règles allemandes de prospection"
+          },
+          {
+            "ref": "DSK",
+            "text": "Orientierungshilfe Direktwerbung, 2022"
+          }
+        ]
+      },
+      "NL": {
+        "q": "Un client veut organiser un jeu-concours à partir de sa liste newsletter. Le consentement reste-t-il valable ?",
+        "a": "Non. L’Autoriteit Persoonsgegevens exige un consentement spécifique à la finalité, et le soft opt-in de la Telecommunicatiewet pour les clients existants ne couvre pas les jeux promotionnels. Documentez le nouveau consentement et conservez le mécanisme de retrait dans le même enregistrement.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Test de compatibilité pour un traitement ultérieur"
+          },
+          {
+            "ref": "Tw art. 11.7",
+            "text": "Consentement néerlandais en prospection électronique"
+          },
+          {
+            "ref": "AP",
+            "text": "Normuitleg toestemming, 2021"
+          }
+        ]
+      },
+      "ES": {
+        "q": "Un client veut organiser un jeu-concours à partir de sa liste newsletter. Le consentement reste-t-il valable ?",
+        "a": "Non. L’AEPD exige un consentement granulaire par finalité, et l’article 21 de la LSSI encadre la communication électronique elle-même. Le règlement du jeu doit aussi indiquer la durée de conservation des données des participants, distinctement de celle de la newsletter.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Test de compatibilité pour un traitement ultérieur"
+          },
+          {
+            "ref": "LSSI art. 21",
+            "text": "Communications commerciales espagnoles"
+          },
+          {
+            "ref": "AEPD",
+            "text": "Guía consentimiento, 2023 — § 3"
+          }
+        ]
+      }
+    },
+    "corpus": [
+      {
+        "source": "Règlement (UE) 2016/679 — texte intégral",
+        "detail": "99 articles · 173 considérants"
+      },
+      {
+        "source": "Lignes directrices, avis et recommandations de l’EDPB",
+        "detail": "142 documents"
+      },
+      {
+        "source": "Arrêts de la CJUE en protection des données",
+        "detail": "Schrems II → 2026"
+      },
+      {
+        "source": "Doctrine des autorités nationales — IE, FR, DE, NL, ES",
+        "detail": "DPC · CNIL · DSK · AP · AEPD"
+      },
+      {
+        "source": "Décisions de sanction publiées",
+        "detail": "plus de 2 400 décisions"
+      }
+    ],
+    "trust": [
+      {
+        "label": "Localisation",
+        "title": "Données hébergées dans l’UE",
+        "body": "Toutes les données sont stockées et traitées sur AWS Dublin (eu-west-1). Aucun transfert hors EEE, y compris pour l’accès support."
+      },
+      {
+        "label": "Accès",
+        "title": "SSO et rôles granulaires",
+        "body": "Authentification unique SAML et OIDC, provisionnement SCIM, rôles par entité pour que le personnel client ne voie que son propre registre."
+      },
+      {
+        "label": "Responsabilité",
+        "title": "Journal d’audit inaltérable",
+        "body": "Chaque modification d’un enregistrement, d’une évaluation ou d’un consentement est écrite dans un journal en ajout seul, avec auteur, horodatage et valeur précédente."
+      },
+      {
+        "label": "Infrastructure",
+        "title": "Exploitation de niveau entreprise",
+        "body": "Chiffrement au repos et en transit, restaurations testées quotidiennement, contrôles alignés sur ISO 27001, tests d’intrusion annuels."
+      },
+      {
+        "label": "Facturation",
+        "title": "TVA gérée automatiquement",
+        "body": "Autoliquidation et taux locaux appliqués par État membre, factures conformes et numéro de TVA vérifié à l’inscription."
+      }
+    ]
   }
 }

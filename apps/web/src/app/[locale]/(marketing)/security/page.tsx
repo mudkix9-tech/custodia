@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { setRequestLocale } from 'next-intl/server';
 import { buildMarketingMetadata } from '../seo';
 import SecurityClient from './SecurityClient';
 
@@ -11,6 +12,12 @@ export async function generateMetadata({
   return buildMarketingMetadata({ locale, path: '/security' });
 }
 
-export default function SecurityPage() {
+export default async function SecurityPage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return <SecurityClient />;
 }

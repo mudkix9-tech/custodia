@@ -1,84 +1,99 @@
 "use client";
 
 import React from 'react';
-import { Shield, Lock, Server, Users, Key, Database, Globe, CheckCircle2, FileText, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { Check, ArrowRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/routing';
 
-export default function SecurityPage() {
+// Kept on the .online domain because that is the mailbox the security team
+// actually monitors; the marketing site is .com. Worth reconciling.
+const SECURITY_EMAIL = 'security@trycustodia.online';
+
+export default function SecurityClient() {
+  const t = useTranslations('marketing.securityPage');
+  const principles = t.raw('principles') as { label: string; title: string; desc: string }[];
+  const gdprPoints = t.raw('gdprPoints') as string[];
+
   return (
-    <div className="pt-24 pb-32">
-      {/* Header */}
-      <section className="max-w-7xl mx-auto px-6 mb-24 text-center">
-        <div className="inline-flex items-center gap-2 bg-sage-50 border border-sage-500/20 rounded-full px-4 py-1.5 mb-8 text-sm font-medium text-sage-700">
-          <Shield className="w-4 h-4"/> Security & Trust
+    <div className="[font-family:var(--font-plex-sans)] pt-16">
+
+      {/* HEADER */}
+      <section className="relative border-b border-white/7 overflow-hidden">
+        <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(120%_80%_at_50%_0%,#000_20%,transparent_75%)]" />
+        <div aria-hidden="true" className="absolute -top-60 left-1/2 w-[900px] h-[520px] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,var(--color-accent-transparent),transparent_70%)] pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 pt-20 sm:pt-24 pb-16 sm:pb-18">
+          <div className="flex items-center gap-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.16em] uppercase text-accent-gold">
+            <span className="w-6 h-px bg-accent-gold" />
+            <span>{t('badge')}</span>
+          </div>
+          <h1 className="mt-5.5 max-w-2xl text-[32px] sm:text-[46px] font-normal tracking-[-0.03em] leading-[1.1] text-text-heading text-balance">
+            {t('title')}
+          </h1>
+          <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-text-muted text-pretty">
+            {t('subheadline')}
+          </p>
         </div>
-        <h1 className="text-4xl md:text-6xl font-serif text-ink-900 mb-6 tracking-tight max-w-4xl mx-auto">
-          We protect your data <br/>
-          <span className="text-ink-400">like you protect your clients.</span>
-        </h1>
-        <p className="text-xl text-ink-500 max-w-2xl mx-auto mb-10">
-          We build compliance software, so our security posture has to be flawless. Read about how we secure the Custodia platform.
-        </p>
       </section>
 
-      {/* Core Security Principles */}
-      <section className="max-w-7xl mx-auto px-6 mb-32">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[
-            { icon: Server, title: 'EU Infrastructure', desc: 'EU hosted on AWS Dublin (eu-west-1). Your data never leaves the EU.' },
-            { icon: Lock, title: 'Encryption', desc: 'AES-256 at rest, TLS 1.3 in transit. Top-tier cryptographic standards.' },
-            { icon: Users, title: 'Access Control', desc: 'Row-level security, role-based permissions, and MFA support.' },
-            { icon: FileText, title: 'Certifications', desc: 'SOC 2 Type II (in progress). We adhere to the highest industry standards.' },
-            { icon: Database, title: 'Data Isolation', desc: 'Multi-tenant with database-level isolation per organization.' },
-            { icon: Key, title: 'Penetration Testing', desc: 'Annual third-party penetration testing to identify and fix vulnerabilities.' }
-          ].map((item, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl hairline shadow-sm flex flex-col gap-4">
-               <div className="w-12 h-12 bg-sage-50 rounded-xl flex items-center justify-center border border-sage-500/20">
-                  <item.icon className="w-6 h-6 text-sage-600"/>
-               </div>
-               <h3 className="text-xl font-bold text-ink-900">{item.title}</h3>
-               <p className="text-ink-500 leading-relaxed">{item.desc}</p>
+      {/* PRINCIPLES */}
+      <section className="border-b border-white/7">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-16 sm:py-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/8 border border-white/8">
+            {principles.map((p) => (
+              <div key={p.title} className="bg-surface-base p-6.5 pb-7 flex flex-col gap-2.5">
+                <span className="[font-family:var(--font-plex-mono)] text-[10.5px] tracking-[0.14em] uppercase text-accent-gold">{p.label}</span>
+                <span className="text-[16px] font-medium tracking-[-0.012em] text-[#EDEFF0]">{p.title}</span>
+                <span className="text-[13.5px] leading-relaxed text-[#868C91] text-pretty">{p.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* DETAIL */}
+      <section className="border-b border-white/7 bg-[#0B0C0E]">
+        <div className="max-w-4xl mx-auto px-6 sm:px-8 py-16 sm:py-20 grid gap-14">
+
+          <div>
+            <h2 className="text-[22px] sm:text-[28px] font-normal tracking-[-0.025em] text-text-heading text-balance">{t('gdprTitle')}</h2>
+            <p className="mt-4 text-[15.5px] leading-relaxed text-text-muted text-pretty">{t('gdprBody')}</p>
+            <div className="mt-6 grid gap-2.5">
+              {gdprPoints.map((point) => (
+                <div key={point} className="grid grid-cols-[12px_1fr] gap-2.5 items-start text-[14px] leading-relaxed text-[#868C91]">
+                  <Check className="w-3 h-3 mt-1 text-accent-gold" />
+                  <span>{point}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div className="pt-12 border-t border-white/8">
+            <h2 className="text-[22px] sm:text-[28px] font-normal tracking-[-0.025em] text-text-heading text-balance">{t('subTitle')}</h2>
+            <p className="mt-4 text-[15.5px] leading-relaxed text-text-muted text-pretty">{t('subBody')}</p>
+            <Link
+              href="/legal/subprocessors"
+              className="mt-6 inline-flex items-center gap-2 text-[14px] text-accent-gold hover:text-accent-gold-hover transition-colors focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:outline-none"
+            >
+              {t('subLink')} <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="pt-12 border-t border-white/8">
+            <h2 className="text-[22px] sm:text-[28px] font-normal tracking-[-0.025em] text-text-heading text-balance">{t('contactTitle')}</h2>
+            <p className="mt-4 text-[15.5px] leading-relaxed text-text-muted text-pretty">{t('contactBody')}</p>
+            <a
+              href={`mailto:${SECURITY_EMAIL}`}
+              className="mt-6 inline-block text-[14px] text-text-primary border border-white/16 hover:border-white/40 px-5 py-3 transition-colors focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:outline-none"
+            >
+              {t('contactCta')}
+            </a>
+            <div className="mt-3 [font-family:var(--font-plex-mono)] text-[11px] tracking-[0.06em] text-text-subtle">{SECURITY_EMAIL}</div>
+          </div>
+
         </div>
       </section>
 
-      {/* Detailed Policies */}
-      <section className="max-w-4xl mx-auto px-6 mb-32 space-y-16">
-
-         <div className="border-t border-ink-900/5 pt-16">
-            <h2 className="text-3xl font-bold text-ink-900 mb-6">GDPR Compliance</h2>
-            <p className="text-lg text-ink-500 leading-relaxed mb-6">
-               We practice what we preach — Custodia is fully GDPR compliant. We maintain our own Records of Processing Activities, manage our vendors meticulously, and have strict data retention policies in place.
-            </p>
-            <ul className="space-y-3 mb-6">
-               <li className="flex items-center gap-3 text-ink-700"><CheckCircle2 className="w-5 h-5 text-sage-600"/> Data Processing Agreement (DPA) available for all customers.</li>
-               <li className="flex items-center gap-3 text-ink-700"><CheckCircle2 className="w-5 h-5 text-sage-600"/> Strict vendor assessment and sub-processor tracking.</li>
-               <li className="flex items-center gap-3 text-ink-700"><CheckCircle2 className="w-5 h-5 text-sage-600"/> Dedicated Data Protection Officer (DPO).</li>
-            </ul>
-         </div>
-
-         <div className="border-t border-ink-900/5 pt-16">
-            <h2 className="text-3xl font-bold text-ink-900 mb-6">Sub-processors</h2>
-            <p className="text-lg text-ink-500 leading-relaxed mb-6">
-               We maintain transparency regarding all third-party services that process data on our behalf. Our sub-processors are carefully vetted for security and compliance.
-            </p>
-            <Link href="/legal/subprocessors" className="inline-flex items-center gap-2 text-sage-700 font-semibold hover:text-sage-600 transition-colors">
-               View our sub-processor list <ArrowRight className="w-4 h-4"/>
-            </Link>
-         </div>
-
-         <div className="border-t border-ink-900/5 pt-16">
-            <h2 className="text-3xl font-bold text-ink-900 mb-6">Security Inquiries</h2>
-            <p className="text-lg text-ink-500 leading-relaxed mb-6">
-               If you have specific security questions, require our DPA, or want to report a vulnerability, our security team is ready to assist.
-            </p>
-            <a href="mailto:security@trycustodia.online" className="inline-flex bg-bone-100 hover:bg-bone-200 text-ink-900 text-sm font-semibold py-3 px-6 rounded-xl transition-all items-center justify-center border border-ink-900/5 shadow-sm">
-               Contact Security Team
-            </a>
-         </div>
-
-      </section>
     </div>
   );
 }

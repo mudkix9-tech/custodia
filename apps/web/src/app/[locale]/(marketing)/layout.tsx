@@ -1,5 +1,7 @@
 import React from 'react';
-import Link from 'next/link';
+// Locale-aware Link: next/link would emit a bare '/pricing' and drop a de/fr
+// visitor back into English on every footer click.
+import { Link } from '@/i18n/routing';
 import { Lock, Server } from 'lucide-react';
 import { MarketingHeader, Logo } from '@/components/marketing/MarketingHeader';
 import { FooterLocaleSwitcher } from '@/components/marketing/FooterLocaleSwitcher';
@@ -62,7 +64,7 @@ export default async function MarketingLayout({
 
   return (
     <div
-      className={`min-h-screen bg-surface-base text-text-primary font-sans selection:bg-accent-gold selection:text-surface-base overflow-x-hidden flex flex-col relative antialiased ${plexSans.variable} ${plexMono.variable} ${spectral.variable}`}
+      className={`min-h-screen bg-surface-base text-text-primary [font-family:var(--font-plex-sans)] selection:bg-accent-gold selection:text-surface-base overflow-x-hidden flex flex-col relative antialiased ${plexSans.variable} ${plexMono.variable} ${spectral.variable}`}
     >
       {/* Force body background to dark theme to prevent white overscroll bounce */}
       <style dangerouslySetInnerHTML={{ __html: `

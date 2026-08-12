@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { setRequestLocale } from 'next-intl/server';
 import { buildMarketingMetadata } from '../seo';
 import EnterpriseClient from './EnterpriseClient';
 
@@ -11,6 +12,12 @@ export async function generateMetadata({
   return buildMarketingMetadata({ locale, path: '/enterprise' });
 }
 
-export default function EnterprisePage() {
+export default async function EnterprisePage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return <EnterpriseClient />;
 }

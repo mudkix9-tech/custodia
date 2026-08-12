@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { 
   ArrowLeft, HelpCircle, ShieldCheck, Check, ArrowRight, Copy, ChevronRight, Calculator, Loader2 
 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 
 import { useRiskCalculator } from '@/hooks/useRiskCalculator';
 import { requestLeadPdf } from '@/actions/lead-assessment';

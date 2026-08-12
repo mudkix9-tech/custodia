@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { BookOpen, Shield, Users, AlertTriangle, FileCheck, ArrowRight } from 'lucide-react';
 
 export default function GdprHubPage() {

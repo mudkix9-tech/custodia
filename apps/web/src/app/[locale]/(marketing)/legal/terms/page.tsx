@@ -13,11 +13,11 @@ export async function generateMetadata({
 
 export default function TermsOfServicePage() {
   return (
-    <div className="pt-24 pb-32 max-w-3xl mx-auto px-6 font-sans">
-      <h1 className="text-4xl font-serif text-ink-900 mb-4">Terms of Service</h1>
-      <p className="text-sm text-ink-500 mb-12">Last updated: {new Date().toLocaleDateString()}</p>
+    <div className="pt-24 pb-32 max-w-3xl mx-auto px-6 [font-family:var(--font-plex-sans)]">
+      <h1 className="text-4xl text-text-heading mb-4">Terms of Service</h1>
+      <p className="text-sm text-text-muted mb-12">Last updated: {new Date().toLocaleDateString()}</p>
 
-      <div className="prose prose-sage max-w-none text-ink-600">
+      <div className="marketing-prose">
         <h2>1. Acceptance of Terms</h2>
         <p>By accessing or using Custodia OS, you agree to be bound by these Terms of Service.</p>
 

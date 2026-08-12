@@ -13,11 +13,11 @@ export async function generateMetadata({
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="pt-24 pb-32 max-w-3xl mx-auto px-6 font-sans">
-      <h1 className="text-4xl font-serif text-ink-900 mb-4">Privacy Policy</h1>
-      <p className="text-sm text-ink-500 mb-12">Last updated: {new Date().toLocaleDateString()}</p>
+    <div className="pt-24 pb-32 max-w-3xl mx-auto px-6 [font-family:var(--font-plex-sans)]">
+      <h1 className="text-4xl text-text-heading mb-4">Privacy Policy</h1>
+      <p className="text-sm text-text-muted mb-12">Last updated: {new Date().toLocaleDateString()}</p>
 
-      <div className="prose prose-sage max-w-none text-ink-600">
+      <div className="marketing-prose">
         <h2>1. Introduction</h2>
         <p>This Privacy Policy explains how Custodia OS ("we", "us", or "our") collects, uses, and discloses your information. As a privacy-focused company, we practice data minimization and strictly adhere to the GDPR.</p>
 

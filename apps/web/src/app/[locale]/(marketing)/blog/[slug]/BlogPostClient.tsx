@@ -1,7 +1,7 @@
 "use client";
 
 import React, { use } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { POSTS } from '../posts';

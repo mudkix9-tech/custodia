@@ -165,6 +165,52 @@
   .settings-scope :where(a):hover {
     color: var(--color-set-gold-hi);
   }
+  /* Long-form marketing copy — legal pages, /about, /changelog. These carried
+     `prose prose-sage` from @tailwindcss/typography, which is not installed, so
+     the classes emitted nothing and the pages rendered with no paragraph rhythm
+     and no heading scale at all. Element defaults live in the components layer
+     so any Tailwind utility on the element still wins. */
+  .marketing-prose {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.75;
+  }
+  .marketing-prose :where(h2) {
+    color: var(--color-text-heading);
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    margin: 2.5rem 0 0.75rem;
+  }
+  .marketing-prose :where(h3) {
+    color: var(--color-text-primary);
+    font-size: 1.0625rem;
+    font-weight: 500;
+    margin: 1.75rem 0 0.5rem;
+  }
+  .marketing-prose :where(h2):first-child,
+  .marketing-prose :where(h3):first-child {
+    margin-top: 0;
+  }
+  .marketing-prose :where(p) {
+    margin: 0 0 1rem;
+    text-wrap: pretty;
+  }
+  .marketing-prose :where(ul, ol) {
+    margin: 0 0 1rem;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: 0.4rem;
+  }
+  .marketing-prose :where(ul) { list-style: disc; }
+  .marketing-prose :where(ol) { list-style: decimal; }
+  .marketing-prose :where(strong) { color: var(--color-text-primary); font-weight: 500; }
+  .marketing-prose :where(a) {
+    color: var(--color-accent-gold);
+    text-underline-offset: 0.18em;
+  }
+  .marketing-prose :where(a):hover { color: var(--color-accent-gold-hover); }
+
   .settings-scope :where(hr) {
     border-color: var(--color-set-line);
   }

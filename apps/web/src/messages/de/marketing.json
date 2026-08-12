@@ -133,6 +133,10 @@
       "legal_subprocessors": {
         "title": "Unterauftragsverarbeiter | Custodia",
         "desc": "Die aktuelle Liste der Unterauftragsverarbeiter von Custodia, was sie jeweils verarbeiten, wo sie sitzen und wie wir über Änderungen informieren."
+      },
+      "assessment": {
+        "title": "Kostenlose DSGVO-Reifegradanalyse | Custodia",
+        "desc": "Bewerten Sie Ihre DSGVO-Reife in wenigen Minuten. Jede Lücke wird dem verletzten Artikel zugeordnet, nach Schweregrad bewertet und nach Kategorie aufgeschlüsselt. Kein Konto erforderlich."
       }
     }
   },
@@ -209,6 +213,821 @@
       "privacy": "Datenschutzerklärung",
       "cookies": "Cookie-Richtlinie",
       "dpa": "Auftragsverarbeitungsvertrag"
-    }
+    },
+    "nav": {
+      "platform": "Plattform",
+      "advisor": "KI-Berater",
+      "pricing": "Preise",
+      "security": "Sicherheit"
+    },
+    "nav_aria_label": "Hauptnavigation",
+    "nav_open": "Navigationsmenü öffnen",
+    "nav_close": "Navigationsmenü schließen",
+    "sign_in": "Anmelden",
+    "cta_assessment": "Kostenlose Analyse starten"
+  },
+  "assessmentFlow": {
+    "headerBadge": "Kostenlose Lückenanalyse",
+    "resumed": "Fortgesetzt — Sie machen dort weiter, wo Sie aufgehört haben",
+    "answered": "{answered} von {total} beantwortet",
+    "unanswered": "Kein Konto erforderlich · ~10 Min",
+    "introReqs": "{reqs} Anforderungen · {categories} Kategorien · ~10 Minuten",
+    "introTitle": "Finden Sie heraus, wo Sie stehen, bevor es jemand anderes tut.",
+    "introDesc": "Ein strukturierter Scan Ihrer Abläufe anhand der DSGVO, wie sie tatsächlich durchgesetzt wird. Beantworten Sie {reqs} Fragen; Custodia bewertet jede Anforderung, ordnet jede Lücke ihrem Artikel zu und sortiert die Ergebnisse nach Kategorie.",
+    "resumeBtn": "Analyse fortsetzen",
+    "startOverBtn": "Neu starten",
+    "beginBtn": "Analyse beginnen",
+    "introFootnote": "Kein Konto. Keine Kreditkarte. Kein Verkaufsgespräch. Der Fortschritt wird in Ihrem Browser gespeichert — Sie können die Seite verlassen und später zurückkehren.",
+    "usedBy": "Wird von Agenturen und ihren Kunden in der gesamten EU genutzt.",
+    "whatYouGet": "Was Sie sofort erhalten",
+    "d1Title": "Ein bewerteter Bereitschaftswert",
+    "d1Desc": "Eine Zahl, verglichen mit ähnlichen EU-Agenturen.",
+    "d2Title": "Jede Lücke ihrem Artikel zugeordnet",
+    "d2Desc": "Ergebnisse zitieren die Bestimmung, die sie verfehlen, nicht eine vage Kategorie.",
+    "d3Title": "Schweregrad pro Ergebnis",
+    "d3Desc": "So können Sie unterscheiden, was in diesem Quartal Aufmerksamkeit erfordert und was warten kann.",
+    "d4Title": "Eine Aufschlüsselung nach Kategorien",
+    "d4Desc": "Verzeichnisse, Einwilligungen, Anbieter, Sicherheit und mehr, unabhängig bewertet.",
+    "statsReqs": "Anforderungen geprüft",
+    "statsCats": "Kategorien bewertet",
+    "statsEU": "Daten gespeichert & verarbeitet",
+    "questionHeader": "Frage {current} / {total}",
+    "back": "← Zurück",
+    "keyboardHint": "Drücken Sie 1–{count} zum Antworten · Antworten werden fortlaufend gespeichert"
+  },
+  "assessmentResults": {
+    "shareLink": "Ergebnisse teilen",
+    "copied": "Kopiert",
+    "expiredTitle": "Analyse abgelaufen",
+    "expiredDesc": "Diese Analyse wurde vor über 30 Tagen abgeschlossen und ist nicht mehr verfügbar.",
+    "startNewBtn": "Neue Analyse starten",
+    "assessmentComplete": "Analyse abgeschlossen",
+    "ref": "Ref {ref}",
+    "medianScore": "Medianwert für Agenturen bei der ersten Analyse: 55",
+    "highSeverity": "Hoher Schweregrad",
+    "mediumSeverity": "Mittlerer Schweregrad",
+    "totalFindings": "Gesamtergebnisse",
+    "scoreByCategory": "Bewertung nach Kategorie",
+    "findings": "Ergebnisse",
+    "findingsDesc": "Nach Schweregrad sortiert — der vollständige Bericht enthält jedes Ergebnis und seinen Behebungsschritt.",
+    "furtherFindings": "{count} weitere Ergebnis(se) befinden sich im vollständigen Bericht.",
+    "unlockBelow": "Unten freischalten ↓",
+    "sendReportHeader": "Meinen Bericht senden",
+    "sendReportDesc": "Eine E-Mail mit Ihrem PDF. Keine Sequenz, kein Verkaufsgespräch — die Abmeldung erfolgt mit einem Klick und Ihre Analyse bleibt in jedem Fall gültig.",
+    "emailPlaceholder": "name@unternehmen.eu",
+    "companyPlaceholder": "Unternehmen (optional)",
+    "marketingConsent": "Halten Sie mich über Custodia auf dem Laufenden, einschließlich Produktneuigkeiten und Angeboten",
+    "emailMeBtn": "Senden Sie mir den vollständigen Bericht",
+    "emailMeProcessing": "Wird verarbeitet…",
+    "emailNoteError": "Geben Sie eine gültige E-Mail-Adresse ein, damit wir den Bericht senden können.",
+    "emailNote": "Wir senden Ihnen einen sicheren Magic-Link per E-Mail. Kein Passwort erforderlich.",
+    "storedEU": "Daten gespeichert & verarbeitet in der EU",
+    "deleted90Days": "Analysen werden nach 90 Tagen gelöscht",
+    "checkEmailTitle": "Überprüfen Sie Ihre E-Mails",
+    "checkEmailDesc1": "Wir haben einen magischen Link an ",
+    "checkEmailDesc2": "Klicken Sie auf diesem Gerät auf den Link, um auf Ihre vollständigen Ergebnisse zuzugreifen.",
+    "resendLink": "Link erneut senden",
+    "wrongEmail": "Falsche E-Mail?",
+    "fullReportBadge": "Vollständiger Bericht",
+    "fullReportTitle": "DSGVO-Audit-Bereitschaftsbericht",
+    "bandDefensible": "Vertretbar",
+    "bandMaterialExposure": "Wesentliches Risiko",
+    "bandHighExposure": "Hohes Risiko",
+    "verdictDefensible": "Ihr Programm ist weitgehend vertretbar. Die untenstehenden Ergebnisse sind eher Verfeinerungen als echte Risiken — beheben Sie diese, um von 'inhaltlich konform' zu 'auf Anfrage nachweisbar' zu wechseln.",
+    "verdictMaterialExposure": "Sie haben die Grundzüge eines Compliance-Programms, ohne die Beweise dafür zu haben. Bei einer Untersuchung liegt die Haftung in der Lücke zwischen dem, was Sie tun, und dem, was Sie nachweisen können — und die meisten der folgenden Ergebnisse betreffen die Dokumentation, nicht neue Arbeit.",
+    "verdictHighExposure": "Mehrere grundlegende Pflichten sind nicht erfüllt, einschließlich solcher, die eine Aufsichtsbehörde ohne Ihre Mitwirkung überprüfen kann. Behandeln Sie die Ergebnisse mit hohem Schweregrad als Priorität für dieses Quartal.",
+    "btnEmailReport": "Senden Sie mir den vollständigen Bericht",
+    "btnProcessing": "Wird bearbeitet…",
+    "btnDownloadPdf": "PDF-Bericht herunterladen",
+    "btnGenerating": "Wird generiert…",
+    "actionPlan": "Ihr Aktionsplan",
+    "fixIssue": "Problem beheben",
+    "fixAutomaticallyTitle": "Beheben Sie diese Probleme automatisch.",
+    "fixAutomaticallyDesc": "Custodia ersetzt Ihre Tabellenkalkulationen durch ein dynamisches Compliance-Betriebssystem. Beginnen Sie noch heute mit der Lösung dieser Aktionspunkte.",
+    "viewPlans": "Custodia-Pläne anzeigen",
+    "downloadPdf": "PDF-Bericht herunterladen",
+    "generatingPdf": "Wird erstellt …"
+  },
+  "pdfReport": {
+    "confidential": "Lückenanalyse · Vertraulich",
+    "title": "DSGVO-Compliance-Bewertungsbericht",
+    "orgLabel": "Organisation",
+    "dateLabel": "Bewertungsdatum",
+    "idLabel": "Berichts-ID",
+    "overallScoreLabel": "Gesamt-Compliance-Score",
+    "assessedDesc": "{questions} Fragen in {categories} Compliance-Kategorien bewertet.",
+    "disclaimerLine1": "Custodia agiert als Anbieter von Compliance-Software, nicht als Anwaltskanzlei. Dieser Bericht ist eine automatisierte Bewertung basierend auf Ihren Antworten und stellt keine formelle Rechtsberatung dar. Wir empfehlen, qualifizierte Rechtsberater für endgültige rechtliche Empfehlungen heranzuziehen.",
+    "actionItemPrefix": "Risiko adressieren bezüglich: ",
+    "disclaimer": "Dieser Bericht spiegelt selbstberichtete Antworten wider und dient zur Unterstützung der internen Compliance-Planung. Er stellt keine Rechtsberatung oder Zertifizierung der Einhaltung der Verordnung (EU) 2016/679 dar.",
+    "footerText": "Generiert von Custodia | trycustodia.com | Vertraulich",
+    "footerPage": "Seite {pageNumber} von {totalPages}",
+    "headerText": "DSGVO-Compliance-Bewertungsbericht · {orgName}",
+    "execSummaryTitle": "Zusammenfassung",
+    "execSummaryText": "{orgName} hat einen Gesamt-Compliance-Score von {score}% erreicht, was die Organisation einem {risk} Risiko der Nichteinhaltung der DSGVO aussetzt.",
+    "scoreBreakdownTitle": "Punkteaufschlüsselung nach Kategorie",
+    "catHeaderCategory": "Kategorie",
+    "catHeaderScore": "Ergebnis",
+    "catHeaderRisk": "Risikostufe",
+    "riskLow": "Geringes Risiko",
+    "riskModerate": "Mittleres Risiko",
+    "riskHigh": "Hohes Risiko",
+    "legendLow": "Geringes Risiko — 76–100%",
+    "legendModerate": "Mittleres Risiko — 51–75%",
+    "legendHigh": "Hohes Risiko — 0–50%",
+    "findingsTitle": "Detaillierte Erkenntnisse",
+    "findingsDesc": "Eingereichte Antworten, gruppiert nach Kategorie. Der Indikator spiegelt das mit jeder Antwort verbundene Restrisiko wider.",
+    "questionsLabel": "{count} FRAGEN",
+    "responseLabel": "ANTWORT",
+    "actionTitle": "Empfohlene Maßnahmen",
+    "actionDesc": "{count} Maßnahmen generiert aus den identifizierten Lücken, geordnet nach Priorität.",
+    "actionHeaderPriority": "Priorität",
+    "actionHeaderAction": "Maßnahme",
+    "actionHeaderArticle": "DSGVO-Artikel",
+    "nextStepsTitle": "Nächste Schritte",
+    "nextStepsSummary": "Sie haben {highCount} Lücken mit hoher Priorität. {moduleText} können {autoCount} davon automatisch beheben.",
+    "nextStepsModules_1": "Custodias {m1}",
+    "nextStepsModules_2": "Custodias {m1} und {m2}",
+    "nextStepsModules_multi": "Custodias {modules} und {last}",
+    "nextStepsCTA": "Starten Sie eine kostenlose Testversion auf trycustodia.com, um diese Probleme zu lösen und ein Compliance-Zertifikat zu erstellen.",
+    "module_ropa": "VVT-Modul",
+    "module_cookie": "Cookie-Consent-Manager",
+    "module_vendor": "Risikoverfolgung für Anbieter",
+    "module_dsar": "Betroffenenrechte-Automatisierung",
+    "module_security": "Sicherheits- & Vorfall-Modul"
+  },
+  "pricingPage": {
+    "badge": "Preise",
+    "title": "Ein Tarif, kalkuliert für Agenturen.",
+    "subheadline": "Beginnen Sie mit der kostenlosen Analyse und wechseln Sie zu Professional, sobald Verzeichnis, Fristen und Nachweispaket laufend gepflegt werden sollen.",
+    "monthlyLabel": "Monatlich",
+    "annualLabel": "Jährlich",
+    "annualSaveBadge": "−20 %",
+    "savingsNote": "Sparen Sie {amount} € pro Jahr bei jährlicher Zahlung.",
+    "perMonth": "/Monat",
+    "perMonthAnnual": "/Monat, jährlich abgerechnet",
+    "custom": "Individuell",
+    "included": "Enthaltene Leistungen",
+    "professionalName": "Professional",
+    "professionalBadge": "Meistgewählt",
+    "professionalBlurb": "Das vollständige Betriebssystem für wachsende Agenturen.",
+    "professionalCta": "Kostenlos testen",
+    "enterpriseName": "Enterprise",
+    "enterpriseBlurb": "Für Gruppen mit mehreren Rechtsträgern oder eigenen Kontrollen.",
+    "enterpriseCta": "Kontakt aufnehmen",
+    "professionalFeatures": [
+      "Unbegrenzte Nutzer & Verarbeitungstätigkeiten",
+      "Unbegrenzte Dienstleister & DSFA",
+      "Cookie-Einwilligung (50 Domains)",
+      "KI-Compliance-Berater (2.000 Anfragen)"
+    ],
+    "enterpriseFeatures": [
+      "Alles aus Professional",
+      "Individueller Datenstandort",
+      "SSO & eigene Rollen",
+      "Fester Ansprechpartner",
+      "REST-APIs (nur Enterprise)"
+    ],
+    "footnote1": "Jederzeit kündbar",
+    "footnote2": "Keine Einrichtungsgebühr",
+    "footnote3": "USt. wird beim Checkout berechnet",
+    "faqTitle": "Häufige Fragen",
+    "faqs": [
+      {
+        "q": "Gibt es eine kostenlose Testphase für kostenpflichtige Tarife?",
+        "a": "Ja. Die Testphase ist zeitlich begrenzt und erfordert keine Kreditkarte."
+      },
+      {
+        "q": "Kann ich jederzeit wechseln oder herunterstufen?",
+        "a": "Ja. Tarifwechsel gelten sofort, die Differenz wird automatisch anteilig verrechnet."
+      },
+      {
+        "q": "Fallen Einrichtungsgebühren an?",
+        "a": "Nein. Es gibt keine Onboarding- oder Einrichtungskosten — Sie zahlen ausschließlich das monatliche oder jährliche Abonnement."
+      },
+      {
+        "q": "Gibt es Sonderkonditionen für gemeinnützige Organisationen?",
+        "a": "Ja, eingetragene gemeinnützige Organisationen erhalten 50 %. Kontaktieren Sie uns mit Ihrer Registernummer."
+      },
+      {
+        "q": "Was passiert, wenn ich die Tarifgrenzen überschreite?",
+        "a": "Wir informieren Sie, sobald Sie sich einer Grenze nähern. Nichts wird abgeschaltet; Sie entscheiden über ein Upgrade."
+      },
+      {
+        "q": "Sind meine Daten sicher?",
+        "a": "Alle Daten werden im Ruhezustand und bei der Übertragung verschlüsselt und auf AWS in Dublin (eu-west-1) gehostet. Unsere Kontrollen sind an ISO 27001 ausgerichtet; SOC 2 Typ II ist in Vorbereitung."
+      },
+      {
+        "q": "Schließen Sie einen Auftragsverarbeitungsvertrag (AVV) ab?",
+        "a": "Ja. Ein AVV nach Artikel 28 ist in den Bedingungen jedes kostenpflichtigen Tarifs enthalten."
+      },
+      {
+        "q": "Kann ich meine Daten bei Kündigung exportieren?",
+        "a": "Ja. Verzeichnis, Dienstleisterliste, Bewertungen und Richtlinien lassen sich jederzeit exportieren, auch nach der Kündigung."
+      }
+    ],
+    "ctaTitle": "Beginnen Sie mit der kostenlosen Analyse.",
+    "ctaDesc": "Sehen Sie in wenigen Minuten, wo Sie stehen. Upgraden Sie, wenn Sie die Lücken schließen wollen.",
+    "ctaBtn": "Analyse starten"
+  },
+  "featuresPage": {
+    "badge": "Plattform",
+    "title": "Zehn Module. Eine verlässliche Quelle.",
+    "subheadline": "Jedes Modul schreibt in dasselbe Verzeichnis, sodass ein an einer Stelle erzeugter Nachweis überall sonst verfügbar ist. Nichts wird doppelt erfasst, nichts läuft auseinander.",
+    "producesLabel": "Ergebnis",
+    "ctaTitle": "Prüfen Sie es an Ihrem eigenen Betrieb.",
+    "ctaDesc": "Die kostenlose Analyse bewertet alle zehn Bereiche und zeigt, welcher zuerst Aufmerksamkeit braucht.",
+    "ctaBtn": "Analyse starten",
+    "items": [
+      {
+        "id": "gap-assessment",
+        "ref": "Art. 24 · 32",
+        "title": "Gap-Analyse",
+        "subtitle": "Wissen, wo Sie stehen.",
+        "desc": "Schluss mit dem Rätselraten über die eigene Compliance. Die Analyse stellt klare Fragen zum tatsächlichen Umgang mit Daten und liefert eine bewertete, priorisierte Roadmap.",
+        "highlights": [
+          "Dynamischer Fragebogen, der sich Ihrem Agenturprofil anpasst.",
+          "Risikobewertung über zehn eigenständige Compliance-Kategorien.",
+          "Maßnahmen Schritt für Schritt, nach Risiko und Aufwand geordnet.",
+          "Mandantenfähige PDF-Berichte als Nachweis proaktiver Compliance."
+        ],
+        "cta": "Analyse starten",
+        "href": "/assessment",
+        "output": "Ein bewerteter Reifegrad und eine datierte Feststellungsliste"
+      },
+      {
+        "id": "ropa",
+        "ref": "Art. 30",
+        "title": "Verzeichnis von Verarbeitungstätigkeiten",
+        "subtitle": "Verarbeitung dokumentieren.",
+        "desc": "Das Fundament der Verordnung, ohne Tabellenkalkulation. Ein lebendes Abbild davon, wie Daten durch Ihre Agentur und Ihre Kundenprojekte fließen.",
+        "highlights": [
+          "Vorlagen für gängige Agenturtätigkeiten.",
+          "Dienstleister und Systeme mit den Tätigkeiten verknüpft, die sie nutzen.",
+          "Rechtsgrundlage, Aufbewahrungsfrist und Datenkategorie je Tätigkeit.",
+          "Verzeichnisse nach Artikel 30 in Sekunden exportiert."
+        ],
+        "cta": "Dokumentation beginnen",
+        "href": "/signup",
+        "output": "Ein versioniertes Verzeichnis nach Artikel 30"
+      },
+      {
+        "id": "vendor-intelligence",
+        "ref": "Art. 28 · 44",
+        "title": "Dienstleister-Intelligenz",
+        "subtitle": "Dritte im Blick behalten.",
+        "desc": "Agenturen arbeiten mit Dutzenden Tools. Custodia verfolgt deren Compliance-Status für Sie — mit einem gepflegten Profil für jeden gängigen Auftragsverarbeiter.",
+        "highlights": [
+          "Hosting-Region, Unterauftragsverarbeiter und Übermittlungsmechanismus je Dienstleister.",
+          "Warnungen, wenn ein Dienstleister seine Bedingungen ändert oder eine Panne meldet.",
+          "Ein Ablageort für jeden unterzeichneten Auftragsverarbeitungsvertrag.",
+          "Risikobewertung vor dem Onboarding eines Tools, nicht danach."
+        ],
+        "cta": "Dienstleisterverzeichnis ansehen",
+        "href": "/signup",
+        "output": "Ein Übermittlungs- und AVV-Nachweis je Dienstleister"
+      },
+      {
+        "id": "privacy-policies",
+        "ref": "Art. 13–14",
+        "title": "Dynamische Datenschutzhinweise",
+        "subtitle": "Konforme Hinweise erzeugen.",
+        "desc": "Keine Standardvorlagen, keine Anwaltskosten. Custodia erzeugt Datenschutzhinweise, Cookie-Richtlinien und Bedingungen aus Ihren tatsächlichen Verarbeitungsdaten.",
+        "highlights": [
+          "Hinweise aktualisieren sich, wenn ein Dienstleister oder eine Tätigkeit hinzukommt.",
+          "Einbettbare Widgets halten veröffentlichte Seiten synchron.",
+          "Mehrsprachige Ausgabe für EU-weit tätige Agenturen.",
+          "Formulierungen, die für Marketing- und Designagenturen geschrieben sind."
+        ],
+        "cta": "Hinweis erzeugen",
+        "href": "/signup",
+        "output": "Ein veröffentlichter, versionierter Datenschutzhinweis"
+      },
+      {
+        "id": "cookie-consent",
+        "ref": "ePrivacy",
+        "title": "Cookie-Einwilligung",
+        "subtitle": "Website-Einwilligung verwalten.",
+        "desc": "Eine Consent-Management-Plattform, die Ihr Design nicht ruiniert. ePrivacy- und DSGVO-Pflichten erfüllt, während das Banner nach Ihrer Marke aussieht.",
+        "highlights": [
+          "Google Consent Mode v2 und IAB TCF v2.2 unterstützt.",
+          "Wöchentliches automatisches Cookie-Scanning und Kategorisierung.",
+          "Granulare Einwilligungsprotokolle, die als Nachweis standhalten.",
+          "Mehrere Kundendomains an einer Stelle verwaltet."
+        ],
+        "cta": "Einwilligung einrichten",
+        "href": "/signup",
+        "output": "Ein manipulationssicheres Einwilligungsprotokoll"
+      },
+      {
+        "id": "dsar-automation",
+        "ref": "Art. 15–22",
+        "title": "DSAR-Automatisierung",
+        "subtitle": "Betroffenenanfragen bearbeiten.",
+        "desc": "Aus zwanzig Stunden Hektik wird ein nachverfolgter Ablauf. Eingang, Identitätsprüfung und Erledigung an einer Stelle, gegen die gesetzliche Frist.",
+        "highlights": [
+          "Sicheres, konfigurierbares Eingangsportal für betroffene Personen.",
+          "Identitätsprüfung, bevor Daten zusammengetragen werden.",
+          "Erhebungsaufgaben System für System zugewiesen.",
+          "Sichere Übergabe des fertigen Datenpakets."
+        ],
+        "cta": "Anfragen automatisieren",
+        "href": "/signup",
+        "output": "Eine abgeschlossene Anfrageakte samt Fristverlauf"
+      },
+      {
+        "id": "breach-management",
+        "ref": "Art. 33 · 34",
+        "title": "Verletzungsmanagement",
+        "subtitle": "Auf Vorfälle reagieren.",
+        "desc": "Wenn es passiert, entscheidet Geschwindigkeit. Custodia führt Schritt für Schritt durch die 72-Stunden-Meldepflicht, damit die Reaktion im Nachhinein belastbar ist.",
+        "highlights": [
+          "Reaktionspläne mit benannten Verantwortlichen.",
+          "Schweregrad nach EDSA-Kriterien zur Meldepflicht bewertet.",
+          "Vorbefüllte Meldevorlagen für die Aufsichtsbehörde.",
+          "Ein Vorfallprotokoll, das die Registerpflicht erfüllt."
+        ],
+        "cta": "Auf Vorfälle vorbereiten",
+        "href": "/signup",
+        "output": "Ein belastbarer Vorfallnachweis samt 72-Stunden-Verlauf"
+      },
+      {
+        "id": "dpia",
+        "ref": "Art. 35",
+        "title": "Datenschutz-Folgenabschätzung",
+        "subtitle": "Risikoreiche Verarbeitung bewerten.",
+        "desc": "Führen Sie die vorgeschriebenen Bewertungen vor dem Projektstart durch, nicht danach. Risiken erkennen, bewerten und mindern — mit Rahmen statt leerem Dokument.",
+        "highlights": [
+          "Geführte Fragebögen auf Basis behördlicher Leitlinien.",
+          "Gemeinsame Prüfung mit Ihrem Datenschutzbeauftragten und Beteiligten.",
+          "Risikomatrix, die Maßnahmen nach Schweregrad ordnet.",
+          "Exportierbare Berichte für die vorherige Konsultation."
+        ],
+        "cta": "DSFA starten",
+        "href": "/signup",
+        "output": "Eine freigegebene DSFA mit Maßnahmenverzeichnis"
+      },
+      {
+        "id": "training",
+        "ref": "Art. 39",
+        "title": "Mitarbeiterschulung",
+        "subtitle": "Ihr Team schulen.",
+        "desc": "Menschliches Versagen bleibt das größte Datenschutzrisiko. Schulen Sie Ihr Team agenturspezifisch und bewahren Sie die Nachweise auf.",
+        "highlights": [
+          "Kurze Module, geschrieben für Agenturrollen.",
+          "Automatische Zuweisung und Fortschrittsverfolgung.",
+          "Tests, die Verständnis prüfen, nicht Anwesenheit.",
+          "Abschlusszertifikate als Nachweis aufbewahrt."
+        ],
+        "cta": "Team schulen",
+        "href": "/signup",
+        "output": "Datierte Abschlussnachweise je Mitarbeitendem"
+      },
+      {
+        "id": "audit-readiness",
+        "ref": "Art. 5(2)",
+        "title": "Auditbereitschaft",
+        "subtitle": "Compliance auf Abruf belegen.",
+        "desc": "Machen Sie Compliance zu etwas, das Sie Kunden zeigen können. Eine vollständige Auditakte erzeugen oder eine Vertrauensseite teilen, wenn der Einkauf fragt.",
+        "highlights": [
+          "Öffentliche oder passwortgeschützte Vertrauensseiten für Kunden.",
+          "Vollständiges Nachweispaket auf Knopfdruck.",
+          "Lieferantenfragebögen aus vorhandenen Daten beantworten.",
+          "Ein Ablageort für jeden Compliance-Nachweis."
+        ],
+        "cta": "Vertrauensseite aufbauen",
+        "href": "/signup",
+        "output": "Ein exportierbares Nachweispaket je Anfrage"
+      }
+    ]
+  },
+  "securityPage": {
+    "badge": "Sicherheit & Vertrauen",
+    "title": "Wir schützen Ihre Daten so, wie Sie die Ihrer Kunden schützen.",
+    "subheadline": "Wir verkaufen Compliance-Software, also muss unsere eigene Aufstellung derselben Prüfung standhalten. So wird Custodia betrieben.",
+    "principles": [
+      {
+        "label": "Standort",
+        "title": "EU-Infrastruktur",
+        "desc": "Betrieben auf AWS Dublin (eu-west-1). Keine Daten verlassen den EWR, auch nicht für den Support-Zugriff."
+      },
+      {
+        "label": "Verschlüsselung",
+        "title": "Durchgehend verschlüsselt",
+        "desc": "AES-256 im Ruhezustand, TLS 1.3 bei der Übertragung, Schlüssel getrennt von den Daten verwaltet."
+      },
+      {
+        "label": "Zugriff",
+        "title": "Zugriffskontrolle",
+        "desc": "Zeilenbasierte Sicherheit, rollenbasierte Rechte je Rechtsträger und MFA für jedes Konto."
+      },
+      {
+        "label": "Prüfung",
+        "title": "Unabhängige Tests",
+        "desc": "Jährliche Penetrationstests durch Dritte. Feststellungen werden behoben und vor Abschluss erneut geprüft."
+      },
+      {
+        "label": "Trennung",
+        "title": "Mandantentrennung",
+        "desc": "Mehrmandantenfähig mit Trennung auf Datenbankebene, bei jeder Abfrage je Organisation durchgesetzt."
+      },
+      {
+        "label": "Standards",
+        "title": "An ISO 27001 ausgerichtet",
+        "desc": "Kontrollen auf ISO 27001 abgebildet. SOC 2 Typ II ist in Vorbereitung, noch nicht zertifiziert."
+      }
+    ],
+    "gdprTitle": "Unsere eigene DSGVO-Position",
+    "gdprBody": "Wir führen die Nachweise, die wir auch von Ihnen erwarten. Custodia pflegt ein eigenes Verzeichnis nach Artikel 30, bewertet die eigenen Dienstleister und wendet ein eigenes Löschkonzept an.",
+    "gdprPoints": [
+      "Ein Auftragsverarbeitungsvertrag nach Artikel 28 steht jedem Kunden zur Verfügung.",
+      "Unterauftragsverarbeiter werden vor dem Onboarding geprüft und danach fortlaufend überwacht.",
+      "Ein benannter Datenschutzbeauftragter verantwortet das Programm."
+    ],
+    "subTitle": "Unterauftragsverarbeiter",
+    "subBody": "Jeder Dritte, der in unserem Auftrag Daten verarbeitet, ist öffentlich gelistet — mit Verarbeitungszweck und Standort. Vor Änderungen informieren wir unsere Kunden.",
+    "subLink": "Liste der Unterauftragsverarbeiter ansehen",
+    "contactTitle": "Sicherheitsanfragen",
+    "contactBody": "Für einen Sicherheitsfragebogen, eine Ausfertigung des AVV oder die Meldung einer Schwachstelle wenden Sie sich direkt an das Sicherheitsteam. Wir bestätigen Meldungen innerhalb eines Werktags.",
+    "contactCta": "Sicherheitsteam kontaktieren"
+  },
+  "enterprisePage": {
+    "badge": "Enterprise",
+    "title": "Für Unternehmensgruppen, nicht nur für Agenturen.",
+    "subheadline": "Mehrere Rechtsträger, eine zu bestehende Sicherheitsprüfung und ein internes System, das versorgt werden will. Enterprise deckt ab, was Professional bewusst auslässt.",
+    "blocks": [
+      {
+        "label": "Struktur",
+        "title": "Steuerung mehrerer Rechtsträger",
+        "desc": "Ein Programm über alle Tochtergesellschaften — jede mit eigenem Verzeichnis, eigenen Rechtsgrundlagen und eigenen Löschfristen, zusammengeführt zu einer Gesamtsicht für die Gruppe.",
+        "points": [
+          "Rollen je Rechtsträger, sodass Mitarbeitende nur eigene Daten sehen.",
+          "Gruppenweite Auswertung über alle Rechtsträger.",
+          "Getrennte Verzeichnisse, die dennoch zusammenpassen."
+        ]
+      },
+      {
+        "label": "Zugriff",
+        "title": "SSO und eigene Rollen",
+        "desc": "Single Sign-on über SAML und OIDC mit SCIM-Bereitstellung sowie Rollen, die Sie definieren statt der von uns mitgelieferten.",
+        "points": [
+          "SAML 2.0 und OIDC.",
+          "Benutzerbereitstellung und -entzug über SCIM.",
+          "Eigene Rechtebündel je Rechtsträger."
+        ]
+      },
+      {
+        "label": "Integration",
+        "title": "REST-APIs und SIEM",
+        "desc": "Lesen und schreiben Sie das Verzeichnis aus Ihren eigenen Systemen und leiten Sie das Prüfprotokoll an das SIEM weiter, das Ihr Sicherheitsteam ohnehin betreibt.",
+        "points": [
+          "Zugriff über REST-API (nur Enterprise).",
+          "Weiterleitung des Prüfprotokolls an SIEM.",
+          "Dedizierte Datenbank auf Anfrage."
+        ]
+      },
+      {
+        "label": "Prüfung",
+        "title": "Unterstützung bei Sicherheitsprüfungen",
+        "desc": "Individueller Datenstandort, wo Sie ihn brauchen, und ein benannter Ansprechpartner für Ihren Einkaufsfragebogen statt einer Support-Warteschlange.",
+        "points": [
+          "Individuelle Optionen für den Datenstandort.",
+          "Fester Ansprechpartner.",
+          "Kontrollen an ISO 27001 ausgerichtet; SOC 2 Typ II in Vorbereitung."
+        ]
+      }
+    ],
+    "ctaTitle": "Erzählen Sie uns, wie Ihre Gruppe aufgebaut ist.",
+    "ctaDesc": "Wir gehen Struktur, Zugriffsmodell und Datenstandort durch und sagen Ihnen offen, ob Professional bereits ausreicht.",
+    "ctaBtn": "Kontakt aufnehmen"
+  },
+  "agenciesPage": {
+    "badge": "Für Agenturen gebaut",
+    "title": "Sie bauen das Internet.",
+    "titleAccent": "Wir halten es rechtskonform.",
+    "subheadline": "Agenturen stehen gleichzeitig auf beiden Seiten der Verordnung — Verantwortlicher für eigene Daten, Auftragsverarbeiter für Kundendaten. Allgemeine Compliance-Tools bilden das nicht ab. Custodia schon.",
+    "ctaHero": "Kostenlose Agenturanalyse starten",
+    "blocks": [
+      {
+        "label": "Doppelrolle",
+        "title": "Sie sind Verantwortlicher und Auftragsverarbeiter zugleich.",
+        "desc": "Betreuen Sie einen Kunden-Newsletter, sind Sie Auftragsverarbeiter. Stellen Sie jemanden ein, sind Sie Verantwortlicher. Custodia trennt beide Kontexte von Haus aus, sodass Verzeichnis und Hinweise die tatsächlich innegehabte Rolle je Tätigkeit abbilden.",
+        "points": [
+          "Kontextbewusste Erzeugung des Verzeichnisses.",
+          "Auftragsverarbeitungsverträge je Kunde erzeugt."
+        ],
+        "panelLabel": "Rollenmodell",
+        "panelA": "Sie",
+        "panelARole": "Verantwortlicher",
+        "panelB": "Kunden",
+        "panelBRole": "Auftragsverarbeiter"
+      },
+      {
+        "label": "Kundenvertrauen",
+        "title": "Ihre Kunden fragen bereits nach Compliance.",
+        "desc": "Unternehmenskunden unterschreiben nicht, bevor Sie Ihre DSGVO-Aufstellung belegen können. Custodia macht aus dem ohnehin gepflegten Verzeichnis eine Vertrauensseite, die Sie im Einkaufsprozess versenden können.",
+        "points": [
+          "Teilbare Vertrauensseiten, öffentlich oder passwortgeschützt.",
+          "Lieferantenfragebögen aus vorhandenen Daten beantworten."
+        ],
+        "panelLabel": "Vertrauensseite",
+        "panelA": "",
+        "panelARole": "",
+        "panelB": "",
+        "panelBRole": ""
+      },
+      {
+        "label": "Tool-Wildwuchs",
+        "title": "Sie betreiben zwanzig Tools, die personenbezogene Daten berühren.",
+        "desc": "Zwischen Design, Entwicklung, Marketing und Betrieb wächst die Liste der Unterauftragsverarbeiter schneller, als sie jemand pflegt. Custodia führt gepflegte Profile für die Tools, die Agenturen tatsächlich einsetzen.",
+        "points": [
+          "Hosting-Region und Übermittlungsmechanismus je Tool.",
+          "Warnungen bei geänderten Bedingungen oder gemeldeten Pannen."
+        ],
+        "panelLabel": "Dienstleisterverzeichnis",
+        "panelA": "",
+        "panelARole": "",
+        "panelB": "",
+        "panelBRole": ""
+      },
+      {
+        "label": "Auditbereitschaft",
+        "title": "Belegen Sie es in Minuten, nicht in Wochen.",
+        "desc": "Wenn ein Kunde oder eine Aufsichtsbehörde Nachweise verlangt, sollte die Antwort bereits vorliegen. Custodia stellt Verzeichnis, Hinweise, Verträge und Dienstleisterliste zu einem datierten Nachweispaket zusammen.",
+        "points": [
+          "Ein Nachweispaket je Anfrage, datiert und vollständig.",
+          "Immer aktuell, weil aus laufenden Daten erzeugt."
+        ],
+        "panelLabel": "Nachweispaket",
+        "panelA": "",
+        "panelARole": "",
+        "panelB": "",
+        "panelBRole": ""
+      }
+    ],
+    "ctaTitle": "Sehen Sie, wo Ihre Agentur tatsächlich steht.",
+    "ctaDesc": "Die Analyse bewertet zehn Bereiche anhand der Verordnung und zeigt, welche Lücke zuerst zu schließen ist.",
+    "ctaBtn": "Kostenlose Analyse starten"
+  },
+  "home": {
+    "mock": {
+      "org": "custodia / nordlicht-agency.eu",
+      "view": "Auditbereitschaft",
+      "region": "EU-WEST · FRA1",
+      "scoreLabel": "Reifegrad",
+      "scoreDelta": "14 in diesem Quartal",
+      "actionExport": "Nachweispaket exportieren",
+      "actionRegister": "Verzeichnis Art. 30"
+    },
+    "nav": [
+      "Übersicht",
+      "Verarbeitungstätigkeiten",
+      "Gap-Analyse",
+      "Dienstleister & Übermittlungen",
+      "Betroffenenanfragen",
+      "Einwilligung",
+      "Verletzungsregister",
+      "Berater"
+    ],
+    "rows": [
+      {
+        "name": "Verzeichnis Art. 30 — Nordlicht GmbH",
+        "meta": "12 Tätigkeiten",
+        "status": "VOLLSTÄNDIG",
+        "due": "—"
+      },
+      {
+        "name": "Betroffenenanfrage · Löschung #1184",
+        "meta": "Tag 6 von 30",
+        "status": "IN ARBEIT",
+        "due": "14. Aug."
+      },
+      {
+        "name": "Übermittlungsprüfung — Segment (US)",
+        "meta": "SCC Modul 2",
+        "status": "PRÜFUNG FÄLLIG",
+        "due": "02. Aug."
+      },
+      {
+        "name": "Cookie-Banner — 4 Kundendomains",
+        "meta": "TCF v2.2",
+        "status": "AKTIV",
+        "due": "—"
+      },
+      {
+        "name": "Verletzungsprotokoll — Vorfall 0042",
+        "meta": "72-Stunden-Frist gewahrt",
+        "status": "GEMELDET",
+        "due": "—"
+      }
+    ],
+    "pains": [
+      {
+        "tag": "Zersplitterung",
+        "title": "Ihr Compliance-Programm besteht aus elf Dateien und dem Gedächtnis einer Person.",
+        "body": "Verarbeitungsverzeichnisse in einer Tabelle, AVV auf einem Netzlaufwerk, Bewertungen in der Word-Vorlage eines Beraters, Entscheidungen per E-Mail. Nichts passt zusammen, und niemand kann belegen, was an einem bestimmten Tag galt.",
+        "stat": "Durchschnittliche Agentur: 4 Tools, 0 Prüfpfad"
+      },
+      {
+        "tag": "Risiko",
+        "title": "Aufsichtsbehörden warten nicht mehr auf eine Datenpanne.",
+        "body": "Behörden in der gesamten EU eröffnen Verfahren aufgrund von Beschwerden, Cookie-Prüfungen und Dienstleisterketten. Bußgelder erreichen 4 % des weltweiten Umsatzes, und „wir wollten es dokumentieren“ war noch nie eine Verteidigung.",
+        "stat": "Über 1,2 Mrd. € DSGVO-Bußgelder im Jahr 2025"
+      },
+      {
+        "tag": "Aufwand",
+        "title": "Betroffenenanfragen und Verzeichnispflege kosten abrechenbare Wochen.",
+        "body": "Jede Anfrage bedeutet Systeme abklappern, Daten exportieren, Dritte schwärzen und eine gesetzliche Frist von Hand einhalten. Jeder neue Dienstleister bedeutet, ein Verzeichnis erneut zu lesen, das seit dem Onboarding niemand aktualisiert hat.",
+        "stat": "9–14 Stunden je Betroffenenanfrage"
+      }
+    ],
+    "modules": [
+      {
+        "title": "Verarbeitungsverzeichnis",
+        "ref": "Art. 30",
+        "body": "Ein lebendes Verzeichnis nach Art. 30 mit Rechtsgrundlage, Aufbewahrung, Empfängern und Übermittlungswegen je Tätigkeit. Versioniert — Sie können zeigen, was der Eintrag im März aussagte."
+      },
+      {
+        "title": "Gap-Analyse",
+        "ref": "Art. 24 · 32",
+        "body": "38 Kontrollen auf die Verordnung abgebildet, bewertet und nach Risiko und Aufwand priorisiert. Quartalsweise wiederholbar als Nachweis kontinuierlicher Verbesserung."
+      },
+      {
+        "title": "Dienstleister-Intelligenz",
+        "ref": "Art. 28 · 44",
+        "body": "Ein gepflegtes Profil für jeden gängigen Auftragsverarbeiter: Unterauftragsverarbeiter, Hosting-Region, Übermittlungsmechanismus, AVV-Link und bekannte Bußgeldhistorie."
+      },
+      {
+        "title": "Automatisierte Betroffenenanfragen",
+        "ref": "Art. 15–22",
+        "body": "Eingangsformular, Identitätsprüfung, Erhebungsaufgaben System für System, Schwärzungsablauf und eine gesetzliche Frist, die vor Tag 30 eskaliert."
+      },
+      {
+        "title": "Cookie-Einwilligung (CMP)",
+        "ref": "ePrivacy",
+        "body": "Nach IAB TCF v2.2 zertifiziertes Banner, Konfiguration je Domain, Signale für Google Consent Mode und ein manipulationssicheres Einwilligungsprotokoll."
+      },
+      {
+        "title": "Verletzungsmanagement",
+        "ref": "Art. 33 · 34",
+        "body": "Schweregradbewertung nach EDSA-Kriterien, die 72-Stunden-Meldefrist, Weiterleitung an die zuständige Behörde und ein belastbarer Vorfallnachweis."
+      },
+      {
+        "title": "Dashboard zur Auditbereitschaft",
+        "ref": "Art. 5(2)",
+        "body": "Ein Wert je Rechtsträger, ein Nachweispaket je Anfrage. Alles, wonach eine Aufsichtsbehörde oder ein Einkaufsteam fragt, per Klick exportiert."
+      },
+      {
+        "title": "KI-Compliance-Berater",
+        "ref": "RAG · zitiert",
+        "body": "Antworten, die im tatsächlichen Rechtsbestand verankert sind, auf Ihre Jurisdiktion zugeschnitten und bis auf den Absatz genau belegt."
+      }
+    ],
+    "advisorPanelLabel": "Berater · Jurisdiktion",
+    "advisorActions": [
+      "An Verzeichniseintrag anhängen",
+      "Maßnahme anlegen",
+      "Als Kundenmemo exportieren"
+    ],
+    "advisorJurisdictions": {
+      "IE": {
+        "q": "Ein Kunde möchte ein Gewinnspiel über seine Newsletter-Liste durchführen. Gilt die Einwilligung weiter?",
+        "a": "Nein. Eine für den Newsletter-Versand erteilte Einwilligung erstreckt sich nicht auf ein Gewinnspiel — der neue Zweck ist mit dem bei der Erhebung genannten unvereinbar, und die DPC wertet die Zweckänderung von Marketinglisten als eigenständige Verarbeitung, die eine neue, spezifische Einwilligung erfordert.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Vereinbarkeitsprüfung bei Weiterverarbeitung"
+          },
+          {
+            "ref": "EDSA 05/2020",
+            "text": "Einwilligung muss für jeden Zweck spezifisch sein (Rn. 56)"
+          },
+          {
+            "ref": "DPC IE",
+            "text": "Leitlinie Direktwerbung, 2023 — Ziff. 4.2"
+          }
+        ]
+      },
+      "FR": {
+        "q": "Ein Kunde möchte ein Gewinnspiel über seine Newsletter-Liste durchführen. Gilt die Einwilligung weiter?",
+        "a": "Nein. Die CNIL ist strenger als der Grundstandard: Werbung für einen eigenständigen Vorgang erfordert ein eigenes Opt-in, und der Erhebungshinweis muss den Werbezweck ausdrücklich benennen. Die Weiterverwendung einer bestehenden Liste setzt den Kunden einer Sanktion nach Artikel 82 der Loi Informatique et Libertés aus.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Vereinbarkeitsprüfung bei Weiterverarbeitung"
+          },
+          {
+            "ref": "CNIL",
+            "text": "Référentiel prospection commerciale, Ziff. 2.1"
+          },
+          {
+            "ref": "LIL Art. 82",
+            "text": "Nationale Einwilligungspflicht beim Tracking"
+          }
+        ]
+      },
+      "DE": {
+        "q": "Ein Kunde möchte ein Gewinnspiel über seine Newsletter-Liste durchführen. Gilt die Einwilligung weiter?",
+        "a": "Nein, und es kommt eine nationale Dimension hinzu: Das Kopplungsverbot nach § 7 UWG und die BGH-Rechtsprechung dazu bedeuten, dass die Teilnahme nicht von einer Werbeeinwilligung abhängig gemacht werden darf. Erforderlich ist ein gesondertes, dokumentiertes Opt-in mit Zeitstempel.",
+        "cites": [
+          {
+            "ref": "Art. 7(4)",
+            "text": "Freiwillige Einwilligung — keine Kopplung"
+          },
+          {
+            "ref": "§ 7 UWG",
+            "text": "Unzumutbare Belästigung — deutsches Wettbewerbsrecht"
+          },
+          {
+            "ref": "DSK",
+            "text": "Orientierungshilfe Direktwerbung, 2022"
+          }
+        ]
+      },
+      "NL": {
+        "q": "Ein Kunde möchte ein Gewinnspiel über seine Newsletter-Liste durchführen. Gilt die Einwilligung weiter?",
+        "a": "Nein. Die Autoriteit Persoonsgegevens verlangt eine zweckspezifische Einwilligung, und das Soft-Opt-in der Telecommunicatiewet für Bestandskunden deckt Gewinnspiele nicht ab. Dokumentieren Sie die neue Einwilligung und halten Sie den Widerrufsweg im selben Datensatz vor.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Vereinbarkeitsprüfung bei Weiterverarbeitung"
+          },
+          {
+            "ref": "Tw Art. 11.7",
+            "text": "Niederländische Einwilligung für elektronische Werbung"
+          },
+          {
+            "ref": "AP",
+            "text": "Normuitleg toestemming, 2021"
+          }
+        ]
+      },
+      "ES": {
+        "q": "Ein Kunde möchte ein Gewinnspiel über seine Newsletter-Liste durchführen. Gilt die Einwilligung weiter?",
+        "a": "Nein. Die AEPD verlangt eine je Zweck granulare Einwilligung, und Artikel 21 LSSI regelt die elektronische Kommunikation selbst. Die Teilnahmebedingungen müssen zudem die Aufbewahrungsfrist für Teilnehmerdaten getrennt von der Newsletter-Frist ausweisen.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Vereinbarkeitsprüfung bei Weiterverarbeitung"
+          },
+          {
+            "ref": "LSSI Art. 21",
+            "text": "Spanische Regeln für kommerzielle Kommunikation"
+          },
+          {
+            "ref": "AEPD",
+            "text": "Guía consentimiento, 2023 — Ziff. 3"
+          }
+        ]
+      }
+    },
+    "corpus": [
+      {
+        "source": "Verordnung (EU) 2016/679 — Volltext",
+        "detail": "99 Artikel · 173 Erwägungsgründe"
+      },
+      {
+        "source": "EDSA-Leitlinien, Stellungnahmen & Empfehlungen",
+        "detail": "142 Dokumente"
+      },
+      {
+        "source": "EuGH-Urteile zum Datenschutz",
+        "detail": "Schrems II → 2026"
+      },
+      {
+        "source": "Nationale Aufsichtsleitlinien — IE, FR, DE, NL, ES",
+        "detail": "DPC · CNIL · DSK · AP · AEPD"
+      },
+      {
+        "source": "Veröffentlichte Bußgeldentscheidungen",
+        "detail": "über 2.400 Entscheidungen"
+      }
+    ],
+    "trust": [
+      {
+        "label": "Standort",
+        "title": "Datenhaltung in der EU",
+        "body": "Alle Daten werden auf AWS Dublin (eu-west-1) gespeichert und verarbeitet. Keine Übermittlung außerhalb des EWR, auch nicht für den Support-Zugriff."
+      },
+      {
+        "label": "Zugriff",
+        "title": "SSO & granulare Rollen",
+        "body": "Single Sign-on über SAML und OIDC, SCIM-Bereitstellung, Rollen je Rechtsträger, sodass Kundenmitarbeitende nur ihr eigenes Verzeichnis sehen."
+      },
+      {
+        "label": "Rechenschaft",
+        "title": "Unveränderliches Prüfprotokoll",
+        "body": "Jede Änderung an Eintrag, Bewertung oder Einwilligung wird mit Akteur, Zeitstempel und Vorwert in ein reines Anfügeprotokoll geschrieben."
+      },
+      {
+        "label": "Infrastruktur",
+        "title": "Betrieb auf Unternehmensniveau",
+        "body": "Verschlüsselt im Ruhezustand und bei der Übertragung, täglich getestete Wiederherstellungen, an ISO 27001 ausgerichtete Kontrollen, jährliche Penetrationstests."
+      },
+      {
+        "label": "Abrechnung",
+        "title": "Umsatzsteuer automatisch berücksichtigt",
+        "body": "Reverse-Charge und lokale Sätze je Mitgliedstaat angewandt, mit konformen Rechnungen und bei der Registrierung geprüfter USt-IdNr."
+      }
+    ]
   }
 }

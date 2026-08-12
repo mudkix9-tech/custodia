@@ -130,6 +130,10 @@
       "legal_subprocessors": {
         "title": "Sub-processors | Custodia",
         "desc": "The current list of Custodia sub-processors, what each one processes, where it is located, and how we notify customers before changes take effect."
+      },
+      "assessment": {
+        "title": "Free GDPR Readiness Assessment | Custodia",
+        "desc": "Score your GDPR readiness in a few minutes. Every gap is mapped to the article it fails, scored by severity and broken down by category. No account needed to start."
       }
     }
   },
@@ -206,6 +210,821 @@
       "privacy": "Privacy notice",
       "cookies": "Cookie policy",
       "dpa": "Data processing agreement"
-    }
+    },
+    "nav": {
+      "platform": "Platform",
+      "advisor": "AI Advisor",
+      "pricing": "Pricing",
+      "security": "Security"
+    },
+    "nav_aria_label": "Primary navigation",
+    "nav_open": "Open navigation menu",
+    "nav_close": "Close navigation menu",
+    "sign_in": "Sign in",
+    "cta_assessment": "Start free assessment"
+  },
+  "assessmentFlow": {
+    "headerBadge": "Free gap assessment",
+    "resumed": "Resumed — continuing where you left off",
+    "answered": "{answered} of {total} answered",
+    "unanswered": "No account required · ~10 min",
+    "introReqs": "{reqs} requirements · {categories} categories · ~10 minutes",
+    "introTitle": "Find out where you stand before someone else does.",
+    "introDesc": "A structured scan of your operations against the Regulation as it is actually enforced. Answer {reqs} questions; Custodia scores every requirement, maps each gap to its article, and orders the findings by category.",
+    "resumeBtn": "Resume assessment",
+    "startOverBtn": "Start over",
+    "beginBtn": "Begin assessment",
+    "introFootnote": "No account. No credit card. No sales call. Progress saves in your browser — you can leave and come back.",
+    "usedBy": "Used by agencies and their clients across the EU.",
+    "whatYouGet": "What you get, immediately",
+    "d1Title": "A scored readiness figure",
+    "d1Desc": "One number, benchmarked against comparable EU agencies.",
+    "d2Title": "Every gap mapped to its article",
+    "d2Desc": "Findings cite the provision they fail, not a vague category.",
+    "d3Title": "Severity per finding",
+    "d3Desc": "So you can tell what needs attention this quarter from what can wait.",
+    "d4Title": "A category-by-category breakdown",
+    "d4Desc": "Records, consent, vendors, security and more, scored independently.",
+    "statsReqs": "Requirements checked",
+    "statsCats": "Categories assessed",
+    "statsEU": "Data stored & processed",
+    "questionHeader": "Question {current} / {total}",
+    "back": "← Back",
+    "keyboardHint": "Press 1–{count} to answer · answers save as you go"
+  },
+  "assessmentResults": {
+    "shareLink": "Share results",
+    "copied": "Copied",
+    "expiredTitle": "Assessment expired",
+    "expiredDesc": "This assessment was completed over 30 days ago and is no longer available.",
+    "startNewBtn": "Start new assessment",
+    "assessmentComplete": "Assessment complete",
+    "ref": "Ref {ref}",
+    "medianScore": "Median score for agencies at first assessment: 55",
+    "highSeverity": "High severity",
+    "mediumSeverity": "Medium severity",
+    "totalFindings": "Total findings",
+    "scoreByCategory": "Score by category",
+    "findings": "Findings",
+    "findingsDesc": "Ordered by severity — the full report includes every finding and its remediation step.",
+    "furtherFindings": "{count} further finding(s) are in the full report.",
+    "unlockBelow": "Unlock below ↓",
+    "sendReportHeader": "Send my report",
+    "sendReportDesc": "One email, containing your PDF. No sequence, no sales call — unsubscribe is a single click and your assessment stays valid either way.",
+    "emailPlaceholder": "name@company.eu",
+    "companyPlaceholder": "Company (optional)",
+    "marketingConsent": "Keep me updated about Custodia, including product news and offers",
+    "emailMeBtn": "Email me the full report",
+    "emailMeProcessing": "Processing…",
+    "emailNoteError": "Enter a valid email address so we can send the report.",
+    "emailNote": "We will email you a secure magic link. No password required.",
+    "storedEU": "Data stored & processed in the EU",
+    "deleted90Days": "Assessments deleted after 90 days",
+    "checkEmailTitle": "Check your email",
+    "checkEmailDesc1": "We've sent a magic link to ",
+    "checkEmailDesc2": "Click the link on this device to access your full results.",
+    "resendLink": "Resend link",
+    "wrongEmail": "Wrong email?",
+    "fullReportBadge": "Full report",
+    "fullReportTitle": "GDPR Audit Readiness Report",
+    "bandDefensible": "Defensible",
+    "bandMaterialExposure": "Material exposure",
+    "bandHighExposure": "High exposure",
+    "verdictDefensible": "Your programme is broadly defensible. The findings below are refinements rather than exposures — close them to move from compliant-in-substance to demonstrable on request.",
+    "verdictMaterialExposure": "You have the outline of a compliance programme without the evidence to prove it. In an inquiry, the gap between what you do and what you can show is where liability sits — and most of the findings below are documentation, not new work.",
+    "verdictHighExposure": "Several foundational obligations are unmet, including ones a supervisory authority can verify without contacting you. Treat the high-severity findings as this quarter's priority.",
+    "btnEmailReport": "Email me the full report",
+    "btnProcessing": "Processing…",
+    "btnDownloadPdf": "Download PDF report",
+    "btnGenerating": "Generating…",
+    "downloadPdf": "Download PDF report",
+    "generatingPdf": "Generating…",
+    "actionPlan": "Your action plan",
+    "fixIssue": "Fix issue",
+    "fixAutomaticallyTitle": "Fix these issues automatically.",
+    "fixAutomaticallyDesc": "Custodia replaces your spreadsheets with a dynamic compliance operating system. Start resolving these action items today.",
+    "viewPlans": "View Custodia plans"
+  },
+  "pdfReport": {
+    "confidential": "Gap Assessment · Confidential",
+    "title": "GDPR Compliance Assessment Report",
+    "orgLabel": "Organization",
+    "dateLabel": "Assessment date",
+    "idLabel": "Report ID",
+    "overallScoreLabel": "Overall compliance score",
+    "assessedDesc": "{questions} questions assessed across {categories} compliance categories.",
+    "disclaimerLine1": "Custodia acts as a compliance software provider, not a law firm. This report is an automated assessment based on your answers and does not constitute formal legal advice. While it identifies potential regulatory exposure, we recommend consulting qualified counsel for definitive guidance.",
+    "actionItemPrefix": "Address risk regarding: ",
+    "disclaimer": "This report reflects self-reported responses and is intended to support internal compliance planning. It does not constitute legal advice or certification of compliance with Regulation (EU) 2016/679.",
+    "footerText": "Generated by Custodia | trycustodia.com | Confidential",
+    "footerPage": "Page {pageNumber} of {totalPages}",
+    "headerText": "GDPR Compliance Assessment Report · {orgName}",
+    "execSummaryTitle": "Executive summary",
+    "execSummaryText": "{orgName} achieved an overall compliance score of {score}%, placing the organization at {risk} risk of non-compliance with the GDPR.",
+    "scoreBreakdownTitle": "Score breakdown by category",
+    "catHeaderCategory": "Category",
+    "catHeaderScore": "Score",
+    "catHeaderRisk": "Risk level",
+    "riskLow": "Low risk",
+    "riskModerate": "Moderate risk",
+    "riskHigh": "High risk",
+    "legendLow": "Low risk — 76–100%",
+    "legendModerate": "Moderate risk — 51–75%",
+    "legendHigh": "High risk — 0–50%",
+    "findingsTitle": "Detailed findings",
+    "findingsDesc": "Responses as submitted, grouped by category. The indicator reflects the residual risk associated with each response.",
+    "questionsLabel": "{count} QUESTIONS",
+    "responseLabel": "RESPONSE",
+    "actionTitle": "Recommended action items",
+    "actionDesc": "{count} actions generated from the gaps identified, ordered by priority.",
+    "actionHeaderPriority": "Priority",
+    "actionHeaderAction": "Action",
+    "actionHeaderArticle": "GDPR article",
+    "nextStepsTitle": "Next steps",
+    "nextStepsSummary": "You have {highCount} high-priority gaps. {moduleText} can address {autoCount} of these automatically.",
+    "nextStepsModules_1": "Custodia's {m1}",
+    "nextStepsModules_2": "Custodia's {m1} and {m2}",
+    "nextStepsModules_multi": "Custodia's {modules}, and {last}",
+    "nextStepsCTA": "Start a free trial at trycustodia.com to resolve these issues and generate a compliance certificate.",
+    "module_ropa": "ROPA engine",
+    "module_cookie": "cookie consent manager",
+    "module_vendor": "vendor risk tracking",
+    "module_dsar": "DSAR automation",
+    "module_security": "Security & Breach module"
+  },
+  "pricingPage": {
+    "badge": "Pricing",
+    "title": "One tier, priced for agencies.",
+    "subheadline": "Start with the free assessment, then move to Professional when you want the register, the clock and the evidence pack maintained for you.",
+    "monthlyLabel": "Monthly",
+    "annualLabel": "Annual",
+    "annualSaveBadge": "−20%",
+    "savingsNote": "Save €{amount} a year on annual billing.",
+    "perMonth": "/mo",
+    "perMonthAnnual": "/mo, billed yearly",
+    "custom": "Custom",
+    "included": "What’s included",
+    "professionalName": "Professional",
+    "professionalBadge": "Most chosen",
+    "professionalBlurb": "The complete OS for growing agencies.",
+    "professionalCta": "Start free trial",
+    "enterpriseName": "Enterprise",
+    "enterpriseBlurb": "For groups running several legal entities or custom controls.",
+    "enterpriseCta": "Contact us",
+    "professionalFeatures": [
+      "Unlimited users & processing activities",
+      "Unlimited vendors & DPIAs",
+      "Cookie consent (50 domains)",
+      "AI compliance advisor (2,000 queries)"
+    ],
+    "enterpriseFeatures": [
+      "Everything in Professional",
+      "Custom data residency",
+      "SSO & custom roles",
+      "Dedicated account manager",
+      "REST APIs (Enterprise only)"
+    ],
+    "footnote1": "Cancel anytime",
+    "footnote2": "No setup fees",
+    "footnote3": "VAT calculated at checkout",
+    "faqTitle": "Frequently asked questions",
+    "faqs": [
+      {
+        "q": "Do you offer a free trial for paid plans?",
+        "a": "Yes. The trial is time-limited and no card is required to start."
+      },
+      {
+        "q": "Can I upgrade or downgrade at any time?",
+        "a": "Yes. Plan changes take effect immediately and we prorate the difference automatically."
+      },
+      {
+        "q": "Are there any setup fees?",
+        "a": "No. There are no onboarding or setup costs — you pay the monthly or annual subscription and nothing else."
+      },
+      {
+        "q": "Do you have special pricing for non-profits?",
+        "a": "Yes, registered non-profits get 50%. Contact us with your registration number to apply."
+      },
+      {
+        "q": "What happens if I go over my plan limits?",
+        "a": "We notify you as you approach a limit. Nothing is cut off; you choose whether to upgrade."
+      },
+      {
+        "q": "Is my data secure?",
+        "a": "All data is encrypted at rest and in transit and hosted on AWS in Dublin (eu-west-1). Our controls are ISO 27001-aligned and we are working towards SOC 2 Type II."
+      },
+      {
+        "q": "Do you sign a Data Processing Agreement (DPA)?",
+        "a": "Yes. An Article 28 DPA is included in the terms for every paid plan."
+      },
+      {
+        "q": "Can I export my data if I cancel?",
+        "a": "Yes. Your register, vendor list, assessments and policies export at any time, including after you cancel."
+      }
+    ],
+    "ctaTitle": "Start with the free assessment.",
+    "ctaDesc": "See where you stand in a few minutes. Upgrade when you are ready to close the gaps.",
+    "ctaBtn": "Take the assessment"
+  },
+  "featuresPage": {
+    "badge": "Platform",
+    "title": "Ten modules. One source of truth.",
+    "subheadline": "Each module writes to the same register, so evidence produced in one place is available everywhere else. Nothing is re-keyed and nothing drifts.",
+    "producesLabel": "Produces",
+    "ctaTitle": "See it against your own operations.",
+    "ctaDesc": "The free assessment scores all ten areas and tells you which ones need attention first.",
+    "ctaBtn": "Take the assessment",
+    "items": [
+      {
+        "id": "gap-assessment",
+        "ref": "Art. 24 · 32",
+        "title": "Gap assessment",
+        "subtitle": "Understand where you stand.",
+        "desc": "Stop guessing whether you are compliant. The assessment engine asks plain questions about how your agency actually handles data, then returns a scored, prioritised roadmap.",
+        "highlights": [
+          "Dynamic questionnaire that adapts to your agency profile.",
+          "Risk scoring across ten distinct compliance categories.",
+          "Step-by-step remediation ordered by risk and effort.",
+          "Client-ready PDF reports evidencing proactive compliance."
+        ],
+        "cta": "Take the assessment",
+        "href": "/assessment",
+        "output": "A scored readiness figure and a dated finding list"
+      },
+      {
+        "id": "ropa",
+        "ref": "Art. 30",
+        "title": "Records of processing",
+        "subtitle": "Document your processing.",
+        "desc": "The cornerstone of the Regulation, without the spreadsheet. Maintain a living map of how data moves through your agency and your client projects.",
+        "highlights": [
+          "Pre-built templates for common agency activities.",
+          "Vendors and systems linked to the activities that use them.",
+          "Lawful basis, retention period and data category per activity.",
+          "Article 30 records exported in seconds."
+        ],
+        "cta": "Start documenting",
+        "href": "/signup",
+        "output": "A versioned Article 30 register"
+      },
+      {
+        "id": "vendor-intelligence",
+        "ref": "Art. 28 · 44",
+        "title": "Vendor intelligence",
+        "subtitle": "Track your third parties.",
+        "desc": "Agencies run on dozens of tools. Custodia tracks their compliance posture for you, drawing on a maintained profile for every common processor.",
+        "highlights": [
+          "Hosting region, sub-processors and transfer mechanism per vendor.",
+          "Alerts when a vendor changes terms or discloses a breach.",
+          "One repository for every signed data processing agreement.",
+          "Risk assessed before you onboard a new tool, not after."
+        ],
+        "cta": "Explore the vendor register",
+        "href": "/signup",
+        "output": "A per-vendor transfer and DPA record"
+      },
+      {
+        "id": "privacy-policies",
+        "ref": "Art. 13–14",
+        "title": "Dynamic privacy notices",
+        "subtitle": "Generate compliant notices.",
+        "desc": "No generic templates, no drafting fees. Custodia generates privacy notices, cookie policies and terms from your actual processing records.",
+        "highlights": [
+          "Notices update when you add a vendor or an activity.",
+          "Embeddable widgets keep published pages in sync.",
+          "Multi-language output for agencies working across the EU.",
+          "Language written for marketing and design agencies."
+        ],
+        "cta": "Generate a notice",
+        "href": "/signup",
+        "output": "A published, versioned privacy notice"
+      },
+      {
+        "id": "cookie-consent",
+        "ref": "ePrivacy",
+        "title": "Cookie consent",
+        "subtitle": "Manage website consent.",
+        "desc": "A consent management platform that does not wreck your design. ePrivacy and GDPR obligations met while the banner still looks like your brand.",
+        "highlights": [
+          "Google Consent Mode v2 and IAB TCF v2.2 supported.",
+          "Weekly automated cookie scanning and categorisation.",
+          "Granular consent logs that stand up as evidence.",
+          "Several client domains managed from one place."
+        ],
+        "cta": "Set up consent",
+        "href": "/signup",
+        "output": "A tamper-evident consent proof log"
+      },
+      {
+        "id": "dsar-automation",
+        "ref": "Art. 15–22",
+        "title": "DSAR automation",
+        "subtitle": "Handle data subject requests.",
+        "desc": "Turn a twenty-hour scramble into a tracked workflow. Intake, identity verification and resolution are handled in one place against the statutory clock.",
+        "highlights": [
+          "Secure, configurable intake portal for data subjects.",
+          "Identity verification before any data is gathered.",
+          "Collection tasks routed system by system.",
+          "Secure delivery of the finished data package."
+        ],
+        "cta": "Automate requests",
+        "href": "/signup",
+        "output": "A closed request file with a clock history"
+      },
+      {
+        "id": "breach-management",
+        "ref": "Art. 33 · 34",
+        "title": "Breach management",
+        "subtitle": "Respond to incidents.",
+        "desc": "When it happens, speed decides the outcome. Custodia walks the 72-hour notification duty step by step so the response is defensible after the fact.",
+        "highlights": [
+          "Incident response playbooks with named owners.",
+          "Severity assessed against EDPB criteria to decide notifiability.",
+          "Pre-filled supervisory authority notification templates.",
+          "An incident log that satisfies the breach register duty."
+        ],
+        "cta": "Prepare for incidents",
+        "href": "/signup",
+        "output": "A defensible incident record and 72h timeline"
+      },
+      {
+        "id": "dpia",
+        "ref": "Art. 35",
+        "title": "Data protection impact assessments",
+        "subtitle": "Assess high-risk processing.",
+        "desc": "Run the assessments the Regulation requires before a project launches, not after. Identify, evaluate and mitigate risk with a framework rather than a blank document.",
+        "highlights": [
+          "Guided questionnaires built on regulator guidance.",
+          "Collaborative review with your DPO and stakeholders.",
+          "Risk matrix that orders mitigation by severity.",
+          "Exportable reports for prior consultation."
+        ],
+        "cta": "Start a DPIA",
+        "href": "/signup",
+        "output": "A signed-off DPIA with a measures register"
+      },
+      {
+        "id": "training",
+        "ref": "Art. 39",
+        "title": "Employee training",
+        "subtitle": "Educate your team.",
+        "desc": "Human error remains the largest privacy risk. Enrol your team in agency-specific awareness training and keep the completion evidence.",
+        "highlights": [
+          "Short modules written for agency roles.",
+          "Automated enrolment and progress tracking.",
+          "Quizzes that verify comprehension, not attendance.",
+          "Completion certificates retained as evidence."
+        ],
+        "cta": "Train your team",
+        "href": "/signup",
+        "output": "Dated completion records per employee"
+      },
+      {
+        "id": "audit-readiness",
+        "ref": "Art. 5(2)",
+        "title": "Audit readiness",
+        "subtitle": "Prove compliance on demand.",
+        "desc": "Turn compliance into something you can show a client. Generate a complete audit file or share a live trust page when enterprise procurement asks.",
+        "highlights": [
+          "Public or password-protected client trust pages.",
+          "One-click generation of a complete evidence pack.",
+          "Answer vendor assessments from existing records.",
+          "One repository for every piece of compliance evidence."
+        ],
+        "cta": "Build a trust page",
+        "href": "/signup",
+        "output": "An exportable evidence pack per request"
+      }
+    ]
+  },
+  "securityPage": {
+    "badge": "Security & trust",
+    "title": "We protect your data the way you protect your clients’.",
+    "subheadline": "We sell compliance software, so our own posture has to survive the same scrutiny. Here is exactly how Custodia is run.",
+    "principles": [
+      {
+        "label": "Residency",
+        "title": "EU infrastructure",
+        "desc": "Hosted on AWS Dublin (eu-west-1). No data leaves the EEA, including for support access."
+      },
+      {
+        "label": "Encryption",
+        "title": "Encrypted throughout",
+        "desc": "AES-256 at rest, TLS 1.3 in transit, with keys managed separately from the data."
+      },
+      {
+        "label": "Access",
+        "title": "Access control",
+        "desc": "Row-level security, role-based permissions scoped per entity, and MFA on every account."
+      },
+      {
+        "label": "Assurance",
+        "title": "Independent testing",
+        "desc": "Annual third-party penetration testing. Findings are remediated and retested before closure."
+      },
+      {
+        "label": "Isolation",
+        "title": "Tenant isolation",
+        "desc": "Multi-tenant with database-level isolation, enforced per organisation on every query."
+      },
+      {
+        "label": "Standards",
+        "title": "ISO 27001-aligned",
+        "desc": "Controls mapped to ISO 27001. SOC 2 Type II is in preparation, not yet certified."
+      }
+    ],
+    "gdprTitle": "Our own GDPR position",
+    "gdprBody": "We keep the records we ask you to keep. Custodia maintains its own Article 30 register, assesses its own vendors, and applies its own retention schedule.",
+    "gdprPoints": [
+      "An Article 28 data processing agreement is available to every customer.",
+      "Sub-processors are assessed before onboarding and tracked thereafter.",
+      "A named data protection officer is accountable for the programme."
+    ],
+    "subTitle": "Sub-processors",
+    "subBody": "Every third party that processes data on our behalf is listed publicly, with what it processes and where it is located. We notify customers before the list changes.",
+    "subLink": "View the sub-processor list",
+    "contactTitle": "Security enquiries",
+    "contactBody": "For a security questionnaire, a copy of the DPA, or to report a vulnerability, write to the security team directly. We acknowledge reports within one working day.",
+    "contactCta": "Email the security team"
+  },
+  "enterprisePage": {
+    "badge": "Enterprise",
+    "title": "For groups, not just agencies.",
+    "subheadline": "Several legal entities, a security review to pass and an internal system to feed. Enterprise covers what Professional deliberately leaves out.",
+    "blocks": [
+      {
+        "label": "Structure",
+        "title": "Multi-entity governance",
+        "desc": "One programme across subsidiaries, each with its own register, its own lawful bases and its own retention rules — rolled up into a single readiness view for the group.",
+        "points": [
+          "Per-entity roles so staff see only their own records.",
+          "Group-level reporting across every entity.",
+          "Separate registers that still reconcile."
+        ]
+      },
+      {
+        "label": "Access",
+        "title": "SSO and custom roles",
+        "desc": "SAML and OIDC single sign-on with SCIM provisioning, plus roles you define rather than roles we ship.",
+        "points": [
+          "SAML 2.0 and OIDC.",
+          "SCIM user provisioning and de-provisioning.",
+          "Custom permission sets per entity."
+        ]
+      },
+      {
+        "label": "Integration",
+        "title": "REST APIs and SIEM",
+        "desc": "Read and write the register from your own systems, and stream the audit log to the SIEM your security team already runs.",
+        "points": [
+          "REST API access (Enterprise only).",
+          "Audit log streaming to SIEM.",
+          "Dedicated database on request."
+        ]
+      },
+      {
+        "label": "Assurance",
+        "title": "Security review support",
+        "desc": "Custom data residency where you need it, and a named contact to work through your procurement questionnaire rather than a support queue.",
+        "points": [
+          "Custom data residency options.",
+          "Dedicated account manager.",
+          "Controls mapped to ISO 27001; SOC 2 Type II in preparation."
+        ]
+      }
+    ],
+    "ctaTitle": "Tell us how your group is structured.",
+    "ctaDesc": "We will walk through entity structure, access model and data residency, and tell you plainly whether Professional already covers you.",
+    "ctaBtn": "Talk to us"
+  },
+  "agenciesPage": {
+    "badge": "Built for agencies",
+    "title": "You build the internet.",
+    "titleAccent": "We keep it compliant.",
+    "subheadline": "Agencies sit on both sides of the Regulation at once — controller for your own data, processor for your clients’. Generic compliance tools do not model that. Custodia does.",
+    "ctaHero": "Start the free agency assessment",
+    "blocks": [
+      {
+        "label": "Dual role",
+        "title": "You are a controller and a processor at the same time.",
+        "desc": "Run a client newsletter and you are a processor. Hire someone and you are a controller. Custodia separates the two contexts natively, so your register and your notices reflect the role you actually hold for each activity.",
+        "points": [
+          "Context-aware register generation.",
+          "Data processing agreements produced per client."
+        ],
+        "panelLabel": "Role model",
+        "panelA": "You",
+        "panelARole": "Controller",
+        "panelB": "Clients",
+        "panelBRole": "Processor"
+      },
+      {
+        "label": "Client trust",
+        "title": "Your clients are already asking about compliance.",
+        "desc": "Enterprise buyers will not sign until you can evidence your GDPR posture. Custodia turns the register you already maintain into a live trust page you can send during procurement.",
+        "points": [
+          "Shareable trust pages, public or password-protected.",
+          "Answer vendor questionnaires from existing records."
+        ],
+        "panelLabel": "Client trust page",
+        "panelA": "",
+        "panelARole": "",
+        "panelB": "",
+        "panelBRole": ""
+      },
+      {
+        "label": "Vendor sprawl",
+        "title": "You run twenty tools that touch personal data.",
+        "desc": "Between design, development, marketing and operations, the sub-processor list grows faster than anyone maintains it. Custodia keeps a maintained profile for the tools agencies actually use.",
+        "points": [
+          "Hosting region and transfer mechanism per tool.",
+          "Alerts when a vendor changes terms or discloses a breach."
+        ],
+        "panelLabel": "Vendor register",
+        "panelA": "",
+        "panelARole": "",
+        "panelB": "",
+        "panelBRole": ""
+      },
+      {
+        "label": "Audit readiness",
+        "title": "Prove it in minutes, not weeks.",
+        "desc": "When a client or a supervisory authority asks for proof, the answer should already exist. Custodia compiles the register, the notices, the agreements and the vendor list into one dated evidence pack.",
+        "points": [
+          "One evidence pack per request, dated and complete.",
+          "Always current, because it is built from live records."
+        ],
+        "panelLabel": "Evidence pack",
+        "panelA": "",
+        "panelARole": "",
+        "panelB": "",
+        "panelBRole": ""
+      }
+    ],
+    "ctaTitle": "See where your agency actually stands.",
+    "ctaDesc": "The assessment scores ten areas against the Regulation and tells you which gap to close first.",
+    "ctaBtn": "Start free assessment"
+  },
+  "home": {
+    "mock": {
+      "org": "custodia / nordlicht-agency.eu",
+      "view": "Audit readiness",
+      "region": "EU-WEST · FRA1",
+      "scoreLabel": "Readiness score",
+      "scoreDelta": "14 this quarter",
+      "actionExport": "Export evidence pack",
+      "actionRegister": "Art. 30 register"
+    },
+    "nav": [
+      "Overview",
+      "Records of processing",
+      "Gap assessment",
+      "Vendors & transfers",
+      "Data subject requests",
+      "Consent",
+      "Breach register",
+      "Advisor"
+    ],
+    "rows": [
+      {
+        "name": "Art. 30 register — Nordlicht GmbH",
+        "meta": "12 processes",
+        "status": "COMPLETE",
+        "due": "—"
+      },
+      {
+        "name": "DSAR · erasure request #1184",
+        "meta": "day 6 of 30",
+        "status": "IN PROGRESS",
+        "due": "14 Aug"
+      },
+      {
+        "name": "Transfer assessment — Segment (US)",
+        "meta": "SCC module 2",
+        "status": "REVIEW DUE",
+        "due": "02 Aug"
+      },
+      {
+        "name": "Cookie banner — 4 client domains",
+        "meta": "TCF v2.2",
+        "status": "LIVE",
+        "due": "—"
+      },
+      {
+        "name": "Breach log — vendor incident 0042",
+        "meta": "72h clock closed",
+        "status": "REPORTED",
+        "due": "—"
+      }
+    ],
+    "pains": [
+      {
+        "tag": "Fragmentation",
+        "title": "Your compliance programme is eleven files and one person's memory.",
+        "body": "Processing records in a spreadsheet, DPAs in a shared drive, assessments in a consultant’s Word template, decisions in email. Nothing reconciles, and no one can prove what was true on a given date.",
+        "stat": "Average agency: 4 tools, 0 audit trail"
+      },
+      {
+        "tag": "Exposure",
+        "title": "Enforcement no longer waits for a data breach.",
+        "body": "Supervisory authorities across the EU open inquiries from complaints, cookie sweeps and vendor chains. Fines reach 4% of global turnover, and “we intended to document it” has never been a defence.",
+        "stat": "€1.2bn+ in GDPR fines issued in 2025"
+      },
+      {
+        "tag": "Cost of manual work",
+        "title": "DSARs and ROPA upkeep consume billable weeks.",
+        "body": "Every request means chasing systems, exporting data, redacting third parties and hitting a statutory clock by hand. Every new vendor means re-reading the register nobody has updated since onboarding.",
+        "stat": "9–14 hours per data subject request"
+      }
+    ],
+    "modules": [
+      {
+        "title": "Records of processing",
+        "ref": "Art. 30",
+        "body": "A living Art. 30 register with lawful basis, retention, recipients and transfer routes per activity. Versioned, so you can show what the record said last March."
+      },
+      {
+        "title": "Gap assessment",
+        "ref": "Art. 24 · 32",
+        "body": "38 controls mapped to the Regulation, scored and prioritised by risk and effort. Re-run quarterly to evidence continuous improvement."
+      },
+      {
+        "title": "Vendor intelligence",
+        "ref": "Art. 28 · 44",
+        "body": "A maintained profile for every common processor: sub-processors, hosting region, transfer mechanism, DPA link and known enforcement history."
+      },
+      {
+        "title": "DSAR automation",
+        "ref": "Art. 15–22",
+        "body": "Intake form, identity verification, system-by-system collection tasks, redaction workflow and a statutory clock that escalates before day 30."
+      },
+      {
+        "title": "Cookie consent (CMP)",
+        "ref": "ePrivacy",
+        "body": "IAB TCF v2.2 certified banner, per-domain configuration, Google Consent Mode signals and a tamper-evident consent proof log."
+      },
+      {
+        "title": "Breach management",
+        "ref": "Art. 33 · 34",
+        "body": "Severity assessment against EDPB criteria, the 72-hour notification clock, notifiable-authority routing and a defensible incident record."
+      },
+      {
+        "title": "Audit readiness dashboard",
+        "ref": "Art. 5(2)",
+        "body": "One score per entity, one evidence pack per request. Everything a supervisory authority or an enterprise procurement team asks for, exported in a click."
+      },
+      {
+        "title": "AI compliance advisor",
+        "ref": "RAG · cited",
+        "body": "Retrieval-grounded answers over the actual legal corpus, scoped to the jurisdiction you are working in and cited down to the paragraph."
+      }
+    ],
+    "advisorPanelLabel": "Advisor · jurisdiction",
+    "advisorActions": [
+      "Attach to ROPA entry",
+      "Open remediation task",
+      "Export as client memo"
+    ],
+    "advisorJurisdictions": {
+      "IE": {
+        "q": "A client wants to run a prize draw using their newsletter list. Is consent still valid?",
+        "a": "No. Consent obtained for newsletter delivery does not extend to a prize draw — the new purpose is incompatible with the one disclosed at collection, and the DPC treats re-purposing of marketing lists as a separate processing operation requiring fresh, specific consent.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Compatibility test for further processing"
+          },
+          {
+            "ref": "EDPB 05/2020",
+            "text": "Consent must be specific to each purpose (§ 56)"
+          },
+          {
+            "ref": "DPC IE",
+            "text": "Guidance on direct marketing, 2023 — § 4.2"
+          }
+        ]
+      },
+      "FR": {
+        "q": "A client wants to run a prize draw using their newsletter list. Is consent still valid?",
+        "a": "No. The CNIL's position is stricter than the baseline: prospection for a distinct operation requires its own opt-in, and the collection notice must name the promotional purpose. Re-use of an existing list exposes the client to a sanction under Article 82 of the Loi Informatique et Libertés.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Compatibility test for further processing"
+          },
+          {
+            "ref": "CNIL",
+            "text": "Référentiel prospection commerciale, § 2.1"
+          },
+          {
+            "ref": "LIL Art. 82",
+            "text": "National consent requirement for tracking"
+          }
+        ]
+      },
+      "DE": {
+        "q": "A client wants to run a prize draw using their newsletter list. Is consent still valid?",
+        "a": "No, and there is an additional national dimension: the coupling prohibition under § 7 UWG plus BGH case law on Kopplungsverbot mean the draw cannot be conditioned on marketing consent. A separate, documented opt-in is required and must be logged with its timestamp.",
+        "cites": [
+          {
+            "ref": "Art. 7(4)",
+            "text": "Freely given consent — no bundling"
+          },
+          {
+            "ref": "§ 7 UWG",
+            "text": "Unzumutbare Belästigung — German marketing rules"
+          },
+          {
+            "ref": "DSK",
+            "text": "Orientierungshilfe Direktwerbung, 2022"
+          }
+        ]
+      },
+      "NL": {
+        "q": "A client wants to run a prize draw using their newsletter list. Is consent still valid?",
+        "a": "No. The Autoriteit Persoonsgegevens requires purpose-specific consent, and the Telecommunicatiewet soft opt-in for existing customers does not cover promotional draws. Document the new consent and retain the withdrawal mechanism in the same record.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Compatibility test for further processing"
+          },
+          {
+            "ref": "Tw Art. 11.7",
+            "text": "Dutch electronic marketing consent"
+          },
+          {
+            "ref": "AP",
+            "text": "Normuitleg toestemming, 2021"
+          }
+        ]
+      },
+      "ES": {
+        "q": "A client wants to run a prize draw using their newsletter list. Is consent still valid?",
+        "a": "No. The AEPD requires consent granular to each purpose, and LSSI Article 21 governs the electronic communication itself. Prize-draw terms must also disclose the retention period for entrant data separately from the newsletter retention rule.",
+        "cites": [
+          {
+            "ref": "Art. 6(4)",
+            "text": "Compatibility test for further processing"
+          },
+          {
+            "ref": "LSSI Art. 21",
+            "text": "Spanish commercial communications"
+          },
+          {
+            "ref": "AEPD",
+            "text": "Guía consentimiento, 2023 — § 3"
+          }
+        ]
+      }
+    },
+    "corpus": [
+      {
+        "source": "Regulation (EU) 2016/679 — full text",
+        "detail": "99 articles · 173 recitals"
+      },
+      {
+        "source": "EDPB guidelines, opinions & recommendations",
+        "detail": "142 documents"
+      },
+      {
+        "source": "CJEU judgments on data protection",
+        "detail": "Schrems II → 2026"
+      },
+      {
+        "source": "National DPA guidance — IE, FR, DE, NL, ES",
+        "detail": "DPC · CNIL · DSK · AP · AEPD"
+      },
+      {
+        "source": "Published enforcement decisions & sanctions",
+        "detail": "2,400+ decisions"
+      }
+    ],
+    "trust": [
+      {
+        "label": "Residency",
+        "title": "EU data residency",
+        "body": "All data stored and processed on AWS Dublin (eu-west-1). No transfer outside the EEA, including for support access."
+      },
+      {
+        "label": "Access",
+        "title": "SSO & granular roles",
+        "body": "SAML and OIDC single sign-on, SCIM provisioning, per-entity roles so client staff see only their own register."
+      },
+      {
+        "label": "Accountability",
+        "title": "Immutable audit logging",
+        "body": "Every change to a record, assessment or consent is written to an append-only log with actor, timestamp and prior value."
+      },
+      {
+        "label": "Infrastructure",
+        "title": "Enterprise-grade operations",
+        "body": "Encrypted at rest and in transit, daily tested restores, ISO 27001-aligned controls, annual penetration testing."
+      },
+      {
+        "label": "Billing",
+        "title": "VAT handled automatically",
+        "body": "Reverse charge and local rates applied per member state, with compliant invoices and your VAT number validated at signup."
+      }
+    ]
   }
 }
