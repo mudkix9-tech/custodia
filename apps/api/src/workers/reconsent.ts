@@ -8,6 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { trackAiUsage } from '../lib/billing.js';
 import { queueNotification } from '../utils/notifications.js';
+import { WORKER_MODEL } from '../lib/anthropicModels.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -75,9 +76,8 @@ JSON format only:`;
       await trackAiUsage(organizationId, 1);
 
       const response = await anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20240620',
-        max_tokens: 500,
-        temperature: 0,
+        model: WORKER_MODEL,
+        max_tokens: 2048,
         system: "You are a GDPR compliance expert. Output strictly valid JSON.",
         messages: [{ role: 'user', content: prompt }]
       });

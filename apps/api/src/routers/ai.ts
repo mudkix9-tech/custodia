@@ -23,6 +23,7 @@ import { PDFParse } from 'pdf-parse';
 import crypto from 'crypto';
 import { calculateVendorRisk } from './vendors.js';
 import { trackAiUsage } from '../lib/billing.js';
+import { COPILOT_MODEL } from '../lib/anthropicModels.js';
 
 const ai = new GoogleGenAI({
   vertexai: true,
@@ -519,7 +520,376 @@ async function retrieveContext(ctx: any, query: string, orgId?: string, locale?:
   return budgetedResults;
 }
 
+/**
+ * Retrieval, org context, and system-prompt assembly for the Copilot.
+ *
+ * Extracted so the buffered `askCopilot` and the streaming `streamCopilot`
+ * cannot drift: they must ground an answer on exactly the same sources, or the
+ * citations shown under a streamed answer would describe a different prompt.
+ */
+type CopilotInput = {
+  question: string;
+  history?: { role: 'user' | 'assistant'; content: string }[];
+  moduleContext?: 'ropa' | 'vendors' | 'breaches' | 'dsar' | 'consent' | 'compliance_scoring';
+  entityId?: string;
+  locale?: string;
+};
+
+async function buildCopilotContext(ctx: any, input: CopilotInput) {
+        const orgId = ctx.user!.orgId;
+        const { locale } = input;
+      
+      
+        // 1. Rate Limiting Check
+        await trackAiUsage(orgId, 1);
+ 
+        // 2. Topic Shift & Context Retrieval
+        let RAGQuery = input.question;
+      
+        if (input.history && input.history.length > 0) {
+          const prevUserMessages = input.history.filter(h => h.role === 'user');
+          if (prevUserMessages.length > 0) {
+            const lastUserMsg = prevUserMessages[prevUserMessages.length - 1];
+            const lastQuestion = lastUserMsg?.content || '';
+            const currentCategory = mapIntentToCategory(input.question);
+            const previousCategory = mapIntentToCategory(lastQuestion);
+          
+            const currentIntent = classifyIntent(input.question);
+            const previousIntent = classifyIntent(lastQuestion);
+          
+            if (currentCategory === previousCategory && currentIntent === previousIntent) {
+              // No topic shift: combine queries for query expansion
+              RAGQuery = `${lastQuestion} ${input.question}`;
+            }
+          }
+        }
+ 
+        // If a specific module focus was provided, prepend it to RAG search
+        if (input.moduleContext) {
+          RAGQuery = `[Context: ${input.moduleContext}] ${RAGQuery}`;
+        }
+ 
+        const retrieved = await retrieveContext(ctx, RAGQuery, orgId, locale);
+ 
+        // Check if we retrieved any database chunks above the similarity threshold
+        const hasGroundedContext = retrieved.some(r => r.similarity > 0.6);
+ 
+        // 3. Retrieve ROPA Context and Vendor counts for Context Window & Insights
+        const activities = await ctx.db.query.processingActivities.findMany({
+          where: and(
+            eq(processingActivities.organizationId, orgId),
+            eq(processingActivities.status, 'active'),
+          ),
+          with: { dataCategories: true, recipients: true },
+        });
+ 
+        const vendorsCountResult = await ctx.db.execute(sql`
+          SELECT COUNT(*) as count FROM vendors WHERE organization_id = ${orgId}
+        `);
+        const vendorCount = Number(vendorsCountResult.rows?.[0]?.count || 0);
+ 
+        const org = await ctx.db.query.organizations.findFirst({
+          where: eq(organizations.id, orgId)
+        });
+        if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
+
+        const orgContext = {
+          orgName: org.name,
+          industry: org.industry || 'general',
+          country: org.countryCode || 'IE',
+          hasDpo: org.hasDpo ? 'Yes' : 'No',
+          vendorCount,
+          activityCount: activities.length
+        };
+ 
+        // 4. Assemble LLM Prompt
+        let systemPrompt = `You are a GDPR compliance expert assistant for ${orgContext.orgName || 'a European organization'}.
+ 
+  Answer the following question using ONLY the provided reference materials. If the answer cannot be determined from the provided materials, say so clearly. Do not speculate or provide information not grounded in the sources.
+ 
+  Always cite your sources using the exact format "[Source N: Document Title, Section]" (where N is the source index number, e.g. "[Source 1: Chapter II > Article 6]", "[Source 2: Guidelines 05/2020 on consent]"). When referencing specific GDPR articles, quote the relevant text.
+ 
+  ${orgContext ? `
+  Organization context:
+  - Industry: ${orgContext.industry}
+  - Country: ${orgContext.country}
+  - Has DPO: ${orgContext.hasDpo}
+  - Vendor count: ${orgContext.vendorCount}
+  - Processing activities: ${orgContext.activityCount}
+  ` : ''}
+  `;
+ 
+        // Instruct Claude to respond in the requested language
+        const targetLanguageName = locale === 'de' ? 'German' : locale === 'fr' ? 'French' : 'English';
+        systemPrompt += `\n\nCRITICAL LANGUAGE REQUIREMENT: You MUST generate your entire response in ${targetLanguageName} (matching the requested locale '${locale || 'en'}'). Translate all compliance terms and explanations accurately into ${targetLanguageName}, but keep the source citation bracket labels exactly as "[Source N: ...]".`;
+ 
+        if (!hasGroundedContext) {
+          systemPrompt += `
+ 
+  CRITICAL INSTRUCTION FOR FALLBACK:
+  No specific matching regulatory or organization database context was found for this query.
+  Please answer the user's question using your general compliance and GDPR knowledge.
+  You MUST begin your response with the following exact disclaimer:
+  "Disclaimer: No direct matching sources were found in the database. The following is general compliance guidance based on standard data protection knowledge."
+  `;
+        }
+
+        let contextStr = `\nReference materials:\n`;
+        const citationsList: { title: string; url: string }[] = [];
+        // Structured form of the same sources, returned to the client. These were
+        // previously assembled only to be spliced into the prose as markdown links,
+        // so an answer could not show what it had been grounded in.
+        const citations: {
+          index: number;
+          title: string;
+          document: string;
+          url: string;
+          authority: string | null;
+          similarity: number;
+        }[] = [];
+        let citationIndex = 1;
+
+        retrieved.forEach((c) => {
+          const sourceName = c.section || c.title;
+          const sourceUrl = c.sourceUrl || '';
+
+          contextStr += `--- Source ${citationIndex}: ${c.title} (${c.source}) ---\nSection: ${sourceName}\n${c.content}\n---\n\n`;
+          citationsList.push({
+            title: sourceName,
+            url: sourceUrl
+          });
+          citations.push({
+            index: citationIndex,
+            title: sourceName,
+            document: c.title,
+            url: sourceUrl,
+            authority: c.authority ?? null,
+            similarity: c.similarity,
+          });
+          citationIndex++;
+        });
+
+        if (activities.length > 0) {
+          contextStr += `\n--- ORGANIZATION ROPA CONTEXT ---\n`;
+          activities.forEach((a: any) => {
+            contextStr += `- Active Processing Activity: "${a.name}". Lawful basis: ${a.lawfulBasis}. Categories: ${a.dataCategories.map((dc: any) => dc.category).join(', ')}.\n`;
+          });
+        }
+
+        systemPrompt += contextStr;
+
+  const messages: any[] = [];
+  if (input.history && input.history.length > 0) {
+    input.history.forEach((h) => {
+      messages.push({ role: h.role, content: h.content });
+    });
+  }
+  messages.push({ role: 'user', content: input.question });
+
+  return { systemPrompt, messages, citations, citationsList, hasGroundedContext, retrieved, org, activities, vendorCount };
+}
+
+/**
+ * Rewrites the model's `[Source N: …]` markers into markdown links and appends
+ * the insights card. Shared by the buffered and streaming procedures so a
+ * streamed answer ends up byte-identical to a buffered one.
+ */
+function finaliseCopilotAnswer(
+responseText: string,
+{ citationsList, retrieved, input, org, activities, vendorCount }: any,
+) {
+      // 5. Robust citation parsing and replacement
+      // Handles formats like [Source 1], [Source 1, 2], [Sources 1-3], [Source 1: Section], etc.
+      const bracketRegex = /\[Sources?\s*([^\]]+)\]/ig;
+      let processedAnswer = responseText.replace(bracketRegex, (match, content) => {
+        const numbers: number[] = [];
+        const parts = content.split(/,|\band\b|&/i);
+        
+        for (let part of parts) {
+          part = part.trim().toLowerCase();
+          part = part.replace(/sources?/g, '').trim();
+          
+          // Check for range e.g. "1-3" or "1 to 3"
+          const rangeMatch = part.match(/(\d+)\s*(?:-|to)\s*(\d+)/);
+          if (rangeMatch) {
+            const start = parseInt(rangeMatch[1], 10);
+            const end = parseInt(rangeMatch[2], 10);
+            if (!isNaN(start) && !isNaN(end) && start <= end) {
+              for (let i = start; i <= end; i++) {
+                numbers.push(i);
+              }
+              continue;
+            }
+          }
+          
+          // Extract single numbers
+          const singleMatches = part.match(/\d+/g);
+          if (singleMatches) {
+            singleMatches.forEach((numStr: string) => {
+              numbers.push(parseInt(numStr, 10));
+            });
+          }
+        }
+
+        if (numbers.length === 0) {
+          return match;
+        }
+
+        const markdownLinks = numbers.map(num => {
+          const idx = num - 1;
+          if (idx >= 0 && idx < citationsList.length) {
+            const cit = citationsList[idx]!;
+            const linkUrl = cit.url || '#';
+            return `[${cit.title}](${linkUrl})`;
+          }
+          return `[Source ${num}]`;
+        });
+
+        return `[${markdownLinks.join(', ')}]`;
+      });
+
+      // 6. Append RAG Confidence and Organization Compliance Insights Card
+      let highestAuthority = 'general';
+      retrieved.forEach((c: any) => {
+        if (c.similarity > 0.6) {
+          if (c.authority === 'eu' || c.authority === 'edpb') {
+            if (highestAuthority !== 'eu' && highestAuthority !== 'edpb') {
+              highestAuthority = 'eu';
+            }
+          } else if (c.authority === 'cjeu' || c.authority === 'ico' || c.authority === 'cnil' || c.authority === 'bfdi' || c.authority === 'dpc' || c.authority === 'ap' || c.authority === 'aepd') {
+            if (highestAuthority !== 'eu' && highestAuthority !== 'edpb') {
+              highestAuthority = 'national';
+            }
+          }
+        }
+      });
+
+      let confidence = 'Advisory';
+      let confidenceDescription = 'Answer synthesized from multiple indirect compliance sources.';
+      if (highestAuthority === 'eu') {
+        confidence = 'High confidence';
+        confidenceDescription = 'Answer grounded directly in primary GDPR text or official EDPB guidelines.';
+      } else if (highestAuthority === 'national') {
+        confidence = 'Medium confidence';
+        confidenceDescription = 'Answer grounded in interpretive national Data Protection Authority (DPA) guidance.';
+      }
+
+      const insights: string[] = [];
+      const qLower = input.question.toLowerCase();
+      const intent = classifyIntent(input.question);
+
+      if (intent === 'organization_specific') {
+        if (qLower.includes('dpo') || qLower.includes('data protection officer')) {
+          if (!org.hasDpo) {
+            insights.push(`⚠️ **DPO Config**: You asked about your DPO status, but currently do not have a Data Protection Officer configured in Custodia. Consider verifying if Article 37 requirements apply to your processing activities.`);
+          }
+        }
+        if (qLower.includes('ropa') || qLower.includes('processing') || qLower.includes('activity') || qLower.includes('activities') || qLower.includes('record')) {
+          if (activities.length === 0) {
+            insights.push(`⚠️ **ROPA Config**: You asked about processing activities, but have 0 active Processing Activities registered in your Custodia account. Article 30 requires keeping a ROPA if you have >250 employees or process high-risk data.`);
+          }
+        }
+        if (qLower.includes('vendor') || qLower.includes('processor') || qLower.includes('third party') || qLower.includes('dpa')) {
+          if (vendorCount === 0) {
+            insights.push(`⚠️ **Vendor Config**: You asked about vendors, but have 0 vendors configured in your settings. Ensure you register all processors and sign required Article 28 DPAs.`);
+          }
+        }
+      }
+
+      // Format Copilot Insights Card
+      let insightBlock = `\n\n---\n### Copilot Insights\n- **Confidence**: **${confidence}** — *${confidenceDescription}*`;
+      if (insights.length > 0) {
+        insightBlock += `\n- **Organization Cross-Reference**:\n  ` + insights.join('\n  ');
+      }
+
+return { answer: processedAnswer + insightBlock, confidence };
+}
+
+/** What the Copilot says when the model call fails outright. */
+function buildCopilotFallback(hasGroundedContext: boolean, citationsList: { title: string; url: string }[]) {
+      let processedFallback = `This is a mock response because the Anthropic API failed or is not configured.`;
+      if (!hasGroundedContext) {
+        processedFallback = `Disclaimer: No direct matching sources were found in the database. The following is general compliance guidance based on standard data protection knowledge.\n\n` + processedFallback;
+      } else {
+        processedFallback += `\n\nContext matched from:`;
+        citationsList.forEach((cit) => {
+          processedFallback += `\n- [${cit.title}](${cit.url || '#'})`;
+        });
+      }
+return processedFallback;
+}
+
 export const aiRouter = router({
+  /**
+   * Streaming Copilot.
+   *
+   * An async generator rather than a subscription: tRPC v11 streams a
+   * generator's yields over the existing POST transport with
+   * `httpBatchStreamLink`, so the conversation history rides in the body. An SSE
+   * subscription would put it in the query string, where a long thread runs into
+   * proxy URL limits.
+   *
+   * Yields text as the model produces it, then one final `done` frame carrying
+   * the citations and the same post-processed answer `askCopilot` returns —
+   * link rewriting and the insights block can only be applied once the whole
+   * answer exists, so the streamed text is deliberately the raw prose and the
+   * client swaps in the finished version at the end.
+   */
+  streamCopilot: protectedProcedure
+    .input(z.object({
+      question: z.string().min(1),
+      history: z.array(z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string()
+      })).optional(),
+      moduleContext: z.enum(['ropa', 'vendors', 'breaches', 'dsar', 'consent', 'compliance_scoring']).optional(),
+      entityId: z.string().uuid().optional(),
+      locale: z.string().optional(),
+    }))
+    .mutation(async function* ({ ctx, input }) {
+      const {
+        systemPrompt, messages, citations, citationsList, hasGroundedContext, retrieved, org, activities, vendorCount,
+      } = await buildCopilotContext(ctx, input);
+
+      let responseText = '';
+      try {
+        const stream = anthropic.messages.stream({
+          model: COPILOT_MODEL,
+          max_tokens: 4096,
+          // Adaptive lets the model spend more on a genuinely hard compliance
+          // question and almost nothing on a lookup; `low` keeps a chat answer
+          // from stalling behind a long think.
+          thinking: { type: 'adaptive' },
+          output_config: { effort: 'low' },
+          system: systemPrompt,
+          messages,
+        });
+
+        for await (const event of stream) {
+          if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+            responseText += event.delta.text;
+            yield { type: 'chunk' as const, text: event.delta.text };
+          }
+        }
+      } catch (err: any) {
+        console.warn('Anthropic streaming error:', err);
+        yield {
+          type: 'done' as const,
+          answer: buildCopilotFallback(hasGroundedContext, citationsList),
+          citations,
+          confidence: 'Unavailable',
+          grounded: hasGroundedContext,
+        };
+        return;
+      }
+
+      const { answer, confidence } = finaliseCopilotAnswer(responseText, {
+        citationsList, retrieved, input, org, activities, vendorCount,
+      });
+
+      yield { type: 'done' as const, answer, citations, confidence, grounded: hasGroundedContext };
+    }),
+
   askCopilot: protectedProcedure
     .input(z.object({
       question: z.string().min(1),
@@ -532,147 +902,10 @@ export const aiRouter = router({
       locale: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const orgId = ctx.user!.orgId;
-      const { locale } = input;
-      
-      
-      // 1. Rate Limiting Check
-      await trackAiUsage(orgId, 1);
- 
-      // 2. Topic Shift & Context Retrieval
-      let RAGQuery = input.question;
-      
-      if (input.history && input.history.length > 0) {
-        const prevUserMessages = input.history.filter(h => h.role === 'user');
-        if (prevUserMessages.length > 0) {
-          const lastUserMsg = prevUserMessages[prevUserMessages.length - 1];
-          const lastQuestion = lastUserMsg?.content || '';
-          const currentCategory = mapIntentToCategory(input.question);
-          const previousCategory = mapIntentToCategory(lastQuestion);
-          
-          const currentIntent = classifyIntent(input.question);
-          const previousIntent = classifyIntent(lastQuestion);
-          
-          if (currentCategory === previousCategory && currentIntent === previousIntent) {
-            // No topic shift: combine queries for query expansion
-            RAGQuery = `${lastQuestion} ${input.question}`;
-          }
-        }
-      }
- 
-      // If a specific module focus was provided, prepend it to RAG search
-      if (input.moduleContext) {
-        RAGQuery = `[Context: ${input.moduleContext}] ${RAGQuery}`;
-      }
- 
-      const retrieved = await retrieveContext(ctx, RAGQuery, orgId, locale);
- 
-      // Check if we retrieved any database chunks above the similarity threshold
-      const hasGroundedContext = retrieved.some(r => r.similarity > 0.6);
- 
-      // 3. Retrieve ROPA Context and Vendor counts for Context Window & Insights
-      const activities = await ctx.db.query.processingActivities.findMany({
-        where: and(
-          eq(processingActivities.organizationId, orgId),
-          eq(processingActivities.status, 'active'),
-        ),
-        with: { dataCategories: true, recipients: true },
-      });
- 
-      const vendorsCountResult = await ctx.db.execute(sql`
-        SELECT COUNT(*) as count FROM vendors WHERE organization_id = ${orgId}
-      `);
-      const vendorCount = Number(vendorsCountResult.rows?.[0]?.count || 0);
- 
-      const org = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.id, orgId)
-      });
-      if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
+      const {
+        systemPrompt, messages, citations, citationsList, hasGroundedContext, retrieved, org, activities, vendorCount,
+      } = await buildCopilotContext(ctx, input);
 
-      const orgContext = {
-        orgName: org.name,
-        industry: org.industry || 'general',
-        country: org.countryCode || 'IE',
-        hasDpo: org.hasDpo ? 'Yes' : 'No',
-        vendorCount,
-        activityCount: activities.length
-      };
- 
-      // 4. Assemble LLM Prompt
-      let systemPrompt = `You are a GDPR compliance expert assistant for ${orgContext.orgName || 'a European organization'}.
- 
-Answer the following question using ONLY the provided reference materials. If the answer cannot be determined from the provided materials, say so clearly. Do not speculate or provide information not grounded in the sources.
- 
-Always cite your sources using the exact format "[Source N: Document Title, Section]" (where N is the source index number, e.g. "[Source 1: Chapter II > Article 6]", "[Source 2: Guidelines 05/2020 on consent]"). When referencing specific GDPR articles, quote the relevant text.
- 
-${orgContext ? `
-Organization context:
-- Industry: ${orgContext.industry}
-- Country: ${orgContext.country}
-- Has DPO: ${orgContext.hasDpo}
-- Vendor count: ${orgContext.vendorCount}
-- Processing activities: ${orgContext.activityCount}
-` : ''}
-`;
- 
-      // Instruct Claude to respond in the requested language
-      const targetLanguageName = locale === 'de' ? 'German' : locale === 'fr' ? 'French' : 'English';
-      systemPrompt += `\n\nCRITICAL LANGUAGE REQUIREMENT: You MUST generate your entire response in ${targetLanguageName} (matching the requested locale '${locale || 'en'}'). Translate all compliance terms and explanations accurately into ${targetLanguageName}, but keep the source citation bracket labels exactly as "[Source N: ...]".`;
- 
-      if (!hasGroundedContext) {
-        systemPrompt += `
- 
-CRITICAL INSTRUCTION FOR FALLBACK:
-No specific matching regulatory or organization database context was found for this query.
-Please answer the user's question using your general compliance and GDPR knowledge.
-You MUST begin your response with the following exact disclaimer:
-"Disclaimer: No direct matching sources were found in the database. The following is general compliance guidance based on standard data protection knowledge."
-`;
-      }
-
-      let contextStr = `\nReference materials:\n`;
-      const citationsList: { title: string; url: string }[] = [];
-      // Structured form of the same sources, returned to the client. These were
-      // previously assembled only to be spliced into the prose as markdown links,
-      // so an answer could not show what it had been grounded in.
-      const citations: {
-        index: number;
-        title: string;
-        document: string;
-        url: string;
-        authority: string | null;
-        similarity: number;
-      }[] = [];
-      let citationIndex = 1;
-
-      retrieved.forEach((c) => {
-        const sourceName = c.section || c.title;
-        const sourceUrl = c.sourceUrl || '';
-
-        contextStr += `--- Source ${citationIndex}: ${c.title} (${c.source}) ---\nSection: ${sourceName}\n${c.content}\n---\n\n`;
-        citationsList.push({
-          title: sourceName,
-          url: sourceUrl
-        });
-        citations.push({
-          index: citationIndex,
-          title: sourceName,
-          document: c.title,
-          url: sourceUrl,
-          authority: c.authority ?? null,
-          similarity: c.similarity,
-        });
-        citationIndex++;
-      });
-
-      if (activities.length > 0) {
-        contextStr += `\n--- ORGANIZATION ROPA CONTEXT ---\n`;
-        activities.forEach((a: any) => {
-          contextStr += `- Active Processing Activity: "${a.name}". Lawful basis: ${a.lawfulBasis}. Categories: ${a.dataCategories.map((dc: any) => dc.category).join(', ')}.\n`;
-        });
-      }
-
-      systemPrompt += contextStr;
 
       try {
         const messages: any[] = [];
@@ -684,7 +917,7 @@ You MUST begin your response with the following exact disclaimer:
         messages.push({ role: 'user', content: input.question });
 
         const msg = await anthropic.messages.create({
-          model: 'claude-3-5-sonnet-20240620',
+          model: COPILOT_MODEL,
           max_tokens: 1024,
           system: systemPrompt,
           messages: messages
@@ -693,112 +926,11 @@ You MUST begin your response with the following exact disclaimer:
         // The correct way to handle text blocks from Anthropic SDK
         const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
         
-        // 5. Robust citation parsing and replacement
-        // Handles formats like [Source 1], [Source 1, 2], [Sources 1-3], [Source 1: Section], etc.
-        const bracketRegex = /\[Sources?\s*([^\]]+)\]/ig;
-        let processedAnswer = responseText.replace(bracketRegex, (match, content) => {
-          const numbers: number[] = [];
-          const parts = content.split(/,|\band\b|&/i);
-          
-          for (let part of parts) {
-            part = part.trim().toLowerCase();
-            part = part.replace(/sources?/g, '').trim();
-            
-            // Check for range e.g. "1-3" or "1 to 3"
-            const rangeMatch = part.match(/(\d+)\s*(?:-|to)\s*(\d+)/);
-            if (rangeMatch) {
-              const start = parseInt(rangeMatch[1], 10);
-              const end = parseInt(rangeMatch[2], 10);
-              if (!isNaN(start) && !isNaN(end) && start <= end) {
-                for (let i = start; i <= end; i++) {
-                  numbers.push(i);
-                }
-                continue;
-              }
-            }
-            
-            // Extract single numbers
-            const singleMatches = part.match(/\d+/g);
-            if (singleMatches) {
-              singleMatches.forEach((numStr: string) => {
-                numbers.push(parseInt(numStr, 10));
-              });
-            }
-          }
-
-          if (numbers.length === 0) {
-            return match;
-          }
-
-          const markdownLinks = numbers.map(num => {
-            const idx = num - 1;
-            if (idx >= 0 && idx < citationsList.length) {
-              const cit = citationsList[idx]!;
-              const linkUrl = cit.url || '#';
-              return `[${cit.title}](${linkUrl})`;
-            }
-            return `[Source ${num}]`;
-          });
-
-          return `[${markdownLinks.join(', ')}]`;
+        const { answer, confidence } = finaliseCopilotAnswer(responseText, {
+          citationsList, retrieved, input, org, activities, vendorCount,
         });
-
-        // 6. Append RAG Confidence and Organization Compliance Insights Card
-        let highestAuthority = 'general';
-        retrieved.forEach(c => {
-          if (c.similarity > 0.6) {
-            if (c.authority === 'eu' || c.authority === 'edpb') {
-              if (highestAuthority !== 'eu' && highestAuthority !== 'edpb') {
-                highestAuthority = 'eu';
-              }
-            } else if (c.authority === 'cjeu' || c.authority === 'ico' || c.authority === 'cnil' || c.authority === 'bfdi' || c.authority === 'dpc' || c.authority === 'ap' || c.authority === 'aepd') {
-              if (highestAuthority !== 'eu' && highestAuthority !== 'edpb') {
-                highestAuthority = 'national';
-              }
-            }
-          }
-        });
-
-        let confidence = 'Advisory';
-        let confidenceDescription = 'Answer synthesized from multiple indirect compliance sources.';
-        if (highestAuthority === 'eu') {
-          confidence = 'High confidence';
-          confidenceDescription = 'Answer grounded directly in primary GDPR text or official EDPB guidelines.';
-        } else if (highestAuthority === 'national') {
-          confidence = 'Medium confidence';
-          confidenceDescription = 'Answer grounded in interpretive national Data Protection Authority (DPA) guidance.';
-        }
-
-        const insights: string[] = [];
-        const qLower = input.question.toLowerCase();
-        const intent = classifyIntent(input.question);
-
-        if (intent === 'organization_specific') {
-          if (qLower.includes('dpo') || qLower.includes('data protection officer')) {
-            if (!org.hasDpo) {
-              insights.push(`⚠️ **DPO Config**: You asked about your DPO status, but currently do not have a Data Protection Officer configured in Custodia. Consider verifying if Article 37 requirements apply to your processing activities.`);
-            }
-          }
-          if (qLower.includes('ropa') || qLower.includes('processing') || qLower.includes('activity') || qLower.includes('activities') || qLower.includes('record')) {
-            if (activities.length === 0) {
-              insights.push(`⚠️ **ROPA Config**: You asked about processing activities, but have 0 active Processing Activities registered in your Custodia account. Article 30 requires keeping a ROPA if you have >250 employees or process high-risk data.`);
-            }
-          }
-          if (qLower.includes('vendor') || qLower.includes('processor') || qLower.includes('third party') || qLower.includes('dpa')) {
-            if (vendorCount === 0) {
-              insights.push(`⚠️ **Vendor Config**: You asked about vendors, but have 0 vendors configured in your settings. Ensure you register all processors and sign required Article 28 DPAs.`);
-            }
-          }
-        }
-
-        // Format Copilot Insights Card
-        let insightBlock = `\n\n---\n### Copilot Insights\n- **Confidence**: **${confidence}** — *${confidenceDescription}*`;
-        if (insights.length > 0) {
-          insightBlock += `\n- **Organization Cross-Reference**:\n  ` + insights.join('\n  ');
-        }
-
         return {
-          answer: processedAnswer + insightBlock,
+          answer,
           citations,
           confidence,
           grounded: hasGroundedContext,
@@ -807,17 +939,8 @@ You MUST begin your response with the following exact disclaimer:
         // Fallback for missing API keys in local development
         console.warn('Anthropic API error:', err);
         
-        let processedFallback = `This is a mock response because the Anthropic API failed or is not configured.`;
-        if (!hasGroundedContext) {
-          processedFallback = `Disclaimer: No direct matching sources were found in the database. The following is general compliance guidance based on standard data protection knowledge.\n\n` + processedFallback;
-        } else {
-          processedFallback += `\n\nContext matched from:`;
-          citationsList.forEach((cit) => {
-            processedFallback += `\n- [${cit.title}](${cit.url || '#'})`;
-          });
-        }
         return {
-          answer: processedFallback,
+          answer: buildCopilotFallback(hasGroundedContext, citationsList),
           citations,
           confidence: 'Unavailable',
           grounded: hasGroundedContext,
@@ -921,7 +1044,7 @@ Use this EXACT JSON schema:
 }`;
  
         const msg = await anthropic.messages.create({
-          model: 'claude-3-5-sonnet-20240620',
+          model: COPILOT_MODEL,
           max_tokens: 4096,
           system: systemPrompt,
           messages: [
@@ -1015,7 +1138,7 @@ Security Certifications: ${certs.join(', ') || 'none specified'}
 Existing DPA Clause Coverage: ${JSON.stringify(dpaClauseCoverage)}`;
  
       const msg = await anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20240620',
+        model: COPILOT_MODEL,
         max_tokens: 4096,
         system: systemPrompt,
         messages: [
@@ -1123,7 +1246,7 @@ Provided answers / document text:
 ${answersText}`;
  
       const msg = await anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20240620',
+        model: COPILOT_MODEL,
         max_tokens: 4096,
         system: systemPrompt,
         messages: [
@@ -1410,7 +1533,7 @@ ${contextStr}
 
       try {
         const msg = await anthropic.messages.create({
-          model: 'claude-3-5-sonnet-20240620',
+          model: COPILOT_MODEL,
           max_tokens: 2048,
           system: systemPrompt,
           messages: [

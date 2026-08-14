@@ -20,6 +20,8 @@ type Message = {
   content: string;
   citations?: Citation[];
   confidence?: string;
+  /** True while the model is still producing this message. */
+  streaming?: boolean;
 };
 
 const GREETING: Message = {
@@ -71,37 +73,17 @@ export default function CopilotPage() {
     }
   }, [messages, restored]);
 
-  const copilotMutation = trpc.ai.askCopilot.useMutation({
-    onSuccess: (data) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: data.answer,
-          citations: data.citations,
-          confidence: data.confidence,
-        },
-      ]);
-    },
-    onError: (err) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `Error: ${err.message || 'I encountered an error trying to process your request.'}`,
-        },
-      ]);
-    },
-  });
+  const utils = trpc.useUtils();
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const ask = useCallback(
-    (question: string) => {
+    async (question: string) => {
       const trimmed = question.trim();
-      if (!trimmed || copilotMutation.isPending) return;
+      if (!trimmed || isPending) return;
 
       // The subtitle claims the assistant is context-aware, but the mutation used
       // to send `{ question }` alone — the router has always accepted history and
@@ -111,11 +93,59 @@ export default function CopilotPage() {
         .slice(-HISTORY_TURNS)
         .map((m) => ({ role: m.role, content: m.content }));
 
-      setMessages((prev) => [...prev, { role: 'user', content: trimmed }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: trimmed },
+        // The placeholder the deltas append into. Rendering it immediately is
+        // the point of streaming — the first token lands in a bubble that is
+        // already on screen.
+        { role: 'assistant', content: '', streaming: true },
+      ]);
       setInput('');
-      copilotMutation.mutate({ question: trimmed, history, locale });
+      setIsPending(true);
+
+      const replaceLast = (patch: Partial<Message>) =>
+        setMessages((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = { ...next[next.length - 1], ...patch };
+          return next;
+        });
+
+      try {
+        const stream = await utils.client.ai.streamCopilot.mutate({
+          question: trimmed,
+          history,
+          locale,
+        });
+
+        let text = '';
+        for await (const frame of stream) {
+          if (frame.type === 'chunk') {
+            text += frame.text;
+            replaceLast({ content: text });
+          } else {
+            // The final frame carries the post-processed answer — citation
+            // links rewritten and the insights card appended, neither of which
+            // can be done until the whole answer exists.
+            replaceLast({
+              content: frame.answer,
+              citations: frame.citations,
+              confidence: frame.confidence,
+              streaming: false,
+            });
+          }
+        }
+        replaceLast({ streaming: false });
+      } catch (err) {
+        replaceLast({
+          content: `Error: ${err instanceof Error ? err.message : 'I encountered an error trying to process your request.'}`,
+          streaming: false,
+        });
+      } finally {
+        setIsPending(false);
+      }
     },
-    [copilotMutation, messages, locale],
+    [isPending, messages, locale, utils],
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -160,7 +190,10 @@ export default function CopilotPage() {
       <div className="flex-1 bg-[#0D0F11] rounded-lg border border-white/10 shadow-panel-elevated flex flex-col overflow-hidden">
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {messages.map((msg, idx) => (
+          {messages.map((msg, idx) =>
+            // The empty placeholder would otherwise draw a second bot avatar
+            // beside the typing indicator.
+            msg.streaming && !msg.content ? null : (
             <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               {msg.role === 'assistant' && (
                 <div className="w-8 h-8 rounded-full bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
@@ -222,10 +255,11 @@ export default function CopilotPage() {
                 </div>
               )}
             </div>
-          ))}
+            ),
+          )}
 
           {/* Starter questions: an empty chat box teaches nothing about what it can do. */}
-          {!hasConversation && !copilotMutation.isPending && (
+          {!hasConversation && !isPending && (
             <div className="flex flex-wrap gap-2 pl-12">
               {SUGGESTIONS.map((s) => (
                 <button
@@ -239,7 +273,7 @@ export default function CopilotPage() {
             </div>
           )}
 
-          {copilotMutation.isPending && (
+          {isPending && messages[messages.length - 1]?.content === '' && (
             <div className="flex gap-4 justify-start">
               <div className="w-8 h-8 rounded-full bg-[#C9A227]/15 flex items-center justify-center flex-shrink-0">
                 <Bot className="w-5 h-5 text-[#C9A227]" />
@@ -263,11 +297,11 @@ export default function CopilotPage() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="E.g., Do I need a DPIA for tracking employee locations?"
               className="flex-1 rounded-lg border border-white/10 bg-[#0D0F11] text-[#F4F5F6] placeholder:text-[#6E747A] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
-              disabled={copilotMutation.isPending}
+              disabled={isPending}
             />
             <button
               type="submit"
-              disabled={!input.trim() || copilotMutation.isPending}
+              disabled={!input.trim() || isPending}
               className="bg-[#C9A227] hover:bg-[#E5C463] disabled:opacity-50 disabled:cursor-not-allowed text-[#08090A] px-6 py-3 rounded-lg flex items-center gap-2 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"
             >
               <span>Ask</span>

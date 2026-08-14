@@ -10,6 +10,7 @@ import { TRPCError } from '@trpc/server';
 import { diffWords } from 'diff';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { trackAiUsage } from '../lib/billing.js';
+import { COPILOT_MODEL } from '../lib/anthropicModels.js';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
@@ -67,7 +68,7 @@ ${currentRopaState}
     await trackAiUsage(orgId, 1);
 
     const msg = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20240620',
+      model: COPILOT_MODEL,
       max_tokens: 4000,
       messages: [{ role: 'user', content: prompt }]
     });

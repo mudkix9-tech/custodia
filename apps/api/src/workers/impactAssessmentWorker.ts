@@ -5,6 +5,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { trackAiUsage } from '../lib/billing.js';
 import { Job } from '../lib/queue.js';
+import { WORKER_MODEL } from '../lib/anthropicModels.js';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
@@ -162,9 +163,8 @@ RECOMMENDED ACTIONS: <your recommended actions>`;
       await trackAiUsage(match.organizationId, 1);
 
       const msg = await anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20240620',
+        model: WORKER_MODEL,
         max_tokens: isLightweight ? 100 : 500,
-        temperature: 0.1,
         messages: [{ role: 'user', content: prompt }]
       });
 

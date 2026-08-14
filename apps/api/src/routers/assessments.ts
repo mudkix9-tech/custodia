@@ -64,6 +64,7 @@ import { sendEmail, AssessmentInvitation, AssessmentReminder } from 'emails';
 import { updateVendorRiskScore } from './vendors.js';
 import { scheduleEmailSequence } from '../workers/emails.js';
 import { trackAiUsage } from '../lib/billing.js';
+import { COPILOT_MODEL } from '../lib/anthropicModels.js';
 
 const ai = new GoogleGenAI({
   vertexai: true,
@@ -558,7 +559,7 @@ Only return valid JSON, nothing else.`;
         let responseText = "";
         if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'mock-key') {
           const msg = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-20240620',
+            model: COPILOT_MODEL,
             max_tokens: 500,
             system: "You are a GDPR audit assistant. Always return raw JSON.",
             messages: [{ role: 'user', content: prompt }]
