@@ -13,6 +13,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/Toast';
 
 export default function ClientDetailPage() {
   const params = useParams();
@@ -82,6 +83,7 @@ export default function ClientDetailPage() {
 }
 
 function OverviewTab({ client }: { client: any }) {
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const utils = trpc.useUtils();
   const togglePortal = trpc.clients.togglePortal.useMutation();
   const rotateToken = trpc.clients.rotateToken.useMutation();
@@ -93,10 +95,18 @@ function OverviewTab({ client }: { client: any }) {
   };
 
   const handleRotate = async () => {
-    if (confirm("Regenerating the token will break any existing portal links you've shared. Continue?")) {
-      await rotateToken.mutateAsync({ id: client.id });
-      utils.clients.get.invalidate({ id: client.id });
-    }
+    // Native confirm() has no room to say what breaks. Every portal link already
+    // sent to this client stops working, which is worth spelling out.
+    const ok = await confirm({
+      title: 'Regenerate portal token?',
+      description:
+        "Every trust-portal link you have already shared with this client will stop working immediately. You will need to send them the new link.",
+      confirmText: 'Regenerate token',
+      variant: 'destructive',
+    });
+    if (!ok) return;
+    await rotateToken.mutateAsync({ id: client.id });
+    utils.clients.get.invalidate({ id: client.id });
   };
 
   const handleDpaStatusChange = async (e: any) => {
@@ -115,6 +125,7 @@ function OverviewTab({ client }: { client: any }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {confirmDialog}
       {/* Left Col - Info */}
       <div className="space-y-8 md:col-span-2">
         <section className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
@@ -468,11 +479,15 @@ function VendorsTab({ client }: { client: any }) {
 }
 
 function ReportTab({ client }: { client: any }) {
+  const toast = useToast();
   const generate = trpc.clients.generateComplianceReport.useMutation();
   
   const handleGenerate = async () => {
     const res = await generate.mutateAsync({ id: client.id });
-    alert(`Report generated: ${res.url}`); // In real app, this downloads or opens the PDF
+    // The URL was previously only ever shown inside an alert(), where it could
+    // not be clicked; open it instead.
+    window.open(res.url, '_blank', 'noopener,noreferrer');
+    toast('Compliance report ready', { description: 'Opened in a new tab.' });
   };
 
   return (

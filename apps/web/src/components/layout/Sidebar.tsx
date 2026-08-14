@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, usePathname } from '@/i18n/routing';
 import { useSession, signOut } from 'next-auth/react';
-import { LayoutDashboard, Users, Database, Building2, UserCircle, GraduationCap, Settings, LifeBuoy, ChevronUp, FileText, Cookie, AlertTriangle, ShieldCheck, Sparkles, Menu, X, LogOut } from 'lucide-react';
+import { Settings, LifeBuoy, ChevronUp, Menu, X, LogOut } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { OrgSwitcher } from './OrgSwitcher';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
+import { NAV_GROUPS } from './navigation';
 
 export function Logo({ className = '' }: { className?: string }) {
   return (
@@ -26,18 +27,6 @@ export function Logo({ className = '' }: { className?: string }) {
   );
 }
 
-const NAV = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { id: 'clients', label: 'Trust Portals', icon: Users, href: '/clients' },
-  { id: 'ropa', label: 'Data Processing', icon: Database, href: '/ropa' },
-  { id: 'vendors', label: 'Vendors', icon: Building2, href: '/vendors' },
-  { id: 'dsars', label: 'Data Requests', icon: UserCircle, href: '/dsar' },
-  { id: 'policies', label: 'Privacy Policies', icon: FileText, href: '/policies' },
-  { id: 'consent', label: 'Cookie Consent', icon: Cookie, href: '/consent' },
-  { id: 'breaches', label: 'Breaches', icon: AlertTriangle, href: '/breaches' },
-  { id: 'audit', label: 'Audit Readiness', icon: ShieldCheck, href: '/audit' },
-  { id: 'training', label: 'Training', icon: GraduationCap, href: '/training' },
-];
 
 export function Sidebar() {
   const t = useTranslations('shared');
@@ -100,9 +89,11 @@ export function Sidebar() {
         <nav className="flex-1 px-3 overflow-y-auto">
           {!isLocked && (
             <>
-              <div className="px-2 pt-2 pb-1.5 text-[11px] uppercase tracking-[0.14em] text-[#6E747A]">{t('navigation.workspace')}</div>
+              {NAV_GROUPS.map((group) => (
+              <div key={group.id}>
+              <div className="px-2 pt-3 pb-1.5 text-[11px] uppercase tracking-[0.14em] text-[#6E747A]">{t(`navigation.${group.id}`)}</div>
               <ul className="space-y-0.5">
-                {NAV.map((n) => {
+                {group.items.map((n) => {
                   const isActive = pathname === n.href || (n.href !== '/' && pathname.startsWith(n.href));
                   const IconComp = n.icon;
                   // Only the DSAR item carries a count, and a zero is worth no pill at all.
@@ -134,6 +125,8 @@ export function Sidebar() {
                   );
                 })}
               </ul>
+              </div>
+              ))}
             </>
           )}
         </nav>
@@ -146,9 +139,9 @@ export function Sidebar() {
               </Link>
             </li>
             <li>
-              <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-[#9BA1A6] hover:bg-white/[0.04] hover:text-[#E6E8EA] focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none">
-                <LifeBuoy size={16} className="text-[#6E747A]" /> {t('navigation.help_docs')}
-              </button>
+              <Link href="/support" className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-[#9BA1A6] hover:bg-white/[0.04] hover:text-[#E6E8EA] focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none">
+                <LifeBuoy size={16} className="text-[#6E747A]" /> {t('navigation.support')}
+              </Link>
             </li>
           </ul>
           {session?.user && (

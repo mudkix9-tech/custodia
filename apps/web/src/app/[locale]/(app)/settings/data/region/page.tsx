@@ -6,6 +6,7 @@ import { trpc } from '@/utils/trpc';
 import { MapPin, Database, ShieldAlert } from 'lucide-react';
 import React from 'react';
 import { useSession } from 'next-auth/react';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 const REGIONS = [
   { id: 'eu-west-1', name: 'Dublin (Ireland)', isDefault: true },
@@ -15,6 +16,7 @@ const REGIONS = [
 ];
 
 export default function DataResidencyPage() {
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [selectedRegion, setSelectedRegion] = useState('');
@@ -37,14 +39,20 @@ export default function DataResidencyPage() {
   const isEnterprise = (session?.user as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.tier === 'enterprise';
   const currentRegion = REGIONS.find(r => r.id === (orgData.dataRegion || 'eu-west-1'));
 
-  const handleMigrate = () => {
-    if (confirm(`Are you sure you want to migrate your data to ${selectedRegion}? This process can take 15-30 minutes and your org will be placed in read-only mode during migration.`)) {
-      updateResidency.mutate({ region: selectedRegion });
-    }
+  const handleMigrate = async () => {
+    const ok = await confirm({
+      title: `Migrate data to ${selectedRegion}?`,
+      description:
+        'The migration takes 15-30 minutes. Your organisation is placed in read-only mode for the whole of it, so nobody can record a breach or respond to a DSAR until it finishes.',
+      confirmText: 'Start migration',
+      variant: 'destructive',
+    });
+    if (ok) updateResidency.mutate({ region: selectedRegion });
   };
 
   return (
     <div className="mx-auto max-w-[1040px] px-8 pt-10 pb-24 rise-in">
+      {confirmDialog}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-set-fg">Data Residency</h1>
         <p className="text-set-fg-subtle mt-1">Control where your data is physically stored and processed.</p>

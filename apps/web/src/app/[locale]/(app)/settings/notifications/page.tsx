@@ -6,6 +6,7 @@ import { Bell, AlertCircle, Save } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import { useToast } from '@/components/ui/Toast';
 
 export const NOTIFICATION_GROUPS = [
   {
@@ -40,6 +41,7 @@ export const NOTIFICATION_GROUPS = [
 ];
 
 export default function NotificationsSettingsPage() {
+  const toast = useToast();
   const { data: session } = useSession();
   const t = useTranslations('settings.notifications');
   const userRole = (session?.user as any)?.role;
@@ -107,7 +109,7 @@ export default function NotificationsSettingsPage() {
     } catch (e) {
       console.error(e);
       setSaveStatus('idle');
-      alert(t('failed_to_save'));
+      toast(t('failed_to_save'), { tone: 'error' });
     }
   };
 

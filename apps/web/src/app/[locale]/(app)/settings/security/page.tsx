@@ -9,8 +9,10 @@ import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Shield, Key, Smartphone, Monitor, Clock, LogOut, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslations } from 'next-intl';
+import { useToast } from '@/components/ui/Toast';
 
 export default function SecuritySettingsPage() {
+  const toast = useToast();
   const t = useTranslations('settings.security');
   const { data: session } = useSession();
 
@@ -74,7 +76,7 @@ export default function SecuritySettingsPage() {
       refetchSessions();
     } catch (e) {
       console.error(e);
-      alert(t('sessions.error_revoke'));
+      toast(t('sessions.error_revoke'), { tone: 'error' });
     }
   };
 
@@ -86,7 +88,7 @@ export default function SecuritySettingsPage() {
         refetchSessions();
       } catch (e) {
         console.error(e);
-        alert(t('sessions.error_revoke_all'));
+        toast(t('sessions.error_revoke_all'), { tone: 'error' });
       }
     }
   };
@@ -121,7 +123,7 @@ export default function SecuritySettingsPage() {
             await disableMfa.mutateAsync();
             refetchUser();
         } catch(e: any) {
-            alert(e.message || t('mfa.error_disable'));
+            toast(t('mfa.error_disable'), { tone: 'error', description: e.message });
         }
     }
   };

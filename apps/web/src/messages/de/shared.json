@@ -17,7 +17,18 @@
     "training": "Schulung",
     "settings": "Einstellungen",
     "help_docs": "Hilfe & Dokumentation",
-    "log_out": "Abmelden"
+    "log_out": "Abmelden",
+    "group_overview": "Übersicht",
+    "group_records": "Verzeichnisse",
+    "group_requests": "Anfragen & Vorfälle",
+    "group_compliance": "Compliance",
+    "group_intelligence": "Intelligence",
+    "analytics": "Analysen",
+    "copilot": "Compliance-Co-Pilot",
+    "updates": "Regulatorische Updates",
+    "support": "Support",
+    "group": "Gruppe",
+    "developers": "Entwickler"
   },
   "actions": {
     "save": "Speichern",

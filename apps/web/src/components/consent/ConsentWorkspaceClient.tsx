@@ -12,8 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CoveragePanel } from '@/components/consent/CoveragePanel';
+import { useToast } from '@/components/ui/Toast';
 
 export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
+  const toast = useToast();
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as any) || 'install';
   
@@ -24,7 +26,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
   const { data, isLoading } = trpc.consent.getDomain.useQuery({ id: domainId });
   const { setContext } = useAiGuidanceStore();
   const scanMutation = trpc.consent.scanCookies.useMutation({
-    onSuccess: () => alert('Scan queued successfully! Check back in a few minutes.')
+    onSuccess: () => toast('Scan queued', { description: 'Check back in a few minutes.' })
   });
 
   if (isLoading || !data) return <div className="text-[#6E747A]">Loading CMP Workspace...</div>;

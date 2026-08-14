@@ -17,7 +17,18 @@
     "training": "Formation",
     "settings": "Paramètres",
     "help_docs": "Aide et documentation",
-    "log_out": "Se déconnecter"
+    "log_out": "Se déconnecter",
+    "group_overview": "Vue d'ensemble",
+    "group_records": "Registres",
+    "group_requests": "Demandes et incidents",
+    "group_compliance": "Conformité",
+    "group_intelligence": "Intelligence",
+    "analytics": "Analyses",
+    "copilot": "Co-pilote conformité",
+    "updates": "Actualités réglementaires",
+    "support": "Assistance",
+    "group": "Groupe",
+    "developers": "Développeurs"
   },
   "actions": {
     "save": "Enregistrer",

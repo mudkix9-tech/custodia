@@ -8,7 +8,10 @@ import { Search, FileText, Download, ShieldAlert, CheckCircle2, Clock, Link as L
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { DiscoveryTab } from '@/components/vendors/DiscoveryTab';
+import { AddCustomVendorModal } from '@/components/vendors/AddCustomVendorModal';
 import { useTranslations } from 'next-intl';
+import { toCsvRow } from '@/utils/csv';
+import { useToast } from '@/components/ui/Toast';
 
 export default function VendorsPage() {
   const t = useTranslations('vendors');
@@ -25,7 +28,12 @@ export default function VendorsPage() {
 
   const vendors = vendorsResp?.pages.flatMap((page: any) => page.data) || [];
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
+  const [isAddCustomOpen, setIsAddCustomOpen] = useState(false);
+  // Declared but never connected to anything: the search box had no `value` and
+  // no `onChange`, and the grid was mounted without `globalFilter`.
   const [searchQuery, setSearchQuery] = useState('');
+  const toast = useToast();
+  const utils = trpc.useUtils();
   
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'register' | 'discovery'>('register');
@@ -36,6 +44,36 @@ export default function VendorsPage() {
       setActiveTab('discovery');
     }
   }, [searchParams]);
+
+  const handleExportRegister = () => {
+    if (vendors.length === 0) {
+      toast('Nothing to export', { tone: 'error', description: 'The vendor register is empty.' });
+      return;
+    }
+    const headers = ['Vendor', 'Category', 'Country', 'DPA Status', 'Risk Level', 'Risk Score', 'Website'];
+    const csv = [
+      toCsvRow(headers),
+      ...vendors.map((v: any) =>
+        toCsvRow([
+          v.name,
+          v.category || '',
+          v.headquartersCountry || '',
+          v.dpaStatus || '',
+          v.riskLevel || '',
+          v.riskScore ?? '',
+          v.website || '',
+        ])
+      ),
+    ].join('\r\n');
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    link.setAttribute('download', `vendor_register_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast(`Exported ${vendors.length} vendor${vendors.length === 1 ? '' : 's'}`);
+  };
 
   // Derived metrics
   const totalVendors = vendors.length;
@@ -108,10 +146,13 @@ export default function VendorsPage() {
           <p className="text-[#9BA1A6] text-[15px]">{t('subtitle')}</p>
         </div>
         <div className="flex gap-3">
-          <Link href="/vendors/analyzer" className="inline-flex items-center gap-2 bg-indigo-500/10 hover:bg-indigo-100 text-indigo-400 text-[14px] font-medium px-4 py-2 rounded-xl border border-indigo-900/50 transition-colors shadow-panel-elevated">
+          <Link href="/vendors/analyzer" className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated">
             <Sparkles className="w-4 h-4" /> {t('analyze_dpa')}
           </Link>
-          <button className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-[#08090A] text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated">
+          <button
+            onClick={handleExportRegister}
+            className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated"
+          >
             <Download className="w-4 h-4" /> {t('export_register')}
           </button>
           <button onClick={() => setIsDiscoverOpen(true)} className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[14px] font-medium px-4 py-2 rounded-xl transition-all shadow-card">
@@ -167,13 +208,18 @@ export default function VendorsPage() {
             <div className="p-4 border-b border-white/5 bg-[#08090A]/50 flex items-center justify-between">
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E747A]" />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('filter_placeholder')}
-                  className="w-full bg-[#0D0F11] border border-white/10 rounded-lg pl-9 pr-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
+                  className="w-full bg-[#0D0F11] border border-white/10 rounded-lg pl-9 pr-4 py-2 text-[14px] text-[#F4F5F6] placeholder:text-[#6E747A] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                 />
               </div>
-              <button className="text-[13px] font-medium text-[#9BA1A6] hover:text-[#F4F5F6] bg-[#0D0F11] border border-white/10 px-3 py-1.5 rounded-lg shadow-panel-elevated">
+              <button
+                onClick={() => setIsAddCustomOpen(true)}
+                className="text-[13px] font-medium text-[#9BA1A6] hover:text-[#F4F5F6] bg-[#0D0F11] border border-white/10 px-3 py-1.5 rounded-lg shadow-panel-elevated transition-colors"
+              >
                 {t('add_custom_vendor')}
               </button>
             </div>
@@ -183,6 +229,7 @@ export default function VendorsPage() {
               columns={columns as any}
               data={vendors}
               isLoading={isLoading}
+              globalFilter={searchQuery}
               emptyStateMessage={t('empty_state')}
             />
             {hasNextPage && (
@@ -203,6 +250,11 @@ export default function VendorsPage() {
       )}
 
       <DiscoverModal isOpen={isDiscoverOpen} onClose={() => setIsDiscoverOpen(false)} />
+      <AddCustomVendorModal
+        open={isAddCustomOpen}
+        onClose={() => setIsAddCustomOpen(false)}
+        onCreated={() => utils.vendors.getOrgVendors.invalidate()}
+      />
     </div>
   );
 }

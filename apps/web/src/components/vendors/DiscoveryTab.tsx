@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/components/ui/Toast';
 
 // Mirrors the category palette in the consent Coverage panel, so the same category
 // reads the same way in both places.
@@ -21,6 +22,7 @@ const CONSENT_CATEGORY_STYLES: Record<string, string> = {
 };
 
 export function DiscoveryTab() {
+  const toast = useToast();
   const utils = trpc.useUtils();
   const [subTab, setSubTab] = useState<'inbox' | 'archive'>('inbox');
   const [scanUrl, setScanUrl] = useState('');
@@ -53,7 +55,7 @@ export function DiscoveryTab() {
     try {
       await triggerMutation.mutateAsync({ websiteUrl: scanUrl || undefined });
       setScanUrl('');
-      alert("Vendor discovery scan queued. Results will appear in the inbox in a few minutes.");
+      toast('Discovery scan queued', { description: 'Results appear in the inbox in a few minutes.' });
     } catch (e: any) {
       setScanError(e.message || "Failed to start discovery scan.");
     } finally {
@@ -67,7 +69,7 @@ export function DiscoveryTab() {
       utils.vendors.getDiscoveries.invalidate();
       utils.vendors.getOrgVendors.invalidate();
     } catch (e: any) {
-      alert("Failed to confirm: " + e.message);
+      toast('Could not confirm the vendor', { tone: 'error', description: e.message });
     }
   };
 
@@ -94,7 +96,7 @@ export function DiscoveryTab() {
       utils.vendors.getDiscoveries.invalidate();
       utils.vendors.getOrgVendors.invalidate();
     } catch (e: any) {
-      alert("Failed to create custom vendor: " + e.message);
+      toast('Could not create the vendor', { tone: 'error', description: e.message });
     }
   };
 
@@ -103,7 +105,7 @@ export function DiscoveryTab() {
       await dismissMutation.mutateAsync({ id });
       utils.vendors.getDiscoveries.invalidate();
     } catch (e: any) {
-      alert("Failed to dismiss: " + e.message);
+      toast('Could not dismiss the finding', { tone: 'error', description: e.message });
     }
   };
 

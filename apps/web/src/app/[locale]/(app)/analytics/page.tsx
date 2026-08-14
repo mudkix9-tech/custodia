@@ -8,8 +8,10 @@ import {
   BarChart, Bar, ComposedChart, Area
 } from 'recharts';
 import { Download, AlertCircle, TrendingUp, CheckCircle, Clock } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 export default function AnalyticsDashboard() {
+  const toast = useToast();
   const { data: trendData, isLoading: isLoadingTrend } = trpc.analytics.getComplianceTrend.useQuery();
   const { data: benchmarkData, isLoading: isLoadingBenchmark } = trpc.analytics.getBenchmark.useQuery();
   const { data: advancedMetrics, isLoading: isLoadingMetrics } = trpc.analytics.getAdvancedMetrics.useQuery();
@@ -25,7 +27,7 @@ export default function AnalyticsDashboard() {
     },
     onError: (error) => {
       console.error("Failed to generate report:", error);
-      alert("Failed to generate report. Please try again.");
+      toast('Could not generate the report', { tone: 'error', description: 'Please try again.' });
     }
   });
 

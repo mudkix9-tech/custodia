@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Download, FileText, FileDown, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 export function Article30Generator() {
+  const toast = useToast();
   const [isGeneratingCsv, setIsGeneratingCsv] = useState(false);
   const [isGeneratingAudit, setIsGeneratingAudit] = useState(false);
   
@@ -32,7 +34,7 @@ export function Article30Generator() {
     // Simulate generation of full zip file. In reality, this would hit an endpoint that orchestrates S3 downloads and PDF generation via Puppeteer
     setTimeout(() => {
       setIsGeneratingAudit(false);
-      alert('Audit ZIP file generation started. You will receive an email when it is ready.');
+      toast('Audit export started', { description: 'You will receive an email when it is ready.' });
     }, 2000);
   };
 

@@ -4,8 +4,10 @@ import React, { useState, useRef } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Upload, FileText, CheckCircle2, AlertTriangle, AlertCircle, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/Toast';
 
 export default function DpaAnalyzerPage() {
+  const toast = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [analysis, setAnalysis] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -15,7 +17,7 @@ export default function DpaAnalyzerPage() {
       setAnalysis(data);
     },
     onError: (err) => {
-      alert(`Error analyzing DPA: ${err.message}`);
+      toast('Could not analyse the DPA', { tone: 'error', description: err.message });
     }
   });
 

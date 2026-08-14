@@ -13,7 +13,18 @@
     "training": "Training",
     "settings": "Settings",
     "help_docs": "Help & Docs",
-    "log_out": "Log out"
+    "log_out": "Log out",
+    "group_overview": "Overview",
+    "group_records": "Records",
+    "group_requests": "Requests & incidents",
+    "group_compliance": "Compliance",
+    "group_intelligence": "Intelligence",
+    "analytics": "Analytics",
+    "copilot": "Compliance Co-Pilot",
+    "updates": "Regulatory Updates",
+    "support": "Support",
+    "group": "Group",
+    "developers": "Developers"
   },
   "actions": {
     "save": "Save",

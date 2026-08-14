@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 export default function DeliveryDetailPanel({ delivery }: { delivery: any }) {
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [redeliverSuccess, setRedeliverSuccess] = useState<boolean | null>(null);
   const utils = trpc.useUtils();
 
@@ -17,14 +19,18 @@ export default function DeliveryDetailPanel({ delivery }: { delivery: any }) {
     }
   });
 
-  const handleRedeliver = () => {
-    if (confirm('This will resend the webhook payload to your endpoint. Continue?')) {
-      redeliverMutation.mutate({ webhookId: delivery.webhookId, deliveryId: delivery.id });
-    }
+  const handleRedeliver = async () => {
+    const ok = await confirm({
+      title: 'Resend this delivery?',
+      description: 'The same payload is posted to your endpoint again. Handlers that are not idempotent will process it twice.',
+      confirmText: 'Resend',
+    });
+    if (ok) redeliverMutation.mutate({ webhookId: delivery.webhookId, deliveryId: delivery.id });
   };
 
   return (
     <div className="p-4 space-y-4">
+      {confirmDialog}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <h4 className="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-2">Request Payload</h4>

@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
 import { Plus, Save, Trash2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 const MODULES = ['ropa', 'vendors', 'dsar', 'breaches', 'policies', 'consent', 'training', 'audit', 'clients', 'settings', 'billing', 'developers', 'team'];
 const ACTIONS = ['view', 'edit', 'delete', 'manage', 'export', 'respond', 'report', 'notify', 'publish', 'configure', 'invite'];
@@ -26,6 +27,7 @@ const MODULE_ACTIONS: Record<string, string[]> = {
 };
 
 export default function RolesPage() {
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const utils = trpc.useUtils();
   const [selectedRole, setSelectedRole] = useState<any /* eslint-disable-line @typescript-eslint/no-explicit-any */ | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -91,6 +93,7 @@ export default function RolesPage() {
 
   return (
     <div className="mx-auto max-w-[1040px] px-8 pt-10 pb-24 rise-in">
+      {confirmDialog}
       <div className="flex items-center gap-4 mb-8">
         <Link href="/settings/team" className="text-set-fg-subtle hover:text-set-fg transition-colors">
           <ArrowLeft className="w-5 h-5" />
@@ -191,10 +194,15 @@ export default function RolesPage() {
                     <h3 className="text-sm font-medium text-set-fg">Permissions Matrix</h3>
                     {selectedRole && !selectedRole.isDefault && (
                       <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this role? Users with this role will lose their custom permissions.')) {
-                            deleteRole.mutate({ id: selectedRole.id });
-                          }
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: `Delete the ${selectedRole.name} role?`,
+                            description:
+                              'Everyone currently holding this role loses its permissions immediately and falls back to their default access.',
+                            confirmText: 'Delete role',
+                            variant: 'destructive',
+                          });
+                          if (ok) deleteRole.mutate({ id: selectedRole.id });
                         }}
                         className="text-xs text-set-danger hover:text-set-danger flex items-center gap-1"
                       >
