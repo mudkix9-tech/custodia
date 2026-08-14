@@ -1,0 +1,78 @@
+{
+  "title": "Group Management",
+  "subtitle": "Aggregated compliance metrics across all entities",
+  "loading": "Loading group dashboard...",
+  "tabs": {
+    "dashboard": "Dashboard",
+    "vendors": "Cross-Entity Vendors",
+    "breaches": "Breaches",
+    "dsar": "DSARs"
+  },
+  "export_report": "Export Consolidated Report",
+  "metrics": {
+    "entities": "Entities Managed",
+    "average_score": "Average Score",
+    "average_score_note": "(equal weighting across entities)",
+    "worst_score": "Worst-Case Score",
+    "worst_score_note": "(lowest entity score)",
+    "activities": "Processing Activities",
+    "gaps": "Total Gaps Identified"
+  },
+  "breakdown": {
+    "title": "Compliance Breakdown by Entity",
+    "entity": "Entity",
+    "score": "Score",
+    "trend": "Trend",
+    "actions": "Actions",
+    "view_dashboard": "View Dashboard"
+  },
+  "scoped": {
+    "title": "Dashboard scoped to child org: {orgId}",
+    "description": "This page renders the main Dashboard scoped to the selected child organisation data.",
+    "placeholder": "[Normal Dashboard Components scoped to {orgId} will render here]"
+  },
+  "breaches_page": {
+    "title": "Group Breach Register",
+    "subtitle": "Consolidated view of all incidents and breaches across your organisation and subsidiaries.",
+    "load_more": "Load More",
+    "loading_more": "Loading more..."
+  },
+  "dsar_page": {
+    "title": "Group DSAR Automation",
+    "subtitle": "Consolidated view of Data Subject Access Requests across your organisation and subsidiaries."
+  },
+  "vendors_page": {
+    "loading": "Loading vendor consistency...",
+    "back": "Group Dashboard",
+    "breadcrumb": "Cross-Entity Vendors",
+    "title": "Group Vendor Consistency",
+    "subtitle": "Identify gaps in DPA status for vendors used across multiple entities in your group.",
+    "shared_vendors": "Shared Vendors",
+    "shared_vendors_note": "Vendors used by 2+ entities",
+    "inconsistencies": "Inconsistencies",
+    "inconsistencies_note": "Vendors with mismatched DPA status",
+    "breakdown_title": "Cross-Entity Vendor Breakdown",
+    "headers": {
+      "vendor": "Vendor",
+      "usage": "Usage",
+      "status": "Status",
+      "actions": "Actions",
+      "entity": "Entity",
+      "dpa_status": "DPA Status",
+      "risk_score": "Risk Score",
+      "action": "Action"
+    },
+    "empty": "No vendors are shared across multiple entities in this group.",
+    "inconsistent_posture": "Inconsistent Posture",
+    "used_by": "Used by {count} entities",
+    "signed_count": "{count} Signed",
+    "missing_count": "{count} Missing",
+    "consistently_signed": "Consistently Signed",
+    "consistently_missing": "Consistently Missing",
+    "signed": "Signed",
+    "missing": "Missing",
+    "hide_details": "Hide Details",
+    "compare_entities": "Compare Entities",
+    "view_profile": "View Profile"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "gate": {
+    "title": "Enterprise-Support",
+    "description": "Priority-Support steht ausschließlich Enterprise-Kunden zur Verfügung. Führen Sie ein Upgrade durch, um garantierte SLAs und einen persönlichen Kundenbetreuer zu erhalten.",
+    "manage_subscription": "Abonnement verwalten"
+  },
+  "title": "Priority-Support",
+  "subtitle": "Exklusive Enterprise-Support-Stufe mit garantierten SLAs und persönlicher Kundenbetreuung.",
+  "sla": {
+    "title": "SLA-Überwachung",
+    "critical": "Kritische Vorfälle",
+    "critical_target": "4 Stunden",
+    "standard": "Standard-Vorfälle",
+    "standard_target": "24 Stunden",
+    "current_status": "Aktueller Stand: Alle SLAs werden eingehalten"
+  },
+  "account_manager": {
+    "title": "Kundenbetreuer",
+    "email": "{name} eine E-Mail schreiben",
+    "slack": "Slack Connect öffnen"
+  },
+  "qbr": {
+    "title": "Geschäftsbericht",
+    "next": "Nächster geplanter QBR",
+    "generate": "Vorbereitungs-PDF erstellen",
+    "generating": "Wird erstellt…",
+    "note": "Das PDF enthält Ihre aktuellen Compliance-Daten und individuelle Empfehlungen.",
+    "generated": "Vorbereitungsunterlage erstellt",
+    "failed": "Die Vorbereitungsunterlage konnte nicht erstellt werden"
+  },
+  "tickets": {
+    "title": "Aktuelle Tickets",
+    "new": "Neues Ticket",
+    "headers": {
+      "id": "Ticket-ID",
+      "subject": "Betreff",
+      "status": "Status",
+      "priority": "Priorität",
+      "updated": "Zuletzt aktualisiert"
+    },
+    "status": {
+      "open": "Offen",
+      "in_progress": "In Bearbeitung",
+      "closed": "Geschlossen"
+    },
+    "priority": {
+      "standard": "Standard",
+      "high": "Hoch"
+    },
+    "samples": {
+      "dpa_template": "Formatierung einer individuellen AVV-Vorlage",
+      "sso_config": "Unterstützung bei der SSO-Anbieterkonfiguration",
+      "vendor_import": "Problem beim Massenimport von Anbietern"
+    }
+  }
+}

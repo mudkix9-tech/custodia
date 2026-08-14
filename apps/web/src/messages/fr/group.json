@@ -1,0 +1,78 @@
+{
+  "title": "Gestion du groupe",
+  "subtitle": "Indicateurs de conformité agrégés sur l'ensemble des entités",
+  "loading": "Chargement du tableau de bord du groupe...",
+  "tabs": {
+    "dashboard": "Tableau de bord",
+    "vendors": "Fournisseurs inter-entités",
+    "breaches": "Violations de données",
+    "dsar": "DSAR"
+  },
+  "export_report": "Exporter le rapport consolidé",
+  "metrics": {
+    "entities": "Entités gérées",
+    "average_score": "Score moyen",
+    "average_score_note": "(pondération égale entre les entités)",
+    "worst_score": "Score le plus faible",
+    "worst_score_note": "(score de l'entité la moins bien notée)",
+    "activities": "Activités de traitement",
+    "gaps": "Total des écarts identifiés"
+  },
+  "breakdown": {
+    "title": "Répartition de la conformité par entité",
+    "entity": "Entité",
+    "score": "Score",
+    "trend": "Tendance",
+    "actions": "Actions",
+    "view_dashboard": "Voir le tableau de bord"
+  },
+  "scoped": {
+    "title": "Tableau de bord limité à la filiale : {orgId}",
+    "description": "Cette page affiche le tableau de bord principal, limité aux données de la filiale sélectionnée.",
+    "placeholder": "[Les composants habituels du tableau de bord limités à {orgId} s'afficheront ici]"
+  },
+  "breaches_page": {
+    "title": "Registre des violations du groupe",
+    "subtitle": "Vue consolidée de tous les incidents et violations de données de votre organisation et de ses filiales.",
+    "load_more": "Charger plus",
+    "loading_more": "Chargement..."
+  },
+  "dsar_page": {
+    "title": "Automatisation des DSAR du groupe",
+    "subtitle": "Vue consolidée des demandes d'accès des personnes concernées dans votre organisation et ses filiales."
+  },
+  "vendors_page": {
+    "loading": "Chargement de la cohérence fournisseurs...",
+    "back": "Tableau de bord du groupe",
+    "breadcrumb": "Fournisseurs inter-entités",
+    "title": "Cohérence fournisseurs du groupe",
+    "subtitle": "Repérez les écarts de statut DPA pour les fournisseurs utilisés par plusieurs entités de votre groupe.",
+    "shared_vendors": "Fournisseurs partagés",
+    "shared_vendors_note": "Fournisseurs utilisés par 2 entités ou plus",
+    "inconsistencies": "Incohérences",
+    "inconsistencies_note": "Fournisseurs dont le statut DPA diverge",
+    "breakdown_title": "Détail des fournisseurs inter-entités",
+    "headers": {
+      "vendor": "Fournisseur",
+      "usage": "Utilisation",
+      "status": "Statut",
+      "actions": "Actions",
+      "entity": "Entité",
+      "dpa_status": "Statut DPA",
+      "risk_score": "Score de risque",
+      "action": "Action"
+    },
+    "empty": "Aucun fournisseur n'est partagé entre plusieurs entités de ce groupe.",
+    "inconsistent_posture": "Situation incohérente",
+    "used_by": "Utilisé par {count} entités",
+    "signed_count": "{count} signé(s)",
+    "missing_count": "{count} manquant(s)",
+    "consistently_signed": "Signé partout",
+    "consistently_missing": "Manquant partout",
+    "signed": "Signé",
+    "missing": "Manquant",
+    "hide_details": "Masquer les détails",
+    "compare_entities": "Comparer les entités",
+    "view_profile": "Voir la fiche"
+  }
+}

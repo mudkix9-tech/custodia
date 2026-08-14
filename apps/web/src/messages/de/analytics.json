@@ -1,0 +1,31 @@
+{
+  "title": "Erweiterte Analysen",
+  "subtitle": "Vorstandstaugliche Kennzahlen, Benchmarking und vorausschauende Auswertungen.",
+  "loading": "Analysedaten werden geladen...",
+  "export_report": "Management-Bericht (PDF)",
+  "export_failed": "Der Bericht konnte nicht erstellt werden",
+  "export_failed_description": "Bitte versuchen Sie es erneut.",
+  "metrics": {
+    "overall": "Gesamt-Compliance",
+    "industry_average": "Branchendurchschnitt ({industry})",
+    "top_quartile": "Oberstes Quartil",
+    "month_delta": "{delta} diesen Monat"
+  },
+  "charts": {
+    "trajectory": "Compliance-Verlauf und Prognose über 12 Monate",
+    "pillar_performance": "Säulen-Performance im Vorperiodenvergleich",
+    "dsar_distribution": "Verteilung der DSAR-Bearbeitungszeiten",
+    "gap_velocity": "Tempo der Lückenschließung (letzte 4 Wochen)",
+    "training_completion": "Abschlussquote der Mitarbeiterschulungen"
+  },
+  "series": {
+    "historical": "Bisheriger Score",
+    "forecast": "Prognose",
+    "previous_quarter": "Vorquartal",
+    "current_score": "Aktueller Score",
+    "dsar_count": "Anzahl der DSARs",
+    "days_to_resolve": "Tage bis zur Erledigung",
+    "issues_resolved": "Gelöste Punkte",
+    "completion_rate": "Abschlussquote %"
+  }
+}

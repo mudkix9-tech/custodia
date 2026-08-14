@@ -1,0 +1,31 @@
+{
+  "title": "Advanced Analytics",
+  "subtitle": "Board-ready metrics, benchmarking, and predictive insights.",
+  "loading": "Loading analytics data...",
+  "export_report": "Executive Report (PDF)",
+  "export_failed": "Could not generate the report",
+  "export_failed_description": "Please try again.",
+  "metrics": {
+    "overall": "Overall Compliance",
+    "industry_average": "Industry Average ({industry})",
+    "top_quartile": "Top Quartile",
+    "month_delta": "{delta} this month"
+  },
+  "charts": {
+    "trajectory": "12-Month Compliance Trajectory & Forecast",
+    "pillar_performance": "Pillar Performance vs Previous",
+    "dsar_distribution": "DSAR Response Time Distribution",
+    "gap_velocity": "Gap Resolution Velocity (Past 4 Weeks)",
+    "training_completion": "Employee Training Completion"
+  },
+  "series": {
+    "historical": "Historical Score",
+    "forecast": "Forecast",
+    "previous_quarter": "Previous Quarter",
+    "current_score": "Current Score",
+    "dsar_count": "Number of DSARs",
+    "days_to_resolve": "Days to Resolve",
+    "issues_resolved": "Issues Resolved",
+    "completion_rate": "Completion %"
+  }
+}

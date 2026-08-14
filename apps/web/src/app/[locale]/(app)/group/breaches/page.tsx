@@ -1,10 +1,12 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import BreachList from '@/components/breaches/BreachList';
 
 export default function GroupBreachesPage() {
+  const t = useTranslations('group');
   const {
     data: breachesResp,
     isLoading,
@@ -22,8 +24,8 @@ export default function GroupBreachesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-semibold text-[#F4F5F6]">Group Breach Register</h1>
-          <p className="text-sm text-[#9BA1A6] mt-1">Consolidated view of all incidents and breaches across your organization and subsidiaries.</p>
+          <h1 className="text-2xl font-semibold text-[#F4F5F6]">{t('breaches_page.title')}</h1>
+          <p className="text-sm text-[#9BA1A6] mt-1">{t('breaches_page.subtitle')}</p>
         </div>
       </div>
 
@@ -36,7 +38,7 @@ export default function GroupBreachesPage() {
             disabled={isFetchingNextPage}
             className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors border border-white/10 shadow-panel-elevated disabled:opacity-50"
           >
-            {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+            {isFetchingNextPage ? t('breaches_page.loading_more') : t('breaches_page.load_more')}
           </button>
         </div>
       )}

@@ -1,0 +1,56 @@
+{
+  "gate": {
+    "title": "Assistance Enterprise",
+    "description": "L'assistance prioritaire est réservée aux clients Enterprise. Passez à un forfait supérieur pour bénéficier de SLA garantis et d'un gestionnaire de compte dédié.",
+    "manage_subscription": "Gérer l'abonnement"
+  },
+  "title": "Assistance prioritaire",
+  "subtitle": "Niveau d'assistance Enterprise exclusif, avec SLA garantis et gestion de compte dédiée.",
+  "sla": {
+    "title": "Suivi des SLA",
+    "critical": "Incidents critiques",
+    "critical_target": "4 heures",
+    "standard": "Incidents standard",
+    "standard_target": "24 heures",
+    "current_status": "État actuel : tous les SLA sont respectés"
+  },
+  "account_manager": {
+    "title": "Gestionnaire de compte",
+    "email": "Écrire à {name}",
+    "slack": "Ouvrir Slack Connect"
+  },
+  "qbr": {
+    "title": "Revue d'activité",
+    "next": "Prochaine revue trimestrielle",
+    "generate": "Générer le PDF préparatoire",
+    "generating": "Génération…",
+    "note": "Le PDF reprend vos dernières données de conformité et des recommandations personnalisées.",
+    "generated": "Document préparatoire généré",
+    "failed": "Impossible de générer le document préparatoire"
+  },
+  "tickets": {
+    "title": "Tickets récents",
+    "new": "Nouveau ticket",
+    "headers": {
+      "id": "N° de ticket",
+      "subject": "Objet",
+      "status": "Statut",
+      "priority": "Priorité",
+      "updated": "Dernière mise à jour"
+    },
+    "status": {
+      "open": "Ouvert",
+      "in_progress": "En cours",
+      "closed": "Clôturé"
+    },
+    "priority": {
+      "standard": "Standard",
+      "high": "Élevée"
+    },
+    "samples": {
+      "dpa_template": "Mise en forme d'un modèle de DPA personnalisé",
+      "sso_config": "Aide à la configuration du fournisseur SSO",
+      "vendor_import": "Problème d'import groupé de fournisseurs"
+    }
+  }
+}

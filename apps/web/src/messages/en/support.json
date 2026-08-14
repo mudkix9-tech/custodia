@@ -1,0 +1,56 @@
+{
+  "gate": {
+    "title": "Enterprise Support",
+    "description": "Priority support is available exclusively for Enterprise customers. Upgrade your plan to get guaranteed SLAs and a dedicated account manager.",
+    "manage_subscription": "Manage Subscription"
+  },
+  "title": "Priority Support",
+  "subtitle": "Exclusive enterprise support tier with guaranteed SLAs and dedicated account management.",
+  "sla": {
+    "title": "SLA Tracking",
+    "critical": "Critical Issues",
+    "critical_target": "4 hours",
+    "standard": "Standard Issues",
+    "standard_target": "24 hours",
+    "current_status": "Current Status: Meeting all SLAs"
+  },
+  "account_manager": {
+    "title": "Account Manager",
+    "email": "Email {name}",
+    "slack": "Open Slack Connect"
+  },
+  "qbr": {
+    "title": "Business Review",
+    "next": "Next Scheduled QBR",
+    "generate": "Generate Pre-read PDF",
+    "generating": "Generating…",
+    "note": "PDF includes your latest compliance data and customized recommendations.",
+    "generated": "Pre-read generated",
+    "failed": "Could not generate the pre-read"
+  },
+  "tickets": {
+    "title": "Recent Tickets",
+    "new": "New Ticket",
+    "headers": {
+      "id": "Ticket ID",
+      "subject": "Subject",
+      "status": "Status",
+      "priority": "Priority",
+      "updated": "Last Updated"
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In Progress",
+      "closed": "Closed"
+    },
+    "priority": {
+      "standard": "Standard",
+      "high": "High"
+    },
+    "samples": {
+      "dpa_template": "Custom DPA template formatting",
+      "sso_config": "SSO provider configuration assistance",
+      "vendor_import": "Vendor bulk import issue"
+    }
+  }
+}

@@ -26,6 +26,11 @@ export default getRequestConfig(async ({requestLocale}) => {
       training: (await import(`../messages/${locale}/training.json`)).default,
       clients: (await import(`../messages/${locale}/clients.json`)).default,
       onboarding: (await import(`../messages/${locale}/onboarding.json`)).default,
+      analytics: (await import(`../messages/${locale}/analytics.json`)).default,
+      copilot: (await import(`../messages/${locale}/copilot.json`)).default,
+      group: (await import(`../messages/${locale}/group.json`)).default,
+      support: (await import(`../messages/${locale}/support.json`)).default,
+      updates: (await import(`../messages/${locale}/updates.json`)).default,
     }
   };
 });

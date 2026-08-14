@@ -1,0 +1,17 @@
+{
+  "title": "Compliance Co-Pilot",
+  "subtitle": "Context-aware AI assistant grounded in official GDPR text and your organisation's data.",
+  "greeting": "Hello! I'm your Custodia Co-Pilot. Ask me anything about GDPR compliance, Article 28 requirements, or your organisation's specific processing activities.",
+  "new_conversation": "New conversation",
+  "suggestions": {
+    "dpia": "Do I need a DPIA for tracking employee locations?",
+    "article_28": "What must an Article 28 processor contract contain?",
+    "retention": "How long can I keep job applicant data?"
+  },
+  "sources": "Sources",
+  "input_placeholder": "E.g., Do I need a DPIA for tracking employee locations?",
+  "ask": "Ask",
+  "disclaimer": "AI can make mistakes. Please verify important compliance advice.",
+  "error": "Error: {message}",
+  "error_generic": "I encountered an error trying to process your request."
+}

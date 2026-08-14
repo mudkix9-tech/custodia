@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Send, Bot, User, Sparkles, AlertCircle, BookOpen, Trash2 } from 'lucide-react';
 import { Markdown } from '@/components/copilot/Markdown';
@@ -22,13 +22,17 @@ type Message = {
   confidence?: string;
   /** True while the model is still producing this message. */
   streaming?: boolean;
+  /**
+   * The opening message. Flagged rather than compared by identity: it is also
+   * restored from localStorage, where reference equality does not survive, and
+   * its text is resolved at render time so a locale switch re-renders it.
+   */
+  greeting?: boolean;
+  /** A failed turn. Flagged so it can be excluded from history in any locale. */
+  error?: boolean;
 };
 
-const GREETING: Message = {
-  role: 'assistant',
-  content:
-    "Hello! I'm your Custodia Co-Pilot. Ask me anything about GDPR compliance, Article 28 requirements, or your organization's specific processing activities.",
-};
+const GREETING: Message = { role: 'assistant', content: '', greeting: true };
 
 const STORAGE_KEY = 'custodia.copilot.conversation';
 /** Enough to keep a working session; beyond this the prompt gets expensive anyway. */
@@ -36,13 +40,10 @@ const MAX_STORED = 50;
 /** How many turns to send back as context. The router uses these for query expansion. */
 const HISTORY_TURNS = 8;
 
-const SUGGESTIONS = [
-  'Do I need a DPIA for tracking employee locations?',
-  'What must an Article 28 processor contract contain?',
-  'How long can I keep job applicant data?',
-];
+const SUGGESTION_KEYS = ['dpia', 'article_28', 'retention'] as const;
 
 export default function CopilotPage() {
+  const t = useTranslations('copilot');
   const locale = useLocale();
   const [messages, setMessages] = useState<Message[]>([GREETING]);
   const [input, setInput] = useState('');
@@ -89,7 +90,7 @@ export default function CopilotPage() {
       // to send `{ question }` alone — the router has always accepted history and
       // locale and uses them for query expansion and answer language.
       const history = messages
-        .filter((m) => m !== GREETING && !m.content.startsWith('Error:'))
+        .filter((m) => !m.greeting && !m.error)
         .slice(-HISTORY_TURNS)
         .map((m) => ({ role: m.role, content: m.content }));
 
@@ -138,14 +139,17 @@ export default function CopilotPage() {
         replaceLast({ streaming: false });
       } catch (err) {
         replaceLast({
-          content: `Error: ${err instanceof Error ? err.message : 'I encountered an error trying to process your request.'}`,
+          content: t('error', {
+            message: err instanceof Error ? err.message : t('error_generic'),
+          }),
+          error: true,
           streaming: false,
         });
       } finally {
         setIsPending(false);
       }
     },
-    [isPending, messages, locale, utils],
+    [isPending, messages, locale, utils, t],
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -170,10 +174,10 @@ export default function CopilotPage() {
         <div>
           <h1 className="text-2xl font-serif text-[#F4F5F6] flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-[#C9A227]" />
-            Compliance Co-Pilot
+            {t('title')}
           </h1>
           <p className="text-sm text-[#9BA1A6] mt-1">
-            Context-aware AI assistant grounded in official GDPR text and your organization&apos;s data.
+            {t('subtitle')}
           </p>
         </div>
         {hasConversation && (
@@ -182,7 +186,7 @@ export default function CopilotPage() {
             className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-[13px] text-[#9BA1A6] transition-colors hover:bg-white/5 hover:text-[#E6E8EA]"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            New conversation
+            {t('new_conversation')}
           </button>
         )}
       </div>
@@ -209,7 +213,7 @@ export default function CopilotPage() {
                 }`}
               >
                 {msg.role === 'assistant' ? (
-                  <Markdown content={msg.content} />
+                  <Markdown content={msg.greeting ? t('greeting') : msg.content} />
                 ) : (
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</div>
                 )}
@@ -219,7 +223,7 @@ export default function CopilotPage() {
                   <div className="mt-3 border-t border-white/10 pt-3">
                     <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#6E747A]">
                       <BookOpen className="h-3 w-3" />
-                      Sources
+                      {t('sources')}
                     </p>
                     <ol className="space-y-1.5">
                       {msg.citations.map((c) => (
@@ -261,13 +265,13 @@ export default function CopilotPage() {
           {/* Starter questions: an empty chat box teaches nothing about what it can do. */}
           {!hasConversation && !isPending && (
             <div className="flex flex-wrap gap-2 pl-12">
-              {SUGGESTIONS.map((s) => (
+              {SUGGESTION_KEYS.map((key) => (
                 <button
-                  key={s}
-                  onClick={() => ask(s)}
+                  key={key}
+                  onClick={() => ask(t(`suggestions.${key}`))}
                   className="rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[12.5px] text-[#9BA1A6] transition-colors hover:border-[#C9A227]/40 hover:text-[#E6E8EA]"
                 >
-                  {s}
+                  {t(`suggestions.${key}`)}
                 </button>
               ))}
             </div>
@@ -295,7 +299,7 @@ export default function CopilotPage() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="E.g., Do I need a DPIA for tracking employee locations?"
+              placeholder={t('input_placeholder')}
               className="flex-1 rounded-lg border border-white/10 bg-[#0D0F11] text-[#F4F5F6] placeholder:text-[#6E747A] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
               disabled={isPending}
             />
@@ -304,13 +308,13 @@ export default function CopilotPage() {
               disabled={!input.trim() || isPending}
               className="bg-[#C9A227] hover:bg-[#E5C463] disabled:opacity-50 disabled:cursor-not-allowed text-[#08090A] px-6 py-3 rounded-lg flex items-center gap-2 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"
             >
-              <span>Ask</span>
+              <span>{t('ask')}</span>
               <Send className="w-4 h-4" />
             </button>
           </form>
           <div className="mt-2 text-xs text-center text-[#9BA1A6] flex items-center justify-center gap-1">
             <AlertCircle className="w-3 h-3" />
-            AI can make mistakes. Please verify important compliance advice.
+            {t('disclaimer')}
           </div>
         </div>
       </div>

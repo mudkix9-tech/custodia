@@ -1,0 +1,17 @@
+{
+  "title": "Co-Pilote conformité",
+  "subtitle": "Assistant IA contextuel, fondé sur le texte officiel du RGPD et les données de votre organisation.",
+  "greeting": "Bonjour ! Je suis votre Co-Pilote Custodia. Posez-moi vos questions sur la conformité au RGPD, les exigences de l'article 28 ou les activités de traitement propres à votre organisation.",
+  "new_conversation": "Nouvelle conversation",
+  "suggestions": {
+    "dpia": "Dois-je réaliser une AIPD pour le suivi de localisation des salariés ?",
+    "article_28": "Que doit contenir un contrat de sous-traitance au titre de l'article 28 ?",
+    "retention": "Combien de temps puis-je conserver les données des candidats ?"
+  },
+  "sources": "Sources",
+  "input_placeholder": "Ex. : dois-je réaliser une AIPD pour le suivi de localisation des salariés ?",
+  "ask": "Demander",
+  "disclaimer": "L'IA peut se tromper. Vérifiez les conseils de conformité importants.",
+  "error": "Erreur : {message}",
+  "error_generic": "Une erreur est survenue lors du traitement de votre demande."
+}

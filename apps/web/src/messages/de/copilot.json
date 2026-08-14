@@ -1,0 +1,17 @@
+{
+  "title": "Compliance-Co-Pilot",
+  "subtitle": "Kontextbewusster KI-Assistent, gestützt auf den amtlichen DSGVO-Text und die Daten Ihrer Organisation.",
+  "greeting": "Hallo! Ich bin Ihr Custodia-Co-Pilot. Fragen Sie mich alles zur DSGVO-Compliance, zu den Anforderungen aus Artikel 28 oder zu den konkreten Verarbeitungstätigkeiten Ihrer Organisation.",
+  "new_conversation": "Neue Unterhaltung",
+  "suggestions": {
+    "dpia": "Brauche ich eine DSFA für die Standortverfolgung von Mitarbeitenden?",
+    "article_28": "Was muss ein Auftragsverarbeitungsvertrag nach Artikel 28 enthalten?",
+    "retention": "Wie lange darf ich Bewerberdaten aufbewahren?"
+  },
+  "sources": "Quellen",
+  "input_placeholder": "z. B. Brauche ich eine DSFA für die Standortverfolgung von Mitarbeitenden?",
+  "ask": "Fragen",
+  "disclaimer": "KI kann Fehler machen. Bitte prüfen Sie wichtige Compliance-Hinweise nach.",
+  "error": "Fehler: {message}",
+  "error_generic": "Bei der Bearbeitung Ihrer Anfrage ist ein Fehler aufgetreten."
+}

@@ -1,0 +1,78 @@
+{
+  "title": "Konzernverwaltung",
+  "subtitle": "Aggregierte Compliance-Kennzahlen über alle Einheiten hinweg",
+  "loading": "Konzern-Dashboard wird geladen...",
+  "tabs": {
+    "dashboard": "Dashboard",
+    "vendors": "Einheitenübergreifende Anbieter",
+    "breaches": "Datenschutzverletzungen",
+    "dsar": "DSARs"
+  },
+  "export_report": "Konsolidierten Bericht exportieren",
+  "metrics": {
+    "entities": "Verwaltete Einheiten",
+    "average_score": "Durchschnittlicher Score",
+    "average_score_note": "(gleiche Gewichtung aller Einheiten)",
+    "worst_score": "Schlechtester Score",
+    "worst_score_note": "(niedrigster Wert einer Einheit)",
+    "activities": "Verarbeitungstätigkeiten",
+    "gaps": "Identifizierte Lücken insgesamt"
+  },
+  "breakdown": {
+    "title": "Compliance-Aufschlüsselung nach Einheit",
+    "entity": "Einheit",
+    "score": "Score",
+    "trend": "Trend",
+    "actions": "Aktionen",
+    "view_dashboard": "Dashboard anzeigen"
+  },
+  "scoped": {
+    "title": "Dashboard eingegrenzt auf Tochtergesellschaft: {orgId}",
+    "description": "Diese Seite zeigt das Haupt-Dashboard, eingegrenzt auf die Daten der ausgewählten Tochtergesellschaft.",
+    "placeholder": "[Hier erscheinen die üblichen Dashboard-Komponenten, eingegrenzt auf {orgId}]"
+  },
+  "breaches_page": {
+    "title": "Konzernweites Verletzungsregister",
+    "subtitle": "Konsolidierte Übersicht aller Vorfälle und Datenschutzverletzungen in Ihrer Organisation und deren Tochtergesellschaften.",
+    "load_more": "Mehr laden",
+    "loading_more": "Weitere werden geladen..."
+  },
+  "dsar_page": {
+    "title": "Konzernweite DSAR-Automatisierung",
+    "subtitle": "Konsolidierte Übersicht der Betroffenenanfragen in Ihrer Organisation und deren Tochtergesellschaften."
+  },
+  "vendors_page": {
+    "loading": "Anbieter-Konsistenz wird geladen...",
+    "back": "Konzern-Dashboard",
+    "breadcrumb": "Einheitenübergreifende Anbieter",
+    "title": "Konzernweite Anbieter-Konsistenz",
+    "subtitle": "Erkennen Sie Lücken im AVV-Status bei Anbietern, die von mehreren Einheiten Ihres Konzerns genutzt werden.",
+    "shared_vendors": "Gemeinsam genutzte Anbieter",
+    "shared_vendors_note": "Anbieter, die von 2 oder mehr Einheiten genutzt werden",
+    "inconsistencies": "Inkonsistenzen",
+    "inconsistencies_note": "Anbieter mit abweichendem AVV-Status",
+    "breakdown_title": "Einheitenübergreifende Anbieterübersicht",
+    "headers": {
+      "vendor": "Anbieter",
+      "usage": "Nutzung",
+      "status": "Status",
+      "actions": "Aktionen",
+      "entity": "Einheit",
+      "dpa_status": "AVV-Status",
+      "risk_score": "Risiko-Score",
+      "action": "Aktion"
+    },
+    "empty": "In diesem Konzern wird kein Anbieter von mehreren Einheiten genutzt.",
+    "inconsistent_posture": "Uneinheitlicher Stand",
+    "used_by": "Von {count} Einheiten genutzt",
+    "signed_count": "{count} unterzeichnet",
+    "missing_count": "{count} fehlen",
+    "consistently_signed": "Durchgängig unterzeichnet",
+    "consistently_missing": "Durchgängig fehlend",
+    "signed": "Unterzeichnet",
+    "missing": "Fehlt",
+    "hide_details": "Details ausblenden",
+    "compare_entities": "Einheiten vergleichen",
+    "view_profile": "Profil anzeigen"
+  }
+}

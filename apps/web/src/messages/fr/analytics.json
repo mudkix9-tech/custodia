@@ -1,0 +1,31 @@
+{
+  "title": "Analyses avancées",
+  "subtitle": "Indicateurs prêts pour le conseil d'administration, comparatifs et projections.",
+  "loading": "Chargement des données d'analyse...",
+  "export_report": "Rapport de direction (PDF)",
+  "export_failed": "Impossible de générer le rapport",
+  "export_failed_description": "Veuillez réessayer.",
+  "metrics": {
+    "overall": "Conformité globale",
+    "industry_average": "Moyenne du secteur ({industry})",
+    "top_quartile": "Quartile supérieur",
+    "month_delta": "{delta} ce mois-ci"
+  },
+  "charts": {
+    "trajectory": "Trajectoire de conformité sur 12 mois et prévision",
+    "pillar_performance": "Performance par pilier vs période précédente",
+    "dsar_distribution": "Répartition des délais de traitement des DSAR",
+    "gap_velocity": "Rythme de résolution des écarts (4 dernières semaines)",
+    "training_completion": "Achèvement des formations des collaborateurs"
+  },
+  "series": {
+    "historical": "Score historique",
+    "forecast": "Prévision",
+    "previous_quarter": "Trimestre précédent",
+    "current_score": "Score actuel",
+    "dsar_count": "Nombre de DSAR",
+    "days_to_resolve": "Jours avant résolution",
+    "issues_resolved": "Points résolus",
+    "completion_rate": "Taux d'achèvement %"
+  }
+}
