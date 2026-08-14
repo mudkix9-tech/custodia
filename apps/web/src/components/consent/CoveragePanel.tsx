@@ -168,9 +168,9 @@ export function CoveragePanel({ domainId }: { domainId: string }) {
               <span>
                 Last scan: {format(new Date(lastRun.startedAt), 'MMM dd, yyyy h:mm a')}
               </span>
-              <span className="text-ink-200">|</span>
+              <span className="text-[#6E747A]">|</span>
               <span>CMP: {lastRun.cmpDetected ?? 'none detected'}</span>
-              <span className="text-ink-200">|</span>
+              <span className="text-[#6E747A]">|</span>
               <span>
                 {lastRun.preRequestCount} hosts before consent, {lastRun.postRequestCount} after
               </span>

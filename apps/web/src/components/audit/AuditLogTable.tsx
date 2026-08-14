@@ -186,7 +186,7 @@ export function AuditLogTable() {
                             <span className="text-red-500 font-bold mr-2">-</span>
                             {JSON.stringify(change.old)}
                           </div>
-                          <div className="flex-1 bg-[#C9A227]/10 text-sage-900 p-2 rounded border border-sage-100 break-all">
+                          <div className="flex-1 bg-[#C9A227]/10 text-[#C9A227] p-2 rounded border border-sage-100 break-all">
                             <span className="text-sage-500 font-bold mr-2">+</span>
                             {JSON.stringify(change.new)}
                           </div>
@@ -200,7 +200,7 @@ export function AuditLogTable() {
               {selectedLog.metadata && (
                 <div>
                   <h4 className="text-sm font-medium text-[#F4F5F6] mb-3 border-b border-white/10 pb-2">Raw Payload Metadata</h4>
-                  <pre className="bg-ink-900 text-ink-100 p-4 rounded-lg text-xs overflow-x-auto font-mono">
+                  <pre className="bg-ink-900 text-[#E6E8EA] p-4 rounded-lg text-xs overflow-x-auto font-mono">
                     {JSON.stringify(selectedLog.metadata, null, 2)}
                   </pre>
                 </div>

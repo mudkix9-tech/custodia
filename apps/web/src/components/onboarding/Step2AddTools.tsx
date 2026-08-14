@@ -311,7 +311,7 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
             {customTools.map(name => (
               <span
                 key={name}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-sage-100/20 text-[#C9A227] border border-[#C9A227]/30"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#C9A227]/15 text-[#C9A227] border border-[#C9A227]/30"
               >
                 <span>{name}</span>
                 <button

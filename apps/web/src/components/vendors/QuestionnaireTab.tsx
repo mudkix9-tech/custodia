@@ -159,7 +159,7 @@ export function QuestionnaireTab({ orgVendorId }: { orgVendorId: string }) {
       {isSendFormOpen && (
         <form onSubmit={handleSendAssessment} className="bg-[#08090A] border border-white/10 rounded-2xl p-5 space-y-4 shadow-inner">
           <div className="flex justify-between items-center border-b border-white/5 pb-2">
-            <h4 className="font-serif text-sm font-bold text-ink-950">New Questionnaire Request</h4>
+            <h4 className="font-serif text-sm font-bold text-[#F4F5F6]">New Questionnaire Request</h4>
             <Button 
               type="button" 
               variant="ghost"
@@ -241,7 +241,7 @@ export function QuestionnaireTab({ orgVendorId }: { orgVendorId: string }) {
               <div key={assessment.id} className="bg-[#0D0F11] border border-white/10 rounded-2xl p-5 shadow-panel-elevated space-y-4 hover:shadow-md transition-shadow relative overflow-hidden">
                 <div className="flex justify-between items-start flex-wrap gap-2">
                   <div>
-                    <h4 className="font-bold text-ink-950 text-sm leading-snug">{template?.name}</h4>
+                    <h4 className="font-bold text-[#F4F5F6] text-sm leading-snug">{template?.name}</h4>
                     <p className="text-xs text-[#6E747A] mt-0.5">Recipient: {assessment.recipientName || 'Security Lead'} ({assessment.recipientEmail})</p>
                   </div>
                   <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
@@ -340,7 +340,7 @@ export function QuestionnaireTab({ orgVendorId }: { orgVendorId: string }) {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#0D0F11] border border-ink-900/15 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up">
             <div className="bg-[#08090A] px-6 py-4 border-b border-white/10 flex justify-between items-center">
-              <h3 className="font-serif text-lg text-ink-950 font-bold">Auditor Review &amp; Override</h3>
+              <h3 className="font-serif text-lg text-[#F4F5F6] font-bold">Auditor Review &amp; Override</h3>
               <Button
                 variant="ghost" 
                 onClick={() => setIsReviewOpen(false)}

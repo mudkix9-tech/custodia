@@ -125,7 +125,7 @@ export default function RolesPage() {
                       <div className="font-medium text-set-fg flex items-center gap-2">
                         {role.name}
                         {role.isDefault && (
-                          <span className="text-[10px] bg-ink-100 text-set-fg-muted px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Default</span>
+                          <span className="text-[10px] bg-white/10 text-set-fg-muted px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Default</span>
                         )}
                       </div>
                       <div className="text-sm text-set-fg-subtle mt-1">{role.description}</div>

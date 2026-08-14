@@ -67,7 +67,7 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
   const daysRemaining = differenceInDays(new Date(dsar.deadlineAt), new Date());
   
   // Header Escalation Logic
-  let headerColor = 'bg-sage-600';
+  let headerColor = 'bg-[#C9A227]';
   let bannerText = `${daysRemaining} Days Remaining`;
   if (daysRemaining <= 14 && daysRemaining > 7) {
     headerColor = 'bg-amber-500/100';
@@ -209,7 +209,7 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
             ) : (
               <div className="space-y-4">
                 {((tasks as any)?.data || [])?.map((task: any) => (
-                  <div key={task.id} className={`p-5 rounded-2xl border ${task.status === 'completed' ? 'bg-[#C9A227]/30 border-[#C9A227]/20' : 'bg-[#0D0F11] border-white/10'}`}>
+                  <div key={task.id} className={`p-5 rounded-2xl border ${task.status === 'completed' ? 'bg-[#C9A227]/[0.07] border-[#C9A227]/25' : 'bg-[#0D0F11] border-white/10'}`}>
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -329,7 +329,7 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
                     <div className="font-medium text-[#F4F5F6]">Package Generated</div>
                     <div className="text-[13px] text-[#6E747A]">Expires: {format(new Date(dsar.dataPackageExpiresAt!), 'MMM dd, yyyy')}</div>
                   </div>
-                  <span className="bg-sage-100 text-[#C9A227] px-3 py-1 rounded-full text-[12px] font-medium">Ready</span>
+                  <span className="bg-[#C9A227]/15 text-[#C9A227] px-3 py-1 rounded-full text-[12px] font-medium">Ready</span>
                 </div>
                 <div className="flex gap-3">
                   <Button variant="outline" className="flex-1">
@@ -358,7 +358,7 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
             <h3 className="font-medium text-[#F4F5F6] mb-8">Audit Trail</h3>
             <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-ink-900/10 before:to-transparent">
               <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-sage-100 text-[#C9A227] shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-[#C9A227]/15 text-[#C9A227] shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-white/10 bg-[#0D0F11] shadow-panel-elevated">

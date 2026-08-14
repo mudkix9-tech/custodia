@@ -36,7 +36,7 @@ export function RegulatoryImpactWidget() {
           )}
           <h2 className={`font-semibold ${hasAnyHighConfidence ? 'text-amber-950' : 'text-[#F4F5F6]'}`}>{t('title')}</h2>
           <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-            hasAnyHighConfidence ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-400'
+            hasAnyHighConfidence ? 'bg-amber-500/15 text-amber-800' : 'bg-indigo-100 text-indigo-400'
           }`}>{t('new_count', { count: groupedImpacts.length })}</span>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function RegulatoryImpactWidget() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     {hasHigh ? (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-100 px-2 py-0.5 rounded-md uppercase tracking-wide">
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-md uppercase tracking-wide">
                         <AlertTriangle className="w-3 h-3" /> {t('high_impact')}
                       </span>
                     ) : (

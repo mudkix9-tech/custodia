@@ -114,7 +114,7 @@ export default function VendorsPage() {
           <button className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-[#08090A] text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated">
             <Download className="w-4 h-4" /> {t('export_register')}
           </button>
-          <button onClick={() => setIsDiscoverOpen(true)} className="inline-flex items-center gap-2 bg-sage-700 hover:bg-sage-600 text-white text-[14px] font-medium px-4 py-2 rounded-xl transition-all shadow-card">
+          <button onClick={() => setIsDiscoverOpen(true)} className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[14px] font-medium px-4 py-2 rounded-xl transition-all shadow-card">
             <Search className="w-4 h-4" /> {t('discover_vendors')}
           </button>
         </div>
@@ -124,13 +124,13 @@ export default function VendorsPage() {
       <div className="flex border-b border-white/10">
         <button
           onClick={() => setActiveTab('register')}
-          className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'register' ? 'border-sage-600 text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-ink-950'}`}
+          className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'register' ? 'border-[#C9A227] text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'}`}
         >
           {t('tabs.tracked_register', { count: totalVendors })}
         </button>
         <button
           onClick={() => setActiveTab('discovery')}
-          className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'discovery' ? 'border-sage-600 text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-ink-950'}`}
+          className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'discovery' ? 'border-[#C9A227] text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'}`}
         >
           {t('tabs.vendor_discovery')}
         </button>
@@ -261,7 +261,7 @@ function DiscoverModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => vo
                 <button 
                   onClick={() => handleLink(v.id)}
                   disabled={linkMutation.isPending}
-                  className="bg-[#C9A227]/10 text-[#C9A227] hover:bg-[#C9A227]/20 hover:text-sage-800 font-medium text-[13px] px-4 py-2 rounded-lg transition-colors border border-[#C9A227]/30"
+                  className="bg-[#C9A227]/10 text-[#C9A227] hover:bg-[#C9A227]/20 hover:text-[#E5C463] font-medium text-[13px] px-4 py-2 rounded-lg transition-colors border border-[#C9A227]/30"
                 >
                   {t('discover_modal.add_to_register')}
                 </button>

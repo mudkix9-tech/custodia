@@ -85,7 +85,7 @@ export default function SSOSettingsPage() {
             </Button>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-ink-100">
+          <div className="mt-12 pt-8 border-t border-white/10">
              <h2 className="text-lg font-medium text-set-fg mb-4">Enforcement</h2>
              <div className="flex items-center justify-between max-w-lg">
                 <div>

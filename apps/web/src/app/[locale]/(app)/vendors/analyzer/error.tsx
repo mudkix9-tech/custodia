@@ -15,7 +15,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <p className="text-[#9BA1A6] mb-6">We couldn't load this page. Our team has been notified.</p>
       <div className="flex gap-3">
         <button onClick={reset} className="px-4 py-2 bg-ink-900 text-white rounded hover:bg-ink-800 transition-colors">Try again</button>
-        <Link href="/dashboard" className="px-4 py-2 border border-white/10 text-[#F4F5F6] rounded hover:bg-ink-50 transition-colors">Go to dashboard</Link>
+        <Link href="/dashboard" className="px-4 py-2 border border-white/10 text-[#F4F5F6] rounded hover:bg-white/5 transition-colors">Go to dashboard</Link>
       </div>
       {process.env.NODE_ENV === 'development' && (
         <pre className="mt-6 text-xs text-[#6E747A] max-w-2xl overflow-auto">{error.message}</pre>

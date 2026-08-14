@@ -93,7 +93,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                         href={inc.sourceUrl} 
                         target="_blank" 
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-[#C9A227] hover:text-sage-800 transition-colors font-medium border border-white/10 px-3 py-1.5 rounded-lg hover:bg-[#08090A]"
+                        className="inline-flex items-center gap-1.5 text-xs text-[#C9A227] hover:text-[#E5C463] transition-colors font-medium border border-white/10 px-3 py-1.5 rounded-lg hover:bg-[#08090A]"
                       >
                         Source <ExternalLink className="w-3.5 h-3.5" />
                       </a>
@@ -237,7 +237,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                           type="button"
                           onClick={() => handleReviewSubmit(inc.alertId)}
                           disabled={reviewMutation.isPending}
-                          className="bg-sage-700 hover:bg-sage-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-panel-elevated disabled:opacity-50"
+                          className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-panel-elevated disabled:opacity-50"
                         >
                           Submit Assessment
                         </button>

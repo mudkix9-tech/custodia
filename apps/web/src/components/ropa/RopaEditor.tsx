@@ -282,7 +282,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 variant="outline"
                 type="button"
                 onClick={handleAiAssist}
-                className="bg-amber-500/10 hover:bg-amber-100 border-amber-900/50 text-amber-800 transition-colors flex items-center gap-1.5"
+                className="bg-amber-500/10 hover:bg-amber-500/15 border-amber-900/50 text-amber-800 transition-colors flex items-center gap-1.5"
               >
                 <Lightbulb className="w-4 h-4" /> {t('help_me_fill')}
               </Button>
@@ -308,7 +308,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-3 text-[13.5px] whitespace-nowrap transition-colors border-b-2 ${
                   activeTab === tab.id 
-                    ? 'border-sage-700 text-[#C9A227] font-medium' 
+                    ? 'border-[#C9A227] text-[#C9A227] font-medium' 
                     : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:border-white/10'
                 }`}
               >

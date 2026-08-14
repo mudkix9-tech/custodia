@@ -91,7 +91,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
             variant="ghost"
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-2 px-6 py-4 h-auto rounded-none text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === tab.id ? 'border-sage-600 text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-ink-900/5'
+              activeTab === tab.id ? 'border-[#C9A227] text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-ink-900/5'
             }`}
           >
             <tab.icon className="w-4 h-4" />
@@ -138,7 +138,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
                 This script natively supports Google Consent Mode v2. If you are using Google Tag Manager or Google Analytics, simply ensure this script loads <strong>before</strong> the Google tags. The banner will automatically signal consent updates to Google.
               </p>
               <div className="flex items-center gap-2">
-                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${domain.gcmV2Enabled ? 'bg-sage-100 text-[#C9A227]' : 'bg-white/5 text-[#6E747A]'}`}>
+                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${domain.gcmV2Enabled ? 'bg-[#C9A227]/15 text-[#C9A227]' : 'bg-white/5 text-[#6E747A]'}`}>
                   GCM v2 {domain.gcmV2Enabled ? 'Enabled' : 'Disabled'}
                 </span>
               </div>
@@ -178,7 +178,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
               </div>
             </div>
             
-            <div className="bg-ink-100 rounded-2xl flex items-center justify-center p-8 border border-white/10">
+            <div className="bg-white/10 rounded-2xl flex items-center justify-center p-8 border border-white/10">
               {/* Preview */}
               <div className="w-full max-w-sm bg-[#0D0F11] rounded-xl shadow-2xl overflow-hidden border border-white/5">
                 <div className="p-5">
@@ -283,7 +283,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
             </div>
             
             <div className="bg-[#0D0F11] border border-white/10 p-10 rounded-2xl shadow-panel-elevated text-center">
-              <BarChart3 className="w-12 h-12 text-ink-200 mx-auto mb-4" />
+              <BarChart3 className="w-12 h-12 text-[#6E747A] mx-auto mb-4" />
               <h3 className="font-medium text-[#F4F5F6]">Advanced Analytics Available Soon</h3>
               <p className="text-sm text-[#6E747A] max-w-sm mx-auto mt-2">
                 Detailed breakdowns by country, interaction type, and browser will appear here once enough consent logs are collected.

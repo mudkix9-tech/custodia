@@ -65,7 +65,7 @@ export default function AssessmentPrintPage() {
         </div>
         <button
           onClick={handlePrint}
-          className="inline-flex items-center gap-2 bg-sage-700 hover:bg-sage-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-panel-elevated"
+          className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-panel-elevated"
         >
           <Printer className="w-4 h-4" /> Print / Save as PDF
         </button>

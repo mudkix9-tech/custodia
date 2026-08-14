@@ -59,7 +59,7 @@ export default function ClientDetailPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`pb-4 text-[14px] font-medium transition-colors border-b-2 ${
                 activeTab === tab.id 
-                  ? 'border-sage-600 text-[#C9A227]' 
+                  ? 'border-[#C9A227] text-[#C9A227]' 
                   : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:border-white/20'
               }`}
             >
@@ -335,7 +335,7 @@ function ActivitiesTab({ client }: { client: any }) {
         </div>
         <button 
           onClick={() => setIsLinkOpen(true)}
-          className="bg-sage-700 hover:bg-sage-600 text-white font-medium text-[14px] px-4 py-2 rounded-xl flex items-center gap-2"
+          className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] font-medium text-[14px] px-4 py-2 rounded-xl flex items-center gap-2"
         >
           <LinkIcon className="w-4 h-4" /> Link Activity
         </button>
@@ -439,7 +439,7 @@ function LinkActivityModal({ clientId, isOpen, onClose, existingActivityIds }: a
             <button 
               onClick={handleLink}
               disabled={selected.length === 0 || linkBulk.isPending}
-              className="px-4 py-2 text-[14px] font-medium text-white bg-sage-700 hover:bg-sage-600 rounded-xl disabled:opacity-50"
+              className="px-4 py-2 text-[14px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] rounded-xl disabled:opacity-50"
             >
               Link Selected
             </button>
@@ -455,7 +455,7 @@ function VendorsTab({ client }: { client: any }) {
   // For UI representation, we just display the concept.
   return (
     <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-12 shadow-panel-elevated text-center">
-      <Globe className="w-12 h-12 text-sage-200 mx-auto mb-4" />
+      <Globe className="w-12 h-12 text-[#6E747A] mx-auto mb-4" />
       <h3 className="text-xl font-bold text-[#F4F5F6] mb-2">Auto-generated Vendor List</h3>
       <p className="text-[15px] text-[#9BA1A6] max-w-md mx-auto mb-6">
         When processing activities are linked, Custodia automatically traverses the data flow graph to determine which of your vendors sub-process data for this client.

@@ -104,7 +104,7 @@ export function CommandPalette() {
             />
             <button
               onClick={() => setIsOpen(false)}
-              className="p-1 rounded-md hover:bg-ink-100 text-[#6E747A] focus:outline-none focus:ring-2 focus:ring-ink-500"
+              className="p-1 rounded-md hover:bg-white/10 text-[#6E747A] focus:outline-none focus:ring-2 focus:ring-ink-500"
               aria-label="Close search"
             >
               <X className="w-5 h-5" aria-hidden="true" />

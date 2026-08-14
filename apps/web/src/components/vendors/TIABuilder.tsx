@@ -131,7 +131,7 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
                 onClick={() => setStep(s.id)}
                 className={`w-full flex items-center justify-start gap-3 p-2 h-auto rounded-xl transition-colors relative z-10 ${step === s.id ? 'bg-[#0D0F11] shadow-panel-elevated border border-white/10 text-[#C9A227] hover:bg-[#0D0F11] hover:text-[#C9A227]' : 'text-[#6E747A] hover:bg-white/5 hover:text-[#F4F5F6]'}`}
               >
-                <div className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${step === s.id ? 'bg-sage-600 text-white' : 'bg-white/10 text-[#6E747A]'}`}>
+                <div className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${step === s.id ? 'bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A]' : 'bg-white/10 text-[#6E747A]'}`}>
                   {tia?.status === 'completed' ? <CheckCircle2 className="w-4 h-4 text-[#C9A227] bg-[#0D0F11] rounded-full" /> : s.id}
                 </div>
                 <span className="text-sm font-medium text-left">{s.name}</span>
@@ -142,7 +142,7 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
 
         {tia?.status === 'completed' && (
           <div className="pt-6 border-t border-white/10">
-            <div className="bg-[#C9A227]/10 text-sage-800 p-4 rounded-xl border border-[#C9A227]/30 text-sm">
+            <div className="bg-[#C9A227]/10 text-[#C9A227] p-4 rounded-xl border border-[#C9A227]/30 text-sm">
               <ShieldCheck className="w-5 h-5 mb-2 text-[#C9A227]" />
               <div className="font-bold mb-1">TIA Completed</div>
               <div className="text-xs opacity-80 mb-3">Approved on {format(new Date(tia.approvedAt!), 'MMM d, yyyy')}</div>
@@ -256,7 +256,7 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
           <div className="space-y-6 animate-in fade-in">
             <h2 className="text-2xl font-serif text-[#F4F5F6]">Step 3: Supplementary Measures</h2>
             {!requiresMeasures ? (
-              <div className="bg-[#C9A227]/10 text-sage-800 p-6 rounded-xl border border-[#C9A227]/30 text-center">
+              <div className="bg-[#C9A227]/10 text-[#C9A227] p-6 rounded-xl border border-[#C9A227]/30 text-center">
                 <CheckCircle2 className="w-8 h-8 mx-auto mb-3 text-sage-500" />
                 <p>Based on Step 2, supplementary measures are not strictly required. You can skip to Conclusion.</p>
               </div>

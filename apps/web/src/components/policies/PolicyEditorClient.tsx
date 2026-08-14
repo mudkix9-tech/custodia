@@ -74,15 +74,15 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
           <div className="border-b border-white/5 bg-[#0D0F11] px-6 py-3 flex gap-6 text-[13px] font-medium shrink-0">
             <button 
               onClick={() => setActiveTab('rich')}
-              className={`pb-2 -mb-3 ${activeTab === 'rich' ? 'text-[#C9A227] border-b-2 border-sage-600' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
+              className={`pb-2 -mb-3 ${activeTab === 'rich' ? 'text-[#C9A227] border-b-2 border-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
             >Rich Text</button>
             <button 
               onClick={() => setActiveTab('markdown')}
-              className={`pb-2 -mb-3 ${activeTab === 'markdown' ? 'text-[#C9A227] border-b-2 border-sage-600' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
+              className={`pb-2 -mb-3 ${activeTab === 'markdown' ? 'text-[#C9A227] border-b-2 border-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
             >Markdown</button>
             <button 
               onClick={() => setActiveTab('diff')}
-              className={`pb-2 -mb-3 ${activeTab === 'diff' ? 'text-[#C9A227] border-b-2 border-sage-600' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
+              className={`pb-2 -mb-3 ${activeTab === 'diff' ? 'text-[#C9A227] border-b-2 border-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
             >Diff View</button>
           </div>
           
@@ -116,7 +116,7 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
               </div>
             ) : (
               <div className="h-full flex items-center justify-center text-[#6E747A] flex-col">
-                <FileText className="w-12 h-12 mb-4 text-ink-200" />
+                <FileText className="w-12 h-12 mb-4 text-[#6E747A]" />
                 <p>No content yet. Click "Sync with ROPA" to generate the first draft.</p>
               </div>
             )}

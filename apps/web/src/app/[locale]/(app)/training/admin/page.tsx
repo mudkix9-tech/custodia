@@ -17,7 +17,7 @@ export default function TrainingAdminDashboard() {
   if (loadingModules || loadingCompletions) {
     return (
       <div className="flex-1 p-8 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C9A227]"></div>
       </div>
     );
   }
@@ -122,7 +122,7 @@ export default function TrainingAdminDashboard() {
                   {((completions as any)?.data || [])?.slice(0, 5).map((c: any) => (
                     <div key={c.id} className="p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-ink-100 flex items-center justify-center text-[#9BA1A6] font-medium text-[13px]">
+                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[#9BA1A6] font-medium text-[13px]">
                           {c.user?.name?.charAt(0)}
                         </div>
                         <div>
@@ -135,7 +135,7 @@ export default function TrainingAdminDashboard() {
                           c.status === 'passed' ? 'bg-emerald-50 text-emerald-700' :
                           c.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400' :
                           c.status === 'failed' ? 'bg-rose-50 text-rose-700' :
-                          'bg-ink-100 text-[#E6E8EA]'
+                          'bg-white/10 text-[#E6E8EA]'
                         }`}>
                           {(c.status || '').replace('_', ' ')}
                         </span>
@@ -182,7 +182,7 @@ export default function TrainingAdminDashboard() {
                       <td className="py-4 px-6 capitalize text-[#9BA1A6]">{m.targetRole}</td>
                       <td className="py-4 px-6">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${
-                          m.status === 'published' ? 'bg-emerald-50 text-emerald-700' : 'bg-ink-100 text-[#E6E8EA]'
+                          m.status === 'published' ? 'bg-emerald-50 text-emerald-700' : 'bg-white/10 text-[#E6E8EA]'
                         }`}>
                           {m.status}
                         </span>
@@ -219,7 +219,7 @@ export default function TrainingAdminDashboard() {
                           c.status === 'passed' ? 'bg-emerald-50 text-emerald-700' :
                           c.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400' :
                           c.status === 'failed' ? 'bg-rose-50 text-rose-700' :
-                          'bg-ink-100 text-[#E6E8EA]'
+                          'bg-white/10 text-[#E6E8EA]'
                         }`}>
                           {(c.status || '').replace('_', ' ')}
                         </span>

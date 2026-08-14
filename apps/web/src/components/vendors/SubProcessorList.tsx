@@ -91,7 +91,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
             {subProcessors?.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-[#6E747A]">
-                  <Network className="w-12 h-12 text-ink-200 mx-auto mb-3" />
+                  <Network className="w-12 h-12 text-[#6E747A] mx-auto mb-3" />
                   <p>No sub-processors recorded.</p>
                 </td>
               </tr>
@@ -158,14 +158,14 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
               <Button 
                 variant="ghost"
                 onClick={() => setAddMode('linked')}
-                className={`flex-1 rounded-none px-4 py-3 h-auto text-sm font-medium transition-colors ${addMode === 'linked' ? 'bg-[#0D0F11] text-[#C9A227] border-b-2 border-sage-600 hover:bg-[#0D0F11] hover:text-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
+                className={`flex-1 rounded-none px-4 py-3 h-auto text-sm font-medium transition-colors ${addMode === 'linked' ? 'bg-[#0D0F11] text-[#C9A227] border-b-2 border-[#C9A227] hover:bg-[#0D0F11] hover:text-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
               >
                 Search Database
               </Button>
               <Button 
                 variant="ghost"
                 onClick={() => setAddMode('unlinked')}
-                className={`flex-1 rounded-none px-4 py-3 h-auto text-sm font-medium transition-colors ${addMode === 'unlinked' ? 'bg-[#0D0F11] text-[#C9A227] border-b-2 border-sage-600 hover:bg-[#0D0F11] hover:text-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
+                className={`flex-1 rounded-none px-4 py-3 h-auto text-sm font-medium transition-colors ${addMode === 'unlinked' ? 'bg-[#0D0F11] text-[#C9A227] border-b-2 border-[#C9A227] hover:bg-[#0D0F11] hover:text-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
               >
                 Manual Entry
               </Button>
@@ -276,7 +276,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
 
               return (
                 <div key={ch.id} className="relative group">
-                  <div className="absolute -left-[31px] top-1.5 w-4.5 h-4.5 rounded-full border-4 border-white bg-sage-600 ring-1 ring-ink-900/10 group-hover:scale-110 transition-transform flex items-center justify-center">
+                  <div className="absolute -left-[31px] top-1.5 w-4.5 h-4.5 rounded-full border-4 border-[#0D0F11] bg-[#C9A227] ring-1 ring-white/10 group-hover:scale-110 transition-transform flex items-center justify-center">
                     <Calendar className="w-1.5 h-1.5 text-white" />
                   </div>
 
@@ -320,7 +320,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                         <Button
                           variant="ghost"
                           onClick={() => setExpandedChangeId(isExpanded ? null : ch.id)}
-                          className="flex items-center gap-1 text-xs font-medium text-[#C9A227] hover:text-sage-800 hover:bg-transparent transition-colors"
+                          className="flex items-center gap-1 text-xs font-medium text-[#C9A227] hover:text-[#E5C463] hover:bg-transparent transition-colors"
                         >
                           {isExpanded ? (
                             <>Hide Changes <ChevronUp className="w-3.5 h-3.5" /></>
@@ -345,7 +345,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                                 </div>
                               ))}
                               {addedLines.map((line, i) => (
-                                <div key={`add-${i}`} className="bg-[#C9A227]/10 text-sage-800 border-l-2 border-[#C9A227]/50 px-3 py-1.5 rounded flex items-start gap-2">
+                                <div key={`add-${i}`} className="bg-[#C9A227]/10 text-[#C9A227] border-l-2 border-[#C9A227]/50 px-3 py-1.5 rounded flex items-start gap-2">
                                   <span className="font-bold shrink-0 text-[#C9A227]">+</span>
                                   <span className="break-all">{line}</span>
                                 </div>

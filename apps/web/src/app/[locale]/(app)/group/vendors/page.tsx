@@ -47,10 +47,10 @@ export default function GroupVendorConsistencyPage() {
       </div>
 
       <div className="bg-[#0D0F11] hairline rounded-xl shadow-panel-elevated overflow-hidden mb-8">
-        <div className="p-6 border-b border-ink-100 flex justify-between items-center bg-[#08090A]/50">
+        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#08090A]/50">
           <h2 className="text-lg font-medium text-[#F4F5F6]">Cross-Entity Vendor Breakdown</h2>
         </div>
-        <div className="divide-y divide-ink-100">
+        <div className="divide-y divide-white/10">
           <div className="grid grid-cols-12 gap-4 p-4 bg-[#08090A] text-xs font-medium text-[#6E747A] uppercase tracking-wider">
             <div className="col-span-4">Vendor</div>
             <div className="col-span-2 text-center">Usage</div>
@@ -73,7 +73,7 @@ export default function GroupVendorConsistencyPage() {
               <React.Fragment key={vendor.vendorId}>
                 <div className={`grid grid-cols-12 gap-4 p-4 items-center transition-colors ${vendor.inconsistent ? 'bg-amber-500/30 hover:bg-amber-500/60' : 'hover:bg-[#08090A]'}`}>
                   <div className="col-span-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-ink-100 flex items-center justify-center text-[#9BA1A6] font-medium text-sm">
+                    <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center text-[#9BA1A6] font-medium text-sm">
                       <Building2 className="w-4 h-4" />
                     </div>
                     <div>
@@ -120,9 +120,9 @@ export default function GroupVendorConsistencyPage() {
                 </div>
 
                 {isExpanded && (
-                  <div className="col-span-12 bg-[#08090A]/50 p-4 border-b border-ink-100">
+                  <div className="col-span-12 bg-[#08090A]/50 p-4 border-b border-white/10">
                     <div className="rounded-lg border border-white/10 bg-[#0D0F11] overflow-hidden shadow-panel-elevated">
-                      <table className="min-w-full divide-y divide-ink-200">
+                      <table className="min-w-full divide-y divide-white/10">
                         <thead className="bg-[#08090A]">
                           <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#6E747A] uppercase tracking-wider">Entity</th>
@@ -131,7 +131,7 @@ export default function GroupVendorConsistencyPage() {
                             <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-[#6E747A] uppercase tracking-wider">Action</th>
                           </tr>
                         </thead>
-                        <tbody className="bg-[#0D0F11] divide-y divide-ink-100">
+                        <tbody className="bg-[#0D0F11] divide-y divide-white/10">
                           {vendor.entityDetails.map((detail: any, idx: number) => (
                             <tr key={idx} className={vendor.inconsistent && detail.dpaStatus !== 'signed' ? 'bg-red-500/20' : ''}>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#F4F5F6]">
@@ -148,9 +148,9 @@ export default function GroupVendorConsistencyPage() {
                                 <div className="flex items-center gap-2">
                                   <span className={`px-2 py-0.5 rounded text-xs font-medium
                                     ${detail.riskLevel === 'critical' ? 'bg-red-500/20 text-red-400' : 
-                                      detail.riskLevel === 'high' ? 'bg-amber-100 text-amber-400' : 
+                                      detail.riskLevel === 'high' ? 'bg-amber-500/15 text-amber-400' : 
                                       detail.riskLevel === 'medium' ? 'bg-blue-100 text-blue-400' : 
-                                      'bg-sage-100 text-[#C9A227]'}`}>
+                                      'bg-[#C9A227]/15 text-[#C9A227]'}`}>
                                     {detail.riskLevel || 'unknown'}
                                   </span>
                                   <span className="text-xs text-[#6E747A]">({detail.riskScore})</span>

@@ -208,7 +208,7 @@ export function DpaAnalysisModal({
             <button
               onClick={handleApply}
               disabled={isSubmitting}
-              className="bg-sage-700 hover:bg-sage-600 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow-card hover:shadow-sage-500/10 transition-all duration-300 disabled:opacity-50"
+              className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] font-semibold text-xs px-5 py-2.5 rounded-lg shadow-card hover:shadow-sage-500/10 transition-all duration-300 disabled:opacity-50"
             >
               Apply and lock DPA checklist
             </button>

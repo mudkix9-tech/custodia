@@ -56,7 +56,7 @@ export default function ConsentDashboard() {
             <button 
               onClick={() => createMutation.mutate({ domain })}
               disabled={!domain || createMutation.isPending}
-              className="bg-sage-600 text-white px-6 py-2 rounded-xl font-medium disabled:opacity-50"
+              className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] px-6 py-2 rounded-xl font-medium disabled:opacity-50"
             >
               {createMutation.isPending ? t('adding') : t('add_domain')}
             </button>
@@ -79,10 +79,10 @@ export default function ConsentDashboard() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${d.gcmV2Enabled ? 'bg-sage-100 text-[#C9A227]' : 'bg-white/5 text-[#6E747A]'}`}>
+                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${d.gcmV2Enabled ? 'bg-[#C9A227]/15 text-[#C9A227]' : 'bg-white/5 text-[#6E747A]'}`}>
                   {t('gcm_v2')}
                 </span>
-                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${d.tcfEnabled ? 'bg-sage-100 text-[#C9A227]' : 'bg-white/5 text-[#6E747A]'}`}>
+                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${d.tcfEnabled ? 'bg-[#C9A227]/15 text-[#C9A227]' : 'bg-white/5 text-[#6E747A]'}`}>
                   {t('tcf')}
                 </span>
               </div>

@@ -69,12 +69,12 @@ export function HistoryTab({ activityId }: { activityId: string }) {
               {change.key}
             </div>
             <div className="grid grid-cols-2 divide-x divide-ink-900/10">
-              <div className="p-2 bg-clay-50/30 text-clay-700 break-all">
-                <span className="text-clay-400 select-none mr-2">-</span>
+              <div className="p-2 bg-red-500/10 text-red-400 break-all">
+                <span className="text-red-400 select-none mr-2">-</span>
                 {typeof change.old === 'object' ? JSON.stringify(change.old) : String(change.old || 'null')}
               </div>
-              <div className="p-2 bg-[#C9A227]/30 text-[#C9A227] break-all">
-                <span className="text-sage-400 select-none mr-2">+</span>
+              <div className="p-2 bg-green-500/10 text-green-400 break-all">
+                <span className="text-green-400 select-none mr-2">+</span>
                 {typeof change.new === 'object' ? JSON.stringify(change.new) : String(change.new || 'null')}
               </div>
             </div>

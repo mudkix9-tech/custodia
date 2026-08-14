@@ -77,7 +77,7 @@ export function GapRemediationList() {
         <button
           onClick={() => setFilterSource('all')}
           className={`pb-2 px-3 border-b-2 transition-colors ${
-            filterSource === 'all' ? 'border-sage-600 text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'
+            filterSource === 'all' ? 'border-[#C9A227] text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'
           }`}
         >
           All Gaps
@@ -85,7 +85,7 @@ export function GapRemediationList() {
         <button
           onClick={() => setFilterSource('scanner')}
           className={`pb-2 px-3 border-b-2 transition-colors ${
-            filterSource === 'scanner' ? 'border-sage-600 text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'
+            filterSource === 'scanner' ? 'border-[#C9A227] text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'
           }`}
         >
           Scanner Detected
@@ -93,7 +93,7 @@ export function GapRemediationList() {
         <button
           onClick={() => setFilterSource('dpia')}
           className={`pb-2 px-3 border-b-2 transition-colors ${
-            filterSource === 'dpia' ? 'border-sage-600 text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'
+            filterSource === 'dpia' ? 'border-[#C9A227] text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'
           }`}
         >
           DPIA Identified
@@ -101,10 +101,10 @@ export function GapRemediationList() {
       </div>
 
       {activeAndRemovedGaps.length === 0 ? (
-        <div className="p-8 text-center bg-[#C9A227]/50 rounded-2xl border border-sage-100/50">
-          <CheckCircle2 className="w-10 h-10 text-sage-500 mx-auto mb-3" />
-          <h3 className="text-[14.5px] font-semibold text-sage-900">No Compliance Gaps</h3>
-          <p className="text-[#C9A227] mt-1 text-[13px]">No active compliance gaps found under the selected filter.</p>
+        <div className="p-8 text-center bg-[#C9A227]/[0.07] rounded-2xl border border-[#C9A227]/25">
+          <CheckCircle2 className="w-10 h-10 text-[#C9A227] mx-auto mb-3" />
+          <h3 className="text-[14.5px] font-semibold text-[#F4F5F6]">No Compliance Gaps</h3>
+          <p className="text-[#9BA1A6] mt-1 text-[13px]">No active compliance gaps found under the selected filter.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -134,13 +134,13 @@ export function GapRemediationList() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     {isRemoved ? (
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-sage-100 text-sage-800">
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#C9A227]/15 text-[#C9A227]">
                         Resolved
                       </span>
                     ) : (
                       <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
                         gap.severity === 'critical' ? 'bg-red-500/20 text-red-400' :
-                        gap.severity === 'high' ? 'bg-amber-100 text-amber-400' :
+                        gap.severity === 'high' ? 'bg-amber-500/15 text-amber-400' :
                         'bg-blue-100 text-blue-400'
                       }`}>{gap.severity}</span>
                     )}
@@ -154,8 +154,8 @@ export function GapRemediationList() {
                   {/* DPIA Source Badge */}
                   {gap.source === 'dpia' && gap.dpiaTitle && (
                     <div className="mt-2">
-                      <span className="inline-flex items-center bg-[#C9A227]/10 text-sage-800 border border-[#C9A227]/50 text-[10px] px-2.5 py-1 rounded-md font-medium">
-                        From DPIA: <Link href={gap.resolutionUrl || '/ropa'} className="underline hover:text-sage-950 font-bold ml-1">{gap.dpiaTitle}</Link>
+                      <span className="inline-flex items-center bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/50 text-[10px] px-2.5 py-1 rounded-md font-medium">
+                        From DPIA: <Link href={gap.resolutionUrl || '/ropa'} className="underline hover:text-[#E5C463] font-bold ml-1">{gap.dpiaTitle}</Link>
                       </span>
                     </div>
                   )}
@@ -182,7 +182,7 @@ export function GapRemediationList() {
                     {/* AI Explain - click-only */}
                     <button
                       onClick={() => handleGapClick(gap)}
-                      className="bg-amber-500/10 text-amber-400 hover:bg-amber-100 border border-amber-900/50 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
+                      className="bg-amber-500/10 text-amber-400 hover:bg-amber-500/15 border border-amber-900/50 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
                     >
                       <Lightbulb className="w-3 h-3" /> Explain
                     </button>
@@ -226,7 +226,7 @@ export function GapRemediationList() {
               <button 
                 onClick={handleDismiss} 
                 disabled={dismissReason.length < 10 || dismissMutation.isPending}
-                className="px-4 py-2 text-sm font-medium bg-sage-600 text-white hover:bg-sage-700 rounded-lg disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] rounded-lg disabled:opacity-50"
               >
                 Confirm Dismissal
               </button>

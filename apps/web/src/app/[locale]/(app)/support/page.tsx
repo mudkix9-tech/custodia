@@ -12,7 +12,7 @@ export default function EnterpriseSupportPage() {
   if (isLoading) {
     return (
       <div className="p-8 flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-sage-600 border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-[#C9A227] border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -29,7 +29,7 @@ export default function EnterpriseSupportPage() {
           </p>
           <Link
             href="/settings"
-            className="inline-flex items-center gap-2 bg-sage-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-sage-700 transition-colors"
+            className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] px-4 py-2 rounded-lg font-medium hover:bg-[#E5C463] transition-colors"
           >
             Manage Subscription
           </Link>
@@ -121,7 +121,7 @@ export default function EnterpriseSupportPage() {
             <div className="text-sm text-[#9BA1A6] mb-1">Next Scheduled QBR</div>
             <div className="font-medium text-[#F4F5F6]">{format(nextQbrDate, 'MMMM d, yyyy')}</div>
           </div>
-          <button className="w-full bg-sage-600 text-white hover:bg-sage-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <button className="w-full bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] px-4 py-2 rounded-lg text-sm font-medium transition-colors">
             Generate Pre-read PDF
           </button>
           <p className="text-xs text-[#6E747A] mt-3 text-center">
@@ -156,9 +156,9 @@ export default function EnterpriseSupportPage() {
                   <td className="px-6 py-4 font-medium text-[#F4F5F6]">{ticket.subject}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                      ${ticket.status === 'Open' ? 'bg-amber-100 text-amber-800' :
+                      ${ticket.status === 'Open' ? 'bg-amber-500/15 text-amber-800' :
                         ticket.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
-                        'bg-sage-100 text-sage-800'}`}
+                        'bg-[#C9A227]/15 text-[#C9A227]'}`}
                     >
                       {ticket.status}
                     </span>

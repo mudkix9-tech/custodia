@@ -27,7 +27,7 @@ export default async function PublicPrivacyPolicy({ params }: { params: Promise<
   if (!policy || !policy.currentVersionId) {
     return (
       <div className="min-h-screen bg-bone-50 flex flex-col items-center justify-center p-8 text-center">
-        <Shield className="w-16 h-16 text-ink-200 mb-6" />
+        <Shield className="w-16 h-16 text-ink-300 mb-6" />
         <h1 className="text-2xl font-serif text-ink-900 mb-2">Policy Not Found</h1>
         <p className="text-ink-600 max-w-md mx-auto">
           The privacy policy for {org.name} has not been published yet. Please check back later.

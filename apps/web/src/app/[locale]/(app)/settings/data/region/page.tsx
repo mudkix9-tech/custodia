@@ -131,7 +131,7 @@ export default function DataResidencyPage() {
                     <div className="font-medium text-set-fg">{region.name}</div>
                     <div className="text-sm text-set-fg-subtle mt-1">{region.id}</div>
                     {region.id === orgData.dataRegion && (
-                      <span className="inline-block mt-2 text-xs font-medium bg-ink-200 text-set-fg px-2 py-1 rounded">Current Region</span>
+                      <span className="inline-block mt-2 text-xs font-medium bg-white/10 text-set-fg px-2 py-1 rounded">Current Region</span>
                     )}
                   </div>
                 ))}
@@ -144,7 +144,7 @@ export default function DataResidencyPage() {
                   <div className="mt-4 flex gap-3">
                     <button
                       onClick={() => setSelectedRegion('')}
-                      className="px-4 py-2 border border-amber-300 rounded text-amber-800 hover:bg-amber-100 font-medium"
+                      className="px-4 py-2 border border-amber-300 rounded text-amber-800 hover:bg-amber-500/15 font-medium"
                     >
                       Cancel
                     </button>

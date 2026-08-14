@@ -24,8 +24,8 @@ export default function GroupDashboardPage() {
         <div>
           <h1 className="text-2xl font-serif text-[#F4F5F6]">Group Management</h1>
           <p className="mt-2 text-sm text-[#6E747A] mb-4">Aggregated compliance metrics across all entities</p>
-          <div className="flex gap-4 border-b border-ink-100">
-            <Link href="/group" className="px-1 py-2 text-sm font-medium text-[#C9A227] border-b-2 border-sage-600">
+          <div className="flex gap-4 border-b border-white/10">
+            <Link href="/group" className="px-1 py-2 text-sm font-medium text-[#C9A227] border-b-2 border-[#C9A227]">
               Dashboard
             </Link>
             <Link href="/group/vendors" className="px-1 py-2 text-sm font-medium text-[#6E747A] hover:text-[#F4F5F6] transition-colors">
@@ -79,10 +79,10 @@ export default function GroupDashboardPage() {
       </div>
 
       <div className="bg-[#0D0F11] hairline rounded-xl shadow-panel-elevated overflow-hidden mb-8">
-        <div className="p-6 border-b border-ink-100 flex justify-between items-center">
+        <div className="p-6 border-b border-white/10 flex justify-between items-center">
           <h2 className="text-lg font-medium text-[#F4F5F6]">Compliance Breakdown by Entity</h2>
         </div>
-        <div className="divide-y divide-ink-100">
+        <div className="divide-y divide-white/10">
           <div className="grid grid-cols-12 gap-4 p-4 bg-[#08090A] text-xs font-medium text-[#6E747A] uppercase tracking-wider">
             <div className="col-span-4">Entity</div>
             <div className="col-span-3 text-center">Score</div>
@@ -92,7 +92,7 @@ export default function GroupDashboardPage() {
           {scoresData?.breakdown?.map((org) => (
             <div key={org.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-[#08090A] transition-colors">
               <div className="col-span-4 flex items-center gap-3">
-                <div className="w-8 h-8 rounded bg-sage-100 flex items-center justify-center text-[#C9A227] font-medium text-sm">
+                <div className="w-8 h-8 rounded bg-[#C9A227]/15 flex items-center justify-center text-[#C9A227] font-medium text-sm">
                   {org.name.charAt(0).toUpperCase()}
                 </div>
                 <div>

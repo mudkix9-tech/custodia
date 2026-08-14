@@ -131,7 +131,7 @@ export default function AssessmentsDashboardPage() {
             }
             setIsSendModalOpen(true);
           }}
-          className="inline-flex items-center gap-2 bg-sage-700 hover:bg-sage-600 text-white text-[14px] font-medium px-5 py-2.5 rounded-xl transition-all shadow-md"
+          className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[14px] font-medium px-5 py-2.5 rounded-xl transition-all shadow-md"
         >
           <Plus className="w-4 h-4" /> Send Assessment
         </button>
@@ -195,7 +195,7 @@ export default function AssessmentsDashboardPage() {
                 onClick={() => setActiveFilter(filter)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors border ${
                   activeFilter === filter
-                    ? 'bg-sage-700 border-sage-700 text-white shadow-panel-elevated'
+                    ? 'bg-[#C9A227] border-[#C9A227] text-[#08090A] shadow-panel-elevated'
                     : 'bg-[#0D0F11] border-white/10 text-[#9BA1A6] hover:bg-white/50'
                 }`}
               >
@@ -240,7 +240,7 @@ export default function AssessmentsDashboardPage() {
                   return (
                     <tr key={assessment.id} className="hover:bg-[#08090A]/30 transition-colors text-[#F4F5F6] text-sm">
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-ink-950">{vendorName || 'Unknown Vendor'}</div>
+                        <div className="font-semibold text-[#F4F5F6]">{vendorName || 'Unknown Vendor'}</div>
                         <div className="text-xs text-[#6E747A]">{template?.name}</div>
                       </td>
                       <td className="px-6 py-4">
@@ -330,7 +330,7 @@ export default function AssessmentsDashboardPage() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#0D0F11] border border-ink-900/15 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up">
             <div className="bg-[#08090A] px-6 py-4 border-b border-white/10 flex justify-between items-center">
-              <h3 className="font-serif text-lg text-ink-950 font-bold">Dispatch Security Questionnaire</h3>
+              <h3 className="font-serif text-lg text-[#F4F5F6] font-bold">Dispatch Security Questionnaire</h3>
               <button 
                 onClick={() => setIsSendModalOpen(false)}
                 className="text-[#6E747A] hover:text-[#9BA1A6] font-bold text-sm"
@@ -345,7 +345,7 @@ export default function AssessmentsDashboardPage() {
                   required
                   value={selectedVendorId}
                   onChange={(e) => setSelectedVendorId(e.target.value)}
-                  className="w-full bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-sage-600 transition-colors"
+                  className="w-full bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
                 >
                   <option value="">Select a vendor...</option>
                   {vendors.map(v => (
@@ -360,7 +360,7 @@ export default function AssessmentsDashboardPage() {
                   required
                   value={selectedTemplateId}
                   onChange={(e) => setSelectedTemplateId(e.target.value)}
-                  className="w-full bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-sage-600 transition-colors"
+                  className="w-full bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
                 >
                   {templates?.map(t => (
                     <option key={t.id} value={t.id}>{t.name} {t.isDefault ? '(Default)' : ''}</option>
@@ -376,7 +376,7 @@ export default function AssessmentsDashboardPage() {
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
                     placeholder="e.g. Security Team"
-                    className="w-full bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-sage-600 transition-colors"
+                    className="w-full bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
                   />
                 </div>
                 <div>
@@ -387,7 +387,7 @@ export default function AssessmentsDashboardPage() {
                     value={recipientEmail}
                     onChange={(e) => setRecipientEmail(e.target.value)}
                     placeholder="e.g. security@vendor.com"
-                    className="w-full bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-sage-600 transition-colors"
+                    className="w-full bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
                   />
                 </div>
               </div>
@@ -407,7 +407,7 @@ export default function AssessmentsDashboardPage() {
                 <button
                   type="submit"
                   disabled={sendAssessmentMutation.isPending}
-                  className="px-5 py-2 bg-sage-700 hover:bg-sage-600 text-white font-medium rounded-xl transition-all shadow-panel-elevated flex items-center gap-2 text-sm"
+                  className="px-5 py-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] font-medium rounded-xl transition-all shadow-panel-elevated flex items-center gap-2 text-sm"
                 >
                   {sendAssessmentMutation.isPending ? (
                     <>
@@ -431,7 +431,7 @@ export default function AssessmentsDashboardPage() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#0D0F11] border border-ink-900/15 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up">
             <div className="bg-[#08090A] px-6 py-4 border-b border-white/10 flex justify-between items-center">
-              <h3 className="font-serif text-lg text-ink-950 font-bold">Audit Review &amp; Adjustment</h3>
+              <h3 className="font-serif text-lg text-[#F4F5F6] font-bold">Audit Review &amp; Adjustment</h3>
               <button 
                 onClick={() => setIsReviewModalOpen(false)}
                 className="text-[#6E747A] hover:text-[#9BA1A6] font-bold text-sm"
@@ -449,7 +449,7 @@ export default function AssessmentsDashboardPage() {
                   max="50"
                   value={reviewScoreAdj}
                   onChange={(e) => setReviewScoreAdj(parseInt(e.target.value) || 0)}
-                  className="w-full bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-sage-600 transition-colors"
+                  className="w-full bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
                 />
                 <span className="text-[11px] text-[#6E747A] block mt-1">Adjusts the base questionnaire compliance score. Negative values decrease security compliance, positive values increase it.</span>
               </div>
@@ -460,7 +460,7 @@ export default function AssessmentsDashboardPage() {
                   value={reviewSummary}
                   onChange={(e) => setReviewSummary(e.target.value)}
                   placeholder="Record verification notes, observations, or grounds for adjustments..."
-                  className="w-full h-32 bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-sage-600 transition-colors"
+                  className="w-full h-32 bg-[#0D0F11] border border-ink-900/15 rounded-xl p-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
                 />
               </div>
 
@@ -475,7 +475,7 @@ export default function AssessmentsDashboardPage() {
                 <button
                   type="submit"
                   disabled={reviewAssessmentMutation.isPending}
-                  className="px-5 py-2 bg-sage-700 hover:bg-sage-600 text-white font-medium rounded-xl transition-all shadow-panel-elevated flex items-center gap-2 text-sm"
+                  className="px-5 py-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] font-medium rounded-xl transition-all shadow-panel-elevated flex items-center gap-2 text-sm"
                 >
                   {reviewAssessmentMutation.isPending ? (
                     <>

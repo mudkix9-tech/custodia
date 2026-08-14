@@ -14,7 +14,7 @@ export default function EmployeeTrainingDashboard() {
   if (isLoading) {
     return (
       <div className="flex-1 p-8 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C9A227]"></div>
       </div>
     );
   }
@@ -63,7 +63,7 @@ export default function EmployeeTrainingDashboard() {
                           c.status === 'passed' ? 'bg-emerald-50 text-emerald-700' :
                           c.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400' :
                           c.status === 'failed' ? 'bg-rose-50 text-rose-700' :
-                          'bg-ink-100 text-[#E6E8EA]'
+                          'bg-white/10 text-[#E6E8EA]'
                         }`}>
                           {(c.status || '').replace('_', ' ')}
                         </span>

@@ -50,7 +50,7 @@ function getRiskLevelBadge(level: string) {
     case 'medium':
       return 'bg-amber-500/10 text-amber-400 border-amber-900/50';
     case 'high':
-      return 'bg-clay-50 text-clay-700 border-clay-200/50';
+      return 'bg-red-500/10 text-red-400 border-red-500/30';
     case 'critical':
       return 'bg-red-500/10 text-red-400 border-red-900/50';
     default:
@@ -307,7 +307,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
     return (
       <div className="space-y-6 max-w-3xl fade-up">
         <div className="bg-[#08090A] hairline rounded-2xl p-8 text-center space-y-4">
-          <div className="mx-auto w-12 h-12 bg-clay-50 rounded-full flex items-center justify-center mb-4">
+          <div className="mx-auto w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
             <ShieldAlert className="w-6 h-6 text-clay-600" />
           </div>
           <h2 className="text-[16px] font-medium text-[#F4F5F6]">Data Protection Impact Assessment</h2>
@@ -376,7 +376,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
       accessorKey: 'initialRiskScore',
       cell: (info: any) => {
         const score = info.getValue();
-        const color = score >= 15 ? 'bg-clay-100 text-clay-700' : score >= 8 ? 'bg-amber-100 text-amber-400' : 'bg-sage-100 text-[#C9A227]';
+        const color = score >= 15 ? 'bg-red-500/15 text-red-400' : score >= 8 ? 'bg-amber-500/15 text-amber-400' : 'bg-[#C9A227]/15 text-[#C9A227]';
         return <span className={`px-2 py-1 rounded font-medium ${color}`}>{score}</span>;
       }
     },
@@ -421,7 +421,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
           <Button
             variant="outline"
             onClick={() => handleAddHighRiskVendorRisk(vendor)}
-            className="text-amber-800 bg-[#0D0F11] border-amber-900/50 hover:bg-amber-100/50 self-start sm:self-center shrink-0 shadow-panel-elevated"
+            className="text-amber-800 bg-[#0D0F11] border-amber-900/50 hover:bg-amber-500/15 self-start sm:self-center shrink-0 shadow-panel-elevated"
           >
             Document Risk
           </Button>
@@ -491,7 +491,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteResidualRisk(risk.id)}
-                      className="text-[#6E747A] hover:text-clay-600 hover:bg-clay-50"
+                      className="text-[#6E747A] hover:text-clay-600 hover:bg-red-500/10"
                       title="Delete residual risk"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -511,7 +511,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                       
                       {/* Vendor suggestion banner */}
                       {matchedVendor && risk.relatedVendorId !== matchedVendor.orgVendorId && (
-                        <div className="mt-1 flex items-center justify-between p-2 bg-[#C9A227]/70 border border-[#C9A227]/50 rounded-lg text-[12px] text-sage-800">
+                        <div className="mt-1 flex items-center justify-between p-2 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-lg text-[12px] text-[#C9A227]">
                           <span className="flex items-center gap-1.5">
                             💡 Suggestion: Link to vendor <strong>{matchedVendor.name}</strong>?
                           </span>
@@ -520,7 +520,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                             size="sm"
                             type="button"
                             onClick={() => handleFieldChange(risk.id, 'relatedVendorId', matchedVendor.orgVendorId)}
-                            className="text-[11px] font-bold text-[#C9A227] hover:text-sage-800 bg-[#0D0F11] border-[#C9A227]/30 h-auto py-0.5 px-2"
+                            className="text-[11px] font-bold text-[#C9A227] hover:text-[#E5C463] bg-[#0D0F11] border-[#C9A227]/30 h-auto py-0.5 px-2"
                           >
                             Link Vendor
                           </Button>
@@ -714,7 +714,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                               onClick={() => handleMitigationStatusChange(risk.id, 'in_progress')}
                               className={`flex-1 h-auto py-1.5 px-2 text-[12px] ${
                                 risk.mitigationStatus === 'in_progress' 
-                                  ? 'bg-amber-100 text-amber-800 shadow-panel-elevated border border-amber-900/50 hover:bg-amber-100 hover:text-amber-800' 
+                                  ? 'bg-amber-500/15 text-amber-800 shadow-panel-elevated border border-amber-900/50 hover:bg-amber-500/15 hover:text-amber-800' 
                                   : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >
@@ -725,7 +725,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                               onClick={() => handleMitigationStatusChange(risk.id, 'completed')}
                               className={`flex-1 h-auto py-1.5 px-2 text-[12px] ${
                                 risk.mitigationStatus === 'completed' 
-                                  ? 'bg-sage-100 text-sage-800 shadow-panel-elevated border border-[#C9A227]/50 hover:bg-sage-100 hover:text-sage-800' 
+                                  ? 'bg-[#C9A227]/15 text-[#C9A227] shadow-panel-elevated border border-[#C9A227]/50 hover:bg-[#C9A227]/20 hover:text-[#E5C463]' 
                                   : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >

@@ -152,7 +152,7 @@ export function DiscoveryTab() {
             <Button
               variant="ghost"
               onClick={() => setSubTab('inbox')}
-              className={`py-4 px-0 h-auto rounded-none text-xs font-semibold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${subTab === 'inbox' ? 'border-sage-600 text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-transparent'}`}
+              className={`py-4 px-0 h-auto rounded-none text-xs font-semibold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${subTab === 'inbox' ? 'border-[#C9A227] text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-transparent'}`}
             >
               <Inbox className="w-4 h-4" />
               Actionable Inbox
@@ -160,7 +160,7 @@ export function DiscoveryTab() {
             <Button
               variant="ghost"
               onClick={() => setSubTab('archive')}
-              className={`py-4 px-0 h-auto rounded-none text-xs font-semibold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${subTab === 'archive' ? 'border-sage-600 text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-transparent'}`}
+              className={`py-4 px-0 h-auto rounded-none text-xs font-semibold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${subTab === 'archive' ? 'border-[#C9A227] text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-transparent'}`}
             >
               <Archive className="w-4 h-4" />
               Scan Logs & Archive
@@ -238,11 +238,11 @@ export function DiscoveryTab() {
                         <span className="text-xs text-[#6E747A] capitalize">
                           Source: {discovery.discoveryMethod.replace('_', ' ')}
                         </span>
-                        <span className="text-ink-200 text-xs">|</span>
+                        <span className="text-[#6E747A] text-xs">|</span>
                         <span className="text-xs text-[#6E747A]">
                           First seen: {new Date(discovery.firstDetectedAt).toLocaleDateString()}
                         </span>
-                        <span className="text-ink-200 text-xs">|</span>
+                        <span className="text-[#6E747A] text-xs">|</span>
                         {matchBadge}
                         {/* The consent category this host needs, resolved from the
                             tracker registry. Whoever triages this inbox has to
@@ -250,7 +250,7 @@ export function DiscoveryTab() {
                             hostname does not answer that. */}
                         {tracker?.requiredCategory && (
                           <>
-                            <span className="text-ink-200 text-xs">|</span>
+                            <span className="text-[#6E747A] text-xs">|</span>
                             <span
                               className={`inline-flex items-center gap-1 border text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                                 CONSENT_CATEGORY_STYLES[tracker.requiredCategory] ?? CONSENT_CATEGORY_STYLES.default
@@ -271,7 +271,7 @@ export function DiscoveryTab() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDismiss(discovery.id)}
-                        className="text-[#6E747A] hover:text-ink-950 hover:bg-white/5 transition-colors border border-white/10"
+                        className="text-[#6E747A] hover:text-[#F4F5F6] hover:bg-white/5 transition-colors border border-white/10"
                         title="Dismiss / Ignore"
                       >
                         <Trash2 className="w-4 h-4" />

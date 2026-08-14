@@ -156,7 +156,7 @@ export default function VendorDetailsPage() {
                     <label className="flex items-center gap-2 cursor-pointer bg-[#08090A] p-2 rounded-lg border border-white/10">
                       <input 
                         type="checkbox" 
-                        className="rounded border-ink-300 text-[#C9A227] focus:ring-sage-600"
+                        className="rounded border-ink-300 text-[#C9A227] focus:ring-[#C9A227]"
                         checked={vendor.orgVendor.usingEuHosting || false}
                         onChange={handleToggleEuHosting}
                         disabled={updateMutation.isPending}
@@ -202,7 +202,7 @@ export default function VendorDetailsPage() {
                       {/* Visual progress bar */}
                       <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
                         <div 
-                          className={`h-full ${factor.points > (factor.maxPoints / 2) ? 'bg-red-400' : factor.points > 0 ? 'bg-amber-400' : 'bg-sage-400'}`}
+                          className={`h-full ${factor.points > (factor.maxPoints / 2) ? 'bg-red-400' : factor.points > 0 ? 'bg-amber-400' : 'bg-green-500'}`}
                           style={{ width: `${(factor.points / factor.maxPoints) * 100}%` }}
                         />
                       </div>
@@ -222,31 +222,31 @@ export default function VendorDetailsPage() {
             <div className="flex border-b border-white/10 bg-[#08090A]/50">
               <button 
                 onClick={() => setActiveTab('dpa')}
-                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'dpa' ? 'border-sage-600 text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'dpa' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 DPA Management
               </button>
               <button 
                 onClick={() => setActiveTab('tia')}
-                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'tia' ? 'border-sage-600 text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'tia' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 Transfer Impact
               </button>
               <button 
                 onClick={() => setActiveTab('sub-processors')}
-                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'sub-processors' ? 'border-sage-600 text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'sub-processors' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 Sub-processors
               </button>
               <button 
                 onClick={() => setActiveTab('incidents')}
-                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'incidents' ? 'border-sage-600 text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'incidents' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 Incidents &amp; Breaches
               </button>
               <button 
                 onClick={() => setActiveTab('questionnaire')}
-                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'questionnaire' ? 'border-sage-600 text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'questionnaire' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 Security Questionnaire
               </button>
@@ -329,7 +329,7 @@ export default function VendorDetailsPage() {
                           />
                           <button 
                             onClick={() => document.getElementById('dpa-upload-input')?.click()}
-                            className="bg-sage-700 text-white text-[13px] font-medium px-5 py-2.5 rounded-lg hover:bg-sage-600 transition-colors shadow-card"
+                            className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[13px] font-medium px-5 py-2.5 rounded-lg hover:bg-[#E5C463] transition-colors shadow-card"
                           >
                             Select PDF File
                           </button>
@@ -373,7 +373,7 @@ export default function VendorDetailsPage() {
                               </div>
                               <div className="w-full bg-white/5 h-2.5 rounded-full overflow-hidden border border-white/5">
                                 <div 
-                                  className={`h-full transition-all duration-300 ${covered === 8 ? 'bg-sage-600' : covered >= 6 ? 'bg-indigo-500/100' : covered >= 4 ? 'bg-amber-500/100' : 'bg-red-500/100'}`}
+                                  className={`h-full transition-all duration-300 ${covered === 8 ? 'bg-[#C9A227]' : covered >= 6 ? 'bg-indigo-500/100' : covered >= 4 ? 'bg-amber-500/100' : 'bg-red-500/100'}`}
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
@@ -399,7 +399,7 @@ export default function VendorDetailsPage() {
                                 key={key}
                                 className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer select-none
                                   ${isChecked 
-                                    ? 'bg-[#C9A227]/30 border-[#C9A227]/30 hover:border-sage-300' 
+                                    ? 'bg-[#C9A227]/10 border-[#C9A227]/30 hover:border-[#C9A227]/60' 
                                     : 'bg-[#0D0F11] border-white/10 hover:border-white/20'}`}
                               >
                                 <input
@@ -413,7 +413,7 @@ export default function VendorDetailsPage() {
                                     updateMutation.mutate({ vendorId, dpaClauseCoverage: nextCoverage });
                                   }}
                                   disabled={updateMutation.isPending}
-                                  className="rounded border-ink-300 text-[#C9A227] focus:ring-sage-600 mt-1"
+                                  className="rounded border-ink-300 text-[#C9A227] focus:ring-[#C9A227] mt-1"
                                 />
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2">
@@ -497,7 +497,7 @@ export default function VendorDetailsPage() {
                                   updateMutation.mutate({ vendorId, certifications: next });
                                 }}
                                 disabled={updateMutation.isPending}
-                                className="rounded border-ink-300 text-[#C9A227] focus:ring-sage-600"
+                                className="rounded border-ink-300 text-[#C9A227] focus:ring-[#C9A227]"
                               />
                               SOC 2
                             </label>
@@ -513,7 +513,7 @@ export default function VendorDetailsPage() {
                                   updateMutation.mutate({ vendorId, certifications: next });
                                 }}
                                 disabled={updateMutation.isPending}
-                                className="rounded border-ink-300 text-[#C9A227] focus:ring-sage-600"
+                                className="rounded border-ink-300 text-[#C9A227] focus:ring-[#C9A227]"
                               />
                               ISO 27001
                             </label>
@@ -532,7 +532,7 @@ export default function VendorDetailsPage() {
                           <div className="text-[12px] text-[#6E747A]">Publicly provided by {vendor.vendor.name}</div>
                         </div>
                       </div>
-                      <a href={vendor.vendor.dpaUrl} target="_blank" className="text-[13px] font-medium text-[#C9A227] hover:text-sage-800">Review Template</a>
+                      <a href={vendor.vendor.dpaUrl} target="_blank" className="text-[13px] font-medium text-[#C9A227] hover:text-[#E5C463]">Review Template</a>
                     </div>
                   )}
                 </div>

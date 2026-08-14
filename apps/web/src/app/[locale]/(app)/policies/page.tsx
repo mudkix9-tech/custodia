@@ -75,7 +75,7 @@ export default function PoliciesDashboard() {
             <button 
               onClick={() => createMutation.mutate({ name, type })}
               disabled={!name || createMutation.isPending}
-              className="bg-sage-600 text-white px-6 py-2 rounded-xl font-medium disabled:opacity-50"
+              className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] px-6 py-2 rounded-xl font-medium disabled:opacity-50"
             >
               {createMutation.isPending ? t('creating') : t('create')}
             </button>

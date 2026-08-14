@@ -394,7 +394,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                           key={c.code}
                           type="button"
                           onClick={() => selectCountry(c.code)}
-                          className="w-full text-left px-4 py-2 text-sm text-[#E6E8EA] hover:bg-sage-100 hover:text-[#C9A227] flex justify-between items-center"
+                          className="w-full text-left px-4 py-2 text-sm text-[#E6E8EA] hover:bg-[#C9A227]/20 hover:text-[#C9A227] flex justify-between items-center"
                         >
                           <span>{c.name}</span>
                           {formData.countryCode === c.code && (
@@ -420,7 +420,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                             key={c.code}
                             type="button"
                             onClick={() => selectCountry(c.code)}
-                            className="w-full text-left px-4 py-2 text-sm text-[#E6E8EA] hover:bg-sage-100 hover:text-[#C9A227] flex justify-between items-center"
+                            className="w-full text-left px-4 py-2 text-sm text-[#E6E8EA] hover:bg-[#C9A227]/20 hover:text-[#C9A227] flex justify-between items-center"
                           >
                             <span>{c.name}</span>
                             {formData.countryCode === c.code && (
@@ -441,7 +441,7 @@ export function Step1OrgProfile({ onNext }: { onNext: (data: any) => void }) {
                             key={c.code}
                             type="button"
                             onClick={() => selectCountry(c.code)}
-                            className="w-full text-left px-4 py-2 text-sm text-[#E6E8EA] hover:bg-sage-100 hover:text-[#C9A227] flex justify-between items-center"
+                            className="w-full text-left px-4 py-2 text-sm text-[#E6E8EA] hover:bg-[#C9A227]/20 hover:text-[#C9A227] flex justify-between items-center"
                           >
                             <span>{c.name}</span>
                             {formData.countryCode === c.code && (

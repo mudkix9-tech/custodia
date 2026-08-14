@@ -95,7 +95,7 @@ export default function ClientsPage() {
           <p className="text-[#9BA1A6] text-[15px]">{t('subtitle')}</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => setIsAddOpen(true)} className="inline-flex items-center gap-2 bg-sage-700 hover:bg-sage-600 text-white text-[14px] font-medium px-4 py-2 rounded-xl transition-all shadow-card">
+          <button onClick={() => setIsAddOpen(true)} className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[14px] font-medium px-4 py-2 rounded-xl transition-all shadow-card">
             <Plus className="w-4 h-4" /> {t('add_client')}
           </button>
         </div>
@@ -241,7 +241,7 @@ function AddClientModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
             <button type="button" onClick={onClose} className="px-4 py-2 text-[14px] font-medium text-[#9BA1A6] hover:text-[#F4F5F6] bg-[#0D0F11] border border-white/10 rounded-xl">
               {t('modal.cancel')}
             </button>
-            <button type="submit" disabled={createMutation.isPending} className="px-4 py-2 text-[14px] font-medium text-white bg-sage-700 hover:bg-sage-600 rounded-xl disabled:opacity-50">
+            <button type="submit" disabled={createMutation.isPending} className="px-4 py-2 text-[14px] font-medium text-[#08090A] bg-[#C9A227] hover:bg-[#E5C463] rounded-xl disabled:opacity-50">
               {createMutation.isPending ? t('modal.creating') : t('modal.create_button')}
             </button>
           </div>

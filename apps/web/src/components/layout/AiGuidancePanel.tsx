@@ -223,7 +223,7 @@ export function AiGuidancePanel() {
                       <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide">Suggested Lawful Basis</span>
                       <button 
                         onClick={() => applyField('lawfulBasis', suggestions.lawfulBasis)}
-                        className="bg-sage-600 hover:bg-sage-700 text-white text-[11px] font-semibold px-2 py-1 rounded transition-colors"
+                        className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[11px] font-semibold px-2 py-1 rounded transition-colors"
                       >
                         Apply
                       </button>
@@ -239,7 +239,7 @@ export function AiGuidancePanel() {
                       <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide">Suggested Retention</span>
                       <button 
                         onClick={() => applyField('retention', suggestions.retentionPeriod)}
-                        className="bg-sage-600 hover:bg-sage-700 text-white text-[11px] font-semibold px-2 py-1 rounded transition-colors"
+                        className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[11px] font-semibold px-2 py-1 rounded transition-colors"
                       >
                         Apply
                       </button>
@@ -255,7 +255,7 @@ export function AiGuidancePanel() {
                       <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wide">Suggested Categories</span>
                       <button 
                         onClick={() => applyField('dataCategories', suggestions.dataCategories)}
-                        className="bg-sage-600 hover:bg-sage-700 text-white text-[11px] font-semibold px-2 py-1 rounded transition-colors"
+                        className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[11px] font-semibold px-2 py-1 rounded transition-colors"
                       >
                         Apply
                       </button>
@@ -428,7 +428,7 @@ export function AiGuidancePanel() {
                       <a
                         href={suggestions.remediationLink}
                         onClick={closePanel}
-                        className="w-full py-2 bg-sage-600 hover:bg-sage-700 text-white font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors mt-2"
+                        className="w-full py-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors mt-2"
                       >
                         Resolve Gap <ArrowRight className="w-3.5 h-3.5" />
                       </a>
@@ -463,7 +463,7 @@ export function AiGuidancePanel() {
                         <button 
                           onClick={() => handleFeedback(logId, 'helpful')}
                           disabled={feedbackMutation.isPending}
-                          className="p-1.5 rounded hover:bg-white/10 text-[#6E747A] hover:text-ink-950 transition-colors"
+                          className="p-1.5 rounded hover:bg-white/10 text-[#6E747A] hover:text-[#F4F5F6] transition-colors"
                         >
                           <ThumbsUp className="w-4 h-4" />
                         </button>
@@ -523,7 +523,7 @@ export function AiGuidancePanel() {
                   
                   <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-[12.5px] leading-relaxed ${
                     chat.role === 'user'
-                      ? 'bg-sage-600 text-white rounded-tr-none'
+                      ? 'bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] rounded-tr-none'
                       : 'bg-white/5 text-[#E6E8EA] rounded-tl-none border border-white/5'
                   }`}>
                     {chat.role === 'user' ? chat.content : renderTextWithLinks(chat.content)}
@@ -565,7 +565,7 @@ export function AiGuidancePanel() {
               <button
                 type="submit"
                 disabled={!chatInput.trim() || copilotMutation.isPending}
-                className="bg-sage-600 text-white p-2 rounded-xl hover:bg-sage-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] p-2 rounded-xl hover:bg-[#E5C463] transition-colors disabled:opacity-50 flex items-center justify-center"
               >
                 <Send className="w-4 h-4" />
               </button>
