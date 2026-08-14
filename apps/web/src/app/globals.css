@@ -36,6 +36,14 @@
   --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
+  /* Referenced by ~40 marketing files as [font-family:var(--font-plex-sans)]
+     and never defined anywhere, and IBM Plex is not loaded by the app — so
+     those declarations resolved to nothing and the element kept the inherited
+     family. Aliased onto the stacks that are actually loaded, which is what
+     those call sites mean by "body" and "mono label". */
+  --font-plex-sans: var(--font-sans);
+  --font-plex-mono: var(--font-mono);
+
   --shadow-card: 0 1px 0 rgba(31,27,22,0.04), 0 1px 2px rgba(31,27,22,0.04);
   --shadow-lift: 0 1px 0 rgba(31,27,22,0.04), 0 8px 24px -8px rgba(31,27,22,0.10);
   --shadow-inset-hairline: inset 0 0 0 1px rgba(255,255,255,0.06);

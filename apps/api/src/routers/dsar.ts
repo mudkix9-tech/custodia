@@ -14,7 +14,7 @@ import {
   users,
   notificationQueue
 } from 'db';
-import { eq, and, or, desc, isNull, inArray, notInArray, count } from 'drizzle-orm';
+import { eq, and, or, desc, isNull, inArray, notInArray, count, lt, lte, gte } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { Resend } from 'resend';
 import jwt from 'jsonwebtoken';
@@ -448,6 +448,53 @@ export const dsarRouter = router({
           ),
         ));
       return row?.value ?? 0;
+    }),
+
+  // Board metrics. Deliberately not derived from `list` on the client: that is
+  // cursor-paginated at 25, so a register with 40 open requests would report 25
+  // and an overdue one on page two would not be counted at all.
+  boardStats: protectedProcedure
+    .use(requirePermission('dsar', 'view'))
+    .query(async ({ ctx }) => {
+      checkOrgContext(ctx.user);
+      const orgId = ctx.user!.orgId;
+      const now = new Date();
+      const inSevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // A NULL status is open, the same reading `countPending` takes: the column
+      // is nullable and a bare NOT IN drops NULL rows silently.
+      const isOpen = or(
+        isNull(dsarRequests.status),
+        notInArray(dsarRequests.status, ['completed', 'refused']),
+      );
+
+      const [[open], [overdue], [dueSoon], [completedThisMonth]] = await Promise.all([
+        ctx.db.select({ value: count() }).from(dsarRequests)
+          .where(and(eq(dsarRequests.organizationId, orgId), isOpen)),
+        ctx.db.select({ value: count() }).from(dsarRequests)
+          .where(and(eq(dsarRequests.organizationId, orgId), isOpen, lt(dsarRequests.deadlineAt, now))),
+        ctx.db.select({ value: count() }).from(dsarRequests)
+          .where(and(
+            eq(dsarRequests.organizationId, orgId),
+            isOpen,
+            gte(dsarRequests.deadlineAt, now),
+            lte(dsarRequests.deadlineAt, inSevenDays),
+          )),
+        ctx.db.select({ value: count() }).from(dsarRequests)
+          .where(and(
+            eq(dsarRequests.organizationId, orgId),
+            eq(dsarRequests.status, 'completed'),
+            gte(dsarRequests.updatedAt, monthStart),
+          )),
+      ]);
+
+      return {
+        open: open?.value ?? 0,
+        overdue: overdue?.value ?? 0,
+        dueSoon: dueSoon?.value ?? 0,
+        completedThisMonth: completedThisMonth?.value ?? 0,
+      };
     }),
 
   getById: protectedProcedure

@@ -32,5 +32,11 @@
     "action": "Action"
   },
   "load_more": "Charger plus",
-  "loading_more": "Chargement..."
+  "loading_more": "Chargement...",
+  "stats": {
+    "open": "En cours",
+    "overdue": "En retard",
+    "due_soon": "À échéance sous 7 jours",
+    "completed_this_month": "Traitées ce mois-ci"
+  }
 }

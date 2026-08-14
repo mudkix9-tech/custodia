@@ -1,7 +1,7 @@
 "use client";
 import DOMPurify from 'dompurify';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, Bell, ExternalLink, ChevronRight } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { Link, usePathname } from '@/i18n/routing';
@@ -22,6 +22,13 @@ export function Header() {
   const t = useTranslations('shared');
   const pathname = usePathname();
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // ⌘K is not the shortcut on Windows, where most of these users are. Resolved
+  // after mount so the server and client markup agree.
+  const [modKey, setModKey] = useState('Ctrl');
+  useEffect(() => {
+    setModKey(/Mac|iPhone|iPad/.test(navigator.userAgent) ? '⌘' : 'Ctrl');
+  }, []);
 
   const { data: notificationsResp } = trpc.notifications.listInApp.useQuery({ limit: 50 }, {
     refetchInterval: 30000 // Poll every 30s
@@ -105,7 +112,7 @@ export function Header() {
         >
           <Search className="w-4 h-4" />
           <span>Search...</span>
-          <kbd className="ml-2 font-mono text-[10px] font-semibold tracking-wider">⌘K</kbd>
+          <kbd className="ml-2 font-mono text-[10px] font-semibold tracking-wider">{modKey}K</kbd>
         </button>
 
         {/* Mobile Search Button */}

@@ -1,16 +1,26 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
+import { useTranslations } from 'next-intl';
 import FocusTrap from 'focus-trap-react';
+import { NAV_GROUPS } from './navigation';
 
 export function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
   const router = useRouter();
+  const t = useTranslations('shared');
+
+  // The hint said "Cmd" to every user, including the Windows majority. Resolved
+  // after mount so the server and client markup agree.
+  const [modKey, setModKey] = useState('Ctrl');
+  useEffect(() => {
+    setModKey(/Mac|iPhone|iPad/.test(navigator.userAgent) ? 'Cmd' : 'Ctrl');
+  }, []);
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -23,17 +33,26 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
 
+  // Every module, from the same registry the sidebar and header use.
+  const navResults = useMemo(() => {
+    const q = query.toLowerCase();
+    if (!q) return [];
+    return NAV_GROUPS.flatMap((g) => g.items)
+      .map((item) => ({ id: `nav-${item.id}`, name: t(`navigation.${item.id}`), type: 'page', href: item.href }))
+      .filter((item) => item.name.toLowerCase().includes(q));
+  }, [query, t]);
+
   const ropaQuery = trpc.ropa.list.useQuery({ limit: 100 }, { enabled: isOpen });
   const vendorQuery = trpc.vendors.getOrgVendors.useQuery({ limit: 100 }, { enabled: isOpen });
 
   const ropaResults = ((ropaQuery.data?.data as any[]) || []).filter(item => item.name.toLowerCase().includes(query.toLowerCase())).map(item => ({ ...item, type: 'ropa', href: `/ropa/${item.id}` }));
   const vendorResults = ((vendorQuery.data?.data as any[]) || []).filter(item => item.name.toLowerCase().includes(query.toLowerCase())).map(item => ({ ...item, type: 'vendor', href: `/vendors/${item.id}` }));
 
-  const allResults = [...ropaResults, ...vendorResults];
+  const allResults = [...navResults, ...ropaResults, ...vendorResults];
 
   useEffect(() => {
     setActiveIndex(query.length > 0 && allResults.length > 0 ? 0 : -1);
-  }, [query, ropaResults.length, vendorResults.length]);
+  }, [query, navResults.length, ropaResults.length, vendorResults.length]);
 
   const handleSelect = (item: any) => {
     setIsOpen(false);
@@ -77,7 +96,7 @@ export function CommandPalette() {
   return (
     <FocusTrap focusTrapOptions={{ initialFocus: false, escapeDeactivates: false, clickOutsideDeactivates: true, onDeactivate: () => setIsOpen(false) }}>
       <div
-        className="fixed inset-0 z-[100] flex items-start justify-center pt-[20vh] bg-ink-900/40 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-[100] flex items-start justify-center pt-[20vh] bg-black/60 backdrop-blur-sm p-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="cmd-palette-label"
@@ -141,7 +160,7 @@ export function CommandPalette() {
             {query === '' && (
               <div className="p-8 text-center flex flex-col items-center">
                 <div className="flex gap-2 mb-4">
-                  <kbd className="px-2 py-1 bg-[#08090A] border border-white/10 rounded font-mono text-xs font-semibold text-[#6E747A]">Cmd</kbd>
+                  <kbd className="px-2 py-1 bg-[#08090A] border border-white/10 rounded font-mono text-xs font-semibold text-[#6E747A]">{modKey}</kbd>
                   <kbd className="px-2 py-1 bg-[#08090A] border border-white/10 rounded font-mono text-xs font-semibold text-[#6E747A]">K</kbd>
                 </div>
                 <p className="text-sm text-[#6E747A]">Start typing to search your workspace</p>

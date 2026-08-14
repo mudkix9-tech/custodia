@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
-import { Clock, ShieldAlert, LayoutGrid, List } from 'lucide-react';
+import { Clock, ShieldAlert, LayoutGrid, List, AlertTriangle, CheckCircle2, Inbox } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { useTranslations } from 'next-intl';
 
@@ -33,10 +33,36 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
 
   const requests = requestsResp?.pages.flatMap((page: any) => page.data) || [];
 
+  // Counted server-side. `list` is cursor-paginated at 25, so deriving these
+  // from `requests` would report the page rather than the register — and an
+  // overdue request on page two would not be counted at all.
+  const { data: stats } = trpc.dsar.boardStats.useQuery(undefined, { enabled: !isGroupContext });
+
   if (isLoading) return <div className="text-[#6E747A]">{t('loading')}</div>;
 
   return (
     <div>
+      {/* The module whose entire value is not missing a one-month statutory
+          deadline showed no count of how many were near one. */}
+      {stats && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatTile icon={Inbox} label={t('stats.open')} value={stats.open} />
+          <StatTile
+            icon={AlertTriangle}
+            label={t('stats.overdue')}
+            value={stats.overdue}
+            tone={stats.overdue > 0 ? 'critical' : 'neutral'}
+          />
+          <StatTile
+            icon={Clock}
+            label={t('stats.due_soon')}
+            value={stats.dueSoon}
+            tone={stats.dueSoon > 0 ? 'warning' : 'neutral'}
+          />
+          <StatTile icon={CheckCircle2} label={t('stats.completed_this_month')} value={stats.completedThisMonth} />
+        </div>
+      )}
+
       <div className="flex justify-end mb-6">
         <div className="bg-white/5 p-1 rounded-lg flex gap-1">
           <button 
@@ -69,11 +95,12 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
 
                 <div className="space-y-3">
                   {colRequests.map((request: any) => {
-                    const daysRemaining = differenceInDays(new Date(request.deadlineAt), new Date());
+                    const deadline = new Date(request.deadlineAt);
+                    const daysRemaining = differenceInDays(deadline, new Date());
                     let deadlineColor = 'text-[#C9A227] bg-[#C9A227]/10';
                     if (daysRemaining <= 14 && daysRemaining > 7) deadlineColor = 'text-amber-400 bg-amber-500/10';
                     if (daysRemaining <= 7) deadlineColor = 'text-red-400 bg-red-500/10 font-bold';
-                    if (daysRemaining < 0) deadlineColor = 'text-red-400 bg-red-500/20 font-bold animate-pulse';
+                    if (daysRemaining < 0) deadlineColor = 'text-red-400 bg-red-500/20 font-bold';
 
                     return (
                       <Link 
@@ -83,7 +110,10 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
                       >
                         <div className="flex justify-between items-start mb-2">
                           <span className="text-[11px] font-mono font-medium text-[#6E747A]">{request.referenceNumber}</span>
-                          <span className={`text-[11px] px-2 py-0.5 rounded-full flex items-center gap-1 ${deadlineColor}`}>
+                          <span
+                            title={deadline.toLocaleString()}
+                            className={`text-[11px] px-2 py-0.5 rounded-full flex items-center gap-1 ${deadlineColor}`}
+                          >
                             <Clock className="w-3 h-3" />
                             {daysRemaining < 0 ? t('deadline.overdue') : t('deadline.days', { count: daysRemaining })}
                           </span>
@@ -166,6 +196,32 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  tone = 'neutral',
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: number;
+  tone?: 'neutral' | 'warning' | 'critical';
+}) {
+  const accent =
+    tone === 'critical' ? 'text-red-400' : tone === 'warning' ? 'text-amber-400' : 'text-[#C9A227]';
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#0D0F11] p-5 shadow-panel-elevated">
+      <div className="mb-2 flex items-center gap-2 text-[12px] font-medium uppercase tracking-wider text-[#6E747A]">
+        <Icon className={`h-3.5 w-3.5 ${accent}`} />
+        {label}
+      </div>
+      <div className={`font-serif text-3xl tabular-nums ${value === 0 && tone !== 'neutral' ? 'text-[#F4F5F6]' : accent}`}>
+        {value}
+      </div>
     </div>
   );
 }

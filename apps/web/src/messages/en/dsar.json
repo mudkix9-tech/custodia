@@ -29,5 +29,11 @@
     "action": "Action"
   },
   "load_more": "Load More",
-  "loading_more": "Loading more..."
+  "loading_more": "Loading more...",
+  "stats": {
+    "open": "Open",
+    "overdue": "Overdue",
+    "due_soon": "Due within 7 days",
+    "completed_this_month": "Completed this month"
+  }
 }

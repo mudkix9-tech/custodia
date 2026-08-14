@@ -32,5 +32,11 @@
     "action": "Aktion"
   },
   "load_more": "Mehr laden",
-  "loading_more": "Wird geladen..."
+  "loading_more": "Wird geladen...",
+  "stats": {
+    "open": "Offen",
+    "overdue": "Überfällig",
+    "due_soon": "Fällig in 7 Tagen",
+    "completed_this_month": "Diesen Monat erledigt"
+  }
 }
