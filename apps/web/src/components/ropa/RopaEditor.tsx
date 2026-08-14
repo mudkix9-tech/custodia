@@ -43,6 +43,8 @@ const ropaSchema = z.object({
   description: z.string().optional(),
   status: z.string(),
   riskLevel: z.string(),
+  role: z.string(),
+  controllerName: z.string().optional(),
   lawfulBasis: z.string().min(1, 'Lawful basis is required'),
   lawfulBasisNotes: z.string().optional(),
   isSystematicMonitoring: z.boolean().optional(),
@@ -75,6 +77,8 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
       description: '',
       status: 'draft',
       riskLevel: 'low',
+      role: 'controller',
+      controllerName: '',
       lawfulBasis: '',
       lawfulBasisNotes: '',
       isSystematicMonitoring: false,
@@ -490,6 +494,43 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('legal.lawful_basis')} <span className="text-clay-600">*</span></label>
+                <div className="mb-6">
+                  <Label className="block text-sm font-medium text-[#E6E8EA] mb-1.5">{t('legal.role')}</Label>
+                  <Controller
+                    name="role"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="controller">{t('legal.role_controller')}</SelectItem>
+                          <SelectItem value="joint_controller">{t('legal.role_joint_controller')}</SelectItem>
+                          <SelectItem value="processor">{t('legal.role_processor')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <p className="mt-1.5 text-[12px] text-[#6E747A]">{t('legal.role_hint')}</p>
+                </div>
+
+                {formData.role === 'processor' && (
+                  <div className="mb-6">
+                    <Label className="block text-sm font-medium text-[#E6E8EA] mb-1.5">
+                      {t('legal.controller_name')}
+                    </Label>
+                    <Controller
+                      name="controllerName"
+                      control={control}
+                      render={({ field }) => (
+                        <Input {...field} value={field.value ?? ''} placeholder={t('legal.controller_name_placeholder')} />
+                      )}
+                    />
+                    <p className="mt-1.5 text-[12px] text-[#6E747A]">{t('legal.controller_name_hint')}</p>
+                  </div>
+                )}
+
                 <Controller
                   name="lawfulBasis"
                   control={control}

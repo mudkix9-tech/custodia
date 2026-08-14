@@ -20,6 +20,9 @@ export const LAWFUL_BASES = [
 ] as const;
 
 export const ROPA_STATUSES = ['draft', 'active', 'under_review', 'archived'] as const;
+
+/** Art. 30(1) is the controller's record; 30(2) is the processor's. */
+export const ROPA_ROLES = ['controller', 'processor', 'joint_controller'] as const;
 export const RISK_LEVELS = ['low', 'medium', 'high', 'critical'] as const;
 
 /** The exporter's own headers, plus the spellings a hand-built file is likely to use. */
@@ -30,6 +33,8 @@ const HEADER_ALIASES: Record<string, string[]> = {
   status: ['status'],
   riskLevel: ['risk level', 'risklevel', 'risk'],
   description: ['description', 'notes'],
+  role: ['role', 'controller or processor', 'capacity'],
+  controllerName: ['controller', 'controller name', 'on behalf of'],
 };
 
 export type ImportedActivity = {
@@ -39,6 +44,8 @@ export type ImportedActivity = {
   status: string;
   riskLevel: string;
   description: string;
+  role: 'controller' | 'processor' | 'joint_controller';
+  controllerName?: string;
 };
 
 export type RowError = { line: number; message: string };
@@ -132,7 +139,37 @@ export function parseRopaCsv(text: string): ImportResult {
       return;
     }
 
-    activities.push({ name, purpose, lawfulBasis, status, riskLevel, description: at('description') });
+    // A file without a role column is a controller register: that is what every
+    // row written before the column existed was, and what the exporter emitted.
+    const rawRole = at('role');
+    const role = rawRole ? matchEnum(rawRole, ROPA_ROLES) : 'controller';
+    if (!role) {
+      errors.push({
+        line,
+        message: `"${name}" has an unrecognised role "${rawRole}". Expected one of: ${ROPA_ROLES.join(', ')}.`,
+      });
+      return;
+    }
+
+    const controllerName = at('controllerName');
+    if (role === 'processor' && !controllerName) {
+      errors.push({
+        line,
+        message: `"${name}" is a processor activity with no controller named. Article 30(2)(a) requires it.`,
+      });
+      return;
+    }
+
+    activities.push({
+      name,
+      purpose,
+      lawfulBasis,
+      status,
+      riskLevel,
+      description: at('description'),
+      role: role as ImportedActivity['role'],
+      controllerName: controllerName || undefined,
+    });
   });
 
   return { activities, errors };

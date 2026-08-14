@@ -62,12 +62,15 @@ export default function RopaListPage() {
   const handleExportCSV = () => {
     if (!processingActivities || processingActivities.length === 0) return;
     
-    const headers = ['Name', 'Purpose', 'Lawful Basis', 'Status', 'Risk Level', 'Description'];
+    const headers = ['Name', 'Purpose', 'Lawful Basis', 'Role', 'Controller', 'Status', 'Risk Level', 'Description'];
     // Same quoting helper the importer reads back, so a round trip is lossless.
     const csvContent = [
       toCsvRow(headers),
       ...processingActivities.map((a: any) =>
-        toCsvRow([a.name, a.purpose, a.lawfulBasis || '', a.status, a.riskLevel || 'low', a.description || ''])
+        toCsvRow([
+          a.name, a.purpose, a.lawfulBasis || '', a.role || 'controller', a.controllerName || '',
+          a.status, a.riskLevel || 'low', a.description || '',
+        ])
       )
     ].join('\r\n');
 
@@ -171,6 +174,28 @@ export default function RopaListPage() {
       accessorKey: 'purpose',
       header: t('columns.purpose'),
       cell: (info: any) => <span className="text-[#9BA1A6] truncate max-w-xs inline-block">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: 'role',
+      header: t('columns.role'),
+      cell: (info: any) => {
+        const role = (info.getValue() as string) || 'controller';
+        const controllerName = info.row.original.controllerName;
+        return (
+          <span className="inline-flex flex-col gap-0.5">
+            <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${
+              role === 'processor'
+                ? 'bg-white/5 text-[#9BA1A6] border-white/10'
+                : 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/25'
+            }`}>
+              {t(`roles.${role}`)}
+            </span>
+            {role === 'processor' && controllerName && (
+              <span className="text-[11px] text-[#6E747A]">{t('columns.for_controller', { name: controllerName })}</span>
+            )}
+          </span>
+        );
+      },
     },
     {
       accessorKey: 'lawfulBasis',

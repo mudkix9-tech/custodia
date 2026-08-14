@@ -27,7 +27,9 @@
     "data_subjects": "Data Subjects",
     "retention": "Retention",
     "not_recorded": "Not recorded",
-    "special_categories": "Involves special category data (Art. 9)"
+    "special_categories": "Involves special category data (Art. 9)",
+    "role": "Role",
+    "for_controller": "for {name}"
   },
   "risk_levels": {
     "critical": "critical",
@@ -100,7 +102,15 @@
       "legitimate_interest": "Legitimate Interest (Art. 6(1)(f))",
       "lia_required": "Legitimate Interest Assessment (LIA) Required",
       "lia_desc": "You must conduct and document an LIA when relying on legitimate interests.",
-      "start_lia": "Start / View LIA"
+      "start_lia": "Start / View LIA",
+      "role": "Your role in this activity",
+      "role_controller": "Controller — we decide why and how",
+      "role_joint_controller": "Joint controller — we decide jointly with another",
+      "role_processor": "Processor — we act on another organisation’s instructions",
+      "role_hint": "Article 30(1) is the controller’s record; Article 30(2) is the processor’s. They require different information.",
+      "controller_name": "Controller you act for",
+      "controller_name_placeholder": "e.g. Acme GmbH",
+      "controller_name_hint": "Required by Article 30(2)(a) for every processor record."
     },
     "retention": {
       "title": "Data Retention Policy",
@@ -140,5 +150,10 @@
     "title": "No processing activities yet",
     "description": "Your Article 30 register lists every purpose you process personal data for. Add the first activity, or import a register you already keep.",
     "action": "Add an activity"
+  },
+  "roles": {
+    "controller": "Controller",
+    "processor": "Processor",
+    "joint_controller": "Joint controller"
   }
 }

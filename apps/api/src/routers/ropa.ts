@@ -88,6 +88,9 @@ export const ropaRouter = router({
       purpose: z.string().min(1),
       description: z.string().optional(),
       lawfulBasis: z.string(),
+      // Art. 30(1) vs 30(2): the two records answer different questions.
+      role: z.enum(['controller', 'processor', 'joint_controller']).default('controller'),
+      controllerName: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
@@ -99,6 +102,8 @@ export const ropaRouter = router({
         purpose: sanitize(input.purpose)!,
         description: sanitize(input.description),
         lawfulBasis: input.lawfulBasis,
+        role: input.role,
+        controllerName: sanitize(input.controllerName),
         createdBy: ctx.user!.id,
       }).returning();
 
@@ -123,6 +128,8 @@ export const ropaRouter = router({
       lawfulBasis: z.string(),
       status: z.string().default('draft'),
       riskLevel: z.string().default('low'),
+      role: z.enum(['controller', 'processor', 'joint_controller']).default('controller'),
+      controllerName: z.string().optional(),
     })))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
@@ -135,6 +142,7 @@ export const ropaRouter = router({
         name: sanitize(item.name)!,
         purpose: sanitize(item.purpose)!,
         description: sanitize(item.description),
+        controllerName: sanitize(item.controllerName),
         organizationId: ctx.user!.orgId,
         createdBy: ctx.user!.id,
       }));

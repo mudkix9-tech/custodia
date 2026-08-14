@@ -37,7 +37,11 @@ describe('parseRopaCsv', () => {
     const { activities, errors } = parseRopaCsv(`${header}\n"Payroll","Pay staff","contract","active","low","x"`);
     expect(errors).toEqual([]);
     expect(activities).toEqual([
-      { name: 'Payroll', purpose: 'Pay staff', lawfulBasis: 'contract', status: 'active', riskLevel: 'low', description: 'x' },
+      {
+        name: 'Payroll', purpose: 'Pay staff', lawfulBasis: 'contract',
+        status: 'active', riskLevel: 'low', description: 'x',
+        role: 'controller', controllerName: undefined,
+      },
     ]);
   });
 
@@ -92,6 +96,44 @@ describe('parseRopaCsv', () => {
   test('fails the whole file when a required column is absent', () => {
     const { fatal } = parseRopaCsv('Name,Purpose\n"Payroll","Pay staff"');
     expect(fatal).toContain('lawful basis');
+  });
+
+  test('defaults role to controller when the file has no role column', () => {
+    const { activities } = parseRopaCsv('Name,Purpose,Lawful Basis\n"Payroll","Pay staff","consent"');
+    expect(activities[0].role).toBe('controller');
+    expect(activities[0].controllerName).toBeUndefined();
+  });
+
+  test('reads a processor row with its controller', () => {
+    const { activities, errors } = parseRopaCsv(
+      'Name,Purpose,Lawful Basis,Role,Controller\n"Hosting","Host CRM data","contract","Processor","Acme GmbH"',
+    );
+    expect(errors).toEqual([]);
+    expect(activities[0]).toMatchObject({ role: 'processor', controllerName: 'Acme GmbH' });
+  });
+
+  test('rejects a processor row that names no controller', () => {
+    // Article 30(2)(a) requires the controller a processor acts for.
+    const { activities, errors } = parseRopaCsv(
+      'Name,Purpose,Lawful Basis,Role\n"Hosting","Host CRM data","contract","processor"',
+    );
+    expect(activities).toHaveLength(0);
+    expect(errors[0].message).toContain('Article 30(2)(a)');
+  });
+
+  test('accepts joint controller', () => {
+    const { activities, errors } = parseRopaCsv(
+      'Name,Purpose,Lawful Basis,Role\n"Ads","Joint campaign","consent","Joint Controller"',
+    );
+    expect(errors).toEqual([]);
+    expect(activities[0].role).toBe('joint_controller');
+  });
+
+  test('rejects an unrecognised role', () => {
+    const { errors } = parseRopaCsv(
+      'Name,Purpose,Lawful Basis,Role\n"Ads","Campaign","consent","subprocessor"',
+    );
+    expect(errors[0].message).toContain('unrecognised role');
   });
 
   test('defaults only the low-stakes columns', () => {

@@ -230,7 +230,16 @@ export const processingActivities = pgTable('processing_activities', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   purpose: text('purpose').notNull(),
-  
+
+  // Article 30 splits into (1) for controllers and (2) for processors: the two
+  // records answer different questions, and an auditor reads them separately.
+  // Defaults to 'controller' — the register predates this column, and every row
+  // in it was written on the controller assumption.
+  role: varchar('role', { length: 20 }).default('controller').notNull(),
+  // Art. 30(1)(a): the controller a processor acts for. Only meaningful when
+  // role = 'processor'.
+  controllerName: varchar('controller_name', { length: 255 }),
+
   lawfulBasis: varchar('lawful_basis', { length: 50 }).notNull(),
   lawfulBasisDetail: text('lawful_basis_detail'),
   

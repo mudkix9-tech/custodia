@@ -31,7 +31,9 @@
     "data_subjects": "Betroffene Personen",
     "retention": "Aufbewahrung",
     "not_recorded": "Nicht erfasst",
-    "special_categories": "Umfasst besondere Kategorien personenbezogener Daten (Art. 9)"
+    "special_categories": "Umfasst besondere Kategorien personenbezogener Daten (Art. 9)",
+    "role": "Rolle",
+    "for_controller": "für {name}"
   },
   "risk_levels": {
     "critical": "kritisch",
@@ -104,7 +106,15 @@
       "legitimate_interest": "Berechtigtes Interesse (Art. 6(1)(f))",
       "lia_required": "Prüfung des berechtigten Interesses (LIA) erforderlich",
       "lia_desc": "Sie müssen eine LIA durchführen und dokumentieren, wenn Sie sich auf berechtigte Interessen stützen.",
-      "start_lia": "LIA starten / ansehen"
+      "start_lia": "LIA starten / ansehen",
+      "role": "Ihre Rolle bei dieser Tätigkeit",
+      "role_controller": "Verantwortlicher — wir entscheiden über Zwecke und Mittel",
+      "role_joint_controller": "Gemeinsam Verantwortlicher — wir entscheiden gemeinsam mit einem anderen",
+      "role_processor": "Auftragsverarbeiter — wir handeln auf Weisung einer anderen Organisation",
+      "role_hint": "Artikel 30 Abs. 1 ist das Verzeichnis des Verantwortlichen, Artikel 30 Abs. 2 das des Auftragsverarbeiters. Sie verlangen unterschiedliche Angaben.",
+      "controller_name": "Verantwortlicher, für den Sie tätig sind",
+      "controller_name_placeholder": "z. B. Acme GmbH",
+      "controller_name_hint": "Nach Artikel 30 Abs. 2 lit. a für jeden Auftragsverarbeiter-Eintrag erforderlich."
     },
     "retention": {
       "title": "Richtlinie zur Datenaufbewahrung",
@@ -144,5 +154,10 @@
     "title": "Noch keine Verarbeitungstätigkeiten",
     "description": "Ihr Verzeichnis nach Artikel 30 führt jeden Zweck auf, zu dem Sie personenbezogene Daten verarbeiten. Legen Sie die erste Tätigkeit an oder importieren Sie ein vorhandenes Verzeichnis.",
     "action": "Tätigkeit hinzufügen"
+  },
+  "roles": {
+    "controller": "Verantwortlicher",
+    "processor": "Auftragsverarbeiter",
+    "joint_controller": "Gemeinsam Verantwortlicher"
   }
 }

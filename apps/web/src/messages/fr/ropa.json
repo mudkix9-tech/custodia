@@ -30,7 +30,9 @@
     "data_subjects": "Personnes concernées",
     "retention": "Conservation",
     "not_recorded": "Non renseigné",
-    "special_categories": "Comporte des données sensibles (art. 9)"
+    "special_categories": "Comporte des données sensibles (art. 9)",
+    "role": "Rôle",
+    "for_controller": "pour {name}"
   },
   "risk_levels": {
     "critical": "critique",
@@ -103,7 +105,15 @@
       "legitimate_interest": "Intérêt légitime (Art. 6(1)(f))",
       "lia_required": "Évaluation de l'intérêt légitime (LIA) requise",
       "lia_desc": "Vous devez effectuer et documenter une LIA lorsque vous vous appuyez sur des intérêts légitimes.",
-      "start_lia": "Démarrer / Voir LIA"
+      "start_lia": "Démarrer / Voir LIA",
+      "role": "Votre rôle dans cette activité",
+      "role_controller": "Responsable du traitement — nous déterminons les finalités et les moyens",
+      "role_joint_controller": "Responsable conjoint — nous décidons conjointement avec un autre",
+      "role_processor": "Sous-traitant — nous agissons sur instruction d’une autre organisation",
+      "role_hint": "L’article 30, paragraphe 1 est le registre du responsable du traitement ; le paragraphe 2 est celui du sous-traitant. Ils exigent des informations différentes.",
+      "controller_name": "Responsable du traitement pour lequel vous agissez",
+      "controller_name_placeholder": "p. ex. Acme GmbH",
+      "controller_name_hint": "Exigé par l’article 30, paragraphe 2, point a) pour chaque enregistrement de sous-traitant."
     },
     "retention": {
       "title": "Politique de conservation des données",
@@ -143,5 +153,10 @@
     "title": "Aucune activité de traitement pour l'instant",
     "description": "Votre registre au titre de l'article 30 recense chaque finalité pour laquelle vous traitez des données personnelles. Ajoutez la première activité ou importez un registre existant.",
     "action": "Ajouter une activité"
+  },
+  "roles": {
+    "controller": "Responsable du traitement",
+    "processor": "Sous-traitant",
+    "joint_controller": "Responsable conjoint"
   }
 }
