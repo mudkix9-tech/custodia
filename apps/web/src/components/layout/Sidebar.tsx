@@ -9,6 +9,7 @@ import { OrgSwitcher } from './OrgSwitcher';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { NAV_GROUPS } from './navigation';
+import LanguageSelector from './LanguageSelector';
 
 export function Logo({ className = '' }: { className?: string }) {
   return (
@@ -142,6 +143,11 @@ export function Sidebar() {
               <Link href="/support" className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-[#9BA1A6] hover:bg-white/[0.04] hover:text-[#E6E8EA] focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none">
                 <LifeBuoy size={16} className="text-[#6E747A]" /> {t('navigation.support')}
               </Link>
+            </li>
+            <li>
+              {/* The product ships in three languages with no way to change
+                  between them once you are inside it. */}
+              <LanguageSelector />
             </li>
           </ul>
           {session?.user && (
