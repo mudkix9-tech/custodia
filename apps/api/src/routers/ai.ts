@@ -632,16 +632,35 @@ You MUST begin your response with the following exact disclaimer:
 
       let contextStr = `\nReference materials:\n`;
       const citationsList: { title: string; url: string }[] = [];
+      // Structured form of the same sources, returned to the client. These were
+      // previously assembled only to be spliced into the prose as markdown links,
+      // so an answer could not show what it had been grounded in.
+      const citations: {
+        index: number;
+        title: string;
+        document: string;
+        url: string;
+        authority: string | null;
+        similarity: number;
+      }[] = [];
       let citationIndex = 1;
 
       retrieved.forEach((c) => {
         const sourceName = c.section || c.title;
         const sourceUrl = c.sourceUrl || '';
-        
+
         contextStr += `--- Source ${citationIndex}: ${c.title} (${c.source}) ---\nSection: ${sourceName}\n${c.content}\n---\n\n`;
         citationsList.push({
           title: sourceName,
           url: sourceUrl
+        });
+        citations.push({
+          index: citationIndex,
+          title: sourceName,
+          document: c.title,
+          url: sourceUrl,
+          authority: c.authority ?? null,
+          similarity: c.similarity,
         });
         citationIndex++;
       });
@@ -778,7 +797,12 @@ You MUST begin your response with the following exact disclaimer:
           insightBlock += `\n- **Organization Cross-Reference**:\n  ` + insights.join('\n  ');
         }
 
-        return { answer: processedAnswer + insightBlock };
+        return {
+          answer: processedAnswer + insightBlock,
+          citations,
+          confidence,
+          grounded: hasGroundedContext,
+        };
       } catch (err: any) {
         // Fallback for missing API keys in local development
         console.warn('Anthropic API error:', err);
@@ -792,8 +816,11 @@ You MUST begin your response with the following exact disclaimer:
             processedFallback += `\n- [${cit.title}](${cit.url || '#'})`;
           });
         }
-        return { 
-          answer: processedFallback 
+        return {
+          answer: processedFallback,
+          citations,
+          confidence: 'Unavailable',
+          grounded: hasGroundedContext,
         };
       }
     }),
