@@ -156,7 +156,7 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
       {/* Suggested Section */}
       {suggestedTools.length > 0 && (
         <div className="mb-8">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Suggested for your industry</h3>
+          <h3 className="text-sm font-semibold text-[#6E747A] uppercase tracking-wider mb-4">Suggested for your industry</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {suggestedTools.map(tool => {
               const isSelected = selectedTools.includes(tool.id);
@@ -189,7 +189,7 @@ export function Step2AddTools({ onNext, industry }: { onNext: (tools: string[]) 
 
       {/* Popular Tools Section */}
       <div className="mb-8">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+        <h3 className="text-sm font-semibold text-[#6E747A] uppercase tracking-wider mb-4">
           {suggestedTools.length > 0 ? 'Other popular tools' : 'Popular tools'}
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

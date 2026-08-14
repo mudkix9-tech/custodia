@@ -8,10 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { useSettingsToast } from '@/components/settings/SettingsToast';
+import { useToast } from '@/components/ui/Toast';
 
 export default function SiemSettingsPage() {
-  const toast = useSettingsToast();
+  const toast = useToast();
   const toastError = (msg: string) => toast(msg, 'error');
   const [siemEnabled, setSiemEnabled] = useState(false);
   const [siemEndpointUrl, setSiemEndpointUrl] = useState('');

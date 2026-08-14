@@ -5,12 +5,16 @@ import { useRouter } from 'next/navigation';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { severityClasses } from '@/utils/severity';
-import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X } from 'lucide-react';
+import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X, ShieldAlert } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { toCsvRow } from '@/utils/csv';
+import { parseRopaCsv, type RowError } from '@/utils/ropaImport';
+import { useToast } from '@/components/ui/Toast';
 
 export default function RopaListPage() {
   const t = useTranslations('ropa');
   const router = useRouter();
+  const toast = useToast();
   const [globalFilter, setGlobalFilter] = useState('');
   const [flagsTab, setFlagsTab] = useState<'flagged'|'dismissed'>('flagged');
 
@@ -44,6 +48,9 @@ export default function RopaListPage() {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
+  // Rejected rows are listed in the page rather than a toast: the point is that
+  // the customer can fix the file, which means seeing every line that failed.
+  const [importErrors, setImportErrors] = useState<RowError[] | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const { data: reconsentFlags, refetch: refetchFlags } = trpc.reconsent.list.useQuery({ status: flagsTab });
@@ -81,32 +88,52 @@ export default function RopaListPage() {
     if (!file) return;
 
     setIsImporting(true);
+    setImportErrors(null);
     const reader = new FileReader();
+
+    reader.onerror = () => {
+      toast('Could not read that file.', { tone: 'error' });
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
     reader.onload = async (e) => {
       try {
-        const text = e.target?.result as string;
-        const rows = text.split('\n').filter(row => row.trim());
-        const data = rows.slice(1).map(row => {
-          // Simple CSV parsing (does not handle commas inside quotes perfectly, but sufficient for basic import)
-          const cols = row.split(',').map(c => c.replace(/^"|"$/g, '').trim());
-          return {
-            name: cols[0] || 'Untitled Activity',
-            purpose: cols[1] || 'Imported Activity',
-            lawfulBasis: cols[2] || 'legitimate_interest',
-            status: cols[3] || 'draft',
-            riskLevel: cols[4] || 'low',
-            description: cols[5] || ''
-          };
-        });
+        const { activities, errors, fatal } = parseRopaCsv((e.target?.result as string) ?? '');
 
-        if (data.length > 0) {
-          await bulkCreateMutation.mutateAsync(data);
+        if (fatal) {
+          toast('Import failed', { tone: 'error', description: fatal });
+          return;
+        }
+
+        if (activities.length > 0) {
+          await bulkCreateMutation.mutateAsync(activities);
           refetch();
-          alert(`Successfully imported ${data.length} activities!`);
+        }
+
+        // Report what happened to every row. The previous version reported
+        // success unconditionally, including for files it had silently mangled.
+        if (errors.length > 0) setImportErrors(errors);
+
+        if (activities.length === 0) {
+          toast('Nothing imported', {
+            tone: 'error',
+            description: `All ${errors.length} row${errors.length === 1 ? '' : 's'} were rejected.`,
+          });
+        } else if (errors.length > 0) {
+          toast(`Imported ${activities.length} of ${activities.length + errors.length} activities`, {
+            tone: 'info',
+            description: `${errors.length} row${errors.length === 1 ? ' was' : 's were'} skipped — see the list below.`,
+          });
+        } else {
+          toast(`Imported ${activities.length} activit${activities.length === 1 ? 'y' : 'ies'}`);
         }
       } catch (err) {
         console.error(err);
-        alert('Failed to import CSV. Please check the format.');
+        toast('Import failed', {
+          tone: 'error',
+          description: err instanceof Error ? err.message : 'The server rejected the file.',
+        });
       } finally {
         setIsImporting(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -128,7 +155,10 @@ export default function RopaListPage() {
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to generate PDF audit report.');
+      toast('Could not generate the audit report', {
+        tone: 'error',
+        description: err instanceof Error ? err.message : undefined,
+      });
     } finally {
       setIsExportingPdf(false);
     }
@@ -171,13 +201,55 @@ export default function RopaListPage() {
       },
     },
     {
+      accessorKey: 'dataSubjectCategories',
+      header: t('columns.data_subjects'),
+      // Art. 30(1)(c). Stored as a JSONB array; an auditor reads the count first
+      // and the categories second, so lead with the count.
+      cell: (info: any) => {
+        const categories = (info.getValue() as string[] | null) ?? [];
+        if (categories.length === 0) {
+          return <span className="text-[12px] text-[#6E747A]">{t('columns.not_recorded')}</span>;
+        }
+        return (
+          <span className="text-[12px] text-[#9BA1A6]" title={categories.join(', ')}>
+            {categories.slice(0, 2).join(', ')}
+            {categories.length > 2 && ` +${categories.length - 2}`}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'retentionPeriod',
+      header: t('columns.retention'),
+      // Art. 30(1)(f). A blank here is the single most common Article 30 finding,
+      // so it is called out rather than rendered as an empty cell.
+      cell: (info: any) => {
+        const period = info.getValue() as string | null;
+        return period ? (
+          <span className="text-[12px] text-[#9BA1A6]">{period}</span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[12px] text-amber-400">
+            <AlertCircle className="h-3 w-3" /> {t('columns.not_recorded')}
+          </span>
+        );
+      },
+    },
+    {
       accessorKey: 'riskLevel',
       header: t('columns.risk'),
       cell: (info: any) => {
         const risk = info.getValue()?.toLowerCase() || 'low';
+        const special = info.row.original.involvesSpecialCategories;
         return (
-          <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${severityClasses(risk)}`}>
-            {t(`risk_levels.${risk}`) || risk}
+          <span className="inline-flex items-center gap-1.5">
+            <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${severityClasses(risk)}`}>
+              {t(`risk_levels.${risk}`) || risk}
+            </span>
+            {special && (
+              <span title={t('columns.special_categories')} className="text-[#C9A227]">
+                <ShieldAlert className="h-3.5 w-3.5" />
+              </span>
+            )}
           </span>
         );
       },
@@ -192,7 +264,7 @@ export default function RopaListPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-serif text-[#F4F5F6] tracking-tight flex items-center gap-3">
-              <div className="p-2 bg-[#0D0F11] rounded-xl shadow-card border border-ink-900/8">
+              <div className="p-2 bg-[#0D0F11] rounded-xl shadow-card border border-white/10">
                 <FileText className="w-5 h-5 text-[#C9A227]" />
               </div>
               {t('title')}
@@ -235,7 +307,7 @@ export default function RopaListPage() {
             </button>
             <button 
               onClick={() => router.push('/ropa/new')}
-              className="px-4 py-2 bg-sage-700 hover:bg-sage-600 text-bone-50 font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 shadow-card"
+              className="px-4 py-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"
             >
               <Plus className="w-4 h-4" />
               {t('new_activity')}
@@ -243,10 +315,39 @@ export default function RopaListPage() {
           </div>
         </div>
 
+        {/* Rows the import refused. Listed in full so the file can be corrected. */}
+        {importErrors && importErrors.length > 0 && (
+          <div className="fade-up overflow-hidden rounded-2xl border border-red-500/30 bg-[#0D0F11] shadow-panel-elevated">
+            <div className="flex items-center justify-between border-b border-white/5 bg-red-500/10 p-4">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-red-400" />
+                <h3 className="font-semibold text-[#F4F5F6]">
+                  {t('import_skipped', { count: importErrors.length })}
+                </h3>
+              </div>
+              <button
+                onClick={() => setImportErrors(null)}
+                className="rounded p-1 text-[#6E747A] transition-colors hover:text-[#E6E8EA]"
+                aria-label={t('dismiss')}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <ul className="max-h-[280px] divide-y divide-white/5 overflow-y-auto">
+              {importErrors.map((e) => (
+                <li key={e.line} className="flex gap-3 p-3 text-[13px]">
+                  <span className="flex-none font-mono text-[#6E747A]">{t('import_line', { line: e.line })}</span>
+                  <span className="text-[#9BA1A6]">{e.message}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Re-Consent Flags Section */}
         {(reconsentFlags?.length || 0) > 0 || flagsTab === 'dismissed' ? (
           <div className="bg-[#0D0F11] rounded-2xl border border-white/10 shadow-panel-elevated overflow-hidden fade-up">
-            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-amber-500/30">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-amber-500/10">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-amber-400" />
                 <h3 className="font-semibold text-[#F4F5F6]">{t('reconsent_triggers')}</h3>
@@ -266,7 +367,7 @@ export default function RopaListPage() {
                 </button>
               </div>
             </div>
-            <div className="divide-y divide-ink-900/5 max-h-[300px] overflow-y-auto">
+            <div className="divide-y divide-white/5 max-h-[300px] overflow-y-auto">
               {reconsentFlags?.length === 0 ? (
                 <div className="p-8 text-center text-[#6E747A] text-sm">
                   {t('no_flags', { tab: flagsTab === 'flagged' ? t('active_flags').toLowerCase() : t('dismissed').toLowerCase() })}
@@ -276,7 +377,7 @@ export default function RopaListPage() {
                   <div key={flag.id} className="p-4 hover:bg-[#08090A]/50 transition-colors flex items-start gap-4">
                     <div className="mt-1">
                       {flag.confidence === 'ambiguous' ? (
-                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 tooltip" data-tip={t('human_review')}>
+                        <div className="w-8 h-8 rounded-full bg-[#C9A227]/10 flex items-center justify-center text-[#C9A227]" title={t('human_review')}>
                           <AlertCircle className="w-4 h-4" />
                         </div>
                       ) : (

@@ -27,7 +27,11 @@
     "purpose": "Zweck",
     "lawful_basis": "Rechtsgrundlage",
     "status": "Status",
-    "risk": "Risiko"
+    "risk": "Risiko",
+    "data_subjects": "Betroffene Personen",
+    "retention": "Aufbewahrung",
+    "not_recorded": "Nicht erfasst",
+    "special_categories": "Umfasst besondere Kategorien personenbezogener Daten (Art. 9)"
   },
   "risk_levels": {
     "critical": "kritisch",
@@ -133,5 +137,7 @@
       "additional_notes": "Zusätzliche Sicherheitsdetails",
       "additional_notes_ph": "Beschreiben Sie weitere spezifische technische oder organisatorische Maßnahmen..."
     }
-  }
+  },
+  "import_skipped": "{count} Zeilen wurden nicht importiert",
+  "import_line": "Zeile {line}"
 }

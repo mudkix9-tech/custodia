@@ -11,6 +11,7 @@ import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { TrialBanner } from "@/components/layout/TrialBanner";
 import { Announcer } from "@/components/layout/Announcer";
 import { AiGuidancePanel } from "@/components/layout/AiGuidancePanel";
+import { ToastProvider } from "@/components/ui/Toast";
 
 export default function AppLayout({
   children,
@@ -18,7 +19,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <ToastProvider>
       <Announcer />
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-[#0D0F11] focus:text-[#F4F5F6] focus:px-4 focus:py-2 focus:rounded focus:shadow-panel-elevated">
         Skip to main content
@@ -45,6 +46,6 @@ export default function AppLayout({
         <AiGuidancePanel />
         <CommandPalette />
       </div>
-    </>
+    </ToastProvider>
   );
 }

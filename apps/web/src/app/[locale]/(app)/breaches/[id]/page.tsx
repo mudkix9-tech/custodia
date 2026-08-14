@@ -1,8 +1,9 @@
 'use client';
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Tab } from '@headlessui/react';
 import { Clock } from 'lucide-react';
@@ -11,6 +12,7 @@ import RiskAssessmentMatrix from '@/components/breaches/RiskAssessmentMatrix';
 import BreachNotificationDraft from '@/components/breaches/BreachNotificationDraft';
 import BreachTasks from '@/components/breaches/BreachTasks';
 import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
+import { useDeadlineCountdown, formatDeadline } from '@/hooks/useDeadlineCountdown';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -22,6 +24,7 @@ export default function BreachWorkspace() {
 
   const { data: breach, isLoading, refetch } = trpc.breaches.getById.useQuery({ id: breachId });
   const { setContext } = useAiGuidanceStore();
+  const locale = useLocale();
 
   const [activeTab, setActiveTab] = useState(0);
 
@@ -42,21 +45,24 @@ export default function BreachWorkspace() {
     }
   }, [breachId, breach?.status]);
 
-  // Calculate remaining hours for Article 33 banner
-  const remainingHours = useMemo(() => {
-    if (!breach?.notificationDeadline) return null;
-    const deadlineMs = new Date(breach.notificationDeadline).getTime();
-    const nowMs = Date.now();
-    const diffMs = deadlineMs - nowMs;
-    return Math.max(0, Math.round(diffMs / (1000 * 60 * 60)));
-  }, [breach?.notificationDeadline]);
+  // Article 33's 72 hours run in real time, so the banner has to as well. This
+  // was a useMemo keyed on the deadline: it computed once at mount and then
+  // stood still. Hooks run before the early returns below, hence the optional
+  // chaining rather than a guard.
+  const alreadyNotified =
+    breach?.status === 'notified_authority' ||
+    breach?.status === 'notified' ||
+    breach?.status === 'closed' ||
+    !!breach?.authorityNotifiedAt;
+  const countdown = useDeadlineCountdown(breach?.notificationDeadline, alreadyNotified);
 
   if (isLoading) return <GenericWorkspaceSkeleton />;
   if (!breach) return <div className="p-6">Breach not found.</div>;
 
-  const isNotified = breach.status === 'notified_authority' || breach.status === 'closed' || !!breach.authorityNotifiedAt;
-  const isUrgent = remainingHours !== null && remainingHours <= 24 && !isNotified;
-  const showBanner = remainingHours !== null && !isNotified && (breach.status === 'detected' || breach.status === 'assessing');
+  const isNotified = alreadyNotified;
+  // Under 24 hours, or already past the deadline, is the escalated state.
+  const isUrgent = !!countdown && !isNotified && (countdown.expired || countdown.hoursRemaining < 24);
+  const showBanner = !!countdown && !isNotified && (breach.status === 'detected' || breach.status === 'assessing');
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -65,7 +71,7 @@ export default function BreachWorkspace() {
       {showBanner && (
         <div className={`rounded-xl p-4 flex items-center gap-4 ${
           isUrgent 
-            ? 'bg-red-500/10 border-2 border-red-500/30 animate-pulse' 
+            ? 'bg-red-500/10 border-2 border-red-500/30 motion-safe:animate-pulse' 
             : 'bg-amber-500/10 border border-amber-900/50'
         }`}>
           <div className={`p-2 rounded-full ${isUrgent ? 'bg-red-500/20' : 'bg-amber-500/20'}`}>
@@ -73,8 +79,13 @@ export default function BreachWorkspace() {
           </div>
           <div className="flex-1">
             <h3 className={`text-[14px] font-bold ${isUrgent ? 'text-red-400' : 'text-amber-400'}`}>
-              Article 33 Notification Deadline: {remainingHours} hour{remainingHours !== 1 ? 's' : ''} remaining
+              {countdown!.expired
+                ? 'Article 33 notification deadline has passed'
+                : `Article 33 notification deadline: ${countdown!.hours}h ${String(countdown!.minutes).padStart(2, '0')}m remaining`}
             </h3>
+            <p className={`text-[12px] tabular-nums ${isUrgent ? 'text-red-300/80' : 'text-amber-300/80'}`}>
+              Due {formatDeadline(breach.notificationDeadline as string, locale)}
+            </p>
             <p className={`text-[12.5px] ${isUrgent ? 'text-red-400' : 'text-amber-400'}`}>
               {isUrgent 
                 ? 'CRITICAL: You must notify the supervisory authority without undue delay and within 72 hours of becoming aware of a personal data breach.'

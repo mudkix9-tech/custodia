@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { Building2, Users, Bell, Plug, CreditCard, Shield, Database, User } from 'lucide-react';
-import { SettingsToastProvider } from '@/components/settings/SettingsToast';
 import { cn } from '@/utils/cn';
 
 const SETTINGS_NAV = [
@@ -60,8 +59,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const isProfile = pathname.includes('/settings/profile');
 
   return (
-    <SettingsToastProvider>
-      <div className="settings-scope flex min-h-full">
+    <div className="settings-scope flex min-h-full">
         <aside className="sticky top-0 hidden max-h-screen w-[252px] flex-none self-start overflow-y-auto border-r border-set-line-rail bg-set-rail px-4 py-[22px] md:block">
           <div className="px-2 pb-[22px] font-serif text-[30px] tracking-[-0.01em] text-set-fg">
             {t('navigation.header')}
@@ -93,6 +91,5 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
         <div className="min-w-0 flex-1">{children}</div>
       </div>
-    </SettingsToastProvider>
   );
 }

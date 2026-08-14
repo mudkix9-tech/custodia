@@ -23,7 +23,11 @@
     "purpose": "Purpose",
     "lawful_basis": "Lawful Basis",
     "status": "Status",
-    "risk": "Risk"
+    "risk": "Risk",
+    "data_subjects": "Data Subjects",
+    "retention": "Retention",
+    "not_recorded": "Not recorded",
+    "special_categories": "Involves special category data (Art. 9)"
   },
   "risk_levels": {
     "critical": "critical",
@@ -129,5 +133,7 @@
       "additional_notes": "Additional Security Details",
       "additional_notes_ph": "Describe any other specific technical or organizational measures..."
     }
-  }
+  },
+  "import_skipped": "{count} rows were not imported",
+  "import_line": "Line {line}"
 }

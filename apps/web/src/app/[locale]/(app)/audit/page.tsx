@@ -9,6 +9,7 @@ import { GapRemediationList } from '@/components/audit/GapRemediationList';
 import { Article30Generator } from '@/components/audit/Article30Generator';
 import { AuditLogTable } from '@/components/audit/AuditLogTable';
 import { useTranslations } from 'next-intl';
+import { formatScore, scoreChipClasses } from '@/utils/score';
 
 export default function AuditPage() {
   const t = useTranslations('audit');
@@ -19,8 +20,12 @@ export default function AuditPage() {
     return <div className="p-8 text-center text-[#6E747A]">{t('loading')}</div>;
   }
 
-  // Use the latest score if available, otherwise default to a calculated representation or 100
-  const score = metrics?.latestReport?.scoreTotal || 100;
+  // `??`, not `||`: a genuine score of 0 is falsy and used to render as 100. And a
+  // missing report is null rather than a number, so the dial can say "not yet
+  // assessed" instead of claiming a perfect posture the account has not earned.
+  const score = metrics?.latestReport?.scoreTotal ?? null;
+  const categoryScores = (metrics?.latestReport?.categoryScores ?? null) as Record<string, number> | null;
+  const pillarScore = (key: string) => categoryScores?.[key] ?? null;
   
   // Calculate total open gaps
   const totalGaps = metrics?.gapsSummary ? 
@@ -59,7 +64,9 @@ export default function AuditPage() {
         {/* Score Card */}
         <div className="lg:col-span-1 bg-[#0D0F11] border border-white/10 rounded-3xl p-8 shadow-panel-elevated flex flex-col items-center justify-center relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4">
-            {score >= 80 ? <ShieldCheck className="w-6 h-6 text-sage-500" /> : <ShieldAlert className="w-6 h-6 text-amber-500" />}
+            {score === null ? null : score >= 80
+              ? <ShieldCheck className="w-6 h-6 text-[#C9A227]" />
+              : <ShieldAlert className="w-6 h-6 text-amber-500" />}
           </div>
           <h2 className="text-sm font-medium text-[#6E747A] uppercase tracking-wider mb-6">{t('compliance_score')}</h2>
           <ComplianceScoreDial score={score} />
@@ -69,15 +76,15 @@ export default function AuditPage() {
         <div className="lg:col-span-2 bg-[#0D0F11] border border-white/10 rounded-3xl p-8 shadow-panel-elevated">
           <h2 className="text-lg font-serif text-[#F4F5F6] mb-6">{t('compliance_pillars')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <PillarCard title={t('pillars.ropa')} score={(metrics?.latestReport?.categoryScores as any)?.ropa || 100} />
-            <PillarCard title={t('pillars.vendors')} score={(metrics?.latestReport?.categoryScores as any)?.vendors || 100} />
-            <PillarCard title={t('pillars.dpia')} score={(metrics?.latestReport?.categoryScores as any)?.dpia || 100} />
-            <PillarCard title={t('pillars.policies')} score={(metrics?.latestReport?.categoryScores as any)?.policies || 100} />
-            <PillarCard title={t('pillars.dsar')} score={(metrics?.latestReport?.categoryScores as any)?.dsar || 100} />
-            <PillarCard title={t('pillars.breaches')} score={(metrics?.latestReport?.categoryScores as any)?.breach || 100} />
-            <PillarCard title={t('pillars.training')} score={(metrics?.latestReport?.categoryScores as any)?.training || 100} />
-            <PillarCard title={t('pillars.transfers')} score={(metrics?.latestReport?.categoryScores as any)?.transfers || 100} />
-            <PillarCard title={t('pillars.consent')} score={(metrics?.latestReport?.categoryScores as any)?.consent || 100} />
+            <PillarCard title={t('pillars.ropa')} score={pillarScore('ropa')} />
+            <PillarCard title={t('pillars.vendors')} score={pillarScore('vendors')} />
+            <PillarCard title={t('pillars.dpia')} score={pillarScore('dpia')} />
+            <PillarCard title={t('pillars.policies')} score={pillarScore('policies')} />
+            <PillarCard title={t('pillars.dsar')} score={pillarScore('dsar')} />
+            <PillarCard title={t('pillars.breaches')} score={pillarScore('breach')} />
+            <PillarCard title={t('pillars.training')} score={pillarScore('training')} />
+            <PillarCard title={t('pillars.transfers')} score={pillarScore('transfers')} />
+            <PillarCard title={t('pillars.consent')} score={pillarScore('consent')} />
           </div>
         </div>
       </div>
@@ -103,7 +110,7 @@ export default function AuditPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between bg-[#C9A227]/10 border border-[#C9A227]/50 rounded-xl p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-sage-100 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-[#C9A227]/15 rounded-full flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5 text-[#C9A227]" />
               </div>
               <div>
@@ -120,18 +127,15 @@ export default function AuditPage() {
   );
 }
 
-function PillarCard({ title, score }: { title: string, score: number }) {
-  let color = 'bg-red-500/10 text-red-400';
-  if (score >= 50) color = 'bg-amber-500/10 text-amber-400';
-  if (score >= 80) color = 'bg-[#C9A227]/10 text-[#C9A227]';
-  if (score === 100) color = 'bg-sage-100 text-sage-800 font-bold';
-
+function PillarCard({ title, score }: { title: string, score: number | null }) {
   return (
     <div className="p-4 bg-[#08090A] rounded-2xl border border-white/5 flex flex-col justify-between h-24">
       <span className="text-xs font-medium text-[#6E747A] uppercase tracking-wider">{title}</span>
       <div className="flex items-end justify-between">
-        <span className="text-2xl font-serif text-[#F4F5F6]">{score}</span>
-        <span className={`text-[10px] px-1.5 py-0.5 rounded ${color}`}>%</span>
+        <span className={`text-2xl font-serif ${score === null ? 'text-[#6E747A]' : 'text-[#F4F5F6]'}`}>
+          {formatScore(score)}
+        </span>
+        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${scoreChipClasses(score)}`}>%</span>
       </div>
     </div>
   );

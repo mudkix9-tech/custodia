@@ -31,7 +31,7 @@ import {
   SettingsMeter,
   StatusDot,
 } from '@/components/settings/SettingsBits';
-import { useSettingsToast } from '@/components/settings/SettingsToast';
+import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/utils/cn';
 
 const MODULES = ['ROPA', 'Vendors', 'DSARs', 'Breaches', 'Training', 'Billing', 'Users'] as const;
@@ -64,7 +64,7 @@ const EMAIL_RE = /[^\s,;<>"]+@[^\s,;<>"]+\.[^\s,;<>"]+/g;
 export default function TeamSettingsPage() {
   const { data: session } = useSession();
   const t = useTranslations('settings.team');
-  const toast = useSettingsToast();
+  const toast = useToast();
   const { confirm, dialog } = useConfirm();
 
   const currentUserId = (session?.user as { id?: string } | undefined)?.id;

@@ -141,21 +141,21 @@ export default function OnboardingPage() {
   const companySize = (status?.settings as any)?.companySize || '1-4';
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>;
+    return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C9A227]"></div></div>;
   }
 
   return (
     <>
-      <header className="bg-white border-b px-6 py-4 flex justify-between items-center w-full shrink-0">
+      <header className="bg-[#0D0F11] border-b border-white/10 px-6 py-4 flex justify-between items-center w-full shrink-0">
         <div className="flex items-center">
-          <div className="text-xl font-bold text-gray-900">Custodia</div>
+          <div className="text-xl font-serif text-[#F4F5F6]">Custodia</div>
         </div>
         {currentStep < 6 ? (
-          <button onClick={handleDismiss} className="text-sm text-gray-500 hover:text-gray-700">
+          <button onClick={handleDismiss} className="text-sm text-[#9BA1A6] hover:text-[#E6E8EA] transition-colors">
             {t('save_and_exit')}
           </button>
         ) : (
-          <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2.5 py-0.5 rounded-full font-semibold">
+          <span className="text-xs bg-green-500/10 text-green-400 border border-green-500/30 px-2.5 py-0.5 rounded-full font-semibold">
             {t('setup_complete')}
           </span>
         )}

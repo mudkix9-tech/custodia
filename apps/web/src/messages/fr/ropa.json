@@ -26,7 +26,11 @@
     "purpose": "Finalité",
     "lawful_basis": "Base légale",
     "status": "Statut",
-    "risk": "Risque"
+    "risk": "Risque",
+    "data_subjects": "Personnes concernées",
+    "retention": "Conservation",
+    "not_recorded": "Non renseigné",
+    "special_categories": "Comporte des données sensibles (art. 9)"
   },
   "risk_levels": {
     "critical": "critique",
@@ -132,5 +136,7 @@
       "additional_notes": "Détails de sécurité supplémentaires",
       "additional_notes_ph": "Décrivez toute autre mesure technique ou organisationnelle spécifique..."
     }
-  }
+  },
+  "import_skipped": "{count} lignes n'ont pas été importées",
+  "import_line": "Ligne {line}"
 }
