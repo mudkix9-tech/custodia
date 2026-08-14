@@ -219,7 +219,7 @@ export function GapRemediationList() {
               value={dismissReason}
               onChange={e => setDismissReason(e.target.value)}
               placeholder="e.g. This vendor does not process personal data..."
-              className="w-full h-24 p-3 bg-[#08090A] border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sage-500/20 mb-4"
+              className="w-full h-24 p-3 bg-[#08090A] border border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40 mb-4"
             />
             <div className="flex justify-end gap-2">
               <button onClick={() => setDismissingId(null)} className="px-4 py-2 text-sm font-medium text-[#9BA1A6] hover:bg-white/5 rounded-lg">Cancel</button>

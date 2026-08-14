@@ -25,15 +25,15 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="mx-auto max-w-lg w-full rounded-xl bg-[#0D0F11] dark:bg-gray-800 p-6 shadow-2xl ring-1 ring-red-500/50">
-          <Dialog.Title className="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+        <Dialog.Panel className="mx-auto max-w-lg w-full rounded-xl bg-[#0D0F11] p-6 shadow-2xl ring-1 ring-red-500/50">
+          <Dialog.Title className="text-lg font-bold text-[#F4F5F6] flex items-center">
             <span className="bg-red-500/20 text-red-400 p-1.5 rounded-md mr-3">🚨</span>
             Report New Incident
           </Dialog.Title>
           
           <div className="mt-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Incident Title</label>
+              <label className="block text-sm font-medium text-[#9BA1A6]">Incident Title</label>
               <Input
                 type="text"
                 value={form.title}
@@ -43,7 +43,7 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+              <label className="block text-sm font-medium text-[#9BA1A6]">Description</label>
               <Textarea
                 rows={3}
                 value={form.description}
@@ -54,7 +54,7 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Discovery Method</label>
+                <label className="block text-sm font-medium text-[#9BA1A6]">Discovery Method</label>
                 <Select
                   value={form.discoveryMethod}
                   onValueChange={val => setForm({...form, discoveryMethod: val})}
@@ -73,7 +73,7 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Discovered At</label>
+                <label className="block text-sm font-medium text-[#9BA1A6]">Discovered At</label>
                 <Input
                   type="datetime-local"
                   value={form.discoveredAt}
@@ -84,7 +84,7 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Breach Type</label>
+              <label className="block text-sm font-medium text-[#9BA1A6]">Breach Type</label>
               <Select
                 value={form.breachType}
                 onValueChange={val => setForm({...form, breachType: val})}
@@ -102,11 +102,11 @@ export default function ReportBreachModal({ isOpen, onClose, onSuccess }: { isOp
             </div>
           </div>
 
-          <div className="mt-8 flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="mt-8 flex justify-end gap-3 border-t border-white/10 pt-4">
             <Button
               variant="ghost"
               onClick={onClose}
-              className="text-gray-700 dark:text-gray-300"
+              className="text-[#9BA1A6]"
             >
               Cancel
             </Button>

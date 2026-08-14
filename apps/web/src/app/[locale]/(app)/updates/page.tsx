@@ -34,7 +34,7 @@ export default function UpdatesPage() {
               placeholder="Search updates..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-[#0D0F11] border border-white/10 rounded-lg text-sm focus:ring-sage-500 w-64"
+              className="pl-9 pr-4 py-2 bg-[#0D0F11] border border-white/10 rounded-lg text-sm focus:ring-[#C9A227]/40 w-64"
             />
           </div>
           <button className="flex items-center gap-2 px-3 py-2 bg-[#0D0F11] border border-white/10 rounded-lg text-sm text-[#9BA1A6] hover:bg-[#08090A]">

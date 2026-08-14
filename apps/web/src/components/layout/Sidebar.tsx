@@ -8,6 +8,7 @@ import { LayoutDashboard, Users, Database, Building2, UserCircle, GraduationCap,
 import { cn } from '@/utils/cn';
 import { OrgSwitcher } from './OrgSwitcher';
 import { useTranslations } from 'next-intl';
+import { trpc } from '@/utils/trpc';
 
 export function Logo({ className = '' }: { className?: string }) {
   return (
@@ -31,7 +32,7 @@ const NAV = [
   { id: 'clients', label: 'Trust Portals', icon: Users, href: '/clients' },
   { id: 'ropa', label: 'Data Processing', icon: Database, href: '/ropa' },
   { id: 'vendors', label: 'Vendors', icon: Building2, href: '/vendors' },
-  { id: 'dsars', label: 'Data Requests', icon: UserCircle, href: '/dsar', badge: 1 },
+  { id: 'dsars', label: 'Data Requests', icon: UserCircle, href: '/dsar' },
   { id: 'policies', label: 'Privacy Policies', icon: FileText, href: '/policies' },
   { id: 'consent', label: 'Cookie Consent', icon: Cookie, href: '/consent' },
   { id: 'breaches', label: 'Breaches', icon: AlertTriangle, href: '/breaches' },
@@ -45,6 +46,7 @@ export function Sidebar() {
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { data: pendingDsars } = trpc.dsar.countPending.useQuery();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -104,6 +106,8 @@ export function Sidebar() {
                 {NAV.map((n) => {
                   const isActive = pathname === n.href || (n.href !== '/' && pathname.startsWith(n.href));
                   const IconComp = n.icon;
+                  // Only the DSAR item carries a count, and a zero is worth no pill at all.
+                  const badge = n.id === 'dsars' && pendingDsars ? pendingDsars : null;
 
                   return (
                     <li key={n.id}>
@@ -119,8 +123,8 @@ export function Sidebar() {
                           className={isActive ? 'text-[#F4F5F6]' : 'text-[#6E747A] group-hover:text-[#9BA1A6]'}
                         />
                         <span className="flex-1 text-left">{t(`navigation.${n.id}`)}</span>
-                        {n.badge && (
-                          <span className="text-[10.5px] tabular-nums px-1.5 py-0.5 rounded-md bg-[#C9A227]/20 text-[#C9A227]">{n.badge}</span>
+                        {badge !== null && (
+                          <span className="text-[10.5px] tabular-nums px-1.5 py-0.5 rounded-md bg-[#C9A227]/20 text-[#C9A227]">{badge}</span>
                         )}
                       </Link>
                     </li>

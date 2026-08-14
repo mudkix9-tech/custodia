@@ -67,7 +67,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
         value={value || ''}
         onChange={e => setValue(e.target.value)}
         onBlur={onBlur}
-        className="bg-transparent border-none shadow-none focus-visible:ring-1 focus-visible:ring-sage-500/20 rounded px-2 py-1 h-8 w-full text-[#F4F5F6] placeholder:text-white/20"
+        className="bg-transparent border-none shadow-none focus-visible:ring-1 focus-visible:ring-[#C9A227]/40 rounded px-2 py-1 h-8 w-full text-[#F4F5F6] placeholder:text-white/20"
       />
     );
   };
@@ -79,7 +79,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
         value={value || 'none'}
         onValueChange={(val) => table.options.meta?.updateData(row.index, column.id, val === 'none' ? '' : val)}
       >
-        <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-sage-500/20">
+        <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-[#C9A227]/40">
           <SelectValue placeholder="Select..." />
         </SelectTrigger>
         <SelectContent>
@@ -99,7 +99,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
         value={value || 'none'}
         onValueChange={(val) => table.options.meta?.updateData(row.index, column.id, val === 'none' ? null : val)}
       >
-        <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-sage-500/20">
+        <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-[#C9A227]/40">
           <SelectValue placeholder="No vendor linked" />
         </SelectTrigger>
         <SelectContent>

@@ -133,7 +133,7 @@ export default function ClientsPage() {
               placeholder={t('search_placeholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-[#0D0F11] border border-white/10 rounded-lg pl-9 pr-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+              className="w-full bg-[#0D0F11] border border-white/10 rounded-lg pl-9 pr-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
             />
           </div>
         </div>
@@ -197,7 +197,7 @@ function AddClientModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
             <input 
               required type="text"
               value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-              className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+              className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
               placeholder={t('modal.client_name_placeholder')}
             />
           </div>
@@ -206,7 +206,7 @@ function AddClientModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
             <input 
               type="text"
               value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})}
-              className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+              className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
               placeholder={t('modal.legal_name_placeholder')}
             />
           </div>
@@ -216,7 +216,7 @@ function AddClientModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
               <input 
                 type="text"
                 value={formData.contactName} onChange={e => setFormData({...formData, contactName: e.target.value})}
-                className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
               />
             </div>
             <div>
@@ -224,7 +224,7 @@ function AddClientModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
               <input 
                 type="email"
                 value={formData.contactEmail} onChange={e => setFormData({...formData, contactEmail: e.target.value})}
-                className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
               />
             </div>
           </div>
@@ -233,7 +233,7 @@ function AddClientModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
             <input 
               type="text"
               value={formData.industry} onChange={e => setFormData({...formData, industry: e.target.value})}
-              className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+              className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
             />
           </div>
           

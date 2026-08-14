@@ -13,6 +13,9 @@ export default function DashboardPage() {
   const t = useTranslations('dashboard');
   const { data: riskStats } = trpc.vendors.getRiskStats.useQuery();
   const { data: undocumentedCount } = trpc.vendors.getUndocumentedCount.useQuery();
+  const { data: auditMetrics } = trpc.audit.getDashboardMetrics.useQuery();
+  const { data: activeProcessing } = trpc.ropa.countActive.useQuery();
+  const { data: pendingDsars } = trpc.dsar.countPending.useQuery();
 
   return (
     <div className="max-w-5xl mx-auto p-8 fade-up">
@@ -41,15 +44,27 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
         <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
           <h3 className="text-[#6E747A] font-medium text-sm mb-2 truncate" title={t('compliance_score')}>{t('compliance_score')}</h3>
-          <p className="text-3xl font-serif text-[#E6E8EA] font-bold">85%</p>
+          {/* No snapshot yet is not a score of zero -- an em dash reads as "not measured",
+              which is the truthful state before the first assessment has run. */}
+          <p className="text-3xl font-serif text-[#E6E8EA] font-bold">
+            {auditMetrics === undefined
+              ? '...'
+              : auditMetrics.latestReport
+                ? `${auditMetrics.latestReport.scoreTotal}%`
+                : '—'}
+          </p>
         </div>
         <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
           <h3 className="text-[#6E747A] font-medium text-sm mb-2 truncate" title={t('active_processing')}>{t('active_processing')}</h3>
-          <p className="text-3xl font-serif text-[#E6E8EA] font-bold">12</p>
+          <p className="text-3xl font-serif text-[#E6E8EA] font-bold">
+            {activeProcessing !== undefined ? activeProcessing : '...'}
+          </p>
         </div>
         <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
           <h3 className="text-[#6E747A] font-medium text-sm mb-2 truncate" title={t('pending_dsars')}>{t('pending_dsars')}</h3>
-          <p className="text-3xl font-serif text-[#E6E8EA] font-bold">2</p>
+          <p className="text-3xl font-serif text-[#E6E8EA] font-bold">
+            {pendingDsars !== undefined ? pendingDsars : '...'}
+          </p>
         </div>
         <Link 
           href="/vendors" 

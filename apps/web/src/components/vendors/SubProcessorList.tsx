@@ -193,7 +193,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                           name="vendor" 
                           checked={selectedSubProcessorId === v.id}
                           onChange={() => setSelectedSubProcessorId(v.id)}
-                          className="text-[#C9A227] focus:ring-sage-500"
+                          className="text-[#C9A227] focus:ring-[#C9A227]/40"
                         />
                         <div>
                           <div className="font-medium text-[#F4F5F6] text-sm">{v.name}</div>
@@ -345,7 +345,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                                 </div>
                               ))}
                               {addedLines.map((line, i) => (
-                                <div key={`add-${i}`} className="bg-[#C9A227]/10 text-sage-800 border-l-2 border-sage-500 px-3 py-1.5 rounded flex items-start gap-2">
+                                <div key={`add-${i}`} className="bg-[#C9A227]/10 text-sage-800 border-l-2 border-[#C9A227]/50 px-3 py-1.5 rounded flex items-start gap-2">
                                   <span className="font-bold shrink-0 text-[#C9A227]">+</span>
                                   <span className="break-all">{line}</span>
                                 </div>

@@ -14,7 +14,7 @@ import {
   users,
   notificationQueue
 } from 'db';
-import { eq, and, desc, isNull, inArray } from 'drizzle-orm';
+import { eq, and, or, desc, isNull, inArray, notInArray, count } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { Resend } from 'resend';
 import jwt from 'jsonwebtoken';
@@ -430,6 +430,24 @@ export const dsarRouter = router({
       }
 
       return result;
+    }),
+
+  // Pending is everything short of a terminal state. status is nullable, and a
+  // NULL would drop out of a bare NOT IN, so count it as pending explicitly.
+  countPending: protectedProcedure
+    .use(requirePermission('dsar', 'view'))
+    .query(async ({ ctx }) => {
+      checkOrgContext(ctx.user);
+      const [row] = await ctx.db.select({ value: count() })
+        .from(dsarRequests)
+        .where(and(
+          eq(dsarRequests.organizationId, ctx.user!.orgId),
+          or(
+            isNull(dsarRequests.status),
+            notInArray(dsarRequests.status, ['completed', 'refused']),
+          ),
+        ));
+      return row?.value ?? 0;
     }),
 
   getById: protectedProcedure

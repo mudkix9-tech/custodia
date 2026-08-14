@@ -187,7 +187,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                             onClick={() => setReviewStatus('acknowledged')}
                             className={`px-4 py-2.5 rounded-lg border text-xs font-semibold transition-all uppercase tracking-wider
                               ${reviewStatus === 'acknowledged' 
-                                ? 'bg-[#C9A227]/10 border-sage-300 text-sage-800 ring-2 ring-sage-500/10' 
+                                ? 'bg-[#C9A227]/10 border-[#C9A227]/40 text-[#C9A227] ring-2 ring-[#C9A227]/30' 
                                 : 'bg-[#0D0F11] border-white/10 text-[#6E747A] hover:border-white/20'}`}
                           >
                             Acknowledge
@@ -221,7 +221,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
                           placeholder="Document your workspace action notes (e.g. 'Confirmed no data subjects are affected by API key disclosure.')"
-                          className="w-full min-h-20 px-3 py-2 border border-white/20 rounded-xl outline-none focus:border-sage-500 focus:ring-1 focus:ring-sage-500 text-xs"
+                          className="w-full min-h-20 px-3 py-2 border border-white/20 rounded-xl outline-none focus:border-[#C9A227]/50 focus:ring-1 focus:ring-[#C9A227]/40 text-xs"
                         />
                       </div>
 

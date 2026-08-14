@@ -160,7 +160,7 @@ export default function RopaListPage() {
         const status = info.getValue();
         return (
           <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${
-            status === 'active' ? 'bg-[#C9A227]/10 text-[#C9A227] border-sage-500/20' : 
+            status === 'active' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/50/20' : 
             status === 'draft' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
             'bg-white/5 text-[#6E747A] border-white/10'
           }`}>
@@ -179,7 +179,7 @@ export default function RopaListPage() {
             risk === 'critical' ? 'bg-clay-50 text-clay-700 border-clay-500/20' :
             risk === 'high' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
             risk === 'medium' ? 'bg-yellow-50 text-yellow-700 border-yellow-500/20' :
-            'bg-[#C9A227]/10 text-[#C9A227] border-sage-500/20'
+            'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/50/20'
           }`}>
             {t(`risk_levels.${risk}`) || risk}
           </span>

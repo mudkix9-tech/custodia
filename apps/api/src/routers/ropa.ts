@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
 import { processingActivities, legitimateInterestAssessments, processingDataCategories, processingRecipients, processingTransfers, auditLogs, vendors, organizationVendors, clientProcessingActivities, reconsentFlags } from 'db';
-import { eq, and, desc, inArray, not } from 'drizzle-orm';
+import { eq, and, desc, inArray, not, count } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { assertOwned, assertParentOwned } from '../lib/tenancy.js';
 import DOMPurify from 'isomorphic-dompurify';
@@ -40,6 +40,21 @@ export const ropaRouter = router({
         'updatedAt',
         'desc'
       );
+    }),
+
+  // The dashboard tile wants an org-wide total. list is cursor-paginated, so
+  // counting its rows would silently cap at the page size.
+  countActive: protectedProcedure
+    .use(requirePermission('ropa', 'view'))
+    .query(async ({ ctx }) => {
+      checkOrgContext(ctx.user);
+      const [row] = await ctx.db.select({ value: count() })
+        .from(processingActivities)
+        .where(and(
+          eq(processingActivities.organizationId, ctx.user!.orgId),
+          eq(processingActivities.status, 'active'),
+        ));
+      return row?.value ?? 0;
     }),
 
   get: protectedProcedure

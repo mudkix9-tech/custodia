@@ -155,7 +155,7 @@ function OverviewTab({ client }: { client: any }) {
                 value={client.dpaStatus} 
                 onChange={handleDpaStatusChange}
                 disabled={updateDpa.isPending}
-                className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:ring-2 focus:ring-sage-500/20"
+                className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:ring-2 focus:ring-[#C9A227]/40"
               >
                 <option value="not_started">Not Started</option>
                 <option value="pending">Pending Signature</option>
@@ -403,7 +403,7 @@ function LinkActivityModal({ clientId, isOpen, onClose, existingActivityIds }: a
             placeholder="Search your ROPA..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+            className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
           />
         </div>
 
@@ -413,7 +413,7 @@ function LinkActivityModal({ clientId, isOpen, onClose, existingActivityIds }: a
           ) : (
             availableActivities.map((act: any) => (
               <label key={act.id} className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
-                selected.includes(act.id) ? 'border-sage-500 bg-[#C9A227]/10' : 'border-white/10 hover:border-ink-900/30'
+                selected.includes(act.id) ? 'border-[#C9A227]/50 bg-[#C9A227]/10' : 'border-white/10 hover:border-ink-900/30'
               }`}>
                 <input 
                   type="checkbox" 

@@ -22,8 +22,8 @@ export default function GroupBreachesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Group Breach Register</h1>
-          <p className="text-sm text-gray-500 mt-1">Consolidated view of all incidents and breaches across your organization and subsidiaries.</p>
+          <h1 className="text-2xl font-semibold text-[#F4F5F6]">Group Breach Register</h1>
+          <p className="text-sm text-[#9BA1A6] mt-1">Consolidated view of all incidents and breaches across your organization and subsidiaries.</p>
         </div>
       </div>
 

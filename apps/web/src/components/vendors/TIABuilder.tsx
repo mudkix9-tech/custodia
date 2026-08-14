@@ -337,13 +337,13 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
                     { value: 'proceed_with_conditions', label: 'Proceed with Conditions', color: 'text-amber-400' },
                     { value: 'suspend', label: 'Suspend Transfer', color: 'text-red-400' }
                   ].map(opt => (
-                    <label key={opt.value} className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${formData.conclusion === opt.value ? 'bg-[#0D0F11] border-sage-500 shadow-panel-elevated' : 'bg-[#0D0F11]/50 border-white/10 hover:bg-[#0D0F11]'}`}>
+                    <label key={opt.value} className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${formData.conclusion === opt.value ? 'bg-[#0D0F11] border-[#C9A227]/50 shadow-panel-elevated' : 'bg-[#0D0F11]/50 border-white/10 hover:bg-[#0D0F11]'}`}>
                       <input 
                         type="radio" 
                         name="conclusion" 
                         checked={formData.conclusion === opt.value} 
                         onChange={() => setFormData({...formData, conclusion: opt.value})}
-                        className="text-[#C9A227] focus:ring-sage-500"
+                        className="text-[#C9A227] focus:ring-[#C9A227]/40"
                       />
                       <span className={`font-medium ${opt.color}`}>{opt.label}</span>
                     </label>

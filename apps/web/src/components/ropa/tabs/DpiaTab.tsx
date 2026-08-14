@@ -172,9 +172,9 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
       if (element) {
         setTimeout(() => {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          element.classList.add('ring-4', 'ring-sage-500/50', 'ring-offset-2', 'transition-all', 'duration-500');
+          element.classList.add('ring-4', 'ring-[#C9A227]/50', 'ring-offset-2', 'transition-all', 'duration-500');
           setTimeout(() => {
-            element.classList.remove('ring-4', 'ring-sage-500/50', 'ring-offset-2');
+            element.classList.remove('ring-4', 'ring-[#C9A227]/50', 'ring-offset-2');
           }, 3000);
         }, 500);
       }

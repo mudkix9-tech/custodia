@@ -560,7 +560,7 @@ export function AiGuidancePanel() {
                 onChange={e => setChatInput(e.target.value)}
                 placeholder="Ask follow-up..."
                 disabled={copilotMutation.isPending}
-                className="flex-1 bg-[#08090A] border border-white/10 rounded-xl px-3 py-2 text-[12.5px] focus:outline-none focus:ring-2 focus:ring-sage-500/20 disabled:opacity-60"
+                className="flex-1 bg-[#08090A] border border-white/10 rounded-xl px-3 py-2 text-[12.5px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40 disabled:opacity-60"
               />
               <button
                 type="submit"

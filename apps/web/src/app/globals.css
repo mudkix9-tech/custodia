@@ -38,7 +38,7 @@
 
   --shadow-card: 0 1px 0 rgba(31,27,22,0.04), 0 1px 2px rgba(31,27,22,0.04);
   --shadow-lift: 0 1px 0 rgba(31,27,22,0.04), 0 8px 24px -8px rgba(31,27,22,0.10);
-  --shadow-inset-hairline: inset 0 0 0 1px rgba(31,27,22,0.06);
+  --shadow-inset-hairline: inset 0 0 0 1px rgba(255,255,255,0.06);
 
   /* Marketing Dark Theme Tokens */
   --color-surface-base: #08090A;
@@ -257,11 +257,14 @@
   .rise-in {
     animation: rise-in 400ms cubic-bezier(.2,.7,.2,1) both;
   }
+  /* Ink-on-bone hairlines from the retired light theme, which every one of the
+     24 call sites renders on a #0D0F11 or #08090A panel -- i.e. invisibly.
+     Matched to the border-white/10 the neighbouring surfaces use. */
   .hairline {
-    box-shadow: inset 0 0 0 1px rgba(31,27,22,0.07);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10);
   }
   .hairline-strong {
-    box-shadow: inset 0 0 0 1px rgba(31,27,22,0.12);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16);
   }
   .grain {
     background-image: radial-gradient(rgba(31,27,22,0.025) 1px, transparent 1px);

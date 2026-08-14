@@ -61,12 +61,12 @@ export default function PoliciesDashboard() {
               placeholder={t('name_placeholder')}
               value={name}
               onChange={e => setName(e.target.value)}
-              className="flex-1 bg-[#08090A] border border-white/10 rounded-xl px-4 py-2 focus:ring-2 focus:ring-sage-500/20"
+              className="flex-1 bg-[#08090A] border border-white/10 rounded-xl px-4 py-2 focus:ring-2 focus:ring-[#C9A227]/40"
             />
             <select 
               value={type}
               onChange={e => setType(e.target.value)}
-              className="bg-[#08090A] border border-white/10 rounded-xl px-4 py-2 focus:ring-2 focus:ring-sage-500/20"
+              className="bg-[#08090A] border border-white/10 rounded-xl px-4 py-2 focus:ring-2 focus:ring-[#C9A227]/40"
             >
               <option value="website_visitors">{t('types.website_visitors')}</option>
               <option value="employees">{t('types.employees')}</option>

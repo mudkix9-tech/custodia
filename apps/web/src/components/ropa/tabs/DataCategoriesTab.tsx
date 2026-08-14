@@ -62,7 +62,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
         value={value || ''}
         onChange={e => setValue(e.target.value)}
         onBlur={onBlur}
-        className="bg-transparent border-none shadow-none focus-visible:ring-1 focus-visible:ring-sage-500/20 rounded px-2 py-1 h-8 w-full text-[#F4F5F6] placeholder:text-white/20"
+        className="bg-transparent border-none shadow-none focus-visible:ring-1 focus-visible:ring-[#C9A227]/40 rounded px-2 py-1 h-8 w-full text-[#F4F5F6] placeholder:text-white/20"
       />
     );
   };
@@ -92,7 +92,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
             type="checkbox"
             checked={getValue() || false}
             onChange={(e) => table.options.meta?.updateData(row.index, column.id, e.target.checked)}
-            className="rounded border-white/20 text-[#C9A227] focus:ring-sage-500/20 bg-transparent"
+            className="rounded border-white/20 text-[#C9A227] focus:ring-[#C9A227]/40 bg-transparent"
           />
         );
       }

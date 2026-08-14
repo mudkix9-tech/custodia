@@ -174,7 +174,7 @@ export default function VendorsPage() {
                 <input 
                   type="text" 
                   placeholder={t('filter_placeholder')}
-                  className="w-full bg-[#0D0F11] border border-white/10 rounded-lg pl-9 pr-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                  className="w-full bg-[#0D0F11] border border-white/10 rounded-lg pl-9 pr-4 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                 />
               </div>
               <button className="text-[13px] font-medium text-[#9BA1A6] hover:text-[#F4F5F6] bg-[#0D0F11] border border-white/10 px-3 py-1.5 rounded-lg shadow-panel-elevated">
@@ -183,6 +183,7 @@ export default function VendorsPage() {
             </div>
             <DataGrid 
               mode="full"
+              bare
               columns={columns as any}
               data={vendors}
               isLoading={isLoading}
@@ -243,7 +244,7 @@ function DiscoverModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => vo
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={t('discover_modal.search_placeholder')}
-              className="w-full bg-[#08090A] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+              className="w-full bg-[#08090A] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
             />
           </div>
         </div>
@@ -253,7 +254,7 @@ function DiscoverModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => vo
             <div className="p-8 text-center text-[#6E747A]">{t('discover_modal.no_results', { search })}</div>
           ) : (
             filtered.map((v: any) => (
-              <div key={v.id} className="bg-[#0D0F11] border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-sage-500/30 transition-colors shadow-panel-elevated">
+              <div key={v.id} className="bg-[#0D0F11] border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-[#C9A227]/50/30 transition-colors shadow-panel-elevated">
                 <div>
                   <h4 className="font-semibold text-[#F4F5F6] flex items-center gap-2">
                     {v.name}

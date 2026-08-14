@@ -57,7 +57,7 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
       {viewMode === 'kanban' ? (
         <div className="flex gap-4 overflow-x-auto pb-4">
           {COLUMNS.map(col => {
-            const colRequests = ((requests as any)?.data || [])?.filter((r: any) => r.status === col.id) || [];
+            const colRequests = requests.filter((r: any) => r.status === col.id);
             return (
               <div key={col.id} className="min-w-[300px] w-[300px] flex-shrink-0 bg-[#08090A]/50 rounded-2xl p-4 border border-white/5">
                 <div className="flex items-center justify-between mb-4 px-1">
@@ -122,7 +122,7 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-900/5">
-              {((requests as any)?.data || [])?.map((request: any) => (
+              {requests.map((request: any) => (
                 <tr key={request.id} className="hover:bg-[#08090A]/50">
                   {isGroupContext && (
                     <td className="px-6 py-4 text-[13px] text-[#9BA1A6] font-medium">

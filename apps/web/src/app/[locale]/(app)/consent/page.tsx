@@ -50,7 +50,7 @@ export default function ConsentDashboard() {
                 placeholder={t('domain_placeholder')}
                 value={domain}
                 onChange={e => setDomain(e.target.value.replace(/^https?:\/\//, ''))}
-                className="w-full bg-[#08090A] border border-white/10 rounded-xl pl-16 pr-4 py-2 focus:ring-2 focus:ring-sage-500/20"
+                className="w-full bg-[#08090A] border border-white/10 rounded-xl pl-16 pr-4 py-2 focus:ring-2 focus:ring-[#C9A227]/40"
               />
             </div>
             <button 

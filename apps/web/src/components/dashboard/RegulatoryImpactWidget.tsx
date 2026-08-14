@@ -95,7 +95,7 @@ export function RegulatoryImpactWidget() {
                   <button 
                     onClick={() => acknowledgeMutation.mutate({ updateId: update.id })}
                     disabled={acknowledgeMutation.isPending}
-                    className="flex items-center justify-center gap-1.5 bg-[#0D0F11] border border-white/20 hover:border-sage-500 hover:text-[#C9A227] text-[#9BA1A6] px-4 py-2 rounded-xl text-[13px] font-medium transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center gap-1.5 bg-[#0D0F11] border border-white/20 hover:border-[#C9A227]/50 hover:text-[#C9A227] text-[#9BA1A6] px-4 py-2 rounded-xl text-[13px] font-medium transition-colors disabled:opacity-50"
                   >
                     <Check className="w-4 h-4" /> {t('acknowledge')}
                   </button>

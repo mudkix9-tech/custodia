@@ -34,6 +34,9 @@ export interface DataGridProps<TData, TValue> {
   emptyStateMessage?: string;
   globalFilter?: string;
   setGlobalFilter?: (value: string) => void;
+  /** Drop the grid's own panel chrome when a caller has already drawn one
+   *  around it, so the two borders do not stack. */
+  bare?: boolean;
 }
 
 function useIsMobile() {
@@ -58,6 +61,7 @@ export function DataGrid<TData, TValue>({
   enableInlineAdd = false,
   isLoading = false,
   emptyStateMessage = "No data found.",
+  bare = false,
   globalFilter,
   setGlobalFilter,
 }: DataGridProps<TData, TValue>) {
@@ -105,24 +109,24 @@ export function DataGrid<TData, TValue>({
           <div className="flex items-center gap-2">
             {setGlobalFilter && (
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E747A]" />
                 <input
                   value={globalFilter ?? ''}
                   onChange={e => setGlobalFilter(e.target.value)}
                   placeholder="Search all columns..."
-                  className="pl-9 pr-4 py-2 bg-bone-50 hairline rounded-lg text-[13px] text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-500/20 transition-colors"
+                  className="pl-9 pr-4 py-2 bg-[#08090A] border border-white/10 rounded-lg text-[13px] text-[#F4F5F6] placeholder:text-[#6E747A] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40 transition-colors"
                 />
               </div>
             )}
             {enableBulkActions && Object.keys(rowSelection).length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-[12.5px] text-ink-500 ml-2">
+                <span className="text-[12.5px] text-[#9BA1A6] ml-2">
                   {Object.keys(rowSelection).length} selected
                 </span>
-                <button className="bg-bone-100 hover:bg-bone-200 hairline text-ink-800 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2">
+                <button className="bg-[#0D0F11] hover:bg-white/5 border border-white/10 text-[#E6E8EA] px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2">
                   <Download className="w-4 h-4" /> Export
                 </button>
-                <button className="bg-bone-100 hover:bg-bone-200 hairline text-ink-800 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2">
+                <button className="bg-[#0D0F11] hover:bg-white/5 border border-white/10 text-[#E6E8EA] px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2">
                   <MoreHorizontal className="w-4 h-4" /> Actions
                 </button>
               </div>
@@ -133,25 +137,26 @@ export function DataGrid<TData, TValue>({
 
       {/* TABLE/CARD CONTAINER */}
       <div className={cn(
-        "rounded-2xl hairline overflow-hidden bg-bone-50",
+        "overflow-hidden",
+        !bare && "rounded-2xl border border-white/10 bg-[#0D0F11]",
         !isFull && "shadow-none"
       )}>
         {isMobile ? (
           <div className="space-y-3 p-4">
             {isLoading ? (
                Array.from({ length: isFull ? 5 : 3 }).map((_, i) => (
-                 <div key={i} className="bg-white p-4 rounded-xl shadow-sm border border-ink-900/10 space-y-3 animate-pulse">
-                   <div className="h-4 bg-bone-200 rounded w-1/3"></div>
-                   <div className="h-4 bg-bone-200 rounded w-1/2"></div>
+                 <div key={i} className="bg-[#0D0F11] p-4 rounded-xl border border-white/10 space-y-3 animate-pulse">
+                   <div className="h-4 bg-white/10 rounded w-1/3"></div>
+                   <div className="h-4 bg-white/10 rounded w-1/2"></div>
                  </div>
                ))
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <div key={row.id} className="bg-white p-4 rounded-xl shadow-sm border border-ink-900/10 space-y-2">
+                <div key={row.id} className="bg-[#0D0F11] p-4 rounded-xl border border-white/10 space-y-2">
                   {row.getVisibleCells().map((cell) => (
-                    <div key={cell.id} className="flex justify-between py-1 border-b border-ink-900/5 last:border-0">
-                      <span className="text-sm text-ink-500">{typeof cell.column.columnDef.header === 'string' ? cell.column.columnDef.header : cell.column.id}</span>
-                      <span className="text-sm text-ink-900 font-medium">
+                    <div key={cell.id} className="flex justify-between py-1 border-b border-white/5 last:border-0">
+                      <span className="text-sm text-[#9BA1A6]">{typeof cell.column.columnDef.header === 'string' ? cell.column.columnDef.header : cell.column.id}</span>
+                      <span className="text-sm text-[#F4F5F6] font-medium">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </span>
                     </div>
@@ -159,7 +164,7 @@ export function DataGrid<TData, TValue>({
                 </div>
               ))
             ) : (
-              <div className="h-32 flex items-center justify-center text-center text-ink-500">
+              <div className="h-32 flex items-center justify-center text-center text-[#9BA1A6]">
                 {emptyStateMessage}
               </div>
             )}
@@ -167,7 +172,7 @@ export function DataGrid<TData, TValue>({
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-[13px] text-left">
-              <thead className="bg-bone-50 text-[11px] uppercase tracking-[0.12em] text-ink-400 border-b border-ink-900/8 sticky top-0 z-10">
+              <thead className="bg-[#08090A] text-[11px] uppercase tracking-[0.12em] text-[#6E747A] border-b border-white/10 sticky top-0 z-10">
                 {table.getHeaderGroups().map(headerGroup => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map(header => (
@@ -180,7 +185,7 @@ export function DataGrid<TData, TValue>({
                         {header.isPlaceholder ? null : (
                           <div
                             {...{
-                              className: header.column.getCanSort() ? 'cursor-pointer select-none flex items-center gap-1 hover:text-ink-900 transition-colors' : '',
+                              className: header.column.getCanSort() ? 'cursor-pointer select-none flex items-center gap-1 hover:text-[#F4F5F6] transition-colors' : '',
                               onClick: header.column.getToggleSortingHandler(),
                             }}
                           >
@@ -199,10 +204,10 @@ export function DataGrid<TData, TValue>({
               <tbody>
                 {isLoading ? (
                   Array.from({ length: isFull ? 5 : 3 }).map((_, i) => (
-                    <tr key={i} className="border-b border-ink-900/6">
+                    <tr key={i} className="border-b border-white/5">
                       {columns.map((col, j) => (
                         <td key={j} className="px-4 py-3">
-                          <div className="h-4 bg-bone-200 rounded animate-pulse" />
+                          <div className="h-4 bg-white/10 rounded animate-pulse" />
                         </td>
                       ))}
                     </tr>
@@ -213,15 +218,15 @@ export function DataGrid<TData, TValue>({
                       key={row.id}
                       onClick={() => isFull && onRowClick?.(row.original)}
                       className={cn(
-                        "border-b border-ink-900/6 transition-colors group",
-                        isFull && onRowClick && "cursor-pointer hover:bg-bone-100/60",
-                        i % 2 === 0 && "bg-bone-50/50",
+                        "border-b border-white/5 transition-colors group",
+                        isFull && onRowClick && "cursor-pointer hover:bg-white/5",
+                        i % 2 === 0 && "bg-white/[0.02]",
                         !isFull && "h-10"
                       )}
                       style={{ height: isFull ? '48px' : '40px' }}
                     >
                       {row.getVisibleCells().map(cell => (
-                        <td key={cell.id} className="px-4 py-2 text-ink-900">
+                        <td key={cell.id} className="px-4 py-2 text-[#E6E8EA]">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
                       ))}
@@ -229,7 +234,7 @@ export function DataGrid<TData, TValue>({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={columns.length} className="h-32 text-center text-ink-500">
+                    <td colSpan={columns.length} className="h-32 text-center text-[#9BA1A6]">
                       {emptyStateMessage}
                     </td>
                   </tr>
@@ -242,7 +247,7 @@ export function DataGrid<TData, TValue>({
 
       {/* FOOTERS & PAGINATION */}
       {isFull ? (
-        <div className="flex items-center justify-between text-[12.5px] text-ink-500 px-4 pb-4">
+        <div className="flex items-center justify-between text-[12.5px] text-[#9BA1A6] px-4 pb-4">
           <div>
             Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
             {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, data.length)} of{' '}
@@ -252,14 +257,14 @@ export function DataGrid<TData, TValue>({
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="px-3 py-1.5 rounded-lg hairline bg-bone-50 text-ink-800 hover:bg-bone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-white/10 bg-[#0D0F11] text-[#E6E8EA] hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="px-3 py-1.5 rounded-lg hairline bg-bone-50 text-ink-800 hover:bg-bone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-white/10 bg-[#0D0F11] text-[#E6E8EA] hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>
@@ -269,7 +274,7 @@ export function DataGrid<TData, TValue>({
         enableInlineAdd && onAddRow && (
           <button 
             onClick={onAddRow}
-            className="flex items-center gap-2 text-[12.5px] text-sage-700 hover:text-sage-600 font-medium transition-colors w-fit"
+            className="flex items-center gap-2 text-[12.5px] text-[#C9A227] hover:text-[#E5C463] font-medium transition-colors w-fit"
           >
             <Plus className="w-3.5 h-3.5" /> Add Row
           </button>

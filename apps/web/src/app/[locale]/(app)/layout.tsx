@@ -23,7 +23,10 @@ export default function AppLayout({
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-[#0D0F11] focus:text-[#F4F5F6] focus:px-4 focus:py-2 focus:rounded focus:shadow-panel-elevated">
         Skip to main content
       </a>
-      <div className="h-screen flex overflow-hidden">
+      {/* The inherited colour is globals.css --foreground (#1F1B16), left over from the
+          retired light theme; anything here that sets no colour of its own renders dark
+          brown on the near-black shell. Anchor the app tree to the dark-surface primary. */}
+      <div className="h-screen flex overflow-hidden text-[#E6E8EA]">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-[#08090A] selection:bg-[#C9A227]/30">
           <OfflineBanner />

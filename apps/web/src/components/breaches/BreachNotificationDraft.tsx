@@ -7,15 +7,15 @@ export default function BreachNotificationDraft({ breachId }: { breachId: string
     onSuccess: () => refetch()
   });
 
-  if (isLoading) return <div className="animate-pulse h-32 bg-gray-100 rounded-lg"></div>;
+  if (isLoading) return <div className="animate-pulse h-32 bg-white/10 rounded-lg"></div>;
 
   const draft = notifications && notifications[0]; // For simplicity, we just use the first draft
 
   if (!draft) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-sm font-medium text-gray-900 dark:text-white">No draft available</h3>
-        <p className="text-sm text-gray-500 mt-1 mb-6">Generate an automated draft notification based on the risk assessment.</p>
+        <h3 className="text-sm font-medium text-[#F4F5F6]">No draft available</h3>
+        <p className="text-sm text-[#9BA1A6] mt-1 mb-6">Generate an automated draft notification based on the risk assessment.</p>
         <button
           onClick={() => generateMutation.mutate({ breachId })}
           disabled={generateMutation.isPending}
@@ -33,15 +33,15 @@ export default function BreachNotificationDraft({ breachId }: { breachId: string
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Supervisory Authority Notification</h3>
-          <p className="text-sm text-gray-500 mt-1">Review the auto-generated notification letter.</p>
+          <h3 className="text-lg font-bold text-[#F4F5F6]">Supervisory Authority Notification</h3>
+          <p className="text-sm text-[#9BA1A6] mt-1">Review the auto-generated notification letter.</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs font-medium px-2.5 py-1 bg-yellow-100 text-yellow-800 rounded-full capitalize">{draft.status}</span>
+          <span className="text-xs font-medium px-2.5 py-1 bg-yellow-500/20 text-yellow-400 rounded-full capitalize">{draft.status}</span>
         </div>
       </div>
 
-      <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 p-6 font-serif prose dark:prose-invert max-w-none">
+      <div className="bg-[#08090A] rounded-lg border border-white/10 p-6 font-serif prose prose-invert max-w-none">
         <h2 className="text-xl border-b pb-4">Data Breach Notification to {(content as any)?.authority}</h2>
         
         <h4>1. Nature of the personal data breach</h4>
@@ -60,7 +60,7 @@ export default function BreachNotificationDraft({ breachId }: { breachId: string
         <p>{(content as any)?.dpo_contact}</p>
       </div>
 
-      <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex justify-end pt-4 border-t border-white/10">
         <button className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">
           Edit Draft
         </button>

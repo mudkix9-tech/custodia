@@ -266,7 +266,7 @@ export default function VendorDetailsPage() {
                           onClick={() => handleUpdateDpa(status)}
                           className={`px-4 py-2 rounded-lg text-[13px] font-medium uppercase tracking-wider border transition-all
                             ${vendor.orgVendor.dpaStatus === status 
-                              ? 'bg-[#C9A227]/10 border-sage-300 text-sage-800 ring-2 ring-sage-500/20' 
+                              ? 'bg-[#C9A227]/10 border-[#C9A227]/40 text-[#C9A227] ring-2 ring-[#C9A227]/30' 
                               : 'bg-[#0D0F11] border-white/10 text-[#6E747A] hover:border-ink-900/30'}`}
                         >
                           {status.replace('_', ' ')}
@@ -442,7 +442,7 @@ export default function VendorDetailsPage() {
                             value={vendor.orgVendor.dataSubjectVolume || '<1K'}
                             onChange={(e) => updateMutation.mutate({ vendorId, dataSubjectVolume: e.target.value as any })}
                             disabled={updateMutation.isPending}
-                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                           >
                             <option value="<1K">&lt; 1,000 subjects</option>
                             <option value="1K-10K">1,000 - 10,000 subjects</option>
@@ -461,7 +461,7 @@ export default function VendorDetailsPage() {
                             value={vendor.orgVendor.contractRenewalDate ? new Date(vendor.orgVendor.contractRenewalDate).toISOString().split('T')[0] : ''}
                             onChange={(e) => updateMutation.mutate({ vendorId, contractRenewalDate: e.target.value || null })}
                             disabled={updateMutation.isPending}
-                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                           />
                         </div>
 
@@ -475,7 +475,7 @@ export default function VendorDetailsPage() {
                             value={vendor.orgVendor.dpaExpiresAt ? new Date(vendor.orgVendor.dpaExpiresAt).toISOString().split('T')[0] : ''}
                             onChange={(e) => updateMutation.mutate({ vendorId, dpaExpiresAt: e.target.value || null })}
                             disabled={updateMutation.isPending}
-                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sage-500/20"
+                            className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                           />
                         </div>
 
