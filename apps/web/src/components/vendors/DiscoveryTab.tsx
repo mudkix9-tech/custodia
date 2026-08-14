@@ -288,7 +288,7 @@ export function DiscoveryTab() {
                         <Button
                           variant="outline"
                           onClick={() => handleOpenCustomModal({ discovery })}
-                          className="bg-indigo-500/10 text-indigo-400 border-indigo-900/50 hover:bg-indigo-100 hover:text-indigo-900"
+                          className="bg-indigo-500/10 text-indigo-400 border-indigo-900/50 hover:bg-indigo-500/15 hover:text-indigo-300"
                         >
                           Add Custom Vendor
                         </Button>

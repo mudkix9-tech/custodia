@@ -61,7 +61,7 @@ export default function BreachNotificationDraft({ breachId }: { breachId: string
       </div>
 
       <div className="flex justify-end pt-4 border-t border-white/10">
-        <button className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md">
+        <button className="px-4 py-2 text-sm font-medium text-white bg-[#C9A227] hover:bg-[#E5C463] rounded-md">
           Edit Draft
         </button>
       </div>

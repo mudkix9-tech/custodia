@@ -57,7 +57,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
               <div key={inc.id} className="relative group">
                 {/* Timeline node icon */}
                 <div className={`absolute -left-[31px] top-1.5 w-4.5 h-4.5 rounded-full border-4 border-white ring-1 ring-ink-900/10 flex items-center justify-center
-                  ${inc.incidentType === 'breach' ? 'bg-red-600' : inc.incidentType === 'fine' ? 'bg-amber-600' : 'bg-indigo-600'}`}>
+                  ${inc.incidentType === 'breach' ? 'bg-red-600' : inc.incidentType === 'fine' ? 'bg-amber-600' : 'bg-[#C9A227]'}`}>
                   <Calendar className="w-1.5 h-1.5 text-white" />
                 </div>
 

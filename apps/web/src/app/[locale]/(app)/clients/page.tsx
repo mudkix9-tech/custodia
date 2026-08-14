@@ -82,7 +82,7 @@ export default function ClientsPage() {
       cell: ({ getValue }: any) => {
         const val = getValue();
         if (val) return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-green-500/10 text-green-400"><Globe className="w-3.5 h-3.5"/> {t('status.active')}</span>;
-        return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-gray-100 text-gray-600">{t('status.disabled')}</span>;
+        return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-white/10 text-[#9BA1A6]">{t('status.disabled')}</span>;
       }
     }
   ];

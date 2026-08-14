@@ -411,7 +411,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2">
                     {allClients.map((client: any) => (
                       <label key={client.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                        assignedClientIds.includes(client.id) ? 'border-indigo-300 bg-indigo-500/50' : 'border-white/10 hover:border-ink-900/30'
+                        assignedClientIds.includes(client.id) ? 'border-indigo-500/30 bg-indigo-500/15' : 'border-white/10 hover:border-ink-900/30'
                       }`}>
                         <Switch 
                           checked={assignedClientIds.includes(client.id)}

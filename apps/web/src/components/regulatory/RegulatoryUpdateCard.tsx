@@ -29,8 +29,8 @@ export function RegulatoryUpdateCard({ update }: { update: any }) {
       <p className="text-[#E6E8EA] text-[14px] leading-relaxed mb-6">{update.summary}</p>
 
       {matches.length > 0 && (
-        <div className="mb-6 bg-indigo-500/50 border border-indigo-900/50 rounded-xl overflow-hidden">
-          <div className="bg-indigo-100/50 px-4 py-2 border-b border-indigo-900/50 flex items-center gap-2">
+        <div className="mb-6 bg-indigo-500/15 border border-indigo-900/50 rounded-xl overflow-hidden">
+          <div className="bg-indigo-500/10 px-4 py-2 border-b border-indigo-900/50 flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-indigo-400" />
             <h4 className="text-[12px] font-bold text-indigo-300 uppercase tracking-wider">Affected in your organization</h4>
           </div>
@@ -55,7 +55,7 @@ export function RegulatoryUpdateCard({ update }: { update: any }) {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                        isHigh ? 'bg-amber-500/15 text-amber-800' : 'bg-indigo-100 text-indigo-400'
+                        isHigh ? 'bg-amber-500/15 text-amber-800' : 'bg-indigo-500/15 text-indigo-400'
                       }`}>
                         {match.entityType.replace('_', ' ')}
                       </span>
@@ -64,7 +64,7 @@ export function RegulatoryUpdateCard({ update }: { update: any }) {
                     {isAck && <span className="text-[10px] uppercase font-bold text-[#6E747A]">Acknowledged</span>}
                   </div>
                   <p className="text-[13px] text-[#E6E8EA] mb-3">{match.aiExplanation}</p>
-                  <Link href={entityLink} className="inline-flex items-center gap-1 text-[12px] font-medium text-indigo-400 hover:text-indigo-800">
+                  <Link href={entityLink} className="inline-flex items-center gap-1 text-[12px] font-medium text-indigo-400 hover:text-indigo-300">
                     Review {match.entityType.replace('_', ' ')} <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>

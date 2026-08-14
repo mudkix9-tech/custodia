@@ -85,7 +85,7 @@ export default function LearnPage({ params }: { params: Promise<{ id: string }> 
           ) : (
             <button
               onClick={() => markComplete.mutate({ completionId: id })}
-              className="btn-primary"
+              className="rounded-lg bg-[#C9A227] px-4 py-2 text-[13.5px] font-medium text-[#08090A] transition-colors hover:bg-[#E5C463] disabled:opacity-50"
             >
               Mark as Complete
             </button>

@@ -226,7 +226,7 @@ function OverviewTab({ client }: { client: any }) {
             {client.portalEnabled && (
               <div className="pt-4 border-t border-indigo-900/50 space-y-4">
                 <div>
-                  <label className="block text-[12px] font-medium text-indigo-800/70 uppercase tracking-wider mb-1">Secret URL</label>
+                  <label className="block text-[12px] font-medium text-indigo-300/70 uppercase tracking-wider mb-1">Secret URL</label>
                   <div className="flex gap-2">
                     <input 
                       readOnly 

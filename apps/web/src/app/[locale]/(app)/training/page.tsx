@@ -81,7 +81,7 @@ export default function EmployeeTrainingDashboard() {
                     {c.status !== 'passed' ? (
                       <Link 
                         href={`/training/${c.id}/learn`}
-                        className="px-5 py-2.5 bg-indigo-600 text-white text-[13.5px] font-medium rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-panel-elevated"
+                        className="px-5 py-2.5 bg-[#C9A227] text-white text-[13.5px] font-medium rounded-xl hover:bg-[#E5C463] transition-colors flex items-center gap-2 shadow-panel-elevated"
                       >
                         <PlayCircle className="w-4 h-4" />
                         {c.status === 'in_progress' || c.status === 'failed' ? t('resume_course') : t('start_course')}

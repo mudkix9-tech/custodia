@@ -33,14 +33,14 @@ export default function DeliveryDetailPanel({ delivery }: { delivery: any }) {
       {confirmDialog}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <h4 className="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-2">Request Payload</h4>
-          <div className="bg-slate-900 text-slate-100 p-3 rounded overflow-auto text-xs font-mono max-h-48">
+          <h4 className="font-semibold text-xs text-[#6E747A] uppercase tracking-wider mb-2">Request Payload</h4>
+          <div className="bg-[#08090A] text-[#E6E8EA] p-3 rounded overflow-auto text-xs font-mono max-h-48">
             <pre>{JSON.stringify(delivery.payload, null, 2)}</pre>
           </div>
         </div>
         <div>
-          <h4 className="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-2">Response Body</h4>
-          <div className="bg-slate-100 border border-slate-200 p-3 rounded overflow-auto text-xs font-mono max-h-48 text-slate-700">
+          <h4 className="font-semibold text-xs text-[#6E747A] uppercase tracking-wider mb-2">Response Body</h4>
+          <div className="bg-white/10 border border-white/10 p-3 rounded overflow-auto text-xs font-mono max-h-48 text-[#E6E8EA]">
             <pre>{delivery.responseBody || 'No response body'}</pre>
           </div>
           {delivery.lastError && (
@@ -52,7 +52,7 @@ export default function DeliveryDetailPanel({ delivery }: { delivery: any }) {
       </div>
 
       <div className="flex justify-between items-center pt-2">
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-[#6E747A]">
           Attempts: {delivery.attempts} / {delivery.maxAttempts}
         </div>
         <div className="flex items-center gap-3">
@@ -62,7 +62,7 @@ export default function DeliveryDetailPanel({ delivery }: { delivery: any }) {
             <button
               onClick={handleRedeliver}
               disabled={redeliverMutation.isPending}
-              className="bg-[#0D0F11] border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-slate-50 disabled:opacity-50"
+              className="bg-[#0D0F11] border border-white/10 text-[#E6E8EA] px-3 py-1.5 rounded text-xs font-medium hover:bg-white/5 disabled:opacity-50"
             >
               Redeliver
             </button>

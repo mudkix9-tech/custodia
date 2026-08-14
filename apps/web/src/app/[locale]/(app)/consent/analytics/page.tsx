@@ -4,11 +4,10 @@ import React, { useState, useMemo } from 'react';
 import { trpc } from '@/utils/trpc';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell, TooltipProps
+  BarChart, Bar, TooltipProps
 } from 'recharts';
+import { SERIES, axisProps, gridProps, tooltipProps, LEGEND_STYLE } from '@/utils/chartTheme';
 import { Download, AlertCircle, Calendar } from 'lucide-react';
-
-const COLORS = ['#294036', '#3b82f6', '#10b981', '#ef4444', '#f59e0b'];
 
 export default function ConsentAnalyticsDashboard() {
   const [days, setDays] = useState(30);
@@ -32,7 +31,7 @@ export default function ConsentAnalyticsDashboard() {
   });
 
   if (isLoading || !analyticsData) {
-    return <div className="p-8 text-center text-stone-500 animate-pulse">Loading consent analytics...</div>;
+    return <div className="p-8 text-center text-[#6E747A] animate-pulse">Loading consent analytics...</div>;
   }
 
   const { optInRateOverTime, interactionBreakdown, domainBreakdown, categoryRejection, withdrawalMetrics, granularCategoryDistribution } = analyticsData;
@@ -74,8 +73,8 @@ export default function ConsentAnalyticsDashboard() {
     <div className="max-w-7xl mx-auto p-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-stone-900">Consent Analytics</h1>
-          <p className="text-stone-500 mt-1">Live tracking of consent rates, interaction types, and rejections.</p>
+          <h1 className="text-3xl font-serif text-[#F4F5F6]">Consent Analytics</h1>
+          <p className="text-[#6E747A] mt-1">Live tracking of consent rates, interaction types, and rejections.</p>
         </div>
         <div className="flex items-center gap-4">
           <select
@@ -102,75 +101,62 @@ export default function ConsentAnalyticsDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Opt-in Rate Over Time */}
-        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated col-span-1 lg:col-span-2">
-          <h3 className="text-lg font-semibold text-stone-900 mb-6">Opt-in Rate Over Time (%)</h3>
+        <div className="bg-[#0D0F11] border border-white/10 rounded-lg p-6 shadow-panel-elevated col-span-1 lg:col-span-2">
+          <h3 className="text-lg font-semibold text-[#F4F5F6] mb-6">Opt-in Rate Over Time (%)</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={formattedOptInRates}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
+                <CartesianGrid {...gridProps} />
+                <XAxis dataKey="date" {...axisProps} />
+                <YAxis {...axisProps} domain={[0, 100]} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                   itemStyle={{ fontSize: '14px' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                <Line type="monotone" dataKey="Analytics" stroke="#294036" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="Marketing" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="Functional" stroke="#10b981" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="Analytics" stroke={SERIES[0]} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="Marketing" stroke={SERIES[1]} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="Functional" stroke={SERIES[2]} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Interaction Breakdown */}
-        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
-          <h3 className="text-lg font-semibold text-stone-900 mb-6">Interaction Breakdown</h3>
+        <div className="bg-[#0D0F11] border border-white/10 rounded-lg p-6 shadow-panel-elevated">
+          <h3 className="text-lg font-semibold text-[#F4F5F6] mb-6">Interaction Breakdown</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={interactionData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {interactionData.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: any) => Number(value).toLocaleString()}
-                  contentStyle={{ borderRadius: '8px' }}
-                />
-                <Legend />
-              </PieChart>
+              <BarChart data={interactionData} layout="vertical" margin={{ top: 0, right: 24, left: 20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical stroke="rgba(255,255,255,0.07)" />
+                <XAxis type="number" {...axisProps} />
+                <YAxis dataKey="name" type="category" width={170} {...axisProps} />
+                <Tooltip {...tooltipProps} formatter={(value: any) => Number(value).toLocaleString()} />
+                <Bar dataKey="value" name="Sessions" fill={SERIES[0]} radius={[0, 4, 4, 0]} barSize={22} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Granular Preference Combinations */}
         {granularCategoryDistribution && granularCategoryDistribution.length > 0 && interactionBreakdown.customizedWithAcceptance + interactionBreakdown.customizedAllRejected > 0 && (
-          <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
-            <h3 className="text-lg font-semibold text-stone-900 mb-2">Customized Combinations</h3>
-            <p className="text-sm text-stone-500 mb-6">
+          <div className="bg-[#0D0F11] border border-white/10 rounded-lg p-6 shadow-panel-elevated">
+            <h3 className="text-lg font-semibold text-[#F4F5F6] mb-2">Customized Combinations</h3>
+            <p className="text-sm text-[#6E747A] mb-6">
               Distribution of preferences for users who actively customized their choices (excludes Accept All / Reject All).
             </p>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={granularCategoryDistribution} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
-                  <XAxis type="number" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis dataKey="combination" type="category" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} width={100} tickFormatter={(val) => val === '' ? 'None' : val} />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical stroke="rgba(255,255,255,0.07)" />
+                  <XAxis type="number" {...axisProps} />
+                  <YAxis dataKey="combination" type="category" {...axisProps} width={100} tickFormatter={(val) => val === '' ? 'None' : val} />
                   <Tooltip
                     formatter={(value: any) => Number(value).toLocaleString()}
                     cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: '8px' }}
                   />
-                  <Bar dataKey="count" name="Sessions" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={32} />
+                  <Bar dataKey="count" name="Sessions" fill={SERIES[0]} radius={[0, 4, 4, 0]} barSize={32} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -178,20 +164,20 @@ export default function ConsentAnalyticsDashboard() {
         )}
 
         {/* Category Rejection */}
-        <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated">
-          <h3 className="text-lg font-semibold text-stone-900 mb-6">Category Rejections</h3>
+        <div className="bg-[#0D0F11] border border-white/10 rounded-lg p-6 shadow-panel-elevated">
+          <h3 className="text-lg font-semibold text-[#F4F5F6] mb-6">Category Rejections</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={rejectionData} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
-                <XAxis type="number" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis dataKey="name" type="category" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical stroke="rgba(255,255,255,0.07)" />
+                <XAxis type="number" {...axisProps} />
+                <YAxis dataKey="name" type="category" {...axisProps} />
                 <Tooltip
                   formatter={(value: any) => Number(value).toLocaleString()}
                   cursor={{ fill: 'transparent' }}
                   contentStyle={{ borderRadius: '8px' }}
                 />
-                <Bar dataKey="value" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={32} />
+                <Bar dataKey="value" fill={SERIES[0]} radius={[0, 4, 4, 0]} barSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -199,20 +185,20 @@ export default function ConsentAnalyticsDashboard() {
 
         {/* Domain Breakdown */}
         {!domainId && domainBreakdown.length > 0 && (
-          <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated col-span-1 lg:col-span-2">
-            <h3 className="text-lg font-semibold text-stone-900 mb-6">Sessions by Domain</h3>
+          <div className="bg-[#0D0F11] border border-white/10 rounded-lg p-6 shadow-panel-elevated col-span-1 lg:col-span-2">
+            <h3 className="text-lg font-semibold text-[#F4F5F6] mb-6">Sessions by Domain</h3>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={domainBreakdown} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="domainName" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                  <CartesianGrid {...gridProps} />
+                  <XAxis dataKey="domainName" {...axisProps} />
+                  <YAxis {...axisProps} />
                   <Tooltip
                     formatter={(value: any) => Number(value).toLocaleString()}
                     cursor={{ fill: '#f3f4f6' }}
                     contentStyle={{ borderRadius: '8px' }}
                   />
-                  <Legend />
+                  <Legend wrapperStyle={LEGEND_STYLE} />
                   <Bar dataKey="totalSessions" name="Total Sessions" fill="#9ca3af" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="acceptAllCount" name="Accept All" fill="#10b981" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -223,17 +209,17 @@ export default function ConsentAnalyticsDashboard() {
 
         {/* Consent Withdrawals */}
         {withdrawalMetrics && (
-          <div className="bg-[#0D0F11] border border-stone-200 rounded-lg p-6 shadow-panel-elevated col-span-1 lg:col-span-2">
-            <h3 className="text-lg font-semibold text-stone-900 mb-6">Consent Withdrawals</h3>
+          <div className="bg-[#0D0F11] border border-white/10 rounded-lg p-6 shadow-panel-elevated col-span-1 lg:col-span-2">
+            <h3 className="text-lg font-semibold text-[#F4F5F6] mb-6">Consent Withdrawals</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="p-4 bg-stone-50 rounded-md border border-stone-100">
-                <p className="text-sm text-stone-500 mb-1">Withdrawals relative to new consent volume this period</p>
-                <p className="text-2xl font-bold text-stone-800">{withdrawalMetrics.relativeVolumePercent}%</p>
+              <div className="p-4 bg-white/5 rounded-md border border-stone-100">
+                <p className="text-sm text-[#6E747A] mb-1">Withdrawals relative to new consent volume this period</p>
+                <p className="text-2xl font-bold text-[#E6E8EA]">{withdrawalMetrics.relativeVolumePercent}%</p>
               </div>
-              <div className="p-4 bg-stone-50 rounded-md border border-stone-100">
-                <p className="text-sm text-stone-500 mb-1">Average time-to-withdrawal (within queried range)</p>
-                <p className="text-2xl font-bold text-stone-800">
+              <div className="p-4 bg-white/5 rounded-md border border-stone-100">
+                <p className="text-sm text-[#6E747A] mb-1">Average time-to-withdrawal (within queried range)</p>
+                <p className="text-2xl font-bold text-[#E6E8EA]">
                   {withdrawalMetrics.avgTimeToWithdrawalHours !== null 
                     ? `${Math.round(withdrawalMetrics.avgTimeToWithdrawalHours)} hours` 
                     : 'N/A'}
@@ -244,9 +230,9 @@ export default function ConsentAnalyticsDashboard() {
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={formattedWithdrawals}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                  <CartesianGrid {...gridProps} />
+                  <XAxis dataKey="date" {...axisProps} />
+                  <YAxis {...axisProps} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                     itemStyle={{ fontSize: '14px' }}

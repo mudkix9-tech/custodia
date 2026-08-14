@@ -126,7 +126,7 @@ export default function EnterpriseSupportPage() {
           </a>
           <a
             href="#"
-            className="w-full mt-2 flex items-center justify-center gap-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-100 border border-indigo-900/50 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="w-full mt-2 flex items-center justify-center gap-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/15 border border-indigo-900/50 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             <ExternalLink className="w-4 h-4" /> Open Slack Connect
           </a>

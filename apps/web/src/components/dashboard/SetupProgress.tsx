@@ -25,31 +25,31 @@ function SetupProgressCard() {
   return (
     <div className="bg-[#0D0F11] border-2 border-blue-900/50 rounded-2xl p-6 shadow-panel-elevated mb-8 flex flex-col md:flex-row gap-6 items-start">
       <div className="flex-1">
-        <h2 className="text-lg font-bold text-gray-900 mb-2">{t('title')}</h2>
-        <p className="text-gray-600 mb-4 text-sm">{t('description', { score })}</p>
+        <h2 className="text-lg font-bold text-[#F4F5F6] mb-2">{t('title')}</h2>
+        <p className="text-[#9BA1A6] mb-4 text-sm">{t('description', { score })}</p>
 
         <div className="space-y-3">
-          <Link href="/onboarding" className="flex items-center p-3 hover:bg-gray-50 rounded border border-transparent hover:border-gray-200 transition">
-            <div className="w-5 h-5 rounded-full border border-gray-300 mr-3"></div>
+          <Link href="/onboarding" className="flex items-center p-3 hover:bg-white/5 rounded border border-transparent hover:border-white/10 transition">
+            <div className="w-5 h-5 rounded-full border border-white/10 mr-3"></div>
             <div className="flex-1">
-              <span className="font-medium text-sm text-gray-900">{t('onboarding_title')}</span>
-              <p className="text-xs text-gray-500">{t('onboarding_desc')}</p>
+              <span className="font-medium text-sm text-[#F4F5F6]">{t('onboarding_title')}</span>
+              <p className="text-xs text-[#6E747A]">{t('onboarding_desc')}</p>
             </div>
           </Link>
 
-          <Link href="/ropa" className="flex items-center p-3 hover:bg-gray-50 rounded border border-transparent hover:border-gray-200 transition">
-            <div className="w-5 h-5 rounded-full border border-gray-300 mr-3"></div>
+          <Link href="/ropa" className="flex items-center p-3 hover:bg-white/5 rounded border border-transparent hover:border-white/10 transition">
+            <div className="w-5 h-5 rounded-full border border-white/10 mr-3"></div>
             <div className="flex-1">
-              <span className="font-medium text-sm text-gray-900">{t('ropa_title')}</span>
-              <p className="text-xs text-gray-500">{t('ropa_desc')}</p>
+              <span className="font-medium text-sm text-[#F4F5F6]">{t('ropa_title')}</span>
+              <p className="text-xs text-[#6E747A]">{t('ropa_desc')}</p>
             </div>
           </Link>
 
-          <Link href="/vendors" className="flex items-center p-3 hover:bg-gray-50 rounded border border-transparent hover:border-gray-200 transition">
-            <div className="w-5 h-5 rounded-full border border-gray-300 mr-3"></div>
+          <Link href="/vendors" className="flex items-center p-3 hover:bg-white/5 rounded border border-transparent hover:border-white/10 transition">
+            <div className="w-5 h-5 rounded-full border border-white/10 mr-3"></div>
             <div className="flex-1">
-              <span className="font-medium text-sm text-gray-900">{t('vendors_title')}</span>
-              <p className="text-xs text-gray-500">{t('vendors_desc')}</p>
+              <span className="font-medium text-sm text-[#F4F5F6]">{t('vendors_title')}</span>
+              <p className="text-xs text-[#6E747A]">{t('vendors_desc')}</p>
             </div>
           </Link>
         </div>

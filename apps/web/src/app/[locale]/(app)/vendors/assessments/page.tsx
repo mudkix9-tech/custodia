@@ -309,7 +309,7 @@ export default function AssessmentsDashboardPage() {
                             <button
                               onClick={() => handleOpenReviewModal(assessment.id, assessment.scoreAdjustment, assessment.aiSummary || '')}
                               title="Audit Review & Overrides"
-                              className="p-2 text-indigo-400 hover:text-indigo-400 border border-indigo-900/50 hover:border-indigo-900/50 bg-indigo-500/50 rounded-lg transition-colors shadow-panel-elevated"
+                              className="p-2 text-indigo-400 hover:text-indigo-400 border border-indigo-900/50 hover:border-indigo-900/50 bg-indigo-500/15 rounded-lg transition-colors shadow-panel-elevated"
                             >
                               <Star className="w-4 h-4" />
                             </button>

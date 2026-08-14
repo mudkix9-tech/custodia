@@ -32,7 +32,7 @@ export default function IntegrationsPage() {
                   {connection?.status === 'active' && <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-sm">Connected</span>}
                   {connection?.status === 'error' && <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-sm">Error</span>}
               </div>
-              <div className="text-sm text-gray-600 space-y-2 mb-4">
+              <div className="text-sm text-[#9BA1A6] space-y-2 mb-4">
                   <p>When connected, Custodia can:</p>
                   <ul className="list-disc pl-5">
                     <li>Auto-search {provider.name} contacts during DSAR processing</li>
@@ -42,7 +42,7 @@ export default function IntegrationsPage() {
                   <p className="mt-4 font-semibold">Data access: Read-only. Custodia never modifies your data.</p>
 
                   {connection && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-md border">
+                    <div className="mt-4 p-4 bg-white/5 rounded-md border">
                       <p><strong>Connected to:</strong> {connection.providerAccountName}</p>
                       <p><strong>Status:</strong> {connection.status}</p>
                       {connection.lastSyncAt && <p><strong>Last synced:</strong> {new Date(connection.lastSyncAt).toLocaleString()}</p>}

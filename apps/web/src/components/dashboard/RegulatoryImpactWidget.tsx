@@ -26,7 +26,7 @@ export function RegulatoryImpactWidget() {
       hasAnyHighConfidence ? 'border-amber-900/50' : 'border-indigo-900/50'
     }`}>
       <div className={`px-5 py-4 border-b flex items-center justify-between ${
-        hasAnyHighConfidence ? 'bg-gradient-to-r from-amber-50 to-orange-50/30 border-amber-900/50' : 'bg-gradient-to-r from-blue-50 to-indigo-50/30 border-indigo-900/50'
+        hasAnyHighConfidence ? 'bg-gradient-to-r from-amber-50 to-orange-50/30 border-amber-900/50' : 'bg-gradient-to-r from-blue-50 to-indigo-500/10 border-indigo-900/50'
       }`}>
         <div className="flex items-center gap-2">
           {hasAnyHighConfidence ? (
@@ -36,7 +36,7 @@ export function RegulatoryImpactWidget() {
           )}
           <h2 className={`font-semibold ${hasAnyHighConfidence ? 'text-amber-950' : 'text-[#F4F5F6]'}`}>{t('title')}</h2>
           <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-            hasAnyHighConfidence ? 'bg-amber-500/15 text-amber-800' : 'bg-indigo-100 text-indigo-400'
+            hasAnyHighConfidence ? 'bg-amber-500/15 text-amber-800' : 'bg-indigo-500/15 text-indigo-400'
           }`}>{t('new_count', { count: groupedImpacts.length })}</span>
         </div>
       </div>
@@ -70,7 +70,7 @@ export function RegulatoryImpactWidget() {
                   <p className="text-[13px] text-[#9BA1A6] mb-4 line-clamp-2">{update.summary}</p>
                   
                   <div className={`border rounded-lg p-3 ${
-                    hasHigh ? 'bg-amber-500/50 border-amber-900/50' : 'bg-indigo-500/50 border-indigo-900/50'
+                    hasHigh ? 'bg-amber-500/50 border-amber-900/50' : 'bg-indigo-500/15 border-indigo-900/50'
                   }`}>
                     <p className={`text-[12px] font-semibold mb-2 ${hasHigh ? 'text-amber-300' : 'text-indigo-300'}`}>
                       {t('affected_entities')}
