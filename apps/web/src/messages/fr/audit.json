@@ -7,7 +7,8 @@
   "loading": "Chargement de l'espace d'audit...",
   "tabs": {
     "dashboard": "Tableau de bord",
-    "ledger": "Registre immuable"
+    "ledger": "Registre immuable",
+    "evidence": "Preuves"
   },
   "compliance_score": "Score de conformité global",
   "compliance_pillars": "Piliers de conformité",

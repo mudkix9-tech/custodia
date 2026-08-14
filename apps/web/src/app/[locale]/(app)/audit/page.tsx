@@ -8,13 +8,14 @@ import { ComplianceScoreDial } from '@/components/audit/ComplianceScoreDial';
 import { GapRemediationList } from '@/components/audit/GapRemediationList';
 import { Article30Generator } from '@/components/audit/Article30Generator';
 import { AuditLogTable } from '@/components/audit/AuditLogTable';
+import { EvidenceLibrary } from '@/components/audit/EvidenceLibrary';
 import { useTranslations } from 'next-intl';
 import { formatScore, scoreChipClasses } from '@/utils/score';
 import { PageShell } from '@/components/layout/PageShell';
 
 export default function AuditPage() {
   const t = useTranslations('audit');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'ledger'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'evidence' | 'ledger'>('dashboard');
   const { data: metrics, isLoading } = trpc.audit.getDashboardMetrics.useQuery();
 
   if (isLoading) {
@@ -47,6 +48,14 @@ export default function AuditPage() {
             }`}
           >
             <LayoutDashboard size={16} /> {t('tabs.dashboard')}
+          </button>
+          <button
+            onClick={() => setActiveTab('evidence')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-[13.5px] font-medium transition-colors ${
+              activeTab === 'evidence' ? 'bg-[#0D0F11] text-[#F4F5F6] shadow-panel-elevated border border-white/5' : 'text-[#6E747A] hover:text-[#E6E8EA]'
+            }`}
+          >
+            <FileText size={16} /> {t('tabs.evidence')}
           </button>
           <button
             onClick={() => setActiveTab('ledger')}
@@ -107,6 +116,8 @@ export default function AuditPage() {
         </div>
       </div>
         </>
+      ) : activeTab === 'evidence' ? (
+        <EvidenceLibrary />
       ) : (
         <div className="space-y-4">
           <div className="flex items-center justify-between bg-[#C9A227]/10 border border-[#C9A227]/50 rounded-xl p-4">

@@ -7,7 +7,8 @@
   "loading": "Audit-Arbeitsbereich wird geladen...",
   "tabs": {
     "dashboard": "Dashboard",
-    "ledger": "Unveränderliches Ledger"
+    "ledger": "Unveränderliches Ledger",
+    "evidence": "Nachweise"
   },
   "compliance_score": "Gesamter Compliance-Score",
   "compliance_pillars": "Compliance-Säulen",

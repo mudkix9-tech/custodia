@@ -7,9 +7,19 @@ import {
   organizations,
   processingActivities,
   auditLogs,
-  dpias
+  dpias,
+  auditEvidence
 } from 'db';
-import { eq, and, desc, inArray, lt, or } from 'drizzle-orm';
+import { eq, and, desc, inArray, lt, or, isNull, count } from 'drizzle-orm';
+import { GDPR_ARTICLES, GDPR_ARTICLE_IDS } from '../lib/gdprArticles.js';
+import { TRPCError } from '@trpc/server';
+
+// Matches the helper the other routers define. `requirePermission` checks what a
+// user may do, never which organisation's rows they may touch — org filtering is
+// manual, per query. See known-concerns.md.
+const checkOrgContext = (user: any) => {
+  if (!user?.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
+};
 import * as xlsx from 'xlsx';
 import { paginatedQuery, decodeCursor, encodeCursor } from '../utils/pagination.js';
 import { PassThrough } from 'stream';
@@ -314,4 +324,157 @@ export const auditRouter = router({
 
       return { data: combined };
     }),
+
+  /**
+   * The evidence library.
+   *
+   * "Audit Readiness" was a score, a gap list and an export — the apparatus an
+   * auditor actually walks through was missing. This is the control-to-evidence
+   * linkage: per GDPR article, what document discharges it and when it was last
+   * reviewed.
+   */
+  evidence: router({
+    list: protectedProcedure
+      .input(z.object({ article: z.string().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+        const rows = await ctx.db.query.auditEvidence.findMany({
+          where: and(
+            eq(auditEvidence.organizationId, ctx.user!.orgId),
+            isNull(auditEvidence.deletedAt),
+          ),
+          orderBy: [desc(auditEvidence.collectedAt)],
+        });
+
+        // Filtered in memory rather than in SQL: `articles` is a jsonb array and
+        // the per-org row count here is small (one item per obligation, not per
+        // record), so a containment index would be cost without benefit.
+        const article = input?.article;
+        return article
+          ? rows.filter((r: any) => (r.articles as string[]).includes(article))
+          : rows;
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        title: z.string().min(1),
+        description: z.string().optional(),
+        articles: z.array(z.enum(GDPR_ARTICLE_IDS as [string, ...string[]])).min(1),
+        evidenceType: z.enum(['document_link', 'internal_record', 'attestation']).default('document_link'),
+        url: z.string().url().optional(),
+        collectedAt: z.string().datetime().optional(),
+        validUntil: z.string().datetime().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+        const [row] = await ctx.db.insert(auditEvidence).values({
+          organizationId: ctx.user!.orgId,
+          title: input.title,
+          description: input.description,
+          articles: input.articles,
+          evidenceType: input.evidenceType,
+          url: input.url,
+          collectedAt: input.collectedAt ? new Date(input.collectedAt) : new Date(),
+          validUntil: input.validUntil ? new Date(input.validUntil) : null,
+          uploadedBy: ctx.user!.id,
+        }).returning();
+        return row;
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.string().uuid(),
+        title: z.string().min(1).optional(),
+        description: z.string().optional(),
+        articles: z.array(z.enum(GDPR_ARTICLE_IDS as [string, ...string[]])).min(1).optional(),
+        url: z.string().url().nullish(),
+        validUntil: z.string().datetime().nullish(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+        const { id, validUntil, ...rest } = input;
+
+        // Filtering on a client-supplied id, so ownership is proved in the same
+        // statement rather than assumed — see known-concerns.md.
+        const [row] = await ctx.db.update(auditEvidence)
+          .set({
+            ...rest,
+            ...(validUntil !== undefined ? { validUntil: validUntil ? new Date(validUntil) : null } : {}),
+            updatedAt: new Date(),
+          })
+          .where(and(
+            eq(auditEvidence.id, id),
+            eq(auditEvidence.organizationId, ctx.user!.orgId),
+          ))
+          .returning();
+
+        if (!row) throw new TRPCError({ code: 'NOT_FOUND', message: 'Evidence not found.' });
+        return row;
+      }),
+
+    remove: protectedProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+        const [row] = await ctx.db.update(auditEvidence)
+          .set({ deletedAt: new Date() })
+          .where(and(
+            eq(auditEvidence.id, input.id),
+            eq(auditEvidence.organizationId, ctx.user!.orgId),
+          ))
+          .returning();
+        if (!row) throw new TRPCError({ code: 'NOT_FOUND', message: 'Evidence not found.' });
+        return { success: true };
+      }),
+  }),
+
+  /**
+   * Per-article completeness — the view an auditor reads.
+   *
+   * An article counts as covered only when at least one item attached to it is
+   * still in date: evidence that expired six months ago demonstrates nothing,
+   * and reporting it as coverage is the failure mode this whole module exists
+   * to avoid.
+   */
+  articleCoverage: protectedProcedure.query(async ({ ctx }) => {
+    checkOrgContext(ctx.user);
+    const rows = await ctx.db.query.auditEvidence.findMany({
+      where: and(
+        eq(auditEvidence.organizationId, ctx.user!.orgId),
+        isNull(auditEvidence.deletedAt),
+      ),
+    });
+
+    const now = new Date();
+    const articles = GDPR_ARTICLES.map((article) => {
+      const attached = rows.filter((r: any) => (r.articles as string[]).includes(article.id));
+      const current = attached.filter((r: any) => !r.validUntil || new Date(r.validUntil) > now);
+      const expired = attached.length - current.length;
+
+      return {
+        ...article,
+        evidenceCount: attached.length,
+        currentCount: current.length,
+        expiredCount: expired,
+        status: current.length > 0 ? 'covered' : attached.length > 0 ? 'expired' : 'missing',
+        lastCollectedAt: attached.length
+          ? attached.map((r: any) => r.collectedAt).sort().reverse()[0]
+          : null,
+      };
+    });
+
+    const covered = articles.filter((a) => a.status === 'covered').length;
+    return {
+      articles,
+      summary: {
+        total: articles.length,
+        covered,
+        expired: articles.filter((a) => a.status === 'expired').length,
+        missing: articles.filter((a) => a.status === 'missing').length,
+        // The headline an auditor is shown. Deliberately not the compliance
+        // score: this measures documentation, not posture.
+        percent: Math.round((covered / articles.length) * 100),
+      },
+    };
+  }),
 });

@@ -2140,3 +2140,47 @@ export const consentFindings = pgTable('consent_findings', {
     orgStateSeverityIdx: index('idx_consent_findings_org_state_severity').on(table.organizationId, table.state, table.severity),
   };
 });
+
+/**
+ * Audit evidence library.
+ *
+ * "Audit Readiness" was a score, a gap list and an export. What an auditor
+ * actually walks through is control-to-evidence linkage: for each obligation,
+ * show me the document that discharges it and when it was last reviewed. That
+ * mapping had nowhere to live.
+ *
+ * `articles` is the GDPR article each item speaks to — a jsonb array rather
+ * than a join table because an item routinely covers several ("32" and "5(1)(f)"
+ * for the same security policy) and the set is small and read whole.
+ */
+export const auditEvidence = pgTable('audit_evidence', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+
+  /** GDPR article references, e.g. ["30","32"]. */
+  articles: jsonb('articles').notNull().default([]),
+
+  /** How the evidence is held: a link, an internal Custodia record, or a written attestation. */
+  evidenceType: varchar('evidence_type', { length: 30 }).notNull().default('document_link'),
+  url: text('url'),
+
+  /**
+   * When the evidence was gathered, and when it stops being current. An auditor
+   * asks "how do you know this is still true", so a review date is the point.
+   */
+  collectedAt: timestamp('collected_at', { withTimezone: true }).notNull().defaultNow(),
+  validUntil: timestamp('valid_until', { withTimezone: true }),
+
+  uploadedBy: uuid('uploaded_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (table) => {
+  return {
+    orgIdx: index('idx_audit_evidence_org').on(table.organizationId),
+    orgValidIdx: index('idx_audit_evidence_org_valid').on(table.organizationId, table.validUntil),
+  };
+});

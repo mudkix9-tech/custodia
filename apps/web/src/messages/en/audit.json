@@ -4,7 +4,8 @@
   "loading": "Loading audit workspace...",
   "tabs": {
     "dashboard": "Dashboard",
-    "ledger": "Immutable Ledger"
+    "ledger": "Immutable Ledger",
+    "evidence": "Evidence"
   },
   "compliance_score": "Overall Compliance Score",
   "compliance_pillars": "Compliance Pillars",
