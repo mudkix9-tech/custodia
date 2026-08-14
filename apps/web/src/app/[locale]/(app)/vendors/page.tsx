@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 import { toCsvRow } from '@/utils/csv';
 import { useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { PageShell } from '@/components/layout/PageShell';
 
 export default function VendorsPage() {
   const t = useTranslations('vendors');
@@ -140,7 +141,7 @@ export default function VendorsPage() {
   ];
 
   return (
-    <div className="max-w-[1200px] mx-auto p-8 fade-up space-y-8">
+    <PageShell className="fade-up space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
@@ -264,7 +265,7 @@ export default function VendorsPage() {
         onClose={() => setIsAddCustomOpen(false)}
         onCreated={() => utils.vendors.getOrgVendors.invalidate()}
       />
-    </div>
+    </PageShell>
   );
 }
 

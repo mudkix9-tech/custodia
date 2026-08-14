@@ -10,6 +10,7 @@ import { Article30Generator } from '@/components/audit/Article30Generator';
 import { AuditLogTable } from '@/components/audit/AuditLogTable';
 import { useTranslations } from 'next-intl';
 import { formatScore, scoreChipClasses } from '@/utils/score';
+import { PageShell } from '@/components/layout/PageShell';
 
 export default function AuditPage() {
   const t = useTranslations('audit');
@@ -32,7 +33,7 @@ export default function AuditPage() {
     (Object.values(metrics.gapsSummary) as number[]).reduce((a: number, b: number) => a + b, 0) : 0;
 
   return (
-    <div className="max-w-6xl mx-auto p-8 space-y-8 fade-up">
+    <PageShell className="space-y-8 fade-up">
       <div className="flex items-end justify-between border-b border-white/10 pb-4">
         <div>
           <h1 className="text-3xl font-serif text-[#F4F5F6] tracking-tight">{t('title')}</h1>
@@ -123,7 +124,7 @@ export default function AuditPage() {
           <AuditLogTable />
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 

@@ -8,6 +8,7 @@ import { OverdueDpiaRemediationWidget } from '@/components/dashboard/OverdueDpia
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { PageShell } from '@/components/layout/PageShell';
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
@@ -18,7 +19,7 @@ export default function DashboardPage() {
   const { data: pendingDsars } = trpc.dsar.countPending.useQuery();
 
   return (
-    <div className="max-w-5xl mx-auto p-8 fade-up">
+    <PageShell width="narrow" className="fade-up">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
@@ -89,6 +90,6 @@ export default function DashboardPage() {
           </p>
         </Link>
       </div>
-    </div>
+    </PageShell>
   );
 }

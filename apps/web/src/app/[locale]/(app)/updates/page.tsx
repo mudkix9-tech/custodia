@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Filter, Search } from 'lucide-react';
 import { RegulatoryUpdateCard } from '@/components/regulatory/RegulatoryUpdateCard';
+import { PageShell } from '@/components/layout/PageShell';
 
 export default function UpdatesPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,7 +20,7 @@ export default function UpdatesPage() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto p-8 fade-up">
+    <PageShell width="narrow" className="fade-up">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-serif text-[#F4F5F6] mb-2">Regulatory Feed</h1>
@@ -51,6 +52,6 @@ export default function UpdatesPage() {
           <div className="text-center py-20 text-[#6E747A]">No regulatory updates found.</div>
         )}
       </div>
-    </div>
+    </PageShell>
   );
 }

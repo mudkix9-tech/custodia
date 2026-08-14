@@ -6,6 +6,7 @@ import { DataGrid } from 'ui';
 import { Plus, Search, Building2, Globe, FileText, CheckCircle2, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { PageShell } from '@/components/layout/PageShell';
 
 export default function ClientsPage() {
   const t = useTranslations('clients');
@@ -88,7 +89,7 @@ export default function ClientsPage() {
   ];
 
   return (
-    <div className="max-w-[1200px] mx-auto p-8 fade-up space-y-8">
+    <PageShell className="fade-up space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
@@ -158,7 +159,7 @@ export default function ClientsPage() {
       </div>
 
       <AddClientModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
-    </div>
+    </PageShell>
   );
 }
 

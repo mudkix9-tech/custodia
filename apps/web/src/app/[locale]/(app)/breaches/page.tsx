@@ -5,6 +5,7 @@ import { trpc } from '@/utils/trpc';
 import BreachList from '@/components/breaches/BreachList';
 import ReportBreachModal from '@/components/breaches/ReportBreachModal';
 import { useTranslations } from 'next-intl';
+import { PageShell } from '@/components/layout/PageShell';
 
 export default function BreachesPage() {
   const t = useTranslations('breaches');
@@ -24,7 +25,7 @@ export default function BreachesPage() {
   const breaches = breachesResp?.pages.flatMap((page: any) => page.data) || [];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <PageShell width="wide" className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-semibold text-[#F4F5F6]">{t('title')}</h1>
@@ -60,6 +61,6 @@ export default function BreachesPage() {
           refetch();
         }}
       />
-    </div>
+    </PageShell>
   );
 }
