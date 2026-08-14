@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
-import { Clock, ShieldAlert, LayoutGrid, List, AlertTriangle, CheckCircle2, Inbox } from 'lucide-react';
+import { Clock, ShieldAlert, LayoutGrid, List, AlertTriangle, CheckCircle2, Inbox, GripVertical } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { useTranslations } from 'next-intl';
+import { useToast } from '@/components/ui/Toast';
 
 type ViewMode = 'kanban' | 'datagrid';
 
@@ -37,6 +38,26 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
   // from `requests` would report the page rather than the register — and an
   // overdue request on page two would not be counted at all.
   const { data: stats } = trpc.dsar.boardStats.useQuery(undefined, { enabled: !isGroupContext });
+
+  const toast = useToast();
+  const utils = trpc.useUtils();
+  // The board was read-only: the one screen a DPO works a request from could not
+  // advance it, so every transition meant opening the record and coming back.
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+
+  const updateStatus = trpc.dsar.updateStatus.useMutation({
+    onSuccess: () => {
+      utils.dsar.list.invalidate();
+      utils.dsar.boardStats.invalidate();
+    },
+    onError: (err) => toast('Could not move the request', { tone: 'error', description: err.message }),
+  });
+
+  const moveTo = (id: string, from: string, to: string) => {
+    if (from === to) return;
+    updateStatus.mutate({ id, status: to });
+  };
 
   if (isLoading) return <div className="text-[#6E747A]">{t('loading')}</div>;
 
@@ -85,7 +106,27 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
           {COLUMNS.map(col => {
             const colRequests = requests.filter((r: any) => r.status === col.id);
             return (
-              <div key={col.id} className="min-w-[300px] w-[300px] flex-shrink-0 bg-[#08090A]/50 rounded-2xl p-4 border border-white/5">
+              <div
+                key={col.id}
+                onDragOver={(e) => {
+                  // Without preventDefault the browser refuses the drop entirely.
+                  e.preventDefault();
+                  setDropTarget(col.id);
+                }}
+                onDragLeave={() => setDropTarget((cur) => (cur === col.id ? null : cur))}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDropTarget(null);
+                  const id = e.dataTransfer.getData('text/dsar-id');
+                  const from = e.dataTransfer.getData('text/dsar-status');
+                  if (id) moveTo(id, from, col.id);
+                }}
+                className={`min-w-[300px] w-[300px] flex-shrink-0 rounded-2xl p-4 border transition-colors ${
+                  dropTarget === col.id && dragging
+                    ? 'bg-[#C9A227]/[0.07] border-[#C9A227]/40'
+                    : 'bg-[#08090A]/50 border-white/5'
+                }`}
+              >
                 <div className="flex items-center justify-between mb-4 px-1">
                   <h3 className="font-semibold text-[13px] text-[#F4F5F6] uppercase tracking-wider">{col.label}</h3>
                   <span className="bg-[#0D0F11] border border-white/10 text-[#9BA1A6] text-xs px-2 py-0.5 rounded-full font-medium">
@@ -103,13 +144,30 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
                     if (daysRemaining < 0) deadlineColor = 'text-red-400 bg-red-500/20 font-bold';
 
                     return (
-                      <Link 
-                        href={isGroupContext ? `/group/dsar/${request.id}` : `/dsar/${request.id}`} 
+                      <div
                         key={request.id}
-                        className="block bg-[#0D0F11] p-4 rounded-xl border border-white/10 shadow-panel-elevated hover:shadow-md transition-shadow group"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/dsar-id', request.id);
+                          e.dataTransfer.setData('text/dsar-status', request.status ?? '');
+                          e.dataTransfer.effectAllowed = 'move';
+                          setDragging(request.id);
+                        }}
+                        onDragEnd={() => {
+                          setDragging(null);
+                          setDropTarget(null);
+                        }}
+                        className={`block bg-[#0D0F11] p-4 rounded-xl border shadow-panel-elevated transition-opacity group ${
+                          dragging === request.id
+                            ? 'opacity-40 border-[#C9A227]/40'
+                            : 'border-white/10 hover:border-white/20'
+                        }`}
                       >
                         <div className="flex justify-between items-start mb-2">
-                          <span className="text-[11px] font-mono font-medium text-[#6E747A]">{request.referenceNumber}</span>
+                          <span className="flex items-center gap-1.5 text-[11px] font-mono font-medium text-[#6E747A]">
+                            <GripVertical className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                            {request.referenceNumber}
+                          </span>
                           <span
                             title={deadline.toLocaleString()}
                             className={`text-[11px] px-2 py-0.5 rounded-full flex items-center gap-1 ${deadlineColor}`}
@@ -118,7 +176,14 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
                             {daysRemaining < 0 ? t('deadline.overdue') : t('deadline.days', { count: daysRemaining })}
                           </span>
                         </div>
-                        <h4 className="font-medium text-[#F4F5F6] text-sm mb-1">{request.subjectName.split(' ')[0]}</h4>
+                        <h4 className="font-medium text-sm mb-1">
+                          <Link
+                            href={isGroupContext ? `/group/dsar/${request.id}` : `/dsar/${request.id}`}
+                            className="text-[#F4F5F6] hover:text-[#C9A227] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60 rounded"
+                          >
+                            {request.subjectName.split(' ')[0]}
+                          </Link>
+                        </h4>
                         {isGroupContext && (
                           <div className="text-[11px] text-[#9BA1A6] font-medium mb-1 truncate">{request.organizationName || t('unknown_entity')}</div>
                         )}
@@ -128,7 +193,25 @@ export function DsarDashboardClient({ isGroupContext }: { isGroupContext?: boole
                             <ShieldAlert className="w-3 h-3" /> {t('unverified')}
                           </div>
                         )}
-                      </Link>
+
+                        {/* The keyboard equivalent of the drag. Same mutation. */}
+                        <label className="sr-only" htmlFor={`move-${request.id}`}>
+                          {t('board.move_label', { reference: request.referenceNumber })}
+                        </label>
+                        <select
+                          id={`move-${request.id}`}
+                          value={col.id}
+                          disabled={updateStatus.isPending}
+                          onChange={(e) => moveTo(request.id, col.id, e.target.value)}
+                          className="mt-3 w-full rounded-md border border-white/10 bg-[#08090A] px-2 py-1.5 text-[11.5px] text-[#9BA1A6] transition-colors hover:text-[#E6E8EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60 disabled:opacity-50"
+                        >
+                          {COLUMNS.map((c) => (
+                            <option key={c.id} value={c.id} className="bg-[#0D0F11] text-[#E6E8EA]">
+                              {c.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     )
                   })}
                 </div>

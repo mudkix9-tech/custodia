@@ -38,5 +38,8 @@
     "overdue": "En retard",
     "due_soon": "À échéance sous 7 jours",
     "completed_this_month": "Traitées ce mois-ci"
+  },
+  "board": {
+    "move_label": "Déplacer la demande {reference} vers un autre statut"
   }
 }

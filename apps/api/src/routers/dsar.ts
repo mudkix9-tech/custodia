@@ -525,6 +525,11 @@ export const dsarRouter = router({
         .where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)))
         .returning();
 
+      // The org filter above means a request belonging to another tenant matches
+      // no rows; without this the next line dereferences undefined and 500s
+      // instead of telling the caller the id is not theirs.
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Request not found.' });
+
       await orgEmbeddingsQueue.add('embed-dsar', {
         orgId: ctx.user!.orgId,
         entityType: 'dsar',

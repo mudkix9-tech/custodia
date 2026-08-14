@@ -35,5 +35,8 @@
     "overdue": "Overdue",
     "due_soon": "Due within 7 days",
     "completed_this_month": "Completed this month"
+  },
+  "board": {
+    "move_label": "Move request {reference} to another status"
   }
 }

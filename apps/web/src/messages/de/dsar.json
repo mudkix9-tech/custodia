@@ -38,5 +38,8 @@
     "overdue": "Überfällig",
     "due_soon": "Fällig in 7 Tagen",
     "completed_this_month": "Diesen Monat erledigt"
+  },
+  "board": {
+    "move_label": "Anfrage {reference} in einen anderen Status verschieben"
   }
 }
