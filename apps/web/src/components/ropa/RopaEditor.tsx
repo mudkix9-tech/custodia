@@ -282,7 +282,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 variant="outline"
                 type="button"
                 onClick={handleAiAssist}
-                className="bg-amber-500/10 hover:bg-amber-500/15 border-amber-900/50 text-amber-800 transition-colors flex items-center gap-1.5"
+                className="bg-amber-500/10 hover:bg-amber-500/15 border-amber-900/50 text-amber-300 transition-colors flex items-center gap-1.5"
               >
                 <Lightbulb className="w-4 h-4" /> {t('help_me_fill')}
               </Button>
@@ -325,7 +325,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         {relevantImpacts.length > 0 && !showImpacts && (
           <div 
             onClick={() => setShowImpacts(true)}
-            className="mb-6 bg-blue-500/10 border border-blue-200 text-blue-800 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors"
+            className="mb-6 bg-blue-500/10 border border-blue-500/25 text-blue-300 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center justify-between cursor-pointer hover:bg-blue-500/15 transition-colors"
           >
             <div className="flex items-center gap-2">
               <Info className="w-4 h-4 text-blue-400" />
@@ -335,9 +335,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         )}
 
         {relevantImpacts.length > 0 && showImpacts && (
-          <div className="mb-6 bg-blue-500/50 border border-blue-200 rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200 bg-blue-500/10">
-              <div className="flex items-center gap-2 font-medium text-blue-900 text-sm">
+          <div className="mb-6 bg-blue-500/50 border border-blue-500/25 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-blue-500/25 bg-blue-500/10">
+              <div className="flex items-center gap-2 font-medium text-blue-300 text-sm">
                 <Info className="w-4 h-4" /> {t('regulatory_impacts')}
               </div>
               <button onClick={() => setShowImpacts(false)} className="text-blue-500 hover:text-blue-400">
@@ -360,7 +360,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     <button 
                       onClick={() => acknowledgeMutation.mutate({ assessmentId: impact.id })}
                       disabled={acknowledgeMutation.isPending}
-                      className="shrink-0 bg-[#0D0F11] border border-blue-200 hover:border-blue-400 text-blue-400 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
+                      className="shrink-0 bg-[#0D0F11] border border-blue-500/25 hover:border-blue-400 text-blue-400 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
                     >
                       {t('acknowledge')}
                     </button>

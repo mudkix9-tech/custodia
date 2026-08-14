@@ -191,14 +191,14 @@ export function DiscoveryTab() {
               if (discovery.status === 'undocumented') {
                 if (matchedVendor) {
                   matchBadge = (
-                    <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                       Global Registry Match
                     </span>
                   );
                 } else {
                   matchBadge = (
-                    <span className="inline-flex items-center gap-1 bg-amber-500/10 border border-amber-900/50 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 bg-amber-500/10 border border-amber-900/50 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
                       <HelpCircle className="w-3 h-3 text-amber-400" />
                       Unrecognized Domain
                     </span>
@@ -207,7 +207,7 @@ export function DiscoveryTab() {
               } else {
                 let badgeStyle = 'bg-white/5 text-[#9BA1A6] border-white/10';
                 if (discovery.status === 'added_to_register') {
-                  badgeStyle = 'bg-emerald-500/10 text-emerald-800 border-emerald-500/20';
+                  badgeStyle = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20';
                 } else if (discovery.status === 'dismissed') {
                   badgeStyle = 'bg-neutral-100 text-neutral-500 border-neutral-200';
                 }

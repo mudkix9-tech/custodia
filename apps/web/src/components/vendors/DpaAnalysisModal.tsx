@@ -116,7 +116,7 @@ export function DpaAnalysisModal({
                 const isExpanded = !!expandedClauses[key];
 
                 let statusBadge = 'bg-red-500/10 text-red-400 border-red-900/50';
-                if (isPresent) statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                if (isPresent) statusBadge = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25';
                 if (isWeak) statusBadge = 'bg-amber-500/10 text-amber-400 border-amber-900/50';
 
                 return (
@@ -165,14 +165,14 @@ export function DpaAnalysisModal({
           {/* Problematic Language flagged */}
           {problematic.length > 0 && (
             <div className="space-y-3">
-              <h4 className="font-bold text-[#F4F5F6] text-sm flex items-center gap-1.5 text-rose-700">
+              <h4 className="font-bold text-[#F4F5F6] text-sm flex items-center gap-1.5 text-rose-300">
                 <ShieldAlert className="w-4 h-4 shrink-0" />
                 Problematic Language Identified
               </h4>
               <div className="space-y-2">
                 {problematic.map((p: any, idx: number) => (
                   <div key={idx} className="p-4 bg-rose-500/5 border border-rose-500/20 rounded-xl space-y-2">
-                    <div className="flex justify-between items-center text-xs font-bold text-rose-800">
+                    <div className="flex justify-between items-center text-xs font-bold text-rose-300">
                       <span className="capitalize">Clause type: {p.clauseType.replace('_', ' ')}</span>
                       <span className="uppercase tracking-widest text-[9px] bg-rose-500/10 px-2 py-0.5 rounded border border-rose-200/50">
                         {p.severity} severity

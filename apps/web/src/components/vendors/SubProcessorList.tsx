@@ -205,7 +205,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="bg-amber-500/10 text-amber-800 text-xs p-3 rounded-lg border border-amber-900/50">
+                  <div className="bg-amber-500/10 text-amber-300 text-xs p-3 rounded-lg border border-amber-900/50">
                     Use manual entry only if the vendor doesn't exist in our global database. Manual sub-processors do not receive automated risk scores.
                   </div>
                   <div>
@@ -431,7 +431,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                 <AlertOctagon className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <h4 className="font-semibold text-amber-300 text-xs uppercase tracking-wider">DPA Objection Clause Warning</h4>
-                  <p className="text-xs text-amber-800 leading-normal">
+                  <p className="text-xs text-amber-300 leading-normal">
                     Objecting to a sub-processor change is a legally significant action under GDPR.
                     Under your DPA terms, you may have the right to terminate the agreement.
                     Review your DPA clause coverage for termination provisions.

@@ -40,8 +40,8 @@ export default function DpaAnalyzerPage() {
   };
 
   const statusColors = {
-    present: 'bg-green-500/20 text-green-400 border-green-200',
-    weak: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    present: 'bg-green-500/20 text-green-400 border-green-500/25',
+    weak: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/25',
     missing: 'bg-red-500/20 text-red-400 border-red-900/50'
   };
 

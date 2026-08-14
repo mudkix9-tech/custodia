@@ -180,7 +180,7 @@ export default function NotificationsSettingsPage() {
               <h2 className="text-lg font-medium text-set-fg">{t('routing.title')}</h2>
             </div>
 
-            <div className="bg-blue-500/50 border border-blue-900/50 rounded-xl p-4 mb-6 flex gap-3 text-sm text-blue-800">
+            <div className="bg-blue-500/50 border border-blue-900/50 rounded-xl p-4 mb-6 flex gap-3 text-sm text-blue-300">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <div>
                 <p><strong>{t('routing.admin_note')}</strong> {t('routing.admin_note_text')}</p>

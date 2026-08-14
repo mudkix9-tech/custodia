@@ -50,7 +50,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
             const severityColor = 
               inc.severity === 'critical' ? 'bg-red-500/10 text-red-400 border-red-900/50' :
               inc.severity === 'high' ? 'bg-amber-500/10 text-amber-400 border-amber-900/50' :
-              inc.severity === 'medium' ? 'bg-blue-500/10 text-blue-400 border-blue-200' :
+              inc.severity === 'medium' ? 'bg-blue-500/10 text-blue-400 border-blue-500/25' :
               'bg-gray-50 text-gray-700 border-gray-200';
 
             return (
@@ -75,7 +75,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider
                             ${inc.alertStatus === 'unread' ? 'bg-red-500/10 text-red-400 border-red-900/50 animate-pulse' :
                               inc.alertStatus === 'acknowledged' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30' :
-                              inc.alertStatus === 'action_taken' ? 'bg-blue-500/10 text-blue-400 border-blue-200' :
+                              inc.alertStatus === 'action_taken' ? 'bg-blue-500/10 text-blue-400 border-blue-500/25' :
                               'bg-gray-50 text-gray-700 border-gray-200'}`}
                           >
                             Alert: {inc.alertStatus.replace('_', ' ')}
@@ -107,7 +107,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                     <div className="bg-amber-500/50 border border-amber-900/50 rounded-xl p-4 flex items-center gap-3">
                       <Landmark className="w-5 h-5 text-amber-400 shrink-0" />
                       <div>
-                        <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider block">Administrative Penalty</span>
+                        <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider block">Administrative Penalty</span>
                         <span className="text-lg font-bold text-amber-300 font-serif">
                           {Number(inc.fineAmount).toLocaleString()} {inc.fineCurrency || 'EUR'}
                         </span>
@@ -135,7 +135,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                       <AlertOctagon className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                       <div className="space-y-1">
                         <span className="text-xs font-semibold text-red-950 uppercase tracking-wider block">Article 33 Recommended Action</span>
-                        <p className="text-xs text-red-900 leading-relaxed">
+                        <p className="text-xs text-red-300 leading-relaxed">
                           If this breach affects personal data you shared with this vendor, you may need to notify your supervisory authority within 72 hours under Article 33. Review the breach details above and assess whether your data subjects are affected.
                         </p>
                       </div>
@@ -197,7 +197,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                             onClick={() => setReviewStatus('action_taken')}
                             className={`px-4 py-2.5 rounded-lg border text-xs font-semibold transition-all uppercase tracking-wider
                               ${reviewStatus === 'action_taken' 
-                                ? 'bg-blue-500/10 border-blue-300 text-blue-800 ring-2 ring-blue-500/10' 
+                                ? 'bg-blue-500/10 border-blue-500/30 text-blue-300 ring-2 ring-blue-500/10' 
                                 : 'bg-[#0D0F11] border-white/10 text-[#6E747A] hover:border-white/20'}`}
                           >
                             Action Taken

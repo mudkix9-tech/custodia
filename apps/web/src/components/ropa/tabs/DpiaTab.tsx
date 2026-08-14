@@ -421,7 +421,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
           <Button
             variant="outline"
             onClick={() => handleAddHighRiskVendorRisk(vendor)}
-            className="text-amber-800 bg-[#0D0F11] border-amber-900/50 hover:bg-amber-500/15 self-start sm:self-center shrink-0 shadow-panel-elevated"
+            className="text-amber-300 bg-[#0D0F11] border-amber-900/50 hover:bg-amber-500/15 self-start sm:self-center shrink-0 shadow-panel-elevated"
           >
             Document Risk
           </Button>
@@ -714,7 +714,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                               onClick={() => handleMitigationStatusChange(risk.id, 'in_progress')}
                               className={`flex-1 h-auto py-1.5 px-2 text-[12px] ${
                                 risk.mitigationStatus === 'in_progress' 
-                                  ? 'bg-amber-500/15 text-amber-800 shadow-panel-elevated border border-amber-900/50 hover:bg-amber-500/15 hover:text-amber-800' 
+                                  ? 'bg-amber-500/15 text-amber-300 shadow-panel-elevated border border-amber-900/50 hover:bg-amber-500/15 hover:text-amber-300' 
                                   : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >

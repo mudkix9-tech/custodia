@@ -138,7 +138,7 @@ export default function DataPrivacySettingsPage() {
             </button>
 
             {deleteStatus === 'success' && (
-              <div className="mt-4 p-3 bg-set-danger/20 text-set-danger text-sm rounded-lg border border-red-300">
+              <div className="mt-4 p-3 bg-set-danger/20 text-set-danger text-sm rounded-lg border border-red-500/30">
                 {t('deletion.success')}
               </div>
             )}

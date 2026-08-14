@@ -34,7 +34,7 @@ export function AlternativesSection({ vendorId }: { vendorId: string }) {
         {alternatives.map((alt: any) => {
           let riskColor = 'text-[#C9A227] bg-[#C9A227]/10 border-[#C9A227]/30';
           if (alt.riskLevel === 'medium') riskColor = 'text-amber-400 bg-amber-500/10 border-amber-900/50';
-          if (alt.riskLevel === 'high' || alt.riskLevel === 'critical') riskColor = 'text-rose-700 bg-rose-50 border-rose-200';
+          if (alt.riskLevel === 'high' || alt.riskLevel === 'critical') riskColor = 'text-rose-300 bg-rose-500/10 border-rose-500/25';
 
           return (
             <div 
@@ -60,7 +60,7 @@ export function AlternativesSection({ vendorId }: { vendorId: string }) {
 
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {alt.isPrivacyFriendly && (
-                  <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center gap-1">
                     <ShieldCheck className="w-2.5 h-2.5 shrink-0" />
                     Privacy Friendly
                   </span>

@@ -198,7 +198,7 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
             </div>
 
             {isUS && (
-              <div className="bg-amber-500/10 border border-amber-900/50 rounded-xl p-4 flex gap-3 text-sm text-amber-800">
+              <div className="bg-amber-500/10 border border-amber-900/50 rounded-xl p-4 flex gap-3 text-sm text-amber-300">
                 <AlertTriangle className="w-5 h-5 shrink-0" />
                 <div>
                   <strong>US Context:</strong> Since the invalidation of the Privacy Shield, transfers to the US using SCCs require a TIA to assess risks associated with FISA 702 and EO 12333.

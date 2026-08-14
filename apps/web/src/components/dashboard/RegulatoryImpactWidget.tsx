@@ -36,7 +36,7 @@ export function RegulatoryImpactWidget() {
           )}
           <h2 className={`font-semibold ${hasAnyHighConfidence ? 'text-amber-950' : 'text-[#F4F5F6]'}`}>{t('title')}</h2>
           <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-            hasAnyHighConfidence ? 'bg-amber-500/15 text-amber-800' : 'bg-indigo-500/15 text-indigo-400'
+            hasAnyHighConfidence ? 'bg-amber-500/15 text-amber-300' : 'bg-indigo-500/15 text-indigo-400'
           }`}>{t('new_count', { count: groupedImpacts.length })}</span>
         </div>
       </div>

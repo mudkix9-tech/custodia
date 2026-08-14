@@ -6,6 +6,7 @@ import { trpc } from '@/utils/trpc';
 import { BookOpen, CheckCircle, Clock, PlayCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { completionChipClasses, completionTileClasses } from '@/utils/status';
 
 export default function EmployeeTrainingDashboard() {
   const t = useTranslations('training');
@@ -36,7 +37,7 @@ export default function EmployeeTrainingDashboard() {
               <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-[14px] font-medium text-amber-300">{t('training_due.title')}</h3>
-                <p className="text-[13px] text-amber-800 mt-0.5">{t('training_due.description', { count: assignedCount })}</p>
+                <p className="text-[13px] text-amber-300 mt-0.5">{t('training_due.description', { count: assignedCount })}</p>
               </div>
             </div>
           )}
@@ -47,11 +48,7 @@ export default function EmployeeTrainingDashboard() {
               {myCompletions?.map(c => (
                 <div key={c.id} className="bg-[#0D0F11] rounded-2xl p-6 border border-white/10 shadow-panel-elevated flex flex-col sm:flex-row gap-6 sm:items-center justify-between transition-shadow hover:shadow-md">
                   <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                      c.status === 'passed' ? 'bg-emerald-50 text-emerald-600' :
-                      c.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400' :
-                      'bg-indigo-500/10 text-indigo-400'
-                    }`}>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${completionTileClasses(c.status)}`}>
                       {c.status === 'passed' ? <CheckCircle className="w-6 h-6" /> : <BookOpen className="w-6 h-6" />}
                     </div>
                     <div>
@@ -59,12 +56,7 @@ export default function EmployeeTrainingDashboard() {
                       <p className="text-[13px] text-[#9BA1A6] mt-1">{c.module?.description}</p>
                       
                       <div className="flex items-center gap-4 mt-3">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${
-                          c.status === 'passed' ? 'bg-emerald-50 text-emerald-700' :
-                          c.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400' :
-                          c.status === 'failed' ? 'bg-rose-50 text-rose-700' :
-                          'bg-white/10 text-[#E6E8EA]'
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full border text-[11px] font-medium capitalize ${completionChipClasses(c.status)}`}>
                           {(c.status || '').replace('_', ' ')}
                         </span>
                         {c.status === 'passed' && (
@@ -81,7 +73,7 @@ export default function EmployeeTrainingDashboard() {
                     {c.status !== 'passed' ? (
                       <Link 
                         href={`/training/${c.id}/learn`}
-                        className="px-5 py-2.5 bg-[#C9A227] text-white text-[13.5px] font-medium rounded-xl hover:bg-[#E5C463] transition-colors flex items-center gap-2 shadow-panel-elevated"
+                        className="px-5 py-2.5 bg-[#C9A227] text-[#08090A] text-[13.5px] font-medium rounded-xl hover:bg-[#E5C463] transition-colors flex items-center gap-2 shadow-panel-elevated"
                       >
                         <PlayCircle className="w-4 h-4" />
                         {c.status === 'in_progress' || c.status === 'failed' ? t('resume_course') : t('start_course')}

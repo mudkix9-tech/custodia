@@ -104,7 +104,7 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
                   currentDraft.diffFromPrevious && Array.isArray(currentDraft.diffFromPrevious) ? (
                     <div className="prose prose-sm max-w-none whitespace-pre-wrap font-mono text-sm">
                       {(currentDraft.diffFromPrevious as any[]).map((part, i) => (
-                        <span key={i} className={part.added ? 'bg-green-500/20 text-green-900' : part.removed ? 'bg-red-500/20 text-red-900 line-through' : 'text-gray-600'}>
+                        <span key={i} className={part.added ? 'bg-green-500/20 text-green-300' : part.removed ? 'bg-red-500/20 text-red-300 line-through' : 'text-gray-600'}>
                           {part.value}
                         </span>
                       ))}

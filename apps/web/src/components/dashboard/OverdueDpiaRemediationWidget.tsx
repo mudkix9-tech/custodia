@@ -22,7 +22,7 @@ export function OverdueDpiaRemediationWidget() {
         </div>
         <div>
           <h4 className="font-bold text-amber-950 text-sm">{t('title')}</h4>
-          <p className="text-xs text-amber-800 mt-0.5 font-medium">
+          <p className="text-xs text-amber-300 mt-0.5 font-medium">
             {count === 1 
               ? t('singular') 
               : t('plural', { count })}

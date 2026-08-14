@@ -75,10 +75,10 @@ function SetupProgressCard() {
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xl font-bold text-blue-900">{score}%</span>
+            <span className="text-xl font-bold text-blue-300">{score}%</span>
           </div>
         </div>
-        <span className="text-sm font-medium text-blue-800">Compliance Score</span>
+        <span className="text-sm font-medium text-blue-300">Compliance Score</span>
       </div>
     </div>
   );

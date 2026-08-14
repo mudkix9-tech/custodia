@@ -149,7 +149,7 @@ export default function GroupVendorConsistencyPage() {
                                   <span className={`px-2 py-0.5 rounded text-xs font-medium
                                     ${detail.riskLevel === 'critical' ? 'bg-red-500/20 text-red-400' : 
                                       detail.riskLevel === 'high' ? 'bg-amber-500/15 text-amber-400' : 
-                                      detail.riskLevel === 'medium' ? 'bg-blue-100 text-blue-400' : 
+                                      detail.riskLevel === 'medium' ? 'bg-blue-500/15 text-blue-400' : 
                                       'bg-[#C9A227]/15 text-[#C9A227]'}`}>
                                     {detail.riskLevel || 'unknown'}
                                   </span>

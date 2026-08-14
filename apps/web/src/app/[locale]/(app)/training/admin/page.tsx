@@ -85,7 +85,7 @@ export default function TrainingAdminDashboard() {
 
                 <div className="bg-[#0D0F11] rounded-2xl p-6 border border-white/10 shadow-panel-elevated">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center">
                       <Users className="w-5 h-5" />
                     </div>
                   </div>
@@ -105,7 +105,7 @@ export default function TrainingAdminDashboard() {
 
                 <div className="bg-[#0D0F11] rounded-2xl p-6 border border-white/10 shadow-panel-elevated">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center">
                       <AlertTriangle className="w-5 h-5" />
                     </div>
                   </div>
@@ -132,9 +132,9 @@ export default function TrainingAdminDashboard() {
                       </div>
                       <div className="flex items-center gap-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${
-                          c.status === 'passed' ? 'bg-emerald-50 text-emerald-700' :
+                          c.status === 'passed' ? 'bg-green-500/10 text-green-400' :
                           c.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400' :
-                          c.status === 'failed' ? 'bg-rose-50 text-rose-700' :
+                          c.status === 'failed' ? 'bg-red-500/10 text-red-400' :
                           'bg-white/10 text-[#E6E8EA]'
                         }`}>
                           {(c.status || '').replace('_', ' ')}
@@ -182,7 +182,7 @@ export default function TrainingAdminDashboard() {
                       <td className="py-4 px-6 capitalize text-[#9BA1A6]">{m.targetRole}</td>
                       <td className="py-4 px-6">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${
-                          m.status === 'published' ? 'bg-emerald-50 text-emerald-700' : 'bg-white/10 text-[#E6E8EA]'
+                          m.status === 'published' ? 'bg-green-500/10 text-green-400' : 'bg-white/[0.06] text-[#9BA1A6]'
                         }`}>
                           {m.status}
                         </span>
@@ -216,9 +216,9 @@ export default function TrainingAdminDashboard() {
                       <td className="py-3 px-6 text-[#9BA1A6]">{c.module?.title}</td>
                       <td className="py-3 px-6">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${
-                          c.status === 'passed' ? 'bg-emerald-50 text-emerald-700' :
+                          c.status === 'passed' ? 'bg-green-500/10 text-green-400' :
                           c.status === 'in_progress' ? 'bg-amber-500/10 text-amber-400' :
-                          c.status === 'failed' ? 'bg-rose-50 text-rose-700' :
+                          c.status === 'failed' ? 'bg-red-500/10 text-red-400' :
                           'bg-white/10 text-[#E6E8EA]'
                         }`}>
                           {(c.status || '').replace('_', ' ')}

@@ -147,13 +147,13 @@ export default function DataResidencyPage() {
               </div>
 
               {selectedRegion && selectedRegion !== orgData.dataRegion && (
-                <div className="bg-amber-500/10 p-4 rounded-lg border border-amber-900/50 text-sm text-amber-800">
+                <div className="bg-amber-500/10 p-4 rounded-lg border border-amber-900/50 text-sm text-amber-300">
                   <strong>Important:</strong> Changing your region will provision a new dedicated PostgreSQL instance in {REGIONS.find(r => r.id === selectedRegion)?.name}. Your existing data will be migrated, which can take several minutes. Your organization will be placed in read-only mode during this time.
 
                   <div className="mt-4 flex gap-3">
                     <button
                       onClick={() => setSelectedRegion('')}
-                      className="px-4 py-2 border border-amber-300 rounded text-amber-800 hover:bg-amber-500/15 font-medium"
+                      className="px-4 py-2 border border-amber-500/30 rounded text-amber-300 hover:bg-amber-500/15 font-medium"
                     >
                       Cancel
                     </button>

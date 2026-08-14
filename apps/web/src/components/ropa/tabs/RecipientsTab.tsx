@@ -106,7 +106,7 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
 
         let colorClass = "text-[#C9A227] bg-[#C9A227]/10 border-[#C9A227]/30";
         if (level === 'critical') colorClass = "text-red-400 bg-red-500/10 border-red-900/50 font-bold";
-        else if (level === 'high') colorClass = "text-orange-700 bg-orange-50 border-orange-200 font-semibold";
+        else if (level === 'high') colorClass = "text-orange-300 bg-orange-500/10 border-orange-500/25 font-semibold";
         else if (level === 'medium') colorClass = "text-amber-400 bg-amber-500/10 border-amber-900/50";
 
         return (

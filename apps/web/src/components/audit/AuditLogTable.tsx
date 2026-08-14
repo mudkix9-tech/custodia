@@ -182,7 +182,7 @@ export function AuditLogTable() {
                       <div key={field} className="bg-[#08090A] rounded-lg p-3 border border-white/10 text-sm">
                         <div className="font-mono text-xs font-bold text-[#E6E8EA] mb-2">{field}</div>
                         <div className="flex items-start gap-4">
-                          <div className="flex-1 bg-red-500/10 text-red-900 p-2 rounded border border-red-900/50 break-all">
+                          <div className="flex-1 bg-red-500/10 text-red-300 p-2 rounded border border-red-900/50 break-all">
                             <span className="text-red-500 font-bold mr-2">-</span>
                             {JSON.stringify(change.old)}
                           </div>

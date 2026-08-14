@@ -55,7 +55,7 @@ export function RegulatoryUpdateCard({ update }: { update: any }) {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                        isHigh ? 'bg-amber-500/15 text-amber-800' : 'bg-indigo-500/15 text-indigo-400'
+                        isHigh ? 'bg-amber-500/15 text-amber-300' : 'bg-indigo-500/15 text-indigo-400'
                       }`}>
                         {match.entityType.replace('_', ' ')}
                       </span>

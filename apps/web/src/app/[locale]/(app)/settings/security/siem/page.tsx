@@ -72,10 +72,10 @@ export default function SiemSettingsPage() {
       {siemSettings?.deliveryStatus && (
         <div className={`p-4 rounded-md border ${
           siemSettings.deliveryStatus.status === 'sent'
-            ? 'bg-set-ok/12 border-green-200 text-set-ok'
+            ? 'bg-set-ok/12 border-green-500/25 text-set-ok'
             : siemSettings.deliveryStatus.status === 'failed'
             ? 'bg-set-danger/12 border-red-900/50 text-set-danger'
-            : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+            : 'bg-yellow-500/10 border-yellow-500/25 text-yellow-300'
         }`}>
           <div className="font-semibold">
             Status: {siemSettings.deliveryStatus.status.charAt(0).toUpperCase() + siemSettings.deliveryStatus.status.slice(1)}

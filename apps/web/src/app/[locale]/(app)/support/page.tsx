@@ -184,8 +184,8 @@ export default function EnterpriseSupportPage() {
                   <td className="px-6 py-4 font-medium text-[#F4F5F6]">{ticket.subject}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                      ${ticket.status === 'Open' ? 'bg-amber-500/15 text-amber-800' :
-                        ticket.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+                      ${ticket.status === 'Open' ? 'bg-amber-500/15 text-amber-300' :
+                        ticket.status === 'In Progress' ? 'bg-blue-500/15 text-blue-300' :
                         'bg-[#C9A227]/15 text-[#C9A227]'}`}
                     >
                       {ticket.status}

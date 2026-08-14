@@ -146,11 +146,11 @@ export default function ClientPortalPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">DPA Status</span>
                     {v.dpaStatus === 'signed' ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-300">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Signed
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-300">
                         <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div> Pending
                       </span>
                     )}

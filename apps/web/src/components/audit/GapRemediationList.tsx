@@ -141,7 +141,7 @@ export function GapRemediationList() {
                       <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
                         gap.severity === 'critical' ? 'bg-red-500/20 text-red-400' :
                         gap.severity === 'high' ? 'bg-amber-500/15 text-amber-400' :
-                        'bg-blue-100 text-blue-400'
+                        'bg-blue-500/15 text-blue-400'
                       }`}>{gap.severity}</span>
                     )}
                     <h4 className={`text-[14px] font-semibold text-[#F4F5F6] truncate ${isRemoved ? 'line-through text-[#6E747A]' : ''}`}>
