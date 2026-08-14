@@ -71,7 +71,7 @@ export default function GroupVendorConsistencyPage() {
 
             return (
               <React.Fragment key={vendor.vendorId}>
-                <div className={`grid grid-cols-12 gap-4 p-4 items-center transition-colors ${vendor.inconsistent ? 'bg-amber-500/10/30 hover:bg-amber-500/10/60' : 'hover:bg-[#08090A]'}`}>
+                <div className={`grid grid-cols-12 gap-4 p-4 items-center transition-colors ${vendor.inconsistent ? 'bg-amber-500/30 hover:bg-amber-500/60' : 'hover:bg-[#08090A]'}`}>
                   <div className="col-span-4 flex items-center gap-3">
                     <div className="w-8 h-8 rounded bg-ink-100 flex items-center justify-center text-[#9BA1A6] font-medium text-sm">
                       <Building2 className="w-4 h-4" />
@@ -133,7 +133,7 @@ export default function GroupVendorConsistencyPage() {
                         </thead>
                         <tbody className="bg-[#0D0F11] divide-y divide-ink-100">
                           {vendor.entityDetails.map((detail: any, idx: number) => (
-                            <tr key={idx} className={vendor.inconsistent && detail.dpaStatus !== 'signed' ? 'bg-red-500/10/20' : ''}>
+                            <tr key={idx} className={vendor.inconsistent && detail.dpaStatus !== 'signed' ? 'bg-red-500/20' : ''}>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#F4F5F6]">
                                 {detail.orgName}
                               </td>

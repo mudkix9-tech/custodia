@@ -24,7 +24,7 @@ export default function EmployeeTrainingDashboard() {
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#08090A]/50">
       <header className="px-8 py-6 border-b border-white/10 bg-[#0D0F11]/50 backdrop-blur-xl shrink-0">
-        <h1 className="text-2xl font-bold text-[#F4F5F6] font-display">{t('title')}</h1>
+        <h1 className="text-2xl font-serif text-[#F4F5F6]">{t('title')}</h1>
         <p className="text-sm text-[#9BA1A6] mt-1">{t('subtitle')}</p>
       </header>
 
@@ -55,7 +55,7 @@ export default function EmployeeTrainingDashboard() {
                       {c.status === 'passed' ? <CheckCircle className="w-6 h-6" /> : <BookOpen className="w-6 h-6" />}
                     </div>
                     <div>
-                      <h3 className="text-[16px] font-bold text-[#F4F5F6]">{c.module?.title}</h3>
+                      <h3 className="text-[16px] font-serif text-[#F4F5F6]">{c.module?.title}</h3>
                       <p className="text-[13px] text-[#9BA1A6] mt-1">{c.module?.description}</p>
                       
                       <div className="flex items-center gap-4 mt-3">

@@ -46,13 +46,13 @@ function computeResidualRiskLevel(likelihood: 'low' | 'medium' | 'high', severit
 function getRiskLevelBadge(level: string) {
   switch (level) {
     case 'low':
-      return 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30/50';
+      return 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/50';
     case 'medium':
-      return 'bg-amber-500/10 text-amber-400 border-amber-900/50/50';
+      return 'bg-amber-500/10 text-amber-400 border-amber-900/50';
     case 'high':
       return 'bg-clay-50 text-clay-700 border-clay-200/50';
     case 'critical':
-      return 'bg-red-500/10 text-red-400 border-red-900/50/50';
+      return 'bg-red-500/10 text-red-400 border-red-900/50';
     default:
       return 'bg-white/5 text-[#9BA1A6] border-white/10';
   }
@@ -511,7 +511,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                       
                       {/* Vendor suggestion banner */}
                       {matchedVendor && risk.relatedVendorId !== matchedVendor.orgVendorId && (
-                        <div className="mt-1 flex items-center justify-between p-2 bg-[#C9A227]/10/70 border border-[#C9A227]/30/50 rounded-lg text-[12px] text-sage-800">
+                        <div className="mt-1 flex items-center justify-between p-2 bg-[#C9A227]/70 border border-[#C9A227]/50 rounded-lg text-[12px] text-sage-800">
                           <span className="flex items-center gap-1.5">
                             💡 Suggestion: Link to vendor <strong>{matchedVendor.name}</strong>?
                           </span>
@@ -714,7 +714,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                               onClick={() => handleMitigationStatusChange(risk.id, 'in_progress')}
                               className={`flex-1 h-auto py-1.5 px-2 text-[12px] ${
                                 risk.mitigationStatus === 'in_progress' 
-                                  ? 'bg-amber-100 text-amber-800 shadow-panel-elevated border border-amber-900/50/50 hover:bg-amber-100 hover:text-amber-800' 
+                                  ? 'bg-amber-100 text-amber-800 shadow-panel-elevated border border-amber-900/50 hover:bg-amber-100 hover:text-amber-800' 
                                   : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >
@@ -725,7 +725,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                               onClick={() => handleMitigationStatusChange(risk.id, 'completed')}
                               className={`flex-1 h-auto py-1.5 px-2 text-[12px] ${
                                 risk.mitigationStatus === 'completed' 
-                                  ? 'bg-sage-100 text-sage-800 shadow-panel-elevated border border-[#C9A227]/30/50 hover:bg-sage-100 hover:text-sage-800' 
+                                  ? 'bg-sage-100 text-sage-800 shadow-panel-elevated border border-[#C9A227]/50 hover:bg-sage-100 hover:text-sage-800' 
                                   : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >
@@ -763,9 +763,9 @@ function VendorRiskCard({ vendorId }: { vendorId: string }) {
       <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
         <span className="text-[11px] font-bold uppercase tracking-widest text-[#6E747A]">Vendor Risk Profile</span>
         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border
-          ${orgVendor.riskLevel === 'low' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30/50' : 
-            orgVendor.riskLevel === 'critical' ? 'bg-red-500/10 text-red-400 border-red-900/50/50' : 
-            'bg-amber-500/10 text-amber-400 border-amber-900/50/50'}
+          ${orgVendor.riskLevel === 'low' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/50' : 
+            orgVendor.riskLevel === 'critical' ? 'bg-red-500/10 text-red-400 border-red-900/50' : 
+            'bg-amber-500/10 text-amber-400 border-amber-900/50'}
         `}>
           {orgVendor.riskLevel} Risk ({orgVendor.riskScore})
         </span>

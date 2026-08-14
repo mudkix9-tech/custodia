@@ -55,6 +55,15 @@
   --color-accent-gold-hover: #E5C463;
   --color-accent-transparent: rgba(201, 162, 39, 0.16);
 
+  /* The four tokens the shadcn primitives in components/ui reference but that
+     were never defined, so they emitted no CSS: every Button lost its focus
+     ring, and Switch rendered its track, thumb and ring all transparent --
+     an invisible control on nine screens. Mapped onto the product palette. */
+  --color-ring: #C9A227;
+  --color-primary: #C9A227;
+  --color-background: #08090A;
+  --color-input: #3A4048;
+
   --shadow-panel-elevated: 0 -1px 0 rgba(201,162,39,0.18) inset, 0 40px 120px -40px rgba(0,0,0,0.9);
 
   /* Settings surface tokens — warm-neutral, near-black console treatment */

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
+import { severityClasses } from '@/utils/severity';
 import { DataGrid } from 'ui';
 import { Search, FileText, Download, ShieldAlert, CheckCircle2, Clock, Link as LinkIcon, Building2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -80,13 +81,8 @@ export default function VendorsPage() {
         const level = row.original.riskLevel || 'low';
         const score = row.original.riskScore || 0;
         
-        let colorClass = "text-[#C9A227] bg-[#C9A227]/10 border-[#C9A227]/30";
-        if (level === 'critical') colorClass = "text-red-400 bg-red-500/10 border-red-900/50 font-bold";
-        else if (level === 'high') colorClass = "text-orange-700 bg-orange-50 border-orange-200 font-semibold";
-        else if (level === 'medium') colorClass = "text-amber-400 bg-amber-500/10 border-amber-900/50";
-
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] uppercase tracking-wider border ${colorClass}`}>
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] uppercase tracking-wider border ${severityClasses(level)}`}>
             {level} ({score})
           </span>
         );
@@ -254,7 +250,7 @@ function DiscoverModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => vo
             <div className="p-8 text-center text-[#6E747A]">{t('discover_modal.no_results', { search })}</div>
           ) : (
             filtered.map((v: any) => (
-              <div key={v.id} className="bg-[#0D0F11] border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-[#C9A227]/50/30 transition-colors shadow-panel-elevated">
+              <div key={v.id} className="bg-[#0D0F11] border border-white/10 rounded-xl p-4 flex items-center justify-between hover:border-[#C9A227]/30 transition-colors shadow-panel-elevated">
                 <div>
                   <h4 className="font-semibold text-[#F4F5F6] flex items-center gap-2">
                     {v.name}

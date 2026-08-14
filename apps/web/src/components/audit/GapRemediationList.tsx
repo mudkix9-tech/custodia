@@ -101,7 +101,7 @@ export function GapRemediationList() {
       </div>
 
       {activeAndRemovedGaps.length === 0 ? (
-        <div className="p-8 text-center bg-[#C9A227]/10/50 rounded-2xl border border-sage-100/50">
+        <div className="p-8 text-center bg-[#C9A227]/50 rounded-2xl border border-sage-100/50">
           <CheckCircle2 className="w-10 h-10 text-sage-500 mx-auto mb-3" />
           <h3 className="text-[14.5px] font-semibold text-sage-900">No Compliance Gaps</h3>
           <p className="text-[#C9A227] mt-1 text-[13px]">No active compliance gaps found under the selected filter.</p>
@@ -115,7 +115,7 @@ export function GapRemediationList() {
                 key={gap.id} 
                 className={`bg-[#0D0F11] border rounded-xl p-4 flex items-start gap-4 hover:shadow-panel-elevated transition-shadow group ${
                   isRemoved 
-                    ? 'border-[#C9A227]/30 bg-[#C9A227]/10/10 opacity-80' 
+                    ? 'border-[#C9A227]/30 bg-[#C9A227]/10 opacity-80' 
                     : 'border-white/10'
                 }`}
               >
@@ -154,7 +154,7 @@ export function GapRemediationList() {
                   {/* DPIA Source Badge */}
                   {gap.source === 'dpia' && gap.dpiaTitle && (
                     <div className="mt-2">
-                      <span className="inline-flex items-center bg-[#C9A227]/10 text-sage-800 border border-[#C9A227]/30/50 text-[10px] px-2.5 py-1 rounded-md font-medium">
+                      <span className="inline-flex items-center bg-[#C9A227]/10 text-sage-800 border border-[#C9A227]/50 text-[10px] px-2.5 py-1 rounded-md font-medium">
                         From DPIA: <Link href={gap.resolutionUrl || '/ropa'} className="underline hover:text-sage-950 font-bold ml-1">{gap.dpiaTitle}</Link>
                       </span>
                     </div>
@@ -162,7 +162,7 @@ export function GapRemediationList() {
 
                   {/* Special notice for removed DPIA risks */}
                   {isRemoved && (
-                    <p className="text-[12px] text-[#C9A227] mt-2 bg-[#C9A227]/10 border border-[#C9A227]/30/50 rounded-lg p-2.5 font-medium leading-relaxed">
+                    <p className="text-[12px] text-[#C9A227] mt-2 bg-[#C9A227]/10 border border-[#C9A227]/50 rounded-lg p-2.5 font-medium leading-relaxed">
                       💡 This compliance gap was automatically resolved because the underlying risk was removed or reassessed in the DPIA.
                     </p>
                   )}

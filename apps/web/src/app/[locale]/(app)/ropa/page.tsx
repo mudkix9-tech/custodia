@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
+import { severityClasses } from '@/utils/severity';
 import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -160,7 +161,7 @@ export default function RopaListPage() {
         const status = info.getValue();
         return (
           <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${
-            status === 'active' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/50/20' : 
+            status === 'active' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/20' : 
             status === 'draft' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
             'bg-white/5 text-[#6E747A] border-white/10'
           }`}>
@@ -175,12 +176,7 @@ export default function RopaListPage() {
       cell: (info: any) => {
         const risk = info.getValue()?.toLowerCase() || 'low';
         return (
-          <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${
-            risk === 'critical' ? 'bg-clay-50 text-clay-700 border-clay-500/20' :
-            risk === 'high' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-            risk === 'medium' ? 'bg-yellow-50 text-yellow-700 border-yellow-500/20' :
-            'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/50/20'
-          }`}>
+          <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${severityClasses(risk)}`}>
             {t(`risk_levels.${risk}`) || risk}
           </span>
         );
@@ -250,7 +246,7 @@ export default function RopaListPage() {
         {/* Re-Consent Flags Section */}
         {(reconsentFlags?.length || 0) > 0 || flagsTab === 'dismissed' ? (
           <div className="bg-[#0D0F11] rounded-2xl border border-white/10 shadow-panel-elevated overflow-hidden fade-up">
-            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-amber-500/10/30">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-amber-500/30">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-amber-400" />
                 <h3 className="font-semibold text-[#F4F5F6]">{t('reconsent_triggers')}</h3>

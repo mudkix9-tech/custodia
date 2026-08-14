@@ -335,7 +335,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         )}
 
         {relevantImpacts.length > 0 && showImpacts && (
-          <div className="mb-6 bg-blue-500/10/50 border border-blue-200 rounded-2xl overflow-hidden">
+          <div className="mb-6 bg-blue-500/50 border border-blue-200 rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200 bg-blue-500/10">
               <div className="flex items-center gap-2 font-medium text-blue-900 text-sm">
                 <Info className="w-4 h-4" /> {t('regulatory_impacts')}
@@ -411,7 +411,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2">
                     {allClients.map((client: any) => (
                       <label key={client.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                        assignedClientIds.includes(client.id) ? 'border-indigo-300 bg-indigo-500/10/50' : 'border-white/10 hover:border-ink-900/30'
+                        assignedClientIds.includes(client.id) ? 'border-indigo-300 bg-indigo-500/50' : 'border-white/10 hover:border-ink-900/30'
                       }`}>
                         <Switch 
                           checked={assignedClientIds.includes(client.id)}
@@ -466,7 +466,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </div>
 
               <div className="space-y-2 pt-2 border-t border-ink-900/8">
-                <label className="flex items-start gap-3 p-3 bg-white/5/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                <label className="flex items-start gap-3 p-3 bg-white/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
                   <Switch 
                     checked={formData.isSystematicMonitoring || false}
                     onCheckedChange={(checked) => handleFieldChange('isSystematicMonitoring', checked)}
@@ -621,7 +621,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     { id: 'regular_backups', label: t('security.backups') },
                     { id: 'audit_logging', label: t('security.audit_logs') },
                   ].map(measure => (
-                    <label key={measure.id} className="flex items-start gap-3 p-3 bg-white/5/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                    <label key={measure.id} className="flex items-start gap-3 p-3 bg-white/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
                       <Switch 
                         checked={Array.isArray(formData.securityMeasures) && formData.securityMeasures.includes(measure.id)}
                         onCheckedChange={(checked) => {

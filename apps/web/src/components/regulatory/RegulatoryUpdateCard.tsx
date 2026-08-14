@@ -29,7 +29,7 @@ export function RegulatoryUpdateCard({ update }: { update: any }) {
       <p className="text-[#E6E8EA] text-[14px] leading-relaxed mb-6">{update.summary}</p>
 
       {matches.length > 0 && (
-        <div className="mb-6 bg-indigo-500/10/50 border border-indigo-900/50 rounded-xl overflow-hidden">
+        <div className="mb-6 bg-indigo-500/50 border border-indigo-900/50 rounded-xl overflow-hidden">
           <div className="bg-indigo-100/50 px-4 py-2 border-b border-indigo-900/50 flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-indigo-400" />
             <h4 className="text-[12px] font-bold text-indigo-300 uppercase tracking-wider">Affected in your organization</h4>

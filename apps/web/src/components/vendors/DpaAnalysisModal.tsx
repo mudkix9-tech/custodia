@@ -93,7 +93,7 @@ export function DpaAnalysisModal({
 
           {/* Tier 2 Special Category warning */}
           {analysisData.potential_special_category && (
-            <div className="p-4 bg-amber-500/100/10 border border-amber-500/20 text-amber-300 rounded-xl text-xs flex gap-3 leading-relaxed">
+            <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-xl text-xs flex gap-3 leading-relaxed">
               <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400" />
               <div>
                 <span className="font-bold block mb-0.5">Contextual Special Category Data Warning (Advisory)</span>

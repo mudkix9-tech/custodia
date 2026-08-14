@@ -104,7 +104,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
 
                   {/* Fine Details */}
                   {inc.incidentType === 'fine' && inc.fineAmount && (
-                    <div className="bg-amber-500/10/50 border border-amber-900/50/50 rounded-xl p-4 flex items-center gap-3">
+                    <div className="bg-amber-500/50 border border-amber-900/50 rounded-xl p-4 flex items-center gap-3">
                       <Landmark className="w-5 h-5 text-amber-400 shrink-0" />
                       <div>
                         <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider block">Administrative Penalty</span>
@@ -131,7 +131,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
 
                   {/* Recommended Action Box for breaches */}
                   {inc.incidentType === 'breach' && (
-                    <div className="bg-red-500/10/40 border border-red-900/50/40 rounded-xl p-4 flex gap-3">
+                    <div className="bg-red-500/40 border border-red-900/40 rounded-xl p-4 flex gap-3">
                       <AlertOctagon className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                       <div className="space-y-1">
                         <span className="text-xs font-semibold text-red-950 uppercase tracking-wider block">Article 33 Recommended Action</span>

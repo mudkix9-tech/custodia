@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { severityClasses } from '@/utils/severity';
 
 export default function BreachList({ breaches, isLoading, isGroupContext }: { breaches: any[], isLoading: boolean, isGroupContext?: boolean }) {
   const t = useTranslations('breaches');
@@ -25,15 +26,10 @@ export default function BreachList({ breaches, isLoading, isGroupContext }: { br
     }
   };
 
-  const getRiskColor = (risk: string) => {
-    switch(risk) {
-      case 'high': return 'bg-red-500/20 text-red-400';
-      case 'medium': return 'bg-orange-500/20 text-orange-400';
-      case 'low': return 'bg-yellow-500/20 text-yellow-400';
-      case 'unlikely': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-white/10 text-[#E6E8EA]';
-    }
-  };
+  // Breach likelihood shares the product-wide ramp; 'high' here is the top of
+  // this scale, so it maps onto critical rather than the ramp's own 'high'.
+  const getRiskColor = (risk: string) =>
+    severityClasses(risk === 'high' ? 'critical' : risk === 'medium' ? 'high' : risk);
 
   return (
     <div className="bg-[#0D0F11] shadow-panel-elevated rounded-xl overflow-hidden border border-white/10">

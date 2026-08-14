@@ -55,7 +55,7 @@ function SetupProgressCard() {
         </div>
       </div>
 
-      <div className="w-full md:w-64 bg-blue-500/100/10 rounded-xl p-6 flex flex-col items-center justify-center text-center">
+      <div className="w-full md:w-64 bg-blue-500/10 rounded-xl p-6 flex flex-col items-center justify-center text-center">
         <div className="relative w-24 h-24 mb-3">
           <svg className="w-full h-full" viewBox="0 0 36 36">
             <path

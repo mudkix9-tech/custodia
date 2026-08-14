@@ -95,7 +95,7 @@ export default function VendorDetailsPage() {
       </Link>
  
       {vendor.vendor.isAutoDiscovered && (
-        <div className="bg-amber-500/100/5 border border-amber-500/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4 text-amber-300">
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4 text-amber-300">
           <div className="flex gap-3 leading-relaxed">
             <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" />
             <div className="text-xs">
@@ -171,12 +171,12 @@ export default function VendorDetailsPage() {
 
           {/* Risk Dial */}
           <div className="bg-ink-900 border border-ink-900 rounded-2xl p-6 shadow-panel-elevated text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A227]/100/20 rounded-full blur-[50px]"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A227]/20 rounded-full blur-[50px]"></div>
             <div className="text-[12px] font-bold uppercase tracking-widest text-bone-50/50 mb-4">Calculated Risk Score</div>
             <div className="text-5xl font-black text-white mb-2">{vendor.orgVendor.riskScore}</div>
             <div className={`inline-block px-3 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider mb-6
-              ${vendor.orgVendor.riskLevel === 'low' ? 'bg-[#C9A227]/100/20 text-sage-300' : 
-                vendor.orgVendor.riskLevel === 'critical' ? 'bg-red-500/100/20 text-red-300' : 'bg-amber-500/100/20 text-amber-300'}
+              ${vendor.orgVendor.riskLevel === 'low' ? 'bg-[#C9A227]/20 text-sage-300' : 
+                vendor.orgVendor.riskLevel === 'critical' ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'}
             `}>
               {vendor.orgVendor.riskLevel}
             </div>
@@ -200,7 +200,7 @@ export default function VendorDetailsPage() {
                         {factor.detail}
                       </div>
                       {/* Visual progress bar */}
-                      <div className="w-full bg-white/5/10 h-1 rounded-full overflow-hidden">
+                      <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
                         <div 
                           className={`h-full ${factor.points > (factor.maxPoints / 2) ? 'bg-red-400' : factor.points > 0 ? 'bg-amber-400' : 'bg-sage-400'}`}
                           style={{ width: `${(factor.points / factor.maxPoints) * 100}%` }}
@@ -399,7 +399,7 @@ export default function VendorDetailsPage() {
                                 key={key}
                                 className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer select-none
                                   ${isChecked 
-                                    ? 'bg-[#C9A227]/10/30 border-[#C9A227]/30 hover:border-sage-300' 
+                                    ? 'bg-[#C9A227]/30 border-[#C9A227]/30 hover:border-sage-300' 
                                     : 'bg-[#0D0F11] border-white/10 hover:border-white/20'}`}
                               >
                                 <input
@@ -418,7 +418,7 @@ export default function VendorDetailsPage() {
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2">
                                     <span className="font-semibold text-[#F4F5F6] text-[13px] leading-tight">{label}</span>
-                                    <span className="text-[10px] font-bold text-[#C9A227] bg-[#C9A227]/10 border border-[#C9A227]/30/50 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{citation}</span>
+                                    <span className="text-[10px] font-bold text-[#C9A227] bg-[#C9A227]/10 border border-[#C9A227]/50 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{citation}</span>
                                   </div>
                                   <p className="text-[11px] text-[#6E747A] leading-tight">{desc}</p>
                                 </div>

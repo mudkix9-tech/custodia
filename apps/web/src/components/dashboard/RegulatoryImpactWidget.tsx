@@ -58,7 +58,7 @@ export function RegulatoryImpactWidget() {
                         <AlertTriangle className="w-3 h-3" /> {t('high_impact')}
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 bg-indigo-500/100/10 px-2 py-0.5 rounded-md uppercase tracking-wide">
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md uppercase tracking-wide">
                         <Info className="w-3 h-3" /> {t('advisory')}
                       </span>
                     )}
@@ -70,7 +70,7 @@ export function RegulatoryImpactWidget() {
                   <p className="text-[13px] text-[#9BA1A6] mb-4 line-clamp-2">{update.summary}</p>
                   
                   <div className={`border rounded-lg p-3 ${
-                    hasHigh ? 'bg-amber-500/100/10/50 border-amber-900/50' : 'bg-indigo-500/100/10/50 border-indigo-900/50'
+                    hasHigh ? 'bg-amber-500/50 border-amber-900/50' : 'bg-indigo-500/50 border-indigo-900/50'
                   }`}>
                     <p className={`text-[12px] font-semibold mb-2 ${hasHigh ? 'text-amber-300' : 'text-indigo-300'}`}>
                       {t('affected_entities')}
@@ -80,7 +80,7 @@ export function RegulatoryImpactWidget() {
                         <li key={i} className="text-[12px] text-[#E6E8EA] flex flex-col gap-1">
                           <div className="flex items-center gap-1.5 font-medium text-[#F4F5F6]">
                             <span className={`w-1.5 h-1.5 rounded-full mt-0.5 shrink-0 ${
-                              match.confidence === 'high' ? 'bg-amber-500/100/100' : 'bg-indigo-400'
+                              match.confidence === 'high' ? 'bg-amber-500/100' : 'bg-indigo-400'
                             }`} />
                             {match.entityName || match.entityType.replace('_', ' ')}
                           </div>

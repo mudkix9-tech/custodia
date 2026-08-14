@@ -101,7 +101,7 @@ export default function AuditPage() {
         </>
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-[#C9A227]/10 border border-[#C9A227]/30/50 rounded-xl p-4">
+          <div className="flex items-center justify-between bg-[#C9A227]/10 border border-[#C9A227]/50 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-sage-100 rounded-full flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5 text-[#C9A227]" />

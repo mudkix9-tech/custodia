@@ -209,7 +209,7 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
             ) : (
               <div className="space-y-4">
                 {((tasks as any)?.data || [])?.map((task: any) => (
-                  <div key={task.id} className={`p-5 rounded-2xl border ${task.status === 'completed' ? 'bg-[#C9A227]/10/30 border-[#C9A227]/50/20' : 'bg-[#0D0F11] border-white/10'}`}>
+                  <div key={task.id} className={`p-5 rounded-2xl border ${task.status === 'completed' ? 'bg-[#C9A227]/30 border-[#C9A227]/20' : 'bg-[#0D0F11] border-white/10'}`}>
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">

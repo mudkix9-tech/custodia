@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, usePathname } from '@/i18n/routing';
 import { useSession, signOut } from 'next-auth/react';
 import { LayoutDashboard, Users, Database, Building2, UserCircle, GraduationCap, Settings, LifeBuoy, ChevronUp, FileText, Cookie, AlertTriangle, ShieldCheck, Sparkles, Menu, X, LogOut } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -75,7 +74,7 @@ export function Sidebar() {
   return (
     <>
       <button
-        className="md:hidden fixed top-3 left-4 z-50 p-2 rounded-md hover:bg-[#0D0F11]/5 text-[#9BA1A6]"
+        className="md:hidden fixed top-3 left-4 z-50 p-2 rounded-md hover:bg-white/[0.04] text-[#9BA1A6]"
         onClick={() => setSidebarOpen(true)}
         aria-label="Open menu"
       >
@@ -86,7 +85,7 @@ export function Sidebar() {
         <div className="flex items-center justify-between px-5 pt-6 pb-4 md:pt-6">
           <Logo />
           <button
-            className="md:hidden p-2 -mr-2 rounded-md hover:bg-[#0D0F11]/5 text-[#9BA1A6]"
+            className="md:hidden p-2 -mr-2 rounded-md hover:bg-white/[0.04] text-[#9BA1A6]"
             onClick={() => setSidebarOpen(false)}
             aria-label="Close menu"
           >
@@ -113,14 +112,18 @@ export function Sidebar() {
                     <li key={n.id}>
                       <Link
                         href={n.href}
-                        className={`group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] transition-colors focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none
+                        aria-current={isActive ? 'page' : undefined}
+                        className={`group relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] transition-colors focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none
                           ${isActive
-                            ? 'bg-[#0D0F11]/10 text-[#F4F5F6] font-medium'
-                            : 'text-[#9BA1A6] hover:bg-[#0D0F11]/5 hover:text-[#E6E8EA]'}`}
+                            ? 'bg-gradient-to-r from-[#C9A227]/10 to-transparent text-[#F4F5F6] font-medium'
+                            : 'text-[#9BA1A6] hover:bg-white/[0.04] hover:text-[#E6E8EA]'}`}
                       >
+                        {isActive && (
+                          <span className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-sm bg-[#C9A227]" />
+                        )}
                         <IconComp
                           size={16}
-                          className={isActive ? 'text-[#F4F5F6]' : 'text-[#6E747A] group-hover:text-[#9BA1A6]'}
+                          className={isActive ? 'text-[#C9A227]' : 'text-[#6E747A] group-hover:text-[#9BA1A6]'}
                         />
                         <span className="flex-1 text-left">{t(`navigation.${n.id}`)}</span>
                         {badge !== null && (
@@ -138,12 +141,12 @@ export function Sidebar() {
         <div className="mt-2 px-3 pb-3 pt-3 border-t border-white/10">
           <ul className="space-y-0.5 mb-3">
             <li>
-              <Link href="/settings" className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-[#9BA1A6] hover:bg-[#0D0F11]/5 hover:text-[#E6E8EA] focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none">
+              <Link href="/settings" className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-[#9BA1A6] hover:bg-white/[0.04] hover:text-[#E6E8EA] focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none">
                 <Settings size={16} className="text-[#6E747A]" /> {t('navigation.settings')}
               </Link>
             </li>
             <li>
-              <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-[#9BA1A6] hover:bg-[#0D0F11]/5 hover:text-[#E6E8EA] focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none">
+              <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-[#9BA1A6] hover:bg-white/[0.04] hover:text-[#E6E8EA] focus-visible:ring-2 focus-visible:ring-[#C9A227] focus-visible:outline-none">
                 <LifeBuoy size={16} className="text-[#6E747A]" /> {t('navigation.help_docs')}
               </button>
             </li>
@@ -167,7 +170,7 @@ export function Sidebar() {
               )}
               <button 
                 onClick={(e) => { e.preventDefault(); setUserMenuOpen(!userMenuOpen); }}
-                className="w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-[#0D0F11]/5 cursor-pointer transition-colors"
+                className="w-full text-left flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.04] cursor-pointer transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-[#0D0F11]/10 text-[#E6E8EA] flex items-center justify-center font-medium text-[12.5px] border border-white/10 shrink-0">
                   {session.user.name?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase() || 'U'}

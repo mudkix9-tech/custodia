@@ -196,7 +196,7 @@ export default function AssessmentsDashboardPage() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors border ${
                   activeFilter === filter
                     ? 'bg-sage-700 border-sage-700 text-white shadow-panel-elevated'
-                    : 'bg-[#0D0F11] border-white/10 text-[#9BA1A6] hover:bg-white/5/50'
+                    : 'bg-[#0D0F11] border-white/10 text-[#9BA1A6] hover:bg-white/50'
                 }`}
               >
                 {filter}
@@ -309,7 +309,7 @@ export default function AssessmentsDashboardPage() {
                             <button
                               onClick={() => handleOpenReviewModal(assessment.id, assessment.scoreAdjustment, assessment.aiSummary || '')}
                               title="Audit Review & Overrides"
-                              className="p-2 text-indigo-400 hover:text-indigo-400 border border-indigo-900/50 hover:border-indigo-900/50 bg-indigo-500/10/50 rounded-lg transition-colors shadow-panel-elevated"
+                              className="p-2 text-indigo-400 hover:text-indigo-400 border border-indigo-900/50 hover:border-indigo-900/50 bg-indigo-500/50 rounded-lg transition-colors shadow-panel-elevated"
                             >
                               <Star className="w-4 h-4" />
                             </button>
@@ -392,7 +392,7 @@ export default function AssessmentsDashboardPage() {
                 </div>
               </div>
 
-              <div className="bg-white/5/50 p-4 rounded-xl text-xs text-[#9BA1A6] leading-relaxed">
+              <div className="bg-white/50 p-4 rounded-xl text-xs text-[#9BA1A6] leading-relaxed">
                 ℹ️ Dispatching this request will immediately generate a secure single-use access link and email the partner contact. The questionnaire will expire in exactly 30 days unless completed or extended.
               </div>
 

@@ -119,7 +119,7 @@ export default function DataPrivacySettingsPage() {
 
         {/* Account Deletion */}
         {isOwner && (
-          <div className="bg-set-danger/12/50 rounded-2xl border border-red-900/50 p-6">
+          <div className="bg-set-danger/50 rounded-2xl border border-red-900/50 p-6">
             <div className="flex items-center gap-2 mb-6 text-set-danger">
               <AlertTriangle className="w-5 h-5" />
               <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{t('deletion.title')}</h2>

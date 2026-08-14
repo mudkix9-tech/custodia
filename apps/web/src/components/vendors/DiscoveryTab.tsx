@@ -219,7 +219,7 @@ export function DiscoveryTab() {
               return (
                 <div key={discovery.id} className="p-6 flex items-start justify-between hover:bg-[#08090A]/20 transition-colors">
                   <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white/5/50 border border-white/5 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-white/50 border border-white/5 flex items-center justify-center shrink-0">
                       {discovery.discoveryMethod === 'dns_analysis' ? (
                         <Globe className="w-5 h-5 text-indigo-500" />
                       ) : (

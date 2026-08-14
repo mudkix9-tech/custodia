@@ -37,7 +37,7 @@ export default function TrainingAdminDashboard() {
     <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#08090A]/50">
       <header className="px-8 py-6 border-b border-white/10 bg-[#0D0F11]/50 backdrop-blur-xl shrink-0 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#F4F5F6] font-display">Training Administration</h1>
+          <h1 className="text-2xl font-serif text-[#F4F5F6]">Training Administration</h1>
           <p className="text-sm text-[#9BA1A6] mt-1">Manage GDPR staff training modules, compliance records, and assignments.</p>
         </div>
         <button className="px-4 py-2 bg-ink-900 text-white text-[13.5px] font-medium rounded-xl hover:bg-ink-800 transition-colors flex items-center gap-2 shadow-panel-elevated">
@@ -79,7 +79,7 @@ export default function TrainingAdminDashboard() {
                       <Shield className="w-5 h-5" />
                     </div>
                   </div>
-                  <div className="text-3xl font-bold text-[#F4F5F6]">{completionRate}%</div>
+                  <div className="text-3xl font-serif text-[#F4F5F6]">{completionRate}%</div>
                   <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">Overall Completion Rate</div>
                 </div>
 
@@ -89,7 +89,7 @@ export default function TrainingAdminDashboard() {
                       <Users className="w-5 h-5" />
                     </div>
                   </div>
-                  <div className="text-3xl font-bold text-[#F4F5F6]">{passed}</div>
+                  <div className="text-3xl font-serif text-[#F4F5F6]">{passed}</div>
                   <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">Staff Certified</div>
                 </div>
 
@@ -99,7 +99,7 @@ export default function TrainingAdminDashboard() {
                       <BookOpen className="w-5 h-5" />
                     </div>
                   </div>
-                  <div className="text-3xl font-bold text-[#F4F5F6]">{modules?.filter(m => m.status === 'published').length || 0}</div>
+                  <div className="text-3xl font-serif text-[#F4F5F6]">{modules?.filter(m => m.status === 'published').length || 0}</div>
                   <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">Active Modules</div>
                 </div>
 
@@ -109,7 +109,7 @@ export default function TrainingAdminDashboard() {
                       <AlertTriangle className="w-5 h-5" />
                     </div>
                   </div>
-                  <div className="text-3xl font-bold text-[#F4F5F6]">{overdueCount}</div>
+                  <div className="text-3xl font-serif text-[#F4F5F6]">{overdueCount}</div>
                   <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">Overdue Assignments</div>
                 </div>
               </div>

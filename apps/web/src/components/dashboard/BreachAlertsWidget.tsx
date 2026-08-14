@@ -16,9 +16,9 @@ export function BreachAlertsWidget() {
   const count = alertsCount.count;
 
   return (
-    <div className="bg-red-500/100/10 border border-red-900/50 rounded-2xl p-5 shadow-panel-elevated mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between animate-in fade-in slide-in-from-top duration-300">
+    <div className="bg-red-500/10 border border-red-900/50 rounded-2xl p-5 shadow-panel-elevated mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between animate-in fade-in slide-in-from-top duration-300">
       <div className="flex items-center gap-3.5">
-        <div className="w-10 h-10 rounded-full bg-red-500/100/20 flex items-center justify-center text-red-400 shrink-0">
+        <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 shrink-0">
           <ShieldAlert className="w-5 h-5" />
         </div>
         <div>
