@@ -5,9 +5,30 @@ import { trpc } from '@/utils/trpc';
 import { Clock, MessagesSquare, Calendar, ExternalLink, LifeBuoy } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/Toast';
 
 export default function EnterpriseSupportPage() {
+  const toast = useToast();
   const { data: orgSettings, isLoading } = trpc.settings.getOrgSettings.useQuery();
+
+  // The QBR pre-read button had no handler. `export.generatePdf` already builds
+  // the full audit pack, which is what a quarterly review is read against.
+  const generatePdf = trpc.export.generatePdf.useMutation({
+    onSuccess: (result) => {
+      if (result.success && result.pdfData) {
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${result.pdfData}`;
+        link.download = result.filename;
+        link.click();
+        toast('Pre-read generated');
+      } else {
+        toast('Could not generate the pre-read', { tone: 'error' });
+      }
+    },
+    onError: (err) => toast('Could not generate the pre-read', { tone: 'error', description: err.message }),
+  });
+
+  const handleGeneratePreread = () => generatePdf.mutate({ type: 'full_audit' });
 
   if (isLoading) {
     return (
@@ -121,8 +142,12 @@ export default function EnterpriseSupportPage() {
             <div className="text-sm text-[#9BA1A6] mb-1">Next Scheduled QBR</div>
             <div className="font-medium text-[#F4F5F6]">{format(nextQbrDate, 'MMMM d, yyyy')}</div>
           </div>
-          <button className="w-full bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-            Generate Pre-read PDF
+          <button
+            onClick={handleGeneratePreread}
+            disabled={generatePdf.isPending}
+            className="w-full bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {generatePdf.isPending ? 'Generating…' : 'Generate Pre-read PDF'}
           </button>
           <p className="text-xs text-[#6E747A] mt-3 text-center">
             PDF includes your latest compliance data and customized recommendations.
@@ -134,9 +159,12 @@ export default function EnterpriseSupportPage() {
       <div className="bg-[#0D0F11] rounded-2xl border border-white/10 shadow-panel-elevated overflow-hidden">
         <div className="p-6 border-b border-white/10 flex justify-between items-center">
           <h2 className="text-lg font-medium text-[#F4F5F6]">Recent Tickets</h2>
-          <button className="text-sm bg-[#08090A] hover:bg-white/5 text-[#E6E8EA] px-3 py-1.5 rounded-lg border border-white/10 font-medium transition-colors">
+          <a
+            href="mailto:support@custodia.io?subject=Support%20request"
+            className="text-sm bg-[#08090A] hover:bg-white/5 text-[#E6E8EA] px-3 py-1.5 rounded-lg border border-white/10 font-medium transition-colors"
+          >
             New Ticket
-          </button>
+          </a>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">

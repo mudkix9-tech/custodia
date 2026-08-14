@@ -135,5 +135,10 @@
     }
   },
   "import_skipped": "{count} rows were not imported",
-  "import_line": "Line {line}"
+  "import_line": "Line {line}",
+  "empty": {
+    "title": "No processing activities yet",
+    "description": "Your Article 30 register lists every purpose you process personal data for. Add the first activity, or import a register you already keep.",
+    "action": "Add an activity"
+  }
 }

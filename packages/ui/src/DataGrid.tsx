@@ -32,6 +32,9 @@ export interface DataGridProps<TData, TValue> {
   enableInlineAdd?: boolean;
   isLoading?: boolean;
   emptyStateMessage?: string;
+  /** Rendered instead of `emptyStateMessage` when the list is empty, so a caller
+   *  can offer a way to create the first row rather than a bare grey sentence. */
+  emptyState?: React.ReactNode;
   globalFilter?: string;
   setGlobalFilter?: (value: string) => void;
   /** Drop the grid's own panel chrome when a caller has already drawn one
@@ -61,6 +64,7 @@ export function DataGrid<TData, TValue>({
   enableInlineAdd = false,
   isLoading = false,
   emptyStateMessage = "No data found.",
+  emptyState,
   bare = false,
   globalFilter,
   setGlobalFilter,
@@ -164,9 +168,13 @@ export function DataGrid<TData, TValue>({
                 </div>
               ))
             ) : (
+              emptyState ? (
+                <div>{emptyState}</div>
+              ) : (
               <div className="h-32 flex items-center justify-center text-center text-[#9BA1A6]">
                 {emptyStateMessage}
               </div>
+              )
             )}
           </div>
         ) : (
@@ -234,8 +242,8 @@ export function DataGrid<TData, TValue>({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={columns.length} className="h-32 text-center text-[#9BA1A6]">
-                      {emptyStateMessage}
+                    <td colSpan={columns.length} className={emptyState ? 'p-0' : 'h-32 text-center text-[#9BA1A6]'}>
+                      {emptyState ?? emptyStateMessage}
                     </td>
                   </tr>
                 )}

@@ -7,6 +7,7 @@ import { MapPin, Database, ShieldAlert } from 'lucide-react';
 import React from 'react';
 import { useSession } from 'next-auth/react';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
+import Link from 'next/link';
 
 const REGIONS = [
   { id: 'eu-west-1', name: 'Dublin (Ireland)', isDefault: true },
@@ -63,10 +64,10 @@ export default function DataResidencyPage() {
           <ShieldAlert className="w-6 h-6 text-set-gold shrink-0" />
           <div>
             <h3 className="font-medium text-set-fg">Enterprise Feature</h3>
-            <p className="text-sm text-set-gold mt-1">
+            <p className="text-sm text-set-fg-muted mt-1">
               Dedicated data residency is available on the Enterprise plan. Your data is currently stored securely in AWS Dublin (eu-west-1) in a multi-tenant environment.
             </p>
-            <button className="mt-4 px-4 py-2 rounded-lg text-sm font-semibold bg-set-gold text-[#0A0A0A] hover:bg-set-gold-hi">Upgrade to Enterprise</button>
+            <Link href="/settings/billing" className="mt-4 inline-block px-4 py-2 rounded-lg text-sm font-semibold bg-set-gold text-[#0A0A0A] hover:bg-set-gold-hi transition-colors">Upgrade to Enterprise</Link>
           </div>
         </div>
       ) : (

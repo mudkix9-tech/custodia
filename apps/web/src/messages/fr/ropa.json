@@ -138,5 +138,10 @@
     }
   },
   "import_skipped": "{count} lignes n'ont pas été importées",
-  "import_line": "Ligne {line}"
+  "import_line": "Ligne {line}",
+  "empty": {
+    "title": "Aucune activité de traitement pour l'instant",
+    "description": "Votre registre au titre de l'article 30 recense chaque finalité pour laquelle vous traitez des données personnelles. Ajoutez la première activité ou importez un registre existant.",
+    "action": "Ajouter une activité"
+  }
 }

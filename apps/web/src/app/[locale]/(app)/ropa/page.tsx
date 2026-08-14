@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl';
 import { toCsvRow } from '@/utils/csv';
 import { parseRopaCsv, type RowError } from '@/utils/ropaImport';
 import { useToast } from '@/components/ui/Toast';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function RopaListPage() {
   const t = useTranslations('ropa');
@@ -62,16 +63,12 @@ export default function RopaListPage() {
     if (!processingActivities || processingActivities.length === 0) return;
     
     const headers = ['Name', 'Purpose', 'Lawful Basis', 'Status', 'Risk Level', 'Description'];
+    // Same quoting helper the importer reads back, so a round trip is lossless.
     const csvContent = [
-      headers.join(','),
-      ...processingActivities.map((a: any) => [
-        `"${a.name.replace(/"/g, '""')}"`,
-        `"${a.purpose.replace(/"/g, '""')}"`,
-        `"${a.lawfulBasis || ''}"`,
-        `"${a.status}"`,
-        `"${a.riskLevel || 'low'}"`,
-        `"${(a.description || '').replace(/"/g, '""')}"`
-      ].join(','))
+      toCsvRow(headers),
+      ...processingActivities.map((a: any) =>
+        toCsvRow([a.name, a.purpose, a.lawfulBasis || '', a.status, a.riskLevel || 'low', a.description || ''])
+      )
     ].join('\r\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -438,7 +435,15 @@ export default function RopaListPage() {
             globalFilter={globalFilter}
             setGlobalFilter={setGlobalFilter}
             onRowClick={(row: any) => router.push(`/ropa/${row.id}`)}
-            emptyStateMessage={t('empty_state')}
+            emptyState={
+              <EmptyState
+                icon={FileText}
+                title={t('empty.title')}
+                description={t('empty.description')}
+                action={{ label: t('empty.action'), onClick: () => router.push('/ropa/new') }}
+                secondaryAction={{ label: t('import_csv'), onClick: () => fileInputRef.current?.click() }}
+              />
+            }
           />
 
           {hasNextPage && (

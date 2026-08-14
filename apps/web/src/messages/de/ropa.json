@@ -139,5 +139,10 @@
     }
   },
   "import_skipped": "{count} Zeilen wurden nicht importiert",
-  "import_line": "Zeile {line}"
+  "import_line": "Zeile {line}",
+  "empty": {
+    "title": "Noch keine Verarbeitungstätigkeiten",
+    "description": "Ihr Verzeichnis nach Artikel 30 führt jeden Zweck auf, zu dem Sie personenbezogene Daten verarbeiten. Legen Sie die erste Tätigkeit an oder importieren Sie ein vorhandenes Verzeichnis.",
+    "action": "Tätigkeit hinzufügen"
+  }
 }

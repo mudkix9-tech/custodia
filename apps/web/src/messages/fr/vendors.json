@@ -45,5 +45,9 @@
     "no_results": "Aucun fournisseur mondial trouvé correspondant à '{search}'.",
     "hq": "Siège social : {country}",
     "add_to_register": "Ajouter au registre"
+  },
+  "empty": {
+    "title": "Aucun sous-traitant enregistré",
+    "description": "Chaque sous-traitant qui manipule des données personnelles pour votre compte requiert un contrat au titre de l'article 28. Analysez votre site ou ajoutez-en un manuellement."
   }
 }

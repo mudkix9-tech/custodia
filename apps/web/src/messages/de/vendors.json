@@ -45,5 +45,9 @@
     "no_results": "Keine globalen Dienstleister gefunden, die '{search}' entsprechen.",
     "hq": "Hauptsitz: {country}",
     "add_to_register": "Zum Register hinzufügen"
+  },
+  "empty": {
+    "title": "Noch keine Dienstleister erfasst",
+    "description": "Für jeden Auftragsverarbeiter, der in Ihrem Auftrag personenbezogene Daten verarbeitet, ist ein Vertrag nach Artikel 28 erforderlich. Scannen Sie Ihre Website oder fügen Sie einen manuell hinzu."
   }
 }

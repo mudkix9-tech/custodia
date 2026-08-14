@@ -12,6 +12,7 @@ import { AddCustomVendorModal } from '@/components/vendors/AddCustomVendorModal'
 import { useTranslations } from 'next-intl';
 import { toCsvRow } from '@/utils/csv';
 import { useToast } from '@/components/ui/Toast';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function VendorsPage() {
   const t = useTranslations('vendors');
@@ -230,7 +231,15 @@ export default function VendorsPage() {
               data={vendors}
               isLoading={isLoading}
               globalFilter={searchQuery}
-              emptyStateMessage={t('empty_state')}
+              emptyState={
+                <EmptyState
+                  icon={Building2}
+                  title={t('empty.title')}
+                  description={t('empty.description')}
+                  action={{ label: t('discover_vendors'), onClick: () => setIsDiscoverOpen(true) }}
+                  secondaryAction={{ label: t('add_custom_vendor'), onClick: () => setIsAddCustomOpen(true) }}
+                />
+              }
             />
             {hasNextPage && (
               <div className="mt-4 flex justify-center">

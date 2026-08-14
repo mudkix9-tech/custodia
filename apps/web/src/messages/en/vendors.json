@@ -42,5 +42,9 @@
     "no_results": "No global vendors found matching '{search}'.",
     "hq": "HQ: {country}",
     "add_to_register": "Add to Register"
+  },
+  "empty": {
+    "title": "No vendors tracked yet",
+    "description": "Every processor that touches personal data on your behalf needs an Article 28 contract. Scan your site to find them automatically, or add one by hand."
   }
 }
