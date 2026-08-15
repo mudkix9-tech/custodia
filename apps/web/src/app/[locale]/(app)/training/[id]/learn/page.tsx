@@ -57,8 +57,8 @@ export default function LearnPage({ params }: { params: Promise<{ id: string }> 
     );
   }
 
-  const module = completion.module;
-  const slides = (module?.content ?? []) as Slide[];
+  const trainingModule = completion.module;
+  const slides = (trainingModule?.content ?? []) as Slide[];
   const status: string = completion.status ?? 'not_started';
 
   return (
@@ -78,7 +78,7 @@ export default function LearnPage({ params }: { params: Promise<{ id: string }> 
                 <GraduationCap className="w-3.5 h-3.5" />
                 {t('learn.eyebrow')}
               </div>
-              <h1 className="text-lg font-bold text-[#F4F5F6] leading-tight truncate">{module?.title}</h1>
+              <h1 className="text-lg font-bold text-[#F4F5F6] leading-tight truncate">{trainingModule?.title}</h1>
             </div>
           </div>
 
@@ -115,8 +115,8 @@ export default function LearnPage({ params }: { params: Promise<{ id: string }> 
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-        {module?.description && (
-          <p className="text-[15px] leading-relaxed text-[#9BA1A6]">{module.description}</p>
+        {trainingModule?.description && (
+          <p className="text-[15px] leading-relaxed text-[#9BA1A6]">{trainingModule.description}</p>
         )}
 
         <div className="bg-[#0D0F11] rounded-2xl border border-white/10 p-8 shadow-panel-elevated">

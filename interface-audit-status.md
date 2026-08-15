@@ -428,11 +428,11 @@ PY
 
 ### Infrastructure
 
-- **`npx eslint` still cannot run.** `apps/web/eslint.config.mjs` throws
-  `TypeError: tailwind.configs.flat/recommended is not iterable` on ESLint 9.39.4. Most of
-  what this audit found — dead classes, undefined tokens, invalid utilities, the unused
-  `setExpandedRow` above — is what a working linter reports for free. Unblocking it is the
-  durable fix for the whole category, and it is the single highest-leverage item on this page.
+- **`npx eslint` is now unblocked and working.** Fixed ESLint 9 flat config in
+  `apps/web/eslint.config.mjs` by switching to `tailwind.configs.recommended` (which exports
+  a config object rather than a `flat/recommended` array in `eslint-plugin-tailwindcss` v4)
+  and configuring `cssConfigPath: "src/app/globals.css"` so the plugin resolves the Tailwind
+  entrypoint. Added `--if-present` to root `package.json` `lint` script.
 - **Two of `apps/api`'s three test styles do not execute** (vitest is installed in `apps/web`
   only; `billing.test.ts` wants jest, which is not installed anywhere). They typecheck, which
   is what makes it easy to believe the suite covers more than it does. Documented in

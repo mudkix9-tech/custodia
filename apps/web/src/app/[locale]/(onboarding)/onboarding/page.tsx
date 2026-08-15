@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/utils/trpc';
 import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
@@ -54,6 +54,11 @@ export default function OnboardingPage() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [policyData, setPolicyData] = useState<any>(null);
 
+  const loadTemplates = useCallback(async (ind: string) => {
+    const res = await utils.onboarding.getTemplates.fetch({ industry: ind });
+    setTemplates(res);
+  }, [utils]);
+
   useEffect(() => {
     if (!statusLoading) {
       if (status?.onboardingCompleted) {
@@ -79,12 +84,7 @@ export default function OnboardingPage() {
 
       setLoading(false);
     }
-  }, [status, statusLoading, router]);
-
-  const loadTemplates = async (ind: string) => {
-    const res = await utils.onboarding.getTemplates.fetch({ industry: ind });
-    setTemplates(res);
-  };
+  }, [status, statusLoading, router, loadTemplates, industry]);
 
   const handleStep1 = async (data: any) => {
     setIndustry(data.industry);

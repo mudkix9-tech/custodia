@@ -41,7 +41,7 @@ export function RegulatoryUpdateCard({ update }: { update: any }) {
               
               // Generate deep link based on entityType
               let entityLink = '#';
-              let entityLabel = match.entityName || 'Entity';
+              const entityLabel = match.entityName || 'Entity';
               if (match.entityType === 'processing_activity') {
                 entityLink = '/ropa';
               } else if (match.entityType === 'vendor') {

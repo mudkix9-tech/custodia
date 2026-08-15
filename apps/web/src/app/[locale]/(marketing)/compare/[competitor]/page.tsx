@@ -67,7 +67,7 @@ export default async function CompetitorComparison({ params }: { params: Promise
             <thead>
               <tr>
                 <th className="w-1/3 py-4 px-6 border-b border-white/10 text-sm font-semibold text-text-heading bg-surface-panel-top">Feature / Module</th>
-                <th className="w-1/3 py-4 px-6 border-b border-accent-gold/20 text-sm font-semibold text-center text-accent-gold bg-accent-gold/[0.08] border-x border-accent-gold/30">Custodia (For Agencies)</th>
+                <th className="w-1/3 py-4 px-6 border-b text-sm font-semibold text-center text-accent-gold bg-accent-gold/[0.08] border-x border-accent-gold/20">Custodia (For Agencies)</th>
                 <th className="w-1/3 py-4 px-6 border-b border-white/10 text-sm font-semibold text-center text-text-heading bg-surface-panel-top">{competitorName}</th>
               </tr>
             </thead>

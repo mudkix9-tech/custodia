@@ -29,9 +29,9 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
     onSuccess: () => toast('Scan queued', { description: 'Check back in a few minutes.' })
   });
 
-  if (isLoading || !data) return <div className="text-[#6E747A]">Loading CMP Workspace...</div>;
-
-  const { domain, cookies, stats } = data;
+  const domain = data?.domain;
+  const cookies = data?.cookies;
+  const stats = data?.stats;
 
   // Set AI guidance context when consent data is available
   useEffect(() => {
@@ -50,7 +50,9 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
         }
       });
     }
-  }, [domainId, cookies?.length]);
+  }, [domainId, domain, cookies, setContext]);
+
+  if (isLoading || !data || !domain) return <div className="text-[#6E747A]">Loading CMP Workspace...</div>;
 
   const scriptTag = `<script src="https://api.custodia.io/api/cmp/${domain.scriptId}/banner.js" async></script>`;
 

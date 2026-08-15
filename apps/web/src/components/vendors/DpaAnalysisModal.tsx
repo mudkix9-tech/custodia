@@ -81,7 +81,7 @@ export function DpaAnalysisModal({
               <div className="text-3xl font-black">{analysisData.overall_score || 0} / 100</div>
             </div>
 
-            <div className="text-center border-r border-bone-50/10 py-2 col-span-3 text-left px-4 flex flex-col justify-center">
+            <div className="border-r border-bone-50/10 py-2 col-span-3 text-left px-4 flex flex-col justify-center">
               <span className="text-[10px] font-bold text-bone-50/50 uppercase tracking-widest mb-1">AI Recommendation</span>
               <p className="text-xs text-bone-50/80 leading-relaxed">
                 {analysisData.overall_score >= 80 
@@ -165,7 +165,7 @@ export function DpaAnalysisModal({
           {/* Problematic Language flagged */}
           {problematic.length > 0 && (
             <div className="space-y-3">
-              <h4 className="font-bold text-[#F4F5F6] text-sm flex items-center gap-1.5 text-rose-300">
+              <h4 className="font-bold text-sm flex items-center gap-1.5 text-rose-300">
                 <ShieldAlert className="w-4 h-4 shrink-0" />
                 Problematic Language Identified
               </h4>

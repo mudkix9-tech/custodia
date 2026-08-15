@@ -6,6 +6,17 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { POSTS } from '../posts';
 
+const componentCache = new Map<string, React.LazyExoticComponent<React.ComponentType>>();
+
+function getPostComponent(slug: string, loader: () => Promise<{ default: React.ComponentType }>) {
+  let Comp = componentCache.get(slug);
+  if (!Comp) {
+    Comp = React.lazy(loader);
+    componentCache.set(slug, Comp);
+  }
+  return Comp;
+}
+
 export default function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
   const post = POSTS[resolvedParams.slug];
@@ -14,7 +25,7 @@ export default function BlogPost({ params }: { params: Promise<{ slug: string }>
     notFound();
   }
 
-  const PostComponent = React.lazy(post.component);
+  const PostComponent = getPostComponent(resolvedParams.slug, post.component);
 
   return (
     <div className="relative pt-24 pb-32 overflow-hidden min-h-screen">
@@ -40,7 +51,7 @@ export default function BlogPost({ params }: { params: Promise<{ slug: string }>
 
           <div className="prose prose-invert prose-p:text-text-primary prose-headings:text-text-heading prose-headings:font-normal prose-headings:tracking-tight max-w-none mb-16">
              <React.Suspense fallback={<div className="animate-pulse h-96 bg-white/5 rounded-lg"></div>}>
-               <PostComponent />
+               {React.createElement(PostComponent)}
              </React.Suspense>
           </div>
 

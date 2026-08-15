@@ -1,7 +1,7 @@
 "use client";
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Save, Building2, MapPin, UserCheck, Shield, Palette, Upload } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -58,19 +58,20 @@ export default function OrganizationSettingsPage() {
     }
   }, [org]);
 
-  const debouncedSave = useCallback(
-    debounce(async (dataToSave) => {
-      setSaveStatus('saving');
-      try {
-        await updateOrg.mutateAsync(dataToSave);
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus('idle'), 2000);
-      } catch (e) {
-        console.error("Failed to save org settings", e);
-        setSaveStatus('idle');
-      }
-    }, 500),
-    []
+  const debouncedSave = useMemo(
+    () =>
+      debounce(async (dataToSave) => {
+        setSaveStatus('saving');
+        try {
+          await updateOrg.mutateAsync(dataToSave);
+          setSaveStatus('saved');
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        } catch (e) {
+          console.error("Failed to save org settings", e);
+          setSaveStatus('idle');
+        }
+      }, 1000),
+    [updateOrg]
   );
 
   const handleChange = (field: string, value: any) => {
