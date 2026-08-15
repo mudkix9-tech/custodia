@@ -346,24 +346,104 @@ closely enough to extract strings from.
 
 ## Left
 
-Nothing from the audit. Two things were scoped out explicitly rather than missed, both noted
-above in place: **audit scheduling and external-audit findings tracking** (a module, and a
-product decision about whether Custodia tracks external audits), and **a real OAuth flow for
-integrations** — `/api/integrations/[provider]/authorize` does not exist, so the Connect
-button on both integrations pages links to a 404. That predates this work.
+**Nothing from the audit's 40 findings.** Everything below was found while working through
+them and is out of scope for a UI repair — recorded here because the next person should not
+have to rediscover it. Each was verified against the code on 2026-08-15, not inferred.
 
-One tidy-up left deliberately undone: `dashboard/integrations` duplicates
-`settings/integrations` and nothing links to it. Both were fixed rather than one deleted —
-removing a route is a product call, not a repair.
+### Procedures with no interface
+
+The API implements these and nothing in `apps/web` calls them, so the feature exists only to
+someone writing requests by hand.
+
+- **The whole training quiz.** `submitQuiz` and `trackProgress` have zero callers. Passing the
+  quiz is the only thing that sets a completion to `passed`, so **a module cannot be completed
+  through the UI at all** — which makes the completion rate and "staff certified" figures on
+  the training admin dashboard structurally zero unless rows are seeded directly. The learn
+  page says as much rather than implying otherwise, but the honest fix is the quiz.
+- **Module authoring.** `createModule`, `updateModule` and `publishModule` likewise have no
+  callers; the admin page's "Create Module" button is one of the dead controls below.
+- **SSO connection setup.** No API exists. The page says so plainly and routes to a human,
+  which was the right repair, but it is a stopgap for a missing feature.
+- **The integrations OAuth flow.** `/api/integrations/[provider]/authorize` does not exist as
+  a route anywhere in either workspace, so the Connect button on both integrations pages links
+  to a 404.
+
+### Surfaces that are still placeholder
+
+- **`group/[orgId]`** renders "[Normal Dashboard Components scoped to {orgId} will render
+  here]" — literally, and now in three languages. Scoping the dashboard to a child org needs
+  the dashboard queries to take an org parameter.
+- **`clients/[id]` → Vendors tab** displays the concept of a resolved vendor graph rather than
+  one; "Quick Stats" omits the vendor count for the same reason.
+- **`support`** is mock throughout: a named account manager, three invented tickets, and SLA
+  figures that are constants rather than measurements. The page reads as a live status board.
+- **`settings/organization`** logo upload is not wired to storage.
+- **`group/vendors` → View Profile** sets a `targetOrgId` cookie and navigates, hoping the
+  server honours it; there is no context switcher behind it.
+
+### Dead controls still in the tree
+
+The earlier passes fixed 17 of these; these nine were not reached. All render as enabled and
+do nothing on click.
+
+| File | Control |
+|---|---|
+| `training/admin/page.tsx:45` | Create Module |
+| `training/admin/page.tsx:193` | View Details |
+| `clients/[id]/page.tsx:189` | Upload Document |
+| `group/page.tsx:44` | Export Consolidated Report |
+| `settings/integrations/page.tsx:127` | Request |
+| `updates/page.tsx:43` | Filter |
+| `(marketing)/legal/dpa/page.tsx:27` | Download PDF |
+| `components/breaches/BreachNotificationDraft.tsx:64` | Edit Draft |
+| `components/policies/PolicyEditorClient.tsx:133` | version-history entries |
+
+`components/developers/WebhookDeliveryLog.tsx:50` is a tenth of a different kind:
+`setExpandedRow` is declared and never called, so the row carries `cursor-pointer` and a
+View/Hide label for an expansion that cannot happen. The detail `<tr>` beneath it is
+unreachable code.
+
+Find them again with:
+
+```bash
+python - <<'PY'
+import io, re, os
+for root, _, files in os.walk('src'):
+    for f in (x for x in files if x.endswith('.tsx')):
+        p = os.path.join(root, f); s = io.open(p, encoding='utf-8').read()
+        for m in re.finditer(r'<button\b((?:[^>]|\n)*?)>', s):
+            if any(k in m.group(1) for k in ('onClick', 'type="submit"', 'form=')): continue
+            print('%s:%d' % (p, s[:m.start()].count('\n') + 1))
+PY
+```
+
+### Scoped out of a finding, deliberately
+
+- **Audit scheduling and external-audit findings tracking.** The readiness finding's stated
+  fix was the control-to-evidence linkage, which is built. Tracking *external* audits — when
+  one is due, what it found, whether the findings were remediated — is a second module and
+  needs a product decision about whether Custodia is the system of record for that at all.
+- **`dashboard/integrations` duplicates `settings/integrations`** and nothing links to it.
+  Both were repaired rather than one deleted; removing a route is a product call.
+
+### Infrastructure
+
+- **`npx eslint` still cannot run.** `apps/web/eslint.config.mjs` throws
+  `TypeError: tailwind.configs.flat/recommended is not iterable` on ESLint 9.39.4. Most of
+  what this audit found — dead classes, undefined tokens, invalid utilities, the unused
+  `setExpandedRow` above — is what a working linter reports for free. Unblocking it is the
+  durable fix for the whole category, and it is the single highest-leverage item on this page.
+- **Two of `apps/api`'s three test styles do not execute** (vitest is installed in `apps/web`
+  only; `billing.test.ts` wants jest, which is not installed anywhere). They typecheck, which
+  is what makes it easy to believe the suite covers more than it does. Documented in
+  `CLAUDE.md`; unchanged by this work.
 
 ---
 
 ## Notes for whoever picks this up
 
-- **`npx eslint` still cannot run** (`apps/web/eslint.config.mjs` throws on ESLint 9), so `tsc`
-  plus the repo's guard scripts remain the only static gate. Most of what this audit found —
-  dead classes, undefined tokens, invalid utilities — is exactly what a working linter would
-  have caught. Unblocking it is the durable fix for a whole class of these.
+- **`tsc` plus the repo's guard scripts are the only static gate**, because eslint cannot run
+  at all — see *Left → Infrastructure* for why that is the highest-leverage thing on this page.
 - **Do not sweep Tailwind classes with a plain substring replace.** `border-sage-500` is a
   prefix of `border-sage-500/20`; that mistake produced four dead classes in `5fd874a` and
   caught me three more times in `0b81847` (`border-clay-200/50` → `border-red-500/30/50`).
