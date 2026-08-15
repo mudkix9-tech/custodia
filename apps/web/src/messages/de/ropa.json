@@ -146,7 +146,9 @@
       "audit_logs": "System-Audit-Protokollierung",
       "additional_notes": "Zusätzliche Sicherheitsdetails",
       "additional_notes_ph": "Beschreiben Sie weitere spezifische technische oder organisatorische Maßnahmen..."
-    }
+    },
+    "not_found": "Tätigkeit nicht gefunden",
+    "not_found_description": "Die angeforderte Verarbeitungstätigkeit konnte nicht geladen werden."
   },
   "import_skipped": "{count} Zeilen wurden nicht importiert",
   "import_line": "Zeile {line}",

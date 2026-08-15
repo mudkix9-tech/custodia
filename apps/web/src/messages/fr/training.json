@@ -14,5 +14,72 @@
   "download_certificate": "Télécharger le certificat",
   "score": "Score : {score}%",
   "valid_until": "Valable jusqu'au {date}",
-  "empty_state": "Vous n'avez aucun module de formation attribué."
+  "empty_state": "Vous n'avez aucun module de formation attribué.",
+  "learn": {
+    "not_found": "Ce module de formation ne vous est pas attribué.",
+    "back": "Retour aux formations",
+    "eyebrow": "Module de formation",
+    "completed": "Terminé",
+    "failed": "Non réussi",
+    "in_progress": "En cours",
+    "start": "Commencer le module",
+    "starting": "Démarrage...",
+    "reading_material": "Support de lecture",
+    "no_content": "Ce module ne comporte pas encore de contenu.",
+    "minutes": "{count} min",
+    "quiz_note": "C'est la réussite au quiz du module qui valide l'achèvement. Votre score apparaît sur la page des formations une fois le quiz passé."
+  },
+  "status": {
+    "not_started": "Non commencé",
+    "in_progress": "En cours",
+    "passed": "Réussi",
+    "failed": "Échoué"
+  },
+  "admin": {
+    "title": "Administration des formations",
+    "subtitle": "Gérez les modules de formation RGPD, les preuves de conformité et les affectations.",
+    "create_module": "Créer un module",
+    "tabs": {
+      "overview": "Vue d'ensemble",
+      "modules": "Modules ({count})",
+      "completions": "Dossiers des collaborateurs"
+    },
+    "metrics": {
+      "completion_rate": "Taux d'achèvement global",
+      "certified": "Collaborateurs certifiés",
+      "active_modules": "Modules actifs",
+      "overdue": "Affectations en retard"
+    },
+    "recent_activity": "Activité récente",
+    "empty_activity": "Aucune activité de formation enregistrée.",
+    "score": "Score de {score} %",
+    "modules_table": {
+      "name": "Nom du module",
+      "type": "Type",
+      "target_role": "Public visé",
+      "status": "Statut",
+      "actions": "Actions",
+      "global": "Custodia global",
+      "custom": "Personnalisé",
+      "view": "Voir le détail"
+    },
+    "module_status": {
+      "published": "Publié",
+      "draft": "Brouillon",
+      "archived": "Archivé"
+    },
+    "roles": {
+      "all": "Tous les collaborateurs",
+      "admin": "Administrateurs",
+      "dpo": "DPO",
+      "manager": "Encadrants"
+    },
+    "records_table": {
+      "employee": "Collaborateur",
+      "module": "Module",
+      "status": "Statut",
+      "score": "Score",
+      "date": "Date"
+    }
+  }
 }

@@ -14,5 +14,72 @@
   "download_certificate": "Zertifikat herunterladen",
   "score": "Ergebnis: {score}%",
   "valid_until": "Gültig bis {date}",
-  "empty_state": "Ihnen sind keine Schulungsmodule zugewiesen."
+  "empty_state": "Ihnen sind keine Schulungsmodule zugewiesen.",
+  "learn": {
+    "not_found": "Dieses Schulungsmodul ist Ihnen nicht zugewiesen.",
+    "back": "Zurück zu den Schulungen",
+    "eyebrow": "Schulungsmodul",
+    "completed": "Abgeschlossen",
+    "failed": "Nicht bestanden",
+    "in_progress": "In Bearbeitung",
+    "start": "Modul beginnen",
+    "starting": "Wird gestartet...",
+    "reading_material": "Lernmaterial",
+    "no_content": "Für dieses Modul sind noch keine Lerninhalte hinterlegt.",
+    "minutes": "{count} Min.",
+    "quiz_note": "Der Abschluss wird über das Bestehen des Modulquiz erfasst. Ihr Ergebnis erscheint nach der Teilnahme auf der Schulungsseite."
+  },
+  "status": {
+    "not_started": "Nicht begonnen",
+    "in_progress": "In Bearbeitung",
+    "passed": "Bestanden",
+    "failed": "Nicht bestanden"
+  },
+  "admin": {
+    "title": "Schulungsverwaltung",
+    "subtitle": "Verwalten Sie DSGVO-Schulungsmodule, Nachweise und Zuweisungen für Mitarbeitende.",
+    "create_module": "Modul erstellen",
+    "tabs": {
+      "overview": "Übersicht",
+      "modules": "Module ({count})",
+      "completions": "Mitarbeiternachweise"
+    },
+    "metrics": {
+      "completion_rate": "Gesamte Abschlussquote",
+      "certified": "Zertifizierte Mitarbeitende",
+      "active_modules": "Aktive Module",
+      "overdue": "Überfällige Zuweisungen"
+    },
+    "recent_activity": "Letzte Aktivitäten",
+    "empty_activity": "Noch keine Schulungsaktivität erfasst.",
+    "score": "{score} % Ergebnis",
+    "modules_table": {
+      "name": "Modulname",
+      "type": "Art",
+      "target_role": "Zielgruppe",
+      "status": "Status",
+      "actions": "Aktionen",
+      "global": "Custodia global",
+      "custom": "Individuell",
+      "view": "Details ansehen"
+    },
+    "module_status": {
+      "published": "Veröffentlicht",
+      "draft": "Entwurf",
+      "archived": "Archiviert"
+    },
+    "roles": {
+      "all": "Alle Mitarbeitenden",
+      "admin": "Administratoren",
+      "dpo": "Datenschutzbeauftragte",
+      "manager": "Führungskräfte"
+    },
+    "records_table": {
+      "employee": "Mitarbeitende Person",
+      "module": "Modul",
+      "status": "Status",
+      "score": "Ergebnis",
+      "date": "Datum"
+    }
+  }
 }

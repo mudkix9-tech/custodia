@@ -11,5 +11,72 @@
   "download_certificate": "Download Certificate",
   "score": "Score: {score}%",
   "valid_until": "Valid until {date}",
-  "empty_state": "You have no assigned training modules."
+  "empty_state": "You have no assigned training modules.",
+  "learn": {
+    "not_found": "This training module is not assigned to you.",
+    "back": "Back to training",
+    "eyebrow": "Training Module",
+    "completed": "Completed",
+    "failed": "Not passed",
+    "in_progress": "In progress",
+    "start": "Start module",
+    "starting": "Starting...",
+    "reading_material": "Reading Material",
+    "no_content": "This module has no lesson content yet.",
+    "minutes": "{count} min",
+    "quiz_note": "Passing the module quiz is what records completion. Your score is shown on the training page once you have taken it."
+  },
+  "status": {
+    "not_started": "Not started",
+    "in_progress": "In progress",
+    "passed": "Passed",
+    "failed": "Failed"
+  },
+  "admin": {
+    "title": "Training Administration",
+    "subtitle": "Manage GDPR staff training modules, compliance records, and assignments.",
+    "create_module": "Create Module",
+    "tabs": {
+      "overview": "Overview",
+      "modules": "Modules ({count})",
+      "completions": "Employee Records"
+    },
+    "metrics": {
+      "completion_rate": "Overall Completion Rate",
+      "certified": "Staff Certified",
+      "active_modules": "Active Modules",
+      "overdue": "Overdue Assignments"
+    },
+    "recent_activity": "Recent Activity",
+    "empty_activity": "No training activity recorded yet.",
+    "score": "{score}% score",
+    "modules_table": {
+      "name": "Module Name",
+      "type": "Type",
+      "target_role": "Target Role",
+      "status": "Status",
+      "actions": "Actions",
+      "global": "Custodia Global",
+      "custom": "Custom",
+      "view": "View Details"
+    },
+    "module_status": {
+      "published": "Published",
+      "draft": "Draft",
+      "archived": "Archived"
+    },
+    "roles": {
+      "all": "All staff",
+      "admin": "Administrators",
+      "dpo": "DPO",
+      "manager": "Managers"
+    },
+    "records_table": {
+      "employee": "Employee",
+      "module": "Module",
+      "status": "Status",
+      "score": "Score",
+      "date": "Date"
+    }
+  }
 }

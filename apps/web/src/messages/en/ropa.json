@@ -142,7 +142,9 @@
       "audit_logs": "System Audit Logging",
       "additional_notes": "Additional Security Details",
       "additional_notes_ph": "Describe any other specific technical or organizational measures..."
-    }
+    },
+    "not_found": "Activity not found",
+    "not_found_description": "The requested processing activity could not be loaded."
   },
   "import_skipped": "{count} rows were not imported",
   "import_line": "Line {line}",

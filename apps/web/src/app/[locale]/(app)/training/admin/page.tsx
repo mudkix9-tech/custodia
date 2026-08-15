@@ -2,11 +2,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Shield, Users, BookOpen, Clock, AlertTriangle, Plus } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TrainingAdminDashboard() {
+  const t = useTranslations('training');
   const { data: modulesResp, isLoading: loadingModules } = trpc.training.listModules.useQuery({ limit: 100 });
   const modules = modulesResp?.data || [];
   const { data: completionsResp, isLoading: loadingCompletions } = trpc.training.orgOverview.useQuery({ limit: 100 } as any);
@@ -37,12 +39,12 @@ export default function TrainingAdminDashboard() {
     <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#08090A]/50">
       <header className="px-8 py-6 border-b border-white/10 bg-[#0D0F11]/50 backdrop-blur-xl shrink-0 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-serif text-[#F4F5F6]">Training Administration</h1>
-          <p className="text-sm text-[#9BA1A6] mt-1">Manage GDPR staff training modules, compliance records, and assignments.</p>
+          <h1 className="text-2xl font-serif text-[#F4F5F6]">{t('admin.title')}</h1>
+          <p className="text-sm text-[#9BA1A6] mt-1">{t('admin.subtitle')}</p>
         </div>
         <button className="px-4 py-2 bg-ink-900 text-white text-[13.5px] font-medium rounded-xl hover:bg-ink-800 transition-colors flex items-center gap-2 shadow-panel-elevated">
           <Plus className="w-4 h-4" />
-          Create Module
+          {t('admin.create_module')}
         </button>
       </header>
 
@@ -51,19 +53,19 @@ export default function TrainingAdminDashboard() {
           onClick={() => setActiveTab('overview')}
           className={`text-[13.5px] font-medium transition-colors ${activeTab === 'overview' ? 'text-[#F4F5F6] border-b-2 border-ink-900 pb-4 -mb-[17px]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
         >
-          Overview
+          {t('admin.tabs.overview')}
         </button>
         <button 
           onClick={() => setActiveTab('modules')}
           className={`text-[13.5px] font-medium transition-colors ${activeTab === 'modules' ? 'text-[#F4F5F6] border-b-2 border-ink-900 pb-4 -mb-[17px]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
         >
-          Modules ({modules?.length || 0})
+          {t('admin.tabs.modules', { count: modules?.length || 0 })}
         </button>
         <button 
           onClick={() => setActiveTab('completions')}
           className={`text-[13.5px] font-medium transition-colors ${activeTab === 'completions' ? 'text-[#F4F5F6] border-b-2 border-ink-900 pb-4 -mb-[17px]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
         >
-          Employee Records
+          {t('admin.tabs.completions')}
         </button>
       </div>
 
@@ -80,7 +82,7 @@ export default function TrainingAdminDashboard() {
                     </div>
                   </div>
                   <div className="text-3xl font-serif text-[#F4F5F6]">{completionRate}%</div>
-                  <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">Overall Completion Rate</div>
+                  <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">{t('admin.metrics.completion_rate')}</div>
                 </div>
 
                 <div className="bg-[#0D0F11] rounded-2xl p-6 border border-white/10 shadow-panel-elevated">
@@ -90,7 +92,7 @@ export default function TrainingAdminDashboard() {
                     </div>
                   </div>
                   <div className="text-3xl font-serif text-[#F4F5F6]">{passed}</div>
-                  <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">Staff Certified</div>
+                  <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">{t('admin.metrics.certified')}</div>
                 </div>
 
                 <div className="bg-[#0D0F11] rounded-2xl p-6 border border-white/10 shadow-panel-elevated">
@@ -100,7 +102,7 @@ export default function TrainingAdminDashboard() {
                     </div>
                   </div>
                   <div className="text-3xl font-serif text-[#F4F5F6]">{modules?.filter(m => m.status === 'published').length || 0}</div>
-                  <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">Active Modules</div>
+                  <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">{t('admin.metrics.active_modules')}</div>
                 </div>
 
                 <div className="bg-[#0D0F11] rounded-2xl p-6 border border-white/10 shadow-panel-elevated">
@@ -110,13 +112,13 @@ export default function TrainingAdminDashboard() {
                     </div>
                   </div>
                   <div className="text-3xl font-serif text-[#F4F5F6]">{overdueCount}</div>
-                  <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">Overdue Assignments</div>
+                  <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">{t('admin.metrics.overdue')}</div>
                 </div>
               </div>
 
               <div className="bg-[#0D0F11] rounded-2xl border border-white/10 shadow-panel-elevated overflow-hidden">
                 <div className="px-6 py-4 border-b border-white/10">
-                  <h3 className="text-[14px] font-semibold text-[#F4F5F6]">Recent Activity</h3>
+                  <h3 className="text-[14px] font-semibold text-[#F4F5F6]">{t('admin.recent_activity')}</h3>
                 </div>
                 <div className="divide-y divide-ink-900/10">
                   {((completions as any)?.data || [])?.slice(0, 5).map((c: any) => (
@@ -137,16 +139,16 @@ export default function TrainingAdminDashboard() {
                           c.status === 'failed' ? 'bg-red-500/10 text-red-400' :
                           'bg-white/10 text-[#E6E8EA]'
                         }`}>
-                          {(c.status || '').replace('_', ' ')}
+                          {t(`status.${c.status || 'not_started'}`)}
                         </span>
                         {c.status === 'passed' && (
-                          <div className="text-[12px] font-medium text-[#F4F5F6]">{c.quizScore}% Score</div>
+                          <div className="text-[12px] font-medium text-[#F4F5F6]">{t('admin.score', { score: c.quizScore })}</div>
                         )}
                       </div>
                     </div>
                   ))}
                   {((completions as any)?.data || [])?.length === 0 && (
-                    <div className="p-8 text-center text-[13.5px] text-[#6E747A]">No training activity recorded yet.</div>
+                    <div className="p-8 text-center text-[13.5px] text-[#6E747A]">{t('admin.empty_activity')}</div>
                   )}
                 </div>
               </div>
@@ -158,11 +160,11 @@ export default function TrainingAdminDashboard() {
               <table className="w-full text-left text-[13.5px]">
                 <thead className="bg-[#08090A]/50 text-[#9BA1A6] border-b border-white/10">
                   <tr>
-                    <th className="py-3 px-6 font-medium">Module Name</th>
-                    <th className="py-3 px-6 font-medium">Type</th>
-                    <th className="py-3 px-6 font-medium">Target Role</th>
-                    <th className="py-3 px-6 font-medium">Status</th>
-                    <th className="py-3 px-6 font-medium text-right">Actions</th>
+                    <th className="py-3 px-6 font-medium">{t('admin.modules_table.name')}</th>
+                    <th className="py-3 px-6 font-medium">{t('admin.modules_table.type')}</th>
+                    <th className="py-3 px-6 font-medium">{t('admin.modules_table.target_role')}</th>
+                    <th className="py-3 px-6 font-medium">{t('admin.modules_table.status')}</th>
+                    <th className="py-3 px-6 font-medium text-right">{t('admin.modules_table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-900/10">
@@ -174,21 +176,21 @@ export default function TrainingAdminDashboard() {
                       </td>
                       <td className="py-4 px-6">
                         {m.isGlobal ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-500/10 text-indigo-400">Custodia Global</span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-500/10 text-indigo-400">{t('admin.modules_table.global')}</span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#C9A227]/10 text-[#C9A227]">Custom</span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#C9A227]/10 text-[#C9A227]">{t('admin.modules_table.custom')}</span>
                         )}
                       </td>
-                      <td className="py-4 px-6 capitalize text-[#9BA1A6]">{m.targetRole}</td>
+                      <td className="py-4 px-6 text-[#9BA1A6]">{t(`admin.roles.${m.targetRole || 'all'}`)}</td>
                       <td className="py-4 px-6">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${
                           m.status === 'published' ? 'bg-green-500/10 text-green-400' : 'bg-white/[0.06] text-[#9BA1A6]'
                         }`}>
-                          {m.status}
+                          {t(`admin.module_status.${m.status || 'draft'}`)}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-right">
-                        <button className="text-indigo-400 font-medium hover:text-indigo-400">View Details</button>
+                        <button className="text-indigo-400 font-medium hover:text-indigo-400">{t('admin.modules_table.view')}</button>
                       </td>
                     </tr>
                   ))}
@@ -202,11 +204,11 @@ export default function TrainingAdminDashboard() {
                <table className="w-full text-left text-[13.5px]">
                 <thead className="bg-[#08090A]/50 text-[#9BA1A6] border-b border-white/10">
                   <tr>
-                    <th className="py-3 px-6 font-medium">Employee</th>
-                    <th className="py-3 px-6 font-medium">Module</th>
-                    <th className="py-3 px-6 font-medium">Status</th>
-                    <th className="py-3 px-6 font-medium">Score</th>
-                    <th className="py-3 px-6 font-medium">Date</th>
+                    <th className="py-3 px-6 font-medium">{t('admin.records_table.employee')}</th>
+                    <th className="py-3 px-6 font-medium">{t('admin.records_table.module')}</th>
+                    <th className="py-3 px-6 font-medium">{t('admin.records_table.status')}</th>
+                    <th className="py-3 px-6 font-medium">{t('admin.records_table.score')}</th>
+                    <th className="py-3 px-6 font-medium">{t('admin.records_table.date')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-900/10">
@@ -221,7 +223,7 @@ export default function TrainingAdminDashboard() {
                           c.status === 'failed' ? 'bg-red-500/10 text-red-400' :
                           'bg-white/10 text-[#E6E8EA]'
                         }`}>
-                          {(c.status || '').replace('_', ' ')}
+                          {t(`status.${c.status || 'not_started'}`)}
                         </span>
                       </td>
                       <td className="py-3 px-6 font-medium text-[#F4F5F6]">{c.quizScore ? `${c.quizScore}%` : '-'}</td>
