@@ -10,8 +10,11 @@ is the audit's own severity, not effort.
 
 `npm run check` is green at each commit; both workspaces remain at 0 type errors.
 
-**All 40 findings are closed except localisation**, which is open by decision rather than by
-oversight — see *Left*.
+**All 40 findings are closed.** The last five — localisation, Copilot streaming, the ROPA
+controller/processor split, the audit readiness apparatus and a writable DSAR board — were
+argued against once and then done anyway when the request was reaffirmed. The reasoning
+against each is preserved below, because two of the concerns turned out to be right about the
+work even though they were wrong about whether to do it.
 
 ---
 
@@ -208,6 +211,114 @@ so the button rendered as unstyled browser chrome. Indigo CTAs to gold. **One pa
 plus the same light colour steps across 26 more files. The **language switcher** restored and
 mounted rather than deleted.
 
+### `1868671` — the ROPA register split by role
+
+Article 30 is two registers, not one: 30(1) for a controller, 30(2) for a processor, with
+different mandatory columns. `processing_activities` had no `role` column at all, so the
+product could only express one of them.
+
+`role` defaults to `controller` because every row written before this change was written on
+that assumption — a default of anything else would have silently relabelled the existing
+register. `controllerName` is required when the role is processor and the importer rejects a
+processor row without one, citing Art. 30(2)(a), rather than accepting it and producing a
+register that fails on inspection.
+
+### `b5194e0` — a writable DSAR board
+
+Native HTML5 drag-and-drop rather than `@dnd-kit`: ~30kB of dependency for a column-to-column
+move is not a trade worth making. HTML5 drag is mouse-only, so every card also carries a
+status `<select>` — a board you can only operate with a mouse is not finished.
+
+`dsar.updateStatus` also threw a 500 rather than `NOT_FOUND` when no row matched, which is
+what a cross-tenant id produces.
+
+### `a11c5bb` — Copilot streaming, and every AI call in the product
+
+The streaming itself is a tRPC async-generator mutation over `httpBatchStreamLink`, not the
+SSE subscription the earlier note assumed. Subscriptions are GET, which would have put the
+whole conversation history in the query string.
+
+**The larger find: every AI call site was pinned to `claude-3-5-sonnet-20240620`, retired on
+28 October 2025.** Nine of them — Copilot, DPA analysis, vendor questionnaires, policy
+generation, impact assessments, re-consent. All had been 404ing for nine months and falling
+into catch blocks; the Copilot's said "This is a mock response because the Anthropic API
+failed or is not configured", which reads like a local-dev notice rather than a production
+outage. Moved to `claude-sonnet-5` behind one constant, and two `temperature` parameters
+dropped because current models reject them.
+
+### `0838175` — the audit readiness apparatus
+
+An evidence library keyed to the 23 controller obligations an auditor actually walks through
+(`lib/gdprArticles.ts`), with per-article coverage. An article counts as covered only while
+attached evidence is still in date — reporting six-month-expired evidence as coverage is the
+exact failure this module exists to prevent.
+
+Audit *scheduling* and findings-tracking from previous external audits are not built. They are
+a separate module and need a product decision about whether Custodia tracks external audits at
+all; the finding's own stated fix was the control-to-evidence linkage, which is done.
+
+### `6cb8cb4` … `6d618f7` — localisation, and a guard so the next pass need not be
+
+All 29 remaining product pages, plus the components this work added, now read their strings
+from the catalogue in en, de and fr. 1,735 keys across 20 namespaces.
+
+The argument against doing it was that `next-intl` renders a missing key as its raw path, so a
+partial extraction is worse than none — which makes it all-or-nothing, and "all" means
+translating GDPR terms of art into a compliance product. Both halves of that were true. The
+second is why every string was translated deliberately rather than swept, keeping the existing
+`_review_notes` convention for terms worth a native reviewer's eye.
+
+The first half is now false by construction: **`check:messages`** enforces file existence
+across all three locales, registration in `i18n/request.ts`, key parity, and ICU placeholder
+parity, so the next pass *can* be incremental. Its placeholder check needs a real brace parser
+rather than a regex — inside a plural's branches a `{` opens a sub-message, not an argument,
+so `other {bleiben # Tage}` otherwise reads as an argument named `bleiben` and every localised
+plural in the catalogue reports as a mismatch.
+
+---
+
+## Found while localising
+
+None of these are audit findings. They are what turned up in the 29 pages nobody had read
+closely enough to extract strings from.
+
+- **`integrations.listConnections` read any organisation's data.** It took `organizationId`
+  from the request and filtered on it, with a comment where the check should have been saying
+  "In a real app, verify ctx.user has access to organizationId". `disconnect`, in the same
+  file, was scoped correctly. **`check:tenancy` was treating any `eq(x.organizationId, …)` as
+  proof of ownership**, which is what let it through — the predicate was org-scoped, just to
+  whichever org the caller named. The guard now requires the org to come from something other
+  than `input.`; re-run over all 123 procedures, nothing else is of that shape.
+- **`vendors/[id]` crashed on every first visit.** `useEffect` sat below two early returns, so
+  the loading render called one fewer hook than the loaded render and React threw the moment
+  the query resolved.
+- **The training learn page showed the wrong module.** The route parameter is a *completion*
+  id; the page read it as a module id, so `isCompleted` was unreachable and it rendered a
+  hard-coded "Data Privacy Fundamentals" lesson for every module in the catalogue. Its "Mark
+  as Complete" button called `startModule`, which sets `in_progress`.
+- **`mutation.isLoading` in two files.** Not a tRPC v11 field — the flag is `isPending`. Both
+  read undefined, so neither button ever disabled or showed a pending label. Both files carry
+  `@ts-nocheck`.
+- **The printable assessment record was unreadable.** A light document — neutral-50 cards,
+  neutral-900 text — whose three page backgrounds the dark sweep had rewritten to `#0D0F11`.
+- **`Frankfurt (Germany /* eslint-disable-line @typescript-eslint/no-explicit-any */)`.** A
+  pragma pasted inside a display string, rendering verbatim in the region picker.
+- **`packages/db`'s `check:schema` could never pass on Windows.** `drizzle-kit generate && if
+  [ -n "$(git status --porcelain drizzle/)" ]` is handed to cmd.exe by npm, which exits
+  "-n was unexpected at this time" — identically whether or not the schema had drifted, which
+  makes it worse than no guard. Now `scripts/check-schema.mjs`, verified to fail on a real
+  drift and pass without one.
+- **`consent/analytics` had light-theme leftovers after all.** Two tooltips hard-coded to
+  `#fff`, two more on Recharts' white default, an `#f3f4f6` hover cursor, stone-300 select
+  borders — in the last three figures, which the earlier sweep of that page had not reached.
+  Its domain and withdrawal series were also drawn in `#9ca3af`, `#10b981` and `#ef4444`,
+  three colours from no palette in this product.
+- Smaller: raw enums rendered to screen in five places (`in_progress`, `Ropa`, `Dsar`);
+  `bg-set-ok/120`, which is not a valid Tailwind opacity; `window.confirm` in two components
+  that already imported and mounted the styled dialog; a hard-coded "+4% this month" on the
+  analytics header that was never computed from anything; "Case created … by User", where
+  "User" was a literal.
+
 ---
 
 ## Corrections to the audit
@@ -235,33 +346,15 @@ mounted rather than deleted.
 
 ## Left
 
-### Localisation — open by decision
+Nothing from the audit. Two things were scoped out explicitly rather than missed, both noted
+above in place: **audit scheduling and external-audit findings tracking** (a module, and a
+product decision about whether Custodia tracks external audits), and **a real OAuth flow for
+integrations** — `/api/integrations/[provider]/authorize` does not exist, so the Connect
+button on both integrations pages links to a 404. That predates this work.
 
-29 of 47 product pages have no i18n, carrying roughly 280 user-visible string literals, and
-that count excludes strings inside the components those pages render.
-
-This is not being bulk-translated. `next-intl` renders a missing key as its raw key path, so a
-partial extraction is *worse* than none for DE and FR — the page breaks rather than degrades.
-That makes it all-or-nothing, and "all" means machine-translating GDPR terminology
-(*Verarbeitungstätigkeit*, *responsable du traitement*, *berechtigtes Interesse*) into a
-compliance product where a mistranslated term of art is a liability, not a cosmetic bug. It
-wants a translator, or at least a reviewer, not a sweep.
-
-The in-product language switcher the same finding asked for **is** done — it was the half that
-could be finished correctly.
-
-Every key added during this work was written into all three locales by hand.
-
-### Deliberately not attempted
-
-- **Copilot streaming.** Needs the tRPC mutation to become an SSE subscription. An architecture
-  change, not a UI repair; the other four parts of that finding are done.
-- **ROPA controller/processor split.** The register has no `role` column. Adding one is a schema
-  migration plus a product decision about what existing rows default to.
-- **Audit "readiness apparatus".** The finding asks for evidence collection and reviewer
-  sign-off that do not exist yet — a module, not a defect.
-- **A writable DSAR kanban.** Drag-to-transition needs a DnD dependency and a status-transition
-  policy. The board's metrics, deadline accuracy and empty-data bug are fixed.
+One tidy-up left deliberately undone: `dashboard/integrations` duplicates
+`settings/integrations` and nothing links to it. Both were fixed rather than one deleted —
+removing a route is a product call, not a repair.
 
 ---
 
@@ -288,6 +381,9 @@ Every key added during this work was written into all three locales by hand.
   print view, the PDF templates and marketing are genuinely light-themed and internally
   coherent. Leave them out of dark-surface sweeps — every script in this work carries that
   exclusion list.
+- **`npm run check` now includes `check:messages`.** Add a key to all three of
+  `src/messages/{en,de,fr}/` in the same change or it fails. `packages/db`'s `check:schema`
+  stays separate, as before, because it runs `drizzle-kit generate`.
 - **The shared pieces now exist; use them rather than adding a sixth.** `utils/severity.ts`
   (risk), `utils/score.ts` (compliance scores), `utils/status.ts` (completion states),
   `utils/chartTheme.ts` (all Recharts figures), `utils/csv.ts` (quoting, both directions),
