@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -25,6 +24,10 @@ export interface DpiaResidualRisk {
   mitigationOwner?: string | null;
   mitigationDueDate?: string | null;
   mitigationStatus: 'not_started' | 'in_progress' | 'completed';
+  // Both are part of the server's dpiaResidualRiskSchema and round-trip through
+  // the jsonb column; the interface simply never listed them.
+  prePopulatedType?: 'missing_dpa' | 'clause_gaps' | 'missing_certs' | 'high_risk_flag' | null;
+  alreadyReflectedInBaseScore?: boolean | null;
 }
 
 function computeResidualRiskLevel(likelihood: 'low' | 'medium' | 'high', severity: 'low' | 'medium' | 'high'): 'low' | 'medium' | 'high' | 'critical' {
@@ -331,7 +334,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
           <div className="bg-[#08090A] hairline rounded-2xl p-6">
             <h3 className="text-[13px] font-medium text-[#F4F5F6] mb-4">Or Link Existing DPIA</h3>
             <div className="space-y-2">
-              {allDpias.map(d => (
+              {allDpias.map((d: any) => (
                 <div key={d.id} className="flex items-center justify-between p-3 bg-[#0D0F11] hairline rounded-xl">
                   <div>
                     <div className="text-[13px] font-medium text-[#F4F5F6]">{d.title}</div>
@@ -570,8 +573,11 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                           
                           {/* Compact Vendor Risk Card */}
                           {risk.relatedVendorId && (() => {
+                            // getOrgVendors merges the vendor row in, so a vendor
+                            // deleted from the catalogue leaves the entry without
+                            // an id — don't render a card keyed on undefined.
                             const vObj = orgVendors.find(v => v.orgVendorId === risk.relatedVendorId);
-                            return vObj ? <VendorRiskCard vendorId={vObj.id} /> : null;
+                            return vObj?.id ? <VendorRiskCard vendorId={vObj.id} /> : null;
                           })()}
                         </div>
                       </div>

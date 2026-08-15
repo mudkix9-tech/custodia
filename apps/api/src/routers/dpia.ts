@@ -28,7 +28,10 @@ const dpiaResidualRiskSchema = z.object({
   mitigationDueDate: z.string().optional().nullable(),
   mitigationStatus: z.enum(['not_started', 'in_progress', 'completed']),
   alreadyReflectedInBaseScore: z.boolean().optional().nullable(),
-  prePopulatedType: z.enum(['missing_dpa', 'clause_gaps', 'missing_certs']).optional().nullable(),
+  // 'high_risk_flag' is written by the DPIA tab when it auto-documents a high or
+  // critical risk vendor. It was missing here, so a DPIA containing one of those
+  // rows failed validation on *every* subsequent save, not just on creation.
+  prePopulatedType: z.enum(['missing_dpa', 'clause_gaps', 'missing_certs', 'high_risk_flag']).optional().nullable(),
 });
 
 export const dpiaRouter = router({

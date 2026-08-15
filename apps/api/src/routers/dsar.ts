@@ -430,14 +430,16 @@ export const dsarRouter = router({
         'desc'
       );
 
-      if (input.includeChildEntities) {
-        result.data = result.data.map((r: any) => ({
-          ...r,
-          organizationName: orgMap.get(r.organizationId) || 'Unknown'
-        }));
-      }
+      // Optional in the declared type, matching the group view being optional —
+      // see the identical shape in breaches.listAll.
+      const data = result.data.map((r) => ({
+        ...r,
+        organizationName: input.includeChildEntities
+          ? (orgMap.get(r.organizationId) || 'Unknown')
+          : undefined,
+      }));
 
-      return result;
+      return { ...result, data };
     }),
 
   // Pending is everything short of a terminal state. status is nullable, and a

@@ -11,6 +11,7 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "check:params": "node scripts/check-async-params.mjs",
+    "check:nocheck": "node scripts/check-ts-nocheck.mjs",
     "check:sitemap": "node scripts/check-sitemap.mjs",
     "check:messages": "node scripts/check-messages.mjs",
     "indexnow": "node scripts/submit-indexnow.mjs",

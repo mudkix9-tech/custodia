@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import React, { useState } from 'react';
@@ -96,7 +95,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                 </td>
               </tr>
             ) : (
-              subProcessors?.map((sp) => (
+              subProcessors?.map((sp: any) => (
                 <tr key={sp.id} className="hover:bg-[#08090A]/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -186,7 +185,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                   </div>
                   
                   <div className="max-h-60 overflow-y-auto border border-white/10 rounded-xl divide-y divide-ink-900/5">
-                    {globalVendors?.filter(v => v.name.toLowerCase().includes(searchQuery.toLowerCase())).map(v => (
+                    {globalVendors?.filter((v: any) => v.name.toLowerCase().includes(searchQuery.toLowerCase())).map((v: any) => (
                       <label key={v.id} className="flex items-center gap-3 p-3 hover:bg-[#08090A] cursor-pointer transition-colors">
                         <input 
                           type="radio" 
@@ -262,11 +261,11 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
           </div>
         ) : (
           <div className="relative pl-6 border-l border-white/10 space-y-8">
-            {changes?.map((ch) => {
+            {changes?.map((ch: any) => {
               const isExpanded = expandedChangeId === ch.id;
               
-              const oldSnapshot = ch.previousSnapshot || '';
-              const newSnapshot = ch.newSnapshot || '';
+              const oldSnapshot: string = ch.previousSnapshot || '';
+              const newSnapshot: string = ch.newSnapshot || '';
               const oldLines = oldSnapshot.split('\n').map(l => l.trim()).filter(Boolean);
               const newLines = newSnapshot.split('\n').map(l => l.trim()).filter(Boolean);
               const oldSet = new Set(oldLines);
@@ -391,8 +390,8 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                 <span className="text-xs font-semibold text-[#6E747A] uppercase tracking-wider block">Detected Diff Preview</span>
                 <div className="border border-white/10 rounded-xl max-h-40 overflow-y-auto font-mono text-[11px] p-3 bg-[#08090A]/30 space-y-1">
                   {(() => {
-                    const oldSnapshot = reviewingChange.previousSnapshot || '';
-                    const newSnapshot = reviewingChange.newSnapshot || '';
+                    const oldSnapshot: string = reviewingChange.previousSnapshot || '';
+                    const newSnapshot: string = reviewingChange.newSnapshot || '';
                     const oldLines = oldSnapshot.split('\n').map(l => l.trim()).filter(Boolean);
                     const newLines = newSnapshot.split('\n').map(l => l.trim()).filter(Boolean);
                     const oldSet = new Set(oldLines);

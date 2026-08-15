@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 
@@ -11,7 +10,7 @@ export default function BreachTasks({ breachId }: { breachId: string }) {
       await utils.breaches.tasks.list.cancel({ breachId });
       const previousTasks = utils.breaches.tasks.list.getData({ breachId });
       if (previousTasks) {
-        utils.breaches.tasks.list.setData({ breachId }, previousTasks.map(t =>
+        utils.breaches.tasks.list.setData({ breachId }, previousTasks.map((t: any) =>
           t.id === newUpdate.id ? { ...t, ...newUpdate } : t
         ) as any);
       }
@@ -68,7 +67,7 @@ export default function BreachTasks({ breachId }: { breachId: string }) {
 
       <div className="space-y-3 mt-4">
         {tasks?.length === 0 && <p className="text-sm text-[#9BA1A6] text-center py-4 border border-dashed rounded-lg">No tasks added yet.</p>}
-        {tasks?.map(task => (
+        {tasks?.map((task: any) => (
           <div key={task.id} className={`p-4 rounded-lg border flex items-start gap-4 ${task.status === 'completed' ? 'bg-[#08090A] border-white/10 opacity-75' : 'bg-[#0D0F11] border-white/10 shadow-panel-elevated'}`}>
             <input 
               type="checkbox" 

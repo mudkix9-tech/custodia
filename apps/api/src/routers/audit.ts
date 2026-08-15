@@ -48,15 +48,13 @@ export const auditRouter = router({
         'desc'
       );
 
-      res.data = res.data.map((log: any) => {
-        if (!isAdminOrOwner) {
-          log.ipAddress = null;
-          log.userAgent = null;
-        }
-        return log;
-      });
+      // Shape is unchanged here — the row is only redacted — so assigning back
+      // onto res.data is accurate, unlike the enriching endpoints.
+      const data = res.data.map((log) => (
+        isAdminOrOwner ? log : { ...log, ipAddress: null, userAgent: null }
+      ));
 
-      return res;
+      return { ...res, data };
     }),
 
   exportLogs: protectedProcedure

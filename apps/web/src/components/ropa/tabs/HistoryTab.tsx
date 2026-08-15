@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import React, { useState } from 'react';
@@ -93,7 +92,7 @@ export function HistoryTab({ activityId }: { activityId: string }) {
         </h2>
 
         <div className="space-y-4">
-          {logs.map((log) => {
+          {logs.map((log: any) => {
             const date = new Date(log.createdAt!).toLocaleString();
             const details = (log as any).newValue || (log as any).details;
             const isExpanded = expandedLogId === log.id;

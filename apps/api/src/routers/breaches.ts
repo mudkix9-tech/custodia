@@ -307,14 +307,16 @@ export const breachesRouter = router({
         'desc'
       );
 
-      if (input.includeChildEntities) {
-        result.data = result.data.map((b: any) => ({
-          ...b,
-          organizationName: orgMap.get(b.organizationId) || 'Unknown'
-        }));
-      }
+      // organizationName is only present for the group view, so it is declared
+      // optional rather than assigned in behind the row type's back.
+      const data = result.data.map((b) => ({
+        ...b,
+        organizationName: input.includeChildEntities
+          ? (orgMap.get(b.organizationId) || 'Unknown')
+          : undefined,
+      }));
 
-      return result;
+      return { ...result, data };
     }),
 
   register: protectedProcedure

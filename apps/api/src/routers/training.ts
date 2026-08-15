@@ -377,17 +377,22 @@ export const trainingRouter = router({
         'desc'
       );
 
-      const compIds = res.data.map((r: any) => r.id);
-      if (compIds.length > 0) {
-        const fullComps = await ctx.db.query.trainingCompletions.findMany({
-          where: inArray(trainingCompletions.id, compIds),
-          // `user: true` would ship each trainee's password hash and MFA seed.
-          with: { user: { columns: USER_SECRET_COLUMNS }, module: true }
-        });
-        const map = new Map(fullComps.map((c: any) => [c.id, c]));
-        res.data = res.data.map((r: any) => map.get(r.id) || r);
-      }
+      // The page needs each completion's user and module, which the paginated row
+      // does not carry, so the rows are re-read with their relations and the
+      // enriched shape is returned rather than assigned back over the plain one.
+      const compIds = res.data.map((r) => r.id);
+      if (compIds.length === 0) return { ...res, data: [] };
 
-      return res;
+      const fullComps = await ctx.db.query.trainingCompletions.findMany({
+        where: inArray(trainingCompletions.id, compIds),
+        // `user: true` would ship each trainee's password hash and MFA seed.
+        with: { user: { columns: USER_SECRET_COLUMNS }, module: true }
+      });
+      // `c` is any because ctx.db is typed `any` (see getDbForOrg in lib/dbRouter.ts),
+      // not because the shape is unknown here.
+      const map = new Map(fullComps.map((c: any) => [c.id, c]));
+      const data = res.data.map((r) => map.get(r.id)).filter((c): c is NonNullable<typeof c> => Boolean(c));
+
+      return { ...res, data };
     }),
 });

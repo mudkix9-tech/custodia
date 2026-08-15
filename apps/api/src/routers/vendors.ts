@@ -218,8 +218,8 @@ export const vendorsRouter = router({
         'desc'
       );
 
-      const vendorIds = res.data.map((ov: any) => ov.vendorId);
-      let vendorsMap = new Map();
+      const vendorIds = res.data.map((ov) => ov.vendorId);
+      const vendorsMap = new Map<string, typeof vendors.$inferSelect>();
 
       if (vendorIds.length > 0) {
         const vendorDataList = await ctx.db.select().from(vendors).where(inArray(vendors.id, vendorIds));
@@ -228,8 +228,13 @@ export const vendorsRouter = router({
         }
       }
 
-      res.data = res.data.map((ov: any) => {
-        const v = vendorsMap.get(ov.vendorId) || {};
+      // Returned as a new object rather than assigned back onto res.data: this
+      // endpoint hands out the vendor row merged with a few organisation_vendors
+      // columns, which is not the organizationVendors row type paginatedQuery
+      // infers. Mutating res.data laundered that difference through `any` and
+      // left callers with a declared type the response never actually matched.
+      const data = res.data.map((ov) => {
+        const v: Partial<typeof vendors.$inferSelect> = vendorsMap.get(ov.vendorId) ?? {};
         return {
           ...v,
           orgVendorId: ov.id,
@@ -244,7 +249,7 @@ export const vendorsRouter = router({
         };
       });
 
-      return res;
+      return { ...res, data };
     }),
 
   getOrgVendorDetails: protectedProcedure

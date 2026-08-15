@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -188,8 +187,15 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
     onSuccess: () => utils.regulatory.listUnacknowledgedImpacts.invalidate()
   });
 
-  const relevantImpacts = impacts.filter(impact => 
-    (impact.affectedActivities as any[]).some(a => a.activityId === initialData?.id)
+  // listUnacknowledgedImpacts returns { update, matches }, where each match is a
+  // regulatory_update_matches row keyed by matchedEntityType/matchedEntityId.
+  // This used to read impact.affectedActivities, which is not a field on either
+  // shape — so .some() ran on undefined and threw the moment an organisation had
+  // any unacknowledged impact, taking the whole activity editor down with it.
+  const relevantImpacts = impacts.filter(impact =>
+    impact.matches.some(
+      (m: any) => m.matchedEntityType === 'processing_activity' && m.matchedEntityId === initialData?.id,
+    ),
   );
 
   const handleClientToggle = async (clientId: string) => {
@@ -350,20 +356,22 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </button>
             </div>
             <div className="divide-y divide-blue-200/50">
-              {relevantImpacts.map(impact => {
+              {relevantImpacts.map((impact: any) => {
                 const update = impact.update as any;
-                const activityImpact = (impact.affectedActivities as any[]).find(a => a.activityId === initialData.id);
+                const activityMatch = impact.matches.find(
+                  (m: any) => m.matchedEntityType === 'processing_activity' && m.matchedEntityId === initialData.id,
+                );
                 return (
-                  <div key={impact.id} className="p-4 flex flex-col md:flex-row justify-between items-start gap-4">
+                  <div key={update.id} className="p-4 flex flex-col md:flex-row justify-between items-start gap-4">
                     <div>
                       <h4 className="font-semibold text-[#F4F5F6] text-[14px] mb-1">{update.title}</h4>
-                      <p className="text-[#9BA1A6] text-[13px] mb-2">{activityImpact?.reason}</p>
+                      <p className="text-[#9BA1A6] text-[13px] mb-2">{activityMatch?.aiExplanation}</p>
                       <a href={update.sourceUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[12px] font-medium text-blue-400 hover:underline">
                         {t('view_full_update')} <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
                     <button 
-                      onClick={() => acknowledgeMutation.mutate({ assessmentId: impact.id })}
+                      onClick={() => acknowledgeMutation.mutate({ updateId: update.id })}
                       disabled={acknowledgeMutation.isPending}
                       className="shrink-0 bg-[#0D0F11] border border-blue-500/25 hover:border-blue-400 text-blue-400 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
                     >

@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -227,7 +226,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-900/5">
-                  {cookies.map(cookie => (
+                  {cookies.map((cookie: any) => (
                     <tr key={cookie.id} className="hover:bg-[#08090A]/50">
                       <td className="px-6 py-4 font-mono text-[12px] text-[#F4F5F6] font-bold">{cookie.cookieName}</td>
                       <td className="px-6 py-4 font-mono text-[12px] text-[#9BA1A6]">{cookie.cookieDomain}</td>
@@ -272,7 +271,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
             <div className="grid grid-cols-3 gap-6">
               <div className="bg-[#0D0F11] border border-white/10 p-6 rounded-2xl shadow-panel-elevated">
                 <div className="text-[12px] font-bold text-[#6E747A] uppercase tracking-wider mb-2">Total Pageviews</div>
-                <div className="text-3xl font-serif text-[#F4F5F6]">{stats.total.toLocaleString()}</div>
+                <div className="text-3xl font-serif text-[#F4F5F6]">{stats?.total?.toLocaleString() ?? '—'}</div>
               </div>
               <div className="bg-[#0D0F11] border border-white/10 p-6 rounded-2xl shadow-panel-elevated">
                 <div className="text-[12px] font-bold text-[#6E747A] uppercase tracking-wider mb-2">Accept All Rate</div>

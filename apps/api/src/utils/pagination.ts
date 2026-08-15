@@ -28,6 +28,24 @@ export function decodeCursor(cursor: string): { sortValue: string; id: string } 
   return { sortValue: payload.s, id: payload.i };
 }
 
+// Overloaded so callers get the table's real row type. The single generic `<T>`
+// this used to carry had no inference site, so every one of the 26 call sites
+// resolved it to `unknown` — which is how the whole web app came to consume
+// `data: unknown[]` from every paginated endpoint, and why several components
+// needed `@ts-nocheck` to touch a row at all. The implementation signature stays
+// `any` because the body indexes the table dynamically (`table[sortField]`).
+export async function paginatedQuery<TTable extends { $inferSelect: any }>(
+  table: TTable,
+  /**
+   * Pass `null` only for a table that has no organization_id of its own, and only
+   * once the caller has proved ownership through the parent — see lib/tenancy.ts.
+   */
+  orgId: string | string[] | null,
+  params: PaginationParams,
+  sortField?: string,
+  sortOrder?: 'asc' | 'desc',
+  additionalWhere?: any[]
+): Promise<PaginatedResponse<TTable['$inferSelect']>>;
 export async function paginatedQuery<T>(
   table: any,
   /**

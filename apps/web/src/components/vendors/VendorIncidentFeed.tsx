@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import React, { useState } from 'react';
@@ -45,7 +44,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
         </div>
       ) : (
         <div className="relative pl-6 border-l border-white/10 space-y-8">
-          {incidents?.map((inc) => {
+          {incidents?.map((inc: any) => {
             const isReviewOpen = activeAlertId === inc.alertId;
             const severityColor = 
               inc.severity === 'critical' ? 'bg-red-500/10 text-red-400 border-red-900/50' :
@@ -120,7 +119,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                     <div className="space-y-1.5">
                       <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wider block">Affected Data Categories</span>
                       <div className="flex flex-wrap gap-2">
-                        {inc.affectedDataCategories.map((cat, idx) => (
+                        {inc.affectedDataCategories.map((cat: any, idx: number) => (
                           <span key={idx} className="bg-[#08090A] border border-white/5 text-[#9BA1A6] text-[11px] px-2 py-0.5 rounded font-medium">
                             {cat}
                           </span>

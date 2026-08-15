@@ -42,12 +42,14 @@ export const clientsRouter = router({
         }
       }
 
-      res.data = res.data.map((c: any) => ({
+      // Returned as a new object so linkedActivitiesCount is part of the declared
+      // type rather than laundered through `any` onto the plain clients row.
+      const data = res.data.map((c) => ({
         ...c,
         linkedActivitiesCount: activitiesCounts.get(c.id) || 0,
       }));
 
-      return res;
+      return { ...res, data };
     }),
 
   get: protectedProcedure
