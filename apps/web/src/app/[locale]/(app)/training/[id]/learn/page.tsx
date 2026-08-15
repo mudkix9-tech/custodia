@@ -46,7 +46,7 @@ export default function LearnPage({ params }: { params: Promise<{ id: string }> 
   const completion = completions?.find((c: any) => c.id === id) as any;
   if (!completion) {
     return (
-      <div className="min-h-screen bg-[#08090A] flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center">
           <p className="text-[#9BA1A6] mb-4">{t('learn.not_found')}</p>
           <Link href="/training" className="text-[#C9A227] hover:underline text-sm font-medium">
@@ -62,7 +62,7 @@ export default function LearnPage({ params }: { params: Promise<{ id: string }> 
   const status: string = completion.status ?? 'not_started';
 
   return (
-    <div className="min-h-screen bg-[#08090A]">
+    <div className="flex-1">
       <div className="bg-[#0D0F11] border-b border-white/10 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">

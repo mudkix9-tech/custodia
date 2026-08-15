@@ -17,7 +17,7 @@ export default function EditRopaPage({ params }: { params: Promise<{ id: string 
 
   if (error || !data) {
     return (
-      <div className="flex-1 min-h-screen bg-[#08090A] flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center py-24">
         <div className="text-center">
           <h2 className="text-xl font-bold text-[#F4F5F6] mb-2">{t('editor.not_found')}</h2>
           <p className="text-[#9BA1A6]">{t('editor.not_found_description')}</p>

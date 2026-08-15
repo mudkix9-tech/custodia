@@ -11,6 +11,7 @@ import { toCsvRow } from '@/utils/csv';
 import { parseRopaCsv, type RowError } from '@/utils/ropaImport';
 import { useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { PageShell } from '@/components/layout/PageShell';
 
 export default function RopaListPage() {
   const t = useTranslations('ropa');
@@ -279,8 +280,7 @@ export default function RopaListPage() {
   ];
 
   return (
-    <div className="flex-1 p-8 bg-[#08090A] min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <PageShell className="fade-up space-y-8">
         
         {/* Header section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -483,7 +483,6 @@ export default function RopaListPage() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }
