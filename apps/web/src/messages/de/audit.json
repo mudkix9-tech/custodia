@@ -29,5 +29,49 @@
   "immutable_ledger": {
     "title": "Unveränderliches Audit-Ledger",
     "description": "Artikel 5(2) Nachweispflicht. Alle Datensätze sind schreibgeschützt und kryptografisch gesichert."
+  },
+  "evidence_library": {
+    "loading": "Nachweisbibliothek wird geladen…",
+    "summary": {
+      "covered": "Abgedeckte Artikel",
+      "expired": "Abgelaufene Nachweise",
+      "missing": "Ohne Nachweis",
+      "documentation": "Dokumentation"
+    },
+    "heading": "Nachweise nach Artikel",
+    "filter_chip": "Artikel {id}",
+    "add": "Nachweis hinzufügen",
+    "article_prefix": "Art. {id}",
+    "status": {
+      "covered": "Abgedeckt",
+      "expired": "Abgelaufen",
+      "missing": "Kein Nachweis"
+    },
+    "item_count": "{count, plural, one {# Eintrag} other {# Einträge}}",
+    "expired_on": "abgelaufen am {date}",
+    "review_by": "zu prüfen bis {date}",
+    "remove": "{title} entfernen",
+    "removed": "Nachweis entfernt",
+    "remove_failed": "Der Nachweis konnte nicht entfernt werden",
+    "remove_title": "„{title}“ entfernen?",
+    "remove_description": "Der zugehörige Artikel gilt danach wieder als nicht abgedeckt, sofern ihm kein anderer Nachweis zugeordnet ist.",
+    "remove_confirm": "Nachweis entfernen",
+    "empty_title": "Noch keine Nachweise erfasst",
+    "empty_description": "Eine prüfende Person möchte zu jeder Pflicht das Dokument sehen, das sie erfüllt. Sobald Sie den ersten hinterlegen, füllen sich die Artikel oben.",
+    "modal": {
+      "title": "Nachweis hinzufügen",
+      "close": "Schließen",
+      "what": "Worum handelt es sich?",
+      "what_placeholder": "z. B. Informationssicherheitsrichtlinie v3",
+      "link": "Link",
+      "review_by": "Zu prüfen bis",
+      "review_by_help": "Nach diesem Datum gilt der abgedeckte Artikel wieder als nicht abgedeckt — ein Nachweis, den niemand überprüft hat, belegt nichts.",
+      "articles": "Abgedeckte Artikel",
+      "cancel": "Abbrechen",
+      "submit": "Nachweis hinzufügen",
+      "submitting": "Wird hinzugefügt…",
+      "added": "Nachweis hinzugefügt",
+      "failed": "Der Nachweis konnte nicht hinzugefügt werden"
+    }
   }
 }

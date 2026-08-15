@@ -36,6 +36,7 @@
     "delete": "Löschen",
     "edit": "Bearbeiten",
     "close": "Schließen",
-    "confirm": "Bestätigen"
+    "confirm": "Bestätigen",
+    "dismiss": "Benachrichtigung schließen"
   }
 }

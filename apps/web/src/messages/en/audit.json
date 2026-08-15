@@ -26,5 +26,49 @@
   "immutable_ledger": {
     "title": "Immutable Audit Ledger",
     "description": "Article 5(2) Demonstrable Accountability. All records are read-only and cryptographically secure."
+  },
+  "evidence_library": {
+    "loading": "Loading evidence library…",
+    "summary": {
+      "covered": "Articles covered",
+      "expired": "Evidence expired",
+      "missing": "No evidence",
+      "documentation": "Documentation"
+    },
+    "heading": "Evidence by article",
+    "filter_chip": "Article {id}",
+    "add": "Add evidence",
+    "article_prefix": "Art. {id}",
+    "status": {
+      "covered": "Covered",
+      "expired": "Expired",
+      "missing": "No evidence"
+    },
+    "item_count": "{count, plural, one {# item} other {# items}}",
+    "expired_on": "expired {date}",
+    "review_by": "review by {date}",
+    "remove": "Remove {title}",
+    "removed": "Evidence removed",
+    "remove_failed": "Could not remove the evidence",
+    "remove_title": "Remove “{title}”?",
+    "remove_description": "The article it covers goes back to uncovered unless other evidence is attached to it.",
+    "remove_confirm": "Remove evidence",
+    "empty_title": "No evidence recorded yet",
+    "empty_description": "An auditor asks, for each obligation, to be shown the document that discharges it. Attach the first one and the articles above start filling in.",
+    "modal": {
+      "title": "Add evidence",
+      "close": "Close",
+      "what": "What is it?",
+      "what_placeholder": "e.g. Information security policy v3",
+      "link": "Link",
+      "review_by": "Review by",
+      "review_by_help": "After this date the article it covers reverts to uncovered — evidence nobody has revisited proves nothing.",
+      "articles": "Articles it covers",
+      "cancel": "Cancel",
+      "submit": "Add evidence",
+      "submitting": "Adding…",
+      "added": "Evidence added",
+      "failed": "Could not add the evidence"
+    }
   }
 }

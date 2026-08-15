@@ -295,5 +295,22 @@
     "responses": "Detailed Responses",
     "question_label": "Q{number} • {category}",
     "no_response": "(No response provided)"
+  },
+  "add_modal": {
+    "title": "Add custom vendor",
+    "close": "Close",
+    "name": "Vendor name",
+    "name_placeholder": "e.g. Northbound Analytics",
+    "website": "Website",
+    "website_placeholder": "https://example.com",
+    "category": "Category",
+    "category_placeholder": "Analytics",
+    "country": "HQ country",
+    "country_placeholder": "IE",
+    "cancel": "Cancel",
+    "submit": "Add vendor",
+    "submitting": "Adding…",
+    "added": "{name} added to the register",
+    "failed": "Could not add the vendor"
   }
 }

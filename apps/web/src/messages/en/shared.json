@@ -32,6 +32,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "close": "Close",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "dismiss": "Dismiss notification"
   }
 }

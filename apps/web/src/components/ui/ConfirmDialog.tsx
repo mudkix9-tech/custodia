@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -17,6 +18,7 @@ interface DialogState extends ConfirmOptions {
 }
 
 export function ConfirmDialogModal({ state, setState }: { state: DialogState, setState: (state: DialogState) => void }) {
+  const t = useTranslations('shared');
   const [typedValue, setTypedValue] = useState('');
 
   if (!state.open) return null;
@@ -66,7 +68,7 @@ export function ConfirmDialogModal({ state, setState }: { state: DialogState, se
             onClick={() => handleClose(false)}
             className="px-4 py-2 text-sm font-medium text-[#E6E8EA] hover:bg-white/5 rounded-lg transition-colors"
           >
-            {state.cancelText || 'Cancel'}
+            {state.cancelText || t('actions.cancel')}
           </button>
           <button
             onClick={() => handleClose(true)}
@@ -78,7 +80,7 @@ export function ConfirmDialogModal({ state, setState }: { state: DialogState, se
                 : "bg-[#C9A227] text-[#08090A] hover:bg-[#B38D1C]"
             )}
           >
-            {state.confirmText || 'Confirm'}
+            {state.confirmText || t('actions.confirm')}
           </button>
         </div>
       </div>

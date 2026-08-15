@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
+import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/ui/Toast';
 
 /**
@@ -21,6 +22,7 @@ export function AddCustomVendorModal({
   onClose: () => void;
   onCreated?: () => void;
 }) {
+  const t = useTranslations('vendors');
   const toast = useToast();
   const [name, setName] = useState('');
   const [website, setWebsite] = useState('');
@@ -29,7 +31,7 @@ export function AddCustomVendorModal({
 
   const createMutation = trpc.vendors.createCustom.useMutation({
     onSuccess: () => {
-      toast(`${name.trim()} added to the register`);
+      toast(t('add_modal.added', { name: name.trim() }));
       setName('');
       setWebsite('');
       setCategory('');
@@ -38,7 +40,7 @@ export function AddCustomVendorModal({
       onClose();
     },
     onError: (err) => {
-      toast('Could not add the vendor', { tone: 'error', description: err.message });
+      toast(t('add_modal.failed'), { tone: 'error', description: err.message });
     },
   });
 
@@ -73,11 +75,11 @@ export function AddCustomVendorModal({
       >
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
           <h2 id="add-vendor-title" className="font-serif text-lg text-[#F4F5F6]">
-            Add custom vendor
+            {t('add_modal.title')}
           </h2>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('add_modal.close')}
             className="rounded p-1 text-[#6E747A] transition-colors hover:text-[#E6E8EA]"
           >
             <X className="h-4 w-4" />
@@ -87,7 +89,7 @@ export function AddCustomVendorModal({
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
           <div>
             <label htmlFor="vendor-name" className="mb-1.5 block text-[13px] font-medium text-[#E6E8EA]">
-              Vendor name <span className="text-[#C9A227]">*</span>
+              {t('add_modal.name')} <span className="text-[#C9A227]">*</span>
             </label>
             <input
               id="vendor-name"
@@ -95,20 +97,20 @@ export function AddCustomVendorModal({
               onChange={(e) => setName(e.target.value)}
               required
               autoFocus
-              placeholder="e.g. Northbound Analytics"
+              placeholder={t('add_modal.name_placeholder')}
               className={field}
             />
           </div>
 
           <div>
             <label htmlFor="vendor-website" className="mb-1.5 block text-[13px] font-medium text-[#E6E8EA]">
-              Website
+              {t('add_modal.website')}
             </label>
             <input
               id="vendor-website"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
-              placeholder="https://example.com"
+              placeholder={t('add_modal.website_placeholder')}
               className={field}
             />
           </div>
@@ -116,25 +118,25 @@ export function AddCustomVendorModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="vendor-category" className="mb-1.5 block text-[13px] font-medium text-[#E6E8EA]">
-                Category
+                {t('add_modal.category')}
               </label>
               <input
                 id="vendor-category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                placeholder="Analytics"
+                placeholder={t('add_modal.category_placeholder')}
                 className={field}
               />
             </div>
             <div>
               <label htmlFor="vendor-country" className="mb-1.5 block text-[13px] font-medium text-[#E6E8EA]">
-                HQ country
+                {t('add_modal.country')}
               </label>
               <input
                 id="vendor-country"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                placeholder="IE"
+                placeholder={t('add_modal.country_placeholder')}
                 className={field}
               />
             </div>
@@ -146,14 +148,14 @@ export function AddCustomVendorModal({
               onClick={onClose}
               className="rounded-lg border border-white/10 px-4 py-2 text-[13.5px] text-[#E6E8EA] transition-colors hover:bg-white/5"
             >
-              Cancel
+              {t('add_modal.cancel')}
             </button>
             <button
               type="submit"
               disabled={!name.trim() || createMutation.isPending}
               className="rounded-lg bg-[#C9A227] px-4 py-2 text-[13.5px] font-medium text-[#08090A] transition-colors hover:bg-[#E5C463] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {createMutation.isPending ? 'Adding…' : 'Add vendor'}
+              {createMutation.isPending ? t('add_modal.submitting') : t('add_modal.submit')}
             </button>
           </div>
         </form>

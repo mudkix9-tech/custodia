@@ -36,6 +36,7 @@
     "delete": "Supprimer",
     "edit": "Modifier",
     "close": "Fermer",
-    "confirm": "Confirmer"
+    "confirm": "Confirmer",
+    "dismiss": "Masquer la notification"
   }
 }

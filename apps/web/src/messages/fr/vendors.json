@@ -298,5 +298,22 @@
     "responses": "Réponses détaillées",
     "question_label": "Q{number} • {category}",
     "no_response": "(Aucune réponse fournie)"
+  },
+  "add_modal": {
+    "title": "Ajouter un fournisseur",
+    "close": "Fermer",
+    "name": "Nom du fournisseur",
+    "name_placeholder": "ex. Northbound Analytics",
+    "website": "Site web",
+    "website_placeholder": "https://exemple.com",
+    "category": "Catégorie",
+    "category_placeholder": "Mesure d'audience",
+    "country": "Pays du siège",
+    "country_placeholder": "FR",
+    "cancel": "Annuler",
+    "submit": "Ajouter le fournisseur",
+    "submitting": "Ajout…",
+    "added": "{name} a été ajouté au registre",
+    "failed": "Impossible d'ajouter le fournisseur"
   }
 }

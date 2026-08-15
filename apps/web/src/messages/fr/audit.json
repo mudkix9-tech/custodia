@@ -29,5 +29,49 @@
   "immutable_ledger": {
     "title": "Registre d'audit immuable",
     "description": "Article 5(2) Responsabilité démontrable. Tous les enregistrements sont en lecture seule et sécurisés cryptographiquement."
+  },
+  "evidence_library": {
+    "loading": "Chargement de la bibliothèque de preuves…",
+    "summary": {
+      "covered": "Articles couverts",
+      "expired": "Preuves expirées",
+      "missing": "Sans preuve",
+      "documentation": "Documentation"
+    },
+    "heading": "Preuves par article",
+    "filter_chip": "Article {id}",
+    "add": "Ajouter une preuve",
+    "article_prefix": "Art. {id}",
+    "status": {
+      "covered": "Couvert",
+      "expired": "Expirée",
+      "missing": "Aucune preuve"
+    },
+    "item_count": "{count, plural, one {# élément} other {# éléments}}",
+    "expired_on": "expirée le {date}",
+    "review_by": "à revoir avant le {date}",
+    "remove": "Supprimer {title}",
+    "removed": "Preuve supprimée",
+    "remove_failed": "Impossible de supprimer la preuve",
+    "remove_title": "Supprimer « {title} » ?",
+    "remove_description": "L'article qu'elle couvre redevient non couvert, sauf si une autre preuve lui est rattachée.",
+    "remove_confirm": "Supprimer la preuve",
+    "empty_title": "Aucune preuve enregistrée",
+    "empty_description": "Un auditeur demande, pour chaque obligation, à voir le document qui la satisfait. Rattachez le premier et les articles ci-dessus commencent à se remplir.",
+    "modal": {
+      "title": "Ajouter une preuve",
+      "close": "Fermer",
+      "what": "De quoi s'agit-il ?",
+      "what_placeholder": "ex. Politique de sécurité de l'information v3",
+      "link": "Lien",
+      "review_by": "À revoir avant le",
+      "review_by_help": "Passée cette date, l'article couvert redevient non couvert — une preuve que personne n'a revue ne prouve rien.",
+      "articles": "Articles couverts",
+      "cancel": "Annuler",
+      "submit": "Ajouter la preuve",
+      "submitting": "Ajout…",
+      "added": "Preuve ajoutée",
+      "failed": "Impossible d'ajouter la preuve"
+    }
   }
 }

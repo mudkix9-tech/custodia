@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { CheckCircle2, AlertTriangle, CircleDashed, Plus, ExternalLink, Trash2, X } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
@@ -36,6 +37,7 @@ const STATUS_STYLE: Record<string, { chip: string; Icon: typeof CheckCircle2 }> 
 };
 
 export function EvidenceLibrary() {
+  const t = useTranslations('audit');
   const toast = useToast();
   const { confirm, dialog } = useConfirm();
   const utils = trpc.useUtils();
@@ -49,13 +51,13 @@ export function EvidenceLibrary() {
     onSuccess: () => {
       utils.audit.evidence.list.invalidate();
       utils.audit.articleCoverage.invalidate();
-      toast('Evidence removed');
+      toast(t('evidence_library.removed'));
     },
-    onError: (err) => toast('Could not remove the evidence', { tone: 'error', description: err.message }),
+    onError: (err) => toast(t('evidence_library.remove_failed'), { tone: 'error', description: err.message }),
   });
 
   if (isLoading) {
-    return <div className="p-8 text-center text-[#6E747A]">Loading evidence library…</div>;
+    return <div className="p-8 text-center text-[#6E747A]">{t('evidence_library.loading')}</div>;
   }
   if (!coverage) return null;
 
@@ -65,9 +67,9 @@ export function EvidenceLibrary() {
 
   const handleRemove = async (id: string, title: string) => {
     const ok = await confirm({
-      title: `Remove "${title}"?`,
-      description: 'The article it covers goes back to uncovered unless other evidence is attached to it.',
-      confirmText: 'Remove evidence',
+      title: t('evidence_library.remove_title', { title }),
+      description: t('evidence_library.remove_description'),
+      confirmText: t('evidence_library.remove_confirm'),
       variant: 'destructive',
     });
     if (ok) removeMutation.mutate({ id });
@@ -80,21 +82,21 @@ export function EvidenceLibrary() {
       {/* Headline. Deliberately separate from the compliance score: this measures
           documentation, not posture. */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <SummaryTile label="Articles covered" value={`${coverage.summary.covered}/${coverage.summary.total}`} tone="good" />
-        <SummaryTile label="Evidence expired" value={coverage.summary.expired} tone={coverage.summary.expired > 0 ? 'warn' : 'neutral'} />
-        <SummaryTile label="No evidence" value={coverage.summary.missing} tone={coverage.summary.missing > 0 ? 'bad' : 'neutral'} />
-        <SummaryTile label="Documentation" value={`${coverage.summary.percent}%`} tone="gold" />
+        <SummaryTile label={t('evidence_library.summary.covered')} value={`${coverage.summary.covered}/${coverage.summary.total}`} tone="good" />
+        <SummaryTile label={t('evidence_library.summary.expired')} value={coverage.summary.expired} tone={coverage.summary.expired > 0 ? 'warn' : 'neutral'} />
+        <SummaryTile label={t('evidence_library.summary.missing')} value={coverage.summary.missing} tone={coverage.summary.missing > 0 ? 'bad' : 'neutral'} />
+        <SummaryTile label={t('evidence_library.summary.documentation')} value={`${coverage.summary.percent}%`} tone="gold" />
       </div>
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-serif text-[#F4F5F6]">Evidence by article</h3>
+          <h3 className="text-lg font-serif text-[#F4F5F6]">{t('evidence_library.heading')}</h3>
           {selected && (
             <button
               onClick={() => setSelected(null)}
               className="flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-0.5 text-[11.5px] text-[#9BA1A6] hover:text-[#E6E8EA]"
             >
-              Article {selected} <X className="h-3 w-3" />
+              {t('evidence_library.filter_chip', { id: selected })} <X className="h-3 w-3" />
             </button>
           )}
         </div>
@@ -102,7 +104,7 @@ export function EvidenceLibrary() {
           onClick={() => setIsAdding(true)}
           className="flex items-center gap-2 rounded-lg bg-[#C9A227] px-4 py-2 text-[13px] font-medium text-[#08090A] transition-colors hover:bg-[#E5C463]"
         >
-          <Plus className="h-4 w-4" /> Add evidence
+          <Plus className="h-4 w-4" /> {t('evidence_library.add')}
         </button>
       </div>
 
@@ -117,11 +119,11 @@ export function EvidenceLibrary() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2.5">
-                      <span className="font-mono text-[12px] text-[#6E747A]">Art. {article.id}</span>
+                      <span className="font-mono text-[12px] text-[#6E747A]">{t('evidence_library.article_prefix', { id: article.id })}</span>
                       <h4 className="text-[14.5px] font-medium text-[#F4F5F6]">{article.title}</h4>
                       <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] ${chip}`}>
                         <Icon className="h-3 w-3" />
-                        {article.status === 'covered' ? 'Covered' : article.status === 'expired' ? 'Expired' : 'No evidence'}
+                        {t(`evidence_library.status.${article.status in STATUS_STYLE ? article.status : 'missing'}`)}
                       </span>
                     </div>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-[#9BA1A6]">{article.expects}</p>
@@ -130,7 +132,7 @@ export function EvidenceLibrary() {
                     onClick={() => setSelected(selected === article.id ? null : article.id)}
                     className="flex-none rounded-lg border border-white/10 px-3 py-1.5 text-[12.5px] text-[#9BA1A6] transition-colors hover:bg-white/5 hover:text-[#E6E8EA]"
                   >
-                    {items.length} item{items.length === 1 ? '' : 's'}
+                    {t('evidence_library.item_count', { count: items.length })}
                   </button>
                 </div>
 
@@ -155,14 +157,15 @@ export function EvidenceLibrary() {
                             )}
                             {item.validUntil && (
                               <span className={expired ? 'ml-2 text-amber-400' : 'ml-2 text-[#6E747A]'}>
-                                {expired ? 'expired ' : 'review by '}
-                                {new Date(item.validUntil).toLocaleDateString()}
+                                {expired
+                                  ? t('evidence_library.expired_on', { date: new Date(item.validUntil).toLocaleDateString() })
+                                  : t('evidence_library.review_by', { date: new Date(item.validUntil).toLocaleDateString() })}
                               </span>
                             )}
                           </span>
                           <button
                             onClick={() => handleRemove(item.id, item.title)}
-                            aria-label={`Remove ${item.title}`}
+                            aria-label={t('evidence_library.remove', { title: item.title })}
                             className="flex-none rounded p-1 text-[#6E747A] transition-colors hover:text-red-400"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -179,9 +182,9 @@ export function EvidenceLibrary() {
 
         {(evidence ?? []).length === 0 && (
           <EmptyState
-            title="No evidence recorded yet"
-            description="An auditor asks, for each obligation, to be shown the document that discharges it. Attach the first one and the articles above start filling in."
-            action={{ label: 'Add evidence', onClick: () => setIsAdding(true) }}
+            title={t('evidence_library.empty_title')}
+            description={t('evidence_library.empty_description')}
+            action={{ label: t('evidence_library.add'), onClick: () => setIsAdding(true) }}
           />
         )}
       </div>
@@ -223,6 +226,7 @@ function AddEvidenceModal({
   articles: CoverageArticle[];
   preselected: string | null;
 }) {
+  const t = useTranslations('audit');
   const toast = useToast();
   const utils = trpc.useUtils();
   const [title, setTitle] = useState('');
@@ -234,14 +238,14 @@ function AddEvidenceModal({
     onSuccess: () => {
       utils.audit.evidence.list.invalidate();
       utils.audit.articleCoverage.invalidate();
-      toast('Evidence added');
+      toast(t('evidence_library.modal.added'));
       setTitle('');
       setUrl('');
       setValidUntil('');
       setChosen([]);
       onClose();
     },
-    onError: (err) => toast('Could not add the evidence', { tone: 'error', description: err.message }),
+    onError: (err) => toast(t('evidence_library.modal.failed'), { tone: 'error', description: err.message }),
   });
 
   if (!open) return null;
@@ -263,8 +267,8 @@ function AddEvidenceModal({
         className="rise-in flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl border border-white/10 bg-[#0D0F11] shadow-panel-elevated"
       >
         <div className="flex flex-none items-center justify-between border-b border-white/10 px-6 py-4">
-          <h2 id="add-evidence-title" className="font-serif text-lg text-[#F4F5F6]">Add evidence</h2>
-          <button onClick={onClose} aria-label="Close" className="rounded p-1 text-[#6E747A] hover:text-[#E6E8EA]">
+          <h2 id="add-evidence-title" className="font-serif text-lg text-[#F4F5F6]">{t('evidence_library.modal.title')}</h2>
+          <button onClick={onClose} aria-label={t('evidence_library.modal.close')} className="rounded p-1 text-[#6E747A] hover:text-[#E6E8EA]">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -284,29 +288,29 @@ function AddEvidenceModal({
         >
           <div>
             <label htmlFor="ev-title" className="mb-1.5 block text-[13px] font-medium text-[#E6E8EA]">
-              What is it? <span className="text-[#C9A227]">*</span>
+              {t('evidence_library.modal.what')} <span className="text-[#C9A227]">*</span>
             </label>
             <input id="ev-title" value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus
-                   placeholder="e.g. Information security policy v3" className={field} />
+                   placeholder={t('evidence_library.modal.what_placeholder')} className={field} />
           </div>
 
           <div>
-            <label htmlFor="ev-url" className="mb-1.5 block text-[13px] font-medium text-[#E6E8EA]">Link</label>
+            <label htmlFor="ev-url" className="mb-1.5 block text-[13px] font-medium text-[#E6E8EA]">{t('evidence_library.modal.link')}</label>
             <input id="ev-url" type="url" value={url} onChange={(e) => setUrl(e.target.value)}
                    placeholder="https://…" className={field} />
           </div>
 
           <div>
-            <label htmlFor="ev-valid" className="mb-1.5 block text-[13px] font-medium text-[#E6E8EA]">Review by</label>
+            <label htmlFor="ev-valid" className="mb-1.5 block text-[13px] font-medium text-[#E6E8EA]">{t('evidence_library.modal.review_by')}</label>
             <input id="ev-valid" type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className={field} />
             <p className="mt-1.5 text-[12px] text-[#6E747A]">
-              After this date the article it covers reverts to uncovered — evidence nobody has revisited proves nothing.
+              {t('evidence_library.modal.review_by_help')}
             </p>
           </div>
 
           <div>
             <span className="mb-1.5 block text-[13px] font-medium text-[#E6E8EA]">
-              Articles it covers <span className="text-[#C9A227]">*</span>
+              {t('evidence_library.modal.articles')} <span className="text-[#C9A227]">*</span>
             </span>
             <div className="flex flex-wrap gap-1.5">
               {articles.map((a) => {
@@ -324,7 +328,7 @@ function AddEvidenceModal({
                         : 'border-white/10 text-[#9BA1A6] hover:text-[#E6E8EA]'
                     }`}
                   >
-                    Art. {a.id}
+                    {t('evidence_library.article_prefix', { id: a.id })}
                   </button>
                 );
               })}
@@ -335,7 +339,7 @@ function AddEvidenceModal({
         <div className="flex flex-none justify-end gap-2.5 border-t border-white/10 px-6 py-4">
           <button onClick={onClose} type="button"
                   className="rounded-lg border border-white/10 px-4 py-2 text-[13.5px] text-[#E6E8EA] hover:bg-white/5">
-            Cancel
+            {t('evidence_library.modal.cancel')}
           </button>
           <button
             type="button"
@@ -350,7 +354,7 @@ function AddEvidenceModal({
             }
             className="rounded-lg bg-[#C9A227] px-4 py-2 text-[13.5px] font-medium text-[#08090A] transition-colors hover:bg-[#E5C463] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {createMutation.isPending ? 'Adding…' : 'Add evidence'}
+            {createMutation.isPending ? t('evidence_library.modal.submitting') : t('evidence_library.modal.submit')}
           </button>
         </div>
       </div>

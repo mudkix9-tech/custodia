@@ -298,5 +298,22 @@
     "responses": "Ausführliche Antworten",
     "question_label": "F{number} • {category}",
     "no_response": "(Keine Antwort abgegeben)"
+  },
+  "add_modal": {
+    "title": "Eigenen Anbieter hinzufügen",
+    "close": "Schließen",
+    "name": "Name des Anbieters",
+    "name_placeholder": "z. B. Northbound Analytics",
+    "website": "Website",
+    "website_placeholder": "https://beispiel.de",
+    "category": "Kategorie",
+    "category_placeholder": "Analyse",
+    "country": "Sitzland",
+    "country_placeholder": "DE",
+    "cancel": "Abbrechen",
+    "submit": "Anbieter hinzufügen",
+    "submitting": "Wird hinzugefügt…",
+    "added": "{name} wurde ins Verzeichnis aufgenommen",
+    "failed": "Der Anbieter konnte nicht hinzugefügt werden"
   }
 }

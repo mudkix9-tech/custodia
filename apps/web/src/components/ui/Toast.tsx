@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/utils/cn';
 
 export type ToastTone = 'success' | 'error' | 'info';
@@ -35,6 +36,7 @@ const ToastContext = React.createContext<ToastApi | null>(null);
  * authenticated page.
  */
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const tr = useTranslations('shared');
   const [toasts, setToasts] = React.useState<Toast[]>([]);
   const timers = React.useRef(new Map<number, ReturnType<typeof setTimeout>>());
 
@@ -106,7 +108,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => dismiss(t.id)}
-                aria-label="Dismiss notification"
+                aria-label={tr('actions.dismiss')}
                 className="-mr-1 mt-0.5 flex-none rounded p-0.5 text-[#6E747A] transition-colors hover:text-[#E6E8EA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"
               >
                 <X className="h-3.5 w-3.5" />
