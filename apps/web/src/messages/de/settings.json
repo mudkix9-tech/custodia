@@ -240,7 +240,7 @@
   "integrations": {
     "title": "Integrationen",
     "subtitle": "Verbinden Sie CRM- und Marketing-Tools für die automatisierte DSAR-Erkennung.",
-    "disconnect_warning": "Das Trennen der Verbindung deaktiviert die automatische DSAR-Datenerkennung. Alle laufenden DSAR-Suchen werden als manuell markiert. Fortfahren?",
+    "disconnect_warning": "Die automatische DSAR-Datensuche für diesen Anbieter wird eingestellt; laufende DSAR-Suchen werden auf manuelle Bearbeitung zurückgesetzt.",
     "status": {
       "connected": "Verbunden",
       "error": "Fehler"
@@ -248,19 +248,26 @@
     "features": {
       "title": "Wenn verbunden, kann Custodia:",
       "auto_search": "Kontakte von {providerName} während der DSAR-Verarbeitung automatisch durchsuchen",
-      "auto_discover": "Verarbeitungsaktivitäten automatisch erkennen"
+      "auto_discover": "Verarbeitungsaktivitäten automatisch erkennen",
+      "monitor": "Gespeicherte personenbezogene Daten überwachen"
     },
     "connection": {
       "connected_to": "Verbunden mit:",
-      "last_synced": "Zuletzt synchronisiert:"
+      "last_synced": "Zuletzt synchronisiert:",
+      "status": "Status:"
     },
     "actions": {
       "disconnect": "Trennen",
       "reconnect": "Neu verbinden",
       "connect": "Verbinden",
-      "request": "Anfragen"
+      "request": "Anfragen",
+      "connect_provider": "{providerName} verbinden"
     },
-    "coming_soon": "Demnächst"
+    "coming_soon": "Demnächst",
+    "marketplace_title": "Integrationsmarktplatz",
+    "disconnect_title": "Diese Integration trennen?",
+    "disconnect_confirm": "Trennen",
+    "read_only_note": "Datenzugriff: nur lesend. Custodia verändert Ihre Daten niemals."
   },
   "developers": {
     "title": "Entwickler",

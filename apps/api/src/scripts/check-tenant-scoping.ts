@@ -31,7 +31,11 @@ const PROCEDURE = /^\s{2,8}(\w+):\s*(protectedProcedure|publicProcedure)/;
  * procedure body — a plain grep for `organizationId` cannot see it.
  */
 const OWNERSHIP_PROOFS = [
-  /eq\(\s*\w+\.organizationId/,
+  // The org must come from the session, not the request body. Accepting a bare
+  // `eq(x.organizationId, …)` let `integrations.listConnections` through for
+  // months: it filtered on `input.organizationId`, which is org-scoped to
+  // whichever org the caller names — the opposite of a tenancy check.
+  /eq\(\s*\w+\.organizationId\s*,\s*(?!input\.)/,
   /assertOwned\(/,
   /assertParentOwned\(/,
   /assertDomainInOrg\(/,

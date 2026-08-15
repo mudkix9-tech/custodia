@@ -18,16 +18,19 @@ export default function IntegrationsSettingsPage() {
   const orgId = (session?.user as any)?.orgId;
 
   const { data: providers, isLoading: providersLoading } = trpc.integrations.listProviders.useQuery();
-  const { data: connections, refetch } = trpc.integrations.listConnections.useQuery(
-    { organizationId: orgId },
-    { enabled: !!orgId }
-  );
+  const { data: connections, refetch } = trpc.integrations.listConnections.useQuery();
   const disconnectMutation = trpc.integrations.disconnect.useMutation();
   const { confirm, dialog } = useConfirm();
 
   const handleDisconnect = async (id: string) => {
     if (!isEditable) return;
-    if (window.confirm(t('disconnect_warning'))) {
+    const ok = await confirm({
+      title: t('disconnect_title'),
+      description: t('disconnect_warning'),
+      confirmText: t('disconnect_confirm'),
+      variant: 'destructive',
+    });
+    if (ok) {
       await disconnectMutation.mutateAsync({ id });
       refetch();
     }

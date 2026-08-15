@@ -16,10 +16,18 @@ export const integrationsRouter = router({
       }));
     }),
 
+  /**
+   * Connections belong to the caller's organisation, full stop.
+   *
+   * This took `organizationId` from the client and filtered on it directly —
+   * any authenticated user could read another tenant's provider account names,
+   * connection status and sync times by passing a different id. The comment
+   * left in its place said "In a real app, verify ctx.user has access to
+   * organizationId", which is this. `disconnect` below was already scoped
+   * correctly, so the two halves of the router disagreed.
+   */
   listConnections: protectedProcedure
-    .input(z.object({ organizationId: z.string().uuid() }))
-    .query(async ({ input, ctx }) => {
-      // In a real app, verify ctx.user has access to organizationId
+    .query(async ({ ctx }) => {
       return ctx.db.select({
         id: organizationIntegrations.id,
         provider: organizationIntegrations.provider,
@@ -29,7 +37,7 @@ export const integrationsRouter = router({
         createdAt: organizationIntegrations.createdAt
       })
       .from(organizationIntegrations)
-      .where(eq(organizationIntegrations.organizationId, input.organizationId));
+      .where(eq(organizationIntegrations.organizationId, ctx.user!.orgId));
     }),
 
   disconnect: protectedProcedure

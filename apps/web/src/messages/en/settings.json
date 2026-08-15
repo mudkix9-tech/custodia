@@ -240,7 +240,7 @@
   "integrations": {
     "title": "Integrations",
     "subtitle": "Connect CRM and marketing tools for automated DSAR discovery.",
-    "disconnect_warning": "Disconnecting will disable automatic DSAR data discovery. Any in-progress DSAR searches will be marked as manual. Proceed?",
+    "disconnect_warning": "Automatic DSAR data discovery stops for this provider, and any in-progress DSAR search falls back to manual.",
     "status": {
       "connected": "Connected",
       "error": "Error"
@@ -248,19 +248,26 @@
     "features": {
       "title": "When connected, Custodia can:",
       "auto_search": "Auto-search {providerName} contacts during DSAR processing",
-      "auto_discover": "Auto-discover processing activities"
+      "auto_discover": "Auto-discover processing activities",
+      "monitor": "Monitor stored personal data"
     },
     "connection": {
       "connected_to": "Connected to:",
-      "last_synced": "Last synced:"
+      "last_synced": "Last synced:",
+      "status": "Status:"
     },
     "actions": {
       "disconnect": "Disconnect",
       "reconnect": "Reconnect",
       "connect": "Connect",
-      "request": "Request"
+      "request": "Request",
+      "connect_provider": "Connect {providerName}"
     },
-    "coming_soon": "Coming Soon"
+    "coming_soon": "Coming Soon",
+    "marketplace_title": "Integrations Marketplace",
+    "disconnect_title": "Disconnect this integration?",
+    "disconnect_confirm": "Disconnect",
+    "read_only_note": "Data access: read-only. Custodia never modifies your data."
   },
   "developers": {
     "title": "Developers",
