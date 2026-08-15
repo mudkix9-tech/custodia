@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "check:params": "node scripts/check-async-params.mjs",
     "check:sitemap": "node scripts/check-sitemap.mjs",
-    "check:messages": "node scripts/check-messages.mjs"
+    "check:messages": "node scripts/check-messages.mjs",
+    "indexnow": "node scripts/submit-indexnow.mjs",
+    "indexnow:dry": "node scripts/submit-indexnow.mjs --dry-run"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",
