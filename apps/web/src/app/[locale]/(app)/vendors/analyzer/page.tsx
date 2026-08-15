@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Upload, FileText, CheckCircle2, AlertTriangle, AlertCircle, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/Toast';
 
 export default function DpaAnalyzerPage() {
+  const t = useTranslations('vendors');
   const toast = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [analysis, setAnalysis] = useState<any>(null);
@@ -17,7 +19,7 @@ export default function DpaAnalyzerPage() {
       setAnalysis(data);
     },
     onError: (err) => {
-      toast('Could not analyse the DPA', { tone: 'error', description: err.message });
+      toast(t('analyzer.failed'), { tone: 'error', description: err.message });
     }
   });
 
@@ -55,11 +57,11 @@ export default function DpaAnalyzerPage() {
     <div className="max-w-[900px] mx-auto p-8 fade-up space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <Link href="/vendors" className="text-sm text-indigo-400 hover:underline mb-2 inline-block">&larr; Back to Vendors</Link>
+          <Link href="/vendors" className="text-sm text-indigo-400 hover:underline mb-2 inline-block">&larr; {t('analyzer.back')}</Link>
           <h1 className="text-3xl font-serif text-[#F4F5F6] mb-2 flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-indigo-400" /> AI DPA Analyzer
+            <Sparkles className="w-8 h-8 text-indigo-400" /> {t('analyzer.title')}
           </h1>
-          <p className="text-[#9BA1A6] text-[15px]">Automatically review Vendor Data Processing Agreements against Article 28.</p>
+          <p className="text-[#9BA1A6] text-[15px]">{t('analyzer.subtitle')}</p>
         </div>
       </div>
 
@@ -70,8 +72,8 @@ export default function DpaAnalyzerPage() {
               <Upload className="w-8 h-8" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-[#F4F5F6]">Upload DPA (PDF)</h3>
-              <p className="text-sm text-[#6E747A] mt-1">Select a signed or draft DPA to analyze for GDPR compliance gaps.</p>
+              <h3 className="text-lg font-medium text-[#F4F5F6]">{t('analyzer.upload_title')}</h3>
+              <p className="text-sm text-[#6E747A] mt-1">{t('analyzer.upload_description')}</p>
             </div>
             
             <input 
@@ -87,7 +89,7 @@ export default function DpaAnalyzerPage() {
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full bg-[#0D0F11] border border-white/10 hover:bg-white/5 text-[#E6E8EA] font-medium py-3 rounded-xl transition-colors"
               >
-                {file ? file.name : 'Select PDF File'}
+                {file ? file.name : t('analyzer.select_file')}
               </button>
 
               <button 
@@ -98,11 +100,11 @@ export default function DpaAnalyzerPage() {
                 {analyzeMutation.isPending ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Analyzing Document...
+                    {t('analyzer.analysing')}
                   </>
                 ) : (
                   <>
-                    <FileText className="w-5 h-5" /> Analyze DPA
+                    <FileText className="w-5 h-5" /> {t('analyzer.analyze')}
                   </>
                 )}
               </button>
@@ -115,12 +117,12 @@ export default function DpaAnalyzerPage() {
         <div className="space-y-6">
           <div className="bg-[#0D0F11] border border-white/10 rounded-2xl shadow-panel-elevated p-6 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-[#F4F5F6]">Analysis Results</h2>
-              <p className="text-sm text-[#6E747A] mt-1">File: {file?.name}</p>
+              <h2 className="text-xl font-bold text-[#F4F5F6]">{t('analyzer.results')}</h2>
+              <p className="text-sm text-[#6E747A] mt-1">{t('analyzer.file', { name: file?.name ?? '' })}</p>
             </div>
             <div className="text-right">
               <div className="text-3xl font-serif text-indigo-400">{analysis.overall_score}/100</div>
-              <div className="text-sm font-medium text-[#6E747A] uppercase tracking-wide">Compliance Score</div>
+              <div className="text-sm font-medium text-[#6E747A] uppercase tracking-wide">{t('analyzer.score_label')}</div>
             </div>
           </div>
 
@@ -135,7 +137,7 @@ export default function DpaAnalyzerPage() {
               onClick={() => { setAnalysis(null); setFile(null); }}
               className="text-indigo-400 font-medium hover:underline"
             >
-              Analyze another document
+              {t('analyzer.another')}
             </button>
           </div>
         </div>
@@ -145,6 +147,7 @@ export default function DpaAnalyzerPage() {
 }
 
 function ClauseItem({ clause, statusColors, statusIcons }: any) {
+  const t = useTranslations('vendors');
   const [expanded, setExpanded] = useState(false);
   
   return (
@@ -162,11 +165,11 @@ function ClauseItem({ clause, statusColors, statusIcons }: any) {
               {clause.id.replace(/_/g, ' ')}
             </h4>
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border uppercase tracking-wider ${statusColors[clause.status as keyof typeof statusColors]}`}>
-              {clause.status}
+              {t(`analyzer.status.${clause.status}`)}
             </span>
           </div>
           <p className="text-sm text-[#6E747A] mt-1 truncate">
-            {clause.notes || (clause.status === 'present' ? 'Clause verified compliant.' : 'Review required.')}
+            {clause.notes || (clause.status === 'present' ? t('analyzer.clause.verified') : t('analyzer.clause.review_required'))}
           </p>
         </div>
         <div className="flex-shrink-0 text-[#6E747A]">
@@ -178,18 +181,18 @@ function ClauseItem({ clause, statusColors, statusIcons }: any) {
         <div className="px-5 pb-5 pt-2 border-t border-white/10 bg-white/5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div>
-              <h5 className="text-xs font-bold text-[#6E747A] uppercase tracking-wider mb-2">Analysis Notes</h5>
+              <h5 className="text-xs font-bold text-[#6E747A] uppercase tracking-wider mb-2">{t('analyzer.clause.notes_title')}</h5>
               <p className="text-sm text-[#E6E8EA] leading-relaxed bg-[#0D0F11] p-3 rounded-lg border border-white/10 shadow-panel-elevated">
-                {clause.notes || 'No specific notes provided. Clause appears compliant with Article 28.'}
+                {clause.notes || t('analyzer.clause.no_notes')}
               </p>
             </div>
             <div>
               <h5 className="text-xs font-bold text-[#6E747A] uppercase tracking-wider mb-2 flex items-center justify-between">
-                <span>Extracted Excerpt</span>
-                {clause.location && <span className="text-[#6E747A] font-normal">Found in: {clause.location}</span>}
+                <span>{t('analyzer.clause.excerpt_title')}</span>
+                {clause.location && <span className="text-[#6E747A] font-normal">{t('analyzer.clause.found_in', { location: clause.location })}</span>}
               </h5>
               <div className="text-sm text-[#9BA1A6] leading-relaxed bg-[#0D0F11] p-3 rounded-lg border border-white/10 shadow-panel-elevated italic h-full">
-                {clause.excerpt ? `"${clause.excerpt}"` : 'No relevant excerpt extracted.'}
+                {clause.excerpt ? `“${clause.excerpt}”` : t('analyzer.clause.no_excerpt')}
               </div>
             </div>
           </div>

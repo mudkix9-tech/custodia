@@ -49,5 +49,254 @@
   "empty": {
     "title": "Noch keine Dienstleister erfasst",
     "description": "Für jeden Auftragsverarbeiter, der in Ihrem Auftrag personenbezogene Daten verarbeitet, ist ein Vertrag nach Artikel 28 erforderlich. Scannen Sie Ihre Website oder fügen Sie einen manuell hinzu."
+  },
+  "risk_level": {
+    "low": "Niedrig",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "critical": "Kritisch",
+    "unknown": "Unbekannt"
+  },
+  "detail": {
+    "loading": "Anbieterdaten werden geladen...",
+    "not_found": "Anbieter nicht gefunden oder nicht verknüpft.",
+    "back": "Zurück zum Anbieterverzeichnis",
+    "auto_discovered": {
+      "title": "Automatisch erkanntes Anbieterprofil",
+      "description": "Dieses Anbieterprofil wurde automatisch aus einem Website- oder DNS-Scan erstellt. Bitte prüfen und ergänzen Sie Sitzland, EU-Hosting-Optionen und Sicherheitszertifizierungen, damit die Risikobewertung korrekt ist.",
+      "verify": "Profil prüfen und festschreiben"
+    },
+    "headquarters": "Hauptsitz",
+    "certifications": "Zertifizierungen",
+    "none_detected": "Keine erkannt",
+    "eu_residency": "EU-Datenstandort",
+    "available": "Verfügbar",
+    "not_available": "Nicht verfügbar",
+    "use_eu_datacentre": "Wir nutzen das EU-Rechenzentrum",
+    "risk": {
+      "title": "Berechneter Risiko-Score",
+      "explanation": "Der Score wird dynamisch aus Rechtsraum ({country}), AVV ({dpaStatus}), Sicherheitslage und Bedrohungsdaten berechnet.",
+      "factors": "Aufschlüsselung der Risikofaktoren",
+      "points": "+{points} / {max} Pkt."
+    },
+    "tabs": {
+      "dpa": "AVV-Verwaltung",
+      "tia": "Transfer-Folgenabschätzung",
+      "sub_processors": "Unterauftragsverarbeiter",
+      "incidents": "Vorfälle und Verletzungen",
+      "questionnaire": "Sicherheitsfragebogen"
+    },
+    "dpa": {
+      "title": "Auftragsverarbeitungsvertrag",
+      "description": "Dokumentieren Sie Ihre Vertragsbeziehung. Ein unterzeichneter AVV ist nach Artikel 28 DSGVO zwingend erforderlich.",
+      "status": {
+        "not_started": "Nicht begonnen",
+        "draft": "Entwurf",
+        "sent": "Versendet",
+        "signed": "Unterzeichnet",
+        "expired": "Abgelaufen"
+      },
+      "upload": {
+        "title": "Unterzeichnetes Dokument hochladen",
+        "description": "Hinterlegen Sie Ihren abgeschlossenen AVV sicher. Ihr Risiko-Score wird automatisch aktualisiert und Ablaufwarnungen werden eingeplant.",
+        "analysing": "Die KI analysiert die Klauseln und prüft auf problematische Formulierungen...",
+        "select_file": "PDF-Datei auswählen",
+        "error_pdf_only": "Für die KI-AVV-Analyse werden ausschließlich PDF-Dokumente unterstützt.",
+        "error_analyse": "Das AVV-Dokument konnte nicht analysiert werden.",
+        "error_read": "Die AVV-Datei konnte nicht gelesen werden."
+      },
+      "clause_review": {
+        "title": "Klauselprüfung nach Artikel 28",
+        "description": "Prüfen Sie, ob Ihr Vertrag alle Pflichtangaben für Auftragsverarbeiter nach Artikel 28 Abs. 3 DSGVO abdeckt.",
+        "completeness": "Vollständigkeit",
+        "count": "{covered} / {total} Klauseln ({percent} %)"
+      },
+      "clauses": {
+        "documented_instructions": {
+          "label": "Dokumentierte Weisungen",
+          "description": "Verarbeitung ausschließlich auf dokumentierte Weisung des Verantwortlichen."
+        },
+        "confidentiality": {
+          "label": "Vertraulichkeit des Personals",
+          "description": "Sicherstellen, dass zur Verarbeitung befugte Personen zur Vertraulichkeit verpflichtet sind."
+        },
+        "security_measures": {
+          "label": "Sicherheitsmaßnahmen",
+          "description": "Technische und organisatorische Maßnahmen umsetzen (Art. 32)."
+        },
+        "sub_processor_restrictions": {
+          "label": "Beschränkungen für Unterauftragsverarbeiter",
+          "description": "Unterauftragsverarbeiter nur mit vorheriger gesonderter oder allgemeiner Genehmigung einsetzen."
+        },
+        "data_subject_rights": {
+          "label": "Unterstützung bei Betroffenenrechten",
+          "description": "Den Verantwortlichen bei der Beantwortung von Betroffenenanfragen unterstützen."
+        },
+        "security_breach_dpia": {
+          "label": "Unterstützung bei Verletzungen und DSFA",
+          "description": "Den Verantwortlichen bei Meldungen von Verletzungen, Sicherheitsprüfungen und DSFA unterstützen."
+        },
+        "deletion_on_termination": {
+          "label": "Löschung oder Rückgabe der Daten",
+          "description": "Alle personenbezogenen Daten nach Abschluss der Verarbeitung nach Wahl des Verantwortlichen löschen oder zurückgeben."
+        },
+        "audit_rights": {
+          "label": "Überprüfungen und Inspektionen",
+          "description": "Überprüfungen und Inspektionen durch den Verantwortlichen ermöglichen und dazu beitragen."
+        }
+      },
+      "inputs": {
+        "title": "Eingaben zur Risikobewertung",
+        "volume": "Zahl der betroffenen Personen",
+        "volume_options": {
+          "lt1k": "< 1.000 Personen",
+          "1k_10k": "1.000 – 10.000 Personen",
+          "10k_100k": "10.000 – 100.000 Personen",
+          "100k_plus": "Mehr als 100.000 Personen"
+        },
+        "renewal_date": "Vertragsverlängerung am",
+        "expiry_date": "AVV läuft ab am",
+        "certifications": "Sicherheitszertifizierungen"
+      },
+      "template": {
+        "title": "AVV-Vorlage des Anbieters",
+        "provided_by": "Öffentlich bereitgestellt von {name}",
+        "review": "Vorlage ansehen"
+      }
+    }
+  },
+  "analyzer": {
+    "back": "Zurück zu den Anbietern",
+    "title": "KI-AVV-Analyse",
+    "subtitle": "Auftragsverarbeitungsverträge automatisch gegen Artikel 28 prüfen.",
+    "failed": "Der AVV konnte nicht analysiert werden",
+    "upload_title": "AVV hochladen (PDF)",
+    "upload_description": "Wählen Sie einen unterzeichneten AVV oder Entwurf zur Prüfung auf DSGVO-Lücken aus.",
+    "select_file": "PDF-Datei auswählen",
+    "analysing": "Dokument wird analysiert...",
+    "analyze": "AVV analysieren",
+    "results": "Analyseergebnisse",
+    "file": "Datei: {name}",
+    "score_label": "Compliance-Score",
+    "another": "Weiteres Dokument analysieren",
+    "status": {
+      "present": "Vorhanden",
+      "weak": "Schwach",
+      "missing": "Fehlt"
+    },
+    "clause": {
+      "verified": "Klausel als konform bestätigt.",
+      "review_required": "Prüfung erforderlich.",
+      "notes_title": "Analysehinweise",
+      "no_notes": "Keine besonderen Hinweise. Die Klausel scheint Artikel 28 zu entsprechen.",
+      "excerpt_title": "Extrahierter Auszug",
+      "found_in": "Gefunden in: {location}",
+      "no_excerpt": "Kein passender Auszug extrahiert."
+    }
+  },
+  "assessments": {
+    "title": "Anbieterbewertungen",
+    "subtitle": "Automatisiertes Tracking und strukturierte Compliance-Fragebögen für Dritte.",
+    "send": "Bewertung versenden",
+    "metrics": {
+      "dispatched": "Insgesamt versendet",
+      "dispatched_unit": "Anfragen",
+      "completion_rate": "Abschlussquote",
+      "completed_count": "{count} abgeschlossen",
+      "pending": "Antwort des Anbieters ausstehend",
+      "pending_unit": "ausstehend",
+      "expired": "Überfällig / abgelaufen",
+      "expired_unit": "Verlängerung nötig"
+    },
+    "filters": {
+      "all": "Alle",
+      "sent": "Versendet",
+      "in_progress": "In Bearbeitung",
+      "completed": "Abgeschlossen",
+      "expired": "Abgelaufen"
+    },
+    "loading": "Bewertungsprotokolle werden geladen...",
+    "empty": {
+      "title": "Keine Bewertungen gefunden",
+      "description": "Versenden Sie eine neue Prüfungseinladung an einen Dritten, damit sie hier erscheint."
+    },
+    "columns": {
+      "vendor": "Anbieter und Vorlage",
+      "recipient": "Empfänger",
+      "sent_at": "Versendet am",
+      "status": "Status",
+      "score": "Score",
+      "actions": "Aktionen"
+    },
+    "unknown_vendor": "Unbekannter Anbieter",
+    "default_recipient": "Sicherheitsverantwortliche Person",
+    "never": "Nie",
+    "not_available": "–",
+    "expires": "Läuft ab: {date}",
+    "adjustment": "Korrektur: {value}",
+    "score_pending": "Ausstehend",
+    "copy_link": "Link in die Zwischenablage kopieren",
+    "print": "Drucken / als PDF exportieren",
+    "review_action": "Prüfung und Korrekturen",
+    "errors": {
+      "required": "Bitte füllen Sie alle Pflichtfelder aus.",
+      "dispatch": "Die Bewertung konnte nicht versendet werden.",
+      "review": "Die Compliance-Prüfung konnte nicht gespeichert werden."
+    },
+    "success": {
+      "sent": "Einladung zur Bewertung erfolgreich versendet.",
+      "reviewed": "Prüfung der Bewertung erfolgreich aktualisiert."
+    },
+    "dispatch_modal": {
+      "title": "Sicherheitsfragebogen versenden",
+      "close": "Schließen",
+      "vendor": "Ziel-Anbieter *",
+      "vendor_placeholder": "Anbieter auswählen...",
+      "template": "Fragebogenvorlage *",
+      "template_default": "(Standard)",
+      "recipient_name": "Name des Empfängers",
+      "recipient_name_placeholder": "z. B. Sicherheitsteam",
+      "recipient_email": "E-Mail des Empfängers *",
+      "recipient_email_placeholder": "z. B. security@anbieter.de",
+      "note": "Mit dem Versand wird sofort ein sicherer Einmal-Zugangslink erzeugt und an den Kontakt des Partners gesendet. Der Fragebogen läuft nach genau 30 Tagen ab, sofern er nicht abgeschlossen oder verlängert wird.",
+      "cancel": "Abbrechen",
+      "submit": "E-Mail versenden",
+      "submitting": "Wird gesendet..."
+    },
+    "review_modal": {
+      "title": "Prüfung und Anpassung",
+      "adjustment": "Score-Korrektur (-50 bis +50)",
+      "adjustment_help": "Passt den Basis-Score des Fragebogens an. Negative Werte senken, positive Werte erhöhen die bewertete Sicherheitslage.",
+      "summary": "Zusammenfassung / Notizen der prüfenden Person",
+      "summary_placeholder": "Prüfnotizen, Beobachtungen oder Gründe für Anpassungen festhalten...",
+      "cancel": "Abbrechen",
+      "submit": "Prüfung speichern",
+      "submitting": "Wird gespeichert..."
+    }
+  },
+  "print": {
+    "loading": "Prüfexport wird vorbereitet...",
+    "not_found": "Datensatz nicht gefunden",
+    "not_found_description": "Der angeforderte Bewertungsdatensatz konnte nicht geladen werden oder ist im Kontext dieser Organisation nicht zugänglich.",
+    "banner": "Prüfnachweis berechtigtes Interesse (DSGVO Art. 30 VVT)",
+    "print_button": "Drucken / als PDF speichern",
+    "provenance": "Prüfnachweis zur Herkunft",
+    "title": "DSGVO-Sicherheits- und Datenschutzbewertung",
+    "vendor_line": "Anbieter: {vendor} • Vorlage: {template}",
+    "score_label": "Prüf-Score",
+    "review_details": "Angaben zur Prüfung",
+    "completed_at": "Abgeschlossen am:",
+    "pending": "Ausstehend",
+    "respondent_email": "E-Mail der antwortenden Person:",
+    "identity": "Identitäts- und Bewertungsprüfung",
+    "respondent_ip": "IP-Adresse der antwortenden Person:",
+    "ip_unavailable": "– (lokale / vertrauenswürdige Sitzung)",
+    "status": "Status:",
+    "ai_summary": "KI-Zusammenfassung und Compliance-Hinweise",
+    "no_summary": "Keine Anmerkungen aus der Prüfzusammenfassung vorhanden.",
+    "adjustment_applied": "Vom Prüfer angewendete Änderung des Risiko-Scores: {points} Punkte",
+    "responses": "Ausführliche Antworten",
+    "question_label": "F{number} • {category}",
+    "no_response": "(Keine Antwort abgegeben)"
   }
 }

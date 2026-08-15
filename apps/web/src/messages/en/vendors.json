@@ -46,5 +46,254 @@
   "empty": {
     "title": "No vendors tracked yet",
     "description": "Every processor that touches personal data on your behalf needs an Article 28 contract. Scan your site to find them automatically, or add one by hand."
+  },
+  "risk_level": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical",
+    "unknown": "Unknown"
+  },
+  "detail": {
+    "loading": "Loading vendor intelligence...",
+    "not_found": "Vendor not found or not linked.",
+    "back": "Back to Vendor Register",
+    "auto_discovered": {
+      "title": "Auto-Discovered Vendor Profile",
+      "description": "This vendor profile was auto-created from a website or DNS scan. Please verify and complete their headquarters country, EU hosting options, and security certifications to ensure correct risk score modelling.",
+      "verify": "Verify & Lock Profile"
+    },
+    "headquarters": "Headquarters",
+    "certifications": "Certifications",
+    "none_detected": "None detected",
+    "eu_residency": "EU Data Residency",
+    "available": "Available",
+    "not_available": "Not Available",
+    "use_eu_datacentre": "We use the EU data centre",
+    "risk": {
+      "title": "Calculated Risk Score",
+      "explanation": "Score is dynamically calculated based on jurisdiction ({country}), DPAs ({dpaStatus}), security posture, and threat intelligence.",
+      "factors": "Risk Factors Breakdown",
+      "points": "+{points} / {max} pts"
+    },
+    "tabs": {
+      "dpa": "DPA Management",
+      "tia": "Transfer Impact",
+      "sub_processors": "Sub-processors",
+      "incidents": "Incidents & Breaches",
+      "questionnaire": "Security Questionnaire"
+    },
+    "dpa": {
+      "title": "Data Processing Agreement",
+      "description": "Track your legal relationship. A signed DPA is strictly required under GDPR Article 28.",
+      "status": {
+        "not_started": "Not started",
+        "draft": "Draft",
+        "sent": "Sent",
+        "signed": "Signed",
+        "expired": "Expired"
+      },
+      "upload": {
+        "title": "Upload Signed Document",
+        "description": "Securely store your executed DPA. This will automatically update your risk score and schedule expiry alerts.",
+        "analysing": "AI is parsing clauses and checking problematic language...",
+        "select_file": "Select PDF File",
+        "error_pdf_only": "Only PDF documents are supported for AI DPA analysis.",
+        "error_analyse": "Failed to analyse the DPA document.",
+        "error_read": "Failed to read the DPA file."
+      },
+      "clause_review": {
+        "title": "Article 28 Clause Review",
+        "description": "Verify that your contract covers all mandatory processor requirements under GDPR Article 28(3).",
+        "completeness": "Completeness",
+        "count": "{covered} / {total} clauses ({percent}%)"
+      },
+      "clauses": {
+        "documented_instructions": {
+          "label": "Documented Instructions",
+          "description": "Process data only on written instructions from the controller."
+        },
+        "confidentiality": {
+          "label": "Personnel Confidentiality",
+          "description": "Ensure staff authorised to process data are committed to confidentiality."
+        },
+        "security_measures": {
+          "label": "Security Measures",
+          "description": "Implement technical and organisational security measures (Art. 32)."
+        },
+        "sub_processor_restrictions": {
+          "label": "Sub-processor Restrictions",
+          "description": "Engage sub-processors only with prior specific or general authorisation."
+        },
+        "data_subject_rights": {
+          "label": "Data Subject Rights Assistance",
+          "description": "Assist the controller in responding to data subjects exercising their rights."
+        },
+        "security_breach_dpia": {
+          "label": "Breach & DPIA Assistance",
+          "description": "Assist the controller with breach notifications, security audits, and DPIAs."
+        },
+        "deletion_on_termination": {
+          "label": "Deletion or Return of Data",
+          "description": "Delete or return all personal data at the choice of the controller after processing ends."
+        },
+        "audit_rights": {
+          "label": "Audits and Inspections",
+          "description": "Allow for and contribute to audits and inspections conducted by the controller."
+        }
+      },
+      "inputs": {
+        "title": "Risk Assessment Inputs",
+        "volume": "Data Subject Volume",
+        "volume_options": {
+          "lt1k": "< 1,000 subjects",
+          "1k_10k": "1,000 – 10,000 subjects",
+          "10k_100k": "10,000 – 100,000 subjects",
+          "100k_plus": "100,000+ subjects"
+        },
+        "renewal_date": "Contract Renewal Date",
+        "expiry_date": "DPA Expiry Date",
+        "certifications": "Security Certifications"
+      },
+      "template": {
+        "title": "Vendor DPA Template",
+        "provided_by": "Publicly provided by {name}",
+        "review": "Review Template"
+      }
+    }
+  },
+  "analyzer": {
+    "back": "Back to Vendors",
+    "title": "AI DPA Analyzer",
+    "subtitle": "Automatically review vendor Data Processing Agreements against Article 28.",
+    "failed": "Could not analyse the DPA",
+    "upload_title": "Upload DPA (PDF)",
+    "upload_description": "Select a signed or draft DPA to analyse for GDPR compliance gaps.",
+    "select_file": "Select PDF File",
+    "analysing": "Analysing document...",
+    "analyze": "Analyze DPA",
+    "results": "Analysis Results",
+    "file": "File: {name}",
+    "score_label": "Compliance Score",
+    "another": "Analyse another document",
+    "status": {
+      "present": "Present",
+      "weak": "Weak",
+      "missing": "Missing"
+    },
+    "clause": {
+      "verified": "Clause verified compliant.",
+      "review_required": "Review required.",
+      "notes_title": "Analysis Notes",
+      "no_notes": "No specific notes provided. Clause appears compliant with Article 28.",
+      "excerpt_title": "Extracted Excerpt",
+      "found_in": "Found in: {location}",
+      "no_excerpt": "No relevant excerpt extracted."
+    }
+  },
+  "assessments": {
+    "title": "Vendor Assessments",
+    "subtitle": "Automated tracking and structured compliance questionnaires for third parties.",
+    "send": "Send Assessment",
+    "metrics": {
+      "dispatched": "Total Dispatched",
+      "dispatched_unit": "requests",
+      "completion_rate": "Completion Rate",
+      "completed_count": "{count} complete",
+      "pending": "Pending Vendor Response",
+      "pending_unit": "awaiting",
+      "expired": "Overdue / Expired",
+      "expired_unit": "requires extension"
+    },
+    "filters": {
+      "all": "All",
+      "sent": "Sent",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "expired": "Expired"
+    },
+    "loading": "Loading assessment logs...",
+    "empty": {
+      "title": "No Assessments Found",
+      "description": "Trigger a new review invitation for a third party to see it here."
+    },
+    "columns": {
+      "vendor": "Vendor & Template",
+      "recipient": "Recipient",
+      "sent_at": "Sent At",
+      "status": "Status",
+      "score": "Score",
+      "actions": "Actions"
+    },
+    "unknown_vendor": "Unknown Vendor",
+    "default_recipient": "Security Lead",
+    "never": "Never",
+    "not_available": "N/A",
+    "expires": "Expires: {date}",
+    "adjustment": "Adj: {value}",
+    "score_pending": "Pending",
+    "copy_link": "Copy link to clipboard",
+    "print": "Print / Export PDF",
+    "review_action": "Audit Review & Overrides",
+    "errors": {
+      "required": "Please fill in all required fields.",
+      "dispatch": "Failed to dispatch the assessment.",
+      "review": "Failed to save the compliance review."
+    },
+    "success": {
+      "sent": "Assessment invitation sent successfully.",
+      "reviewed": "Assessment review updated successfully."
+    },
+    "dispatch_modal": {
+      "title": "Dispatch Security Questionnaire",
+      "close": "Close",
+      "vendor": "Target Vendor *",
+      "vendor_placeholder": "Select a vendor...",
+      "template": "Questionnaire Template *",
+      "template_default": "(Default)",
+      "recipient_name": "Recipient Name",
+      "recipient_name_placeholder": "e.g. Security Team",
+      "recipient_email": "Recipient Email *",
+      "recipient_email_placeholder": "e.g. security@vendor.com",
+      "note": "Dispatching this request will immediately generate a secure single-use access link and email the partner contact. The questionnaire expires in exactly 30 days unless completed or extended.",
+      "cancel": "Cancel",
+      "submit": "Dispatch Email",
+      "submitting": "Sending..."
+    },
+    "review_modal": {
+      "title": "Audit Review & Adjustment",
+      "adjustment": "Score Adjustment Modifier (-50 to +50)",
+      "adjustment_help": "Adjusts the base questionnaire compliance score. Negative values decrease security compliance, positive values increase it.",
+      "summary": "Auditor Review Summary / Notes",
+      "summary_placeholder": "Record verification notes, observations, or grounds for adjustments...",
+      "cancel": "Cancel",
+      "submit": "Save Review",
+      "submitting": "Saving..."
+    }
+  },
+  "print": {
+    "loading": "Preparing compliance audit export...",
+    "not_found": "Record Not Found",
+    "not_found_description": "The requested assessment record could not be loaded or is inaccessible in this organisation context.",
+    "banner": "Legitimate Interest Audit Record (GDPR Art. 30 ROPA)",
+    "print_button": "Print / Save as PDF",
+    "provenance": "Audit Provenance Record",
+    "title": "GDPR Security & Privacy Assessment",
+    "vendor_line": "Vendor: {vendor} • Template: {template}",
+    "score_label": "Audit Score",
+    "review_details": "Review Details",
+    "completed_at": "Completed At:",
+    "pending": "Pending",
+    "respondent_email": "Respondent Email:",
+    "identity": "Identity & Scoring Verification",
+    "respondent_ip": "Respondent IP:",
+    "ip_unavailable": "N/A (local / trusted session)",
+    "status": "Status:",
+    "ai_summary": "AI Summary & Compliance Notes",
+    "no_summary": "No compliance audit summary comments available.",
+    "adjustment_applied": "Risk score modification applied by auditor: {points} points",
+    "responses": "Detailed Responses",
+    "question_label": "Q{number} • {category}",
+    "no_response": "(No response provided)"
   }
 }

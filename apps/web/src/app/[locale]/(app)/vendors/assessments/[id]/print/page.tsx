@@ -2,10 +2,12 @@
 
 import React, { useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Loader2, Printer, ShieldCheck, Mail, Globe, Clock, FileText, CheckSquare } from 'lucide-react';
 
 export default function AssessmentPrintPage() {
+  const t = useTranslations('vendors');
   const params = useParams();
   const id = params?.id as string;
 
@@ -26,20 +28,20 @@ export default function AssessmentPrintPage() {
 
   if (isQueryLoading) {
     return (
-      <div className="min-h-screen bg-[#0D0F11] text-neutral-900 flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-white text-neutral-900 flex flex-col items-center justify-center p-6">
         <Loader2 className="w-10 h-10 text-[#C9A227] animate-spin mb-3" />
-        <p className="text-sm text-neutral-500 font-medium">Preparing compliance audit export...</p>
+        <p className="text-sm text-neutral-500 font-medium">{t('print.loading')}</p>
       </div>
     );
   }
 
   if (queryError || !record) {
     return (
-      <div className="min-h-screen bg-[#0D0F11] text-neutral-900 flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-white text-neutral-900 flex flex-col items-center justify-center p-6">
         <div className="max-w-md border border-neutral-200 rounded-xl p-8 text-center">
-          <h2 className="text-xl font-bold text-red-400 mb-2">Record Not Found</h2>
+          <h2 className="text-xl font-bold text-red-600 mb-2">{t('print.not_found')}</h2>
           <p className="text-sm text-neutral-500 mb-4">
-            The requested assessment record could not be loaded or is inaccessible in this organization context.
+            {t('print.not_found_description')}
           </p>
         </div>
       </div>
@@ -56,32 +58,32 @@ export default function AssessmentPrintPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-[#0D0F11] text-neutral-900 p-8 sm:p-12 print:p-0 max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-white text-neutral-900 p-8 sm:p-12 print:p-0 max-w-4xl mx-auto space-y-8">
       {/* Top Print Utility Bar (Hidden during print) */}
       <div className="print:hidden flex justify-between items-center bg-neutral-50 border border-neutral-200 rounded-xl p-4 mb-6 shadow-panel-elevated">
         <div className="flex items-center gap-2 text-sm text-neutral-600">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Legitimate Interest Audit Record (GDPR Art. 30 ROPA)</span>
+          <span>{t('print.banner')}</span>
         </div>
         <button
           onClick={handlePrint}
           className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-panel-elevated"
         >
-          <Printer className="w-4 h-4" /> Print / Save as PDF
+          <Printer className="w-4 h-4" /> {t('print.print_button')}
         </button>
       </div>
 
       {/* Header compliance title */}
       <div className="border-b-2 border-neutral-900 pb-6 flex justify-between items-start">
         <div>
-          <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest block mb-1">Audit Provenance Record</span>
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-950 font-serif">GDPR Security &amp; Privacy Assessment</h1>
-          <p className="text-sm text-neutral-500 mt-1">Vendor: <strong className="text-neutral-800">{vendorName}</strong> • Template: {template?.name}</p>
+          <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest block mb-1">{t('print.provenance')}</span>
+          <h1 className="text-3xl font-bold tracking-tight text-neutral-950 font-serif">{t('print.title')}</h1>
+          <p className="text-sm text-neutral-500 mt-1">{t('print.vendor_line', { vendor: vendorName ?? '', template: template?.name ?? '' })}</p>
         </div>
         
         {hasScore && (
           <div className="text-right border border-neutral-300 rounded-lg p-3 bg-neutral-50/50">
-            <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest block">Audit Score</span>
+            <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest block">{t('print.score_label')}</span>
             <span className="text-3xl font-extrabold text-neutral-900">{finalScore}/100</span>
           </div>
         )}
@@ -90,61 +92,61 @@ export default function AssessmentPrintPage() {
       {/* Provenance Metadata Table (Critical for Art. 30 Audit trails) */}
       <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
         <div className="space-y-3">
-          <h4 className="font-bold text-xs uppercase tracking-wider text-neutral-500 border-b border-neutral-200 pb-1">Review Details</h4>
+          <h4 className="font-bold text-xs uppercase tracking-wider text-neutral-500 border-b border-neutral-200 pb-1">{t('print.review_details')}</h4>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-neutral-400" />
-            <span className="text-neutral-600">Completed At:</span>
-            <span className="font-semibold text-neutral-800">{a.completedAt ? new Date(a.completedAt).toLocaleString() : 'Pending'}</span>
+            <span className="text-neutral-600">{t('print.completed_at')}</span>
+            <span className="font-semibold text-neutral-800">{a.completedAt ? new Date(a.completedAt).toLocaleString() : t('print.pending')}</span>
           </div>
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-neutral-400" />
-            <span className="text-neutral-600">Respondent Email:</span>
+            <span className="text-neutral-600">{t('print.respondent_email')}</span>
             <span className="font-semibold text-neutral-800">{a.respondentEmail || a.recipientEmail}</span>
           </div>
         </div>
 
         <div className="space-y-3">
-          <h4 className="font-bold text-xs uppercase tracking-wider text-neutral-500 border-b border-neutral-200 pb-1">Identity &amp; Scoring Verification</h4>
+          <h4 className="font-bold text-xs uppercase tracking-wider text-neutral-500 border-b border-neutral-200 pb-1">{t('print.identity')}</h4>
           <div className="flex items-center gap-2">
             <Globe className="w-4 h-4 text-neutral-400" />
-            <span className="text-neutral-600">Respondent IP:</span>
-            <span className="font-mono text-xs font-semibold text-neutral-800">{a.respondentIp || 'N/A (Local / Trusted Session)'}</span>
+            <span className="text-neutral-600">{t('print.respondent_ip')}</span>
+            <span className="font-mono text-xs font-semibold text-neutral-800">{a.respondentIp || t('print.ip_unavailable')}</span>
           </div>
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-neutral-400" />
-            <span className="text-neutral-600">Status:</span>
-            <span className="font-semibold text-neutral-800 uppercase tracking-wider text-xs px-2 py-0.5 bg-neutral-200 rounded">{a.status}</span>
+            <span className="text-neutral-600">{t('print.status')}</span>
+            <span className="font-semibold text-neutral-800 uppercase tracking-wider text-xs px-2 py-0.5 bg-neutral-200 rounded">{t(`assessments.filters.${a.status}`)}</span>
           </div>
         </div>
       </div>
 
       {/* AI Evaluation / Auditor Override Review */}
       <div className="border border-neutral-200 rounded-xl p-6 bg-neutral-50/30 space-y-3">
-        <h3 className="font-bold text-sm text-neutral-800 uppercase tracking-wider border-b border-neutral-200 pb-2">AI Summary &amp; Compliance Notes</h3>
+        <h3 className="font-bold text-sm text-neutral-800 uppercase tracking-wider border-b border-neutral-200 pb-2">{t('print.ai_summary')}</h3>
         {a.aiSummary ? (
           <p className="text-sm text-neutral-700 leading-relaxed italic">
             &ldquo;{a.aiSummary}&rdquo;
           </p>
         ) : (
-          <p className="text-sm text-neutral-400 italic">No compliance audit summary comments available.</p>
+          <p className="text-sm text-neutral-400 italic">{t('print.no_summary')}</p>
         )}
         {a.scoreAdjustment !== 0 && (
-          <div className="text-xs font-semibold text-red-400 bg-red-500/10 border border-red-900/50 rounded-lg p-2.5 inline-block">
-            ⚠️ Risk score modification applied by auditor: {a.scoreAdjustment} points
+          <div className="text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg p-2.5 inline-block">
+            {t('print.adjustment_applied', { points: a.scoreAdjustment })}
           </div>
         )}
       </div>
 
       {/* Question list & answer grid */}
       <div className="space-y-6">
-        <h3 className="font-bold text-sm text-neutral-800 uppercase tracking-wider border-b border-neutral-300 pb-2">Detailed Responses</h3>
+        <h3 className="font-bold text-sm text-neutral-800 uppercase tracking-wider border-b border-neutral-300 pb-2">{t('print.responses')}</h3>
         {questions.map((q, idx) => {
           const ans = responses[q.id];
           return (
             <div key={q.id} className="border-b border-neutral-200 pb-5 last:border-b-0">
               <div className="flex items-start justify-between gap-4 mb-2">
                 <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                  Q{idx + 1} • {q.category}
+                  {t('print.question_label', { number: idx + 1, category: q.category })}
                 </span>
               </div>
               <h4 className="font-bold text-base text-neutral-900 mb-3 leading-snug">{q.text}</h4>
@@ -159,7 +161,7 @@ export default function AssessmentPrintPage() {
                         className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg border text-sm ${
                           isSelected 
                             ? 'bg-neutral-100 border-neutral-800 font-semibold text-neutral-900' 
-                            : 'bg-[#0D0F11] border-neutral-200 text-neutral-400'
+                            : 'bg-white border-neutral-200 text-neutral-500'
                         }`}
                       >
                         <CheckSquare className={`w-4 h-4 ${isSelected ? 'text-neutral-900' : 'text-neutral-300'}`} />
@@ -170,7 +172,7 @@ export default function AssessmentPrintPage() {
                 </div>
               ) : (
                 <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 text-sm text-neutral-800 italic leading-relaxed whitespace-pre-wrap">
-                  {ans || '(No response provided)'}
+                  {ans || t('print.no_response')}
                 </div>
               )}
             </div>

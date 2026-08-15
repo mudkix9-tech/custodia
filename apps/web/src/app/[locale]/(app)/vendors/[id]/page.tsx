@@ -2,6 +2,7 @@
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, ShieldCheck, Globe, Lock, AlertTriangle, FileText, Upload, CheckCircle2, Loader2 } from 'lucide-react';
@@ -15,6 +16,7 @@ import { QuestionnaireTab } from '@/components/vendors/QuestionnaireTab';
 import { DpaAnalysisModal } from '@/components/vendors/DpaAnalysisModal';
 
 export default function VendorDetailsPage() {
+  const t = useTranslations('vendors');
   const params = useParams();
   const router = useRouter();
   const vendorId = params?.id as string;
@@ -60,10 +62,7 @@ export default function VendorDetailsPage() {
   const draftDpaMutation = trpc.vendors.saveDpaAnalysisDraft.useMutation();
   const verifyProfileMutation = trpc.vendors.verifyVendorProfile.useMutation();
 
-  if (isLoading) return <div className="p-8 text-[#6E747A]">Loading vendor intelligence...</div>;
-  if (!vendor) return <div className="p-8 text-[#6E747A]">Vendor not found or not linked.</div>;
-
-  // Set AI guidance context when vendor data is available
+  // Set AI guidance context when vendor data is available.
   useEffect(() => {
     if (vendor) {
       setContext({
@@ -78,6 +77,9 @@ export default function VendorDetailsPage() {
     }
   }, [vendorId, vendor?.orgVendor?.dpaStatus]);
 
+  if (isLoading) return <GenericWorkspaceSkeleton />;
+  if (!vendor) return <div className="p-8 text-[#6E747A]">{t('detail.not_found')}</div>;
+
   const handleUpdateDpa = async (status: string) => {
     await updateMutation.mutateAsync({ vendorId, dpaStatus: status });
     utils.vendors.getOrgVendorDetails.invalidate({ vendorId });
@@ -91,7 +93,7 @@ export default function VendorDetailsPage() {
   return (
     <div className="max-w-[1200px] mx-auto p-8 fade-up">
       <Link href="/vendors" className="inline-flex items-center gap-2 text-[14px] font-medium text-[#6E747A] hover:text-[#F4F5F6] mb-8 transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Back to Vendor Register
+        <ArrowLeft className="w-4 h-4" /> {t('detail.back')}
       </Link>
  
       {vendor.vendor.isAutoDiscovered && (
@@ -99,8 +101,8 @@ export default function VendorDetailsPage() {
           <div className="flex gap-3 leading-relaxed">
             <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" />
             <div className="text-xs">
-              <span className="font-bold block mb-0.5 text-amber-950">Auto-Discovered Vendor Profile</span>
-              This vendor profile was auto-created from a website or DNS scan. Please verify and complete their Headquarters country, EU Hosting options, and Security Certifications to ensure correct risk score modeling.
+              <span className="font-bold block mb-0.5 text-amber-200">{t('detail.auto_discovered.title')}</span>
+              {t('detail.auto_discovered.description')}
             </div>
           </div>
           <button
@@ -111,7 +113,7 @@ export default function VendorDetailsPage() {
             disabled={verifyProfileMutation.isPending}
             className="bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors shrink-0 shadow-panel-elevated self-start sm:self-center"
           >
-            Verify &amp; Lock Profile
+            {t('detail.auto_discovered.verify')}
           </button>
         </div>
       )}
@@ -130,28 +132,28 @@ export default function VendorDetailsPage() {
               <div className="flex items-start gap-3">
                 <Globe className="w-5 h-5 text-[#6E747A] shrink-0" />
                 <div>
-                  <div className="text-[13px] font-medium text-[#F4F5F6]">Headquarters</div>
+                  <div className="text-[13px] font-medium text-[#F4F5F6]">{t('detail.headquarters')}</div>
                   <div className="text-[14px] text-[#9BA1A6]">{vendor.vendor.headquartersCountry}</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <ShieldCheck className="w-5 h-5 text-[#6E747A] shrink-0" />
                 <div>
-                  <div className="text-[13px] font-medium text-[#F4F5F6]">Certifications</div>
+                  <div className="text-[13px] font-medium text-[#F4F5F6]">{t('detail.certifications')}</div>
                   <div className="flex flex-wrap gap-2 mt-1.5">
                     {(vendor.vendor.securityCertifications as string[])?.map((c: string) => (
                       <span key={c} className="bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227] text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
                         {c.replace('_', ' ')}
                       </span>
-                    )) || <span className="text-[13px] text-[#6E747A]">None detected</span>}
+                    )) || <span className="text-[13px] text-[#6E747A]">{t('detail.none_detected')}</span>}
                   </div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-[#6E747A] shrink-0" />
                 <div>
-                  <div className="text-[13px] font-medium text-[#F4F5F6]">EU Data Residency</div>
-                  <div className="text-[14px] text-[#9BA1A6] mb-2">{vendor.vendor.euHostingAvailable ? 'Available' : 'Not Available'}</div>
+                  <div className="text-[13px] font-medium text-[#F4F5F6]">{t('detail.eu_residency')}</div>
+                  <div className="text-[14px] text-[#9BA1A6] mb-2">{vendor.vendor.euHostingAvailable ? t('detail.available') : t('detail.not_available')}</div>
                   {vendor.vendor.euHostingAvailable && (
                     <label className="flex items-center gap-2 cursor-pointer bg-[#08090A] p-2 rounded-lg border border-white/10">
                       <input 
@@ -161,7 +163,7 @@ export default function VendorDetailsPage() {
                         onChange={handleToggleEuHosting}
                         disabled={updateMutation.isPending}
                       />
-                      <span className="text-[12px] font-medium text-[#F4F5F6]">We use the EU data center</span>
+                      <span className="text-[12px] font-medium text-[#F4F5F6]">{t('detail.use_eu_datacentre')}</span>
                     </label>
                   )}
                 </div>
@@ -172,28 +174,31 @@ export default function VendorDetailsPage() {
           {/* Risk Dial */}
           <div className="bg-ink-900 border border-ink-900 rounded-2xl p-6 shadow-panel-elevated text-center relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A227]/20 rounded-full blur-[50px]"></div>
-            <div className="text-[12px] font-bold uppercase tracking-widest text-bone-50/50 mb-4">Calculated Risk Score</div>
+            <div className="text-[12px] font-bold uppercase tracking-widest text-bone-50/50 mb-4">{t('detail.risk.title')}</div>
             <div className="text-5xl font-black text-white mb-2">{vendor.orgVendor.riskScore}</div>
             <div className={`inline-block px-3 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider mb-6
               ${vendor.orgVendor.riskLevel === 'low' ? 'bg-[#C9A227]/20 text-sage-300' : 
                 vendor.orgVendor.riskLevel === 'critical' ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'}
             `}>
-              {vendor.orgVendor.riskLevel}
+              {t(`risk_level.${vendor.orgVendor.riskLevel ?? 'unknown'}`)}
             </div>
             <p className="text-[12px] text-bone-50/60 leading-relaxed text-left mb-6">
-              Score is dynamically calculated based on jurisdiction ({vendor.vendor.headquartersCountry}), DPAs ({vendor.orgVendor.dpaStatus}), security posture, and threat intelligence.
+              {t('detail.risk.explanation', {
+                country: vendor.vendor.headquartersCountry ?? '—',
+                dpaStatus: t(`detail.dpa.status.${vendor.orgVendor.dpaStatus ?? 'not_started'}`),
+              })}
             </p>
 
             {vendor.orgVendor.riskFactors && (
               <div className="mt-6 border-t border-bone-50/20 pt-6 text-left space-y-4">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-bone-50/50">Risk Factors Breakdown</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-bone-50/50">{t('detail.risk.factors')}</div>
                 <div className="space-y-4">
                   {Object.entries(vendor.orgVendor.riskFactors).map(([key, factor]: [string, any]) => (
                     <div key={key} className="space-y-1">
                       <div className="flex justify-between text-xs font-medium">
                         <span className="text-bone-50/80 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
                         <span className={`font-semibold ${factor.points > 0 ? 'text-amber-300' : 'text-sage-300'}`}>
-                          +{factor.points} / {factor.maxPoints} pts
+                          {t('detail.risk.points', { points: factor.points, max: factor.maxPoints })}
                         </span>
                       </div>
                       <div className="text-[11px] text-bone-50/50 leading-tight">
@@ -224,31 +229,31 @@ export default function VendorDetailsPage() {
                 onClick={() => setActiveTab('dpa')}
                 className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'dpa' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
-                DPA Management
+                {t('detail.tabs.dpa')}
               </button>
               <button 
                 onClick={() => setActiveTab('tia')}
                 className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'tia' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
-                Transfer Impact
+                {t('detail.tabs.tia')}
               </button>
               <button 
                 onClick={() => setActiveTab('sub-processors')}
                 className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'sub-processors' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
-                Sub-processors
+                {t('detail.tabs.sub_processors')}
               </button>
               <button 
                 onClick={() => setActiveTab('incidents')}
                 className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'incidents' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
-                Incidents &amp; Breaches
+                {t('detail.tabs.incidents')}
               </button>
               <button 
                 onClick={() => setActiveTab('questionnaire')}
                 className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'questionnaire' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
-                Security Questionnaire
+                {t('detail.tabs.questionnaire')}
               </button>
             </div>
 
@@ -256,8 +261,8 @@ export default function VendorDetailsPage() {
               {activeTab === 'dpa' && (
                 <div className="space-y-8 animate-in fade-in">
                   <div>
-                    <h3 className="text-xl font-serif text-[#F4F5F6] mb-2">Data Processing Agreement</h3>
-                    <p className="text-[14px] text-[#9BA1A6] mb-6">Track your legal relationship. A signed DPA is strictly required under GDPR Article 28.</p>
+                    <h3 className="text-xl font-serif text-[#F4F5F6] mb-2">{t('detail.dpa.title')}</h3>
+                    <p className="text-[14px] text-[#9BA1A6] mb-6">{t('detail.dpa.description')}</p>
                     
                     <div className="flex flex-wrap gap-3 mb-8">
                       {['not_started', 'draft', 'sent', 'signed', 'expired'].map(status => (
@@ -269,7 +274,7 @@ export default function VendorDetailsPage() {
                               ? 'bg-[#C9A227]/10 border-[#C9A227]/40 text-[#C9A227] ring-2 ring-[#C9A227]/30' 
                               : 'bg-[#0D0F11] border-white/10 text-[#6E747A] hover:border-ink-900/30'}`}
                         >
-                          {status.replace('_', ' ')}
+                          {t(`detail.dpa.status.${status}`)}
                         </button>
                       ))}
                     </div>
@@ -278,13 +283,13 @@ export default function VendorDetailsPage() {
                       <div className="w-12 h-12 bg-[#0D0F11] rounded-full flex items-center justify-center mb-4 shadow-panel-elevated">
                         <Upload className="w-5 h-5 text-[#C9A227]" />
                       </div>
-                      <h4 className="font-semibold text-[#F4F5F6] mb-1">Upload Signed Document</h4>
-                      <p className="text-[13px] text-[#6E747A] mb-4 max-w-sm">Securely store your executed DPA. This will automatically update your risk score and schedule expiry alerts.</p>
+                      <h4 className="font-semibold text-[#F4F5F6] mb-1">{t('detail.dpa.upload.title')}</h4>
+                      <p className="text-[13px] text-[#6E747A] mb-4 max-w-sm">{t('detail.dpa.upload.description')}</p>
                       
                       {isAnalyzingDpa ? (
                         <div className="flex flex-col items-center">
                           <Loader2 className="w-8 h-8 text-[#C9A227] animate-spin mb-2" />
-                          <p className="text-xs text-[#9BA1A6] font-semibold animate-pulse">AI is parsing clauses and checking problematic language...</p>
+                          <p className="text-xs text-[#9BA1A6] font-semibold animate-pulse">{t('detail.dpa.upload.analysing')}</p>
                         </div>
                       ) : (
                         <>
@@ -297,7 +302,7 @@ export default function VendorDetailsPage() {
                               if (e.target.files && e.target.files[0]) {
                                 const file = e.target.files[0];
                                 if (!file.name.endsWith('.pdf')) {
-                                  setDpaUploadError("Only PDF documents are supported for AI DPA analysis.");
+                                  setDpaUploadError(t('detail.dpa.upload.error_pdf_only'));
                                   return;
                                 }
                                 setDpaUploadError(null);
@@ -315,13 +320,13 @@ export default function VendorDetailsPage() {
                                       setDpaAnalysisData(result);
                                       setIsDpaModalOpen(true);
                                     } catch (err: any) {
-                                      setDpaUploadError(err.message || "Failed to analyze DPA document.");
+                                      setDpaUploadError(err.message || t('detail.dpa.upload.error_analyse'));
                                     } finally {
                                       setIsAnalyzingDpa(false);
                                     }
                                   };
                                 } catch (err: any) {
-                                  setDpaUploadError("Failed to read DPA file.");
+                                  setDpaUploadError(t('detail.dpa.upload.error_read'));
                                   setIsAnalyzingDpa(false);
                                 }
                               }
@@ -331,7 +336,7 @@ export default function VendorDetailsPage() {
                             onClick={() => document.getElementById('dpa-upload-input')?.click()}
                             className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[13px] font-medium px-5 py-2.5 rounded-lg hover:bg-[#E5C463] transition-colors shadow-card"
                           >
-                            Select PDF File
+                            {t('detail.dpa.upload.select_file')}
                           </button>
                         </>
                       )}
@@ -343,9 +348,9 @@ export default function VendorDetailsPage() {
                     {vendor.orgVendor.dpaStatus === 'signed' && (
                       <div className="mt-8 border-t border-white/5 pt-8 space-y-6 animate-in fade-in">
                         <div>
-                          <h4 className="font-semibold text-[#F4F5F6] text-sm mb-1">Article 28 Clause Review</h4>
+                          <h4 className="font-semibold text-[#F4F5F6] text-sm mb-1">{t('detail.dpa.clause_review.title')}</h4>
                           <p className="text-[13px] text-[#6E747A]">
-                            Verify that your contract covers all mandatory processor requirements under GDPR Article 28(3).
+                            {t('detail.dpa.clause_review.description')}
                           </p>
                         </div>
 
@@ -368,8 +373,8 @@ export default function VendorDetailsPage() {
                           return (
                             <div className="space-y-2">
                               <div className="flex justify-between items-center text-xs font-semibold text-[#E6E8EA]">
-                                <span>COMPLETENESS</span>
-                                <span>{covered} / 8 CLAUSES ({pct}%)</span>
+                                <span className="uppercase tracking-wider">{t('detail.dpa.clause_review.completeness')}</span>
+                                <span>{t('detail.dpa.clause_review.count', { covered, total: keys.length, percent: pct })}</span>
                               </div>
                               <div className="w-full bg-white/5 h-2.5 rounded-full overflow-hidden border border-white/5">
                                 <div 
@@ -384,15 +389,15 @@ export default function VendorDetailsPage() {
                         {/* Checklist */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {[
-                            { key: 'documentedInstructions', label: 'Documented Instructions', citation: 'Art. 28(3)(a)', desc: 'Process data only on written instructions from the controller.' },
-                            { key: 'confidentiality', label: 'Personnel Confidentiality', citation: 'Art. 28(3)(b)', desc: 'Ensure staff authorized to process data are committed to confidentiality.' },
-                            { key: 'securityMeasures', label: 'Security Measures', citation: 'Art. 28(3)(c)', desc: 'Implement technical and organizational security measures (Art. 32).' },
-                            { key: 'subProcessorRestrictions', label: 'Sub-processor Restrictions', citation: 'Art. 28(3)(d)', desc: 'Engage sub-processors only with prior specific or general authorization.' },
-                            { key: 'dataSubjectRights', label: 'Data Subject Rights Assistance', citation: 'Art. 28(3)(e)', desc: 'Assist controller in responding to data subjects exercising their rights.' },
-                            { key: 'securityBreachDpia', label: 'Breach & DPIA Assistance', citation: 'Art. 28(3)(f)', desc: 'Assist controller with breach notifications, security audits, and DPIAs.' },
-                            { key: 'deletionOnTermination', label: 'Deletion or Return of Data', citation: 'Art. 28(3)(g)', desc: 'Delete or return all personal data at the choice of the controller after processing ends.' },
-                            { key: 'auditRights', label: 'Audits and Inspections', citation: 'Art. 28(3)(h)', desc: 'Allow for and contribute to audits and inspections conducted by the controller.' }
-                          ].map(({ key, label, citation, desc }) => {
+                            { key: 'documentedInstructions', message: 'documented_instructions', citation: 'Art. 28(3)(a)' },
+                            { key: 'confidentiality', message: 'confidentiality', citation: 'Art. 28(3)(b)' },
+                            { key: 'securityMeasures', message: 'security_measures', citation: 'Art. 28(3)(c)' },
+                            { key: 'subProcessorRestrictions', message: 'sub_processor_restrictions', citation: 'Art. 28(3)(d)' },
+                            { key: 'dataSubjectRights', message: 'data_subject_rights', citation: 'Art. 28(3)(e)' },
+                            { key: 'securityBreachDpia', message: 'security_breach_dpia', citation: 'Art. 28(3)(f)' },
+                            { key: 'deletionOnTermination', message: 'deletion_on_termination', citation: 'Art. 28(3)(g)' },
+                            { key: 'auditRights', message: 'audit_rights', citation: 'Art. 28(3)(h)' }
+                          ].map(({ key, message, citation }) => {
                             const isChecked = !!(vendor.orgVendor.dpaClauseCoverage as any)?.[key];
                             return (
                               <label 
@@ -417,10 +422,10 @@ export default function VendorDetailsPage() {
                                 />
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-[#F4F5F6] text-[13px] leading-tight">{label}</span>
+                                    <span className="font-semibold text-[#F4F5F6] text-[13px] leading-tight">{t(`detail.dpa.clauses.${message}.label`)}</span>
                                     <span className="text-[10px] font-bold text-[#C9A227] bg-[#C9A227]/10 border border-[#C9A227]/50 px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">{citation}</span>
                                   </div>
-                                  <p className="text-[11px] text-[#6E747A] leading-tight">{desc}</p>
+                                  <p className="text-[11px] text-[#6E747A] leading-tight">{t(`detail.dpa.clauses.${message}.description`)}</p>
                                 </div>
                               </label>
                             );
@@ -430,13 +435,13 @@ export default function VendorDetailsPage() {
                     )}
 
                     <div className="mt-8 border-t border-white/5 pt-8 space-y-6">
-                      <h4 className="font-semibold text-[#F4F5F6] text-sm">Risk Assessment Inputs</h4>
+                      <h4 className="font-semibold text-[#F4F5F6] text-sm">{t('detail.dpa.inputs.title')}</h4>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {/* Data Subject Volume */}
                         <div className="space-y-2">
                           <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
-                            Data Subject Volume
+                            {t('detail.dpa.inputs.volume')}
                           </label>
                           <select
                             value={vendor.orgVendor.dataSubjectVolume || '<1K'}
@@ -444,17 +449,17 @@ export default function VendorDetailsPage() {
                             disabled={updateMutation.isPending}
                             className="w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                           >
-                            <option value="<1K">&lt; 1,000 subjects</option>
-                            <option value="1K-10K">1,000 - 10,000 subjects</option>
-                            <option value="10K-100K">10,000 - 100,000 subjects</option>
-                            <option value="100K+">100,000+ subjects</option>
+                            <option value="<1K">{t('detail.dpa.inputs.volume_options.lt1k')}</option>
+                            <option value="1K-10K">{t('detail.dpa.inputs.volume_options.1k_10k')}</option>
+                            <option value="10K-100K">{t('detail.dpa.inputs.volume_options.10k_100k')}</option>
+                            <option value="100K+">{t('detail.dpa.inputs.volume_options.100k_plus')}</option>
                           </select>
                         </div>
 
                         {/* Contract Renewal Date */}
                         <div className="space-y-2">
                           <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
-                            Contract Renewal Date
+                            {t('detail.dpa.inputs.renewal_date')}
                           </label>
                           <input
                             type="date"
@@ -468,7 +473,7 @@ export default function VendorDetailsPage() {
                         {/* DPA Expiry Date */}
                         <div className="space-y-2">
                           <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
-                            DPA Expiry Date
+                            {t('detail.dpa.inputs.expiry_date')}
                           </label>
                           <input
                             type="date"
@@ -482,7 +487,7 @@ export default function VendorDetailsPage() {
                         {/* Security Certifications */}
                         <div className="space-y-2">
                           <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
-                            Security Certifications
+                            {t('detail.dpa.inputs.certifications')}
                           </label>
                           <div className="flex gap-4 items-center h-10">
                             <label className="flex items-center gap-2 text-xs font-medium text-[#E6E8EA] cursor-pointer">
@@ -528,11 +533,11 @@ export default function VendorDetailsPage() {
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-white/5 rounded text-[#9BA1A6]"><FileText className="w-5 h-5" /></div>
                         <div>
-                          <div className="font-medium text-[#F4F5F6] text-[14px]">Vendor DPA Template</div>
-                          <div className="text-[12px] text-[#6E747A]">Publicly provided by {vendor.vendor.name}</div>
+                          <div className="font-medium text-[#F4F5F6] text-[14px]">{t('detail.dpa.template.title')}</div>
+                          <div className="text-[12px] text-[#6E747A]">{t('detail.dpa.template.provided_by', { name: vendor.vendor.name })}</div>
                         </div>
                       </div>
-                      <a href={vendor.vendor.dpaUrl} target="_blank" className="text-[13px] font-medium text-[#C9A227] hover:text-[#E5C463]">Review Template</a>
+                      <a href={vendor.vendor.dpaUrl} target="_blank" className="text-[13px] font-medium text-[#C9A227] hover:text-[#E5C463]">{t('detail.dpa.template.review')}</a>
                     </div>
                   )}
                 </div>

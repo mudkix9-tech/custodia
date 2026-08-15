@@ -49,5 +49,254 @@
   "empty": {
     "title": "Aucun sous-traitant enregistré",
     "description": "Chaque sous-traitant qui manipule des données personnelles pour votre compte requiert un contrat au titre de l'article 28. Analysez votre site ou ajoutez-en un manuellement."
+  },
+  "risk_level": {
+    "low": "Faible",
+    "medium": "Moyen",
+    "high": "Élevé",
+    "critical": "Critique",
+    "unknown": "Inconnu"
+  },
+  "detail": {
+    "loading": "Chargement des données fournisseur...",
+    "not_found": "Fournisseur introuvable ou non rattaché.",
+    "back": "Retour au registre des fournisseurs",
+    "auto_discovered": {
+      "title": "Fiche fournisseur détectée automatiquement",
+      "description": "Cette fiche a été créée automatiquement à partir d'une analyse de site web ou DNS. Vérifiez et complétez le pays du siège, les options d'hébergement dans l'UE et les certifications de sécurité pour que le score de risque soit correct.",
+      "verify": "Vérifier et verrouiller la fiche"
+    },
+    "headquarters": "Siège social",
+    "certifications": "Certifications",
+    "none_detected": "Aucune détectée",
+    "eu_residency": "Localisation des données dans l'UE",
+    "available": "Disponible",
+    "not_available": "Non disponible",
+    "use_eu_datacentre": "Nous utilisons le centre de données de l'UE",
+    "risk": {
+      "title": "Score de risque calculé",
+      "explanation": "Le score est calculé dynamiquement à partir de la juridiction ({country}), des DPA ({dpaStatus}), du niveau de sécurité et des renseignements sur les menaces.",
+      "factors": "Détail des facteurs de risque",
+      "points": "+{points} / {max} pts"
+    },
+    "tabs": {
+      "dpa": "Gestion du DPA",
+      "tia": "Analyse d'impact du transfert",
+      "sub_processors": "Sous-traitants ultérieurs",
+      "incidents": "Incidents et violations",
+      "questionnaire": "Questionnaire de sécurité"
+    },
+    "dpa": {
+      "title": "Contrat de sous-traitance",
+      "description": "Suivez votre relation contractuelle. Un DPA signé est strictement requis par l'article 28 du RGPD.",
+      "status": {
+        "not_started": "Non commencé",
+        "draft": "Brouillon",
+        "sent": "Envoyé",
+        "signed": "Signé",
+        "expired": "Expiré"
+      },
+      "upload": {
+        "title": "Téléverser le document signé",
+        "description": "Conservez votre DPA signé en toute sécurité. Votre score de risque sera mis à jour et les alertes d'expiration programmées automatiquement.",
+        "analysing": "L'IA analyse les clauses et recherche les formulations problématiques...",
+        "select_file": "Sélectionner un fichier PDF",
+        "error_pdf_only": "Seuls les documents PDF sont pris en charge pour l'analyse de DPA par l'IA.",
+        "error_analyse": "L'analyse du document DPA a échoué.",
+        "error_read": "La lecture du fichier DPA a échoué."
+      },
+      "clause_review": {
+        "title": "Revue des clauses de l'article 28",
+        "description": "Vérifiez que votre contrat couvre toutes les obligations du sous-traitant prévues à l'article 28, paragraphe 3, du RGPD.",
+        "completeness": "Complétude",
+        "count": "{covered} / {total} clauses ({percent} %)"
+      },
+      "clauses": {
+        "documented_instructions": {
+          "label": "Instructions documentées",
+          "description": "Traiter les données uniquement sur instruction documentée du responsable de traitement."
+        },
+        "confidentiality": {
+          "label": "Confidentialité du personnel",
+          "description": "S'assurer que les personnes autorisées à traiter les données sont soumises à une obligation de confidentialité."
+        },
+        "security_measures": {
+          "label": "Mesures de sécurité",
+          "description": "Mettre en œuvre des mesures techniques et organisationnelles (art. 32)."
+        },
+        "sub_processor_restrictions": {
+          "label": "Encadrement des sous-traitants ultérieurs",
+          "description": "Ne recruter un sous-traitant ultérieur qu'avec une autorisation préalable, spécifique ou générale."
+        },
+        "data_subject_rights": {
+          "label": "Aide à l'exercice des droits",
+          "description": "Aider le responsable de traitement à répondre aux personnes concernées qui exercent leurs droits."
+        },
+        "security_breach_dpia": {
+          "label": "Aide en cas de violation et pour les AIPD",
+          "description": "Aider le responsable de traitement pour les notifications de violation, les audits de sécurité et les AIPD."
+        },
+        "deletion_on_termination": {
+          "label": "Suppression ou restitution des données",
+          "description": "Supprimer ou restituer toutes les données à caractère personnel au choix du responsable de traitement à la fin du traitement."
+        },
+        "audit_rights": {
+          "label": "Audits et inspections",
+          "description": "Permettre les audits et inspections du responsable de traitement et y contribuer."
+        }
+      },
+      "inputs": {
+        "title": "Paramètres d'évaluation du risque",
+        "volume": "Nombre de personnes concernées",
+        "volume_options": {
+          "lt1k": "moins de 1 000 personnes",
+          "1k_10k": "1 000 – 10 000 personnes",
+          "10k_100k": "10 000 – 100 000 personnes",
+          "100k_plus": "plus de 100 000 personnes"
+        },
+        "renewal_date": "Date de renouvellement du contrat",
+        "expiry_date": "Date d'expiration du DPA",
+        "certifications": "Certifications de sécurité"
+      },
+      "template": {
+        "title": "Modèle de DPA du fournisseur",
+        "provided_by": "Publié par {name}",
+        "review": "Consulter le modèle"
+      }
+    }
+  },
+  "analyzer": {
+    "back": "Retour aux fournisseurs",
+    "title": "Analyseur de DPA par IA",
+    "subtitle": "Contrôlez automatiquement les contrats de sous-traitance au regard de l'article 28.",
+    "failed": "Impossible d'analyser le DPA",
+    "upload_title": "Téléverser un DPA (PDF)",
+    "upload_description": "Sélectionnez un DPA signé ou un brouillon pour y rechercher des écarts de conformité au RGPD.",
+    "select_file": "Sélectionner un fichier PDF",
+    "analysing": "Analyse du document...",
+    "analyze": "Analyser le DPA",
+    "results": "Résultats de l'analyse",
+    "file": "Fichier : {name}",
+    "score_label": "Score de conformité",
+    "another": "Analyser un autre document",
+    "status": {
+      "present": "Présente",
+      "weak": "Faible",
+      "missing": "Absente"
+    },
+    "clause": {
+      "verified": "Clause vérifiée conforme.",
+      "review_required": "Vérification requise.",
+      "notes_title": "Notes d'analyse",
+      "no_notes": "Aucune note particulière. La clause semble conforme à l'article 28.",
+      "excerpt_title": "Extrait relevé",
+      "found_in": "Trouvé dans : {location}",
+      "no_excerpt": "Aucun extrait pertinent relevé."
+    }
+  },
+  "assessments": {
+    "title": "Évaluations fournisseurs",
+    "subtitle": "Suivi automatisé et questionnaires de conformité structurés pour les tiers.",
+    "send": "Envoyer une évaluation",
+    "metrics": {
+      "dispatched": "Total envoyé",
+      "dispatched_unit": "demandes",
+      "completion_rate": "Taux de réponse",
+      "completed_count": "{count} terminée(s)",
+      "pending": "Réponse fournisseur attendue",
+      "pending_unit": "en attente",
+      "expired": "En retard / expirées",
+      "expired_unit": "prolongation requise"
+    },
+    "filters": {
+      "all": "Toutes",
+      "sent": "Envoyées",
+      "in_progress": "En cours",
+      "completed": "Terminées",
+      "expired": "Expirées"
+    },
+    "loading": "Chargement des journaux d'évaluation...",
+    "empty": {
+      "title": "Aucune évaluation trouvée",
+      "description": "Envoyez une nouvelle invitation à un tiers pour la voir apparaître ici."
+    },
+    "columns": {
+      "vendor": "Fournisseur et modèle",
+      "recipient": "Destinataire",
+      "sent_at": "Envoyée le",
+      "status": "Statut",
+      "score": "Score",
+      "actions": "Actions"
+    },
+    "unknown_vendor": "Fournisseur inconnu",
+    "default_recipient": "Responsable sécurité",
+    "never": "Jamais",
+    "not_available": "N/D",
+    "expires": "Expire le : {date}",
+    "adjustment": "Ajust. : {value}",
+    "score_pending": "En attente",
+    "copy_link": "Copier le lien dans le presse-papiers",
+    "print": "Imprimer / exporter en PDF",
+    "review_action": "Revue d'audit et ajustements",
+    "errors": {
+      "required": "Veuillez renseigner tous les champs obligatoires.",
+      "dispatch": "L'envoi de l'évaluation a échoué.",
+      "review": "L'enregistrement de la revue de conformité a échoué."
+    },
+    "success": {
+      "sent": "Invitation à l'évaluation envoyée.",
+      "reviewed": "Revue de l'évaluation mise à jour."
+    },
+    "dispatch_modal": {
+      "title": "Envoyer le questionnaire de sécurité",
+      "close": "Fermer",
+      "vendor": "Fournisseur ciblé *",
+      "vendor_placeholder": "Sélectionner un fournisseur...",
+      "template": "Modèle de questionnaire *",
+      "template_default": "(par défaut)",
+      "recipient_name": "Nom du destinataire",
+      "recipient_name_placeholder": "ex. Équipe sécurité",
+      "recipient_email": "E-mail du destinataire *",
+      "recipient_email_placeholder": "ex. securite@fournisseur.com",
+      "note": "L'envoi génère immédiatement un lien d'accès sécurisé à usage unique et l'adresse au contact partenaire. Le questionnaire expire au bout de 30 jours exactement, sauf s'il est complété ou prolongé.",
+      "cancel": "Annuler",
+      "submit": "Envoyer l'e-mail",
+      "submitting": "Envoi..."
+    },
+    "review_modal": {
+      "title": "Revue d'audit et ajustement",
+      "adjustment": "Ajustement du score (-50 à +50)",
+      "adjustment_help": "Ajuste le score de conformité issu du questionnaire. Les valeurs négatives le diminuent, les valeurs positives l'augmentent.",
+      "summary": "Synthèse / notes de l'auditeur",
+      "summary_placeholder": "Consignez les vérifications, observations ou motifs d'ajustement...",
+      "cancel": "Annuler",
+      "submit": "Enregistrer la revue",
+      "submitting": "Enregistrement..."
+    }
+  },
+  "print": {
+    "loading": "Préparation de l'export d'audit...",
+    "not_found": "Enregistrement introuvable",
+    "not_found_description": "L'évaluation demandée n'a pas pu être chargée ou n'est pas accessible dans le contexte de cette organisation.",
+    "banner": "Enregistrement d'audit — intérêt légitime (RGPD art. 30, registre)",
+    "print_button": "Imprimer / enregistrer en PDF",
+    "provenance": "Enregistrement de provenance d'audit",
+    "title": "Évaluation sécurité et vie privée RGPD",
+    "vendor_line": "Fournisseur : {vendor} • Modèle : {template}",
+    "score_label": "Score d'audit",
+    "review_details": "Détails de la revue",
+    "completed_at": "Terminée le :",
+    "pending": "En attente",
+    "respondent_email": "E-mail du répondant :",
+    "identity": "Vérification de l'identité et du score",
+    "respondent_ip": "Adresse IP du répondant :",
+    "ip_unavailable": "N/D (session locale / de confiance)",
+    "status": "Statut :",
+    "ai_summary": "Synthèse IA et notes de conformité",
+    "no_summary": "Aucun commentaire de synthèse d'audit disponible.",
+    "adjustment_applied": "Modification du score de risque appliquée par l'auditeur : {points} points",
+    "responses": "Réponses détaillées",
+    "question_label": "Q{number} • {category}",
+    "no_response": "(Aucune réponse fournie)"
   }
 }
