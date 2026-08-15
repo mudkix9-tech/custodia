@@ -13,5 +13,47 @@
   "pageviews": "Pageviews (30d)",
   "consent_rate": "Consent Rate",
   "analytics": "Analytics",
-  "configure_banner": "Configure Banner"
+  "configure_banner": "Configure Banner",
+  "analytics_page": {
+    "loading": "Loading consent analytics...",
+    "title": "Consent Analytics",
+    "subtitle": "Live tracking of consent rates, interaction types, and rejections.",
+    "all_domains": "All Domains",
+    "range": {
+      "7": "Last 7 Days",
+      "30": "Last 30 Days",
+      "90": "Last 90 Days"
+    },
+    "charts": {
+      "opt_in": "Opt-in Rate Over Time (%)",
+      "interactions": "Interaction Breakdown",
+      "combinations": "Customised Combinations",
+      "rejections": "Category Rejections",
+      "by_domain": "Sessions by Domain",
+      "withdrawals": "Consent Withdrawals"
+    },
+    "series": {
+      "sessions": "Sessions",
+      "total_sessions": "Total Sessions",
+      "accept_all": "Accept All",
+      "withdrawals": "Withdrawals"
+    },
+    "withdrawal_rate": "Withdrawals relative to new consent volume this period",
+    "time_to_withdrawal": "Average time-to-withdrawal (within queried range)",
+    "categories": {
+      "analytics": "Analytics",
+      "marketing": "Marketing",
+      "functional": "Functional"
+    },
+    "interactions": {
+      "accept_all": "Accept All",
+      "reject_all": "Reject All",
+      "customized_accepted": "Customised (accepted some)",
+      "customized_rejected": "Customised (rejected all)"
+    },
+    "combinations_description": "Distribution of preferences for users who actively customised their choices (excludes Accept All / Reject All).",
+    "none": "None",
+    "hours": "{count} hours",
+    "not_available": "N/A"
+  }
 }

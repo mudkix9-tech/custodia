@@ -18,5 +18,39 @@
     "unknown": "Unknown",
     "unassessed": "Unassessed",
     "manage": "Manage →"
+  },
+  "workspace": {
+    "not_found": "Breach not found.",
+    "banner": {
+      "expired": "Article 33 notification deadline has passed",
+      "remaining": "Article 33 notification deadline: {hours}h {minutes}m remaining",
+      "due": "Due {date}",
+      "urgent": "Critical: you must notify the supervisory authority without undue delay and within 72 hours of becoming aware of a personal data breach.",
+      "normal": "Under GDPR Article 33, the supervisory authority must be notified within 72 hours unless the breach is unlikely to result in a risk to individuals."
+    },
+    "reference": "Incident reference: {reference}",
+    "status": "Status",
+    "tabs": {
+      "risk": "Risk Assessment",
+      "drafts": "Notification Drafts",
+      "tasks": "Remediation Tasks",
+      "timeline": "Timeline & Logs"
+    },
+    "timeline": {
+      "title": "Timeline & Audit Logs",
+      "description": "Chronological history of all actions related to this incident. Evidence stored here is immutable.",
+      "discovered": "Incident discovered",
+      "created": "Case created",
+      "created_by": "{date} by {user}",
+      "unknown_user": "an unknown user"
+    },
+    "statuses": {
+      "detected": "Detected",
+      "assessing": "Assessing",
+      "contained": "Contained",
+      "notified_authority": "Authority notified",
+      "notified": "Notified",
+      "closed": "Closed"
+    }
   }
 }

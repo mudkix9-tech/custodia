@@ -21,5 +21,39 @@
     "unknown": "Inconnu",
     "unassessed": "Non évalué",
     "manage": "Gérer →"
+  },
+  "workspace": {
+    "not_found": "Violation introuvable.",
+    "banner": {
+      "expired": "Le délai de notification de l'article 33 est dépassé",
+      "remaining": "Délai de notification (article 33) : {hours} h {minutes} min restantes",
+      "due": "Échéance {date}",
+      "urgent": "Critique : vous devez notifier l'autorité de contrôle dans les meilleurs délais et au plus tard 72 heures après avoir pris connaissance de la violation de données à caractère personnel.",
+      "normal": "En application de l'article 33 du RGPD, l'autorité de contrôle doit être notifiée dans les 72 heures, sauf si la violation n'est pas susceptible d'engendrer un risque pour les personnes."
+    },
+    "reference": "Référence de l'incident : {reference}",
+    "status": "Statut",
+    "tabs": {
+      "risk": "Analyse de risque",
+      "drafts": "Projets de notification",
+      "tasks": "Actions correctives",
+      "timeline": "Chronologie et journaux"
+    },
+    "timeline": {
+      "title": "Chronologie et journaux d'audit",
+      "description": "Historique chronologique de toutes les actions liées à cet incident. Les preuves conservées ici sont immuables.",
+      "discovered": "Incident découvert",
+      "created": "Dossier créé",
+      "created_by": "{date} par {user}",
+      "unknown_user": "un utilisateur inconnu"
+    },
+    "statuses": {
+      "detected": "Détectée",
+      "assessing": "En cours d'évaluation",
+      "contained": "Contenue",
+      "notified_authority": "Autorité notifiée",
+      "notified": "Notifiée",
+      "closed": "Clôturée"
+    }
   }
 }

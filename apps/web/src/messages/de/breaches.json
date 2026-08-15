@@ -21,5 +21,39 @@
     "unknown": "Unbekannt",
     "unassessed": "Nicht bewertet",
     "manage": "Verwalten →"
+  },
+  "workspace": {
+    "not_found": "Datenschutzverletzung nicht gefunden.",
+    "banner": {
+      "expired": "Die Meldefrist nach Artikel 33 ist abgelaufen",
+      "remaining": "Meldefrist nach Artikel 33: noch {hours} Std. {minutes} Min.",
+      "due": "Fällig {date}",
+      "urgent": "Kritisch: Sie müssen die Aufsichtsbehörde unverzüglich und binnen 72 Stunden nach Bekanntwerden einer Verletzung des Schutzes personenbezogener Daten benachrichtigen.",
+      "normal": "Nach Artikel 33 DSGVO ist die Aufsichtsbehörde binnen 72 Stunden zu benachrichtigen, es sei denn, die Verletzung führt voraussichtlich nicht zu einem Risiko für die Betroffenen."
+    },
+    "reference": "Vorfallsnummer: {reference}",
+    "status": "Status",
+    "tabs": {
+      "risk": "Risikobewertung",
+      "drafts": "Meldungsentwürfe",
+      "tasks": "Abhilfemaßnahmen",
+      "timeline": "Verlauf und Protokolle"
+    },
+    "timeline": {
+      "title": "Verlauf und Audit-Protokolle",
+      "description": "Chronologische Aufzeichnung aller Handlungen zu diesem Vorfall. Die hier abgelegten Nachweise sind unveränderlich.",
+      "discovered": "Vorfall entdeckt",
+      "created": "Fall angelegt",
+      "created_by": "{date} von {user}",
+      "unknown_user": "unbekannte Person"
+    },
+    "statuses": {
+      "detected": "Entdeckt",
+      "assessing": "In Bewertung",
+      "contained": "Eingedämmt",
+      "notified_authority": "Behörde benachrichtigt",
+      "notified": "Benachrichtigt",
+      "closed": "Abgeschlossen"
+    }
   }
 }

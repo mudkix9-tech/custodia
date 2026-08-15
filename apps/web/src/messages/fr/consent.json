@@ -16,5 +16,47 @@
   "pageviews": "Pages vues (30j)",
   "consent_rate": "Taux de consentement",
   "analytics": "Analytique",
-  "configure_banner": "Configurer la bannière"
+  "configure_banner": "Configurer la bannière",
+  "analytics_page": {
+    "loading": "Chargement des analyses de consentement...",
+    "title": "Analyses du consentement",
+    "subtitle": "Suivi en direct des taux de consentement, des types d'interaction et des refus.",
+    "all_domains": "Tous les domaines",
+    "range": {
+      "7": "7 derniers jours",
+      "30": "30 derniers jours",
+      "90": "90 derniers jours"
+    },
+    "charts": {
+      "opt_in": "Taux d'opt-in dans le temps (%)",
+      "interactions": "Répartition des interactions",
+      "combinations": "Combinaisons personnalisées",
+      "rejections": "Refus par catégorie",
+      "by_domain": "Sessions par domaine",
+      "withdrawals": "Retraits de consentement"
+    },
+    "series": {
+      "sessions": "Sessions",
+      "total_sessions": "Sessions totales",
+      "accept_all": "Tout accepter",
+      "withdrawals": "Retraits"
+    },
+    "withdrawal_rate": "Retraits rapportés au volume de nouveaux consentements sur la période",
+    "time_to_withdrawal": "Délai moyen avant retrait (sur la période interrogée)",
+    "categories": {
+      "analytics": "Mesure d'audience",
+      "marketing": "Marketing",
+      "functional": "Fonctionnel"
+    },
+    "interactions": {
+      "accept_all": "Tout accepter",
+      "reject_all": "Tout refuser",
+      "customized_accepted": "Personnalisé (partiellement accepté)",
+      "customized_rejected": "Personnalisé (tout refusé)"
+    },
+    "combinations_description": "Répartition des préférences des personnes ayant activement personnalisé leurs choix (hors « Tout accepter » et « Tout refuser »).",
+    "none": "Aucune",
+    "hours": "{count} heures",
+    "not_available": "N/D"
+  }
 }

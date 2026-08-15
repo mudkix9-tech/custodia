@@ -39,5 +39,103 @@
     "cancel": "Abbrechen",
     "creating": "Wird erstellt...",
     "create_button": "Kunde erstellen"
+  },
+  "detail": {
+    "not_found": "Mandant nicht gefunden",
+    "no_industry": "Keine Branche angegeben",
+    "unknown_location": "Unbekannter Standort",
+    "tabs": {
+      "overview": "Übersicht",
+      "ropa": "Verarbeitungstätigkeiten",
+      "vendors": "Anbieter und Unterauftragsverarbeiter",
+      "report": "Compliance-Bericht",
+      "portal": "Portalvorschau"
+    },
+    "details": {
+      "title": "Mandantendaten",
+      "legal_name": "Firmenname",
+      "contact_name": "Ansprechpartner",
+      "contact_email": "Kontakt-E-Mail",
+      "created_at": "Angelegt am"
+    },
+    "dpa": {
+      "title": "Auftragsverarbeitungsvertrag (AVV)",
+      "description": "Verwalten Sie den AVV zwischen Ihrer Agentur (Auftragsverarbeiter) und diesem Mandanten (Verantwortlicher). Nach Artikel 28 DSGVO ist er verpflichtend.",
+      "status": "AVV-Status",
+      "options": {
+        "not_started": "Nicht begonnen",
+        "pending": "Unterschrift ausstehend",
+        "signed": "Unterzeichnet",
+        "expired": "Abgelaufen"
+      },
+      "signed_date": "Unterzeichnet am",
+      "expiry_date": "Läuft ab am",
+      "document": "Dokument",
+      "upload": "Dokument hochladen"
+    },
+    "portal": {
+      "title": "Trust-Portal",
+      "description": "Geben Sie diesem Mandanten ein schreibgeschütztes Compliance-Dashboard mit den verknüpften Verarbeitungstätigkeiten und Anbietern frei.",
+      "enable": "Portal aktivieren",
+      "secret_url": "Geheime URL",
+      "copy": "Kopieren",
+      "regenerate": "Link neu erzeugen",
+      "regenerate_title": "Portal-Token neu erzeugen?",
+      "regenerate_description": "Jeder Trust-Portal-Link, den Sie diesem Mandanten bereits geschickt haben, funktioniert sofort nicht mehr. Sie müssen den neuen Link erneut versenden.",
+      "regenerate_confirm": "Token neu erzeugen"
+    },
+    "stats": {
+      "title": "Kurzübersicht",
+      "activities": "Verarbeitungstätigkeiten"
+    },
+    "activities": {
+      "title": "Verknüpfte Verarbeitungstätigkeiten",
+      "description": "Die hier gezeigten Tätigkeiten erscheinen im Compliance-Portal des Mandanten.",
+      "link": "Tätigkeit verknüpfen",
+      "empty": "Diesem Mandanten sind noch keine Verarbeitungstätigkeiten zugeordnet.",
+      "unlink": "Verknüpfung mit dem Mandanten aufheben",
+      "unlink_title": "Verknüpfung dieser Tätigkeit aufheben?",
+      "unlink_description": "Sie erscheint dann nicht mehr im Trust-Portal dieses Mandanten. Die Tätigkeit selbst bleibt in Ihrem Verarbeitungsverzeichnis.",
+      "unlink_confirm": "Verknüpfung aufheben",
+      "columns": {
+        "activity": "Tätigkeit",
+        "lawful_basis": "Rechtsgrundlage",
+        "risk_level": "Risikostufe"
+      }
+    },
+    "link_modal": {
+      "title": "Verarbeitungstätigkeiten verknüpfen",
+      "description": "Wählen Sie Tätigkeiten aus, die Daten dieses Mandanten betreffen.",
+      "close": "Schließen",
+      "search_placeholder": "Verarbeitungsverzeichnis durchsuchen...",
+      "empty": "Keine nicht verknüpften Tätigkeiten gefunden.",
+      "selected": "{count} ausgewählt",
+      "cancel": "Abbrechen",
+      "submit": "Auswahl verknüpfen"
+    },
+    "vendors": {
+      "title": "Automatisch erzeugte Anbieterliste",
+      "description": "Sobald Verarbeitungstätigkeiten verknüpft sind, verfolgt Custodia den Datenfluss automatisch und ermittelt, welche Ihrer Anbieter Daten dieses Mandanten im Unterauftrag verarbeiten.",
+      "note": "(Für die Auflösung des Anbietergraphen muss das Verarbeitungsverzeichnis vollständig gepflegt sein)"
+    },
+    "report": {
+      "title": "Compliance-Bericht für den Mandanten",
+      "description": "Erstellen Sie einen förmlichen PDF-Bericht über Ihre Verarbeitungstätigkeiten und die AVV Ihrer Unterauftragsverarbeiter, zugeschnitten auf {name}. Versenden Sie ihn, wenn Mandanten nach Ihrem DSGVO-Stand fragen.",
+      "generate": "PDF-Bericht erstellen",
+      "generating": "PDF wird erstellt...",
+      "ready": "Compliance-Bericht fertig",
+      "ready_description": "In einem neuen Tab geöffnet."
+    },
+    "preview": {
+      "disabled": "Aktivieren Sie das Portal im Reiter „Übersicht“, um die Vorschau zu sehen.",
+      "description": "Dies ist eine interaktive Vorschau genau dessen, was {name} unter dem sicheren Link sieht.",
+      "open": "In neuem Tab öffnen",
+      "iframe_title": "Portalvorschau"
+    },
+    "risk": {
+      "low": "Niedrig",
+      "medium": "Mittel",
+      "high": "Hoch"
+    }
   }
 }

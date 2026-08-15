@@ -36,5 +36,103 @@
     "cancel": "Cancel",
     "creating": "Creating...",
     "create_button": "Create Client"
+  },
+  "detail": {
+    "not_found": "Client not found",
+    "no_industry": "No industry specified",
+    "unknown_location": "Unknown location",
+    "tabs": {
+      "overview": "Overview",
+      "ropa": "Processing Activities",
+      "vendors": "Vendors & Sub-processors",
+      "report": "Compliance Report",
+      "portal": "Portal Preview"
+    },
+    "details": {
+      "title": "Client Details",
+      "legal_name": "Legal Name",
+      "contact_name": "Contact Person",
+      "contact_email": "Contact Email",
+      "created_at": "Created At"
+    },
+    "dpa": {
+      "title": "Data Processing Agreement (DPA)",
+      "description": "Manage the DPA between your agency (processor) and this client (controller). This is required under GDPR Article 28.",
+      "status": "DPA Status",
+      "options": {
+        "not_started": "Not Started",
+        "pending": "Pending Signature",
+        "signed": "Signed",
+        "expired": "Expired"
+      },
+      "signed_date": "Signed Date",
+      "expiry_date": "Expiry Date",
+      "document": "Document",
+      "upload": "Upload Document"
+    },
+    "portal": {
+      "title": "Trust Portal",
+      "description": "Share a read-only compliance dashboard with this client showing their linked processing activities and vendors.",
+      "enable": "Enable Portal",
+      "secret_url": "Secret URL",
+      "copy": "Copy",
+      "regenerate": "Regenerate Link",
+      "regenerate_title": "Regenerate portal token?",
+      "regenerate_description": "Every trust-portal link you have already shared with this client will stop working immediately. You will need to send them the new link.",
+      "regenerate_confirm": "Regenerate token"
+    },
+    "stats": {
+      "title": "Quick Stats",
+      "activities": "Processing Activities"
+    },
+    "activities": {
+      "title": "Linked Processing Activities",
+      "description": "Activities shown here appear on the client's compliance portal.",
+      "link": "Link Activity",
+      "empty": "No processing activities linked to this client yet.",
+      "unlink": "Unlink from client",
+      "unlink_title": "Unlink this activity?",
+      "unlink_description": "It stops appearing on this client's trust portal. The activity itself stays in your ROPA.",
+      "unlink_confirm": "Unlink",
+      "columns": {
+        "activity": "Activity",
+        "lawful_basis": "Lawful Basis",
+        "risk_level": "Risk Level"
+      }
+    },
+    "link_modal": {
+      "title": "Link Processing Activities",
+      "description": "Select activities that involve this client's data.",
+      "close": "Close",
+      "search_placeholder": "Search your ROPA...",
+      "empty": "No unlinked activities found.",
+      "selected": "{count} selected",
+      "cancel": "Cancel",
+      "submit": "Link Selected"
+    },
+    "vendors": {
+      "title": "Auto-generated Vendor List",
+      "description": "When processing activities are linked, Custodia automatically traverses the data flow graph to determine which of your vendors sub-process data for this client.",
+      "note": "(Vendor graph resolution requires full ROPA data population)"
+    },
+    "report": {
+      "title": "Client Compliance Report",
+      "description": "Generate a formal PDF report detailing your processing activities and sub-processor DPAs scoped specifically to {name}. Send this when clients ask for your GDPR compliance posture.",
+      "generate": "Generate PDF Report",
+      "generating": "Generating PDF...",
+      "ready": "Compliance report ready",
+      "ready_description": "Opened in a new tab."
+    },
+    "preview": {
+      "disabled": "Enable the portal in the Overview tab to view the preview.",
+      "description": "This is an interactive preview of exactly what {name} sees at their secure link.",
+      "open": "Open in new tab",
+      "iframe_title": "Portal Preview"
+    },
+    "risk": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    }
   }
 }

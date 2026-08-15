@@ -16,5 +16,47 @@
   "pageviews": "Seitenaufrufe (30T)",
   "consent_rate": "Einwilligungsrate",
   "analytics": "Analytik",
-  "configure_banner": "Banner konfigurieren"
+  "configure_banner": "Banner konfigurieren",
+  "analytics_page": {
+    "loading": "Einwilligungsanalysen werden geladen...",
+    "title": "Einwilligungsanalysen",
+    "subtitle": "Laufende Auswertung von Einwilligungsquoten, Interaktionsarten und Ablehnungen.",
+    "all_domains": "Alle Domains",
+    "range": {
+      "7": "Letzte 7 Tage",
+      "30": "Letzte 30 Tage",
+      "90": "Letzte 90 Tage"
+    },
+    "charts": {
+      "opt_in": "Opt-in-Quote im Zeitverlauf (%)",
+      "interactions": "Aufschlüsselung der Interaktionen",
+      "combinations": "Individuelle Kombinationen",
+      "rejections": "Ablehnungen nach Kategorie",
+      "by_domain": "Sitzungen nach Domain",
+      "withdrawals": "Widerrufe von Einwilligungen"
+    },
+    "series": {
+      "sessions": "Sitzungen",
+      "total_sessions": "Sitzungen gesamt",
+      "accept_all": "Alle akzeptieren",
+      "withdrawals": "Widerrufe"
+    },
+    "withdrawal_rate": "Widerrufe im Verhältnis zum Volumen neuer Einwilligungen in diesem Zeitraum",
+    "time_to_withdrawal": "Durchschnittliche Zeit bis zum Widerruf (im abgefragten Zeitraum)",
+    "categories": {
+      "analytics": "Analyse",
+      "marketing": "Marketing",
+      "functional": "Funktional"
+    },
+    "interactions": {
+      "accept_all": "Alle akzeptieren",
+      "reject_all": "Alle ablehnen",
+      "customized_accepted": "Individuell (teilweise akzeptiert)",
+      "customized_rejected": "Individuell (alle abgelehnt)"
+    },
+    "combinations_description": "Verteilung der Einstellungen von Nutzenden, die ihre Auswahl aktiv angepasst haben (ohne „Alle akzeptieren“ und „Alle ablehnen“).",
+    "none": "Keine",
+    "hours": "{count} Stunden",
+    "not_available": "–"
+  }
 }

@@ -39,5 +39,103 @@
     "cancel": "Annuler",
     "creating": "Création...",
     "create_button": "Créer le client"
+  },
+  "detail": {
+    "not_found": "Client introuvable",
+    "no_industry": "Aucun secteur renseigné",
+    "unknown_location": "Localisation inconnue",
+    "tabs": {
+      "overview": "Vue d'ensemble",
+      "ropa": "Activités de traitement",
+      "vendors": "Fournisseurs et sous-traitants",
+      "report": "Rapport de conformité",
+      "portal": "Aperçu du portail"
+    },
+    "details": {
+      "title": "Informations client",
+      "legal_name": "Raison sociale",
+      "contact_name": "Interlocuteur",
+      "contact_email": "E-mail de contact",
+      "created_at": "Créé le"
+    },
+    "dpa": {
+      "title": "Contrat de sous-traitance (DPA)",
+      "description": "Gérez le DPA entre votre agence (sous-traitant) et ce client (responsable de traitement). Il est requis par l'article 28 du RGPD.",
+      "status": "Statut du DPA",
+      "options": {
+        "not_started": "Non commencé",
+        "pending": "Signature en attente",
+        "signed": "Signé",
+        "expired": "Expiré"
+      },
+      "signed_date": "Date de signature",
+      "expiry_date": "Date d'expiration",
+      "document": "Document",
+      "upload": "Téléverser le document"
+    },
+    "portal": {
+      "title": "Portail de confiance",
+      "description": "Partagez avec ce client un tableau de bord de conformité en lecture seule présentant ses activités de traitement et ses fournisseurs.",
+      "enable": "Activer le portail",
+      "secret_url": "URL secrète",
+      "copy": "Copier",
+      "regenerate": "Régénérer le lien",
+      "regenerate_title": "Régénérer le jeton du portail ?",
+      "regenerate_description": "Tous les liens du portail de confiance déjà transmis à ce client cesseront immédiatement de fonctionner. Vous devrez leur envoyer le nouveau lien.",
+      "regenerate_confirm": "Régénérer le jeton"
+    },
+    "stats": {
+      "title": "Chiffres clés",
+      "activities": "Activités de traitement"
+    },
+    "activities": {
+      "title": "Activités de traitement rattachées",
+      "description": "Les activités affichées ici apparaissent sur le portail de conformité du client.",
+      "link": "Rattacher une activité",
+      "empty": "Aucune activité de traitement n'est encore rattachée à ce client.",
+      "unlink": "Détacher du client",
+      "unlink_title": "Détacher cette activité ?",
+      "unlink_description": "Elle n'apparaîtra plus sur le portail de confiance de ce client. L'activité elle-même reste dans votre registre.",
+      "unlink_confirm": "Détacher",
+      "columns": {
+        "activity": "Activité",
+        "lawful_basis": "Base légale",
+        "risk_level": "Niveau de risque"
+      }
+    },
+    "link_modal": {
+      "title": "Rattacher des activités de traitement",
+      "description": "Sélectionnez les activités qui concernent les données de ce client.",
+      "close": "Fermer",
+      "search_placeholder": "Rechercher dans votre registre...",
+      "empty": "Aucune activité non rattachée trouvée.",
+      "selected": "{count} sélectionnée(s)",
+      "cancel": "Annuler",
+      "submit": "Rattacher la sélection"
+    },
+    "vendors": {
+      "title": "Liste de fournisseurs générée automatiquement",
+      "description": "Dès que des activités de traitement sont rattachées, Custodia parcourt le graphe des flux de données pour déterminer lesquels de vos fournisseurs sous-traitent les données de ce client.",
+      "note": "(La résolution du graphe des fournisseurs suppose un registre complètement renseigné)"
+    },
+    "report": {
+      "title": "Rapport de conformité client",
+      "description": "Générez un rapport PDF formel détaillant vos activités de traitement et les DPA de vos sous-traitants, limité à {name}. Envoyez-le lorsque des clients s'enquièrent de votre conformité au RGPD.",
+      "generate": "Générer le rapport PDF",
+      "generating": "Génération du PDF...",
+      "ready": "Rapport de conformité prêt",
+      "ready_description": "Ouvert dans un nouvel onglet."
+    },
+    "preview": {
+      "disabled": "Activez le portail dans l'onglet « Vue d'ensemble » pour afficher l'aperçu.",
+      "description": "Voici un aperçu interactif de ce que {name} voit exactement via son lien sécurisé.",
+      "open": "Ouvrir dans un nouvel onglet",
+      "iframe_title": "Aperçu du portail"
+    },
+    "risk": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé"
+    }
   }
 }

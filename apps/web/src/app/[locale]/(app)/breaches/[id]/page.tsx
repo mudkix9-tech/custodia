@@ -3,7 +3,7 @@ import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Tab } from '@headlessui/react';
 import { Clock } from 'lucide-react';
@@ -19,6 +19,7 @@ function classNames(...classes: string[]) {
 }
 
 export default function BreachWorkspace() {
+  const t = useTranslations('breaches.workspace');
   const { id } = useParams();
   const breachId = id as string;
 
@@ -57,7 +58,7 @@ export default function BreachWorkspace() {
   const countdown = useDeadlineCountdown(breach?.notificationDeadline, alreadyNotified);
 
   if (isLoading) return <GenericWorkspaceSkeleton />;
-  if (!breach) return <div className="p-6">Breach not found.</div>;
+  if (!breach) return <div className="p-6">{t('not_found')}</div>;
 
   const isNotified = alreadyNotified;
   // Under 24 hours, or already past the deadline, is the escalated state.
@@ -80,17 +81,17 @@ export default function BreachWorkspace() {
           <div className="flex-1">
             <h3 className={`text-[14px] font-bold ${isUrgent ? 'text-red-400' : 'text-amber-400'}`}>
               {countdown!.expired
-                ? 'Article 33 notification deadline has passed'
-                : `Article 33 notification deadline: ${countdown!.hours}h ${String(countdown!.minutes).padStart(2, '0')}m remaining`}
+                ? t('banner.expired')
+                : t('banner.remaining', {
+                    hours: countdown!.hours,
+                    minutes: String(countdown!.minutes).padStart(2, '0'),
+                  })}
             </h3>
             <p className={`text-[12px] tabular-nums ${isUrgent ? 'text-red-300/80' : 'text-amber-300/80'}`}>
-              Due {formatDeadline(breach.notificationDeadline as string, locale)}
+              {t('banner.due', { date: formatDeadline(breach.notificationDeadline as string, locale) })}
             </p>
             <p className={`text-[12.5px] ${isUrgent ? 'text-red-400' : 'text-amber-400'}`}>
-              {isUrgent 
-                ? 'CRITICAL: You must notify the supervisory authority without undue delay and within 72 hours of becoming aware of a personal data breach.'
-                : 'Under GDPR Article 33, the supervisory authority must be notified within 72 hours unless the breach is unlikely to result in a risk to individuals.'
-              }
+              {isUrgent ? t('banner.urgent') : t('banner.normal')}
             </p>
           </div>
         </div>
@@ -104,15 +105,15 @@ export default function BreachWorkspace() {
         )}
         
         <div className="pl-2">
-          <p className="text-xs font-semibold tracking-wider text-red-400 uppercase mb-1">Incident Reference: {breach.referenceNumber}</p>
+          <p className="text-xs font-semibold tracking-wider text-red-400 uppercase mb-1">{t('reference', { reference: breach.referenceNumber })}</p>
           <h1 className="text-2xl font-bold text-[#F4F5F6]">{breach.title}</h1>
           <p className="text-sm text-[#9BA1A6] mt-1 max-w-3xl">{breach.description}</p>
         </div>
 
         <div className="text-right flex items-center gap-6">
           <div className="text-sm">
-            <span className="block text-[#9BA1A6] mb-1">Status</span>
-            <span className="font-semibold capitalize px-2 py-1 bg-white/10 rounded-md">{breach.status}</span>
+            <span className="block text-[#9BA1A6] mb-1">{t('status')}</span>
+            <span className="font-semibold px-2 py-1 bg-white/10 rounded-md">{t(`statuses.${breach.status ?? 'detected'}`)}</span>
           </div>
           <BreachCountdown 
             deadline={breach.notificationDeadline as string} 
@@ -125,7 +126,7 @@ export default function BreachWorkspace() {
       {/* Tabs */}
       <Tab.Group selectedIndex={activeTab} onChange={setActiveTab}>
         <Tab.List className="flex space-x-1 rounded-xl bg-white/10 p-1">
-          {['Risk Assessment', 'Notification Drafts', 'Remediation Tasks', 'Timeline & Logs'].map((category) => (
+          {(['risk', 'drafts', 'tasks', 'timeline'] as const).map((category) => (
             <Tab
               key={category}
               className={({ selected }) =>
@@ -137,7 +138,7 @@ export default function BreachWorkspace() {
                 )
               }
             >
-              {category}
+              {t(`tabs.${category}`)}
             </Tab>
           ))}
         </Tab.List>
@@ -157,19 +158,22 @@ export default function BreachWorkspace() {
 
           <Tab.Panel className="rounded-xl bg-[#0D0F11] p-6 shadow-panel-elevated border border-white/10">
             <div className="prose prose-invert">
-              <h3>Timeline & Audit Logs</h3>
-              <p>Chronological history of all actions related to this incident. Evidence stored here is immutable.</p>
+              <h3>{t('timeline.title')}</h3>
+              <p>{t('timeline.description')}</p>
               {/* Timeline component implementation... */}
               <div className="border-l-2 border-white/10 pl-4 mt-8 space-y-6">
                 <div className="relative">
                   <div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full bg-red-500/100 border-2 border-white"></div>
-                  <p className="text-sm font-medium text-[#F4F5F6]">Incident Discovered</p>
+                  <p className="text-sm font-medium text-[#F4F5F6]">{t('timeline.discovered')}</p>
                   <p className="text-xs text-[#9BA1A6]">{new Date(breach.discoveredAt).toLocaleString()}</p>
                 </div>
                 <div className="relative">
                   <div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full bg-white/10 border-2 border-white"></div>
-                  <p className="text-sm font-medium text-[#F4F5F6]">Case Created</p>
-                  <p className="text-xs text-[#9BA1A6]">{new Date(breach.createdAt!).toLocaleString()} by User</p>
+                  <p className="text-sm font-medium text-[#F4F5F6]">{t('timeline.created')}</p>
+                  <p className="text-xs text-[#9BA1A6]">{t('timeline.created_by', {
+                    date: new Date(breach.createdAt!).toLocaleString(),
+                    user: (breach as any).createdByName ?? t('timeline.unknown_user'),
+                  })}</p>
                 </div>
               </div>
             </div>
