@@ -5,8 +5,8 @@ import { GenericListSkeleton } from '@/components/skeletons/PageSkeleton';
 import { trpc } from '@/utils/trpc';
 import { BookOpen, CheckCircle, Clock, PlayCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
 import { completionChipClasses, completionTileClasses } from '@/utils/status';
+import { PageShell } from '@/components/layout/PageShell';
 
 export default function EmployeeTrainingDashboard() {
   const t = useTranslations('training');
@@ -23,14 +23,11 @@ export default function EmployeeTrainingDashboard() {
   const assignedCount = myCompletions?.filter(c => c.status !== 'passed').length || 0;
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#08090A]/50">
-      <header className="px-8 py-6 border-b border-white/10 bg-[#0D0F11]/50 backdrop-blur-xl shrink-0">
-        <h1 className="text-2xl font-serif text-[#F4F5F6]">{t('title')}</h1>
-        <p className="text-sm text-[#9BA1A6] mt-1">{t('subtitle')}</p>
-      </header>
-
-      <div className="flex-1 overflow-y-auto p-8 fade-in">
-        <div className="max-w-4xl mx-auto space-y-8">
+    <PageShell width="narrow" className="fade-up space-y-8">
+      <div>
+        <h1 className="text-3xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
+        <p className="text-[#9BA1A6] text-[15px]">{t('subtitle')}</p>
+      </div>
           
           {assignedCount > 0 && (
             <div className="bg-amber-500/10 border border-amber-900/50 rounded-2xl p-4 flex items-start gap-3">
@@ -96,9 +93,6 @@ export default function EmployeeTrainingDashboard() {
               )}
             </div>
           </div>
-
-        </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }
