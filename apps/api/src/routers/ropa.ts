@@ -434,6 +434,10 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'view'))
       .input(z.object({ processingActivityId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
+        // processing_recipients carries no organization_id, so the activity is
+        // what has to be proved — otherwise this reads any tenant's recipients.
+        await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
+
         const records = await ctx.db.select({
           recipient: processingRecipients,
           vendor: {
@@ -473,6 +477,10 @@ export const ropaRouter = router({
         vendorId: z.string().uuid().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Unchecked, this wrote a recipient — and below, a transfer record and a
+        // re-consent flag — into another tenant's processing activity.
+        await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
+
         const [inserted] = await ctx.db.insert(processingRecipients).values({
           ...input,
         }).returning();

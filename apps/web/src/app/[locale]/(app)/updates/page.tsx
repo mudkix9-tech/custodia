@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 import { GenericListSkeleton } from '@/components/skeletons/PageSkeleton';
 
@@ -16,7 +15,7 @@ export default function UpdatesPage() {
 
   if (isLoading) return <GenericListSkeleton />;
 
-  const filteredUpdates = updates?.filter(u => 
+  const filteredUpdates = updates?.filter((u: any) => 
     u.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.sourceName.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -47,7 +46,7 @@ export default function UpdatesPage() {
       </div>
 
       <div className="space-y-6">
-        {filteredUpdates?.map(update => {
+        {filteredUpdates?.map((update: any) => {
           return <RegulatoryUpdateCard key={update.id} update={update} />;
         })}
         {filteredUpdates?.length === 0 && (

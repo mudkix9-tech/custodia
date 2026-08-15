@@ -334,6 +334,10 @@ export const dpiaRouter = router({
         severity: z.number().min(1).max(5).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // The sibling list/update/delete all prove ownership; this one did not,
+        // so a caller could hang a risk off any tenant's DPIA.
+        await assertParentOwned(ctx.db, dpias, input.dpiaId, ctx.user!.orgId, 'DPIA');
+
         const initialRiskScore = (input.likelihood && input.severity) ? input.likelihood * input.severity : null;
         
         const [inserted] = await ctx.db.insert(dpiaRisks).values({
@@ -432,6 +436,14 @@ export const dpiaRouter = router({
         status: z.string().default('planned'),
       }))
       .mutation(async ({ ctx, input }) => {
+        await assertOwned(ctx.db, {
+          table: dpiaRisks,
+          id: input.dpiaRiskId,
+          orgId: ctx.user!.orgId,
+          label: 'Risk',
+          via: [{ table: dpias, on: eq(dpiaRisks.dpiaId, dpias.id) }],
+        });
+
         const [inserted] = await ctx.db.insert(dpiaMeasures).values(input).returning();
 
         const [risk] = await ctx.db.select().from(dpiaRisks).where(eq(dpiaRisks.id, inserted.dpiaRiskId));

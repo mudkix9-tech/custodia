@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { useState } from 'react';
@@ -99,7 +98,7 @@ export default function TrainingAdminDashboard() {
                       <BookOpen className="w-5 h-5" />
                     </div>
                   </div>
-                  <div className="text-3xl font-serif text-[#F4F5F6]">{modules?.filter(m => m.status === 'published').length || 0}</div>
+                  <div className="text-3xl font-serif text-[#F4F5F6]">{modules?.filter((m: any) => m.status === 'published').length || 0}</div>
                   <div className="text-[13px] font-medium text-[#9BA1A6] mt-1">{t('admin.metrics.active_modules')}</div>
                 </div>
 
@@ -166,7 +165,7 @@ export default function TrainingAdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-900/10">
-                  {modules?.map(m => (
+                  {modules?.map((m: any) => (
                     <tr key={m.id} className="hover:bg-[#08090A]/30 transition-colors">
                       <td className="py-4 px-6">
                         <div className="font-medium text-[#F4F5F6]">{m.title}</div>

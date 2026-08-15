@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -14,7 +13,7 @@ import { useToast } from '@/components/ui/Toast';
 export default function SiemSettingsPage() {
   const t = useTranslations('settings');
   const toast = useToast();
-  const toastError = (msg: string) => toast(msg, 'error');
+  const toastError = (msg: string) => toast(msg, { tone: 'error' });
   const [siemEnabled, setSiemEnabled] = useState(false);
   const [siemEndpointUrl, setSiemEndpointUrl] = useState('');
   const [siemFormat, setSiemFormat] = useState('json');

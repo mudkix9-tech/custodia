@@ -1,10 +1,16 @@
 import crypto from 'crypto';
+import { resolveEncryptionKeys } from './secrets.js';
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default_secret_key_needs_to_be_32_bytes_long_so_this_is_it!';
+// Stored TOTP seeds are sealed with this. The key used to fall back to a literal
+// that shipped in source, so anything encrypted before the rotation is readable
+// by anyone holding the repository — see `secrets.ts` and rotate accordingly.
+const { current: ENCRYPTION_KEY, previous: PREVIOUS_KEYS } = resolveEncryptionKeys();
+
+const keyBytes = (key: string) => Buffer.from(key.slice(0, 32));
 
 export function encrypt(text: string) {
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(ENCRYPTION_KEY.slice(0, 32)), iv);
+  const cipher = crypto.createCipheriv('aes-256-gcm', keyBytes(ENCRYPTION_KEY), iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   const authTag = cipher.getAuthTag().toString('hex');
@@ -16,9 +22,21 @@ export function decrypt(text: string) {
   if (!ivHex || !authTagHex || !encryptedText) throw new Error('Invalid encrypted format');
   const iv = Buffer.from(ivHex, 'hex');
   const authTag = Buffer.from(authTagHex, 'hex');
-  const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(ENCRYPTION_KEY.slice(0, 32)), iv);
-  decipher.setAuthTag(authTag);
-  let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
+
+  // Try the retired keys after the current one so a rotation does not lock every
+  // MFA user out of their account. GCM authenticates, so a wrong key throws here
+  // rather than returning plausible rubbish.
+  let lastError: unknown;
+  for (const key of [ENCRYPTION_KEY, ...PREVIOUS_KEYS]) {
+    try {
+      const decipher = crypto.createDecipheriv('aes-256-gcm', keyBytes(key), iv);
+      decipher.setAuthTag(authTag);
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('Decryption failed');
 }

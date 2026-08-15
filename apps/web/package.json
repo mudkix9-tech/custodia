@@ -38,6 +38,7 @@
     "cookies-next": "^6.1.1",
     "date-fns": "^4.3.0",
     "db": "*",
+    "isomorphic-dompurify": "^3.12.0",
     "dompurify": "^3.4.5",
     "drizzle-orm": "^0.45.2",
     "focus-trap-react": "^12.0.2",

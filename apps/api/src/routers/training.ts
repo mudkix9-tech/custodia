@@ -7,6 +7,7 @@ import { trainingModules, trainingCompletions, users, documents, organizations }
 import { eq, and, desc, inArray, isNull, or, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { renderPdf } from '../lib/pdfClient.js';
+import { USER_SECRET_COLUMNS } from '../lib/userColumns.js';
 import crypto from 'crypto';
 
 // Helpers
@@ -380,7 +381,8 @@ export const trainingRouter = router({
       if (compIds.length > 0) {
         const fullComps = await ctx.db.query.trainingCompletions.findMany({
           where: inArray(trainingCompletions.id, compIds),
-          with: { user: true, module: true }
+          // `user: true` would ship each trainee's password hash and MFA seed.
+          with: { user: { columns: USER_SECRET_COLUMNS }, module: true }
         });
         const map = new Map(fullComps.map((c: any) => [c.id, c]));
         res.data = res.data.map((r: any) => map.get(r.id) || r);

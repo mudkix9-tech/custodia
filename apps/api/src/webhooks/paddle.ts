@@ -17,17 +17,24 @@ export async function paddleWebhookHandler(fastify: FastifyInstance) {
     // Fastify request.rawBody requires fastify-raw-body plugin, which should be registered
     const rawBody = (request as any).rawBody || JSON.stringify(request.body);
     
-    // Skip signature verification in dev if secret is missing
+    // This endpoint is unauthenticated and its payload sets an organisation's
+    // subscription tier, so an unverified request is a free upgrade for anyone who
+    // can find the URL — and a downgrade for any org whose id they can guess. The
+    // old code skipped verification whenever the secret was absent, which turned a
+    // missing environment variable into an open billing endpoint.
     const secret = process.env.PADDLE_WEBHOOK_SECRET;
-    
-    if (secret) {
-      try {
-        const unmarshalledEvent = paddle.webhooks.unmarshal(rawBody, secret, signature);
-        if (!unmarshalledEvent) return reply.code(401).send('Invalid signature');
-      } catch (err) {
-        fastify.log.error('Paddle signature verification failed: ' + String(err));
-        return reply.code(401).send('Invalid signature');
-      }
+
+    if (!secret) {
+      fastify.log.error('PADDLE_WEBHOOK_SECRET is not set — rejecting webhook rather than trusting it');
+      return reply.code(503).send('Webhook verification unavailable');
+    }
+
+    try {
+      const unmarshalledEvent = await paddle.webhooks.unmarshal(rawBody, secret, signature);
+      if (!unmarshalledEvent) return reply.code(401).send('Invalid signature');
+    } catch (err) {
+      fastify.log.error('Paddle signature verification failed: ' + String(err));
+      return reply.code(401).send('Invalid signature');
     }
 
     const event = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;

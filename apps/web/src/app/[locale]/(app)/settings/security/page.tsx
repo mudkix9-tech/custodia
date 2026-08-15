@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -268,7 +267,7 @@ export default function SecuritySettingsPage() {
               <p className="text-sm text-set-fg-subtle">{t('sessions.no_sessions')}</p>
             )}
 
-            {activeSessions?.map((session) => (
+            {activeSessions?.map((session: any) => (
               <div key={session.id} className="flex items-center justify-between p-4 bg-set-sunken rounded-lg border border-set-line">
                 <div className="flex items-center gap-4">
                   <Monitor className="w-8 h-8 text-set-fg-subtle" />

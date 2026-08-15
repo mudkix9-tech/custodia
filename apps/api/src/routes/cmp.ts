@@ -119,11 +119,25 @@ export default async function cmpRoutes(fastify: FastifyInstance) {
       }, {})
     };
 
+    // Serialised as a JavaScript object literal, not as a quoted string fed to
+    // JSON.parse. The old form wrapped the JSON in single quotes and escaped only
+    // `<`, so one apostrophe anywhere in the payload — banner copy the customer
+    // types, or a cookie name recorded by scanning a site we do not control —
+    // closed the literal and ran as code in every visitor’s browser.
+    //
+    // JSON is a subset of JS object-literal syntax, so it can be emitted directly.
+    // `<` is still escaped so the body cannot contain `</script>`, and U+2028/9 are
+    // escaped because JSON permits them raw inside strings where JS once did not.
+    const configLiteral = JSON.stringify(config)
+      .replace(/</g, '\\u003c')
+      .replace(/\u2028/g, '\\u2028')
+      .replace(/\u2029/g, '\\u2029');
+
     // The actual banner logic
     // This is a minimal implementation of the requested robust banner logic.
     const script = `
 (function() {
-  const config = JSON.parse('${JSON.stringify(config).replace(/</g, '\\u003c')}');
+  const config = ${configLiteral};
   
   function getCookie(name) {
     const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');

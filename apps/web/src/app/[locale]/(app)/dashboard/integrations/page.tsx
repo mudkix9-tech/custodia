@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
@@ -36,8 +35,8 @@ export default function IntegrationsPage() {
       {dialog}
       <h1 className="text-2xl font-bold mb-6">{t('marketplace_title')}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {providers?.map((provider) => {
-          const connection = connections?.find((c) => c.provider === provider.id);
+        {providers?.map((provider: any) => {
+          const connection = connections?.find((c: any) => c.provider === provider.id);
 
           return (
             <div key={provider.id} className="border rounded-md p-4 bg-[#0D0F11] shadow-panel-elevated">

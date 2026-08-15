@@ -37,11 +37,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(targetPath.replace(/\/\/+/g, '/'), request.url));
   }
 
-  if (tokenStr && !isPublicRoute) {
+  // Falling back to a literal here meant a cookie forged with the published
+  // secret decoded cleanly and passed this gate. With no secret configured the
+  // honest answer is that no session can be validated, so treat every token as
+  // undecodable rather than validating it against a key the world has. The API
+  // enforces the real boundary either way; this only decides what gets rendered.
+  const authSecret = process.env.AUTH_SECRET;
+
+  if (tokenStr && !isPublicRoute && authSecret) {
     try {
       const decoded = await decode({
         token: tokenStr,
-        secret: process.env.AUTH_SECRET || 'secret',
+        secret: authSecret,
         salt: cookieName,
       });
 

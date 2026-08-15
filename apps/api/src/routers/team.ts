@@ -6,6 +6,7 @@ import { users } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { enforceLimit } from '../lib/billing.js';
+import { userPublicColumns } from '../lib/userColumns.js';
 import React from 'react';
 import { sendEmail, TeamInvitation } from 'emails';
 
@@ -13,11 +14,32 @@ const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
 };
 
+// requireRole('admin') gates *reaching* these procedures; it says nothing about
+// which role may be handed out once inside. Without this an admin could invite a
+// fresh owner — or demote the existing one — and so promote themselves past the
+// admin/owner boundary the role check exists to draw.
+const ROLE_RANK: Record<string, number> = { viewer: 0, member: 1, admin: 2, owner: 3 };
+
+const assertMayGrantRole = (actorRole: string, targetRole: string) => {
+  const actor = ROLE_RANK[actorRole] ?? -1;
+  const granted = ROLE_RANK[targetRole] ?? -1;
+  if (granted > actor) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'You cannot assign a role higher than your own.',
+    });
+  }
+};
+
 export const teamRouter = router({
   list: protectedProcedure
     .query(async ({ ctx }) => {
       checkOrgContext(ctx.user);
-      return ctx.db.select().from(users).where(eq(users.organizationId, ctx.user!.orgId));
+      // Never `select()` here: the bare row carries password_hash and the
+      // plaintext mfa_secret, so the team page handed every member the means to
+      // take over their own admins' accounts.
+      return ctx.db.select(userPublicColumns).from(users)
+        .where(eq(users.organizationId, ctx.user!.orgId));
     }),
 
   invite: protectedProcedure
@@ -29,6 +51,7 @@ export const teamRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      assertMayGrantRole(ctx.user!.role, input.role);
       await enforceLimit(ctx.db, ctx.user!.orgId, 'users', 1);
 
       const existing = await ctx.db.query.users.findFirst({
@@ -81,6 +104,7 @@ export const teamRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      assertMayGrantRole(ctx.user!.role, input.role);
 
       const validEmails: string[] = [];
       const invalidEmails: string[] = [];
@@ -219,6 +243,15 @@ export const teamRouter = router({
       if (input.userId === ctx.user!.id) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot change your own role' });
       }
+
+      assertMayGrantRole(ctx.user!.role, input.role);
+
+      // Also guard the *current* role of the target: demoting the owner is the
+      // other half of the same escalation.
+      const [target] = await ctx.db.select({ role: users.role }).from(users)
+        .where(and(eq(users.id, input.userId), eq(users.organizationId, ctx.user!.orgId)));
+      if (!target) throw new TRPCError({ code: 'NOT_FOUND' });
+      assertMayGrantRole(ctx.user!.role, target.role);
 
       const [updated] = await ctx.db.update(users)
         .set({ role: input.role, customRoleId: input.customRoleId !== undefined ? input.customRoleId : null, tokenInvalidatedAt: new Date(), updatedAt: new Date() })

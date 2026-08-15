@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { router, protectedProcedure, requireRole } from '../trpc.js';
+import { router, protectedProcedure, requireRole, requirePlatformAdmin } from '../trpc.js';
 import { db } from '../db.js';
 import { regulatoryUpdates, regulatoryUpdateMatches, processingActivities } from 'db';
 import { eq, and, desc, isNull } from 'drizzle-orm';
@@ -122,8 +122,10 @@ export const regulatoryRouter = router({
         .orderBy(desc(regulatoryUpdates.createdAt));
     }),
 
+  // Publishing fans impact assessments and notifications to *every* organisation,
+  // so a tenant role cannot be the gate — every customer has an owner.
   adminPublishUpdate: protectedProcedure
-    .use(requireRole('owner'))
+    .use(requirePlatformAdmin())
     .input(z.object({
       updateId: z.string().uuid(),
     }))

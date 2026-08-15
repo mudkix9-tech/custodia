@@ -1,4 +1,4 @@
-import { router, protectedProcedure, publicProcedure } from '../trpc.js';
+import { router, protectedProcedure, publicProcedure, requirePlatformAdmin } from '../trpc.js';
 import { z } from 'zod';
 import { 
   processingActivities, 
@@ -1777,7 +1777,10 @@ ${contextStr}
       }));
     }),
 
+  // Writes the shared corpus every tenant retrieves from, so it is gated on
+  // platform operators rather than on any tenant role.
   overrideSupersededStatus: protectedProcedure
+    .use(requirePlatformAdmin())
     .input(z.object({
       documentId: z.string(),
       isCurrent: z.boolean(),
@@ -1807,10 +1810,12 @@ ${contextStr}
       const conditions = [];
       if (input?.startDate) conditions.push(sql`assessed_at >= ${input.startDate}`);
       if (input?.endDate) conditions.push(sql`assessed_at <= ${input.endDate}`);
-      // Filter by org if they are not an admin/superadmin, otherwise they can see their own
-      if (ctx.user?.role !== 'admin' && ctx.user?.role !== 'superadmin' && ctx.user?.orgId) {
-         conditions.push(sql`organization_id = ${ctx.user.orgId}`);
-      }
+      // Always scoped to the caller's organisation. This used to exempt 'admin'
+      // and 'superadmin' from the filter, but 'admin' is an ordinary tenant role
+      // and 'superadmin' is not a role this system issues at all — so every
+      // customer's admins were reading platform-wide spend.
+      if (!ctx.user?.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
+      conditions.push(sql`organization_id = ${ctx.user.orgId}`);
 
       const whereClause = conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)} AND prompt_tokens IS NOT NULL` : sql`WHERE prompt_tokens IS NOT NULL`;
 

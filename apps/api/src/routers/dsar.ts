@@ -1,5 +1,7 @@
 import { paginatedQuery } from '../utils/pagination.js';
 import { assertOwned, assertParentOwned } from '../lib/tenancy.js';
+import { USER_SECRET_COLUMNS } from '../lib/userColumns.js';
+import { requireSecret } from '../lib/secrets.js';
 import { z } from 'zod';
 import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { router, publicProcedure, protectedProcedure, requirePermission, verifyGroupScopeAndLog } from '../trpc.js';
@@ -20,7 +22,10 @@ import { Resend } from 'resend';
 import jwt from 'jsonwebtoken';
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev';
+// Signs the link a data subject clicks to prove their identity. The old fallback
+// literal is in git, so anyone could mint a token verifying themselves as any
+// requester and pull that person's data out of a DSAR.
+const JWT_SECRET = requireSecret('JWT_SECRET', { minLength: 32 });
 
 // Helpers
 const paginationInput = z.object({
@@ -277,6 +282,9 @@ const commsRouter = router({
     .input(z.object({ dsarId: z.string().uuid(), subject: z.string(), body: z.string(), channel: z.string().default('email') }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
+      // dsar_communications has no organization_id, so without this the caller
+      // could append a message to any tenant's DSAR thread.
+      await assertParentOwned(ctx.db, dsarRequests, input.dsarId, ctx.user!.orgId, 'Request');
       const [comm] = await ctx.db.insert(dsarCommunications).values({
         dsarId: input.dsarId,
         direction: 'inbound',
@@ -505,7 +513,8 @@ export const dsarRouter = router({
       const dsar = await ctx.db.query.dsarRequests.findFirst({
         where: and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)),
         with: {
-          assignee: true
+          // Not `true` — that returns the assignee's password hash and MFA seed.
+          assignee: { columns: USER_SECRET_COLUMNS },
         }
       });
       if (!dsar) throw new TRPCError({ code: 'NOT_FOUND' });

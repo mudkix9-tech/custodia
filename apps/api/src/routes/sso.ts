@@ -5,6 +5,7 @@ import { organizations, users } from 'db';
 import { eq } from 'drizzle-orm';
 import * as jwt from 'jsonwebtoken';
 import { TRPCError } from '@trpc/server';
+import { requireSecret } from '../lib/secrets.js';
 
 const workos = new WorkOS(process.env.WORKOS_API_KEY);
 const clientId = process.env.WORKOS_CLIENT_ID;
@@ -123,7 +124,7 @@ export async function ssoRoutes(fastify: FastifyInstance) {
 
       const token = jwt.sign(
         { sub: user.id, email: user.email },
-        process.env.NEXTAUTH_SECRET || 'secret',
+        requireSecret('NEXTAUTH_SECRET', { minLength: 32 }),
         { expiresIn: '7d' }
       );
 

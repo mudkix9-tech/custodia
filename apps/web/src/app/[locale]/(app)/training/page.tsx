@@ -1,7 +1,6 @@
-// @ts-nocheck
 'use client';
-import { GenericListSkeleton } from '@/components/skeletons/PageSkeleton';
 
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { BookOpen, CheckCircle, Clock, PlayCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -20,7 +19,7 @@ export default function EmployeeTrainingDashboard() {
     );
   }
 
-  const assignedCount = myCompletions?.filter(c => c.status !== 'passed').length || 0;
+  const assignedCount = myCompletions?.filter((c: any) => c.status !== 'passed').length || 0;
 
   return (
     <PageShell width="narrow" className="fade-up space-y-8">
@@ -42,7 +41,7 @@ export default function EmployeeTrainingDashboard() {
           <div className="space-y-4">
             <h2 className="text-[15px] font-semibold text-[#F4F5F6]">{t('assigned_modules')}</h2>
             <div className="grid grid-cols-1 gap-4">
-              {myCompletions?.map(c => (
+              {myCompletions?.map((c: any) => (
                 <div key={c.id} className="bg-[#0D0F11] rounded-2xl p-6 border border-white/10 shadow-panel-elevated flex flex-col sm:flex-row gap-6 sm:items-center justify-between transition-shadow hover:shadow-md">
                   <div className="flex items-start gap-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${completionTileClasses(c.status)}`}>

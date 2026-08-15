@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
@@ -48,8 +47,8 @@ export default function IntegrationsSettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {providers?.map((provider) => {
-          const connection = connections?.find((c) => c.provider === provider.id);
+        {providers?.map((provider: any) => {
+          const connection = connections?.find((c: any) => c.provider === provider.id);
 
           return (
             <div key={provider.id} className="rounded-[14px] border border-set-line bg-set-panel p-[22px] flex flex-col h-full shadow-panel-elevated hover:shadow-md transition-shadow">

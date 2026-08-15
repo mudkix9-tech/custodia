@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import React from 'react';
@@ -10,9 +9,10 @@ import { Building2, Activity, ShieldCheck, AlertTriangle, FileDown, TrendingUp, 
 export default function GroupDashboardPage() {
   const t = useTranslations('group');
   const { data: scoresData, isLoading: loadingScores } = trpc.group.getGroupComplianceScores.useQuery();
-  const { data: dashboardData, isLoading: loadingDash } = trpc.group.getGroupDashboard.useQuery();
+  const { data: childOrgs, isLoading: loadingOrgs } = trpc.group.listChildOrgs.useQuery();
+  const { data: gapsData, isLoading: loadingGaps } = trpc.group.getGroupGaps.useQuery();
 
-  if (loadingScores || loadingDash) return <div className="p-8">{t('loading')}</div>;
+  if (loadingScores || loadingOrgs || loadingGaps) return <div className="p-8">{t('loading')}</div>;
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-sage-500';
@@ -50,7 +50,7 @@ export default function GroupDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-[#0D0F11] hairline p-6 rounded-xl flex flex-col items-center justify-center text-center shadow-panel-elevated">
           <Building2 className="w-8 h-8 text-[#6E747A] mb-2" />
-          <div className="text-3xl font-medium text-[#F4F5F6]">{dashboardData?.totalEntities}</div>
+          <div className="text-3xl font-medium text-[#F4F5F6]">{childOrgs?.length || 0}</div>
           <div className="text-sm text-[#6E747A]">{t('metrics.entities')}</div>
         </div>
         
@@ -70,12 +70,12 @@ export default function GroupDashboardPage() {
 
         <div className="bg-[#0D0F11] hairline p-6 rounded-xl flex flex-col items-center justify-center text-center shadow-panel-elevated">
           <Activity className="w-8 h-8 text-[#6E747A] mb-2" />
-          <div className="text-3xl font-medium text-[#F4F5F6]">{dashboardData?.totalActivities}</div>
+          <div className="text-3xl font-medium text-[#F4F5F6]">{scoresData?.breakdown?.length || 0}</div>
           <div className="text-sm text-[#6E747A]">{t('metrics.activities')}</div>
         </div>
         <div className="bg-[#0D0F11] hairline p-6 rounded-xl flex flex-col items-center justify-center text-center shadow-panel-elevated">
           <AlertTriangle className="w-8 h-8 text-amber-500 mb-2" />
-          <div className="text-3xl font-medium text-[#F4F5F6]">{dashboardData?.totalGaps}</div>
+          <div className="text-3xl font-medium text-[#F4F5F6]">{gapsData?.length || 0}</div>
           <div className="text-sm text-[#6E747A]">{t('metrics.gaps')}</div>
         </div>
       </div>
@@ -91,7 +91,7 @@ export default function GroupDashboardPage() {
             <div className="col-span-2 text-center">{t('breakdown.trend')}</div>
             <div className="col-span-3 text-right">{t('breakdown.actions')}</div>
           </div>
-          {scoresData?.breakdown?.map((org) => (
+          {scoresData?.breakdown?.map((org: any) => (
             <div key={org.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-[#08090A] transition-colors">
               <div className="col-span-4 flex items-center gap-3">
                 <div className="w-8 h-8 rounded bg-[#C9A227]/15 flex items-center justify-center text-[#C9A227] font-medium text-sm">

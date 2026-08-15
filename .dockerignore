@@ -2,6 +2,12 @@ node_modules
 **/node_modules
 .next
 .git
+# Every env file, at any depth. This listed only the root `.env`, so `.env.example`
+# — which holds real credentials, not placeholders — and any nested apps/*/.env
+# were copied into the image and survive in its layers.
 .env
+.env.*
+**/.env
+**/.env.*
 *.wav
 temp_geist

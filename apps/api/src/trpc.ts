@@ -6,6 +6,7 @@ import { z } from 'zod';
 import '@fastify/cookie';
 import { decode } from '@auth/core/jwt';
 import { db } from './db.js';
+import { requireSecret } from './lib/secrets.js';
 import { getDbForOrg, getPrimaryDb } from './lib/dbRouter.js';
 
 import { users, customRoles } from 'db';
@@ -130,7 +131,7 @@ export const isAuthed = t.middleware(async ({ ctx, type, next }) => {
   try {
     decoded = await decode({
       token: tokenStr,
-      secret: process.env.AUTH_SECRET || 'secret',
+      secret: requireSecret('AUTH_SECRET', { minLength: 32 }),
       salt: cookieName,
     });
   } catch {
@@ -213,6 +214,43 @@ export const requireRole = (minimumRole: 'viewer' | 'member' | 'admin' | 'owner'
     if (ctx.user.orgId) {
       // Postgres RLS execution
       // await db.execute(sql`SET app.org_id = '${ctx.user.orgId}'`);
+    }
+
+    return next({ ctx });
+  });
+};
+
+/**
+ * Gate for operations on platform-global data — the shared regulatory corpus and
+ * the document embeddings every tenant retrieves from.
+ *
+ * `requireRole('owner')` is not this. Every customer organisation has an owner,
+ * so gating a platform-wide write on it means any customer can publish a
+ * regulatory update to every other customer, or flip a corpus document to
+ * superseded for everyone. There is no platform-admin column in `users`, so
+ * membership is configured out of band and the default is deny: an empty or
+ * unset PLATFORM_ADMIN_EMAILS locks these procedures for everybody, which is the
+ * correct posture for an operation no customer should reach.
+ */
+export const requirePlatformAdmin = () => {
+  return t.middleware(async ({ ctx, next }) => {
+    if (!ctx.user) {
+      throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
+
+    const allowed = (process.env.PLATFORM_ADMIN_EMAILS || '')
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    // ctx.user carries no email (see the token claims above), so it is read
+    // from the database rather than trusted from the session.
+    const [record] = await db.select({ email: users.email })
+      .from(users).where(eq(users.id, ctx.user.id));
+
+    const email = (record?.email || '').toLowerCase();
+    if (!email || !allowed.includes(email)) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'Platform administration is not available to this account.' });
     }
 
     return next({ ctx });

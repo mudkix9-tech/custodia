@@ -263,7 +263,17 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
     }
     
     const webhookUrl = (org.settings as any)?.webhookUrl;
-    const webhookSecret = (org.settings as any)?.webhookSecret || 'secret';
+    const webhookSecret = (org.settings as any)?.webhookSecret;
+
+    // Signing with a literal fallback is worse than not signing: the receiver sees
+    // a valid X-Custodia-Signature header and trusts the payload, while anyone who
+    // has read this file can forge one. Skip instead, and say why.
+    if (webhookUrl && !webhookSecret) {
+      await db.update(notificationQueue)
+        .set({ status: 'skipped', error: 'No webhook signing secret configured' })
+        .where(eq(notificationQueue.id, notification.id));
+      return;
+    }
 
     if (!webhookUrl) {
       await db.update(notificationQueue)

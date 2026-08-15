@@ -8,6 +8,7 @@ import 'dotenv/config';
 import './index.js';
 import { scheduleGlobalJobs } from './index.js';
 import { getBoss, shouldRegisterWorkers } from '../lib/queue.js';
+import { assertSecretsConfigured } from '../lib/secrets.js';
 
 const requiredEnvVars = ['DATABASE_URL'];
 for (const envVar of requiredEnvVars) {
@@ -16,6 +17,10 @@ for (const envVar of requiredEnvVars) {
     process.exit(1);
   }
 }
+
+// The workers decrypt tenant connection strings and TOTP seeds, so the same
+// secret requirements apply here as to the API service.
+assertSecretsConfigured();
 
 if (!shouldRegisterWorkers()) {
   console.error('FATAL: WORKER_ROLE=web on the worker service; it would register no workers.');

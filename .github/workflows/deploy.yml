@@ -18,8 +18,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Typecheck
-        run: npx tsc --noEmit
+      # Not `npx tsc --noEmit`: there is no root tsconfig.json, so that form
+      # compiles nothing and exits 0 — the gate passed no matter what was pushed.
+      # `npm run check` runs both workspaces plus the tenancy, relations and
+      # params guards, which is what actually catches this repo's failure modes.
+      - name: Typecheck and repository guards
+        run: npm run check
         
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps

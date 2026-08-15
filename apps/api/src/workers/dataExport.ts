@@ -12,6 +12,7 @@ import { generateAuditFile, generateGroupAuditArchive } from '../lib/auditExport
 import { verifyGroupScopeAndLog } from '../trpc.js';
 
 import { getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
+import { USER_SECRET_COLUMNS } from '../lib/userColumns.js';
 
 export const dataExportWorker = createWorker('data-export', async (job: any) => {
     const { organizationId, requestedBy, isFullAudit, isGroupAudit } = job.data;
@@ -54,7 +55,12 @@ export const dataExportWorker = createWorker('data-export', async (job: any) => 
       const dataRegion = org?.dataRegion || 'eu-west-1';
       const s3Client = getS3ClientForRegion(dataRegion);
       const s3Bucket = getS3BucketForOrg(dataRegion);
-      const orgUsers = await db.query.users.findMany({ where: eq(users.organizationId, organizationId) });
+      // This lands verbatim in export.json inside a zip served over a signed
+      // URL, so the secret columns would leave the platform entirely.
+      const orgUsers = await db.query.users.findMany({
+        where: eq(users.organizationId, organizationId),
+        columns: USER_SECRET_COLUMNS,
+      });
       const activities = await db.query.processingActivities.findMany({ where: eq(processingActivities.organizationId, organizationId) });
 
       const exportData = {

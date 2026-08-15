@@ -29,6 +29,7 @@ import { paddleWebhookHandler } from './webhooks/paddle.js';
 import { inboundEmailWebhookHandler } from './webhooks/inbound.js';
 import { pool } from './db.js';
 import { getBoss, shouldRegisterWorkers } from './lib/queue.js';
+import { assertSecretsConfigured } from './lib/secrets.js';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -152,6 +153,11 @@ server.register(fastifyTRPCPlugin, {
 
 const start = async () => {
   try {
+    // Before the socket opens, not on first use: a burned or missing signing key
+    // otherwise surfaces as scattered auth failures in production instead of a
+    // deployment that refuses to go live.
+    assertSecretsConfigured();
+
     const port = parseInt(process.env.PORT || '4000', 10);
     const host = process.env.HOST || '0.0.0.0';
     const address = await server.listen({ port, host });

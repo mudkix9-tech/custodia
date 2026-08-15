@@ -1,4 +1,7 @@
-import DOMPurify from 'dompurify';
+// Not plain `dompurify`: it needs a DOM, and on the server its factory returns an
+// object with no `sanitize` at all, so this page threw on every request. The
+// isomorphic build supplies jsdom under Node and the native window in the browser.
+import DOMPurify from 'isomorphic-dompurify';
 import React from 'react';
 import { db } from 'api/src/db';
 import { organizations, privacyPolicies, policyVersions } from 'db';
@@ -38,6 +41,12 @@ export default async function PublicPrivacyPolicy({ params }: { params: Promise<
 
   // Get the published version
   const [version] = await db.select().from(policyVersions).where(eq(policyVersions.id, policy.currentVersionId));
+
+  // currentVersionId can point at a row that no longer exists; without this the
+  // read of version.contentHtml below throws and the public page 500s.
+  if (!version) {
+    notFound();
+  }
 
   return (
     <div className="min-h-screen bg-white">

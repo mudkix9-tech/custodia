@@ -180,7 +180,9 @@ export const clientsRouter = router({
   linkActivity: protectedProcedure
     .input(z.object({ clientId: z.string().uuid(), processingActivityId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      // Verify activity belongs to org
+      // Both ids are client-supplied, so both need proving. Checking only the
+      // activity let a caller attach their own activity to another tenant's
+      // client record — see unlinkActivity, which checks the client instead.
       const act = await ctx.db.query.processingActivities.findFirst({
         where: and(
           eq(processingActivities.id, input.processingActivityId),
@@ -188,6 +190,11 @@ export const clientsRouter = router({
         )
       });
       if (!act) throw new TRPCError({ code: 'NOT_FOUND' });
+
+      const client = await ctx.db.query.clients.findFirst({
+        where: and(eq(clients.id, input.clientId), eq(clients.organizationId, ctx.user.orgId))
+      });
+      if (!client) throw new TRPCError({ code: 'NOT_FOUND' });
 
       await ctx.db.insert(clientProcessingActivities).values({
         clientId: input.clientId,
