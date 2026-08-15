@@ -66,10 +66,10 @@ export default function AnalyticsDashboard() {
         </div>
         <button
           onClick={handleDownloadReport}
-          disabled={generateReport.isLoading}
+          disabled={generateReport.isPending}
           className="flex items-center gap-2 px-4 py-2 bg-[#C9A227] text-[#08090A] font-medium rounded-lg hover:bg-[#E5C463] transition-colors disabled:opacity-50"
         >
-          {generateReport.isLoading ? (
+          {generateReport.isPending ? (
             <div className="h-4 w-4 border-2 border-[#08090A] border-t-transparent rounded-full animate-spin"></div>
           ) : (
             <Download className="w-4 h-4" />

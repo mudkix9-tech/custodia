@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/Toast';
 
 export default function SiemSettingsPage() {
+  const t = useTranslations('settings');
   const toast = useToast();
   const toastError = (msg: string) => toast(msg, 'error');
   const [siemEnabled, setSiemEnabled] = useState(false);
@@ -40,10 +42,10 @@ export default function SiemSettingsPage() {
         siemFormat,
         siemAuthHeader,
       });
-      toast('SIEM settings saved successfully');
+      toast(t('siem.saved'));
       refetch();
     } catch (error: any) {
-      toastError(`Failed to save settings: ${error.message}`);
+      toastError(t('siem.save_failed', { message: error.message }));
     }
   };
 
@@ -52,19 +54,19 @@ export default function SiemSettingsPage() {
     try {
       const result = await testMutation.mutateAsync();
       if (result.success) {
-        toast(result.message || 'Test connection successful');
+        toast(result.message || t('siem.test_success'));
       } else {
-        toastError(result.message || 'Test connection failed');
+        toastError(result.message || t('siem.test_failed'));
       }
     } catch (error: any) {
-      toastError(`Test connection failed: ${error.message}`);
+      toastError(t('siem.test_error', { message: error.message }));
     } finally {
       setIsTesting(false);
     }
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>{t('loading')}</div>;
   }
 
   return (
@@ -78,34 +80,34 @@ export default function SiemSettingsPage() {
             : 'bg-yellow-500/10 border-yellow-500/25 text-yellow-300'
         }`}>
           <div className="font-semibold">
-            Status: {siemSettings.deliveryStatus.status.charAt(0).toUpperCase() + siemSettings.deliveryStatus.status.slice(1)}
+            {t('siem.status', { status: t(`siem.delivery_status.${siemSettings.deliveryStatus.status}`) })}
           </div>
           {siemSettings.deliveryStatus.lastAttemptAt && (
             <div className="text-sm mt-1">
-              Last Attempt: {new Date(siemSettings.deliveryStatus.lastAttemptAt).toLocaleString()}
+              {t('siem.last_attempt', { date: new Date(siemSettings.deliveryStatus.lastAttemptAt).toLocaleString() })}
             </div>
           )}
           {siemSettings.deliveryStatus.error && (
             <div className="text-sm mt-1 font-mono break-all">
-              Error: {siemSettings.deliveryStatus.error}
+              {t('siem.error', { message: siemSettings.deliveryStatus.error })}
             </div>
           )}
         </div>
       )}
 
       <div>
-        <h1 className="mb-2.5 font-serif text-[34px] leading-[1.05] tracking-[-0.015em] text-set-fg md:text-[44px]">SIEM Integration</h1>
+        <h1 className="mb-2.5 font-serif text-[34px] leading-[1.05] tracking-[-0.015em] text-set-fg md:text-[44px]">{t('siem.title')}</h1>
         <p className="text-set-fg-subtle">
-          Stream audit logs to your security tool (Splunk, Datadog, Microsoft Sentinel) in real-time.
+          {t('siem.subtitle')}
         </p>
       </div>
 
       <div className="bg-set-panel p-6 rounded-lg border border-set-line space-y-6 shadow-panel-elevated">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label htmlFor="siem-enabled" className="text-base font-medium text-set-fg">Enable SIEM Integration</Label>
+            <Label htmlFor="siem-enabled" className="text-base font-medium text-set-fg">{t('siem.enable')}</Label>
             <p className="text-sm text-set-fg-subtle">
-              When enabled, audit logs will be pushed to the configured endpoint.
+              {t('siem.enable_description')}
             </p>
           </div>
           <Switch
@@ -118,20 +120,20 @@ export default function SiemSettingsPage() {
         {siemEnabled && (
           <div className="space-y-4 pt-4 border-t border-set-line">
             <div className="space-y-2">
-              <Label htmlFor="endpoint-url" className="text-set-fg">Endpoint URL</Label>
+              <Label htmlFor="endpoint-url" className="text-set-fg">{t('siem.endpoint')}</Label>
               <Input
                 id="endpoint-url"
-                placeholder="https://your-siem-instance.com/api/v1/logs"
+                placeholder={t('siem.endpoint_placeholder')}
                 value={siemEndpointUrl}
                 onChange={(e) => setSiemEndpointUrl(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="payload-format" className="text-set-fg">Payload Format</Label>
+              <Label htmlFor="payload-format" className="text-set-fg">{t('siem.format')}</Label>
               <Select value={siemFormat} onValueChange={setSiemFormat}>
                 <SelectTrigger id="payload-format">
-                  <SelectValue placeholder="Select a format" />
+                  <SelectValue placeholder={t('siem.format_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="json">JSON</SelectItem>
@@ -142,25 +144,25 @@ export default function SiemSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="auth-header" className="text-set-fg">Authorization Header (Optional)</Label>
+              <Label htmlFor="auth-header" className="text-set-fg">{t('siem.auth_header')}</Label>
               <Input
                 id="auth-header"
-                placeholder="Bearer your_token_here"
+                placeholder={t('siem.auth_header_placeholder')}
                 value={siemAuthHeader}
                 onChange={(e) => setSiemAuthHeader(e.target.value)}
               />
             </div>
 
             <div className="flex gap-4 pt-4">
-              <Button onClick={handleSave} disabled={updateMutation.isLoading}>
-                {updateMutation.isLoading ? 'Saving...' : 'Save Configuration'}
+              <Button onClick={handleSave} disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? t('siem.saving') : t('siem.save')}
               </Button>
               <Button
                 variant="outline"
                 onClick={handleTest}
                 disabled={isTesting || !siemEndpointUrl}
               >
-                {isTesting ? 'Testing...' : 'Test Connection'}
+                {isTesting ? t('siem.testing') : t('siem.test')}
               </Button>
             </div>
           </div>

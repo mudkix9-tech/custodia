@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Plus, Save, Trash2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -27,6 +28,7 @@ const MODULE_ACTIONS: Record<string, string[]> = {
 };
 
 export default function RolesPage() {
+  const t = useTranslations('settings');
   const { confirm, dialog: confirmDialog } = useConfirm();
   const utils = trpc.useUtils();
   const [selectedRole, setSelectedRole] = useState<any /* eslint-disable-line @typescript-eslint/no-explicit-any */ | null>(null);
@@ -89,25 +91,25 @@ export default function RolesPage() {
     });
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <div>{t('loading')}</div>;
 
   return (
     <div className="mx-auto max-w-[1040px] px-8 pt-10 pb-24 rise-in">
       {confirmDialog}
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/settings/team" className="text-set-fg-subtle hover:text-set-fg transition-colors">
+        <Link href="/settings/team" aria-label={t('roles.back')} className="text-set-fg-subtle hover:text-set-fg transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-semibold text-set-fg">Custom Roles</h1>
-          <p className="text-set-fg-subtle mt-1">Configure granular permissions for your team members.</p>
+          <h1 className="text-2xl font-semibold text-set-fg">{t('roles.title')}</h1>
+          <p className="text-set-fg-subtle mt-1">{t('roles.subtitle')}</p>
         </div>
         {!isCreating && !selectedRole && (
           <button
             onClick={handleCreate}
             className="ml-auto flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-set-gold text-[#0A0A0A] hover:bg-set-gold-hi transition-colors"
           >
-            <Plus className="w-4 h-4" /> Create Role
+            <Plus className="w-4 h-4" /> {t('roles.create')}
           </button>
         )}
       </div>
@@ -115,7 +117,7 @@ export default function RolesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-1 space-y-4">
           <div className="rounded-xl border border-set-line bg-set-panel shadow-panel-elevated overflow-hidden">
-            <div className="p-4 border-b border-set-line font-medium">Existing Roles</div>
+            <div className="p-4 border-b border-set-line font-medium">{t('roles.existing')}</div>
             <div className="divide-y divide-set-line-soft">
               {roles?.map((role: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => (
                 <div
@@ -128,7 +130,7 @@ export default function RolesPage() {
                       <div className="font-medium text-set-fg flex items-center gap-2">
                         {role.name}
                         {role.isDefault && (
-                          <span className="text-[10px] bg-white/10 text-set-fg-muted px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Default</span>
+                          <span className="text-[10px] bg-white/10 text-set-fg-muted px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">{t('roles.default_badge')}</span>
                         )}
                       </div>
                       <div className="text-sm text-set-fg-subtle mt-1">{role.description}</div>
@@ -137,7 +139,7 @@ export default function RolesPage() {
                 </div>
               ))}
               {roles?.length === 0 && (
-                <div className="p-8 text-center text-set-fg-subtle text-sm">No custom roles found.</div>
+                <div className="p-8 text-center text-set-fg-subtle text-sm">{t('roles.empty')}</div>
               )}
             </div>
           </div>
@@ -147,20 +149,20 @@ export default function RolesPage() {
           <div className="md:col-span-2">
             <div className="rounded-xl border border-set-line bg-set-panel shadow-panel-elevated overflow-hidden">
               <div className="p-6 border-b border-set-line flex justify-between items-center bg-set-sunken">
-                <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{isCreating ? 'Create New Role' : 'Edit Role'}</h2>
+                <h2 className="text-[14.5px] font-semibold tracking-[-0.005em]">{isCreating ? t('roles.create_heading') : t('roles.edit_heading')}</h2>
                 <div className="flex gap-2">
                   <button
                     onClick={() => { setIsCreating(false); setSelectedRole(null); }}
                     className="px-4 py-2 text-sm border border-set-line rounded-lg hover:bg-set-panel transition-colors"
                   >
-                    Cancel
+                    {t('roles.cancel')}
                   </button>
                   <button
                     onClick={handleSave}
                     disabled={createRole.isPending || updateRole.isPending}
                     className="px-4 py-2 text-sm rounded-lg font-semibold bg-set-gold text-[#0A0A0A] hover:bg-set-gold-hi transition-colors flex items-center gap-2"
                   >
-                    <Save className="w-4 h-4" /> Save Role
+                    <Save className="w-4 h-4" /> {t('roles.save')}
                   </button>
                 </div>
               </div>
@@ -168,7 +170,7 @@ export default function RolesPage() {
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-set-fg mb-1">Role Name</label>
+                    <label className="block text-sm font-medium text-set-fg mb-1">{t('roles.name')}</label>
                     <input
                       type="text"
                       value={formData.name}
@@ -178,7 +180,7 @@ export default function RolesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-set-fg mb-1">Description</label>
+                    <label className="block text-sm font-medium text-set-fg mb-1">{t('roles.description')}</label>
                     <input
                       type="text"
                       value={formData.description}
@@ -191,22 +193,21 @@ export default function RolesPage() {
 
                 <div>
                   <div className="flex justify-between items-end mb-4">
-                    <h3 className="text-sm font-medium text-set-fg">Permissions Matrix</h3>
+                    <h3 className="text-sm font-medium text-set-fg">{t('roles.matrix')}</h3>
                     {selectedRole && !selectedRole.isDefault && (
                       <button
                         onClick={async () => {
                           const ok = await confirm({
-                            title: `Delete the ${selectedRole.name} role?`,
-                            description:
-                              'Everyone currently holding this role loses its permissions immediately and falls back to their default access.',
-                            confirmText: 'Delete role',
+                            title: t('roles.delete_title', { name: selectedRole.name }),
+                            description: t('roles.delete_description'),
+                            confirmText: t('roles.delete_action'),
                             variant: 'destructive',
                           });
                           if (ok) deleteRole.mutate({ id: selectedRole.id });
                         }}
                         className="text-xs text-set-danger hover:text-set-danger flex items-center gap-1"
                       >
-                        <Trash2 className="w-3 h-3" /> Delete Role
+                        <Trash2 className="w-3 h-3" /> {t('roles.delete')}
                       </button>
                     )}
                   </div>
@@ -215,15 +216,15 @@ export default function RolesPage() {
                     <table className="w-full text-left text-sm">
                       <thead className="bg-set-sunken border-b border-set-line">
                         <tr>
-                          <th className="px-4 py-3 font-medium text-set-fg-subtle">Module</th>
-                          <th className="px-4 py-3 font-medium text-set-fg-subtle">Permissions</th>
+                          <th className="px-4 py-3 font-medium text-set-fg-subtle">{t('roles.column_module')}</th>
+                          <th className="px-4 py-3 font-medium text-set-fg-subtle">{t('roles.column_permissions')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-set-line-soft">
                         {MODULES.map(module => (
                           <tr key={module} className="hover:bg-set-row-hover/50">
-                            <td className="px-4 py-3 font-medium text-set-fg capitalize w-1/4 align-top pt-4">
-                              {module}
+                            <td className="px-4 py-3 font-medium text-set-fg w-1/4 align-top pt-4">
+                              {t(`roles.modules.${module}`)}
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex flex-wrap gap-4">
@@ -235,7 +236,7 @@ export default function RolesPage() {
                                       checked={!!formData.permissions?.[module]?.[action]}
                                       onChange={(e) => handlePermissionChange(module, action, e.target.checked)}
                                     />
-                                    <span className="text-set-fg-muted capitalize">{action}</span>
+                                    <span className="text-set-fg-muted">{t(`roles.actions.${action}`)}</span>
                                   </label>
                                 ))}
                               </div>
