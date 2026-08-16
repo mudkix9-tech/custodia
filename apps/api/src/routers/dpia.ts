@@ -100,7 +100,9 @@ export const dpiaRouter = router({
 
             for (const item of vendorsData) {
               const { orgVendor, vendor } = item;
-              const vendorName = orgVendor.name || vendor.name;
+              // organization_vendors has no name column, so this always resolved
+              // to vendor.name anyway.
+              const vendorName = vendor.name;
               const activityId = linkedRecipients.find((r: any) => r.vendorId === orgVendor.id)?.processingActivityId;
 
               // 1. Missing DPA Risk
@@ -222,6 +224,7 @@ export const dpiaRouter = router({
         .set({ ...input.data, updatedAt: new Date() })
         .where(and(eq(dpias.id, input.id), eq(dpias.organizationId, ctx.user!.orgId)))
         .returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
 
       await orgEmbeddingsQueue.add('embed-dpia', {
         orgId: ctx.user!.orgId,
@@ -254,6 +257,7 @@ export const dpiaRouter = router({
           eq(dpias.organizationId, ctx.user!.orgId)
         ))
         .returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
 
       if (!updated) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'DPIA not found' });
@@ -302,6 +306,7 @@ export const dpiaRouter = router({
           eq(dpias.organizationId, ctx.user!.orgId)
         ))
         .returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
 
       if (!updated) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'DPIA not found' });
@@ -347,6 +352,7 @@ export const dpiaRouter = router({
           ...input,
           initialRiskScore,
         }).returning();
+        if (!inserted) throw new TRPCError({ code: 'NOT_FOUND' });
 
         await orgEmbeddingsQueue.add('embed-dpia', {
           orgId: ctx.user!.orgId,
@@ -378,6 +384,7 @@ export const dpiaRouter = router({
           .set(input.data)
           .where(eq(dpiaRisks.id, input.id))
           .returning();
+        if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
 
         await orgEmbeddingsQueue.add('embed-dpia', {
           orgId: ctx.user!.orgId,
@@ -448,6 +455,7 @@ export const dpiaRouter = router({
         });
 
         const [inserted] = await ctx.db.insert(dpiaMeasures).values(input).returning();
+        if (!inserted) throw new TRPCError({ code: 'NOT_FOUND' });
 
         const [risk] = await ctx.db.select().from(dpiaRisks).where(eq(dpiaRisks.id, inserted.dpiaRiskId));
         if (risk) {
@@ -484,6 +492,7 @@ export const dpiaRouter = router({
           .set(input.data)
           .where(eq(dpiaMeasures.id, input.id))
           .returning();
+        if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
 
         const [risk] = await ctx.db.select().from(dpiaRisks).where(eq(dpiaRisks.id, updated.dpiaRiskId));
         if (risk) {

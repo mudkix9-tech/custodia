@@ -29,7 +29,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
   });
 
   const domain = data?.domain;
-  const cookies = data?.cookies;
+  const cookies = data?.cookies ?? [];
   const stats = data?.stats;
 
   // Set AI guidance context when consent data is available
@@ -226,7 +226,7 @@ export function ConsentWorkspaceClient({ domainId }: { domainId: string }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-900/5">
-                  {cookies.map((cookie: any) => (
+                  {cookies.map(cookie => (
                     <tr key={cookie.id} className="hover:bg-[#08090A]/50">
                       <td className="px-6 py-4 font-mono text-[12px] text-[#F4F5F6] font-bold">{cookie.cookieName}</td>
                       <td className="px-6 py-4 font-mono text-[12px] text-[#9BA1A6]">{cookie.cookieDomain}</td>

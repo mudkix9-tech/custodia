@@ -39,8 +39,9 @@ export default function BreachWorkspace() {
           title: breach.title,
           description: breach.description,
           discoveredAt: breach.discoveredAt,
-          dataCategoriesAffected: breach.dataCategoriesAffected,
-          estimatedRecordsAffected: breach.estimatedRecordsAffected,
+          // Both columns are nullable; the context takes optionals.
+          dataCategoriesAffected: breach.dataCategoriesAffected ?? undefined,
+          estimatedRecordsAffected: breach.estimatedRecordsAffected ?? undefined,
         }
       });
     }

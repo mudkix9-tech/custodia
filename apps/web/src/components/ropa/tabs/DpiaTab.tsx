@@ -334,7 +334,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
           <div className="bg-[#08090A] hairline rounded-2xl p-6">
             <h3 className="text-[13px] font-medium text-[#F4F5F6] mb-4">Or Link Existing DPIA</h3>
             <div className="space-y-2">
-              {allDpias.map((d: any) => (
+              {allDpias.map(d => (
                 <div key={d.id} className="flex items-center justify-between p-3 bg-[#0D0F11] hairline rounded-xl">
                   <div>
                     <div className="text-[13px] font-medium text-[#F4F5F6]">{d.title}</div>

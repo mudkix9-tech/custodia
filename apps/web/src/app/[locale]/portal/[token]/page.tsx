@@ -110,7 +110,7 @@ export default function ClientPortalPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {data.processingActivities.map((act: any, i: number) => (
+                  {data.processingActivities.map((act, i) => (
                     <tr key={i} className="hover:bg-gray-50/30 transition-colors">
                       <td className="py-4 px-6">
                         <div className="font-medium text-gray-900">{act.name}</div>
@@ -139,7 +139,7 @@ export default function ClientPortalPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {data.vendorDpaStatuses.map((v: any, i: number) => (
+              {data.vendorDpaStatuses.map((v, i) => (
                 <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between">
                   <div className="font-medium text-gray-900 mb-4">{v.name}</div>
                   <div className="flex items-center justify-between">

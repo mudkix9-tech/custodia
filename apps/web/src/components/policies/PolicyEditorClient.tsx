@@ -128,7 +128,7 @@ export function PolicyEditorClient({ policyId }: { policyId: string }) {
             <History className="w-4 h-4" /> Version History
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {versions.map((v: any) => (
+            {versions.map(v => (
               <button 
                 key={v.id} 
                 className={`w-full text-left p-3 rounded-xl border ${currentDraft?.id === v.id ? 'bg-[#0D0F11] border-[var(--org-primary,#2c3e38)] shadow-panel-elevated' : 'border-white/10 hover:bg-[#0D0F11]'}`}

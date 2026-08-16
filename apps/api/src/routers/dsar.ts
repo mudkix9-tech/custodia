@@ -194,6 +194,7 @@ const tasksRouter = router({
         via: [{ table: dsarRequests, on: eq(dsarTasks.dsarId, dsarRequests.id) }],
       });
       const [updated] = await ctx.db.update(dsarTasks).set({ ...input.data, updatedAt: new Date() }).where(eq(dsarTasks.id, input.id)).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       return updated;
     }),
   addManual: protectedProcedure
@@ -535,6 +536,7 @@ export const dsarRouter = router({
         .set({ status: input.status, updatedAt: new Date() })
         .where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)))
         .returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
 
       // The org filter above means a request belonging to another tenant matches
       // no rows; without this the next line dereferences undefined and 500s
@@ -581,6 +583,7 @@ export const dsarRouter = router({
         })
         .where(eq(dsarRequests.id, dsar.id))
         .returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
         
       await orgEmbeddingsQueue.add('embed-dsar', {
         orgId: ctx.user!.orgId,
@@ -610,6 +613,7 @@ export const dsarRouter = router({
         })
         .where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId)))
         .returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
         
       await orgEmbeddingsQueue.add('embed-dsar', {
         orgId: ctx.user!.orgId,
@@ -627,6 +631,7 @@ export const dsarRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       const [updated] = await ctx.db.update(dsarRequests).set({ assignedTo: input.userId, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       return updated;
     }),
 
@@ -636,6 +641,7 @@ export const dsarRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       const [updated] = await ctx.db.update(dsarRequests).set({ status: 'completed', completedAt: new Date(), completedBy: ctx.user!.id, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       
       await orgEmbeddingsQueue.add('embed-dsar', {
         orgId: ctx.user!.orgId,
@@ -657,6 +663,7 @@ export const dsarRouter = router({
       expiry.setDate(expiry.getDate() + 30);
       const mockUrl = `https://s3.custodia.io/mock-package-${input.id}.json`;
       const [updated] = await ctx.db.update(dsarRequests).set({ dataPackageUrl: mockUrl, dataPackageFormat: 'json', dataPackageExpiresAt: expiry, updatedAt: new Date() }).where(and(eq(dsarRequests.id, input.id), eq(dsarRequests.organizationId, ctx.user!.orgId))).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       return updated;
     }),
 });

@@ -44,8 +44,11 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
         </div>
       ) : (
         <div className="relative pl-6 border-l border-white/10 space-y-8">
-          {incidents?.map((inc: any) => {
-            const isReviewOpen = activeAlertId === inc.alertId;
+          {incidents?.map((inc) => {
+            // alertId is null for an incident this organisation has no alert row
+            // for, and activeAlertId starts null — so a plain equality check
+            // opened the review form on every unalerted incident at once.
+            const isReviewOpen = inc.alertId != null && activeAlertId === inc.alertId;
             const severityColor = 
               inc.severity === 'critical' ? 'bg-red-500/10 text-red-400 border-red-900/50' :
               inc.severity === 'high' ? 'bg-amber-500/10 text-amber-400 border-amber-900/50' :
@@ -119,7 +122,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                     <div className="space-y-1.5">
                       <span className="text-[11px] font-bold text-[#6E747A] uppercase tracking-wider block">Affected Data Categories</span>
                       <div className="flex flex-wrap gap-2">
-                        {inc.affectedDataCategories.map((cat: any, idx: number) => (
+                        {inc.affectedDataCategories.map((cat, idx) => (
                           <span key={idx} className="bg-[#08090A] border border-white/5 text-[#9BA1A6] text-[11px] px-2 py-0.5 rounded font-medium">
                             {cat}
                           </span>
@@ -234,7 +237,7 @@ export function VendorIncidentFeed({ vendorId }: { vendorId: string }) {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleReviewSubmit(inc.alertId)}
+                          onClick={() => inc.alertId && handleReviewSubmit(inc.alertId)}
                           disabled={reviewMutation.isPending}
                           className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-panel-elevated disabled:opacity-50"
                         >

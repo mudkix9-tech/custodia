@@ -573,7 +573,7 @@ export const vendorsRouter = router({
       .where(eq(vendorSubProcessorChanges.orgVendorId, input.orgVendorId))
       .orderBy(vendorSubProcessorChanges.detectedAt);
 
-      return list.map((item: any) => ({
+      return list.map((item) => ({
         ...item.change,
         reviewerName: item.reviewerName
       }));
@@ -642,7 +642,7 @@ export const vendorsRouter = router({
       )
       .orderBy(vendorIncidents.incidentDate);
 
-      return list.map((item: any) => ({
+      return list.map((item) => ({
         ...item.incident,
         alertId: item.alertId,
         alertStatus: item.alertStatus || 'unread',
@@ -860,7 +860,6 @@ export const vendorsRouter = router({
       const updates: any = {
         scoreModifier: input.scoreModifier,
         status: 'reviewed',
-        isAiAssisted: false,
         updatedAt: new Date()
       };
       if (input.aiScore !== undefined) updates.aiScore = input.aiScore;

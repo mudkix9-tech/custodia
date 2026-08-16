@@ -166,7 +166,7 @@ export function CoveragePanel({ domainId }: { domainId: string }) {
           {lastRun ? (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#6E747A] pt-1">
               <span>
-                Last scan: {format(new Date(lastRun.startedAt), 'MMM dd, yyyy h:mm a')}
+                Last scan: {lastRun.startedAt ? format(new Date(lastRun.startedAt), 'MMM dd, yyyy h:mm a') : 'unknown'}
               </span>
               <span className="text-[#6E747A]">|</span>
               <span>CMP: {lastRun.cmpDetected ?? 'none detected'}</span>
@@ -498,7 +498,7 @@ function FindingRow({ finding, vendor, expanded, onToggle, onResolve, resolving 
                 {detail.lastRun && (
                   <span className="ml-2 normal-case tracking-normal font-medium">
                     from the scan of{' '}
-                    {format(new Date(detail.lastRun.startedAt), 'MMM dd, yyyy h:mm a')}
+                    {detail.lastRun.startedAt ? format(new Date(detail.lastRun.startedAt), 'MMM dd, yyyy h:mm a') : 'an unknown date'}
                     {detail.lastRun.postConsentMethod && (
                       <> — {POST_CONSENT_METHOD_LABELS[detail.lastRun.postConsentMethod] ?? detail.lastRun.postConsentMethod}</>
                     )}

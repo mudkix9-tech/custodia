@@ -7,7 +7,7 @@ import '@fastify/cookie';
 import { decode } from '@auth/core/jwt';
 import { db } from './db.js';
 import { requireSecret } from './lib/secrets.js';
-import { getDbForOrg, getPrimaryDb } from './lib/dbRouter.js';
+import { getDbForOrg, getPrimaryDb, type OrgDatabase } from './lib/dbRouter.js';
 
 import { users, customRoles } from 'db';
 import { eq, sql, inArray } from 'drizzle-orm';
@@ -24,8 +24,15 @@ import { auditLogs, notificationQueue, organizations } from 'db';
 export interface Context {
   req: FastifyRequest;
   res: FastifyReply;
-  db: any;
-  primaryDb: any;
+  /**
+   * The tenant's database handle — the primary pool, or a dedicated one for an
+   * organisation on its own instance. Declared `any` until August 2026, which
+   * silently overrode the real return type of getDbForOrg: every query in every
+   * procedure produced `any`, so no router output was typed and the web app
+   * consumed the whole API unchecked.
+   */
+  db: OrgDatabase;
+  primaryDb: OrgDatabase;
   user?: {
     id: string;
     orgId: string;

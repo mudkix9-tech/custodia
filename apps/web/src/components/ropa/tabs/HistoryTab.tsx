@@ -92,7 +92,7 @@ export function HistoryTab({ activityId }: { activityId: string }) {
         </h2>
 
         <div className="space-y-4">
-          {logs.map((log: any) => {
+          {logs.map((log) => {
             const date = new Date(log.createdAt!).toLocaleString();
             const details = (log as any).newValue || (log as any).details;
             const isExpanded = expandedLogId === log.id;

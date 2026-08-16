@@ -35,7 +35,7 @@ export function DsarWorkspace({ dsarId }: { dsarId: string }) {
         formData: {
           referenceNumber: dsar.referenceNumber,
           requestType: dsar.requestType,
-          originalMessage: dsar.originalMessage,
+          originalMessage: dsar.originalMessage ?? undefined,
           receivedAt: dsar.receivedAt,
         }
       });

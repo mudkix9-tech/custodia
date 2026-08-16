@@ -423,9 +423,55 @@ export const dpias = pgTable('dpias', {
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-  residualRisks: jsonb('residual_risks').default([]),
+  residualRisks: jsonb('residual_risks').$type<DpiaResidualRiskRow[]>().default([]),
   lastMitigationReminderSentAt: timestamp('last_mitigation_reminder_sent_at', { withTimezone: true }),
 });
+
+/**
+ * Shapes stored in jsonb columns.
+ *
+ * A bare `jsonb()` infers `unknown`, which cannot be indexed, iterated or passed
+ * anywhere — so every consumer reached for a cast and the contents went
+ * unchecked. `$type` is TS-only metadata and emits no SQL, so adding it is not a
+ * schema change and `check:schema` stays clean.
+ */
+export type DpiaResidualRiskRow = {
+  id: string;
+  description: string;
+  riskCategory: 'confidentiality' | 'integrity' | 'availability' | 'unlawful_processing' | 'discrimination' | 'other';
+  likelihood: 'low' | 'medium' | 'high';
+  severity: 'low' | 'medium' | 'high';
+  residualRiskLevel: 'low' | 'medium' | 'high' | 'critical';
+  relatedVendorId?: string | null;
+  relatedProcessingActivityId?: string | null;
+  mitigationRequired: boolean;
+  mitigationDescription?: string | null;
+  mitigationOwner?: string | null;
+  mitigationDueDate?: string | null;
+  mitigationStatus: 'not_started' | 'in_progress' | 'completed';
+  prePopulatedType?: 'missing_dpa' | 'clause_gaps' | 'missing_certs' | 'high_risk_flag' | null;
+  alreadyReflectedInBaseScore?: boolean | null;
+};
+
+export type AssessmentTemplateQuestion = {
+  id: string;
+  text: string;
+  category?: string;
+  type?: 'choice' | 'text';
+  options?: Array<{ text: string; score: number }>;
+};
+
+export type VendorQuestionnaireQuestion = {
+  id: string;
+  text: string;
+  category: string;
+  rationale: string;
+};
+
+export type VendorQuestionnaireAnswer = {
+  questionId: string;
+  textAnswer: string;
+};
 
 export const dpiaRisks = pgTable('dpia_risks', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -589,7 +635,7 @@ export const vendorAssessmentTemplates = pgTable('vendor_assessment_templates', 
   organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }), // null = system template
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
-  questions: jsonb('questions').notNull(), // array of question objects: { id, text, category, type: 'choice' | 'text', options: [{ text, score }] }
+  questions: jsonb('questions').$type<AssessmentTemplateQuestion[]>().notNull(),
   isDefault: boolean('is_default').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
@@ -1132,7 +1178,7 @@ export const breaches = pgTable('breaches', {
   breachCause: varchar('breach_cause', { length: 100 }),
   
   description: text('description').notNull(),
-  dataCategoriesAffected: jsonb('data_categories_affected').default([]),
+  dataCategoriesAffected: jsonb('data_categories_affected').$type<string[]>().default([]),
   dataSubjectsAffected: jsonb('data_subjects_affected').default([]),
   estimatedRecordsAffected: integer('estimated_records_affected'),
   estimatedIndividualsAffected: integer('estimated_individuals_affected'),
@@ -1636,8 +1682,8 @@ export const vendorQuestionnaires = pgTable('vendor_questionnaires', {
   status: varchar('status', { length: 50 }).default('draft').notNull(), // 'draft' | 'sent' | 'submitted' | 'reviewed'
   promptVersion: varchar('prompt_version', { length: 100 }).default('v1').notNull(),
   
-  questions: jsonb('questions').notNull(), // array of { id, text, category, rationale }
-  answers: jsonb('answers').default([]), // array of { questionId, textAnswer }
+  questions: jsonb('questions').$type<VendorQuestionnaireQuestion[]>().notNull(),
+  answers: jsonb('answers').$type<VendorQuestionnaireAnswer[]>().default([]),
   aiScore: integer('ai_score'), // score (0 to 100) calculated by Claude
   aiAnalysis: jsonb('ai_analysis').default({}), // { summary, answersReview: [{ questionId, score, status, analysis, confidence, gapIdentified }] }
   scoreModifier: integer('score_modifier').default(0).notNull(), // the -10 to +25 adjustment applied

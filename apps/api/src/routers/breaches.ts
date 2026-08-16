@@ -128,6 +128,7 @@ const notificationsRouter = router({
         via: [{ table: breaches, on: eq(breachNotifications.breachId, breaches.id) }],
       });
       const [updated] = await ctx.db.update(breachNotifications).set({ contentJson: input.content }).where(eq(breachNotifications.id, input.id)).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       return updated;
     }),
   approve: protectedProcedure
@@ -143,6 +144,7 @@ const notificationsRouter = router({
         via: [{ table: breaches, on: eq(breachNotifications.breachId, breaches.id) }],
       });
       const [updated] = await ctx.db.update(breachNotifications).set({ status: 'approved' }).where(eq(breachNotifications.id, input.id)).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       return updated;
     }),
   markSent: protectedProcedure
@@ -159,6 +161,7 @@ const notificationsRouter = router({
       });
       if (notif.status !== 'approved') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Notification must be approved first.' });
       const [updated] = await ctx.db.update(breachNotifications).set({ status: 'sent', sentAt: new Date() }).where(eq(breachNotifications.id, input.id)).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       return updated;
     }),
 });
@@ -204,6 +207,7 @@ const tasksRouter = router({
         completionNotes: input.completionNotes,
         completedAt: input.status === 'completed' ? new Date() : null
       }).where(eq(breachRemediationTasks.id, input.id)).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       return updated;
     }),
   delete: protectedProcedure
@@ -362,6 +366,7 @@ export const breachesRouter = router({
         notifyIndividuals: riskResults.notifyIndividuals,
         updatedAt: new Date()
       }).where(and(eq(breaches.id, input.id), eq(breaches.organizationId, ctx.user!.orgId))).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       
       await orgEmbeddingsQueue.add('embed-breach', {
         orgId: ctx.user!.orgId,
@@ -379,6 +384,7 @@ export const breachesRouter = router({
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
       const [updated] = await ctx.db.update(breaches).set({ status: input.status, updatedAt: new Date() }).where(and(eq(breaches.id, input.id), eq(breaches.organizationId, ctx.user!.orgId))).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       
       await orgEmbeddingsQueue.add('embed-breach', {
         orgId: ctx.user!.orgId,
@@ -402,6 +408,7 @@ export const breachesRouter = router({
         resolvedAt: new Date(),
         updatedAt: new Date() 
       }).where(and(eq(breaches.id, input.id), eq(breaches.organizationId, ctx.user!.orgId))).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       
       await orgEmbeddingsQueue.add('embed-breach', {
         orgId: ctx.user!.orgId,

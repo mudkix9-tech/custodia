@@ -819,6 +819,62 @@ function buildCopilotFallback(hasGroundedContext: boolean, citationsList: { titl
 return processedFallback;
 }
 
+// ---------------------------------------------------------------------------
+// Shapes the model is instructed to return.
+//
+// Each of these mirrors the "Use this EXACT JSON schema" block in the prompt
+// below it. JSON.parse gives `any`, and returning that straight from a procedure
+// made the whole endpoint `any` on the client — the three that did were the last
+// procedures in the API still handing the web app an unchecked response.
+//
+// Declaring the shape does not validate it: the model can still return something
+// else, and the parse is wrapped accordingly. It documents the contract and lets
+// callers be checked against it, which is what the prompt already promises.
+// ---------------------------------------------------------------------------
+
+type DpaClauseStatus = 'present' | 'missing' | 'weak';
+
+type DpaClauseFinding = {
+  status: DpaClauseStatus;
+  excerpt: string | null;
+  notes: string | null;
+};
+
+export type DpaAnalysis = {
+  overall_score: number;
+  potential_special_category: boolean;
+  special_category_rationale: string | null;
+  checklist: Record<string, DpaClauseFinding>;
+  problematic_language: Array<{
+    clauseType: 'sub_processors' | 'indemnification' | 'liability_cap' | 'other';
+    severity: 'high' | 'medium';
+    excerpt: string;
+    notes: string;
+  }>;
+};
+
+export type GeneratedQuestion = {
+  id: string;
+  text: string;
+  category: string;
+  rationale: string;
+};
+
+export type ParsedVendorAnswers = {
+  aiScore: number;
+  scoreModifier: number;
+  potential_special_category: boolean;
+  special_category_rationale: string | null;
+  answersReview: Array<{
+    questionId: string;
+    score: number;
+    status: 'satisfactory' | 'weak' | 'unsatisfactory';
+    analysis: string;
+    confidence: 'high' | 'insufficient_detail';
+    gapIdentified: string | null;
+  }>;
+};
+
 export const aiRouter = router({
   /**
    * Streaming Copilot.
@@ -1054,10 +1110,10 @@ Use this EXACT JSON schema:
  
         const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
         
-        let jsonResponse;
+        let jsonResponse: DpaAnalysis;
         try {
           const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-          jsonResponse = JSON.parse(cleanedText);
+          jsonResponse = JSON.parse(cleanedText) as DpaAnalysis;
         } catch (e) {
           throw new Error('Failed to parse AI response as JSON');
         }
@@ -1150,7 +1206,7 @@ Existing DPA Clause Coverage: ${JSON.stringify(dpaClauseCoverage)}`;
       
       try {
         const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        return JSON.parse(cleanedText);
+        return JSON.parse(cleanedText) as GeneratedQuestion[];
       } catch (e) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -1258,7 +1314,7 @@ ${answersText}`;
       
       try {
         const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        const jsonResponse = JSON.parse(cleanedText);
+        const jsonResponse = JSON.parse(cleanedText) as ParsedVendorAnswers;
  
         // Save raw parsed data into draft state
         await ctx.db.update(vendorQuestionnaires)
@@ -1267,7 +1323,8 @@ ${answersText}`;
             aiAnalysis: jsonResponse.answersReview,
             scoreModifier: jsonResponse.scoreModifier,
             status: 'submitted',
-            isAiAssisted: true,
+            // isAiAssisted was set here and in vendors.reviewQuestionnaire, but no
+            // such column exists on vendor_questionnaires and nothing ever read it.
             updatedAt: new Date()
           })
           .where(eq(vendorQuestionnaires.id, questionnaire.id));

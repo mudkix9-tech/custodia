@@ -1,4 +1,5 @@
 import { router, protectedProcedure, requireRole } from '../trpc.js';
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { db } from '../db.js';
 import { eq, and, inArray, sql, isNull } from 'drizzle-orm';
@@ -819,6 +820,7 @@ export const onboardingRouter = router({
               domain: domainName,
               scriptId,
             }).returning();
+            if (!newDomain) throw new TRPCError({ code: 'NOT_FOUND' });
 
             // Trigger the cookie scanner background task
             await cmpJobsQueue.add('cookie-scanner', {
