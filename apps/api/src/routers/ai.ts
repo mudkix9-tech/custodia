@@ -16,7 +16,7 @@ import {
   dpias
 } from 'db';
 import { eq, and, sql, desc } from 'drizzle-orm';
-import { GoogleGenAI } from '@google/genai';
+import { genai } from '../lib/genai.js';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { TRPCError } from '@trpc/server';
 import { PDFParse } from 'pdf-parse';
@@ -25,11 +25,7 @@ import { calculateVendorRisk } from './vendors.js';
 import { trackAiUsage } from '../lib/billing.js';
 import { COPILOT_MODEL } from '../lib/anthropicModels.js';
 
-const ai = new GoogleGenAI({
-  vertexai: true,
-  project: process.env.GCP_PROJECT_ID || 'custodia',
-  location: process.env.GCP_LOCATION || 'us-central1',
-});
+const ai = genai;
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
@@ -569,7 +565,18 @@ async function buildCopilotContext(ctx: any, input: CopilotInput) {
           RAGQuery = `[Context: ${input.moduleContext}] ${RAGQuery}`;
         }
  
-        const retrieved = await retrieveContext(ctx, RAGQuery, orgId, locale);
+        // Retrieval is best-effort. It runs before the model call and outside the
+        // try below, so an embedding failure used to throw straight out of the
+        // procedure — when Vertex credentials were missing in production, every
+        // Copilot query errored rather than answering. There is already a path for
+        // having no grounded context (see the fallback instruction below and
+        // buildCopilotFallback), so degrade into it instead of failing.
+        let retrieved: RetrievalResult[] = [];
+        try {
+          retrieved = await retrieveContext(ctx, RAGQuery, orgId, locale);
+        } catch (err) {
+          console.error('Copilot retrieval failed; answering without grounded context:', err);
+        }
  
         // Check if we retrieved any database chunks above the similarity threshold
         const hasGroundedContext = retrieved.some(r => r.similarity > 0.6);
@@ -1486,8 +1493,15 @@ GDPR Articles referenced: ${arts.join(', ')}`;
         }
       }
 
-      // 3. Retrieve Context via pgvector RAG
-      const retrieved = await retrieveContext(ctx, RAGQuery, orgId, locale);
+      // 3. Retrieve Context via pgvector RAG — best-effort, as in buildCopilotContext.
+      // Suggestions are still worth returning ungrounded; the confidence score
+      // below already falls to zero when nothing was retrieved.
+      let retrieved: RetrievalResult[] = [];
+      try {
+        retrieved = await retrieveContext(ctx, RAGQuery, orgId, locale);
+      } catch (err) {
+        console.error('Contextual suggestion retrieval failed; continuing without grounded context:', err);
+      }
 
       let contextStr = `\nReference materials:\n`;
       const citationsList: { title: string; url: string }[] = [];

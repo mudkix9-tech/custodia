@@ -58,7 +58,7 @@ function getGdprArticleReference(articles: number[] | null | undefined): string 
   });
   return Array.from(new Set(refs)).join(', ');
 }
-import { GoogleGenAI } from '@google/genai';
+import { genai } from '../lib/genai.js';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { sendEmail, AssessmentInvitation, AssessmentReminder } from 'emails';
 import { updateVendorRiskScore } from './vendors.js';
@@ -66,11 +66,7 @@ import { scheduleEmailSequence } from '../workers/emails.js';
 import { trackAiUsage } from '../lib/billing.js';
 import { COPILOT_MODEL } from '../lib/anthropicModels.js';
 
-const ai = new GoogleGenAI({
-  vertexai: true,
-  project: process.env.GCP_PROJECT_ID || 'custodia',
-  location: process.env.GCP_LOCATION || 'us-central1',
-});
+const ai = genai;
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || 'mock-key',

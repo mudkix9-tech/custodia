@@ -17,15 +17,20 @@ import {
   vendorQuestionnaires
 } from 'db';
 import { eq, and, desc } from 'drizzle-orm';
-import { GoogleGenAI } from '@google/genai';
+import { genai, hasGenAiCredentials } from '../lib/genai.js';
 
-const ai = new GoogleGenAI({
-  vertexai: true,
-  project: process.env.GCP_PROJECT_ID || 'custodia',
-  location: process.env.GCP_LOCATION || 'us-central1',
-});
+const ai = genai;
 
 async function generateEmbedding(text: string) {
+  // Without this the failure arrives as a google-auth stack trace about the GCE
+  // metadata server, which reads like a transient network fault rather than the
+  // missing configuration it is.
+  if (!hasGenAiCredentials) {
+    throw new Error(
+      'No Google GenAI credentials configured: set GEMINI_API_KEY, or GOOGLE_APPLICATION_CREDENTIALS for Vertex AI.',
+    );
+  }
+
   const response = await ai.models.embedContent({
     model: 'gemini-embedding-001',
     contents: text,

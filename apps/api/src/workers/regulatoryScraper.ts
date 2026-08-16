@@ -3,18 +3,14 @@ import { db } from '../db.js';
 import { regulatoryUpdates, documentEmbeddings, organizations } from 'db';
 import { eq, and, sql, like, inArray } from 'drizzle-orm';
 import crypto from 'crypto';
-import { GoogleGenAI } from '@google/genai';
+import { genai } from '../lib/genai.js';
 import { queueNotification } from '../utils/notifications.js';
 import { matchRegulatoryUpdateToOrganizations } from '../lib/regulatoryImpact.js';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 export const regulatoryQueue = createQueue('regulatory-jobs');
 
-const ai = new GoogleGenAI({
-  vertexai: true,
-  project: process.env.GCP_PROJECT_ID || 'custodia',
-  location: process.env.GCP_LOCATION || 'us-central1',
-});
+const ai = genai;
 
 async function generateEmbedding(text: string): Promise<number[]> {
   try {
