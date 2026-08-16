@@ -1,7 +1,7 @@
 {
   "_review_notes": {
-    "navigation.ropa": "REVIEW: Verify 'Datenverarbeitung' for 'Data Processing' (ROPA context)",
-    "navigation.dsars": "REVIEW: Verify 'Betroffenenanfragen' for 'Data Requests' (DSAR context)"
+    "navigation/ropa": "REVIEW: Verify 'Datenverarbeitung' for 'Data Processing' (ROPA context)",
+    "navigation/dsars": "REVIEW: Verify 'Betroffenenanfragen' for 'Data Requests' (DSAR context)"
   },
   "navigation": {
     "workspace": "Arbeitsbereich",

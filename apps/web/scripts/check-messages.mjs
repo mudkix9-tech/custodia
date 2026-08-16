@@ -18,9 +18,16 @@
  *   2. every namespace registered in i18n/request.ts has a file, and vice versa
  *   3. key parity — de and fr carry exactly the keys en carries
  *   4. ICU placeholder parity — a translation may not drop or invent a `{name}`
+ *   5. no key anywhere contains a `.`
  *
  * Keys beginning with `_` are translator annotations (`_review_notes`) rather
- * than message keys, and are skipped throughout.
+ * than message keys, and are skipped by checks 1–4 — but not by check 5, which
+ * is the one thing that has to look inside them. next-intl reserves `.` for
+ * nesting and throws `INVALID_KEY` for the whole namespace when it finds one in
+ * a key, annotation or not. The de and fr notes recorded which message they
+ * referred to as `dpia.title`, so every German and French page threw on load
+ * while the parity checks above passed, because they skipped the block the
+ * offending keys were in.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -187,6 +194,40 @@ for (const ns of namespaces) {
         if (!wanted.has(name)) {
           errors.push(`${locale}/${ns}.json "${key}" introduces {${name}}, which is never passed`);
         }
+      }
+    }
+  }
+}
+
+// --- 5. no dots in keys -----------------------------------------------------
+
+/** Every key in the raw tree, annotations *included*, as a `>`-joined trail. */
+function allKeys(value, trail = [], out = []) {
+  for (const [key, child] of Object.entries(value)) {
+    out.push([[...trail, key], key]);
+    if (child && typeof child === 'object' && !Array.isArray(child)) {
+      allKeys(child, [...trail, key], out);
+    }
+  }
+  return out;
+}
+
+for (const locale of LOCALES) {
+  for (const ns of namespaces) {
+    const file = path.join(MESSAGES_DIR, locale, `${ns}.json`);
+    if (!fs.existsSync(file)) continue;
+    let tree;
+    try {
+      tree = JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch {
+      continue; // already reported as invalid JSON above
+    }
+    for (const [trail, key] of allKeys(tree)) {
+      if (key.includes('.')) {
+        errors.push(
+          `${locale}/${ns}.json key "${key}" (at ${trail.join(' > ')}) contains "." — ` +
+          'next-intl throws INVALID_KEY for the whole namespace; use another separator',
+        );
       }
     }
   }
