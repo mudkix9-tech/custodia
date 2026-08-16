@@ -17,7 +17,12 @@ const KEY_LOCATION = `${ORIGIN}/${INDEXNOW_KEY}.txt`;
 const LOCALES = ['en', 'de', 'fr'];
 const DEFAULT_LOCALE = 'en';
 
-const SITEMAP_FILE = path.resolve(process.cwd(), 'src/app/sitemap.ts');
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const SITEMAP_FILE = path.resolve(__dirname, '../src/app/sitemap.ts');
 
 function getRoutesFromSitemap() {
   const source = fs.readFileSync(SITEMAP_FILE, 'utf8');
@@ -31,7 +36,7 @@ function getRoutesFromSitemap() {
   // Also include competitor pages
   const compMatch = source.match(/COMPETITOR_SLUGS/);
   if (compMatch) {
-    const compFile = path.resolve(process.cwd(), 'src/app/[locale]/(marketing)/compare/competitors.ts');
+    const compFile = path.resolve(__dirname, '../src/app/[locale]/(marketing)/compare/competitors.ts');
     if (fs.existsSync(compFile)) {
       const compSource = fs.readFileSync(compFile, 'utf8');
       for (const literal of compSource.matchAll(/'([a-z0-9-]+)'/g)) {

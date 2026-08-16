@@ -298,6 +298,7 @@ export const vendorsRouter = router({
         lastRiskAssessment: new Date(),
         addedBy: ctx.user.id,
       }).returning();
+      if (!newLink) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Insert returned no row.' });
       
       await orgEmbeddingsQueue.add('embed-vendor', {
         orgId: ctx.user.orgId,
@@ -339,7 +340,9 @@ export const vendorsRouter = router({
       if (input.notes !== undefined) updates.dpaNotes = input.notes;
       if (input.dataSubjectVolume !== undefined) updates.dataSubjectVolume = input.dataSubjectVolume;
       if (input.certifications !== undefined) updates.certifications = input.certifications;
-      if (input.contractRenewalDate !== undefined) updates.contractRenewalDate = input.contractRenewalDate ? new Date(input.contractRenewalDate) : null;
+      // A `date` column takes 'YYYY-MM-DD'; the input already is one. Wrapping it
+      // in new Date() bound a timestamp to a date column.
+      if (input.contractRenewalDate !== undefined) updates.contractRenewalDate = input.contractRenewalDate || null;
       if (input.dpaClauseCoverage !== undefined) updates.dpaClauseCoverage = input.dpaClauseCoverage;
 
       // Fetch sub-processor count
@@ -349,6 +352,10 @@ export const vendorsRouter = router({
       const subProcessorsCount = subs.length;
 
       // Recalculate Risk
+      // vendor comes from a single-row select and can be absent; scoring against
+      // undefined silently produced a risk level for a vendor that is not there.
+      if (!vendor) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor not found.' });
+
       const mergedOrgVendor = { ...orgVendor, ...updates };
       const { score, level, factors } = calculateVendorRisk(vendor, mergedOrgVendor, subProcessorsCount);
       updates.riskScore = score;
@@ -405,7 +412,7 @@ export const vendorsRouter = router({
         dpaStatus: 'not_started',
         dataSubjectVolume: input.dataSubjectVolume || '<1K',
         certifications: input.certifications || [],
-        contractRenewalDate: input.contractRenewalDate ? new Date(input.contractRenewalDate) : null
+        contractRenewalDate: input.contractRenewalDate || null
       };
 
       const { score, level, factors } = calculateVendorRisk(newVendor, initialOrgVendor, 0);
@@ -420,9 +427,10 @@ export const vendorsRouter = router({
         lastRiskAssessment: new Date(),
         dataSubjectVolume: input.dataSubjectVolume || '<1K',
         certifications: input.certifications || [],
-        contractRenewalDate: input.contractRenewalDate ? new Date(input.contractRenewalDate) : null,
+        contractRenewalDate: input.contractRenewalDate || null,
         addedBy: ctx.user.id,
       }).returning();
+      if (!newLink) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Insert returned no row.' });
 
       await orgEmbeddingsQueue.add('embed-vendor', {
         orgId: ctx.user.orgId,
@@ -1070,6 +1078,8 @@ export const vendorsRouter = router({
 
       if (!existingLink) {
         const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, finalVendorId));
+        if (!vendor) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor not found.' });
+
         const { score, level, factors } = calculateVendorRisk(
           vendor,
           { dpaStatus: 'not_started', dataCategoriesShared: [], dataSubjectVolume: '<1K' },
@@ -1086,6 +1096,7 @@ export const vendorsRouter = router({
           lastRiskAssessment: new Date(),
           addedBy: ctx.user.id
         }).returning();
+        if (!newLink) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Insert returned no row.' });
 
         if (orgEmbeddingsQueue) {
           await orgEmbeddingsQueue.add('embed-vendor', {

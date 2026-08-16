@@ -70,8 +70,9 @@ export default function VendorDetailsPage() {
         entityId: vendorId,
         formData: {
           name: vendor.vendor.name,
-          headquartersCountry: vendor.vendor.headquartersCountry,
-          dpaStatus: vendor.orgVendor.dpaStatus,
+          // Columns are nullable; the context takes optionals, and null is not one.
+          headquartersCountry: vendor.vendor.headquartersCountry ?? undefined,
+          dpaStatus: vendor.orgVendor.dpaStatus ?? undefined,
         }
       });
     }
@@ -189,11 +190,11 @@ export default function VendorDetailsPage() {
               })}
             </p>
 
-            {vendor.orgVendor.riskFactors && (
+            {Boolean(vendor.orgVendor.riskFactors) && (
               <div className="mt-6 border-t border-bone-50/20 pt-6 text-left space-y-4">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-bone-50/50">{t('detail.risk.factors')}</div>
                 <div className="space-y-4">
-                  {Object.entries(vendor.orgVendor.riskFactors).map(([key, factor]: [string, any]) => (
+                  {Object.entries(vendor.orgVendor.riskFactors as Record<string, any>).map(([key, factor]: [string, any]) => (
                     <div key={key} className="space-y-1">
                       <div className="flex justify-between text-xs font-medium">
                         <span className="text-bone-50/80 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>

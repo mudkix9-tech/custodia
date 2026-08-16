@@ -7,10 +7,22 @@ import { db as primaryDb } from '../db.js';
 
 const { Pool } = pg;
 
-// Cache of dedicated database connections per org
-const dedicatedPools = new Map<string, { pool: pg.Pool; db: ReturnType<typeof drizzle>; lastUsed: number }>();
+/**
+ * A database handle carrying the full schema — either the primary pool or a
+ * dedicated pool for a tenant on its own instance.
+ *
+ * Both are `drizzle(pool, { schema })` and so have the same type; the cache used
+ * `ReturnType<typeof drizzle>`, which is schema-less and therefore did not match,
+ * and the mismatch was papered over by returning `any`. That `any` became
+ * `ctx.db`, so every query in every procedure returned `any` and no router output
+ * was typed at all — which is most of why apps/web needed `@ts-nocheck`.
+ */
+export type OrgDatabase = typeof primaryDb;
 
-export async function getDbForOrg(orgId: string): Promise<any> {
+// Cache of dedicated database connections per org
+const dedicatedPools = new Map<string, { pool: pg.Pool; db: OrgDatabase; lastUsed: number }>();
+
+export async function getDbForOrg(orgId: string): Promise<OrgDatabase> {
   // Check if this org has a dedicated database
   const org = await primaryDb.query.organizations.findFirst({
     where: eq(schema.organizations.id, orgId),

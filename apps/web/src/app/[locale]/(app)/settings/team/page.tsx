@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { format } from 'date-fns';
 import { Crown, Lock, Mail, Search, Trash2, Upload, UserPlus, X } from 'lucide-react';
 
-import { trpc } from '@/utils/trpc';
+import { trpc, type RouterOutputs } from '@/utils/trpc';
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Button } from '@/components/ui/button';
@@ -41,18 +41,8 @@ const PERM_STATES = ['inherit', 'allow', 'deny'] as const;
 type PermState = (typeof PERM_STATES)[number];
 type BasicRole = 'admin' | 'member' | 'viewer';
 
-/** Shape of `team.list` rows — the router returns them untyped. */
-type TeamMember = {
-  id: string;
-  name: string | null;
-  email: string;
-  role: 'owner' | BasicRole;
-  customRoleId: string | null;
-  permissions: string[] | null;
-  invitedAt: string | Date | null;
-  emailVerified: string | Date | null;
-  createdAt: string | Date | null;
-};
+/** Derived from the procedure rather than restated, so it cannot drift from it. */
+type TeamMember = RouterOutputs['team']['list'][number];
 
 type CustomRole = { id: string; name: string };
 

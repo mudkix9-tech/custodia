@@ -224,8 +224,13 @@ export const auditRouter = router({
       const hasMore = rows.length > limit;
       const dataRows = hasMore ? rows.slice(0, limit) : rows;
 
-      const nextCursor = hasMore && dataRows.length > 0
-        ? encodeCursor(dataRows[dataRows.length - 1].gap.createdAt, dataRows[dataRows.length - 1].gap.id)
+      // createdAt is nullable on the row type, and encodeCursor takes a date: a
+      // null would have been serialised into the cursor and decoded back as the
+      // epoch, quietly restarting pagination from the beginning. No usable sort
+      // value means no cursor.
+      const lastRow = dataRows[dataRows.length - 1];
+      const nextCursor = hasMore && lastRow?.gap.createdAt
+        ? encodeCursor(lastRow.gap.createdAt, lastRow.gap.id)
         : null;
 
       const mappedData = dataRows.map((row: any) => ({

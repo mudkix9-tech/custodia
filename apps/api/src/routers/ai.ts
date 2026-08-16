@@ -1607,6 +1607,7 @@ ${contextStr}
           confidence,
           topSimilarity: topSim,
         }).returning();
+        if (!insertedLog) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Insert returned no row.' });
 
         return {
           logId: insertedLog.id,

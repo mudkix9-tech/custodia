@@ -475,11 +475,11 @@ export const vendors = pgTable('vendors', {
   dpaAvailable: boolean('dpa_available').default(false),
   privacyPolicyUrl: varchar('privacy_policy_url', { length: 500 }),
   
-  transferMechanisms: jsonb('transfer_mechanisms').default([]),
+  transferMechanisms: jsonb('transfer_mechanisms').$type<string[]>().default([]),
   euHostingAvailable: boolean('eu_hosting_available').default(false),
   euHostingDetail: text('eu_hosting_detail'),
   
-  securityCertifications: jsonb('security_certifications').default([]),
+  securityCertifications: jsonb('security_certifications').$type<string[]>().default([]),
   encryptionAtRest: boolean('encryption_at_rest'),
   encryptionInTransit: boolean('encryption_in_transit'),
   
@@ -495,7 +495,7 @@ export const vendors = pgTable('vendors', {
   riskLevel: varchar('risk_level', { length: 20 }),
   riskFactors: jsonb('risk_factors').default([]),
   
-  knownIncidents: jsonb('known_incidents').default([]),
+  knownIncidents: jsonb('known_incidents').$type<Array<{ date: string; description?: string }>>().default([]),
   regulatoryActions: jsonb('regulatory_actions').default([]),
   
   lastVerifiedAt: timestamp('last_verified_at', { withTimezone: true }),
@@ -525,7 +525,7 @@ export const organizationVendors = pgTable('organization_vendors', {
   tiaCompleted: boolean('tia_completed').default(false),
   tiaDocumentId: uuid('tia_document_id'),
   
-  dataCategoriesShared: jsonb('data_categories_shared').default([]),
+  dataCategoriesShared: jsonb('data_categories_shared').$type<string[]>().default([]),
   processingActivities: jsonb('processing_activities').default([]),
   purpose: text('purpose'),
   usingEuHosting: boolean('using_eu_hosting').default(false),
@@ -1332,7 +1332,7 @@ export const aiGuidanceLogs = pgTable('ai_guidance_logs', {
   entityId: uuid('entity_id'),
   query: text('query'),
   response: text('response').notNull(),
-  sources: jsonb('sources').default([]),
+  sources: jsonb('sources').$type<{ title: string; url: string }[]>().default([]),
   confidence: varchar('confidence', { length: 20 }).notNull(), // 'high' | 'medium' | 'advisory'
   feedback: varchar('feedback', { length: 15 }), // 'helpful' | 'not_helpful'
   feedbackAt: timestamp('feedback_at', { withTimezone: true }),

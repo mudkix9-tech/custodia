@@ -777,7 +777,7 @@ function VendorRiskCard({ vendorId }: { vendorId: string }) {
         </span>
       </div>
 
-      {orgVendor.riskFactors && (
+      {Boolean(orgVendor.riskFactors) && (
         <div className="text-left space-y-2">
           {Object.entries(orgVendor.riskFactors as Record<string, any>).map(([key, factor]: [string, any]) => {
             if (factor.points === 0) return null; // Only show active risk factors to keep it compact!
