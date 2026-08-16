@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { Building2, AlertTriangle, CheckCircle2, XCircle, FileText, Activity } from 'lucide-react';
 
 export default function GroupVendorConsistencyPage() {

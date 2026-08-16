@@ -4,9 +4,9 @@ import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { ArrowLeft, ShieldCheck, Globe, Lock, AlertTriangle, FileText, Upload, CheckCircle2, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { SubProcessorList } from '@/components/vendors/SubProcessorList';
 import { TIABuilder } from '@/components/vendors/TIABuilder';
 import { VendorIncidentFeed } from '@/components/vendors/VendorIncidentFeed';
@@ -18,7 +18,6 @@ import { DpaAnalysisModal } from '@/components/vendors/DpaAnalysisModal';
 export default function VendorDetailsPage() {
   const t = useTranslations('vendors');
   const params = useParams();
-  const router = useRouter();
   const vendorId = params?.id as string;
 
   const { data: vendor, isLoading } = trpc.vendors.getOrgVendorDetails.useQuery({ vendorId }, { enabled: !!vendorId });

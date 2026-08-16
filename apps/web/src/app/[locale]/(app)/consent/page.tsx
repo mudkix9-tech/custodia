@@ -3,7 +3,7 @@ import { GenericListSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { Globe, Plus, BarChart3, Settings } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 

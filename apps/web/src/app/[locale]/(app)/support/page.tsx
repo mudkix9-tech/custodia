@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Clock, MessagesSquare, Calendar, ExternalLink, LifeBuoy } from 'lucide-react';
 import { format } from 'date-fns';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { useToast } from '@/components/ui/Toast';
 
 export default function EnterpriseSupportPage() {

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Plus, Save, Trash2, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 const MODULES = ['ropa', 'vendors', 'dsar', 'breaches', 'policies', 'consent', 'training', 'audit', 'clients', 'settings', 'billing', 'developers', 'team'];

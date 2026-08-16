@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Plus, Search, FileText, Download, CheckCircle2, Clock, Mail, ShieldAlert, Sparkles, Copy, Printer, Check, ClipboardCopy, Star, Eye, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 
 export default function AssessmentsDashboardPage() {
   const t = useTranslations('vendors');

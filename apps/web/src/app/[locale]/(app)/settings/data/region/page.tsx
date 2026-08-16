@@ -8,7 +8,7 @@ import { MapPin, Database, ShieldAlert } from 'lucide-react';
 import React from 'react';
 import { useSession } from 'next-auth/react';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 
 const REGIONS = [
   { id: 'eu-west-1', name: 'Dublin (Ireland)', isDefault: true },

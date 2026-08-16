@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { BookOpen, CheckCircle, Clock, PlayCircle } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { completionChipClasses, completionTileClasses } from '@/utils/status';
 import { PageShell } from '@/components/layout/PageShell';
 

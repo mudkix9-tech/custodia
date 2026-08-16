@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/routing';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { severityClasses } from '@/utils/severity';

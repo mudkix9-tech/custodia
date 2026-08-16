@@ -3,7 +3,7 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { Building2, Activity, ShieldCheck, AlertTriangle, FileDown, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 export default function GroupDashboardPage() {

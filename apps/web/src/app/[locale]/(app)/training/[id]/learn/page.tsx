@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 import { trpc } from '@/utils/trpc';
 import { GraduationCap, ArrowLeft, CheckCircle2, XCircle, FileText, Clock } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 
 /**
  * A slide from `training_modules.content`, which is jsonb rather than a typed

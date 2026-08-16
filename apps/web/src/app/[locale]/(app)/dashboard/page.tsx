@@ -6,7 +6,7 @@ import { SetupProgress } from '@/components/dashboard/SetupProgress';
 import { BreachAlertsWidget } from '@/components/dashboard/BreachAlertsWidget';
 import { OverdueDpiaRemediationWidget } from '@/components/dashboard/OverdueDpiaRemediationWidget';
 import { trpc } from '@/utils/trpc';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { PageShell } from '@/components/layout/PageShell';
 

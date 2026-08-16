@@ -5,7 +5,7 @@ import { trpc } from '@/utils/trpc';
 import { severityClasses } from '@/utils/severity';
 import { DataGrid } from 'ui';
 import { Search, FileText, Download, ShieldAlert, CheckCircle2, Clock, Link as LinkIcon, Building2, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { useSearchParams } from 'next/navigation';
 import { DiscoveryTab } from '@/components/vendors/DiscoveryTab';
 import { AddCustomVendorModal } from '@/components/vendors/AddCustomVendorModal';

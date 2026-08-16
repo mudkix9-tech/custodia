@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Upload, FileText, CheckCircle2, AlertTriangle, AlertCircle, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { useToast } from '@/components/ui/Toast';
 
 export default function DpaAnalyzerPage() {

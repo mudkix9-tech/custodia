@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { DataGrid } from 'ui';
 import { Plus, Search, Building2, Globe, FileText, CheckCircle2, Clock } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { PageShell } from '@/components/layout/PageShell';
 

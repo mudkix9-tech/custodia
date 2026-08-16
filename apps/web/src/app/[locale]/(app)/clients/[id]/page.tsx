@@ -13,7 +13,7 @@ import {
   Settings, Download, Share2, Eye, Link as LinkIcon, Unlink, Trash2,
   AlertTriangle
 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { useToast } from '@/components/ui/Toast';
 
 export default function ClientDetailPage() {

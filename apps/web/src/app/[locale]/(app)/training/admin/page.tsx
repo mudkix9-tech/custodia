@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { Shield, Users, BookOpen, Clock, AlertTriangle, Plus } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 import { PageShell } from '@/components/layout/PageShell';
 
 export default function TrainingAdminDashboard() {
