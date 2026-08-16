@@ -7,7 +7,24 @@ import { trpc } from "../utils/trpc";
 import { SessionProvider } from "next-auth/react";
 
 export default function Provider({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // Was the library default of 0, so every remount refetched even with
+            // the answer already cached — settings.getUserSettings alone is read
+            // by the notifications, security and profile tabs. 30s matches the
+            // router cache staleTime in next.config.ts so the two layers expire
+            // together rather than one re-showing a skeleton the other avoided.
+            // Left refetchOnWindowFocus on: with a staleTime it only fires on
+            // genuinely stale data, and coming back to a tab is exactly when a
+            // change made elsewhere should appear.
+            staleTime: 30 * 1000,
+          },
+        },
+      })
+  );
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [

@@ -1,21 +1,71 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { Building2, Users, Bell, Plug, CreditCard, Shield, Database, User } from 'lucide-react';
+import { Link, usePathname } from '@/i18n/routing';
+import { trpc } from '@/utils/trpc';
 import { cn } from '@/utils/cn';
 
-const SETTINGS_NAV = [
-  { id: 'organization', icon: Building2, href: '/settings/organization', roles: ['viewer', 'member', 'admin', 'owner'] },
-  { id: 'team', icon: Users, href: '/settings/team', roles: ['viewer', 'member', 'admin', 'owner'] },
-  { id: 'notifications', icon: Bell, href: '/settings/notifications', roles: ['viewer', 'member', 'admin', 'owner'] },
-  { id: 'integrations', icon: Plug, href: '/settings/integrations', roles: ['viewer', 'member', 'admin', 'owner'] },
+/** The `trpc.useUtils()` handle, so nav entries can declare their own warm-up. */
+type SettingsUtils = ReturnType<typeof trpc.useUtils>;
+
+/**
+ * `prefetch` names the queries the target page renders a skeleton *instead of*,
+ * warmed on hover/focus so the ~200ms of pointer travel covers the request
+ * rather than the user watching it. Secondary queries are deliberately absent —
+ * warming what does not gate the skeleton buys no perceived speed. Billing has
+ * no entry on purpose: its only query is `enabled: isLocked`, so for an account
+ * in good standing there is nothing to fetch.
+ */
+const SETTINGS_NAV: Array<{
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href: string;
+  roles: string[];
+  prefetch?: (utils: SettingsUtils) => void;
+}> = [
+  {
+    id: 'organization', icon: Building2, href: '/settings/organization',
+    roles: ['viewer', 'member', 'admin', 'owner'],
+    prefetch: (u) => void u.settings.getOrgSettings.prefetch(),
+  },
+  {
+    id: 'team', icon: Users, href: '/settings/team',
+    roles: ['viewer', 'member', 'admin', 'owner'],
+    prefetch: (u) => void u.team.list.prefetch(),
+  },
+  {
+    id: 'notifications', icon: Bell, href: '/settings/notifications',
+    roles: ['viewer', 'member', 'admin', 'owner'],
+    prefetch: (u) => {
+      void u.settings.getOrgSettings.prefetch();
+      void u.settings.getUserSettings.prefetch();
+    },
+  },
+  {
+    id: 'integrations', icon: Plug, href: '/settings/integrations',
+    roles: ['viewer', 'member', 'admin', 'owner'],
+    prefetch: (u) => {
+      void u.integrations.listProviders.prefetch();
+      void u.integrations.listConnections.prefetch();
+    },
+  },
   { id: 'billing', icon: CreditCard, href: '/settings/billing', roles: ['admin', 'owner'] },
-  { id: 'security', icon: Shield, href: '/settings/security', roles: ['viewer', 'member', 'admin', 'owner'] },
-  { id: 'data_privacy', icon: Database, href: '/settings/data', roles: ['admin', 'owner'] },
+  {
+    id: 'security', icon: Shield, href: '/settings/security',
+    roles: ['viewer', 'member', 'admin', 'owner'],
+    prefetch: (u) => {
+      void u.security.listSessions.prefetch();
+      void u.settings.getUserSettings.prefetch();
+    },
+  },
+  {
+    id: 'data_privacy', icon: Database, href: '/settings/data',
+    roles: ['admin', 'owner'],
+    prefetch: (u) => void u.settings.getOrgSettings.prefetch(),
+  },
 ];
 
 function NavItem({
@@ -23,16 +73,22 @@ function NavItem({
   icon: Icon,
   label,
   isActive,
+  onWarm,
 }: {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   isActive: boolean;
+  onWarm?: () => void;
 }) {
   return (
     <Link
       href={href}
       aria-current={isActive ? 'page' : undefined}
+      // Focus as well as hover, so the warm-up is not mouse-only. Both are
+      // no-ops once the data is inside the QueryClient staleTime.
+      onMouseEnter={onWarm}
+      onFocus={onWarm}
       className={cn(
         'relative flex items-center gap-[11px] rounded-lg px-2.5 py-[9px] text-[13.5px] transition-colors',
         isActive
@@ -52,6 +108,7 @@ function NavItem({
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const utils = trpc.useUtils();
   const t = useTranslations('settings');
   const userRole = (session?.user as { role?: string } | undefined)?.role || 'member';
 
@@ -74,6 +131,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                 icon={item.icon}
                 label={t(`navigation.${item.id}`)}
                 isActive={pathname.includes(item.href)}
+                onWarm={item.prefetch ? () => item.prefetch!(utils) : undefined}
               />
             ))}
           </nav>
@@ -85,6 +143,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
               icon={User}
               label={t('navigation.my_profile')}
               isActive={isProfile}
+              onWarm={() => void utils.settings.getUserSettings.prefetch()}
             />
           </nav>
         </aside>

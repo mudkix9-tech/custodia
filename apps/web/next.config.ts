@@ -5,6 +5,18 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // The client router cache. `dynamic` defaults to 0 in Next 15+, meaning an
+    // RSC payload is never reused — every settings tab you return to is a fresh
+    // server round trip, back/forward included. The whole (app) tree is
+    // force-dynamic, so that default applied to all of it. 30s is long enough to
+    // cover tabbing around a section, short enough that another admin's change
+    // still surfaces quickly.
+    staleTimes: {
+      dynamic: 30,
+      static: 300,
+    },
+  },
   async redirects() {
     return [
       {

@@ -84,3 +84,36 @@ export function GenericWorkspaceSkeleton() {
     </div>
   );
 }
+
+/**
+ * Settings routes are a centred single column, not the three-pane workspace
+ * GenericWorkspaceSkeleton draws — mirrors SettingsPage/SettingsHeader measure
+ * and the SettingsCard hairline so the swap to real content doesn't reflow.
+ * Renders inside settings/layout.tsx, so the nav rail is already on screen and
+ * deliberately absent here.
+ */
+export function SettingsPageSkeleton() {
+  return (
+    <div className="mx-auto max-w-[1040px] px-8 pt-10 pb-24">
+      <div className="pb-8">
+        <Skeleton className="h-11 w-72" />
+        <Skeleton className="mt-3.5 h-4 w-[40ch]" />
+      </div>
+      <div className="space-y-5">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="rounded-[14px] border border-set-line bg-set-panel">
+            <div className="flex items-center justify-between gap-4 px-[22px] pt-[18px] pb-4">
+              <Skeleton className="h-[15px] w-44" />
+              <Skeleton className="h-8 w-28" />
+            </div>
+            <div className="space-y-3 px-[22px] pb-[18px]">
+              {Array.from({ length: 4 }).map((_, j) => (
+                <Skeleton key={j} className="h-12 w-full" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
