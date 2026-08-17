@@ -3,7 +3,7 @@ import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
-import { processingActivities, legitimateInterestAssessments, processingDataCategories, processingRecipients, processingTransfers, auditLogs, vendors, organizationVendors, clientProcessingActivities, reconsentFlags } from 'db';
+import { processingActivities, legitimateInterestAssessments, processingDataCategories, processingRecipients, processingTransfers, auditLogs, vendors, organizationVendors, clientProcessingActivities, reconsentFlags, dpias } from 'db';
 import { eq, and, desc, inArray, not, count } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { assertOwned, assertParentOwned } from '../lib/tenancy.js';
@@ -26,6 +26,78 @@ const paginationInput = z.object({
   limit: z.number().min(1).max(100).default(25),
   cursor: z.string().nullish(),
 });
+
+// ---------------------------------------------------------------------------
+// Update payloads.
+//
+// These four mutations took an unconstrained `z.record(z.any())` and spread it into
+// `.set()`. Ownership of the *row* was checked; the *contents* were not, so anyone
+// holding `ropa:edit` could set `organization_id` and move a record into another
+// tenant, or write `created_by`, `deleted_at`, `version`, or a `dpia_id` belonging
+// to someone else. The tenancy guard cannot see that class — the filter is correct
+// and the payload is the problem.
+//
+// Unknown keys are *stripped*, not rejected (zod's default). The editor autosaves
+// `watch()` wholesale, which includes five form fields that have no column
+// (`isLargeScale`, `isAutomatedDecisionMaking`, `retentionSchedule`, `securityNotes`,
+// `lawfulBasisNotes`); Drizzle already discarded those silently, so stripping keeps
+// the tab working while closing the hole. `.strict()` here would 400 every save.
+//
+// `lawfulBasis` and `retentionPeriod` are bounded strings rather than enums on
+// purpose: the onboarding templates seed values the editor's own selects cannot
+// represent ('legitimate_interests', prose retention periods), and those rows are
+// autosaved back verbatim. Tightening them belongs with the fix to the templates,
+// not here, where it would break editing every seeded activity.
+// ---------------------------------------------------------------------------
+
+const activityUpdateSchema = z.object({
+  name: z.string().min(1).max(255),
+  description: z.string().nullable(),
+  purpose: z.string().min(1),
+  role: z.enum(['controller', 'processor', 'joint_controller']),
+  controllerName: z.string().max(255).nullable(),
+  lawfulBasis: z.string().max(50),
+  lawfulBasisDetail: z.string().nullable(),
+  isSystematicMonitoring: z.boolean(),
+  retentionPeriod: z.string().max(100).nullable(),
+  retentionJustification: z.string().nullable(),
+  retentionReviewDate: z.coerce.date().nullable(),
+  deletionProcedure: z.string().nullable(),
+  securityMeasures: z.array(z.string()),
+  securityMeasuresDetail: z.string().nullable(),
+  status: z.enum(['draft', 'active', 'under_review', 'archived']),
+  riskLevel: z.enum(['low', 'medium', 'high', 'critical']),
+  // Ownership is proved in the mutation — a uuid alone does not say whose DPIA it is.
+  dpiaId: z.string().uuid().nullable(),
+}).partial();
+
+const dataCategoryUpdateSchema = z.object({
+  category: z.string().min(1).max(100),
+  categoryGroup: z.string().min(1).max(100),
+  description: z.string().nullable(),
+  source: z.string().max(100).nullable(),
+  sourceDetail: z.string().nullable(),
+  isSpecialCategory: z.boolean(),
+}).partial();
+
+const recipientUpdateSchema = z.object({
+  recipientType: z.string().min(1).max(50),
+  name: z.string().min(1).max(255),
+  vendorId: z.string().uuid().nullable(),
+  purpose: z.string().nullable(),
+}).partial();
+
+// tiaCompleted and tiaRiskLevel are deliberately absent: they are Chapter V evidence
+// derived from a completed TIA, and nothing a register editor may assert directly.
+const transferUpdateSchema = z.object({
+  destinationCountry: z.string().length(2),
+  destinationEntity: z.string().max(255).nullable(),
+  vendorId: z.string().uuid().nullable(),
+  transferMechanism: z.string().min(1).max(100),
+  mechanismDetail: z.string().nullable(),
+  tiaRequired: z.boolean(),
+  supplementaryMeasures: z.array(z.string()),
+}).partial();
 
 export const ropaRouter = router({
   list: protectedProcedure
@@ -166,7 +238,7 @@ export const ropaRouter = router({
     .input(z.object({
       id: z.string().uuid(),
       updatedAt: z.string().datetime().optional(), // for optimistic locking
-      data: z.record(z.any()),
+      data: activityUpdateSchema,
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
@@ -186,6 +258,12 @@ export const ropaRouter = router({
           code: 'CONFLICT', 
           message: 'The record was updated by someone else. Please reload.' 
         });
+      }
+
+      // A client-supplied foreign key is exactly the case the first tenancy audit missed:
+      // the row being edited is ours, the DPIA it points at need not be.
+      if (input.data.dpiaId) {
+        await assertParentOwned(ctx.db, dpias, input.data.dpiaId, ctx.user!.orgId, 'DPIA');
       }
 
       const sanitizedData = { ...input.data };
@@ -332,7 +410,7 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({
         id: z.string().uuid(),
-        data: z.record(z.any())
+        data: dataCategoryUpdateSchema
       }))
       .mutation(async ({ ctx, input }) => {
         const existing = await assertOwned(ctx.db, {
@@ -344,7 +422,7 @@ export const ropaRouter = router({
         });
 
         const [updated] = await ctx.db.update(processingDataCategories)
-          .set(input.data)
+          .set({ ...input.data, updatedAt: new Date() })
           .where(eq(processingDataCategories.id, input.id))
           .returning();
 
@@ -532,7 +610,7 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({
         id: z.string().uuid(),
-        data: z.record(z.any())
+        data: recipientUpdateSchema
       }))
       .mutation(async ({ ctx, input }) => {
         await assertOwned(ctx.db, {
@@ -544,7 +622,7 @@ export const ropaRouter = router({
         });
 
         const [updated] = await ctx.db.update(processingRecipients)
-          .set(input.data)
+          .set({ ...input.data, updatedAt: new Date() })
           .where(eq(processingRecipients.id, input.id))
           .returning();
         return updated;
@@ -610,7 +688,7 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({
         id: z.string().uuid(),
-        data: z.record(z.any())
+        data: transferUpdateSchema
       }))
       .mutation(async ({ ctx, input }) => {
         await assertOwned(ctx.db, {
@@ -622,7 +700,7 @@ export const ropaRouter = router({
         });
 
         const [updated] = await ctx.db.update(processingTransfers)
-          .set(input.data)
+          .set({ ...input.data, updatedAt: new Date() })
           .where(eq(processingTransfers.id, input.id))
           .returning();
         return updated;

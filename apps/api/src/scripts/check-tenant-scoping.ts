@@ -14,6 +14,19 @@
  * safe direction: anything it cannot prove, it reports, and genuine exceptions are
  * listed in ALLOWED below with a reason. Adding to that list should feel like a
  * decision, which is the point.
+ *
+ * Two passes:
+ *
+ *   1. Reads and writes keyed on a client-supplied id, checked per *procedure*.
+ *   2. `update`/`delete` statements, checked per *statement*.
+ *
+ * Pass 2 exists because pass 1 proves ownership for a whole procedure body, and
+ * tenancy is a property of each statement. `tia.save` satisfied pass 1 — it scopes
+ * its transferImpactAssessments and organizationVendors writes correctly — while a
+ * third write in the same body updated processing_transfers by vendorId alone.
+ * `vendors` is a *shared* catalogue, so one organisation completing a TIA for AWS
+ * flipped every other tenant's AWS transfer row to "TIA: Completed". One correct
+ * query masking an incorrect one is exactly what a procedure-level scan cannot see.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -136,6 +149,160 @@ function scan(): { checked: number; findings: Finding[]; staleAllowlist: string[
   return { checked, findings, staleAllowlist };
 }
 
+// ---------------------------------------------------------------------------
+// Pass 2 — write statements.
+// ---------------------------------------------------------------------------
+
+/** ctx.db.update(<table>) / .delete(<table>), also on a helper's own handle. */
+const WRITE_STATEMENT = /\b(?:ctx\.db|db|dbc|tx)\s*\n?\s*\.(update|delete)\(\s*(\w+)\s*\)/g;
+
+/** Anything client-supplied that could steer a predicate. */
+const CLIENT_VALUE = /\b(?:input|opts)\.(\w+)/g;
+
+/** An organisation predicate on this statement, sourced from the session. */
+const ORG_PREDICATE = /\w+\.organizationId\s*,\s*(?!input\.)/;
+
+/**
+ * Scoped to the caller rather than their organisation — sessions, training records.
+ * Stricter than an org predicate, so it settles the question on its own.
+ */
+const USER_PREDICATE = /\w+\.userId\s*,\s*ctx\.user/;
+
+/** A scoping subquery — inArray(child.parentId, db.select(...)). */
+const SCOPING_SUBQUERY = /inArray\([\s\S]*?\.select\(/;
+
+/**
+ * Proof that this exact id was already resolved to a row the caller owns.
+ *
+ * The `.id` half is what makes this sound. `tia.save` proves `input.vendorId` with
+ * `eq(organizationVendors.vendorId, …)` under an org predicate — which establishes
+ * that the caller has that vendor linked, and nothing whatever about who owns the
+ * processing_transfers rows that reference it. Matching an org-scoped read against
+ * a table's *primary key* says "this row is mine"; matching it against a foreign
+ * key into a shared catalogue says only "I have a row pointing at it".
+ */
+function provenEarlier(prefix: string, value: string): boolean {
+  // (a) a preceding org- or user-scoped read that pinned this value to a row's own id.
+  const escaped = value.replace('.', String.raw`\.`);
+  const pinnedToAnId = new RegExp(String.raw`\b\w+\.id\s*,\s*${escaped}\b`);
+  const anchors = /\b\w+\.organizationId\s*,\s*(?!input\.)|\b\w+\.userId\s*,\s*ctx\.user/g;
+  for (const m of prefix.matchAll(anchors)) {
+    // The anchor may sit on a table joined on the way — vendorSubProcessors proves
+    // itself through vendors — so the window, not the table name, is the unit.
+    const window = prefix.slice(Math.max(0, m.index! - 600), m.index! + 600);
+    if (pinnedToAnId.test(window)) return true;
+  }
+
+  // (b) an assertOwned/assertParentOwned naming the value — the helper resolves the
+  //     row by its own id and walks to whatever holds organization_id.
+  const calls = prefix.match(/assert(?:Owned|ParentOwned|DomainInOrg)\([\s\S]{0,700}?\)\s*;/g) ?? [];
+  return calls.some(c => c.includes(value));
+}
+
+/**
+ * Reviewed exceptions for pass 2. Key is `file::procedure::table`.
+ *
+ * Every one of these is a write that genuinely cannot carry an organisation
+ * predicate. Two of them are data-model bugs held open deliberately and tracked in
+ * known-concerns.md; the rest are shared catalogues, platform-operator actions, or
+ * flows whose access control is an unguessable token rather than a tenant.
+ */
+const ALLOWED_WRITES: Record<string, Exception> = {
+  'assessments.ts::calculateResults::assessments': {
+    reason: 'Public lead-magnet assessment flow; the unguessable id is the access control. Same rationale as the pass-1 entry.',
+  },
+  'assessments.ts::calculateResults::actionItems': {
+    reason: 'Clears and rebuilds the action items of the assessment above, in the same public flow.',
+  },
+  'clients.ts::unlinkActivity::clientProcessingActivities': {
+    reason: 'Anchored on a clientId proved org-owned two statements earlier, so the composite delete cannot reach another tenant\'s link rows.',
+  },
+  'regulatory.ts::adminPublishUpdate::regulatoryUpdates': {
+    reason: 'Global regulatory catalogue, gated on requirePlatformAdmin(). Publishing deliberately fans out to every organisation.',
+  },
+  'vendors.ts::markNotified::vendorSubProcessors': {
+    reason: 'notifiedAt lives on the shared row — a data-model bug tracked in known-concerns.md. Scoping it to org-owned vendors would break change notifications for global vendors.',
+  },
+  'vendors.ts::publishIncident::vendorIncidents': {
+    reason: 'Platform-operator action on the global incident feed, gated on vendors:manage until a real platform-admin role exists.',
+  },
+  'vendors.ts::submitQuestionnaireAnswers::vendorQuestionnaires': {
+    reason: 'Vendor-facing questionnaire return path. The recipient has no Custodia account; the unguessable token is the access control.',
+  },
+};
+
+type WriteFinding = { file: string; line: number; table: string; op: string; values: string[]; key: string };
+
+/** Returns the text inside the parens that open at `open`. */
+function balanced(text: string, open: number): string {
+  let depth = 0;
+  for (let i = open; i < text.length; i++) {
+    if (text[i] === '(') depth++;
+    else if (text[i] === ')') {
+      depth--;
+      if (depth === 0) return text.slice(open + 1, i);
+    }
+  }
+  return '';
+}
+
+function scanWrites(): { checked: number; findings: WriteFinding[]; staleAllowlist: string[] } {
+  const findings: WriteFinding[] = [];
+  const seen = new Set<string>();
+  let checked = 0;
+
+  for (const file of fs.readdirSync(ROUTERS).filter(f => f.endsWith('.ts')).sort()) {
+    const text = fs.readFileSync(path.join(ROUTERS, file), 'utf8');
+
+    // Proof has to come from the same procedure. A helper defined above the router
+    // counts as its own body, which is why the fallback is offset 0.
+    const bodies: { at: number; name: string }[] = [];
+    let at = 0;
+    for (const line of text.split('\n')) {
+      const proc = PROCEDURE.exec(line);
+      const fn = /^(?:async )?function (\w+)/.exec(line);
+      if (proc) bodies.push({ at, name: proc[1]! });
+      else if (fn) bodies.push({ at, name: fn[1]! });
+      at += line.length + 1;
+    }
+
+    for (const m of text.matchAll(WRITE_STATEMENT)) {
+      const op = m[1]!;
+      const table = m[2]!;
+      const whereAt = text.indexOf('.where(', m.index! + m[0].length);
+      if (whereAt < 0) continue;
+      const where = balanced(text, whereAt + '.where'.length);
+
+      // Only a predicate the caller steers can cross a tenant boundary.
+      const values = Array.from(new Set(
+        Array.from(where.matchAll(CLIENT_VALUE)).map(v => v[0]!)
+      ));
+      if (values.length === 0) continue;
+      checked++;
+
+      const line = text.slice(0, m.index!).split('\n').length;
+      // Keyed on the procedure, not the line: a line-numbered allowlist goes stale
+      // on any edit above it, and churn is how a reviewed exception stops being read.
+      const body = bodies.filter(b => b.at < m.index!).pop();
+      const key = `${file}::${body?.name ?? '<top-level>'}::${table}`;
+      seen.add(key);
+
+      if (ORG_PREDICATE.test(where)) continue;
+      if (USER_PREDICATE.test(where)) continue;
+      if (SCOPING_SUBQUERY.test(where)) continue;
+
+      const prefix = text.slice(body?.at ?? 0, m.index!);
+      if (values.every(v => provenEarlier(prefix, v))) continue;
+
+      if (ALLOWED_WRITES[key]) continue;
+      findings.push({ file, line, table, op, values, key });
+    }
+  }
+
+  const staleAllowlist = Object.keys(ALLOWED_WRITES).filter(k => !seen.has(k));
+  return { checked, findings, staleAllowlist };
+}
+
 const { checked, findings, staleAllowlist } = scan();
 
 console.log(`Checked ${checked} procedures that filter on a client-supplied id.`);
@@ -161,4 +328,30 @@ if (findings.length > 0) {
 
 if (staleAllowlist.length > 0) process.exit(1);
 
-console.log('\nOK — every procedure keyed on a client-supplied id proves ownership.');
+const writes = scanWrites();
+
+console.log(`Checked ${writes.checked} update/delete statements steered by a client-supplied value.`);
+
+if (writes.staleAllowlist.length > 0) {
+  console.log('\nStale write-allowlist entries (statement gone or moved) — remove them:');
+  for (const key of writes.staleAllowlist) console.log(`  ${key}`);
+}
+
+if (writes.findings.length > 0) {
+  console.error(`\n${writes.findings.length} write(s) with no organisation scope:\n`);
+  for (const f of writes.findings) {
+    console.error(`  ${f.file}:${f.line}  ${f.op}(${f.table})  keyed on ${f.values.join(', ')}`);
+    console.error(`    allowlist key: ${f.key}`);
+  }
+  console.error(
+    '\nA write filtered on a foreign key into a *shared* catalogue — vendors above all —\n' +
+    'is not scoped by that key. Add an organizationId predicate, scope through the parent\n' +
+    'with inArray(child.parentId, db.select()...), or prove the id with assertOwned first.\n'
+  );
+  process.exit(1);
+}
+
+if (writes.staleAllowlist.length > 0) process.exit(1);
+
+console.log('\nOK — every procedure keyed on a client-supplied id proves ownership,');
+console.log('and every update/delete it steers is scoped to an organisation.');

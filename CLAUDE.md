@@ -99,10 +99,24 @@ This applies to client-supplied **foreign** keys too (`input.breachId`, `input.d
 not just `input.id`. That distinction is exactly what the first version of the audit
 missed, which is why it reported 22 instead of 47.
 
-`npm run check:tenancy --workspace=apps/api` fails on any procedure that filters on a
-client-supplied id without proving ownership. Genuine cross-tenant reads (shared vendor
-and regulatory catalogues, user-scoped rows, the public assessment flow) go in the
-`ALLOWED` map in that script **with a reason**; a stale entry fails too.
+`npm run check:tenancy --workspace=apps/api` runs two passes. The first fails on any
+procedure that filters on a client-supplied id without proving ownership. The second
+checks `update`/`delete` **per statement**, because the first proves ownership for a
+whole procedure body and tenancy is a property of each query: `tia.save` scoped two of
+its three writes correctly and updated `processing_transfers` by `vendorId` alone, which
+— `vendors` being a *shared* catalogue — let one organisation's completed TIA flip every
+other tenant's transfer row to "TIA: Completed".
+
+A write passes pass 2 if its own `where` carries an organisation or user predicate or a
+scoping subquery, or if an earlier statement in the same body pinned the value to a row's
+**own id** under such a predicate. That last distinction is the point: proving
+`organizationVendors.vendorId = input.vendorId` says you have the vendor linked, not that
+the rows you are about to update are yours.
+
+Genuine exceptions (shared vendor and regulatory catalogues, user-scoped rows, the public
+assessment flow, token-authenticated vendor returns) go in `ALLOWED` (pass 1, keyed
+`file::procedure`) or `ALLOWED_WRITES` (pass 2, keyed `file::procedure::table`) **with a
+reason**; a stale entry in either fails too.
 
 `ctx.user.orgId` is already the *effective* org after impersonation (`trpc.ts` resolves
 `effectiveOrgId`), so all of this is safe for admin/support paths.

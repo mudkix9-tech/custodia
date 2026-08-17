@@ -1,9 +1,39 @@
 import { z } from 'zod';
 import { db } from '../db.js';
-import { transferImpactAssessments, processingTransfers, organizationVendors, vendors } from 'db';
-import { eq, and, desc } from 'drizzle-orm';
+import { transferImpactAssessments, processingTransfers, processingActivities, organizationVendors, vendors } from 'db';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 import { router, protectedProcedure, requireRole } from '../trpc.js';
 import { TRPCError } from '@trpc/server';
+
+/**
+ * Propagate a completed TIA onto the transfer rows it covers, for this organisation only.
+ *
+ * `processing_transfers` carries no organization_id — it is only reachable through its
+ * parent activity — and `vendors` is a **shared** catalogue, so `vendorId` on its own is
+ * not a tenant predicate. Filtering on it alone let one organisation's completed TIA flip
+ * every other tenant's transfer row for the same vendor to "TIA: Completed", or to
+ * "Suspended" where the conclusion was to suspend: fabricated Chapter V evidence appearing
+ * inside a stranger's register.
+ */
+async function propagateTiaToTransfers(
+  dbc: any,
+  opts: { orgId: string; vendorId: string; riskLevel: string | null | undefined },
+) {
+  await dbc.update(processingTransfers)
+    .set({
+      tiaCompleted: true,
+      tiaRiskLevel: opts.riskLevel,
+    })
+    .where(and(
+      eq(processingTransfers.vendorId, opts.vendorId),
+      inArray(
+        processingTransfers.processingActivityId,
+        dbc.select({ id: processingActivities.id })
+          .from(processingActivities)
+          .where(eq(processingActivities.organizationId, opts.orgId)),
+      ),
+    ));
+}
 
 export const tiaRouter = router({
   getForVendor: protectedProcedure
@@ -84,12 +114,11 @@ export const tiaRouter = router({
         
         // Auto-update linked transfers
         if (input.status === 'completed') {
-          await ctx.db.update(processingTransfers)
-            .set({ 
-              tiaCompleted: true,
-              tiaRiskLevel: input.conclusion === 'suspend' ? 'critical' : input.residualRiskLevel
-            })
-            .where(eq(processingTransfers.vendorId, input.vendorId));
+          await propagateTiaToTransfers(ctx.db, {
+            orgId: ctx.user!.orgId,
+            vendorId: input.vendorId,
+            riskLevel: input.conclusion === 'suspend' ? 'critical' : input.residualRiskLevel,
+          });
         }
 
         return updated;
@@ -107,12 +136,11 @@ export const tiaRouter = router({
               eq(organizationVendors.organizationId, ctx.user!.orgId)
             ));
             
-          await ctx.db.update(processingTransfers)
-            .set({ 
-              tiaCompleted: true,
-              tiaRiskLevel: input.conclusion === 'suspend' ? 'critical' : input.residualRiskLevel
-            })
-            .where(eq(processingTransfers.vendorId, input.vendorId));
+          await propagateTiaToTransfers(ctx.db, {
+            orgId: ctx.user!.orgId,
+            vendorId: input.vendorId,
+            riskLevel: input.conclusion === 'suspend' ? 'critical' : input.residualRiskLevel,
+          });
         }
 
         return inserted;
