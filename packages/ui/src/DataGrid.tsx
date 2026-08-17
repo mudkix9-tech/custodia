@@ -13,7 +13,7 @@ import {
   VisibilityState,
   RowSelectionState,
 } from '@tanstack/react-table';
-import { ChevronDown, ChevronUp, Search, Plus, MoreHorizontal, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Plus } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -28,7 +28,6 @@ export interface DataGridProps<TData, TValue> {
   onRowClick?: (row: TData) => void;
   onInlineEdit?: (rowId: string, columnId: string, value: any) => void;
   onAddRow?: () => void;
-  enableBulkActions?: boolean;
   enableInlineAdd?: boolean;
   isLoading?: boolean;
   emptyStateMessage?: string;
@@ -60,7 +59,6 @@ export function DataGrid<TData, TValue>({
   onRowClick,
   onInlineEdit,
   onAddRow,
-  enableBulkActions = false,
   enableInlineAdd = false,
   isLoading = false,
   emptyStateMessage = "No data found.",
@@ -120,19 +118,6 @@ export function DataGrid<TData, TValue>({
                   placeholder="Search all columns..."
                   className="pl-9 pr-4 py-2 bg-[#08090A] border border-white/10 rounded-lg text-[13px] text-[#F4F5F6] placeholder:text-[#6E747A] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40 transition-colors"
                 />
-              </div>
-            )}
-            {enableBulkActions && Object.keys(rowSelection).length > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-[12.5px] text-[#9BA1A6] ml-2">
-                  {Object.keys(rowSelection).length} selected
-                </span>
-                <button className="bg-[#0D0F11] hover:bg-white/5 border border-white/10 text-[#E6E8EA] px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2">
-                  <Download className="w-4 h-4" /> Export
-                </button>
-                <button className="bg-[#0D0F11] hover:bg-white/5 border border-white/10 text-[#E6E8EA] px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2">
-                  <MoreHorizontal className="w-4 h-4" /> Actions
-                </button>
               </div>
             )}
           </div>

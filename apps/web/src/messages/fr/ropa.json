@@ -32,7 +32,8 @@
     "not_recorded": "Non renseigné",
     "special_categories": "Comporte des données sensibles (art. 9)",
     "role": "Rôle",
-    "for_controller": "pour {name}"
+    "for_controller": "pour {name}",
+    "unspecified": "Non précisé"
   },
   "risk_levels": {
     "critical": "critique",
@@ -130,7 +131,8 @@
       "justification_ph": "Expliquez pourquoi ces données doivent être conservées pendant cette période (ex : obligations légales, besoins commerciaux)...",
       "next_review": "Prochaine date d'examen",
       "deletion_procedure": "Procédure de suppression",
-      "deletion_procedure_ph": "Comment ces données sont-elles détruites en toute sécurité à la fin de leur cycle de vie ?"
+      "deletion_procedure_ph": "Comment ces données sont-elles détruites en toute sécurité à la fin de leur cycle de vie ?",
+      "custom_ph": "p. ex. 7 ans après la fin de la relation de travail"
     },
     "security": {
       "title": "Mesures techniques et organisationnelles (MTO)",

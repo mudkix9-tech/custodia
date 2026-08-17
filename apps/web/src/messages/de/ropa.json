@@ -33,7 +33,8 @@
     "not_recorded": "Nicht erfasst",
     "special_categories": "Umfasst besondere Kategorien personenbezogener Daten (Art. 9)",
     "role": "Rolle",
-    "for_controller": "für {name}"
+    "for_controller": "für {name}",
+    "unspecified": "Nicht angegeben"
   },
   "risk_levels": {
     "critical": "kritisch",
@@ -131,7 +132,8 @@
       "justification_ph": "Erklären Sie, warum diese Daten für diesen Zeitraum aufbewahrt werden müssen (z. B. gesetzliche Anforderungen, geschäftliche Anforderungen)...",
       "next_review": "Nächstes Überprüfungsdatum",
       "deletion_procedure": "Löschverfahren",
-      "deletion_procedure_ph": "Wie werden diese Daten am Ende ihres Lebenszyklus sicher vernichtet?"
+      "deletion_procedure_ph": "Wie werden diese Daten am Ende ihres Lebenszyklus sicher vernichtet?",
+      "custom_ph": "z. B. 7 Jahre nach Ende des Beschäftigungsverhältnisses"
     },
     "security": {
       "title": "Technische und organisatorische Maßnahmen (TOMs)",

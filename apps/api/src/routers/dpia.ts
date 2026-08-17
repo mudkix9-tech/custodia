@@ -368,10 +368,17 @@ export const dpiaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({
         id: z.string().uuid(),
-        data: z.record(z.any()),
+        // Explicit, like the ropa mutations: `z.record(z.any())` spread into .set()
+        // let a caller with ropa:edit rewrite dpiaId and move a risk onto another
+        // organisation's DPIA, which the ownership check above cannot see.
+        data: z.object({
+          description: z.string().min(1),
+          likelihood: z.number().int().min(1).max(5),
+          severity: z.number().int().max(5).min(1),
+        }).partial(),
       }))
       .mutation(async ({ ctx, input }) => {
-        await assertOwned(ctx.db, {
+        const existing = await assertOwned(ctx.db, {
           table: dpiaRisks,
           id: input.id,
           orgId: ctx.user!.orgId,
@@ -379,9 +386,18 @@ export const dpiaRouter = router({
           via: [{ table: dpias, on: eq(dpiaRisks.dpiaId, dpias.id) }],
         });
 
-        // If updating likelihood or severity, recalculate initialRiskScore
+        // The comment here promised this and the code never did it, so a risk edited
+        // from L3/S3 to L5/S5 kept a score of 9 — and the score is what the grid
+        // colours and what the DPIA is read on.
+        const likelihood = input.data.likelihood ?? existing.likelihood;
+        const severity = input.data.severity ?? existing.severity;
+        const payload = {
+          ...input.data,
+          initialRiskScore: (likelihood && severity) ? likelihood * severity : null,
+        };
+
         const [updated] = await ctx.db.update(dpiaRisks)
-          .set(input.data)
+          .set(payload)
           .where(eq(dpiaRisks.id, input.id))
           .returning();
         if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });

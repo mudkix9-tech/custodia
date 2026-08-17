@@ -11,6 +11,7 @@ import { FieldError } from '@/components/ui/FieldError';
 import { announce } from '@/components/layout/Announcer';
 import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
 import { useTranslations } from 'next-intl';
+import { isRetentionPreset, isCustomRetention, normaliseLawfulBasis } from '@/utils/ropaFormat';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -151,6 +152,13 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
   );
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  // Seeded from the loaded value: anything that is not one of the six presets is the
+  // user's own wording — including the ten onboarding templates that seed prose, which
+  // rendered as an empty select and were overwritten with 5_years on any interaction.
+  const [retentionIsCustom, setRetentionIsCustom] = useState(
+    initialData?.retentionPeriod === 'custom' || isCustomRetention(initialData?.retentionPeriod)
+  );
 
   const utils = trpc.useUtils();
   const createMutation = trpc.ropa.create.useMutation();
@@ -595,7 +603,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                   name="lawfulBasis"
                   control={control}
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={normaliseLawfulBasis(field.value)}>
                       <SelectTrigger>
                         <SelectValue placeholder={t('legal.select_lawful_basis')} />
                       </SelectTrigger>
@@ -613,13 +621,15 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 {errors.lawfulBasis && <FieldError>{errors.lawfulBasis.message as string}</FieldError>}
               </div>
 
-              {formData.lawfulBasis === 'legitimate_interest' && (
+              {normaliseLawfulBasis(formData.lawfulBasis) === 'legitimate_interest' && (
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                   <h3 className="text-[13px] font-medium text-amber-400 mb-1">{t('legal.lia_required')}</h3>
-                  <p className="text-[12.5px] text-[#9BA1A6] mb-3">{t('legal.lia_desc')}</p>
-                  <Button variant="outline" className="px-3 py-1.5 h-auto text-[12.5px]">
-                    {t('legal.start_lia')}
-                  </Button>
+                  {/* The "Start / View LIA" button that sat here had no onClick and
+                      nothing to route to: legitimate_interest_assessments carries the
+                      full three-part test and has zero procedures. The advice is
+                      correct and stays; the control that promised to act on it does
+                      not. Building the LIA is F55. */}
+                  <p className="text-[12.5px] text-[#9BA1A6]">{t('legal.lia_desc')}</p>
                 </div>
               )}
 
@@ -650,9 +660,19 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               
               <div className="space-y-2">
                 <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.retention_period')} <span className="text-clay-600">*</span></label>
-                <Select 
-                  value={formData.retentionPeriod || ''}
-                  onValueChange={(value) => handleFieldChange('retentionPeriod', value)}
+                <Select
+                  value={retentionIsCustom ? 'custom' : (formData.retentionPeriod || '')}
+                  onValueChange={(value) => {
+                    if (value === 'custom') {
+                      setRetentionIsCustom(true);
+                      // The old Custom option stored this literal string. It is not a
+                      // retention period, so it does not belong in the text field.
+                      if (formData.retentionPeriod === 'custom') handleFieldChange('retentionPeriod', '');
+                      return;
+                    }
+                    setRetentionIsCustom(false);
+                    handleFieldChange('retentionPeriod', value);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={t('retention.select_retention')} />
@@ -667,6 +687,13 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     <SelectItem value="custom">{t('retention.custom')}</SelectItem>
                   </SelectContent>
                 </Select>
+                {retentionIsCustom && (
+                  <Input
+                    value={formData.retentionPeriod === 'custom' ? '' : (formData.retentionPeriod || '')}
+                    onChange={(e) => handleFieldChange('retentionPeriod', e.target.value)}
+                    placeholder={t('retention.custom_ph')}
+                  />
+                )}
               </div>
 
               <div className="space-y-2">

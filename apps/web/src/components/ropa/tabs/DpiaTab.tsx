@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
-import { AlertTriangle, Plus, ShieldAlert, ArrowRight, Loader2, Save, Trash2 } from 'lucide-react';
+import { AlertTriangle, Plus, ShieldAlert, Loader2, Save, Trash2 } from 'lucide-react';
 import { DataGrid } from 'ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -106,6 +106,8 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
   const createDpiaMutation = trpc.dpia.create.useMutation();
   const updateActivityMutation = trpc.ropa.update.useMutation();
   const createRiskMutation = trpc.dpia.risks.create.useMutation();
+  const updateRiskMutation = trpc.dpia.risks.update.useMutation();
+  const deleteRiskMutation = trpc.dpia.risks.delete.useMutation();
   const updateResidualRisksMutation = trpc.dpia.updateResidualRisks.useMutation();
   const updateMitigationStatusMutation = trpc.dpia.updateMitigationStatus.useMutation();
 
@@ -364,21 +366,59 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
     );
   }
 
+  // The grid was rendered with plain accessorKey columns and no onInlineEdit, so
+  // every initial risk in the product read "New Risk Identified / 3 / 3 / 9" — the
+  // insert defaults — and there is no other DPIA interface anywhere to change them in.
+  const RiskTextCell = ({ getValue, row, column, table }: any) => {
+    const initialValue = getValue();
+    const [value, setValue] = useState(initialValue);
+    return (
+      <Input
+        value={value ?? ''}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => { if (value !== initialValue) table.options.meta?.updateData(row.index, column.id, value); }}
+        className="bg-transparent border-none shadow-none focus-visible:ring-1 focus-visible:ring-[#C9A227]/40 rounded px-2 py-1 h-8 w-full text-[#F4F5F6]"
+      />
+    );
+  };
+
+  const RiskScaleCell = ({ getValue, row, column, table, prefix }: any) => (
+    <Select
+      value={String(getValue() ?? '')}
+      onValueChange={(v) => table.options.meta?.updateData(row.index, column.id, Number(v))}
+    >
+      <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-[#C9A227]/40">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <SelectItem key={n} value={String(n)}>{prefix}{n}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  const handleRiskInlineEdit = async (rowId: string, columnId: string, value: any) => {
+    await updateRiskMutation.mutateAsync({ id: rowId, data: { [columnId]: value } as any });
+    refetchRisks();
+  };
+
+  const handleDeleteRisk = async (id: string) => {
+    await deleteRiskMutation.mutateAsync({ id });
+    refetchRisks();
+  };
+
   const riskColumns = [
-    { header: 'Risk Description', accessorKey: 'description' },
-    { 
-      header: 'Likelihood (1-5)', 
+    { header: 'Risk Description', accessorKey: 'description', cell: RiskTextCell },
+    {
+      header: 'Likelihood (1-5)',
       accessorKey: 'likelihood',
-      cell: (info: any) => (
-        <span className="px-2 py-1 bg-white/5 rounded text-[#E6E8EA] font-medium">L{info.getValue()}</span>
-      )
+      cell: (props: any) => <RiskScaleCell {...props} prefix="L" />,
     },
-    { 
-      header: 'Severity (1-5)', 
+    {
+      header: 'Severity (1-5)',
       accessorKey: 'severity',
-      cell: (info: any) => (
-        <span className="px-2 py-1 bg-white/5 rounded text-[#E6E8EA] font-medium">S{info.getValue()}</span>
-      )
+      cell: (props: any) => <RiskScaleCell {...props} prefix="S" />,
     },
     { 
       header: 'Risk Score', 
@@ -388,6 +428,22 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
         const color = score >= 15 ? 'bg-red-500/15 text-red-400' : score >= 8 ? 'bg-amber-500/15 text-amber-400' : 'bg-[#C9A227]/15 text-[#C9A227]';
         return <span className={`px-2 py-1 rounded font-medium ${color}`}>{score}</span>;
       }
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }: any) => (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Delete risk"
+          onClick={() => handleDeleteRisk(row.original.id)}
+          className="w-7 h-7 text-[#6E747A] hover:text-clay-600 hover:bg-white/5"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      ),
+      size: 50,
     },
   ];
 
@@ -400,9 +456,6 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
             <h2 className="text-[16px] font-medium text-[#F4F5F6]">{dpia.title}</h2>
             <div className="text-[13px] text-[#6E747A] mt-1">Status: <span className="font-medium text-[#E6E8EA]">{dpia.status}</span></div>
           </div>
-          <Button variant="outline" className="text-[#E6E8EA] flex items-center gap-1.5 h-auto py-1.5 px-3 text-[12.5px]">
-            View Full DPIA <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-6 pt-4 border-t border-ink-900/8">
@@ -453,9 +506,10 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
         
         {risks && risks.length > 0 ? (
           <DataGrid 
-            columns={riskColumns} 
+            columns={riskColumns as any} 
             data={risks} 
             mode="compact" 
+            onInlineEdit={handleRiskInlineEdit}
           />
         ) : (
           <div className="py-8 text-center border border-dashed border-white/20 rounded-xl bg-[#0D0F11]/50">

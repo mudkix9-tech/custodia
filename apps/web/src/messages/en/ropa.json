@@ -29,7 +29,8 @@
     "not_recorded": "Not recorded",
     "special_categories": "Involves special category data (Art. 9)",
     "role": "Role",
-    "for_controller": "for {name}"
+    "for_controller": "for {name}",
+    "unspecified": "Unspecified"
   },
   "risk_levels": {
     "critical": "critical",
@@ -127,7 +128,8 @@
       "justification_ph": "Explain why this data must be kept for this period (e.g., statutory requirements, business needs)...",
       "next_review": "Next Review Date",
       "deletion_procedure": "Deletion Procedure",
-      "deletion_procedure_ph": "How is this data securely destroyed at the end of its lifecycle?"
+      "deletion_procedure_ph": "How is this data securely destroyed at the end of its lifecycle?",
+      "custom_ph": "e.g. 7 years after the end of the employment relationship"
     },
     "security": {
       "title": "Technical & Organizational Measures (TOMs)",

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
+import { normaliseLawfulBasis, isLawfulBasisKey, isRetentionPreset } from '@/utils/ropaFormat';
 import { severityClasses } from '@/utils/severity';
 import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X, ShieldAlert } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -64,12 +65,15 @@ export default function RopaListPage() {
     if (!processingActivities || processingActivities.length === 0) return;
     
     const headers = ['Name', 'Purpose', 'Lawful Basis', 'Role', 'Controller', 'Status', 'Risk Level', 'Description'];
-    // Same quoting helper the importer reads back, so a round trip is lossless.
+    // Same quoting helper the importer reads back, so a round trip is lossless. The
+    // basis stays a canonical key rather than a translated label for that reason —
+    // the editor's labels carry their sub-article ("Consent (Art. 6(1)(a))"), which
+    // the importer would reject. Normalising still repairs the seeded plural.
     const csvContent = [
       toCsvRow(headers),
       ...processingActivities.map((a: any) =>
         toCsvRow([
-          a.name, a.purpose, a.lawfulBasis || '', a.role || 'controller', a.controllerName || '',
+          a.name, a.purpose, normaliseLawfulBasis(a.lawfulBasis), a.role || 'controller', a.controllerName || '',
           a.status, a.riskLevel || 'low', a.description || '',
         ])
       )
@@ -201,11 +205,17 @@ export default function RopaListPage() {
     {
       accessorKey: 'lawfulBasis',
       header: t('columns.lawful_basis'),
-      cell: (info: any) => (
-        <span className="px-2.5 py-1 rounded-md text-[12px] font-medium bg-white/5 text-[#9BA1A6] border border-white/10">
-          {info.getValue() || 'Unspecified'}
-        </span>
-      ),
+      // The column stored `legitimate_interest` and the list printed exactly that,
+      // to users and into the regulator-facing exports. The catalogue has carried a
+      // translation for all six bases since the Legal tab was built.
+      cell: (info: any) => {
+        const basis = normaliseLawfulBasis(info.getValue() as string | null);
+        return (
+          <span className="px-2.5 py-1 rounded-md text-[12px] font-medium bg-white/5 text-[#9BA1A6] border border-white/10">
+            {isLawfulBasisKey(basis) ? t(`editor.legal.${basis}`) : (basis || t('columns.unspecified'))}
+          </span>
+        );
+      },
     },
     {
       accessorKey: 'status',
@@ -248,8 +258,13 @@ export default function RopaListPage() {
       // so it is called out rather than rendered as an empty cell.
       cell: (info: any) => {
         const period = info.getValue() as string | null;
-        return period ? (
-          <span className="text-[12px] text-[#9BA1A6]">{period}</span>
+        // A preset translates; anything else is the user's own wording and is shown
+        // as written. The literal `custom` is neither — the old Custom option wrote it
+        // and offered nowhere to type a period — so it counts as not recorded.
+        return period && period !== 'custom' ? (
+          <span className="text-[12px] text-[#9BA1A6]">
+            {isRetentionPreset(period) ? t(`editor.retention.${period}`) : period}
+          </span>
         ) : (
           <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[12px] text-amber-400">
             <AlertCircle className="h-3 w-3" /> {t('columns.not_recorded')}
@@ -456,7 +471,6 @@ export default function RopaListPage() {
             columns={columns as any}
             data={processingActivities || []}
             isLoading={isLoading}
-            enableBulkActions={true}
             globalFilter={globalFilter}
             setGlobalFilter={setGlobalFilter}
             onRowClick={(row: any) => router.push(`/ropa/${row.id}`)}

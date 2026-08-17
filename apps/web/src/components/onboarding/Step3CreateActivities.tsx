@@ -23,7 +23,7 @@ function formatLawfulBasis(basis: string): string {
     consent: 'Consent',
     contract: 'Contractual Necessity',
     legal_obligation: 'Legal Obligation',
-    legitimate_interests: 'Legitimate Interests',
+    legitimate_interest: 'Legitimate Interests',
     public_task: 'Public Task',
     vital_interests: 'Vital Interests'
   };
