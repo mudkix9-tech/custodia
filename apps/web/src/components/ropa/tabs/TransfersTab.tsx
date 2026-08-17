@@ -10,6 +10,7 @@ import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { EU_EEA_COUNTRIES, REST_OF_WORLD, countryName } from '@/utils/countries';
 
 export function TransfersTab({ activityId }: { activityId: string }) {
   const { data: session } = useSession();
@@ -25,7 +26,9 @@ export function TransfersTab({ activityId }: { activityId: string }) {
   const handleAdd = async () => {
     await createMutation.mutateAsync({
       processingActivityId: activityId,
-      destinationCountry: 'United States',
+      // destination_country is char(2). 'United States' is a Postgres 22001, which is
+      // why every use of this button failed until the picker below existed to replace it.
+      destinationCountry: 'US',
       transferMechanism: 'Standard Contractual Clauses (SCCs)',
     });
     utils.ropa.transfers.list.invalidate();
@@ -92,6 +95,26 @@ export function TransfersTab({ activityId }: { activityId: string }) {
     );
   };
 
+  const CountryCell = ({ getValue, row, column, table }: any) => {
+    const value = getValue();
+    return (
+      <Select
+        value={value || 'none'}
+        onValueChange={(val) => table.options.meta?.updateData(row.index, column.id, val)}
+      >
+        <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-[#C9A227]/40">
+          <SelectValue placeholder="Select a country...">{countryName(value)}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none" disabled>Select a country...</SelectItem>
+          {[...EU_EEA_COUNTRIES, ...REST_OF_WORLD].map((c) => (
+            <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  };
+
   const VendorSelectCell = ({ getValue, row, column, table }: any) => {
     const value = getValue();
     return (
@@ -105,7 +128,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
         <SelectContent>
           <SelectItem value="none">No vendor linked</SelectItem>
           {orgVendors.map((ov: any) => (
-            <SelectItem key={ov.vendorId} value={ov.vendorId}>{ov.name}</SelectItem>
+            <SelectItem key={ov.id} value={ov.id}>{ov.name}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -157,7 +180,7 @@ export function TransfersTab({ activityId }: { activityId: string }) {
     {
       accessorKey: 'destinationCountry',
       header: 'Destination Country',
-      cell: EditableCell,
+      cell: CountryCell,
     },
     {
       accessorKey: 'transferMechanism',
@@ -171,8 +194,8 @@ export function TransfersTab({ activityId }: { activityId: string }) {
       ]} />,
     },
     {
-      accessorKey: 'safeguards',
-      header: 'Supplementary Safeguards',
+      accessorKey: 'mechanismDetail',
+      header: 'Mechanism Detail',
       cell: EditableCell,
     },
     {

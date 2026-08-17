@@ -17,6 +17,9 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
   const { confirm, dialog } = useConfirm();
 
   const handleAdd = async () => {
+    // Both columns are NOT NULL, so a new row needs placeholders. They are editable in
+    // the grid now; until this commit `category` was written here and rendered nowhere,
+    // which left the tab unable to record the one field Art. 30(1)(c) asks for.
     await createMutation.mutateAsync({
       processingActivityId: activityId,
       category: 'New Category',
@@ -69,18 +72,18 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
 
   const columns = [
     {
-      accessorKey: 'categoryType',
-      header: 'Category Type',
+      accessorKey: 'category',
+      header: 'Data Category',
+      cell: EditableCell,
+    },
+    {
+      accessorKey: 'categoryGroup',
+      header: 'Group',
       cell: EditableCell,
     },
     {
       accessorKey: 'source',
       header: 'Source',
-      cell: EditableCell,
-    },
-    {
-      accessorKey: 'retentionPeriod',
-      header: 'Retention Period',
       cell: EditableCell,
     },
     {

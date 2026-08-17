@@ -372,11 +372,11 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({
         processingActivityId: z.string().uuid(),
-        category: z.string(),
-        categoryGroup: z.string(),
+        category: z.string().max(100),
+        categoryGroup: z.string().max(100),
         isSpecialCategory: z.boolean().default(false),
-        source: z.string().optional(),
-        retentionPeriod: z.string().optional(),
+        source: z.string().max(100).optional(),
+        description: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
@@ -673,9 +673,11 @@ export const ropaRouter = router({
       .use(requirePermission('ropa', 'edit'))
       .input(z.object({
         processingActivityId: z.string().uuid(),
-        destinationCountry: z.string(),
-        transferMechanism: z.string(),
-        safeguards: z.string().optional(),
+        // char(2). Unbounded, this surfaced as a Postgres 22001 from deep inside the
+        // insert rather than as a validation error naming the field.
+        destinationCountry: z.string().length(2),
+        transferMechanism: z.string().max(100),
+        mechanismDetail: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
