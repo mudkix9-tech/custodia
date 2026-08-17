@@ -3,7 +3,7 @@ import { db } from '../db.js';
 import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates } from 'db';
 import { eq, and, isNotNull, lte, gt, inArray, sql } from 'drizzle-orm';
 import { calculateVendorRisk } from '../routers/vendors.js';
-import { getBrowserCluster, scanDomainForThirdParties } from '../lib/browserPool.js';
+import { runClusterTask, scanDomainForThirdParties } from '../lib/browserPool.js';
 import { getRootDomain } from '../lib/domains.js';
 import { queueNotification } from '../utils/notifications.js';
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
@@ -30,7 +30,6 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
         .where(isNotNull(vendors.subProcessorListUrl))
         .limit(50);
 
-      const clusterInstance = await getBrowserCluster();
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
       for (const v of targetVendors) {
@@ -42,7 +41,10 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
 
         for (let attempt = 1; attempt <= retries; attempt++) {
           try {
-            textContent = await clusterInstance.execute(async ({ page }: any) => {
+            // Acquired per attempt rather than once for the loop: if Chromium dies
+            // partway through 50 vendors, the pool is replaced underneath us and a
+            // hoisted handle would spend the remaining vendors on the dead browser.
+            textContent = await runClusterTask('sub-processor-scrape', async ({ page }: any) => {
               await page.goto(v.subProcessorListUrl!, { waitUntil: 'networkidle2', timeout: 30000 });
               
               // Clean DOM elements to remove boilerplate headers, footers, cookie banners, navigation

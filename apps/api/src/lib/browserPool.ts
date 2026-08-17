@@ -2,28 +2,134 @@ import { Cluster } from 'puppeteer-cluster';
 import puppeteer from 'puppeteer';
 
 let cluster: Cluster | null = null;
+let clusterLaunch: Promise<Cluster> | null = null;
 
 const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
-export async function getBrowserCluster() {
+/**
+ * Ceiling for one cluster task. A two-pass consent scan is two full page loads
+ * plus settle time in one task, which does not fit inside 60s. This is a ceiling,
+ * not a wait, so shorter tasks such as PDF rendering are unaffected.
+ */
+const TASK_TIMEOUT_MS = 150000;
+
+/**
+ * How long runClusterTask() waits before declaring the pool dead. The cluster's
+ * own `timeout` covers only the task function, never the acquisition of a page
+ * before it, so it cannot catch the wedged case described on discardBrowserCluster
+ * below — hence a second ceiling, far enough above the first that it can only fire
+ * on a pool that is stuck rather than one that is merely slow.
+ */
+const TASK_WATCHDOG_MS = TASK_TIMEOUT_MS + 60000;
+
+export async function getBrowserCluster(): Promise<Cluster> {
   if (cluster) return cluster;
 
-  cluster = await Cluster.launch({
-    concurrency: Cluster.CONCURRENCY_CONTEXT, // Each task gets a fresh page in shared browser
-    maxConcurrency: 1, // Reduced to 1 to fit within Render's 512MB free tier limit
-    puppeteerOptions: {
-      headless: true,
-      executablePath: puppeteer.executablePath(),
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    },
-    // A two-pass consent scan is two full page loads plus settle time in one task,
-    // which does not fit inside 60s. This is a ceiling, not a wait, so shorter
-    // tasks such as PDF rendering are unaffected.
-    timeout: 150000,
-    retryLimit: 2,
+  // Concurrent callers share one launch. Two Chromiums do not fit in the
+  // container, and the losing one would leak with no handle left to close it.
+  if (!clusterLaunch) {
+    clusterLaunch = Cluster.launch({
+      concurrency: Cluster.CONCURRENCY_CONTEXT, // Each task gets a fresh page in shared browser
+      maxConcurrency: 1, // One browser is all that fits in the container's 512MB
+      puppeteerOptions: {
+        headless: true,
+        executablePath: puppeteer.executablePath(),
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      },
+      timeout: TASK_TIMEOUT_MS,
+      retryLimit: 2,
+    })
+      .then(launched => {
+        cluster = launched;
+        return launched;
+      })
+      .finally(() => {
+        // Cleared either way: on success `cluster` short-circuits the next call,
+        // on failure the next call must be free to try again.
+        clusterLaunch = null;
+      });
+  }
+
+  return clusterLaunch;
+}
+
+/**
+ * Drops the cached cluster so the next task launches a fresh browser.
+ *
+ * puppeteer-cluster cannot recover from a failed repair. SingleBrowserImplementation
+ * sets `repairing = true` before relaunching and clears it only on success, so once
+ * it has thrown `Unable to restart chrome.` every later task waits on a repair that
+ * will never resolve. That throw does not reach the caller either: `Cluster.doWork()`
+ * is not awaited by anything, so it never reaches `job.executeCallbacks.reject()` and
+ * the pending execute() promise simply stays pending. Both conditions last for the
+ * life of the process, which is why the handle is thrown away rather than reused.
+ *
+ * close() is deliberately not awaited: on a browser that has already died it can
+ * hang exactly as the repair did. It clears the cluster's polling timers
+ * synchronously before its first await, so firing it and walking away is enough.
+ */
+function discardBrowserCluster(reason: string) {
+  const dead = cluster;
+  cluster = null;
+  clusterLaunch = null;
+  if (!dead) return;
+
+  console.error(`[browserPool] Discarding browser cluster: ${reason}`);
+  void Promise.race([dead.close(), sleep(10000)]).catch(() => {});
+}
+
+/**
+ * Errors meaning the browser itself is gone, rather than that one page misbehaved.
+ * Navigation failures are excluded on purpose — a site that times out or refuses
+ * the connection is an ordinary scan result, not a reason to bin Chromium.
+ */
+const FATAL_BROWSER_ERRORS = [
+  'unable to restart chrome',
+  'unable to get browser page',
+  'target closed',
+  'session closed',
+  'connection closed',
+  'browser has disconnected',
+  'protocol error',
+];
+
+function isFatalBrowserError(err: unknown): boolean {
+  const message = String((err as any)?.message ?? err).toLowerCase();
+  return FATAL_BROWSER_ERRORS.some(fragment => message.includes(fragment));
+}
+
+/**
+ * Runs one cluster task, discarding the pool if the browser dies under it.
+ *
+ * Without this a single Chromium crash cost every later scan: the cached cluster
+ * was handed out for the life of the process, so consent, vendor and CMP scans hung
+ * until pg-boss expired them and then hung again on retry. Recovery now costs one
+ * task rather than a redeploy.
+ */
+export async function runClusterTask<T>(label: string, task: (arg: any) => Promise<T>): Promise<T> {
+  const active = await getBrowserCluster();
+
+  let timedOut = false;
+  let watchdog: ReturnType<typeof setTimeout> | undefined;
+  const watchdogged = new Promise<never>((_resolve, reject) => {
+    watchdog = setTimeout(() => {
+      timedOut = true;
+      reject(new Error(`${label} exceeded ${TASK_WATCHDOG_MS}ms; treating the browser as dead`));
+    }, TASK_WATCHDOG_MS);
   });
 
-  return cluster;
+  try {
+    return await Promise.race([active.execute(task), watchdogged]);
+  } catch (err) {
+    // Only when this is still the live cluster: a concurrent failure may already
+    // have replaced it, and discarding the replacement would restart the cycle.
+    if (active === cluster && (timedOut || isFatalBrowserError(err))) {
+      discardBrowserCluster(`${label}: ${(err as any)?.message ?? err}`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(watchdog);
+  }
 }
 
 /**
@@ -73,8 +179,7 @@ function mergeCookies(intercepted: any[], browser: any[]) {
 }
 
 export async function scanDomain(url: string) {
-  const cluster = await getBrowserCluster();
-  return cluster.execute(async ({ page }: any) => {
+  return runClusterTask('scanDomain', async ({ page }: any) => {
     const cookies: any[] = [];
     page.on('response', async (response: any) => {
       const setCookieHeaders = response.headers()['set-cookie'];
@@ -99,8 +204,7 @@ export async function scanDomain(url: string) {
 }
 
 export async function scanDomainForThirdParties(url: string) {
-  const cluster = await getBrowserCluster();
-  return cluster.execute(async ({ page }: any) => {
+  return runClusterTask('scanDomainForThirdParties', async ({ page }: any) => {
     const detectedDomains = new Set<string>();
     const detectedDetails: Array<{ domain: string; type: string; url: string }> = [];
 
@@ -538,8 +642,7 @@ export async function scanDomainTwoPass(
     throw new Error(`scanDomainTwoPass: not a valid URL: ${url}`);
   }
 
-  const cluster = await getBrowserCluster();
-  return cluster.execute(async ({ page }: any) => {
+  return runClusterTask<TwoPassScanResult>('scanDomainTwoPass', async ({ page }: any) => {
     const browser = page.browser();
 
     const pre = await runPass(browser, 'pre_consent', url, targetHost, {
@@ -565,8 +668,9 @@ export async function scanDomainTwoPass(
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  if (cluster) {
-    await cluster.idle();
-    await cluster.close();
-  }
+  if (!cluster) return;
+  // Bounded: idle() on a wedged pool never settles, and hanging here only trades a
+  // clean shutdown for a SIGKILL once the platform's grace period runs out.
+  await Promise.race([cluster.idle(), sleep(10000)]).catch(() => {});
+  await Promise.race([cluster.close(), sleep(10000)]).catch(() => {});
 });
