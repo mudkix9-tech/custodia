@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { trpc } from '@/utils/trpc';
 import { Save, ArrowLeft, AlertCircle, Info, ExternalLink, X, Lightbulb } from 'lucide-react';
@@ -213,20 +213,45 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
 
   // Debounced auto-save logic for form tabs (1, 2, 6, 7)
   const autoSaveTabs = ['general', 'legal', 'retention', 'security'];
-  
+
+  // `watch()` hands back a fresh object on every render, so an effect that depends on
+  // it re-runs on every render — including the renders the save itself causes, through
+  // setSaveStatus, the optimistic setData in onMutate, and the ropa.get invalidation in
+  // onSettled, each of which produces a new `data` object in the page above. An activity
+  // left open therefore issued an UPDATE plus an audit_logs INSERT every 0.5–2 seconds,
+  // indefinitely. Depending on the serialised values instead of the object's identity is
+  // what breaks it: after a save the signature matches, and the effect returns early.
+  const formSignature = JSON.stringify(formData);
+  const lastSavedSignature = useRef<string | null>(null);
+  // Captured on the first render, before any edit, rather than the first time the
+  // effect runs: deep-linking to ?tab=dpia, linking a DPIA and then switching to
+  // General would otherwise adopt the edited values as the baseline and never save.
+  if (lastSavedSignature.current === null) lastSavedSignature.current = formSignature;
+
+  // The lock compares against the last updatedAt *we* wrote, not the one on the prop.
+  // initialData only refreshes when the onSettled refetch lands, and the save that
+  // fires before it does was reporting "The record was updated by someone else" on a
+  // record nobody else had touched.
+  const lastUpdatedAt = useRef<string | undefined>(initialData?.updatedAt);
+
   useEffect(() => {
     if (isNew || !autoSaveTabs.includes(activeTab)) return;
 
-    setSaveStatus('saving');
+    if (lastSavedSignature.current === formSignature) return;
+
     const timer = setTimeout(async () => {
+      const saving = formSignature;
+      setSaveStatus('saving');
       try {
-        await updateMutation.mutateAsync({
+        const saved = await updateMutation.mutateAsync({
           id: initialData.id,
-          updatedAt: initialData.updatedAt,
+          updatedAt: lastUpdatedAt.current,
           data: formData
         });
+        lastSavedSignature.current = saving;
+        if (saved?.updatedAt) lastUpdatedAt.current = new Date(saved.updatedAt).toISOString();
         setSaveStatus('saved');
-      announce(t('saved_success'));
+        announce(t('saved_success'));
         setTimeout(() => setSaveStatus('idle'), 2000);
       } catch (err) {
         setSaveStatus('error');
@@ -234,7 +259,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [formData, activeTab]);
+  }, [formSignature, activeTab]);
 
 
   const handleCreate = async () => {
