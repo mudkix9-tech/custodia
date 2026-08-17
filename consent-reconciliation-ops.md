@@ -56,32 +56,44 @@ one would be skipped in silence. Worth checking before assuming a migration ran.
 
 ---
 
-## 2. The new worker service
+## 2. Where the workers actually run
 
-`render.yaml` now defines two services:
+**One service, not two.** Production is a single Northflank service, `custodia-backend`,
+built from `apps/api/Dockerfile` and started with `npm run start`. `WORKER_ROLE` is unset
+on it, so that one container serves Fastify, registers every worker, and runs Chromium.
+
+The two-service split below was planned and written into `render.yaml`, but never
+deployed — nothing runs on Render. Treat the table as a design note, not as infrastructure:
 
 | Service | Type | Plan | `WORKER_ROLE` | Runs |
 |---|---|---|---|---|
 | `custodia-api` | web | free | `web` | Fastify only. Registers **no** workers, schedules **no** cron. |
 | `custodia-workers` | worker | **starter** | unset | All workers + `scheduleGlobalJobs()`. No HTTP. |
 
-**This is a billing change.** `starter` is a paid plan. Free tier is not viable: the
-Puppeteer browser cluster does not fit 512MB, and free web services sleep, which would
-stop in-process workers regardless.
+What follows from one service being what is live:
 
-`WORKER_ROLE=web` is what makes `createWorker()` a no-op on the API service
-(`apps/api/src/lib/queue.ts` → `shouldRegisterWorkers()`). Without it, the web dyno would
-also try to run Puppeteer scans. **If you ever add a third service, set `WORKER_ROLE=web`
-on it too unless you want it processing jobs.**
+- The browser cluster shares its container with the request path — `nf-compute-20`, 0.2
+  vCPU and 512MB for Fastify, all 28 workers and Chromium together. The reasoning behind
+  `maxConcurrency: 1` in `browserPool.ts` still holds, for a different host than the
+  comment once named.
+- Chromium dying under memory pressure is the expected failure mode, not an exotic one.
+  `browserPool.ts` discards and relaunches the pool when that happens; see §6 for the log
+  line and what a run of them means.
+- `scheduleGlobalJobs()` runs in the process that serves requests, from `index.ts` after
+  `listen()`.
+- The service does have an HTTP health check, so the `consent_scan_runs` signal in §6 is a
+  supplement rather than the only liveness evidence.
 
-The worker entrypoint is `apps/api/src/workers/main.ts` (`npm run start:workers`). It
-imports the worker barrel — which registers every worker as a side effect of
-`createWorker()` — then calls `scheduleGlobalJobs()`. It exits with a fatal error if
-`WORKER_ROLE=web` is set on it, because that combination would register nothing and
-silently do no work.
+`WORKER_ROLE=web` is what makes `createWorker()` a no-op
+(`apps/api/src/lib/queue.ts` → `shouldRegisterWorkers()`). **If you add a second service,
+set `WORKER_ROLE=web` on whichever one should not process jobs** — splitting them is a
+platform change only, no code change.
 
-**Health check:** the worker service has no HTTP endpoint. The practical liveness signal
-is the `consent_scan_runs` table — see §6.
+The worker-only entrypoint is `apps/api/src/workers/main.ts` (`npm run start:workers`),
+unused in the current deployment. It imports the worker barrel — which registers every
+worker as a side effect of `createWorker()` — then calls `scheduleGlobalJobs()`. It exits
+with a fatal error if `WORKER_ROLE=web` is set on it, because that combination would
+register nothing and silently do no work.
 
 ---
 
@@ -223,8 +235,9 @@ WHERE started_at > now() - interval '8 days'
 GROUP BY status;
 ```
 Expect one `ok` row per active domain per week. A growing `running` count with no
-`finished_at` means scans are starting and dying — check the worker service logs for
-Puppeteer crashes.
+`finished_at` means scans are starting and dying — check the service logs for Puppeteer
+crashes. `[browserPool] Discarding browser cluster: …` is the pool recovering from a dead
+Chromium: one line is routine, one per scan means the container is out of memory.
 
 **Are scans producing usable results?**
 ```sql

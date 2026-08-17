@@ -135,10 +135,18 @@ only reason multiplexed workers route correctly.
 `retryBackoff`. Pass pg-boss names (`singletonKey`, `startAfter`, `retryLimit`) directly
 and they go through untouched.
 
-**Two services, and only one runs jobs.** `WORKER_ROLE=web` makes `createWorker()` a
-no-op, which is how `custodia-api` avoids running Puppeteer. `custodia-workers`
-(`npm run start:workers` → `apps/api/src/workers/main.ts`) leaves it unset and does all
-the work. Importing the worker barrel is what registers workers — that is a side effect
+**One service in production, though the code still supports a split.** `WORKER_ROLE=web`
+makes `createWorker()` a no-op, which is how an API-only process would avoid running
+Puppeteer. **Nothing sets it today.** What is deployed is a single Northflank service,
+`custodia-backend`, built from `apps/api/Dockerfile` and started with `npm run start`, so
+one container serves Fastify *and* registers every worker, Chromium included — the browser
+cluster and the request path share one 512MB box. `index.ts` calls `scheduleGlobalJobs()`
+after `listen()` when `shouldRegisterWorkers()` is true, which on that service it is.
+
+`render.yaml`'s `custodia-api` / `custodia-workers` split describes infrastructure that
+has never existed; nothing runs on Render. `npm run start:workers` →
+`apps/api/src/workers/main.ts` remains the worker-only entrypoint if the two are ever
+separated. Importing the worker barrel is what registers workers — that is a side effect
 of `createWorker()` at module scope, so importing a worker module from a router (to get
 its queue handle) is safe but not free of that coupling.
 
