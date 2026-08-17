@@ -27,38 +27,30 @@ export function HistoryTab({ activityId }: { activityId: string }) {
     return <Edit className="w-4 h-4 text-amber-400" />;
   };
 
-  const getActionText = (action: string) => {
-    switch(action) {
+  // The server already writes a description through ACTION_DESCRIPTIONS, including
+  // for the child rows that now log against their activity. This switch covered
+  // three strings and rendered a raw tRPC path for everything else.
+  const getActionText = (log: any) => {
+    if (log.description) return log.description;
+    switch (log.action) {
       case 'ropa.create': return 'Created activity';
       case 'ropa.update': return 'Updated activity';
       case 'ropa.delete': return 'Deleted activity';
-      default: return action;
+      default: return log.action;
     }
   };
 
-  const renderDiff = (oldData: any, newData: any) => {
-    if (!oldData || !newData) return null;
-    
-    const changes: { key: string, old: any, new: any }[] = [];
-    
-    // Simple flat comparison for the top level keys
-    Object.keys(newData).forEach(key => {
-      // ignore internal keys
-      if (['updatedAt', 'createdAt'].includes(key)) return;
-      
-      const oldVal = JSON.stringify(oldData[key]);
-      const newVal = JSON.stringify(newData[key]);
-      
-      if (oldVal !== newVal) {
-        changes.push({
-          key,
-          old: oldData[key],
-          new: newData[key]
-        });
-      }
-    });
+  // audit_logs stores the diff in `changes`, as { field: { old, new } }. This read
+  // `newValue`/`details`, neither of which is a column, so the guard below always
+  // failed and "View Diff" expanded an empty box.
+  const renderDiff = (diff: any) => {
+    if (!diff || typeof diff !== 'object') return null;
 
-    if (changes.length === 0) return <div className="text-[12px] text-[#6E747A] italic mt-2">No structural changes detected (likely just an auto-save).</div>;
+    const changes = Object.entries(diff)
+      .filter(([key]) => !['updatedAt', 'createdAt'].includes(key))
+      .map(([key, value]: [string, any]) => ({ key, old: value?.old, new: value?.new }));
+
+    if (changes.length === 0) return <div className="text-[12px] text-[#6E747A] italic mt-2">No structural changes recorded for this save.</div>;
 
     return (
       <div className="mt-3 space-y-2">
@@ -94,7 +86,7 @@ export function HistoryTab({ activityId }: { activityId: string }) {
         <div className="space-y-4">
           {logs.map((log) => {
             const date = new Date(log.createdAt!).toLocaleString();
-            const details = (log as any).newValue || (log as any).details;
+            const diff = (log as any).changes;
             const isExpanded = expandedLogId === log.id;
 
             return (
@@ -111,7 +103,7 @@ export function HistoryTab({ activityId }: { activityId: string }) {
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5">{getActionIcon(log.action)}</div>
                       <div>
-                        <div className="text-[13px] font-medium text-[#F4F5F6]">{getActionText(log.action)}</div>
+                        <div className="text-[13px] font-medium text-[#F4F5F6]">{getActionText(log)}</div>
                         <div className="text-[12px] text-[#6E747A] mt-0.5">{date}</div>
                       </div>
                     </div>
@@ -123,17 +115,9 @@ export function HistoryTab({ activityId }: { activityId: string }) {
                     )}
                   </div>
 
-                  {isExpanded && log.action === 'ropa.update' && details && (
+                  {isExpanded && log.action === 'ropa.update' && (
                     <div className="mt-4 pt-4 border-t border-ink-900/8 animate-in fade-in slide-in-from-top-2 duration-200">
-                      {renderDiff(details.old, details.new)}
-                    </div>
-                  )}
-                  
-                  {isExpanded && log.action === 'ropa.create' && details && (
-                    <div className="mt-4 pt-4 border-t border-ink-900/8 animate-in fade-in slide-in-from-top-2 duration-200">
-                      <div className="text-[12px] text-[#9BA1A6] bg-white/5 p-3 rounded-lg font-mono break-all">
-                        {JSON.stringify(details.changes, null, 2)}
-                      </div>
+                      {renderDiff(diff)}
                     </div>
                   )}
                 </div>

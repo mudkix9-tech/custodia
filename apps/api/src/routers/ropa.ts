@@ -4,13 +4,14 @@ import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
 import { processingActivities, legitimateInterestAssessments, processingDataCategories, processingRecipients, processingTransfers, auditLogs, vendors, organizationVendors, clientProcessingActivities, reconsentFlags, dpias } from 'db';
-import { eq, and, desc, inArray, not, count } from 'drizzle-orm';
+import { eq, and, desc, inArray, not, count, isNull } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { assertOwned, assertParentOwned } from '../lib/tenancy.js';
 import DOMPurify from 'isomorphic-dompurify';
 import { queueNotification } from '../utils/notifications.js';
 import { reconsentQueue } from '../workers/index.js';
 import { enforceLimit } from '../lib/billing.js';
+import { isAdequateDestination } from '../constants/transferDestinations.js';
 
 const sanitize = (text?: string) => {
   if (!text) return text;
@@ -110,7 +111,11 @@ export const ropaRouter = router({
         ctx.user!.orgId,
         { limit: input.limit, after: input.cursor || undefined },
         'updatedAt',
-        'desc'
+        'desc',
+        // auditExport and scoring already filter on this. The register did not, so a
+        // deleted activity stayed on screen, in the CSV and in the PDF while the audit
+        // pack and the compliance score behaved as though it were gone.
+        [isNull(processingActivities.deletedAt)],
       );
     }),
 
@@ -159,10 +164,19 @@ export const ropaRouter = router({
       name: z.string().min(1),
       purpose: z.string().min(1),
       description: z.string().optional(),
-      lawfulBasis: z.string(),
+      // The CSV importer refuses to guess a basis and cites Art. 30(1)(c) when it
+      // rejects a row. The primary create path accepted '' and satisfied a NOT NULL
+      // column with it, so the register rendered 'Unspecified' for anything made in
+      // the UI. The form now collects it.
+      lawfulBasis: z.string().min(1),
       // Art. 30(1) vs 30(2): the two records answer different questions.
       role: z.enum(['controller', 'processor', 'joint_controller']).default('controller'),
       controllerName: z.string().optional(),
+      // Rendered on the create form and silently dropped: a user who chose
+      // Active/Critical got Draft/Low back.
+      status: z.enum(['draft', 'active', 'under_review', 'archived']).default('draft'),
+      riskLevel: z.enum(['low', 'medium', 'high', 'critical']).default('low'),
+      isSystematicMonitoring: z.boolean().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
@@ -176,6 +190,9 @@ export const ropaRouter = router({
         lawfulBasis: input.lawfulBasis,
         role: input.role,
         controllerName: sanitize(input.controllerName),
+        status: input.status,
+        riskLevel: input.riskLevel,
+        isSystematicMonitoring: input.isSystematicMonitoring,
         createdBy: ctx.user!.id,
       }).returning();
 
@@ -568,12 +585,16 @@ export const ropaRouter = router({
           const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
           const [orgVendor] = await ctx.db.select().from(organizationVendors).where(and(eq(organizationVendors.vendorId, input.vendorId), eq(organizationVendors.organizationId, ctx.user!.orgId)));
           
-          const EU_COUNTRIES = ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
+          // The EU-27 array this used to hardcode treated Norway, Iceland,
+          // Liechtenstein, the UK, Switzerland, Japan, Korea, Canada and the rest of
+          // the adequacy list as third countries, and fabricated a Chapter V transfer
+          // requiring SCCs for each. isAdequateDestination covers the EEA plus every
+          // adequacy decision, and onboarding.ts was already using it.
           const hq = vendor?.headquartersCountry;
-          const isEuHq = hq && EU_COUNTRIES.includes(hq);
+          const isAdequateHq = !!hq && isAdequateDestination(hq);
           const hasEuHosting = orgVendor?.usingEuHosting;
 
-          if (!isEuHq && !hasEuHosting && hq) {
+          if (!isAdequateHq && !hasEuHosting && hq) {
             // It's a non-EU transfer, create draft transfer
             const [existingTransfer] = await ctx.db.select().from(processingTransfers).where(and(
               eq(processingTransfers.processingActivityId, input.processingActivityId),

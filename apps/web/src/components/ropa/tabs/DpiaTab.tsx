@@ -274,7 +274,13 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
   // Find linked vendors that are high or critical risk
   const highRiskVendors = recipients
     .filter((r: any) => r.recipientType === 'vendor' && r.vendorId)
-    .map((r: any) => orgVendors.find((v: any) => v.orgVendorId === r.vendorId))
+    // processing_recipients.vendorId holds a catalogue vendors.id — RecipientsTab
+    // writes vendor.id — and orgVendorId is an organization_vendors row id. Comparing
+    // the two never matched, so this banner and its one-click "Document Risk"
+    // pre-fill could not render at all. getOrgVendors spreads the vendor row, so the
+    // catalogue id is `id`. relatedVendorId stays keyed on orgVendorId, which is what
+    // the rest of this tab uses.
+    .map((r: any) => orgVendors.find((v: any) => v.id === r.vendorId))
     .filter((v: any) => v && (v.riskLevel === 'high' || v.riskLevel === 'critical'));
 
   // Filter to only those that haven't been auto-documented yet

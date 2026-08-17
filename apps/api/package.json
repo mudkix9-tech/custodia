@@ -17,6 +17,7 @@
     "mint-token": "tsx src/scripts/mint-probe-token.ts",
     "test:fixtures": "tsx src/lib/consentEvaluator.fixtures.test.ts",
     "test:consent-cookies": "tsx src/workers/consentScan.cookies.test.ts",
+    "test:transfers": "tsx src/constants/transferDestinations.test.ts",
     "test:scoring": "tsx src/lib/scoring.test.ts"
   },
   "keywords": [],

@@ -326,7 +326,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
             {isNew && (
               <Button 
                 onClick={handleCreate}
-                disabled={!formData.name || !formData.purpose}
+                disabled={!formData.name || !formData.purpose || !formData.lawfulBasis}
                 className="flex items-center gap-1.5"
               >
                 <Save className="w-4 h-4" /> {t('create_activity')}
@@ -441,6 +441,32 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                   rows={2}
                 />
               </div>
+
+              {isNew && (
+                <div className="space-y-2 pt-4 border-t border-ink-900/8">
+                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('legal.lawful_basis')} *</label>
+                  <Controller
+                    name="lawfulBasis"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('legal.select_lawful_basis')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="consent">{t('legal.consent')}</SelectItem>
+                          <SelectItem value="contract">{t('legal.contract')}</SelectItem>
+                          <SelectItem value="legal_obligation">{t('legal.legal_obligation')}</SelectItem>
+                          <SelectItem value="vital_interests">{t('legal.vital_interests')}</SelectItem>
+                          <SelectItem value="public_task">{t('legal.public_task')}</SelectItem>
+                          <SelectItem value="legitimate_interest">{t('legal.legitimate_interest')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <p className="text-[12px] text-[#6E747A]">{t('legal.role_hint')}</p>
+                </div>
+              )}
 
               {!isNew && allClients.length > 0 && (
                 <div className="space-y-3 pt-4 border-t border-ink-900/8">

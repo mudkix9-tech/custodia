@@ -63,8 +63,15 @@ export const ACTION_DESCRIPTIONS: Record<string, (input: any) => string> = {
   'ropa.create': (input) => `Created processing activity "${input.name}"`,
   'ropa.update': (input) => `Updated processing activity`,
   'ropa.delete': (input) => `Deleted processing activity`,
-  'ropa.dataCategories.add': (input) => `Added data category "${input.category}"`,
-  'ropa.recipients.add': (input) => `Added recipient "${input.name}"`,
+  'ropa.dataCategories.create': (input) => `Added data category "${input.category}"`,
+  'ropa.dataCategories.update': () => `Updated a data category`,
+  'ropa.dataCategories.delete': () => `Removed a data category`,
+  'ropa.recipients.create': (input) => `Added recipient "${input.name}"`,
+  'ropa.recipients.update': () => `Updated a recipient`,
+  'ropa.recipients.delete': () => `Removed a recipient`,
+  'ropa.transfers.create': (input) => `Added a transfer to ${input.destinationCountry}`,
+  'ropa.transfers.update': () => `Updated a transfer`,
+  'ropa.transfers.delete': () => `Removed a transfer`,
   'vendors.org.link': (input) => `Added vendor to organization`,
   'vendors.org.update': (input) => `Updated vendor relationship`,
   'vendors.custom.create': (input) => `Created custom vendor "${input.name}"`,
@@ -143,6 +150,10 @@ export function extractResourceId(input: any): string | null {
   if (!input || typeof input !== 'object') return null;
   if (input.id) return input.id;
   if (input.ropaId) return input.ropaId;
+  // Before vendorId on purpose: a recipient create carries both, and the activity is
+  // what the History tab filters on. Without this the child creates logged null and
+  // Art. 5(2) accountability for most of an activity's content was unevidenced.
+  if (input.processingActivityId) return input.processingActivityId;
   if (input.vendorId) return input.vendorId;
   if (input.dsarId) return input.dsarId;
   if (input.breachId) return input.breachId;

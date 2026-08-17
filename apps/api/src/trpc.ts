@@ -376,7 +376,13 @@ const auditLogMiddleware = t.middleware(async ({ ctx, type, path, getRawInput, n
   
   let changes = null;
   if (actionType === 'update' && previousState) {
-    changes = calculateDiff(previousState, rawInput as Record<string, any>);
+    // The update mutations take { id, updatedAt, data }, so diffing the row against
+    // the raw input compared a processing_activities record with an envelope and
+    // produced { data: { old: null, new: <entire payload> } } on every save. The
+    // fields being written live under `data` where the procedure has one.
+    const input = rawInput as Record<string, any>;
+    const after = (input?.data && typeof input.data === 'object') ? input.data : input;
+    changes = calculateDiff(previousState, after as Record<string, any>);
   }
   
   setImmediate(async () => {
