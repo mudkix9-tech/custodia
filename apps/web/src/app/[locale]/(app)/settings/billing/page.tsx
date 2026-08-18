@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { initializePaddle, Paddle } from '@paddle/paddle-js';
 import { trpc } from '@/utils/trpc';
 import { useSession } from 'next-auth/react';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Loader2, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/routing';
 
 const TIERS = [
   {
@@ -21,9 +22,12 @@ const TIERS = [
 
 export default function BillingPage() {
   const t = useTranslations('settings.billing');
+  const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle | undefined>();
   const [isInitializing, setIsInitializing] = useState(true);
-  const { data: session } = useSession();
+  const [isActivating, setIsActivating] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const { data: session, update } = useSession();
   const user = session?.user as any;
   const subscriptionStatus = (session as any)?.subscriptionStatus;
   const trialEndsAt = (session as any)?.trialEndsAt;
@@ -37,15 +41,68 @@ export default function BillingPage() {
     enabled: isLocked,
   });
 
+  const syncSubscriptionSession = useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      const updated = await update();
+      const status = (updated as any)?.subscriptionStatus;
+      const trialEnd = (updated as any)?.trialEndsAt;
+      const active = status === 'active' || (status === 'trialing' && (!trialEnd || Date.now() <= trialEnd));
+      if (active) {
+        router.push('/dashboard');
+        router.refresh();
+      }
+    } catch (e) {
+      console.error('Failed to sync session:', e);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [update, router]);
+
+  const handleCheckoutCompleted = useCallback(async () => {
+    setIsActivating(true);
+    let attempts = 0;
+    const maxAttempts = 8;
+    const poll = async () => {
+      attempts++;
+      try {
+        const updated = await update();
+        const status = (updated as any)?.subscriptionStatus;
+        if (status === 'active') {
+          setIsActivating(false);
+          router.push('/dashboard');
+          router.refresh();
+          return;
+        }
+      } catch (e) {
+        console.error('Error during post-checkout sync:', e);
+      }
+
+      if (attempts < maxAttempts) {
+        setTimeout(poll, 1500);
+      } else {
+        setIsActivating(false);
+        router.push('/dashboard');
+        router.refresh();
+      }
+    };
+    setTimeout(poll, 1500);
+  }, [update, router]);
+
   useEffect(() => {
     initializePaddle({
       environment: (process.env.NEXT_PUBLIC_PADDLE_ENV as 'sandbox' | 'production') || 'sandbox',
       token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || 'test_token',
+      eventCallback: (event) => {
+        if (event.name === 'checkout.completed') {
+          handleCheckoutCompleted();
+        }
+      },
     }).then((paddleInstance) => {
       setPaddle(paddleInstance);
       setIsInitializing(false);
     });
-  }, []);
+  }, [handleCheckoutCompleted]);
 
   const handleUpgrade = (priceId: string) => {
     if (!paddle || !user?.organizationId) return;
@@ -120,7 +177,14 @@ export default function BillingPage() {
 
   return (
     <div className="mx-auto max-w-[1040px] space-y-5 px-8 pt-10 pb-24 rise-in">
-      {isLocked && (
+      {isActivating && (
+        <div className="bg-set-gold/10 border border-set-gold/30 rounded-2xl p-6 mb-8 text-center flex items-center justify-center gap-3 text-set-fg">
+          <Loader2 className="w-5 h-5 text-set-gold animate-spin" />
+          <span className="font-medium text-sm">{t('activating')}</span>
+        </div>
+      )}
+
+      {isLocked && !isActivating && (
         <div className="bg-accent-500/10 border border-accent-500/20 rounded-2xl p-6 mb-8 text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent-500/20 mb-4">
             <CheckCircle className="w-6 h-6 text-accent-500" />
@@ -130,11 +194,23 @@ export default function BillingPage() {
             {isPastDue && t('locked.payment_failed')}
             {isCanceled && t('locked.canceled')}
           </h2>
-          <p className="text-set-fg-muted max-w-lg mx-auto mb-6">
+          <p className="text-set-fg-muted max-w-lg mx-auto mb-4">
             {isExpiredTrial && t('locked.trial_ended_desc')}
             {isPastDue && t('locked.payment_failed_desc')}
             {isCanceled && t('locked.canceled_desc')}
           </p>
+
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={syncSubscriptionSession}
+              disabled={isSyncing}
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-set-fg bg-set-panel border border-set-line hover:border-set-line-strong rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              {isSyncing ? t('syncing') : t('sync_status')}
+            </button>
+          </div>
           
           {stats && (
              <div className="flex items-center justify-center gap-8 border-t border-set-line pt-6 mt-6">

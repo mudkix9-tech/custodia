@@ -47,10 +47,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     } as any)
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.sub = user.id;
-        const [dbUser] = await db.select().from(users).where(eq(users.id, user.id as string));
+    async jwt({ token, user, trigger }) {
+      const userId = (user?.id || token?.sub) as string | undefined;
+
+      if ((user || trigger === 'update') && userId) {
+        token.sub = userId;
+        const [dbUser] = await db.select().from(users).where(eq(users.id, userId));
         if (dbUser) {
           token.org = dbUser.organizationId;
           token.role = dbUser.role;

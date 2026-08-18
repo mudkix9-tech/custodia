@@ -345,6 +345,9 @@
       "canceled": "Canceled",
       "paused": "Paused"
     },
+    "activating": "Payment received! Activating your subscription...",
+    "sync_status": "Check subscription status",
+    "syncing": "Checking subscription status...",
     "plans": {
       "professional": {
         "name": "Professional",
