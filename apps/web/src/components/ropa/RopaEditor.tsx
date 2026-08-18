@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { trpc } from '@/utils/trpc';
-import { Save, ArrowLeft, AlertCircle, Info, ExternalLink, X, Lightbulb } from 'lucide-react';
+import { Save, ArrowLeft, AlertCircle, Info, ExternalLink, X, Lightbulb, FileText, ShieldCheck } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,6 +20,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
+import NextLink from 'next/link';
+import { CompletenessPanel, CompletenessRing, type Requirement } from './CompletenessPanel';
 import { DataCategoriesTab } from './tabs/DataCategoriesTab';
 import { RecipientsTab } from './tabs/RecipientsTab';
 import { TransfersTab } from './tabs/TransfersTab';
@@ -50,7 +52,15 @@ const ropaSchema = z.object({
   lawfulBasisNotes: z.string().optional(),
   isSystematicMonitoring: z.boolean().optional(),
   isLargeScale: z.boolean().optional(),
-  isAutomatedDecisionMaking: z.boolean().optional(),
+  // Art. 22. `isAutomatedDecisionMaking` was a form field with no column behind it —
+  // Drizzle dropped it silently on every save. The real columns are these.
+  involvesProfiling: z.boolean().optional(),
+  involvesAutomatedDecisionMaking: z.boolean().optional(),
+  admLogic: z.string().nullable().optional(),
+  admSignificance: z.string().nullable().optional(),
+  admHumanIntervention: z.string().nullable().optional(),
+  businessOwnerId: z.string().nullable().optional(),
+  privacyOwnerId: z.string().nullable().optional(),
   retentionSchedule: z.string().optional(),
   retentionReviewDate: z.date().nullable().optional(),
   securityMeasures: z.array(z.string()).optional(),
@@ -84,7 +94,13 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
       lawfulBasisNotes: '',
       isSystematicMonitoring: false,
       isLargeScale: false,
-      isAutomatedDecisionMaking: false,
+      involvesProfiling: false,
+      involvesAutomatedDecisionMaking: false,
+      admLogic: '',
+      admSignificance: '',
+      admHumanIntervention: '',
+      businessOwnerId: null,
+      privacyOwnerId: null,
       retentionSchedule: '',
       retentionReviewDate: null,
       securityMeasures: [],
@@ -152,6 +168,11 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
   );
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  // B23. Set when a save is refused because the record cannot be published; cleared
+  // once the user either fixes the blockers or records an exception.
+  const [publicationRefusal, setPublicationRefusal] = useState<string | null>(null);
+  const [exceptionReason, setExceptionReason] = useState('');
+  const [showExceptionForm, setShowExceptionForm] = useState(false);
 
   // Seeded from the loaded value: anything that is not one of the six presets is the
   // user's own wording — including the ten onboarding templates that seed prose, which
@@ -188,6 +209,16 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
   const updateClientsMutation = trpc.clients.updateActivitiesBulk.useMutation();
   const { data: clientsData } = trpc.clients.list.useQuery({ limit: 100 });
   const allClients = clientsData?.data || [];
+
+  // B18. team.list is already org-scoped and returns only the public columns.
+  const { data: orgMembers = [] } = trpc.team.list.useQuery(undefined, { enabled: !isNew });
+
+  // B25/B26. Server-scored, so the ring and the panel agree with the gate that
+  // actually refuses the save — a second implementation here would drift from it.
+  const { data: completeness } = trpc.ropa.completeness.useQuery(
+    { id: initialData?.id },
+    { enabled: !isNew },
+  );
 
   const { data: impacts = [] } = trpc.regulatory.listUnacknowledgedImpacts.useQuery(undefined, { enabled: !isNew });
   const [showImpacts, setShowImpacts] = useState(false);
@@ -280,6 +311,51 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
     }
   };
 
+  /**
+   * B23. Publication is its own act, not something the Status dropdown does on the
+   * way past. That is the whole finding: "draft versus active is currently a
+   * costume" — any activity could wear 'active' with no name, no basis, no subject
+   * categories and no retention, and the register then showed a regulator a
+   * published record answering none of Art. 30(1).
+   *
+   * Routing it through a button rather than the autosaved dropdown also keeps the
+   * refusal legible. A server that rejects one field of a debounced whole-form save
+   * can only report "Error saving"; a button can say which Articles are unanswered
+   * and offer the exception in the same breath.
+   */
+  const handlePublish = async (reason?: string) => {
+    setSaveStatus('saving');
+    setPublicationRefusal(null);
+    try {
+      const saved = await updateMutation.mutateAsync({
+        id: initialData.id,
+        updatedAt: lastUpdatedAt.current,
+        data: { ...formData, status: 'active' },
+        publicationExceptionReason: reason,
+      });
+      handleFieldChange('status', 'active');
+      lastSavedSignature.current = JSON.stringify({ ...formData, status: 'active' });
+      if (saved?.updatedAt) lastUpdatedAt.current = new Date(saved.updatedAt).toISOString();
+      setSaveStatus('saved');
+      setShowExceptionForm(false);
+      setExceptionReason('');
+      announce(t('saved_success'));
+      setTimeout(() => setSaveStatus('idle'), 2000);
+      utils.ropa.completeness.invalidate({ id: initialData.id });
+    } catch (err: any) {
+      setSaveStatus('idle');
+      if (err?.data?.code === 'PRECONDITION_FAILED') {
+        setPublicationRefusal(err.message);
+      } else {
+        setSaveStatus('error');
+      }
+    }
+  };
+
+  const blockers: Requirement[] = (completeness?.blockers as Requirement[] | undefined) ?? [];
+  const missing: Requirement[] = (completeness?.missing as Requirement[] | undefined) ?? [];
+  const isPublished = formData.status === 'active';
+
   return (
     <div className="flex-1 flex flex-col">
       {/* Header */}
@@ -321,6 +397,33 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           </div>
           
           <div className="flex items-center gap-2">
+            {!isNew && completeness && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('general')}
+                title={t('completeness.ring_title', { score: completeness.score })}
+                className="mr-1"
+              >
+                <CompletenessRing score={completeness.score} />
+              </button>
+            )}
+            {!isNew && (
+              <NextLink
+                href={`/ropa/${initialData.id}/record`}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 text-[13px] text-[#9BA1A6] hover:text-[#F4F5F6] hover:border-white/20 transition-colors"
+              >
+                <FileText className="w-4 h-4" /> {t('full_record')}
+              </NextLink>
+            )}
+            {!isNew && !isPublished && (
+              <Button
+                type="button"
+                onClick={() => (blockers.length > 0 ? setShowExceptionForm(true) : handlePublish())}
+                className="flex items-center gap-1.5"
+              >
+                <ShieldCheck className="w-4 h-4" /> {t('publish')}
+              </Button>
+            )}
             {!isNew && (
               <Button
                 variant="outline"
@@ -366,6 +469,73 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
       {/* Tab Content */}
       <div className="flex-1 max-w-7xl w-full mx-auto p-6">
         
+        {!isNew && showExceptionForm && (
+          <div className="mb-6 bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-[14px] font-medium text-[#F4F5F6]">{t('gate.title')}</h3>
+                <p className="text-[12.5px] text-[#9BA1A6] mt-1">{t('gate.description')}</p>
+              </div>
+              <button
+                onClick={() => { setShowExceptionForm(false); setPublicationRefusal(null); }}
+                aria-label={t('gate.close')}
+                className="text-[#6E747A] hover:text-[#F4F5F6]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <ul className="space-y-1.5">
+              {blockers.map((b) => (
+                <li key={b.id} className="flex items-start gap-2 text-[12.5px]">
+                  <AlertCircle className="w-4 h-4 text-clay-600 mt-0.5 shrink-0" />
+                  <span>
+                    <span className="text-[#F4F5F6]">{b.label}</span>
+                    <span className="text-[#6E747A]"> — {b.article}</span>
+                    {b.detail && <span className="block text-[#6E747A]">{b.detail}</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="space-y-2 pt-2 border-t border-white/10">
+              <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('gate.exception_label')}</label>
+              <Textarea
+                value={exceptionReason}
+                onChange={(e) => setExceptionReason(e.target.value)}
+                rows={3}
+                placeholder={t('gate.exception_ph')}
+              />
+              <p className="text-[12px] text-[#6E747A]">{t('gate.exception_hint')}</p>
+            </div>
+
+            {publicationRefusal && (
+              <div className="bg-clay-600/10 border border-clay-600/25 text-clay-600 px-4 py-2.5 rounded-xl text-[13px]">
+                {publicationRefusal}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => handlePublish(exceptionReason)}
+                disabled={exceptionReason.trim().length < 10 || saveStatus === 'saving'}
+              >
+                {t('gate.publish_anyway')}
+              </Button>
+              <Button variant="ghost" onClick={() => { setShowExceptionForm(false); setPublicationRefusal(null); }}>
+                {t('gate.cancel')}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {!isNew && isPublished && initialData?.publicationExceptionReason && (
+          <div className="mb-6 bg-amber-500/10 border border-amber-900/50 text-amber-300 px-4 py-3 rounded-xl text-[12.5px]">
+            <span className="font-medium">{t('gate.published_with_exception')}</span>{' '}
+            {initialData.publicationExceptionReason}
+          </div>
+        )}
+
         {relevantImpacts.length > 0 && !showImpacts && (
           <div 
             onClick={() => setShowImpacts(true)}
@@ -511,7 +681,12 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="draft">{t('general.status_draft')}</SelectItem>
-                      <SelectItem value="active">{t('general.status_active')}</SelectItem>
+                      {/* 'active' is set by Publish, not chosen here. It is the one
+                          status that asserts something to a regulator, and it has a
+                          gate in front of it — a dropdown that quietly sets it is
+                          exactly the costume B23 describes. Still offered when the
+                          record already holds it, so the select is never empty. */}
+                      {isPublished && <SelectItem value="active">{t('general.status_active')}</SelectItem>}
                       <SelectItem value="under_review">{t('general.status_under_review')}</SelectItem>
                       <SelectItem value="archived">{t('general.status_archived')}</SelectItem>
                     </SelectContent>
@@ -537,9 +712,50 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 </div>
               </div>
 
+              {/* B18. Two owners, because they are two different people: the business
+                  owner knows what the activity does, the privacy owner answers for it.
+                  An unowned activity is the one that goes stale. */}
+              {!isNew && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-ink-900/8">
+                  <div className="space-y-2">
+                    <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.business_owner')}</label>
+                    <Select
+                      value={formData.businessOwnerId || 'none'}
+                      onValueChange={(v) => handleFieldChange('businessOwnerId', v === 'none' ? null : v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder={t('general.owner_unassigned')} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">{t('general.owner_unassigned')}</SelectItem>
+                        {orgMembers.map((m: any) => (
+                          <SelectItem key={m.id} value={m.id}>{m.name || m.email}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[12px] text-[#6E747A]">{t('general.business_owner_hint')}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.privacy_owner')}</label>
+                    <Select
+                      value={formData.privacyOwnerId || 'none'}
+                      onValueChange={(v) => handleFieldChange('privacyOwnerId', v === 'none' ? null : v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder={t('general.owner_unassigned')} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">{t('general.owner_unassigned')}</SelectItem>
+                        {orgMembers.map((m: any) => (
+                          <SelectItem key={m.id} value={m.id}>{m.name || m.email}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[12px] text-[#6E747A]">{t('general.privacy_owner_hint')}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2 pt-2 border-t border-ink-900/8">
                 <label className="flex items-start gap-3 p-3 bg-white/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
-                  <Switch 
+                  <Switch
                     checked={formData.isSystematicMonitoring || false}
                     onCheckedChange={(checked) => handleFieldChange('isSystematicMonitoring', checked)}
                     className="mt-0.5"
@@ -551,6 +767,89 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 </label>
               </div>
             </div>
+
+            {/* A12. Art. 22. The flags alone were never the record: 22(3) requires a
+                human who can intervene, and 13(2)(f)/14(2)(g) require the logic and
+                the envisaged consequences. Disclosed progressively, because a payroll
+                activity should not be asked any of this. */}
+            {!isNew && (
+              <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
+                <div className="border-b border-ink-900/8 pb-3">
+                  <h2 className="text-[14px] font-medium text-[#F4F5F6]">{t('adm.title')}</h2>
+                  <p className="text-[12px] text-[#6E747A] mt-1">{t('adm.subtitle')}</p>
+                </div>
+
+                <label className="flex items-start gap-3 p-3 bg-white/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                  <Switch
+                    checked={formData.involvesProfiling || false}
+                    onCheckedChange={(checked) => handleFieldChange('involvesProfiling', checked)}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <p className="text-[13.5px] font-medium text-[#F4F5F6]">{t('adm.profiling')}</p>
+                    <p className="text-[12px] text-[#6E747A]">{t('adm.profiling_desc')}</p>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-3 bg-white/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                  <Switch
+                    checked={formData.involvesAutomatedDecisionMaking || false}
+                    onCheckedChange={(checked) => handleFieldChange('involvesAutomatedDecisionMaking', checked)}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <p className="text-[13.5px] font-medium text-[#F4F5F6]">{t('adm.solely_automated')}</p>
+                    <p className="text-[12px] text-[#6E747A]">{t('adm.solely_automated_desc')}</p>
+                  </div>
+                </label>
+
+                {formData.involvesAutomatedDecisionMaking && (
+                  <div className="space-y-4 pl-3 border-l-2 border-[#C9A227]/30">
+                    <div className="space-y-2">
+                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('adm.logic')}</label>
+                      <Textarea
+                        value={formData.admLogic || ''}
+                        onChange={(e) => handleFieldChange('admLogic', e.target.value)}
+                        rows={3}
+                        placeholder={t('adm.logic_ph')}
+                      />
+                      <p className="text-[12px] text-[#6E747A]">{t('adm.logic_hint')}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('adm.significance')}</label>
+                      <Textarea
+                        value={formData.admSignificance || ''}
+                        onChange={(e) => handleFieldChange('admSignificance', e.target.value)}
+                        rows={2}
+                        placeholder={t('adm.significance_ph')}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('adm.human_intervention')}</label>
+                      <Textarea
+                        value={formData.admHumanIntervention || ''}
+                        onChange={(e) => handleFieldChange('admHumanIntervention', e.target.value)}
+                        rows={2}
+                        placeholder={t('adm.human_intervention_ph')}
+                      />
+                      <p className="text-[12px] text-[#6E747A]">{t('adm.human_intervention_hint')}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* B26. Last on the tab rather than first: it is a checklist for a record
+                being finished, not the first thing a new one should present. */}
+            {!isNew && completeness && (
+              <CompletenessPanel
+                score={completeness.score}
+                missing={missing}
+                onGoToTab={(tab) => setActiveTab(tab)}
+              />
+            )}
           </div>
         )}
 

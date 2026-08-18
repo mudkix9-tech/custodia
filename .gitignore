@@ -48,3 +48,6 @@ vendor-pipeline/dist
 vendor-pipeline/node_modules
 vendor-pipeline/cache
 vendor-pipeline/review-queue.db
+
+# Local tooling notes, not shared work.
+.commandcode/

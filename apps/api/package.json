@@ -18,7 +18,9 @@
     "test:fixtures": "tsx src/lib/consentEvaluator.fixtures.test.ts",
     "test:consent-cookies": "tsx src/workers/consentScan.cookies.test.ts",
     "test:transfers": "tsx src/constants/transferDestinations.test.ts",
-    "test:scoring": "tsx src/lib/scoring.test.ts"
+    "test:scoring": "tsx src/lib/scoring.test.ts",
+    "test:ropa-completeness": "tsx src/lib/ropaCompleteness.test.ts",
+    "test:ropa-vocab": "tsx src/constants/ropaVocabularies.test.ts"
   },
   "keywords": [],
   "author": "",

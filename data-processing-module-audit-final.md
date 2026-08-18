@@ -16,13 +16,114 @@ Reviewed 17 August 2026 against commit `9d28953`, drizzle-orm 0.45.2.
 **Sprint 0 was remediated on 17 August 2026** on branch `fix/ropa-sprint0-tenancy`.
 Twenty-two defects are fixed; see §0.1 for the register and what each commit covers.
 
+**Sprint 1 was built on 19 August 2026.** The register can now record its own subject
+matter: catalogues, Article 9(2) and Article 10, per-category retention, Article 22,
+mechanism-specific transfer evidence, recipient categories and roles, owners,
+completeness scoring and a publication gate. See §0.2 for what shipped and what did
+not. Migration `0046_regular_amphibian` is applied to production.
+
 **The document is otherwise unrevised.** Part II's findings are left exactly as written,
 each with a **FIXED** marker, its commit, and a one-line note on what the fix was, so the
 audit and the remediation can be read against each other. Part I still describes the
-module **as audited** — several of the behaviours it documents no longer exist — and
-Parts III to VI still stand in full, because Sprint 0 fixed defects and built no
-capability: every gap in Part IV is open, and the Article 30 verdict in Part III is
-unchanged by any of this.
+module **as audited** — most of the behaviours it documents no longer exist — and
+Parts III to VI still stand as the record of what was found, with §0.2 stating which
+Part IV items are now closed. The Article 30 verdict in Part III is superseded for the
+items Sprint 1 built and unchanged for everything else.
+
+---
+
+## 0.2 Build status — Sprint 1
+
+Built 19 August 2026. `npm run check` passes at 0 type errors in both workspaces with
+every guard green, and 95 new assertions across two standalone `tsx` fixture suites.
+
+### Schema
+
+`packages/db/drizzle/0046_regular_amphibian.sql` — 52 statements, purely additive: three
+`CREATE TABLE`, the rest `ADD COLUMN` and `ADD CONSTRAINT`. No drops, no type changes,
+no `SET NOT NULL` without a default. Applied to the Supabase instance on 19 August 2026;
+`drizzle.__drizzle_migrations` went 43 → 44 rows and the five existing activities, their
+sixteen data categories and the single organisation were untouched.
+
+| Item | What was added |
+|---|---|
+| **A2** | `data_element_catalogue` — org-scoped, seeded with 45 elements across Identity, Contact, Financial, Employment, Online identifiers, Special category and Criminal data |
+| **A3** | `data_subject_category_catalogue` — 19 seeded categories carrying `is_child` and `is_vulnerable`; `processing_data_subjects` links them to an activity with a volume band |
+| **A4** | `retention_period`, `retention_trigger`, `retention_justification` on `processing_data_categories` |
+| **A6** | `special_category_type`, `article_9_condition`, `article_9_national_law_basis`, `is_criminal_data`, `article_10_basis`, `identifiability` |
+| **A12** | `involves_profiling`, `involves_automated_decision_making`, `adm_logic`, `adm_significance`, `adm_human_intervention` |
+| **B18** | `business_owner_id`, `privacy_owner_id` |
+| **B23** | `published_at`, `published_by`, `publication_exception_reason`, `publication_exception_by`, `publication_exception_at` |
+| **G64/G65** | `recipient_category`, `role` on `processing_recipients` |
+| **H76/H77** | `scc_year`, `scc_module`, `annexes_complete`, `execution_date`, `expiry_date`, `signatories`, `document_id`, `bcr_reference`, `adequacy_decision_reference`, `article_49_sub_reason`, `article_49_justification`, `dpf_certification_number`, `dpf_scope`, `dpf_expiry_date` |
+
+Both catalogues carry a `UNIQUE (organization_id, name)`, and `processing_data_subjects`
+a `UNIQUE (processing_activity_id, category)` — the pattern the Database section of
+`CLAUDE.md` describes, where the constraint carries the logic: seeding is idempotent
+because of it, and it is what makes "Employees" one row rather than four.
+
+### Three decisions worth stating, because they are not what the audit asked for
+
+1. **The jsonb array survives as a derived mirror.** `processing_activities.data_subject_categories`
+   is read by the CSV export, both PDF templates, the audit pack, the embeddings worker
+   and the register list. Rather than migrate five readers at once, the API rewrites the
+   array from `processing_data_subjects` after every mutation. It is authoritative
+   nowhere. The sync deliberately does **not** touch `updated_at`: the register sorts on
+   it (D1's lesson) and the editor's optimistic lock compares against it (D45's).
+
+2. **`active` is no longer reachable from the Status dropdown, the create form or the
+   CSV importer.** B23 says draft-versus-active is a costume; a gate behind a dropdown
+   that autosaves would only ever have surfaced as "Error saving", because a debounced
+   whole-form save cannot report which field was refused. Publication is now an explicit
+   button that names the unanswered Articles and offers the exception in the same place.
+   `ropa.create` and `ropa.bulkCreate` drop `active` from their input enums — a row with
+   no subjects, categories or recipients cannot meet the gate — and the CSV importer
+   names and refuses such a row the way it already refuses an unrecognised lawful basis,
+   rather than downgrading it silently, which is the class of defect D10 was.
+
+3. **D43 is bridged, not resolved.** `transfer_mechanism` still holds two vocabularies —
+   the tab's old prose and the auto-create slug. `normaliseTransferMechanism` maps both
+   onto one enum on read, so an existing row opens in the picker instead of rendering
+   blank; new writes use the enum. Tightening the column itself would 400 the first edit
+   of every existing row and belongs with a data migration.
+
+### Closed by Sprint 1
+
+`A2` · `A3` · `A4` · `A6` · `A12` · `B18` · `B23` · `B25` · `B26` · `D30` · `G64` ·
+`G65` · `H75` · `H76` · `Q132`, and `H77` in part.
+
+The publication gate and the completeness scorer are one module,
+`apps/api/src/lib/ropaCompleteness.ts` — pure, and the same judgement asked twice.
+It is the one piece of Sprint 1 that decides something on the user's behalf, so it
+carries 42 fixture assertions: a wrong "met" lets a register reach a supervisory
+authority with an Article 30 field empty, and a wrong "missing" trains people to reach
+for the exception. Both failures are silent in a browser and invisible to `tsc`.
+
+### Deliberately not built, so the omissions are not mistaken for oversights
+
+- **`H77`'s certification lookup** against the US Department of Commerce list, and DPF
+  expiry *monitoring*. The framework is a first-class mechanism with certification
+  number, certified scope and expiry recorded and rendered; the automated lookup is an
+  external integration and the expiry reminder is `H81`.
+- **`B18`'s unowned-activity reporting** beyond the Mine / Unowned / All filter on the
+  register, which is server-side. A report is `K`-series work.
+- **`R142`.** The five child tabs remain hardcoded English and the new panels match
+  them. Extracting all of them is one sweep; a half-translated tab would render raw key
+  paths to German and French readers, which `check:messages` cannot catch because the
+  keys would be absent rather than divergent. Everything added to the translated
+  surfaces — the editor, the register list, the full-record view — carries en/de/fr.
+- Everything still named as open in §0.1: `supplementaryMeasures` stays unreachable
+  (H78), `D38` is unfixed in both PDFs, and the canonical Article 30 export is `J93`.
+
+### One thing found while migrating, unrelated to this work
+
+`drizzle.__drizzle_migrations` holds 44 rows against 36 journal entries and 50 `.sql`
+files. Seven applied migrations are no longer in `meta/_journal.json`, and several
+`.sql` files are not journalled. It does not affect what runs — `PgDialect.migrate`
+takes the single greatest `created_at` and applies every journal entry with a later
+`folderMillis`, so it never consults a hash — but it means the journal is not a record
+of what the database has had done to it, and a future `check:schema` disagreement will
+be harder to reason about than it looks.
 
 ---
 
@@ -98,6 +199,10 @@ main autosave are *silently dropped* (annoying, not fatal), while an inline grid
 
 ## 1. Executive verdict
 
+*As audited, 17 August 2026. Sprint 0 fixed the defects below and Sprint 1 built the capability
+the last paragraph calls for; §0.1 and §0.2 record what changed. This section is left as written
+because it is the finding, and the finding is what the module has to be measured against.*
+
 The module is an eight-column activity list with a nine-tab editor behind it. Four of the nine tabs
 are wholly or partly non-functional, two of them contain buttons that do nothing, and the two tabs
 that carry the two Article 30 requirements a supervisory authority asks about first —
@@ -133,29 +238,37 @@ data categories × recipients × retention rules × bases × transfer routes. Cu
 flat row with a single lawful basis, one retention dropdown and a `jsonb` array of security
 checkboxes. Every serious competitor made that mistake once and rebuilt.
 
+*Sprint 1 rebuilt four of those seven axes — subject categories, data categories with their own
+retention rules and Article 9(2)/10 conditions, recipients with categories and roles, and transfer
+routes with mechanism-specific evidence. **Purposes are still not first-class** (A1), so an
+activity still carries one lawful basis for everything it does. That is the remaining half of this
+paragraph and it is the single largest thing left in the data model.*
+
 ### Scorecard
 
-Scored as audited, before Sprint 0. Only the tenancy row moves outright — the rest were
-scored on capability, and Sprint 0 built none. Where a fix lifts the floor of a row without
-changing its score, it is noted in the line.
+Scored as audited, before Sprint 0. Left as scored, because what the numbers say about how
+the module was built is the part that outlives the patch. Sprint 0 moved only the tenancy row —
+the rest were scored on capability and it built none. **Sprint 1 built capability, so the
+right-hand column below now carries a second figure wherever it moves; the reasoning in each
+line is the reasoning as audited.**
 
 | Dimension | Score | One line |
 |---|---|---|
-| Article 30(1) field coverage | **3/10** | (b) and (g) present; (a) absent; (c) unwritable; (d) partial; (e) broken; (f) enum-only |
+| Article 30(1) field coverage | **3/10** → **7/10** | (b) and (g) present; (a) absent; (c) unwritable; (d) partial; (e) broken; (f) enum-only. *(c), (d), (e) and (f) now writable and structured; (a) still needs the controller identity block — J93* |
 | Article 30(2) processor record | **2/10** | Role captured, then ignored by both PDFs; the split keys on a column nothing writes |
-| Data model fidelity | **2/10** | One flat row per activity; no per-category retention, no purpose/basis pairs, no lineage |
-| Special categories (Art. 9 / 10) | **2/10** | A boolean. No Art. 9(2)(a)–(j) condition; no Art. 10 concept at all |
-| Chapter V transfers (44–49) | **1/10** | Tab non-functional; adequacy list wrong where it works; no DPF, no SCC metadata, no chaining. *Tab and adequacy list fixed; the rest stands* |
-| Register operations (lifecycle, review, ownership) | **1/10** | No owner, no approval, no review cycle, no delete UI, no versioning |
+| Data model fidelity | **2/10** → **5/10** | One flat row per activity; no per-category retention, no purpose/basis pairs, no lineage. *Per-category retention, subject and element catalogues and structured transfers exist; purposes are still not first-class — A1* |
+| Special categories (Art. 9 / 10) | **2/10** → **8/10** | A boolean. No Art. 9(2)(a)–(j) condition; no Art. 10 concept at all. *Both now recorded per data category, with the national-law citation the four conditions that need it demand* |
+| Chapter V transfers (44–49) | **1/10** → **7/10** | Tab non-functional; adequacy list wrong where it works; no DPF, no SCC metadata, no chaining. *Mechanism-specific evidence, DPF, computed adequacy and the repealed-2010-clauses warning are in; onward-transfer chaining is not — H79* |
+| Register operations (lifecycle, review, ownership) | **1/10** → **4/10** | No owner, no approval, no review cycle, no delete UI, no versioning. *Owners and a publication gate exist; review cycle, approval, versioning and delete are Sprint 2* |
 | Assessments (LIA / DPIA / TIA) | **2/10** | LIA table exists with zero procedures; DPIA has no route; TIA is per-vendor, not per-transfer |
-| Evidence and audit trail | **1/10** | History reads `newValue`/`details`; the columns are `changes`/`metadata`. Always empty. *Diff and child-row logging fixed; no versioning, snapshots or export* |
+| Evidence and audit trail | **1/10** → **2/10** | History reads `newValue`/`details`; the columns are `changes`/`metadata`. Always empty. *Diff and child-row logging fixed, and the publication exception is now dated and attributed; still no versioning, snapshots or export* |
 | Exports and regulator readiness | **3/10** | Two divergent PDFs, neither an Article 30 record; CSV exports only loaded pages |
-| Search, filter, views | **1/10** | Client-side search over the loaded 25 rows. No filters at all |
+| Search, filter, views | **1/10** → **2/10** | Client-side search over the loaded 25 rows. No filters at all. *One server-side filter now exists — owner — because B18 is meaningless without it. Everything else is K102–K104* |
 | Bulk operations | **0/10** | Two buttons with no handlers, behind a selection UI that cannot select. *Removed, so the score is now honest rather than misleading* |
 | Population and discovery | **4/10** | 32 seeded templates and a genuinely good CSV importer; nothing else |
 | Cross-module automation | **3/10** | Re-consent detection and embeddings work; seven ROPA-adjacent jobs are dormant |
 | Tenancy and data integrity | **4/10** → **8/10** | Ownership checks are excellent; one cross-tenant write; mass assignment on three mutations. *All fixed, and the guard extended to the class it could not see* |
-| i18n | **4/10** | List and four tabs translated; five tabs hardcoded English |
+| i18n | **4/10** | List and four tabs translated; five tabs hardcoded English. *Unchanged by design: Sprint 1's new panels match the tabs they sit in, and R142 extracts all of them in one sweep* |
 | Visual design and responsiveness | **8/10** | Genuinely good. Fast, clean, coherent — and the reason the defects are a surprise |
 
 **What is genuinely good, and should be said before the register of failures:** the CSV importer's
@@ -1320,9 +1433,7 @@ the features behind them are F55, F57 and L107/L108, and a control that does not
 no control. `npm run check` passes, and `check:tenancy` now has a second pass covering the class
 that let `D3` through. See §0.1.
 
-**Sprint 1 is now the next thing to build**, and nothing in it was started.
-
-## Sprint 1 — make the register recordable
+## Sprint 1 — make the register recordable — **DONE, 19 August 2026**
 
 Data-element and subject-category catalogues (A2, A3) · Article 9(2) condition and Article 10
 (A6) · per-category retention (A4) · Article 22 fields (A12) · country picker with computed
@@ -1330,6 +1441,16 @@ adequacy (H75) · mechanism-specific transfer fields including DPF (H76, H77) ·
 and roles (G64, G65) · data subject categories editable at last (D30) · owner per activity (B18) ·
 completeness scoring and the "what's missing" panel (B25, B26) · the publication gate (B23) · the
 single-page full-record view (Q132).
+
+All of the above are built, with `H77` short of its Department of Commerce certification lookup and
+`B18` short of unowned-activity *reporting* beyond the register filter. Migration
+`0046_regular_amphibian` is applied. See §0.2 for what shipped, the three decisions that departed
+from this list, and what was deliberately left.
+
+**Sprint 2 is now the next thing to build**, and nothing in it was started. Two of its items are
+owed rather than merely next: `R142`, because Sprint 1 added panels to tabs that are still
+hardcoded English, and `K102`–`K104`, because the register now has an owner, a completeness score
+and a publication state that nothing can filter or sort on.
 
 ## Sprint 2 — make it maintainable
 
@@ -1592,3 +1713,19 @@ read against each other. Line and file references in the findings point at the c
 and several have since moved. The **[S]** caveat above still stands: the fixes were verified by
 `npm run check`, by re-reading the same code, and — for D3 — by reintroducing the defect to confirm
 the new guard fires. No running instance or database was exercised for them either.*
+
+*Amended 19 August 2026 with the Sprint 1 build (§0.2), a rescored scorecard, and the Part V build
+order marked. Part I, Part II and Parts III–VI are otherwise unchanged and describe the module as
+audited — Part I in particular now documents behaviour that no longer exists, and is kept because
+the audit and the work done against it have to remain readable side by side.*
+
+*What was and was not exercised for Sprint 1, stated as plainly as the caveat above. **Verified:**
+`npm run check` at 0 type errors in both workspaces with every guard green; 95 assertions across
+`ropaCompleteness.test.ts` and `ropaVocabularies.test.ts`, covering the publication gate, the
+Article 9(2) national-law rule, the Article 10 separation, per-category retention with its
+activity-level fallback, the repealed 2010 clauses, DPF scope, and both `transfer_mechanism`
+vocabularies; and migration `0046` applied to the Supabase instance and then checked column by
+column — 68 columns and 3 unique constraints present, row counts unchanged. **Not exercised:** no
+part of the new interface was opened in a browser. The tRPC procedures, the seeding path, the
+subject-category backfill and every screen listed in §0.2 are unrun. They typecheck, the tenancy
+guard passes over them, and that is a different claim from working.*

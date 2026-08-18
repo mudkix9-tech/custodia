@@ -72,6 +72,20 @@ export const ACTION_DESCRIPTIONS: Record<string, (input: any) => string> = {
   'ropa.transfers.create': (input) => `Added a transfer to ${input.destinationCountry}`,
   'ropa.transfers.update': () => `Updated a transfer`,
   'ropa.transfers.delete': () => `Removed a transfer`,
+  // Art. 30(1)(c), first limb. These carry processingActivityId, so extractResourceId
+  // files them against the activity and they appear in its History tab.
+  'ropa.dataSubjects.create': (input) => `Added data subject category "${input.category}"`,
+  'ropa.dataSubjects.update': () => `Updated a data subject category`,
+  'ropa.dataSubjects.delete': () => `Removed a data subject category`,
+  // Org-level catalogue edits are not activity history — they log against the
+  // catalogue row's own id, which is right: renaming an element is one event, not
+  // one per activity that uses it.
+  'ropa.catalogue.elements.create': (input) => `Added "${input.name}" to the data element catalogue`,
+  'ropa.catalogue.elements.update': () => `Updated a data element catalogue entry`,
+  'ropa.catalogue.elements.archive': () => `Archived a data element catalogue entry`,
+  'ropa.catalogue.subjects.create': (input) => `Added "${input.name}" to the data subject catalogue`,
+  'ropa.catalogue.subjects.update': () => `Updated a data subject catalogue entry`,
+  'ropa.catalogue.subjects.archive': () => `Archived a data subject catalogue entry`,
   'vendors.org.link': (input) => `Added vendor to organization`,
   'vendors.org.update': (input) => `Updated vendor relationship`,
   'vendors.custom.create': (input) => `Created custom vendor "${input.name}"`,

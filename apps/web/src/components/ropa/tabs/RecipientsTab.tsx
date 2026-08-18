@@ -8,6 +8,7 @@ import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { RECIPIENT_CATEGORIES, RECIPIENT_ROLES, labelFor } from '@/utils/ropaVocabularies';
 
 import Link from 'next/link';
 
@@ -18,11 +19,22 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
   const orgVendors = orgVendorsResp?.data || [];
   
   const createMutation = trpc.ropa.recipients.create.useMutation();
+  const updateMutation = trpc.ropa.recipients.update.useMutation();
   const deleteMutation = trpc.ropa.recipients.delete.useMutation();
   const { confirm, dialog } = useConfirm();
 
   const [selectedVendorId, setSelectedVendorId] = useState('');
   const [customName, setCustomName] = useState('');
+
+  const refresh = () => {
+    utils.ropa.recipients.list.invalidate({ processingActivityId: activityId });
+    utils.ropa.completeness.invalidate({ id: activityId });
+  };
+
+  const handleInlineEdit = async (rowId: string, columnId: string, value: any) => {
+    await updateMutation.mutateAsync({ id: rowId, data: { [columnId]: value } });
+    refresh();
+  };
 
   const handleAddVendor = async () => {
     if (!selectedVendorId) return;
@@ -34,9 +46,14 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
       recipientType: 'vendor',
       name: vendor.name,
       vendorId: vendor.id,
+      // A defensible default rather than a guess: a vendor linked to a processing
+      // activity is a processor in the overwhelming majority of cases, and the role
+      // is editable in the grid. Left null it would show as an Art. 28 gap on a row
+      // the user has just answered.
+      role: 'processor',
     });
     setSelectedVendorId('');
-    utils.ropa.recipients.list.invalidate();
+    refresh();
     utils.ropa.transfers.list.invalidate(); // Because a transfer might have been auto-created
   };
 
@@ -46,9 +63,12 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
       processingActivityId: activityId,
       recipientType: 'other',
       name: customName,
+      // Deliberately unset. A hand-typed recipient could be an internal team, a
+      // regulator or an independent controller, and guessing would put an answer in
+      // the register that nobody gave.
     });
     setCustomName('');
-    utils.ropa.recipients.list.invalidate();
+    refresh();
   };
 
   const handleDelete = async (id: string) => {
@@ -60,9 +80,26 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
     });
     if (confirmed) {
       await deleteMutation.mutateAsync({ id });
-      utils.ropa.recipients.list.invalidate();
+      refresh();
     }
   };
+
+  const SelectCell = ({ getValue, row, column, table, options, placeholder }: any) => (
+    <Select
+      value={getValue() || 'none'}
+      onValueChange={(val) => table.options.meta?.updateData(row.index, column.id, val === 'none' ? null : val)}
+    >
+      <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-[#C9A227]/40">
+        <SelectValue placeholder={placeholder}>{labelFor(options, getValue())}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">{placeholder}</SelectItem>
+        {options.map((o: any) => (
+          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 
   const columns = [
     {
@@ -80,6 +117,21 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
         }
         return <span className="text-[#F4F5F6] font-medium">{name}</span>;
       },
+    },
+    {
+      accessorKey: 'recipientCategory',
+      header: 'Category',
+      // Art. 30(1)(d) asks for the categories of recipient, which is what has to be
+      // shown when the name is commercially confidential or the list runs long.
+      cell: (props: any) => <SelectCell {...props} options={RECIPIENT_CATEGORIES} placeholder="Not categorised" />,
+    },
+    {
+      accessorKey: 'role',
+      header: 'Role',
+      // Whether this is a processor, a joint controller or an independent controller
+      // decides whether Art. 28 applies, whether Art. 26 applies, and whether the
+      // disclosure hands over controllership. `recipientType` says none of that.
+      cell: (props: any) => <SelectCell {...props} options={RECIPIENT_ROLES} placeholder="Not stated" />,
     },
     {
       id: 'dpaStatus',
@@ -216,6 +268,7 @@ export function RecipientsTab({ activityId }: { activityId: string }) {
           columns={columns as any}
           data={recipients}
           isLoading={isLoading}
+          onInlineEdit={handleInlineEdit}
           emptyStateMessage="No recipients documented for this processing activity."
         />
       </div>

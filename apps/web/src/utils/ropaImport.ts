@@ -19,7 +19,28 @@ export const LAWFUL_BASES = [
   'legitimate_interest',
 ] as const;
 
+/**
+ * Recognised on the way in, so a file exported from this product round-trips and a
+ * row saying "active" gets a sentence explaining itself rather than "unrecognised
+ * status". What may actually be *imported* is `IMPORTABLE_STATUSES` — an imported
+ * row arrives with no data subjects, no data categories and no recipients, so it
+ * cannot meet the Art. 30 publication gate.
+ */
 export const ROPA_STATUSES = ['draft', 'active', 'under_review', 'archived'] as const;
+
+/**
+ * What may actually be imported. 'active' is recognised above so a file exported
+ * from this product round-trips and the row gets a sentence explaining itself
+ * rather than "unrecognised status" — but it cannot be imported: a row arrives with
+ * no data subjects, no data categories and no recipients, so it cannot meet the
+ * Art. 30 publication gate.
+ */
+export const IMPORTABLE_STATUSES = ['draft', 'under_review', 'archived'] as const;
+export type ImportableStatus = (typeof IMPORTABLE_STATUSES)[number];
+
+function isImportableStatus(value: string): value is ImportableStatus {
+  return (IMPORTABLE_STATUSES as readonly string[]).includes(value);
+}
 
 /** Art. 30(1) is the controller's record; 30(2) is the processor's. */
 export const ROPA_ROLES = ['controller', 'processor', 'joint_controller'] as const;
@@ -41,7 +62,7 @@ export type ImportedActivity = {
   name: string;
   purpose: string;
   lawfulBasis: string;
-  status: string;
+  status: ImportableStatus;
   riskLevel: string;
   description: string;
   role: 'controller' | 'processor' | 'joint_controller';
@@ -129,6 +150,18 @@ export function parseRopaCsv(text: string): ImportResult {
     const status = rawStatus ? matchEnum(rawStatus, ROPA_STATUSES) : 'draft';
     if (!status) {
       errors.push({ line, message: `"${name}" has an unrecognised status "${rawStatus}".` });
+      return;
+    }
+    // Named and refused, the same way an unrecognised lawful basis is, rather than
+    // downgraded behind the importer's back — the row is one edit away from being
+    // importable, and a silent change of status is the class of bug D10 was.
+    // A predicate rather than a cast, so adding a status to ROPA_STATUSES without
+    // deciding whether it is importable fails here rather than at runtime.
+    if (!isImportableStatus(status)) {
+      errors.push({
+        line,
+        message: `"${name}" is marked ${status}. An activity becomes active once its record is complete; import it as draft and publish it from the editor.`,
+      });
       return;
     }
 

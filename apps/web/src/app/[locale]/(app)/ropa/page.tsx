@@ -6,13 +6,14 @@ import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { normaliseLawfulBasis, isLawfulBasisKey, isRetentionPreset } from '@/utils/ropaFormat';
 import { severityClasses } from '@/utils/severity';
-import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X, ShieldAlert } from 'lucide-react';
+import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X, ShieldAlert, Library } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toCsvRow } from '@/utils/csv';
 import { parseRopaCsv, type RowError } from '@/utils/ropaImport';
 import { useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageShell } from '@/components/layout/PageShell';
+import { CompletenessRing } from '@/components/ropa/CompletenessPanel';
 
 export default function RopaListPage() {
   const t = useTranslations('ropa');
@@ -33,6 +34,11 @@ export default function RopaListPage() {
   }, [router]);
   
   // Use suspense for data loading in Next.js 15
+  // B18. Filtered on the server, so "nobody owns this" means the register rather
+  // than the twenty-five rows currently loaded — which is what the existing
+  // client-side search over the loaded page can only ever mean.
+  const [ownership, setOwnership] = useState<'all' | 'mine' | 'unowned'>('all');
+
   const {
     data,
     isLoading,
@@ -41,11 +47,20 @@ export default function RopaListPage() {
     hasNextPage,
     isFetchingNextPage
   } = trpc.ropa.list.useInfiniteQuery(
-    { limit: 25 },
+    { limit: 25, ownership },
     { getNextPageParam: (lastPage) => lastPage.pagination.next_cursor }
   );
 
   const processingActivities = data?.pages.flatMap((page) => page.data) || [];
+
+  // B25. Scored server-side in one batched call per loaded page rather than one per
+  // row — 25 activities scored individually would be 125 round trips on a 512MB box
+  // that also runs Chromium.
+  const loadedIds = processingActivities.map((a: any) => a.id);
+  const { data: completeness = {} } = trpc.ropa.completenessBatch.useQuery(
+    { ids: loadedIds },
+    { enabled: loadedIds.length > 0 },
+  );
   const bulkCreateMutation = trpc.ropa.bulkCreate.useMutation();
   const generatePdfMutation = trpc.export.generatePdf.useMutation();
 
@@ -170,6 +185,19 @@ export default function RopaListPage() {
   };
 
   const columns = [
+    {
+      id: 'completeness',
+      header: t('columns.completeness'),
+      // Leads the row because it is the column that tells a DPO where to spend the
+      // next hour. The register's job is to be complete; nothing else on the row
+      // says whether it is.
+      cell: (info: any) => {
+        const score = (completeness as Record<string, number>)[info.row.original.id];
+        if (score === undefined) return <span className="text-[12px] text-[#6E747A]">—</span>;
+        return <CompletenessRing score={score} size={34} />;
+      },
+      size: 60,
+    },
     {
       accessorKey: 'name',
       header: t('columns.name'),
@@ -319,6 +347,16 @@ export default function RopaListPage() {
               className="hidden" 
               onChange={handleImportCSV} 
             />
+            {/* A2/A3. The shared vocabulary the register's rows draw on — reachable
+                from the register itself, because that is where someone notices the
+                catalogue is missing something. */}
+            <button
+              onClick={() => router.push('/ropa/catalogues')}
+              className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-white/10 shadow-panel-elevated"
+            >
+              <Library className="w-4 h-4" />
+              {t('catalogues')}
+            </button>
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isImporting}
@@ -466,6 +504,22 @@ export default function RopaListPage() {
 
         {/* Data Grid */}
         <div className="w-full">
+          <div className="flex items-center gap-1 mb-4" role="group" aria-label={t('ownership.label')}>
+            {(['all', 'mine', 'unowned'] as const).map((key) => (
+              <button
+                key={key}
+                onClick={() => setOwnership(key)}
+                aria-pressed={ownership === key}
+                className={`px-3 py-1.5 rounded-lg text-[13px] border transition-colors ${
+                  ownership === key
+                    ? 'border-[#C9A227]/30 bg-[#C9A227]/10 text-[#C9A227]'
+                    : 'border-white/10 text-[#6E747A] hover:text-[#F4F5F6] hover:border-white/20'
+                }`}
+              >
+                {t(`ownership.${key}`)}
+              </button>
+            ))}
+          </div>
           <DataGrid
             mode="full"
             columns={columns as any}

@@ -253,6 +253,16 @@ export const processingActivities = pgTable('processing_activities', {
   involvesSpecialCategories: boolean('involves_special_categories').default(false),
   specialCategories: jsonb('special_categories').default([]),
   involvesChildren: boolean('involves_children').default(false),
+
+  // Art. 22. The flags alone are not the record: 22(3) and Art. 13(2)(f)/14(2)(g)
+  // require the *logic involved* and the significance and envisaged consequences to
+  // be describable, and 22(3) requires the safeguard — a human who can intervene.
+  // A register that says "yes, we profile" and stops there answers none of that.
+  involvesProfiling: boolean('involves_profiling').default(false),
+  involvesAutomatedDecisionMaking: boolean('involves_automated_decision_making').default(false),
+  admLogic: text('adm_logic'),
+  admSignificance: text('adm_significance'),
+  admHumanIntervention: text('adm_human_intervention'),
   
   retentionPeriod: varchar('retention_period', { length: 100 }),
   retentionJustification: text('retention_justification'),
@@ -270,6 +280,23 @@ export const processingActivities = pgTable('processing_activities', {
   lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
   reviewedBy: uuid('reviewed_by').references(() => users.id),
+
+  // Two owners, because they are two different people and the register needs both.
+  // The business owner is who actually knows what the activity does; the privacy
+  // owner is who answers for it. An unowned activity is the one that goes stale,
+  // and there was no way to record either.
+  businessOwnerId: uuid('business_owner_id').references(() => users.id),
+  privacyOwnerId: uuid('privacy_owner_id').references(() => users.id),
+
+  // The publication gate. 'active' used to be a costume — any activity could wear it
+  // with no name, basis, subjects or retention. Now the server refuses, unless an
+  // exception is recorded, named and dated: a register that can be forced past its
+  // own gate silently is worse than one with no gate.
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  publishedBy: uuid('published_by').references(() => users.id),
+  publicationExceptionReason: text('publication_exception_reason'),
+  publicationExceptionBy: uuid('publication_exception_by').references(() => users.id),
+  publicationExceptionAt: timestamp('publication_exception_at', { withTimezone: true }),
   
   version: integer('version').default(1),
   previousVersionId: uuid('previous_version_id'),
@@ -340,10 +367,133 @@ export const legitimateInterestAssessments = pgTable('legitimate_interest_assess
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+// ---------------------------------------------------------------------------
+// Org-level catalogues.
+//
+// Every activity was recording its data elements and its subject categories as
+// free text, so "Email address", "email", "E-mail addr." and "Email Address" were
+// four different things and "which activities process health data?" — the question
+// a DPO is asked most often — had no answer. These two tables are the shared
+// vocabulary the child rows point at.
+//
+// They are *org-scoped*, unlike `vendors`, which is a shared catalogue: a
+// customer's taxonomy is their own, and one tenant renaming an element must not
+// rewrite another's register. Seeded rows are marked so a reset can tell what the
+// customer added from what shipped with the product.
+//
+// Child rows keep a denormalised copy of the name (see `processing_data_categories.
+// category`), so renaming or archiving a catalogue entry cannot silently rewrite
+// what a register said at the time it was published.
+// ---------------------------------------------------------------------------
+
+export const dataElementCatalogue = pgTable('data_element_catalogue', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+
+  name: varchar('name', { length: 120 }).notNull(),
+  // `group` is a reserved word; the column matches `processing_data_categories.category_group`.
+  elementGroup: varchar('element_group', { length: 100 }).notNull(),
+  description: text('description'),
+
+  // Art. 9(1) is not a synonym for "sensitive". An element can be commercially
+  // sensitive (salary, bank details) without being a special category, and treating
+  // the two as one field is how a register ends up claiming Art. 9 processing it
+  // does not do — or missing the Art. 9 processing it does.
+  sensitivity: varchar('sensitivity', { length: 20 }).default('standard').notNull(),
+  isSpecialCategory: boolean('is_special_category').default(false).notNull(),
+  specialCategoryType: varchar('special_category_type', { length: 50 }),
+  isCriminalData: boolean('is_criminal_data').default(false).notNull(),
+
+  // direct | indirect | pseudonymised | anonymous. Recital 26: anonymous data is
+  // outside the Regulation entirely, and pseudonymised data is not — which is the
+  // distinction a register has to be able to make and could not.
+  identifiability: varchar('identifiability', { length: 20 }).default('direct').notNull(),
+
+  format: varchar('format', { length: 50 }),
+  example: text('example'),
+
+  isSeeded: boolean('is_seeded').default(false).notNull(),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_data_element_catalogue_org').on(table.organizationId),
+    // The natural key. Seeding is idempotent because of it, and it is what stops
+    // an import creating "Email address" a second time.
+    unq: unique('data_element_catalogue_org_name_unq').on(table.organizationId, table.name),
+  };
+});
+
+export const dataSubjectCategoryCatalogue = pgTable('data_subject_category_catalogue', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+
+  name: varchar('name', { length: 120 }).notNull(),
+  description: text('description'),
+
+  // Art. 8 and Recital 38 for children; Recital 75 for vulnerable subjects. Both
+  // feed DPIA screening (Art. 35(3)) rather than being decoration.
+  isChild: boolean('is_child').default(false).notNull(),
+  isVulnerable: boolean('is_vulnerable').default(false).notNull(),
+
+  isSeeded: boolean('is_seeded').default(false).notNull(),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_data_subject_category_catalogue_org').on(table.organizationId),
+    unq: unique('data_subject_category_catalogue_org_name_unq').on(table.organizationId, table.name),
+  };
+});
+
+// Art. 30(1)(c), first limb. Until this table the register held the subject
+// categories as a jsonb array of strings on the activity, displayed in the list,
+// warned about when empty, and editable nowhere in the product — only the
+// onboarding templates ever wrote it.
+//
+// `processing_activities.data_subject_categories` is kept in sync as a flat array
+// of the names below, because the CSV export, both PDF templates, the audit pack
+// and the embeddings all read it. That mirror is written by the API on every
+// mutation here and is derived, never authoritative.
+export const processingDataSubjects = pgTable('processing_data_subjects', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+  catalogueId: uuid('catalogue_id').references(() => dataSubjectCategoryCatalogue.id, { onDelete: 'set null' }),
+
+  // Denormalised from the catalogue at the time the link was made.
+  category: varchar('category', { length: 120 }).notNull(),
+  isChild: boolean('is_child').default(false).notNull(),
+  isVulnerable: boolean('is_vulnerable').default(false).notNull(),
+
+  // Art. 35(3)(b)'s "large scale" is a judgement, and a band is what a DPO can
+  // actually answer. EDPB WP248 asks for the number of subjects "either as a
+  // specific number or as a proportion".
+  volumeBand: varchar('volume_band', { length: 30 }),
+  jurisdictions: jsonb('jurisdictions').default([]),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    activityIdx: index('idx_processing_data_subjects_activity').on(table.processingActivityId),
+    // One row per category per activity: listing "Employees" twice is a data-entry
+    // slip, not a fact about the processing.
+    unq: unique('processing_data_subjects_activity_category_unq').on(table.processingActivityId, table.category),
+  };
+});
+
 export const processingDataCategories = pgTable('processing_data_categories', {
   id: uuid('id').defaultRandom().primaryKey(),
   processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
   
+  // Denormalised from the catalogue, and still writable free-hand: a register that
+  // refuses anything not already in the taxonomy is a register people keep in a
+  // spreadsheet instead.
+  catalogueId: uuid('catalogue_id').references(() => dataElementCatalogue.id, { onDelete: 'set null' }),
   category: varchar('category', { length: 100 }).notNull(),
   categoryGroup: varchar('category_group', { length: 100 }).notNull(),
   description: text('description'),
@@ -352,6 +502,32 @@ export const processingDataCategories = pgTable('processing_data_categories', {
   sourceDetail: text('source_detail'),
   
   isSpecialCategory: boolean('is_special_category').default(false),
+
+  // Art. 9(2). The boolean says the prohibition in 9(1) is engaged; these say which
+  // of the ten conditions lifts it. Without them the register asserts special-category
+  // processing and offers no lawful route for it, which is the finding an auditor
+  // writes up. 9(2)(b), (h), (i) and (j) additionally require Union or Member State
+  // law — hence the citation field, which is not optional for those four.
+  specialCategoryType: varchar('special_category_type', { length: 50 }),
+  article9Condition: varchar('article_9_condition', { length: 10 }),
+  article9NationalLawBasis: text('article_9_national_law_basis'),
+
+  // Art. 10. Criminal convictions and offences are not an Art. 9 category, and
+  // conflating the two is the most common mistake in a hand-built register: they
+  // need official authority or a specific legal authorisation, not an Art. 9(2)
+  // condition.
+  isCriminalData: boolean('is_criminal_data').default(false).notNull(),
+  article10Basis: text('article_10_basis'),
+
+  identifiability: varchar('identifiability', { length: 20 }),
+  necessityJustification: text('necessity_justification'),
+
+  // Art. 30(1)(f) is per category, not per activity. One retention answer for an
+  // activity that holds a CV and an audit trail is wrong for at least one of them,
+  // and the per-activity dropdown was the only place a period could be recorded.
+  retentionPeriod: varchar('retention_period', { length: 100 }),
+  retentionTrigger: varchar('retention_trigger', { length: 100 }),
+  retentionJustification: text('retention_justification'),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -362,7 +538,17 @@ export const processingRecipients = pgTable('processing_recipients', {
   processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
   
   recipientType: varchar('recipient_type', { length: 50 }).notNull(),
+  // Art. 30(1)(d) asks for the *categories* of recipient. The named recipient is
+  // what a DPO wants and what this table stored; the category is what the Article
+  // requires and what a record has to show when the name is commercially
+  // confidential or the list is long. Both, not either.
+  recipientCategory: varchar('recipient_category', { length: 100 }),
   name: varchar('name', { length: 255 }).notNull(),
+  // processor | joint_controller | independent_controller | sub_processor.
+  // `recipient_type` says what kind of organisation it is ('vendor', 'other');
+  // this says what it is in law, which decides whether Art. 28 applies, whether
+  // Art. 26 applies, and whether a disclosure is a transfer of controllership.
+  role: varchar('role', { length: 30 }),
   vendorId: uuid('vendor_id'),
   purpose: text('purpose'),
   
@@ -380,6 +566,37 @@ export const processingTransfers = pgTable('processing_transfers', {
   
   transferMechanism: varchar('transfer_mechanism', { length: 100 }).notNull(),
   mechanismDetail: text('mechanism_detail'),
+
+  // Art. 46 and 49 evidence. "SCCs" on its own is not a Chapter V record: the 2010
+  // clauses were repealed with effect from 27 December 2022, so the year decides
+  // whether the transfer is covered at all, and the module decides which parties'
+  // obligations apply (C2C, C2P, P2P, P2C). Annex II is the security schedule an
+  // auditor asks to see; without it the clauses are unexecuted.
+  sccYear: varchar('scc_year', { length: 10 }),
+  sccModule: varchar('scc_module', { length: 20 }),
+  annexesComplete: boolean('annexes_complete').default(false),
+  executionDate: timestamp('execution_date', { withTimezone: true }),
+  expiryDate: timestamp('expiry_date', { withTimezone: true }),
+  signatories: text('signatories'),
+  documentId: uuid('document_id').references(() => documents.id),
+
+  bcrReference: varchar('bcr_reference', { length: 255 }),
+  adequacyDecisionReference: varchar('adequacy_decision_reference', { length: 255 }),
+
+  // Art. 49 is a derogation, not a mechanism, and each sub-paragraph carries its own
+  // conditions — (a) explicit informed consent, (b) contract necessity, (g) a public
+  // register. Recording "Derogation (Art. 49)" without saying which one, and why,
+  // documents nothing.
+  article49SubReason: varchar('article_49_sub_reason', { length: 50 }),
+  article49Justification: text('article_49_justification'),
+
+  // The Data Privacy Framework covers only *certified* entities, and only within the
+  // scope they certified for — an HR-data transfer to an importer certified for
+  // non-HR data alone has no mechanism. Certification lapses annually, which is why
+  // the expiry is a column and not a note.
+  dpfCertificationNumber: varchar('dpf_certification_number', { length: 100 }),
+  dpfScope: varchar('dpf_scope', { length: 20 }),
+  dpfExpiryDate: timestamp('dpf_expiry_date', { withTimezone: true }),
   
   tiaRequired: boolean('tia_required').default(false),
   tiaCompleted: boolean('tia_completed').default(false),
@@ -1745,11 +1962,62 @@ export const breachRemediationTasksRelations = relations(breachRemediationTasks,
   }),
 }));
 
-export const processingActivitiesRelations = relations(processingActivities, ({ many }) => ({
+export const processingActivitiesRelations = relations(processingActivities, ({ one, many }) => ({
   dataCategories: many(processingDataCategories),
+  dataSubjects: many(processingDataSubjects),
   recipients: many(processingRecipients),
+  transfers: many(processingTransfers),
   clients: many(clientProcessingActivities),
   reconsentFlags: many(reconsentFlags),
+  businessOwner: one(users, {
+    fields: [processingActivities.businessOwnerId],
+    references: [users.id],
+  }),
+  privacyOwner: one(users, {
+    fields: [processingActivities.privacyOwnerId],
+    references: [users.id],
+  }),
+}));
+
+export const dataElementCatalogueRelations = relations(dataElementCatalogue, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [dataElementCatalogue.organizationId],
+    references: [organizations.id],
+  }),
+  usages: many(processingDataCategories),
+}));
+
+export const dataSubjectCategoryCatalogueRelations = relations(dataSubjectCategoryCatalogue, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [dataSubjectCategoryCatalogue.organizationId],
+    references: [organizations.id],
+  }),
+  usages: many(processingDataSubjects),
+}));
+
+export const processingDataSubjectsRelations = relations(processingDataSubjects, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [processingDataSubjects.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  catalogueEntry: one(dataSubjectCategoryCatalogue, {
+    fields: [processingDataSubjects.catalogueId],
+    references: [dataSubjectCategoryCatalogue.id],
+  }),
+}));
+
+// `many(processingTransfers)` on the activity needs this back-reference for the
+// same reason the data-category one does — Drizzle infers the join from the
+// child's `one()`, and throws while *building* the query when it is missing.
+export const processingTransfersRelations = relations(processingTransfers, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [processingTransfers.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  vendor: one(vendors, {
+    fields: [processingTransfers.vendorId],
+    references: [vendors.id],
+  }),
 }));
 
 // The `many(processingDataCategories)` above can only be resolved if the child
@@ -1759,6 +2027,10 @@ export const processingDataCategoriesRelations = relations(processingDataCategor
   activity: one(processingActivities, {
     fields: [processingDataCategories.processingActivityId],
     references: [processingActivities.id],
+  }),
+  catalogueEntry: one(dataElementCatalogue, {
+    fields: [processingDataCategories.catalogueId],
+    references: [dataElementCatalogue.id],
   }),
 }));
 
