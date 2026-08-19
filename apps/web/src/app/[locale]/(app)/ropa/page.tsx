@@ -6,7 +6,7 @@ import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { normaliseLawfulBasis, isLawfulBasisKey, isRetentionPreset } from '@/utils/ropaFormat';
 import { severityClasses } from '@/utils/severity';
-import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X, ShieldAlert, Library } from 'lucide-react';
+import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X, ShieldAlert, Library, CalendarClock, Archive } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toCsvRow } from '@/utils/csv';
 import { parseRopaCsv, type RowError } from '@/utils/ropaImport';
@@ -14,12 +14,14 @@ import { useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageShell } from '@/components/layout/PageShell';
 import { CompletenessRing } from '@/components/ropa/CompletenessPanel';
+import { RegisterFilterBar, EMPTY_FILTERS, activeFilterCount, type RegisterFilters } from '@/components/ropa/RegisterFilterBar';
+import { BulkActionBar } from '@/components/ropa/BulkActionBar';
+import { announce } from '@/components/layout/Announcer';
 
 export default function RopaListPage() {
   const t = useTranslations('ropa');
   const router = useRouter();
   const toast = useToast();
-  const [globalFilter, setGlobalFilter] = useState('');
   const [flagsTab, setFlagsTab] = useState<'flagged'|'dismissed'>('flagged');
 
   React.useEffect(() => {
@@ -33,11 +35,16 @@ export default function RopaListPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [router]);
   
-  // Use suspense for data loading in Next.js 15
-  // B18. Filtered on the server, so "nobody owns this" means the register rather
-  // than the twenty-five rows currently loaded — which is what the existing
-  // client-side search over the loaded page can only ever mean.
-  const [ownership, setOwnership] = useState<'all' | 'mine' | 'unowned'>('all');
+  // K102–K104. Every filter is server-side. Sprint 1 left B18's three ownership
+  // options as the only one; everything else was a client-side search over the
+  // twenty-five rows that happened to be loaded, so "show me every unowned
+  // high-risk activity with a transfer to the US" was a question the register
+  // could not answer about itself.
+  const [filters, setFilters] = useState<RegisterFilters>(EMPTY_FILTERS);
+
+  // L107. Ids, not rows, because a selection has to be able to contain records
+  // that are not loaded — that is what "select all 340 matching" means.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const {
     data,
@@ -47,11 +54,42 @@ export default function RopaListPage() {
     hasNextPage,
     isFetchingNextPage
   } = trpc.ropa.list.useInfiniteQuery(
-    { limit: 25, ownership },
+    { limit: 25, ...filters },
     { getNextPageParam: (lastPage) => lastPage.pagination.next_cursor }
   );
 
   const processingActivities = data?.pages.flatMap((page) => page.data) || [];
+
+  const utils = trpc.useUtils();
+  const { data: orgMembers = [] } = trpc.team.list.useQuery();
+  // B19. The overdue count, as a badge rather than a page of rows — "go and look"
+  // is a different question from "show me", and it should not cost a page load.
+  const { data: reviewSummary } = trpc.ropa.review.summary.useQuery();
+
+  // L107. Everything matching the current filters, fetched on demand. Capped
+  // server-side; past the cap the honest answer is "narrow the filter" rather than
+  // a bulk write of unknown size.
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
+  const selectAllMatching = async () => {
+    setIsSelectingAll(true);
+    try {
+      const result = await utils.ropa.listIds.fetch(filters);
+      setSelectedIds(result.ids);
+      announce(
+        result.truncated
+          ? t('bulk.select_all_capped', { count: result.ids.length })
+          : t('bulk.selected', { count: result.ids.length }),
+      );
+      if (result.truncated) {
+        toast(t('bulk.select_all_capped', { count: result.ids.length }), {
+          tone: 'info',
+          description: t('bulk.select_all_capped_hint', { cap: result.cap }),
+        });
+      }
+    } finally {
+      setIsSelectingAll(false);
+    }
+  };
 
   // B25. Scored server-side in one batched call per loaded page rather than one per
   // row — 25 activities scored individually would be 125 round trips on a 512MB box
@@ -76,6 +114,9 @@ export default function RopaListPage() {
     onSuccess: () => refetchFlags()
   });
 
+  // Exports the loaded pages. A selection exports server-side through the bulk
+  // bar (L107); this is the "give me what I am looking at" button and the label
+  // says as much.
   const handleExportCSV = () => {
     if (!processingActivities || processingActivities.length === 0) return;
     
@@ -112,7 +153,7 @@ export default function RopaListPage() {
     const reader = new FileReader();
 
     reader.onerror = () => {
-      toast('Could not read that file.', { tone: 'error' });
+      toast(t('import.unreadable'), { tone: 'error' });
       setIsImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -122,7 +163,7 @@ export default function RopaListPage() {
         const { activities, errors, fatal } = parseRopaCsv((e.target?.result as string) ?? '');
 
         if (fatal) {
-          toast('Import failed', { tone: 'error', description: fatal });
+          toast(t('import.failed'), { tone: 'error', description: fatal });
           return;
         }
 
@@ -135,24 +176,27 @@ export default function RopaListPage() {
         // success unconditionally, including for files it had silently mangled.
         if (errors.length > 0) setImportErrors(errors);
 
+        // Plurals through ICU rather than a ternary on `=== 1`: German and French
+        // do not agree with English about where the boundary falls, and a hand-built
+        // "row/rows" is a rule baked into the code that the catalogue cannot override.
         if (activities.length === 0) {
-          toast('Nothing imported', {
+          toast(t('import.nothing'), {
             tone: 'error',
-            description: `All ${errors.length} row${errors.length === 1 ? '' : 's'} were rejected.`,
+            description: t('import.all_rejected', { count: errors.length }),
           });
         } else if (errors.length > 0) {
-          toast(`Imported ${activities.length} of ${activities.length + errors.length} activities`, {
+          toast(t('import.partial', { imported: activities.length, total: activities.length + errors.length }), {
             tone: 'info',
-            description: `${errors.length} row${errors.length === 1 ? ' was' : 's were'} skipped — see the list below.`,
+            description: t('import.skipped', { count: errors.length }),
           });
         } else {
-          toast(`Imported ${activities.length} activit${activities.length === 1 ? 'y' : 'ies'}`);
+          toast(t('import.imported', { count: activities.length }));
         }
       } catch (err) {
         console.error(err);
-        toast('Import failed', {
+        toast(t('import.failed'), {
           tone: 'error',
-          description: err instanceof Error ? err.message : 'The server rejected the file.',
+          description: err instanceof Error ? err.message : t('import.rejected'),
         });
       } finally {
         setIsImporting(false);
@@ -175,7 +219,7 @@ export default function RopaListPage() {
       }
     } catch (err) {
       console.error(err);
-      toast('Could not generate the audit report', {
+      toast(t('export_pdf_failed'), {
         tone: 'error',
         description: err instanceof Error ? err.message : undefined,
       });
@@ -250,13 +294,63 @@ export default function RopaListPage() {
       header: t('columns.status'),
       cell: (info: any) => {
         const status = info.getValue();
+        const approval = info.row.original.approvalState;
         return (
-          <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${
-            status === 'active' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/20' : 
-            status === 'draft' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-            'bg-white/5 text-[#6E747A] border-white/10'
+          <span className="inline-flex flex-col items-start gap-0.5">
+            <span className={`px-2.5 py-1 rounded-md text-[12px] font-medium border ${
+              status === 'active' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/20' :
+              status === 'draft' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+              'bg-white/5 text-[#6E747A] border-white/10'
+            }`}>
+              {t(`status_types.${status}`) || status}
+            </span>
+            {/* B20. Approval is not the same fact as status, and a register where
+                a record can be published and awaiting re-approval has to show
+                both. Rendered as words rather than a second colour — R141. */}
+            {approval && approval !== 'draft' && (
+              <span className="text-[11px] text-[#6E747A]">{t(`approval.states.${approval}`)}</span>
+            )}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'review',
+      header: t('columns.review'),
+      // B19. The column the review cycle exists to produce. Overdue carries an
+      // icon and the word as well as the colour, so it survives a colour-blind
+      // reader and a greyscale print of the register.
+      cell: (info: any) => {
+        const next = info.row.original.nextReviewAt;
+        if (!next) return <span className="text-[12px] text-[#6E747A]">{t('columns.no_review')}</span>;
+        const due = new Date(next);
+        const overdue = due.getTime() < Date.now();
+        return (
+          <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px] ${
+            overdue
+              ? 'border-red-500/25 bg-red-500/10 text-red-400'
+              : 'border-white/10 text-[#9BA1A6]'
           }`}>
-            {t(`status_types.${status}`) || status}
+            <CalendarClock className="h-3 w-3" aria-hidden="true" />
+            {overdue ? t('columns.overdue_since', { date: due.toLocaleDateString() }) : due.toLocaleDateString()}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'tags',
+      header: t('columns.tags'),
+      // K103/L108. Shown because a tag that cannot be seen on the row is a tag
+      // nobody trusts the filter to be using.
+      cell: (info: any) => {
+        const tags = (info.getValue() as string[] | null) ?? [];
+        if (tags.length === 0) return <span className="text-[12px] text-[#6E747A]">—</span>;
+        return (
+          <span className="inline-flex flex-wrap gap-1" title={tags.join(', ')}>
+            {tags.slice(0, 2).map((tag) => (
+              <span key={tag} className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[11px] text-[#9BA1A6]">{tag}</span>
+            ))}
+            {tags.length > 2 && <span className="text-[11px] text-[#6E747A]">+{tags.length - 2}</span>}
           </span>
         );
       },
@@ -502,38 +596,81 @@ export default function RopaListPage() {
           </div>
         ) : null}
 
+        {/* B19. The overdue queue as a badge with a way in. A count nobody can
+            act on is decoration; this one applies the filter that shows the rows. */}
+        {(reviewSummary?.overdue ?? 0) > 0 && !filters.reviewOverdue && (
+          <button
+            type="button"
+            onClick={() => setFilters({ ...filters, reviewOverdue: true })}
+            className="fade-up flex w-full items-center justify-between gap-4 rounded-2xl border border-red-500/25 bg-red-500/[0.07] px-4 py-3 text-left transition-colors hover:bg-red-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
+          >
+            <span className="flex items-center gap-2 text-[13.5px] text-red-300">
+              <CalendarClock className="h-4 w-4" aria-hidden="true" />
+              {t('review.overdue_banner', { count: reviewSummary!.overdue })}
+              {(reviewSummary?.overdueMine ?? 0) > 0 && (
+                <span className="text-[12.5px] text-red-400/70">
+                  {t('review.overdue_mine', { count: reviewSummary!.overdueMine })}
+                </span>
+              )}
+            </span>
+            <span className="flex items-center gap-1 text-[12.5px] font-medium text-red-300">
+              {t('review.show_overdue')} <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+          </button>
+        )}
+
         {/* Data Grid */}
-        <div className="w-full">
-          <div className="flex items-center gap-1 mb-4" role="group" aria-label={t('ownership.label')}>
-            {(['all', 'mine', 'unowned'] as const).map((key) => (
-              <button
-                key={key}
-                onClick={() => setOwnership(key)}
-                aria-pressed={ownership === key}
-                className={`px-3 py-1.5 rounded-lg text-[13px] border transition-colors ${
-                  ownership === key
-                    ? 'border-[#C9A227]/30 bg-[#C9A227]/10 text-[#C9A227]'
-                    : 'border-white/10 text-[#6E747A] hover:text-[#F4F5F6] hover:border-white/20'
-                }`}
-              >
-                {t(`ownership.${key}`)}
-              </button>
-            ))}
-          </div>
+        <div className="w-full space-y-4">
+          <RegisterFilterBar filters={filters} onChange={setFilters} orgMembers={orgMembers as any} />
+
+          {/* L107. The bridge between "the rows I ticked" and "all 340 matching".
+              Offered whenever something is selected and there is more behind the
+              current filter, which is the only moment the distinction matters. */}
+          {selectedIds.length > 0 && (hasNextPage || activeFilterCount(filters) > 0) && (
+            <button
+              type="button"
+              onClick={selectAllMatching}
+              disabled={isSelectingAll}
+              className="w-full rounded-lg border border-dashed border-[#C9A227]/30 px-3 py-2 text-[12.5px] text-[#C9A227] transition-colors hover:bg-[#C9A227]/5 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"
+            >
+              {isSelectingAll ? t('bulk.selecting') : t('bulk.select_all_matching')}
+            </button>
+          )}
+
           <DataGrid
             mode="full"
             columns={columns as any}
             data={processingActivities || []}
             isLoading={isLoading}
-            globalFilter={globalFilter}
-            setGlobalFilter={setGlobalFilter}
             onRowClick={(row: any) => router.push(`/ropa/${row.id}`)}
+            enableRowSelection
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            selectionToolbar={
+              <BulkActionBar
+                selectedIds={selectedIds}
+                onClear={() => setSelectedIds([])}
+                orgMembers={orgMembers as any}
+                onDone={() => { setSelectedIds([]); refetch(); }}
+              />
+            }
+            labels={{
+              selectRow: t('bulk.select_row'),
+              selectAll: t('bulk.select_page'),
+              previous: t('grid.previous'),
+              next: t('grid.next'),
+              showing: (from, to, total) => t('grid.showing', { from, to, total }),
+            }}
             emptyState={
               <EmptyState
                 icon={FileText}
-                title={t('empty.title')}
-                description={t('empty.description')}
-                action={{ label: t('empty.action'), onClick: () => router.push('/ropa/new') }}
+                title={activeFilterCount(filters) > 0 ? t('empty.filtered_title') : t('empty.title')}
+                description={activeFilterCount(filters) > 0 ? t('empty.filtered_description') : t('empty.description')}
+                action={
+                  activeFilterCount(filters) > 0
+                    ? { label: t('filters.clear'), onClick: () => setFilters(EMPTY_FILTERS) }
+                    : { label: t('empty.action'), onClick: () => router.push('/ropa/new') }
+                }
                 secondaryAction={{ label: t('import_csv'), onClick: () => fileInputRef.current?.click() }}
               />
             }

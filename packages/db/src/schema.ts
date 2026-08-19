@@ -281,6 +281,52 @@ export const processingActivities = pgTable('processing_activities', {
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
   reviewedBy: uuid('reviewed_by').references(() => users.id),
 
+  // B19. The three columns above existed and nothing ever wrote them, because
+  // nothing said how often the record was supposed to be looked at. A cadence is
+  // what turns "reviewed on the 3rd" into "overdue since the 3rd" — the register
+  // cannot have an overdue queue without one. Null means the organisation default
+  // (settings.ropaReviewCadenceMonths) applies; 0 means this activity is
+  // deliberately exempt, which is a different statement from "nobody decided".
+  reviewCadenceMonths: integer('review_cadence_months'),
+
+  // B20. Separate from `status` on purpose. Status is what the record *is* to a
+  // reader of the register; approval is what has happened to it internally, and
+  // collapsing the two would mean an activity could not be both published and
+  // awaiting re-approval — which is the ordinary state of a record someone has
+  // just edited.
+  approvalState: varchar('approval_state', { length: 20 }).default('draft').notNull(),
+  approvalRequestedBy: uuid('approval_requested_by').references(() => users.id),
+  approvalRequestedAt: timestamp('approval_requested_at', { withTimezone: true }),
+  currentReviewerId: uuid('current_reviewer_id').references(() => users.id),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+
+  // B22. Archiving is not deleting and it is not just a status change: a reader
+  // needs to know when it happened and who did it, and a restore needs somewhere to
+  // put the status back to. Without `statusBeforeArchive` every restored activity
+  // comes back as a draft, silently unpublishing a record that was live.
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+  archivedBy: uuid('archived_by').references(() => users.id),
+  statusBeforeArchive: varchar('status_before_archive', { length: 50 }),
+
+  // B24. Activities come in families — "Recruitment (UK)", "Recruitment (DE)" — and
+  // the provenance is worth keeping: it is the first thing someone checks when two
+  // records disagree.
+  duplicatedFromId: uuid('duplicated_from_id'),
+
+  // K103/L108. A free tag vocabulary, because the axes customers filter on are
+  // theirs (system, department, product line) and no enum survives contact with
+  // that. A jsonb array of strings, filtered with a containment test.
+  tags: jsonb('tags').default([]).notNull(),
+
+  // K103. Denormalised from `scoreActivity`, which is a pure function of the
+  // activity and its four child tables. Recomputed by the API after every mutation
+  // that can move it (see refreshCompleteness in routers/ropa.ts). It exists so the
+  // register can *filter and sort* on completeness: computing it per row at query
+  // time means loading every activity's children to answer "show me everything
+  // under 50%", which is the one question the score was built to answer.
+  completenessScore: integer('completeness_score').default(0).notNull(),
+
   // Two owners, because they are two different people and the register needs both.
   // The business owner is who actually knows what the activity does; the privacy
   // owner is who answers for it. An unowned activity is the one that goes stale,
@@ -309,6 +355,14 @@ export const processingActivities = pgTable('processing_activities', {
 }, (table) => {
   return {
     orgIdx: index('idx_processing_activities_org').on(table.organizationId),
+    // K102/K103 filter and sort inside one organisation on every request, and the
+    // register list is the most-hit query in the product. R143 asks for exactly
+    // these; they are here because the filters that need them land in this sprint.
+    orgStatusIdx: index('idx_processing_activities_org_status').on(table.organizationId, table.status),
+    orgUpdatedIdx: index('idx_processing_activities_org_updated').on(table.organizationId, table.updatedAt),
+    // B19's overdue queue is `next_review_at < now()` across the whole register.
+    orgReviewIdx: index('idx_processing_activities_org_review').on(table.organizationId, table.nextReviewAt),
+    deletedIdx: index('idx_processing_activities_deleted').on(table.deletedAt),
   };
 });
 
@@ -366,6 +420,232 @@ export const legitimateInterestAssessments = pgTable('legitimate_interest_assess
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
+
+// ---------------------------------------------------------------------------
+// Register operations — review, approval, versioning, work and discussion.
+//
+// The register had a lifecycle in name only: `last_reviewed_at`, `next_review_at`,
+// `reviewed_by`, `version` and `previous_version_id` were all columns nothing ever
+// wrote. These six tables are what those columns were waiting for.
+//
+// Every one of them is org-scoped in its own right as well as through the activity.
+// That is redundant on paper and load-bearing in practice: the tenancy guard reads
+// each write statement on its own, and a child table that can only prove itself
+// through a join is a child table somebody eventually forgets to join.
+// ---------------------------------------------------------------------------
+
+/**
+ * B19. "I have read this record and it is accurate as at today" — the act an
+ * auditor asks for and the register could not record.
+ *
+ * Append-only. An attestation is a statement a named person made on a date, so
+ * correcting one means making another, and the score and version it was made
+ * against are copied in rather than joined: what matters later is what the record
+ * looked like when somebody signed it off, not what it looks like now.
+ */
+export const processingActivityAttestations = pgTable('processing_activity_attestations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+
+  attestedBy: uuid('attested_by').notNull().references(() => users.id),
+  attestedAt: timestamp('attested_at', { withTimezone: true }).defaultNow().notNull(),
+
+  // What was actually asserted. Free text, because "accurate except that the
+  // retention period is under review" is a more honest attestation than a tick.
+  statement: text('statement'),
+
+  // The state of the record at the moment of signing.
+  scoreAtAttestation: integer('score_at_attestation'),
+  versionAtAttestation: integer('version_at_attestation'),
+  nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  activityIdx: index('idx_paa_activity').on(table.processingActivityId, table.attestedAt),
+  orgIdx: index('idx_paa_org').on(table.organizationId),
+}));
+
+/**
+ * B20. One row per approval decision — requested, then approved or rejected.
+ *
+ * The row is created `pending` when review is requested and closed by the decision;
+ * nothing deletes or rewrites a closed one. That is what makes it the "immutable
+ * approval record" the audit asks for, and it is why the current state also lives
+ * on `processing_activities` — reading the register should not mean replaying a log.
+ */
+export const processingActivityApprovals = pgTable('processing_activity_approvals', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+
+  requestedBy: uuid('requested_by').notNull().references(() => users.id),
+  requestedAt: timestamp('requested_at', { withTimezone: true }).defaultNow().notNull(),
+  requestNote: text('request_note'),
+  reviewerId: uuid('reviewer_id').references(() => users.id),
+
+  // 'pending' | 'approved' | 'rejected' | 'withdrawn'
+  decision: varchar('decision', { length: 20 }).default('pending').notNull(),
+  decidedBy: uuid('decided_by').references(() => users.id),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  // Not optional for a rejection: "no" without a reason is not a decision anyone
+  // can act on, and the API refuses one.
+  decisionReason: text('decision_reason'),
+
+  // The snapshot taken when the decision was made, so "what did I approve?" has an
+  // answer that does not depend on nobody having edited the record since.
+  versionId: uuid('version_id'),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  activityIdx: index('idx_papr_activity').on(table.processingActivityId, table.requestedAt),
+  orgIdx: index('idx_papr_org').on(table.organizationId),
+  // The state machine allows exactly one open request per activity. A partial
+  // unique index enforces that in the database rather than in whichever procedure
+  // happens to run first.
+  onePending: uniqueIndex('idx_papr_one_pending').on(table.processingActivityId)
+    .where(sql`decision = 'pending'`),
+}));
+
+/**
+ * B21. A point-in-time copy of the whole record — the activity row and its four
+ * child tables — taken when something makes the current state worth keeping.
+ *
+ * A jsonb snapshot rather than a shadow table per entity, because the thing being
+ * preserved is the *document* an approver signed or a regulator was shown. A shadow
+ * schema would have to be migrated in step with the live one forever, and the first
+ * time it drifted every historic version would silently start reading differently.
+ * The cost is that a snapshot is not queryable field by field, which is the right
+ * trade: nobody filters the register on what it said in March.
+ */
+export const processingActivityVersions = pgTable('processing_activity_versions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+
+  version: integer('version').notNull(),
+  // 'approved' | 'published' | 'manual' | 'pre_restore'
+  reason: varchar('reason', { length: 30 }).notNull(),
+  note: text('note'),
+
+  snapshot: jsonb('snapshot').notNull(),
+  // Copied out of the snapshot so the version list renders without parsing every
+  // blob.
+  score: integer('score'),
+  status: varchar('status', { length: 50 }),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  activityIdx: index('idx_pav_activity').on(table.processingActivityId, table.version),
+  orgIdx: index('idx_pav_org').on(table.organizationId),
+  // Version numbers are per activity and allocated by the API. The constraint is
+  // what makes two concurrent snapshots fail loudly instead of producing two
+  // different documents both calling themselves v4.
+  unq: unique('processing_activity_versions_activity_version_unq').on(table.processingActivityId, table.version),
+}));
+
+/**
+ * M110. Work arising from a record, attached to the record.
+ *
+ * "Complete the retention section" is the sentence a DPO says twenty times a week,
+ * and there was nowhere to put it: the notification and queue infrastructure has
+ * existed since the DSAR module, and nothing turned a register gap into work.
+ * `section` deep-links the assignee to the tab that needs filling in.
+ */
+export const processingActivityTasks = pgTable('processing_activity_tasks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  // One of the editor's tab ids, so the task can link to the field it is about.
+  section: varchar('section', { length: 40 }),
+
+  assigneeId: uuid('assignee_id').references(() => users.id),
+  dueDate: timestamp('due_date', { withTimezone: true }),
+  // 'open' | 'in_progress' | 'done' | 'cancelled'
+  status: varchar('status', { length: 20 }).default('open').notNull(),
+  priority: varchar('priority', { length: 20 }).default('normal').notNull(),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  completedBy: uuid('completed_by').references(() => users.id),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  // Set once the reminder worker has emailed about this task's due date, so a
+  // nightly job does not send the same reminder every night.
+  reminderSentAt: timestamp('reminder_sent_at', { withTimezone: true }),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  activityIdx: index('idx_pat_activity').on(table.processingActivityId, table.status),
+  assigneeIdx: index('idx_pat_assignee').on(table.assigneeId, table.status),
+  orgIdx: index('idx_pat_org').on(table.organizationId),
+}));
+
+/**
+ * M111. "Why is this retention five years?" — asked where the answer belongs.
+ *
+ * `field` is nullable: a comment is either about the record or about one field of
+ * it, and threading is one level deep (`parentId`), which is what a discussion
+ * about a form field actually needs. Soft-deleted rather than removed, because a
+ * thread with a hole in it reads as tampering in an audit context.
+ */
+export const processingActivityComments = pgTable('processing_activity_comments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+  parentId: uuid('parent_id'),
+
+  // A form field name, or null for a comment about the record as a whole.
+  field: varchar('field', { length: 80 }),
+  body: text('body').notNull(),
+  // User ids named in the comment. Stored rather than re-parsed, so that editing
+  // the body later cannot retrospectively change who was notified.
+  mentions: jsonb('mentions').default([]).notNull(),
+
+  authorId: uuid('author_id').notNull().references(() => users.id),
+  resolvedBy: uuid('resolved_by').references(() => users.id),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (table) => ({
+  activityIdx: index('idx_pac_activity').on(table.processingActivityId, table.createdAt),
+  orgIdx: index('idx_pac_org').on(table.organizationId),
+}));
+
+/**
+ * K104. A named set of register filters.
+ *
+ * Shared views are org-wide by design — the point of "Unowned high-risk transfers"
+ * is that the whole privacy team looks at the same list. `defaultForRole` is what
+ * makes a viewer's register open on something useful without anyone configuring it.
+ */
+export const ropaSavedViews = pgTable('ropa_saved_views', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+
+  name: varchar('name', { length: 120 }).notNull(),
+  description: text('description'),
+  // The `list` input minus pagination, validated against the same zod schema the
+  // procedure uses — so a stored view cannot smuggle in a filter the API rejects.
+  filters: jsonb('filters').default({}).notNull(),
+  isShared: boolean('is_shared').default(false).notNull(),
+  // 'owner' | 'admin' | 'member' | 'viewer', or null for none.
+  defaultForRole: varchar('default_for_role', { length: 20 }),
+
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  orgIdx: index('idx_rsv_org').on(table.organizationId),
+  // One name per author per org: saving "My queue" twice should update the view,
+  // not leave two of them in the picker.
+  unq: unique('ropa_saved_views_org_author_name_unq').on(table.organizationId, table.createdBy, table.name),
+}));
 
 // ---------------------------------------------------------------------------
 // Org-level catalogues.
@@ -1969,12 +2249,96 @@ export const processingActivitiesRelations = relations(processingActivities, ({ 
   transfers: many(processingTransfers),
   clients: many(clientProcessingActivities),
   reconsentFlags: many(reconsentFlags),
+  attestations: many(processingActivityAttestations),
+  approvals: many(processingActivityApprovals),
+  versions: many(processingActivityVersions),
+  tasks: many(processingActivityTasks),
+  comments: many(processingActivityComments),
   businessOwner: one(users, {
     fields: [processingActivities.businessOwnerId],
     references: [users.id],
   }),
   privacyOwner: one(users, {
     fields: [processingActivities.privacyOwnerId],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [processingActivities.currentReviewerId],
+    references: [users.id],
+  }),
+}));
+
+// Each of the five below carries the `one(activity)` back-reference its parent's
+// `many()` needs. Drizzle infers the join from this side; without it the relational
+// query throws while being *built*, so every caller fails rather than some unlucky
+// row — the class check:relations exists to catch.
+
+export const processingActivityAttestationsRelations = relations(processingActivityAttestations, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [processingActivityAttestations.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  attestor: one(users, {
+    fields: [processingActivityAttestations.attestedBy],
+    references: [users.id],
+  }),
+}));
+
+export const processingActivityApprovalsRelations = relations(processingActivityApprovals, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [processingActivityApprovals.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  requester: one(users, {
+    fields: [processingActivityApprovals.requestedBy],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [processingActivityApprovals.reviewerId],
+    references: [users.id],
+  }),
+}));
+
+export const processingActivityVersionsRelations = relations(processingActivityVersions, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [processingActivityVersions.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  author: one(users, {
+    fields: [processingActivityVersions.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const processingActivityTasksRelations = relations(processingActivityTasks, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [processingActivityTasks.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  assignee: one(users, {
+    fields: [processingActivityTasks.assigneeId],
+    references: [users.id],
+  }),
+}));
+
+export const processingActivityCommentsRelations = relations(processingActivityComments, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [processingActivityComments.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  author: one(users, {
+    fields: [processingActivityComments.authorId],
+    references: [users.id],
+  }),
+}));
+
+export const ropaSavedViewsRelations = relations(ropaSavedViews, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [ropaSavedViews.organizationId],
+    references: [organizations.id],
+  }),
+  author: one(users, {
+    fields: [ropaSavedViews.createdBy],
     references: [users.id],
   }),
 }));

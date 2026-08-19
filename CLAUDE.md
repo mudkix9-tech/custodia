@@ -29,6 +29,13 @@ and exits 0. Anything treating that as CI is testing nothing — use `npm run ch
 The guards exist because every bug that has reached production-shaped code in this repo
 was invisible to `tsc`: see the multi-tenancy, database and `apps/web` sections below.
 
+**Two guards are ROPA-specific and easy to miss.** `check:ropa-i18n` (apps/web) fails on
+a hardcoded English string in the register's components *and* on a `t()` key that is not
+in `en/ropa.json` — next-intl renders a missing key as its own dotted path, in every
+locale, which `check:messages` cannot see because it only compares the three catalogues
+against each other. `test:ropa-lifecycle` (apps/api) covers review cadence, the reminder
+ladder, approval transitions, snapshot diffing and the pagination cursor codec.
+
 **`npx eslint` cannot run at all.** `apps/web/eslint.config.mjs` throws
 `TypeError: tailwind.configs.flat/recommended is not iterable` on ESLint 9.39.4.
 Pre-existing plugin incompatibility. **No code in this repo has been lint-checked**, so
@@ -172,6 +179,33 @@ runs except the 19 entries in `DORMANT_JOBS`. Set: *only* what is listed runs an
 New recurring job checklist: add the worker, export it from `workers/index.ts`, add a
 `boss.schedule()` line with `wrapJobPayload`, and decide whether it belongs in
 `DORMANT_JOBS` (it does if it emails or notifies customers).
+
+---
+
+## The ROPA register — two things that will surprise you
+
+**`processing_activities.completeness_score` is denormalised and the API keeps it in
+step.** The score is a pure function of the activity and its four child tables
+(`lib/ropaCompleteness.ts`), and the editor still computes it live; the stored column
+exists so the register can *filter and sort* on it without loading every activity's
+children on every list request. `refreshCompleteness()` in `routers/ropa.ts` is called
+at the end of each mutation that can move it — fourteen call sites, the same shape as
+`syncDataSubjectMirror`. Add a fifteenth if you add a mutation that touches an
+activity's subjects, categories, recipients or transfers, or the filter starts
+reporting yesterday.
+
+Like the subject-category mirror, it deliberately does **not** touch `updated_at`: the
+register sorts on that column and the editor's optimistic lock compares against it, so
+a background recompute would re-order the list (D1) and CONFLICT the next autosave of a
+record nobody else had touched (D45).
+
+**`paginatedQuery`'s cursor records the type of its sort value.** It used to guess by
+trying `new Date(value)`, which was right for every caller until the register gained
+`name` and `completenessScore` sorts: an activity called "2024" parses as a date, a
+score of 85 parses as 85ms past the epoch, and the list then silently ends after one
+page. The codec lives in `utils/cursor.ts` rather than `utils/pagination.ts` so that
+encoding a cursor does not import `db.js` — which throws without `DATABASE_URL` and
+would make the codec untestable by the standalone fixtures.
 
 ---
 

@@ -21,6 +21,7 @@ export * from './generateLeadPdf.js';
 export * from './generateAssessmentPdf.js';
 export * from './trialExpiry.js';
 export * from './consentScan.js';
+export * from './ropaReviews.js';
 import { createQueue } from '../lib/queue.js';
 
 import { getBoss, wrapJobPayload } from '../lib/queue.js';
@@ -50,6 +51,11 @@ export async function scheduleGlobalJobs() {
 
   // Weekly consent/tracker reconciliation dispatch.
   await boss.schedule('consent-scan', '0 5 * * 1', wrapJobPayload('weekly-reconcile-dispatch', {}));
+
+  // B19. Fans out per-org review-reminder checks. Both its jobs email customers, so
+  // both sit in DORMANT_JOBS until an organisation opts in — see CLAUDE.md's
+  // recurring-job checklist.
+  await boss.schedule('ropa-reviews-dispatcher', '0 6 * * *', wrapJobPayload('ropa-reviews-dispatcher', {}));
 }
 
 

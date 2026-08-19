@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { Trash2, Baby, ShieldAlert, Plus } from 'lucide-react';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { VOLUME_BANDS, labelFor } from '@/utils/ropaVocabularies';
+import { useRopaVocabulary } from '@/utils/ropaVocabularies';
 
 /**
  * Art. 30(1)(c), first limb — the categories of data subject.
@@ -25,6 +26,8 @@ import { VOLUME_BANDS, labelFor } from '@/utils/ropaVocabularies';
  * that refuses anything outside its taxonomy is one people keep in a spreadsheet.
  */
 export function DataSubjectsPanel({ activityId }: { activityId: string }) {
+  const t = useTranslations('ropa.subjects');
+  const vocab = useRopaVocabulary();
   const utils = trpc.useUtils();
   const { data = [], isLoading } = trpc.ropa.dataSubjects.list.useQuery({ processingActivityId: activityId });
   const { data: catalogue = [] } = trpc.ropa.catalogue.subjects.list.useQuery({ includeArchived: false });
@@ -62,7 +65,7 @@ export function DataSubjectsPanel({ activityId }: { activityId: string }) {
       setSelectedCatalogueId('');
       refresh();
     } catch (e: any) {
-      setError(e?.message || 'Could not add that category.');
+      setError(e?.message || t('add_failed'));
     }
   };
 
@@ -77,7 +80,7 @@ export function DataSubjectsPanel({ activityId }: { activityId: string }) {
       setCustomName('');
       refresh();
     } catch (e: any) {
-      setError(e?.message || 'Could not add that category.');
+      setError(e?.message || t('add_failed'));
     }
   };
 
@@ -88,10 +91,10 @@ export function DataSubjectsPanel({ activityId }: { activityId: string }) {
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
-      title: 'Remove data subject category?',
-      description: 'This removes the category from this activity. The catalogue entry itself is untouched.',
+      title: t('remove_title'),
+      description: t('remove_body'),
       variant: 'destructive',
-      confirmText: 'Remove',
+      confirmText: t('remove'),
     });
     if (confirmed) {
       await deleteMutation.mutateAsync({ id });
@@ -102,46 +105,46 @@ export function DataSubjectsPanel({ activityId }: { activityId: string }) {
   const columns = [
     {
       accessorKey: 'category',
-      header: 'Category',
+      header: t('category'),
       cell: ({ row }: any) => (
         <div className="flex items-center gap-2">
           <span className="text-[#F4F5F6] font-medium">{row.original.category}</span>
           {row.original.isChild && (
             <span
-              title="Art. 8 — children's data. Screened as high risk under Art. 35(3)."
+              title={t('child_title')}
               className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-amber-900/50"
             >
-              <Baby className="w-3 h-3" /> Child
+              <Baby className="w-3 h-3" aria-hidden="true" /> {t('child')}
             </span>
           )}
           {row.original.isVulnerable && !row.original.isChild && (
             <span
-              title="Recital 75 — vulnerable data subjects."
+              title={t('vulnerable_title')}
               className="inline-flex items-center gap-1 bg-white/5 text-[#9BA1A6] px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-white/10"
             >
-              <ShieldAlert className="w-3 h-3" /> Vulnerable
+              <ShieldAlert className="w-3 h-3" aria-hidden="true" /> {t('vulnerable')}
             </span>
           )}
           {!row.original.catalogueId && (
-            <span title="Not from the catalogue — free text." className="text-[10px] text-[#6E747A] uppercase tracking-wider">ad hoc</span>
+            <span title={t('ad_hoc_title')} className="text-[10px] text-[#6E747A] uppercase tracking-wider">{t('ad_hoc')}</span>
           )}
         </div>
       ),
     },
     {
       accessorKey: 'volumeBand',
-      header: 'Estimated volume',
+      header: t('volume'),
       cell: ({ getValue, row, column, table }: any) => (
         <Select
           value={getValue() || 'none'}
           onValueChange={(val) => table.options.meta?.updateData(row.index, column.id, val === 'none' ? null : val)}
         >
-          <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-[#C9A227]/40">
-            <SelectValue placeholder="Not estimated">{labelFor(VOLUME_BANDS, getValue())}</SelectValue>
+          <SelectTrigger aria-label={t('volume')} className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-[#C9A227]/40">
+            <SelectValue placeholder={t('not_estimated')}>{vocab.label('volume_band', getValue())}</SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">Not estimated</SelectItem>
-            {VOLUME_BANDS.map((b) => (
+            <SelectItem value="none">{t('not_estimated')}</SelectItem>
+            {vocab.options('volume_band').map((b) => (
               <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
             ))}
           </SelectContent>
@@ -155,7 +158,7 @@ export function DataSubjectsPanel({ activityId }: { activityId: string }) {
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Delete"
+          aria-label={t('remove')}
           onClick={() => handleDelete(row.original.id)}
           className="w-7 h-7 text-[#6E747A] hover:text-clay-600 hover:bg-white/5"
         >
@@ -169,51 +172,50 @@ export function DataSubjectsPanel({ activityId }: { activityId: string }) {
   return (
     <div className="bg-[#08090A] hairline rounded-2xl p-6">
       {dialog}
-      <h2 className="text-[14px] font-medium text-[#F4F5F6] mb-1">Data Subject Categories</h2>
-      <p className="text-[12px] text-[#6E747A] mb-4">
-        Art. 30(1)(c) — whose personal data this activity processes. Scale feeds the Art. 35(3) DPIA screening.
-      </p>
+      <h2 className="text-[14px] font-medium text-[#F4F5F6] mb-1">{t('title')}</h2>
+      <p className="text-[12px] text-[#6E747A] mb-4">{t('subtitle')}</p>
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
         <div className="space-y-2">
-          <label className="text-[12.5px] font-medium text-[#E6E8EA] block">Add from your catalogue</label>
+          <label htmlFor="subject-catalogue" className="text-[12.5px] font-medium text-[#E6E8EA] block">{t('from_catalogue')}</label>
           <div className="flex gap-3">
             <Select value={selectedCatalogueId || 'none'} onValueChange={(v) => setSelectedCatalogueId(v === 'none' ? '' : v)}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Select a category..." />
+              <SelectTrigger id="subject-catalogue" className="flex-1">
+                <SelectValue placeholder={t('select_category')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Select a category...</SelectItem>
+                <SelectItem value="none">{t('select_category')}</SelectItem>
                 {catalogue.map((c: any) => (
                   <SelectItem key={c.id} value={c.id} disabled={alreadyAdded.has((c.name || '').toLowerCase())}>
-                    {c.name}{alreadyAdded.has((c.name || '').toLowerCase()) ? ' — already added' : ''}
+                    {c.name}{alreadyAdded.has((c.name || '').toLowerCase()) ? t('already_added') : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Button onClick={handleAddFromCatalogue} disabled={!selectedCatalogueId || createMutation.isPending}>
-              <Plus className="w-4 h-4" /> Add
+              <Plus className="w-4 h-4" aria-hidden="true" /> {t('add')}
             </Button>
           </div>
         </div>
 
         <div className="space-y-2 md:border-l md:border-white/10 md:pl-6">
-          <label className="text-[12.5px] font-medium text-[#E6E8EA] block">Or record one not in the catalogue</label>
+          <label htmlFor="subject-custom" className="text-[12.5px] font-medium text-[#E6E8EA] block">{t('or_custom')}</label>
           <div className="flex gap-3">
             <Input
+              id="subject-custom"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              placeholder="E.g. Scheme trustees"
+              placeholder={t('custom_ph')}
               className="flex-1"
             />
             <Button variant="outline" onClick={handleAddCustom} disabled={!customName.trim() || createMutation.isPending}>
-              Add
+              {t('add')}
             </Button>
           </div>
           <p className="text-[12px] text-[#6E747A]">
-            Recorded against this activity only.{' '}
-            <Link href="/ropa/catalogues" className="text-[#C9A227] hover:underline">Add it to the catalogue</Link>{' '}
-            to reuse it across the register.
+            {t('custom_hint')}{' '}
+            <Link href="/ropa/catalogues" className="text-[#C9A227] hover:underline">{t('add_to_catalogue')}</Link>{' '}
+            {t('custom_hint_end')}
           </p>
         </div>
       </div>
@@ -230,7 +232,7 @@ export function DataSubjectsPanel({ activityId }: { activityId: string }) {
         data={data}
         isLoading={isLoading}
         onInlineEdit={handleInlineEdit}
-        emptyStateMessage="No data subject categories recorded. Art. 30(1)(c) requires at least one."
+        emptyStateMessage={t('empty')}
       />
     </div>
   );

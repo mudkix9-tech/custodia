@@ -14,6 +14,7 @@
     "check:nocheck": "node scripts/check-ts-nocheck.mjs",
     "check:sitemap": "node scripts/check-sitemap.mjs",
     "check:messages": "node scripts/check-messages.mjs",
+    "check:ropa-i18n": "node scripts/check-ropa-i18n.mjs",
     "indexnow": "node scripts/submit-indexnow.mjs",
     "indexnow:dry": "node scripts/submit-indexnow.mjs --dry-run"
   },

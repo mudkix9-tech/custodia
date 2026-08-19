@@ -10,20 +10,9 @@ import { CompletenessRing } from './CompletenessPanel';
 import { countryName } from '@/utils/countries';
 import { isRetentionPreset, normaliseLawfulBasis } from '@/utils/ropaFormat';
 import {
-  SPECIAL_CATEGORY_TYPES,
-  ARTICLE_9_CONDITIONS,
-  IDENTIFIABILITY_LEVELS,
-  RETENTION_TRIGGERS,
-  VOLUME_BANDS,
-  RECIPIENT_CATEGORIES,
-  RECIPIENT_ROLES,
-  TRANSFER_MECHANISMS,
-  SCC_MODULES,
   SCC_REPEALED_YEARS,
-  ARTICLE_49_SUB_REASONS,
-  DPF_SCOPES,
   normaliseTransferMechanism,
-  labelFor,
+  useRopaVocabulary,
 } from '@/utils/ropaVocabularies';
 
 /**
@@ -70,6 +59,9 @@ function Section({ title, article, children }: { title: string; article?: string
 export function FullRecordView({ activity }: { activity: any }) {
   const router = useRouter();
   const t = useTranslations('ropa');
+  // R142. Enum wording comes from the catalogue now, not from a table of English
+  // string literals in utils/ropaVocabularies.ts.
+  const vocab = useRopaVocabulary();
 
   const { data: dataSubjects = [] } = trpc.ropa.dataSubjects.list.useQuery({ processingActivityId: activity.id });
   const { data: dataCategories = [] } = trpc.ropa.dataCategories.list.useQuery({ processingActivityId: activity.id });
@@ -178,16 +170,16 @@ export function FullRecordView({ activity }: { activity: any }) {
                   {s.category}
                   {s.isChild && (
                     <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-amber-900/50">
-                      <Baby className="w-3 h-3" /> Art. 8
+                      <Baby className="w-3 h-3" aria-hidden="true" /> {t('categories.art8')}
                     </span>
                   )}
                   {s.isVulnerable && !s.isChild && (
                     <span className="inline-flex items-center gap-1 bg-white/5 text-[#9BA1A6] px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-white/10">
-                      <ShieldAlert className="w-3 h-3" /> Vulnerable
+                      <ShieldAlert className="w-3 h-3" aria-hidden="true" /> {t('subjects.vulnerable')}
                     </span>
                   )}
                   <span className="text-[12px] text-[#6E747A]">
-                    {s.volumeBand ? labelFor(VOLUME_BANDS, s.volumeBand) : t('record.volume_not_estimated')}
+                    {s.volumeBand ? vocab.label('volume_band', s.volumeBand) : t('record.volume_not_estimated')}
                   </span>
                 </li>
               ))}
@@ -207,30 +199,30 @@ export function FullRecordView({ activity }: { activity: any }) {
                     <span className="text-[13.5px] font-medium text-[#F4F5F6]">{c.category}</span>
                     <span className="text-[12px] text-[#6E747A]">{c.categoryGroup}</span>
                     {c.isSpecialCategory && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30">Art. 9</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30">{t('categories.art9')}</span>
                     )}
                     {c.isCriminalData && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30">Art. 10</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30">{t('categories.art10')}</span>
                     )}
                   </div>
                   <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
                     <Field label={t('record.source')} value={c.source} article="Art. 14(2)(f)" />
-                    <Field label={t('record.identifiability')} value={labelFor(IDENTIFIABILITY_LEVELS, c.identifiability)} />
+                    <Field label={t('record.identifiability')} value={vocab.label('identifiability', c.identifiability)} />
                     <Field
                       label={t('record.retention')}
                       article="Art. 30(1)(f)"
                       value={c.retentionPeriod
-                        ? `${c.retentionPeriod}${c.retentionTrigger ? ` — from ${labelFor(RETENTION_TRIGGERS, c.retentionTrigger).toLowerCase()}` : ''}`
+                        ? `${c.retentionPeriod}${c.retentionTrigger ? ` — from ${vocab.label('retention_trigger', c.retentionTrigger).toLowerCase()}` : ''}`
                         : null}
                     />
                     <Field label={t('record.retention_justification')} value={c.retentionJustification} />
                     {c.isSpecialCategory && (
                       <>
-                        <Field label={t('record.special_category_type')} value={labelFor(SPECIAL_CATEGORY_TYPES, c.specialCategoryType)} />
+                        <Field label={t('record.special_category_type')} value={vocab.label('special_category_type', c.specialCategoryType)} />
                         <Field
                           label={t('record.article_9_condition')}
                           article="Art. 9(2)"
-                          value={c.article9Condition ? labelFor(ARTICLE_9_CONDITIONS, c.article9Condition) : null}
+                          value={c.article9Condition ? vocab.label('article_9_condition', c.article9Condition) : null}
                         />
                         {c.article9NationalLawBasis && (
                           <div className="sm:col-span-2">
@@ -266,10 +258,10 @@ export function FullRecordView({ activity }: { activity: any }) {
                 <li key={r.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[13.5px]">
                   <span className="text-[#F4F5F6] font-medium">{r.name}</span>
                   <span className="text-[12px] text-[#9BA1A6]">
-                    {r.recipientCategory ? labelFor(RECIPIENT_CATEGORIES, r.recipientCategory) : t('record.uncategorised')}
+                    {r.recipientCategory ? vocab.label('recipient_category', r.recipientCategory) : t('record.uncategorised')}
                   </span>
                   <span className="text-[12px] text-[#6E747A]">
-                    {r.role ? labelFor(RECIPIENT_ROLES, r.role) : t('record.role_not_stated')}
+                    {r.role ? vocab.label('recipient_role', r.role) : t('record.role_not_stated')}
                   </span>
                   {r.vendorData?.headquartersCountry && (
                     <span className="text-[12px] text-[#6E747A]">{countryName(r.vendorData.headquartersCountry) || r.vendorData.headquartersCountry}</span>
@@ -301,7 +293,7 @@ export function FullRecordView({ activity }: { activity: any }) {
                       </span>
                       {tr.destinationEntity && <span className="text-[12px] text-[#6E747A]">{tr.destinationEntity}</span>}
                       <span className="text-[12px] text-[#9BA1A6]">
-                        {mech ? labelFor(TRANSFER_MECHANISMS, mech) : t('record.no_mechanism')}
+                        {mech ? vocab.label('transfer_mechanism', mech) : t('record.no_mechanism')}
                       </span>
                     </div>
                     <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
@@ -315,7 +307,7 @@ export function FullRecordView({ activity }: { activity: any }) {
                                   : tr.sccYear)
                               : null}
                           />
-                          <Field label={t('record.scc_module')} value={labelFor(SCC_MODULES, tr.sccModule)} />
+                          <Field label={t('record.scc_module')} value={vocab.label('scc_module', tr.sccModule)} />
                           <Field label={t('record.execution_date')} value={fmtDate(tr.executionDate)} />
                           <Field label={t('record.annexes')} value={tr.annexesComplete ? t('record.annexes_complete') : t('record.annexes_incomplete')} />
                           <Field label={t('record.signatories')} value={tr.signatories} />
@@ -325,7 +317,7 @@ export function FullRecordView({ activity }: { activity: any }) {
                       {mech === 'dpf' && (
                         <>
                           <Field label={t('record.dpf_certification')} value={tr.dpfCertificationNumber} />
-                          <Field label={t('record.dpf_scope')} value={labelFor(DPF_SCOPES, tr.dpfScope)} />
+                          <Field label={t('record.dpf_scope')} value={vocab.label('dpf_scope', tr.dpfScope)} />
                           <Field label={t('record.dpf_expiry')} value={fmtDate(tr.dpfExpiryDate)} />
                         </>
                       )}
@@ -335,7 +327,7 @@ export function FullRecordView({ activity }: { activity: any }) {
                       )}
                       {mech === 'art49_derogation' && (
                         <>
-                          <Field label={t('record.derogation')} value={labelFor(ARTICLE_49_SUB_REASONS, tr.article49SubReason)} />
+                          <Field label={t('record.derogation')} value={vocab.label('article_49_sub_reason', tr.article49SubReason)} />
                           <div className="sm:col-span-2">
                             <Field label={t('record.derogation_justification')} value={tr.article49Justification} />
                           </div>

@@ -39,6 +39,26 @@ export const NOTIFICATION_TYPES = {
   'regulatory.update': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
   'regulatory_update.impact_detected': { defaultChannels: ['email', 'in_app'], urgency: 'high' },
   
+  // ROPA (M112). The register generated no notifications at all: an activity could
+  // go two years past its review date, be waiting on someone's approval and have a
+  // question sitting unanswered on it, and nothing would ever say so.
+  //
+  // Only three of these reach Slack. A register nags on a cadence, and a channel
+  // that carries every 30-day review warning for two hundred activities is a
+  // channel people mute — which takes the overdue and approval alerts with it.
+  'ropa.review_due': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
+  'ropa.review_overdue': { defaultChannels: ['email', 'slack', 'in_app'], urgency: 'high' },
+  'ropa.approval_requested': { defaultChannels: ['email', 'in_app'], urgency: 'high' },
+  'ropa.approval_decided': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
+  'ropa.task_assigned': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
+  'ropa.task_due': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
+  'ropa.comment_mention': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
+  // Someone else edited a record you own. Deliberately in-app only: on a register
+  // being actively worked on this is the highest-volume event of the eight, and an
+  // email per save is how a customer turns the whole notification system off.
+  'ropa.activity_changed': { defaultChannels: ['in_app'], urgency: 'low' },
+  'ropa.completeness_dropped': { defaultChannels: ['email', 'in_app'], urgency: 'high' },
+
   // Training
   'training.assigned': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
   'training.due_7d': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },

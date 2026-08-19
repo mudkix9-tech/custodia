@@ -10,12 +10,7 @@ import { PageShell } from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  SPECIAL_CATEGORY_TYPES,
-  IDENTIFIABILITY_LEVELS,
-  SENSITIVITY_LEVELS,
-  labelFor,
-} from '@/utils/ropaVocabularies';
+import { useRopaVocabulary, type VocabGroup } from '@/utils/ropaVocabularies';
 
 /**
  * A2/A3 — the two org-level catalogues the register's child rows point at.
@@ -37,6 +32,8 @@ import {
 export default function RopaCataloguesPage() {
   const router = useRouter();
   const t = useTranslations('ropa');
+  const tc = useTranslations('ropa.catalogue');
+  const vocab = useRopaVocabulary();
   const utils = trpc.useUtils();
   const [tab, setTab] = useState<'elements' | 'subjects'>('elements');
   const [showArchived, setShowArchived] = useState(false);
@@ -69,7 +66,7 @@ export default function RopaCataloguesPage() {
       setNewElementName('');
       refreshElements();
     } catch (e: any) {
-      setError(e?.message || 'Could not add that element.');
+      setError(e?.message || tc('add_element_failed'));
     }
   };
 
@@ -81,7 +78,7 @@ export default function RopaCataloguesPage() {
       setNewSubjectName('');
       refreshSubjects();
     } catch (e: any) {
-      setError(e?.message || 'Could not add that category.');
+      setError(e?.message || tc('add_category_failed'));
     }
   };
 
@@ -98,17 +95,22 @@ export default function RopaCataloguesPage() {
     );
   };
 
-  const SelectCell = ({ getValue, row, column, table, options, placeholder }: any) => (
+  // R142. Takes the vocabulary group rather than a pre-built option array, so the
+  // labels resolve through the message catalogue in the reader's language.
+  const SelectCell = ({ getValue, row, column, table, group, placeholder, label }: any) => (
     <Select
       value={getValue() || 'none'}
       onValueChange={(v) => table.options.meta?.updateData(row.index, column.id, v === 'none' ? null : v)}
     >
-      <SelectTrigger className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-[#C9A227]/40">
-        <SelectValue placeholder={placeholder}>{labelFor(options, getValue())}</SelectValue>
+      <SelectTrigger
+        aria-label={label}
+        className="bg-transparent border-none shadow-none h-8 px-2 py-1 w-full text-[#F4F5F6] focus:ring-1 focus:ring-[#C9A227]/40"
+      >
+        <SelectValue placeholder={placeholder}>{vocab.label(group as VocabGroup, getValue())}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="none">{placeholder}</SelectItem>
-        {options.map((o: any) => (
+        {vocab.options(group as VocabGroup).map((o) => (
           <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
         ))}
       </SelectContent>
@@ -129,8 +131,8 @@ export default function RopaCataloguesPage() {
     <Button
       variant="ghost"
       size="icon"
-      aria-label={row.original.archivedAt ? 'Restore' : 'Archive'}
-      title={row.original.archivedAt ? 'Restore' : 'Archive — existing register entries keep the name they were recorded with.'}
+      aria-label={row.original.archivedAt ? tc('restore') : tc('archive')}
+      title={row.original.archivedAt ? tc('restore') : tc('archive_title')}
       onClick={() => onToggle(row.original.id, !row.original.archivedAt)}
       className="w-7 h-7 text-[#6E747A] hover:text-[#F4F5F6] hover:bg-white/5"
     >
@@ -139,38 +141,38 @@ export default function RopaCataloguesPage() {
   );
 
   const elementColumns = [
-    { accessorKey: 'name', header: 'Element', cell: EditableCell },
-    { accessorKey: 'elementGroup', header: 'Group', cell: EditableCell },
+    { accessorKey: 'name', header: tc('col_element'), cell: EditableCell },
+    { accessorKey: 'elementGroup', header: tc('col_group'), cell: EditableCell },
     {
       accessorKey: 'sensitivity',
-      header: 'Sensitivity',
+      header: tc('col_sensitivity'),
       // Not a synonym for Art. 9. Salary and bank details are commercially sensitive
       // and are not special-category data; treating the two as one field is how a
       // register claims Art. 9 processing it does not do.
-      cell: (p: any) => <SelectCell {...p} options={SENSITIVITY_LEVELS} placeholder="Standard" />,
+      cell: (p: any) => <SelectCell {...p} group="sensitivity" placeholder={tc('sensitivity_default')} label={tc('col_sensitivity')} />,
     },
     {
       accessorKey: 'isSpecialCategory',
-      header: 'Art. 9',
-      cell: (p: any) => <CheckCell {...p} label="Special category" />,
+      header: tc('col_art9'),
+      cell: (p: any) => <CheckCell {...p} label={tc('special_category')} />,
     },
     {
       accessorKey: 'specialCategoryType',
-      header: 'Art. 9 type',
+      header: tc('col_art9_type'),
       cell: (p: any) =>
         p.row.original.isSpecialCategory
-          ? <SelectCell {...p} options={SPECIAL_CATEGORY_TYPES} placeholder="Not specified" />
+          ? <SelectCell {...p} group="special_category_type" placeholder={tc('not_specified')} label={tc('col_art9_type')} />
           : <span className="text-[#6E747A] text-[13px] px-2">—</span>,
     },
     {
       accessorKey: 'isCriminalData',
-      header: 'Art. 10',
-      cell: (p: any) => <CheckCell {...p} label="Criminal offence data" />,
+      header: tc('col_art10'),
+      cell: (p: any) => <CheckCell {...p} label={tc('criminal_data')} />,
     },
     {
       accessorKey: 'identifiability',
-      header: 'Identifiability',
-      cell: (p: any) => <SelectCell {...p} options={IDENTIFIABILITY_LEVELS} placeholder="Direct" />,
+      header: tc('col_identifiability'),
+      cell: (p: any) => <SelectCell {...p} group="identifiability" placeholder={vocab.label('identifiability', 'direct')} label={tc('col_identifiability')} />,
     },
     {
       id: 'archive',
@@ -189,20 +191,20 @@ export default function RopaCataloguesPage() {
   ];
 
   const subjectColumns = [
-    { accessorKey: 'name', header: 'Category', cell: EditableCell },
+    { accessorKey: 'name', header: tc('col_category'), cell: EditableCell },
     {
       accessorKey: 'isChild',
-      header: 'Children',
+      header: tc('col_children'),
       // Art. 8 and Recital 38. Feeds the Art. 35(3) DPIA screening rather than being
       // decoration, which is why it lives on the category and not on each activity.
-      cell: (p: any) => <CheckCell {...p} label="Children" />,
+      cell: (p: any) => <CheckCell {...p} label={tc('col_children')} />,
     },
     {
       accessorKey: 'isVulnerable',
-      header: 'Vulnerable',
-      cell: (p: any) => <CheckCell {...p} label="Vulnerable data subjects" />,
+      header: tc('col_vulnerable'),
+      cell: (p: any) => <CheckCell {...p} label={tc('vulnerable_subjects')} />,
     },
-    { accessorKey: 'description', header: 'Note', cell: EditableCell },
+    { accessorKey: 'description', header: tc('col_note'), cell: EditableCell },
     {
       id: 'archive',
       header: '',
@@ -237,13 +239,9 @@ export default function RopaCataloguesPage() {
               <div className="p-2 bg-[#0D0F11] rounded-xl shadow-card border border-white/10">
                 <Library className="w-5 h-5 text-[#C9A227]" />
               </div>
-              Register catalogues
+              {tc('title')}
             </h1>
-            <p className="text-[13.5px] text-[#6E747A] mt-2 max-w-2xl">
-              The shared vocabulary your processing activities draw on. Kept here rather than typed per activity so
-              that one element means one thing across the register — and so that &quot;which activities process health
-              data?&quot; has an answer.
-            </p>
+            <p className="text-[13.5px] text-[#6E747A] mt-2 max-w-2xl">{tc('subtitle')}</p>
           </div>
         </div>
 
@@ -254,19 +252,21 @@ export default function RopaCataloguesPage() {
             onChange={(e) => setShowArchived(e.target.checked)}
             className="rounded border-white/20 text-[#C9A227] focus:ring-[#C9A227]/40 bg-transparent"
           />
-          Show archived
+          {tc('show_archived')}
         </label>
       </div>
 
       <div className="flex items-center gap-1 border-b border-white/10">
         {([
-          ['elements', `Data elements (${elements.length})`],
-          ['subjects', `Data subject categories (${subjects.length})`],
+          ['elements', tc('tab_elements', { count: elements.length })],
+          ['subjects', tc('tab_subjects', { count: subjects.length })],
         ] as const).map(([key, label]) => (
           <button
             key={key}
+            type="button"
             onClick={() => setTab(key)}
-            className={`px-4 py-3 text-[13.5px] whitespace-nowrap transition-colors border-b-2 ${
+            aria-pressed={tab === key}
+            className={`px-4 py-3 text-[13.5px] whitespace-nowrap transition-colors border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#C9A227]/60 ${
               tab === key
                 ? 'border-[#C9A227] text-[#C9A227] font-medium'
                 : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:border-white/10'
@@ -289,17 +289,17 @@ export default function RopaCataloguesPage() {
             <Input
               value={newElementName}
               onChange={(e) => setNewElementName(e.target.value)}
-              placeholder="Element — e.g. Payroll number"
+              placeholder={tc('element_ph')}
               className="flex-1"
             />
             <Input
               value={newElementGroup}
               onChange={(e) => setNewElementGroup(e.target.value)}
-              placeholder="Group — e.g. Employment"
+              placeholder={tc('group_ph')}
               className="flex-1"
             />
             <Button onClick={handleAddElement} disabled={!newElementName.trim() || !newElementGroup.trim() || createElement.isPending}>
-              <Plus className="w-4 h-4" /> Add
+              <Plus className="w-4 h-4" aria-hidden="true" /> {tc('add')}
             </Button>
           </div>
 
@@ -313,7 +313,7 @@ export default function RopaCataloguesPage() {
                 await updateElement.mutateAsync({ id, data: { [columnId]: value } });
                 refreshElements();
               }}
-              emptyStateMessage="No data elements in the catalogue."
+              emptyStateMessage={tc('empty_elements')}
             />
           </div>
         </div>
@@ -323,11 +323,11 @@ export default function RopaCataloguesPage() {
             <Input
               value={newSubjectName}
               onChange={(e) => setNewSubjectName(e.target.value)}
-              placeholder="Category — e.g. Scheme trustees"
+              placeholder={tc('category_ph')}
               className="flex-1"
             />
             <Button onClick={handleAddSubject} disabled={!newSubjectName.trim() || createSubject.isPending}>
-              <Plus className="w-4 h-4" /> Add
+              <Plus className="w-4 h-4" aria-hidden="true" /> {tc('add')}
             </Button>
           </div>
 
@@ -341,7 +341,7 @@ export default function RopaCataloguesPage() {
                 await updateSubject.mutateAsync({ id, data: { [columnId]: value } });
                 refreshSubjects();
               }}
-              emptyStateMessage="No data subject categories in the catalogue."
+              emptyStateMessage={tc('empty_subjects')}
             />
           </div>
         </div>

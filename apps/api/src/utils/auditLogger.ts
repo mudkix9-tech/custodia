@@ -77,6 +77,27 @@ export const ACTION_DESCRIPTIONS: Record<string, (input: any) => string> = {
   'ropa.dataSubjects.create': (input) => `Added data subject category "${input.category}"`,
   'ropa.dataSubjects.update': () => `Updated a data subject category`,
   'ropa.dataSubjects.delete': () => `Removed a data subject category`,
+  // Sprint 2's lifecycle actions. Every one of them carries `id` or
+  // `processingActivityId`, so extractResourceId files them against the activity and
+  // they land in its History tab — which is the only place Art. 5(2) accountability
+  // for "who approved this, and when" can be read.
+  'ropa.archive': () => `Archived processing activity`,
+  'ropa.restore': () => `Restored processing activity from the archive`,
+  'ropa.duplicate': (input) => `Duplicated processing activity${input.name ? ` as "${input.name}"` : ''}`,
+  'ropa.review.attest': () => `Attested that the record is accurate`,
+  'ropa.approval.submit': () => `Requested approval`,
+  'ropa.approval.decide': (input) => `Approval ${input.decision}`,
+  'ropa.approval.withdraw': () => `Withdrew the approval request`,
+  'ropa.versions.create': (input) => `Took a version snapshot${input.note ? `: ${input.note}` : ''}`,
+  'ropa.tasks.create': (input) => `Added task "${input.title}"`,
+  'ropa.tasks.update': () => `Updated a task`,
+  'ropa.tasks.delete': () => `Removed a task`,
+  'ropa.comments.create': () => `Commented on the record`,
+  'ropa.comments.resolve': () => `Resolved a comment`,
+  'ropa.comments.delete': () => `Deleted a comment`,
+  'ropa.bulk.update': (input) => `Bulk-edited ${(input.ids || []).length} processing activities`,
+  'ropa.bulk.archive': (input) => `Bulk-archived ${(input.ids || []).length} processing activities`,
+  'ropa.bulk.delete': (input) => `Bulk-deleted ${(input.ids || []).length} processing activities`,
   // Org-level catalogue edits are not activity history — they log against the
   // catalogue row's own id, which is right: renaming an element is one event, not
   // one per activity that uses it.

@@ -17,16 +17,12 @@ export type PaginatedResponse<T> = {
   };
 };
 
-export function encodeCursor(sortValue: string | Date, id: string): string {
-  const s = sortValue instanceof Date ? sortValue.toISOString() : sortValue;
-  const payload = JSON.stringify({ s, i: id });
-  return Buffer.from(payload).toString('base64url');
-}
-
-export function decodeCursor(cursor: string): { sortValue: string; id: string } {
-  const payload = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
-  return { sortValue: payload.s, id: payload.i };
-}
+// The codec lives in its own module so that encoding a cursor does not require a
+// database connection — this file imports db.js, which throws on import without
+// DATABASE_URL, and the codec's fixtures need to run without one. Re-exported so
+// every existing importer keeps working.
+export { encodeCursor, decodeCursor } from './cursor.js';
+import { encodeCursor, decodeCursor } from './cursor.js';
 
 // Overloaded so callers get the table's real row type. The single generic `<T>`
 // this used to carry had no inference site, so every one of the 26 call sites
@@ -81,9 +77,7 @@ export async function paginatedQuery<T>(
   if (params.after) {
     try {
       const cursor = decodeCursor(params.after);
-      const cursorDate = new Date(cursor.sortValue);
-      const isDate = !isNaN(cursorDate.getTime());
-      const val = isDate ? cursorDate : cursor.sortValue;
+      const val = cursor.isDate ? new Date(cursor.sortValue) : cursor.sortValue;
 
       if (sortOrder === 'desc') {
         whereConditions.push(

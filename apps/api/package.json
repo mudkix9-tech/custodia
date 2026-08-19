@@ -20,7 +20,8 @@
     "test:transfers": "tsx src/constants/transferDestinations.test.ts",
     "test:scoring": "tsx src/lib/scoring.test.ts",
     "test:ropa-completeness": "tsx src/lib/ropaCompleteness.test.ts",
-    "test:ropa-vocab": "tsx src/constants/ropaVocabularies.test.ts"
+    "test:ropa-vocab": "tsx src/constants/ropaVocabularies.test.ts",
+    "test:ropa-lifecycle": "tsx src/lib/ropaLifecycle.test.ts"
   },
   "keywords": [],
   "author": "",

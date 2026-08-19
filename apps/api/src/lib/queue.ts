@@ -152,6 +152,8 @@ const DORMANT_JOBS = new Set<string>([
   'vendor-intelligence:dpa-page-change-detector',
   'vendor-intelligence:assessment-reminder-checker',
   'vendor-intelligence:weekly-organization-discovery-trigger',
+  'ropa-reviews:ropa-review-reminder-checker',
+  'ropa-reviews-dispatcher:ropa-reviews-dispatcher',
 ]);
 
 export function parseJobAllowlist(raw = process.env.WORKERS_ENABLED_JOBS): Set<string> | null {

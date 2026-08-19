@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { AlertTriangle, Plus, ShieldAlert, Loader2, Save, Trash2 } from 'lucide-react';
 import { DataGrid } from 'ui';
@@ -76,6 +77,9 @@ const matchVendorFromDescription = (description: string, orgVendors: any[]) => {
 };
 
 export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: string, dpiaId?: string | null, onDpiaLinked: (id: string) => void }) {
+  const t = useTranslations('ropa.dpia');
+  // Risk levels are register vocabulary and already translated there.
+  const tRopa = useTranslations('ropa');
   const [isCreating, setIsCreating] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
   const [localResidualRisks, setLocalResidualRisks] = useState<DpiaResidualRisk[]>([]);
@@ -190,7 +194,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
     setIsCreating(true);
     try {
       const newDpia = await createDpiaMutation.mutateAsync({
-        title: 'New DPIA for Activity',
+        title: t('new_dpia_title'),
         processingActivityIds: [activityId]
       });
       await updateActivityMutation.mutateAsync({
@@ -220,7 +224,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
     if (!dpiaId) return;
     await createRiskMutation.mutateAsync({
       dpiaId,
-      description: 'New Risk Identified',
+      description: t('new_risk'),
       likelihood: 3,
       severity: 3
     });
@@ -311,7 +315,11 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
   };
 
   if (isLoadingDpia && dpiaId) {
-    return <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" /></div>;
+    return (
+      <div className="p-8 flex justify-center" role="status" aria-label={t('loading')}>
+        <Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" aria-hidden="true" />
+      </div>
+    );
   }
 
   if (!dpiaId || !dpia) {
@@ -321,10 +329,8 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
           <div className="mx-auto w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
             <ShieldAlert className="w-6 h-6 text-clay-600" />
           </div>
-          <h2 className="text-[16px] font-medium text-[#F4F5F6]">Data Protection Impact Assessment</h2>
-          <p className="text-[13.5px] text-[#6E747A] max-w-lg mx-auto leading-relaxed">
-            A DPIA is required if this processing activity is likely to result in a high risk to the rights and freedoms of individuals.
-          </p>
+          <h2 className="text-[16px] font-medium text-[#F4F5F6]">{t('title')}</h2>
+          <p className="text-[13.5px] text-[#6E747A] max-w-lg mx-auto leading-relaxed">{t('subtitle')}</p>
           
           <div className="flex items-center justify-center gap-3 pt-4">
             <Button
@@ -332,21 +338,21 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
               disabled={isCreating}
               className="flex items-center gap-2"
             >
-              {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              Create New DPIA
+              {isCreating ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Plus className="w-4 h-4" aria-hidden="true" />}
+              {t('create')}
             </Button>
           </div>
         </div>
 
         {allDpias && allDpias.length > 0 && (
           <div className="bg-[#08090A] hairline rounded-2xl p-6">
-            <h3 className="text-[13px] font-medium text-[#F4F5F6] mb-4">Or Link Existing DPIA</h3>
+            <h3 className="text-[13px] font-medium text-[#F4F5F6] mb-4">{t('link_existing')}</h3>
             <div className="space-y-2">
               {allDpias.map(d => (
                 <div key={d.id} className="flex items-center justify-between p-3 bg-[#0D0F11] hairline rounded-xl">
                   <div>
                     <div className="text-[13px] font-medium text-[#F4F5F6]">{d.title}</div>
-                    <div className="text-[12px] text-[#6E747A]">Status: {d.status}</div>
+                    <div className="text-[12px] text-[#6E747A]">{t('status_line', { status: d.status ?? '' })}</div>
                   </div>
                   <Button
                     variant="outline"
@@ -355,7 +361,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                     disabled={isLinking}
                     className="text-[#C9A227] hover:text-[#C9A227] border-[#C9A227]/30 hover:bg-[#C9A227]/10 transition-colors"
                   >
-                    Link to this activity
+                    {t('link_to_activity')}
                   </Button>
                 </div>
               ))}
@@ -409,19 +415,19 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
   };
 
   const riskColumns = [
-    { header: 'Risk Description', accessorKey: 'description', cell: RiskTextCell },
+    { header: t('col_risk_description'), accessorKey: 'description', cell: RiskTextCell },
     {
-      header: 'Likelihood (1-5)',
+      header: t('col_likelihood_scale'),
       accessorKey: 'likelihood',
       cell: (props: any) => <RiskScaleCell {...props} prefix="L" />,
     },
     {
-      header: 'Severity (1-5)',
+      header: t('col_severity_scale'),
       accessorKey: 'severity',
       cell: (props: any) => <RiskScaleCell {...props} prefix="S" />,
     },
     { 
-      header: 'Risk Score', 
+      header: t('col_risk_score'), 
       accessorKey: 'initialRiskScore',
       cell: (info: any) => {
         const score = info.getValue();
@@ -436,7 +442,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Delete risk"
+          aria-label={t('delete_risk')}
           onClick={() => handleDeleteRisk(row.original.id)}
           className="w-7 h-7 text-[#6E747A] hover:text-clay-600 hover:bg-white/5"
         >
@@ -454,18 +460,20 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-[16px] font-medium text-[#F4F5F6]">{dpia.title}</h2>
-            <div className="text-[13px] text-[#6E747A] mt-1">Status: <span className="font-medium text-[#E6E8EA]">{dpia.status}</span></div>
+            <div className="text-[13px] text-[#6E747A] mt-1">
+              {t('status')} <span className="font-medium text-[#E6E8EA]">{dpia.status}</span>
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-6 pt-4 border-t border-ink-900/8">
           <div>
-            <label className="text-[12.5px] font-medium text-[#E6E8EA]">Overall Initial Risk Level</label>
-            <div className="mt-1 text-[14px] font-medium text-clay-600">{dpia.overallRiskLevel || 'Not Calculated'}</div>
+            <span className="text-[12.5px] font-medium text-[#E6E8EA]">{t('overall_initial')}</span>
+            <div className="mt-1 text-[14px] font-medium text-clay-600">{dpia.overallRiskLevel || t('not_calculated')}</div>
           </div>
           <div>
-            <label className="text-[12.5px] font-medium text-[#E6E8EA]">Residual Risk Level</label>
-            <div className="mt-1 text-[14px] font-medium text-[#C9A227]">{dpia.residualRiskLevel || 'Pending Mitigations'}</div>
+            <span className="text-[12.5px] font-medium text-[#E6E8EA]">{t('residual_level')}</span>
+            <div className="mt-1 text-[14px] font-medium text-[#C9A227]">{dpia.residualRiskLevel || t('pending_mitigations')}</div>
           </div>
         </div>
       </div>
@@ -474,10 +482,10 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
       {activeHighRiskVendors.map((vendor: any) => (
         <div key={vendor.orgVendorId} className="bg-amber-500/10 border border-amber-900/50 rounded-xl p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4 text-amber-300 animate-in fade-in duration-200">
           <div className="flex gap-3 leading-relaxed">
-            <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" aria-hidden="true" />
             <div className="text-[13px]">
-              <span className="font-bold block mb-0.5 text-amber-950">High Risk Vendor Warning</span>
-              Vendor <strong>{vendor.name}</strong> linked to this activity is currently flagged as <strong>{vendor.riskLevel} risk</strong> (Score: {vendor.riskScore}). Consider documenting this as a residual risk in your assessment.
+              <span className="font-bold block mb-0.5 text-amber-950">{t('vendor_warning')}</span>
+              {t('vendor_warning_body', { name: vendor.name, level: vendor.riskLevel, score: vendor.riskScore })}
             </div>
           </div>
           <Button
@@ -485,7 +493,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
             onClick={() => handleAddHighRiskVendorRisk(vendor)}
             className="text-amber-300 bg-[#0D0F11] border-amber-900/50 hover:bg-amber-500/15 self-start sm:self-center shrink-0 shadow-panel-elevated"
           >
-            Document Risk
+            {t('document_risk')}
           </Button>
         </div>
       ))}
@@ -493,14 +501,15 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
       {/* Risk Matrix & Mitigations (Initial Risks) */}
       <div className="bg-[#08090A] hairline rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[14px] font-medium text-[#F4F5F6]">Initial Risk Assessment</h3>
-          <Button 
+          <h3 className="text-[14px] font-medium text-[#F4F5F6]">{t('initial_assessment')}</h3>
+          <Button
             variant="outline"
             size="icon"
+            aria-label={t('add_risk')}
             onClick={handleAddRisk}
             className="w-7 h-7 bg-[#C9A227]/10 text-[#C9A227] hover:bg-[#C9A227]/20 border-none"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
           </Button>
         </div>
         
@@ -513,7 +522,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
           />
         ) : (
           <div className="py-8 text-center border border-dashed border-white/20 rounded-xl bg-[#0D0F11]/50">
-            <p className="text-[13px] text-[#6E747A]">No initial risks identified yet.</p>
+            <p className="text-[13px] text-[#6E747A]">{t('no_initial_risks')}</p>
           </div>
         )}
       </div>
@@ -522,14 +531,14 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
       <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-[14px] font-medium text-[#F4F5F6]">Residual Risks & Mitigations</h3>
+            <h3 className="text-[14px] font-medium text-[#F4F5F6]">{t('residual_title')}</h3>
             {saveStatus === 'saving' && (
               <span className="text-[11px] text-[#6E747A] flex items-center gap-1">
-                <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+                <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" /> {t('saving')}
               </span>
             )}
-            {saveStatus === 'saved' && <span className="text-[11px] text-[#C9A227] font-medium">✓ Saved</span>}
-            {saveStatus === 'error' && <span className="text-[11px] text-clay-600 font-medium">⚠ Save failed</span>}
+            {saveStatus === 'saved' && <span className="text-[11px] text-[#C9A227] font-medium">✓ {t('saved')}</span>}
+            {saveStatus === 'error' && <span className="text-[11px] text-clay-600 font-medium">⚠ {t('save_failed')}</span>}
           </div>
           <Button 
             variant="outline"
@@ -537,7 +546,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
             onClick={handleAddResidualRisk}
             className="bg-[#C9A227]/10 text-[#C9A227] hover:bg-[#C9A227]/20 border-none flex items-center gap-1"
           >
-            <Plus className="w-3.5 h-3.5" /> Add Residual Risk
+            <Plus className="w-3.5 h-3.5" aria-hidden="true" /> {t('add_residual')}
           </Button>
         </div>
 
@@ -549,13 +558,14 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
               return (
                 <div key={risk.id || index} id={`risk-${risk.id}`} className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated space-y-4 transition-all duration-300">
                   <div className="flex items-start justify-between gap-4">
-                    <h4 className="text-[13px] font-medium text-[#E6E8EA]">Residual Risk #{index + 1}</h4>
+                    <h4 className="text-[13px] font-medium text-[#E6E8EA]">{t('residual_n', { n: index + 1 })}</h4>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteResidualRisk(risk.id)}
                       className="text-[#6E747A] hover:text-clay-600 hover:bg-red-500/10"
-                      title="Delete residual risk"
+                      title={t('delete_residual')}
+                      aria-label={t('delete_residual')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -564,11 +574,12 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Description */}
                     <div className="space-y-1.5">
-                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">Risk Description</label>
+                      <label htmlFor={`risk-desc-${risk.id}`} className="text-[12.5px] font-medium text-[#E6E8EA]">{t('risk_description')}</label>
                       <Textarea
+                        id={`risk-desc-${risk.id}`}
                         value={risk.description || ''}
                         onChange={(e) => handleFieldChange(risk.id, 'description', e.target.value)}
-                        placeholder="e.g. Unauthorized access to health records via third-party vendor"
+                        placeholder={t('risk_description_ph')}
                         rows={3}
                       />
                       
@@ -576,7 +587,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                       {matchedVendor && risk.relatedVendorId !== matchedVendor.orgVendorId && (
                         <div className="mt-1 flex items-center justify-between p-2 bg-[#C9A227]/10 border border-[#C9A227]/30 rounded-lg text-[12px] text-[#C9A227]">
                           <span className="flex items-center gap-1.5">
-                            💡 Suggestion: Link to vendor <strong>{matchedVendor.name}</strong>?
+                            💡 {t('vendor_suggestion', { name: matchedVendor.name })}
                           </span>
                           <Button
                             variant="outline"
@@ -585,7 +596,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                             onClick={() => handleFieldChange(risk.id, 'relatedVendorId', matchedVendor.orgVendorId)}
                             className="text-[11px] font-bold text-[#C9A227] hover:text-[#E5C463] bg-[#0D0F11] border-[#C9A227]/30 h-auto py-0.5 px-2"
                           >
-                            Link Vendor
+                            {t('link_vendor')}
                           </Button>
                         </div>
                       )}
@@ -595,36 +606,33 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <label className="text-[12.5px] font-medium text-[#E6E8EA]">Risk Category</label>
+                          <label htmlFor={`risk-cat-${risk.id}`} className="text-[12.5px] font-medium text-[#E6E8EA]">{t('risk_category')}</label>
                           <Select
                             value={risk.riskCategory || 'other'}
                             onValueChange={(value) => handleFieldChange(risk.id, 'riskCategory', value)}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger id={`risk-cat-${risk.id}`}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="confidentiality">Confidentiality</SelectItem>
-                              <SelectItem value="integrity">Integrity</SelectItem>
-                              <SelectItem value="availability">Availability</SelectItem>
-                              <SelectItem value="unlawful_processing">Unlawful Processing</SelectItem>
-                              <SelectItem value="discrimination">Discrimination</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
+                              {(['confidentiality', 'integrity', 'availability', 'unlawful_processing', 'discrimination', 'other'] as const).map((c) => (
+                                <SelectItem key={c} value={c}>{t(`categories.${c}`)}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
 
                         <div className="space-y-1.5">
-                          <label className="text-[12.5px] font-medium text-[#E6E8EA]">Related Vendor</label>
+                          <label htmlFor={`risk-vendor-${risk.id}`} className="text-[12.5px] font-medium text-[#E6E8EA]">{t('related_vendor')}</label>
                           <Select
                             value={risk.relatedVendorId || 'none'}
                             onValueChange={(value) => handleFieldChange(risk.id, 'relatedVendorId', value === 'none' ? null : value)}
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="None / Not Vendor Related" />
+                            <SelectTrigger id={`risk-vendor-${risk.id}`}>
+                              <SelectValue placeholder={t('no_vendor')} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">None / Not Vendor Related</SelectItem>
+                              <SelectItem value="none">{t('no_vendor')}</SelectItem>
                               {orgVendors.map((v) => (
                                 <SelectItem key={v.orgVendorId} value={v.orgVendorId}>{v.name}</SelectItem>
                               ))}
@@ -643,16 +651,16 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[12.5px] font-medium text-[#E6E8EA]">Related Processing Activity (ROPA)</label>
+                        <label htmlFor={`risk-activity-${risk.id}`} className="text-[12.5px] font-medium text-[#E6E8EA]">{t('related_activity')}</label>
                         <Select
                           value={risk.relatedProcessingActivityId || 'none'}
                           onValueChange={(value) => handleFieldChange(risk.id, 'relatedProcessingActivityId', value === 'none' ? null : value)}
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="None / Primary Subject Activity" />
+                          <SelectTrigger id={`risk-activity-${risk.id}`}>
+                            <SelectValue placeholder={t('no_activity')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">None / Primary Subject Activity</SelectItem>
+                            <SelectItem value="none">{t('no_activity')}</SelectItem>
                             {ropaActivities.map((a) => (
                               <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                             ))}
@@ -665,44 +673,44 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                   {/* Likelihood, Severity, Calculated Residual Level */}
                   <div className="grid grid-cols-3 gap-4 items-end pt-3 border-t border-white/5">
                     <div className="space-y-1.5">
-                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">Likelihood</label>
+                      <label htmlFor={`risk-likelihood-${risk.id}`} className="text-[12.5px] font-medium text-[#E6E8EA]">{t('likelihood')}</label>
                       <Select
                         value={risk.likelihood || 'low'}
                         onValueChange={(value) => handleFieldChange(risk.id, 'likelihood', value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger id={`risk-likelihood-${risk.id}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
+                          {(['low', 'medium', 'high'] as const).map((level) => (
+                            <SelectItem key={level} value={level}>{tRopa(`risk_levels.${level}`)}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">Severity</label>
+                      <label htmlFor={`risk-severity-${risk.id}`} className="text-[12.5px] font-medium text-[#E6E8EA]">{t('severity')}</label>
                       <Select
                         value={risk.severity || 'low'}
                         onValueChange={(value) => handleFieldChange(risk.id, 'severity', value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger id={`risk-severity-${risk.id}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
+                          {(['low', 'medium', 'high'] as const).map((level) => (
+                            <SelectItem key={level} value={level}>{tRopa(`risk_levels.${level}`)}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-1.5 flex flex-col justify-end">
-                      <span className="text-[12.5px] font-medium text-[#6E747A] mb-1">Residual Risk Level</span>
+                      <span className="text-[12.5px] font-medium text-[#6E747A] mb-1">{t('residual_level')}</span>
                       <div className="flex">
                         <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border ${getRiskLevelBadge(risk.residualRiskLevel)}`}>
-                          {risk.residualRiskLevel}
+                          {risk.residualRiskLevel ? tRopa(`risk_levels.${risk.residualRiskLevel}`) : ''}
                         </span>
                       </div>
                     </div>
@@ -716,7 +724,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                         onCheckedChange={(checked) => handleFieldChange(risk.id, 'mitigationRequired', checked)}
                         className="mt-0.5"
                       />
-                      Mitigation Required to Accept Residual Risk
+                      {t('mitigation_required')}
                     </label>
                   </div>
 
@@ -724,27 +732,28 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                   {risk.mitigationRequired && (
                     <div className="bg-[#08090A] border border-white/5 rounded-xl p-4 space-y-4 animate-in fade-in slide-in-from-top-1 duration-150">
                       <div className="space-y-1.5">
-                        <label className="text-[12px] font-semibold text-[#E6E8EA]">Mitigation Description</label>
+                        <label htmlFor={`mit-desc-${risk.id}`} className="text-[12px] font-semibold text-[#E6E8EA]">{t('mitigation_description')}</label>
                         <Textarea
+                          id={`mit-desc-${risk.id}`}
                           value={risk.mitigationDescription || ''}
                           onChange={(e) => handleFieldChange(risk.id, 'mitigationDescription', e.target.value)}
-                          placeholder="e.g. Implement strict MFA on all third-party endpoints and perform quarterly audits"
+                          placeholder={t('mitigation_description_ph')}
                           rows={2}
                         />
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <label className="text-[12px] font-semibold text-[#E6E8EA]">Mitigation Owner</label>
+                          <label htmlFor={`mit-owner-${risk.id}`} className="text-[12px] font-semibold text-[#E6E8EA]">{t('mitigation_owner')}</label>
                           <Select
                             value={risk.mitigationOwner || 'none'}
                             onValueChange={(value) => handleFieldChange(risk.id, 'mitigationOwner', value === 'none' ? null : value)}
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Unassigned" />
+                            <SelectTrigger id={`mit-owner-${risk.id}`}>
+                              <SelectValue placeholder={t('unassigned')} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">Unassigned</SelectItem>
+                              <SelectItem value="none">{t('unassigned')}</SelectItem>
                               {teamMembers.map((member: any) => (
                                 <SelectItem key={member.id} value={member.id}>{member.name || member.email}</SelectItem>
                               ))}
@@ -753,8 +762,9 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                         </div>
 
                         <div className="space-y-1.5">
-                          <label className="text-[12px] font-semibold text-[#E6E8EA]">Due Date</label>
+                          <label htmlFor={`mit-due-${risk.id}`} className="text-[12px] font-semibold text-[#E6E8EA]">{t('due_date')}</label>
                           <Input
+                            id={`mit-due-${risk.id}`}
                             type="date"
                             value={risk.mitigationDueDate || ''}
                             onChange={(e) => handleFieldChange(risk.id, 'mitigationDueDate', e.target.value)}
@@ -762,8 +772,8 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                         </div>
 
                         <div className="space-y-1.5 flex flex-col">
-                          <label className="text-[12px] font-semibold text-[#E6E8EA] mb-1.5">Mitigation Status</label>
-                          <div className="flex items-center gap-1 bg-[#08090A] p-1 rounded-lg border border-white/10">
+                          <span className="text-[12px] font-semibold text-[#E6E8EA] mb-1.5">{t('mitigation_status')}</span>
+                          <div role="group" aria-label={t('mitigation_status')} className="flex items-center gap-1 bg-[#08090A] p-1 rounded-lg border border-white/10">
                             <Button
                               variant={risk.mitigationStatus === 'not_started' ? 'default' : 'ghost'}
                               onClick={() => handleMitigationStatusChange(risk.id, 'not_started')}
@@ -773,7 +783,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                                   : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >
-                              Not Started
+                              {t('mitigation_states.not_started')}
                             </Button>
                             <Button
                               variant={risk.mitigationStatus === 'in_progress' ? 'default' : 'ghost'}
@@ -784,7 +794,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                                   : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >
-                              In Progress
+                              {t('mitigation_states.in_progress')}
                             </Button>
                             <Button
                               variant={risk.mitigationStatus === 'completed' ? 'default' : 'ghost'}
@@ -795,7 +805,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
                                   : 'text-[#9BA1A6] hover:bg-[#0D0F11] hover:text-[#F4F5F6]'
                               }`}
                             >
-                              Completed
+                              {t('mitigation_states.completed')}
                             </Button>
                           </div>
                         </div>
@@ -808,7 +818,7 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
           </div>
         ) : (
           <div className="py-8 text-center border border-dashed border-white/20 rounded-xl bg-[#0D0F11]/50">
-            <p className="text-[13px] text-[#6E747A]">No residual risks documented yet.</p>
+            <p className="text-[13px] text-[#6E747A]">{t('no_residual_risks')}</p>
           </div>
         )}
       </div>
@@ -817,9 +827,11 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
 }
 
 function VendorRiskCard({ vendorId }: { vendorId: string }) {
+  const t = useTranslations('ropa.dpia');
+  const tRopa = useTranslations('ropa');
   const { data, isLoading } = trpc.vendors.getOrgVendorDetails.useQuery({ vendorId }, { enabled: !!vendorId });
 
-  if (isLoading) return <div className="text-[11px] text-[#6E747A] py-2">Loading vendor risk profile...</div>;
+  if (isLoading) return <div className="text-[11px] text-[#6E747A] py-2">{t('loading_vendor')}</div>;
   if (!data) return null;
 
   const { orgVendor, vendor } = data;
@@ -827,13 +839,13 @@ function VendorRiskCard({ vendorId }: { vendorId: string }) {
   return (
     <div className="mt-3 bg-[#0D0F11] border border-white/10 rounded-xl p-4 text-[#F4F5F6] shadow-panel-elevated leading-relaxed text-left">
       <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-[#6E747A]">Vendor Risk Profile</span>
+        <span className="text-[11px] font-bold uppercase tracking-widest text-[#6E747A]">{t('vendor_profile')}</span>
         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border
           ${orgVendor.riskLevel === 'low' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/50' : 
             orgVendor.riskLevel === 'critical' ? 'bg-red-500/10 text-red-400 border-red-900/50' : 
             'bg-amber-500/10 text-amber-400 border-amber-900/50'}
         `}>
-          {orgVendor.riskLevel} Risk ({orgVendor.riskScore})
+          {t('vendor_risk_badge', { level: tRopa(`risk_levels.${orgVendor.riskLevel || 'low'}`), score: orgVendor.riskScore })}
         </span>
       </div>
 
@@ -845,7 +857,7 @@ function VendorRiskCard({ vendorId }: { vendorId: string }) {
               <div key={key} className="space-y-0.5">
                 <div className="flex justify-between text-[11px] font-medium">
                   <span className="text-[#E6E8EA] capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                  <span className="font-semibold text-clay-600">+{factor.points} pts</span>
+                  <span className="font-semibold text-clay-600">{t('points', { points: factor.points })}</span>
                 </div>
                 <div className="text-[10.5px] text-[#6E747A] leading-tight">
                   {factor.detail}
@@ -855,7 +867,7 @@ function VendorRiskCard({ vendorId }: { vendorId: string }) {
           })}
           {Object.values(orgVendor.riskFactors as Record<string, any>).every(f => f.points === 0) && (
             <div className="text-[11px] text-[#C9A227] text-center py-1 font-medium">
-              ✓ No active risk factors detected.
+              ✓ {t('no_risk_factors')}
             </div>
           )}
         </div>

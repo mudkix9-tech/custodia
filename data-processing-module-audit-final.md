@@ -22,13 +22,139 @@ mechanism-specific transfer evidence, recipient categories and roles, owners,
 completeness scoring and a publication gate. See §0.2 for what shipped and what did
 not. Migration `0046_regular_amphibian` is applied to production.
 
+**Sprint 2 was built on 19 August 2026.** The register now has a lifecycle: a review
+cycle with attestation, an approval workflow, point-in-time versions, archive,
+restore, duplicate and dependency-aware delete, server-side search and filters with
+saved views, working bulk operations, tasks and comments, notification coverage, and
+the i18n and accessibility sweep the five child tabs had been waiting for. See §0.3.
+Migration `0047_numerous_black_bolt` is generated and **not yet applied**.
+
 **The document is otherwise unrevised.** Part II's findings are left exactly as written,
 each with a **FIXED** marker, its commit, and a one-line note on what the fix was, so the
 audit and the remediation can be read against each other. Part I still describes the
 module **as audited** — most of the behaviours it documents no longer exist — and
-Parts III to VI still stand as the record of what was found, with §0.2 stating which
-Part IV items are now closed. The Article 30 verdict in Part III is superseded for the
-items Sprint 1 built and unchanged for everything else.
+Parts III to VI still stand as the record of what was found, with §0.2 and §0.3 stating
+which Part IV items are now closed. The Article 30 verdict in Part III is superseded for
+the items Sprints 1 and 2 built and unchanged for everything else.
+
+---
+
+## 0.3 Build status — Sprint 2
+
+Built 19 August 2026. `npm run check` passes at 0 type errors in both workspaces with
+every guard green, plus one new guard and 32 new assertions.
+
+### Schema
+
+`packages/db/drizzle/0047_numerous_black_bolt.sql` — purely additive: six
+`CREATE TABLE`, thirteen `ADD COLUMN` on `processing_activities`, and the indexes and
+foreign keys they need. No drops, no type changes, no `SET NOT NULL` without a
+default. **Not yet applied** — unlike 0046, which was applied before this document was
+written.
+
+| Item | What was added |
+|---|---|
+| **B19** | `review_cadence_months`; `processing_activity_attestations` |
+| **B20** | `approval_state`, `approval_requested_by/_at`, `current_reviewer_id`, `approved_by/_at`; `processing_activity_approvals` with a partial unique index allowing one open request per activity |
+| **B21** | `processing_activity_versions` — a jsonb snapshot of the activity and its four child tables, `UNIQUE (activity, version)` |
+| **B22** | `archived_at`, `archived_by`, `status_before_archive` |
+| **B24** | `duplicated_from_id` |
+| **K103** | `tags` (jsonb), `completeness_score` (denormalised), and the three indexes R143 asks for |
+| **K104** | `ropa_saved_views`, `UNIQUE (org, author, name)` |
+| **M110/M111** | `processing_activity_tasks`, `processing_activity_comments` |
+
+### Four decisions worth stating
+
+1. **Approval is a separate axis from status.** Collapsing them would mean a record
+   could not be both published and awaiting re-approval, which is the ordinary state
+   of one somebody has just edited. An edit to a *substantive* field drops an
+   approved record back to draft; an owner, tag or cadence change does not. If every
+   save re-opened approval, nothing would ever stay approved, and the workflow would
+   be the first thing a customer switched off.
+
+2. **`completeness_score` is denormalised onto the activity.** The score is a pure
+   function and the editor still computes it live; the stored copy exists so the
+   register can *filter and sort* on it. Answering "show me everything under 50%"
+   without it means loading every activity's children on every list request. It is
+   refreshed by the API after each of the fourteen mutations that can move it, and
+   deliberately does not touch `updated_at` — for the two reasons the subject-category
+   mirror does not either (D1's sort, D45's optimistic lock).
+
+3. **No bulk publish.** `bulk.update` offers draft and under_review and not active.
+   Publication runs through B23's gate, which is a per-record judgement about
+   Article 30 completeness; a bulk version would either bypass the gate or fail on
+   the first record and leave the rest in an unknown state. The UI says so where the
+   option would have been, rather than leaving a gap somebody reads as a bug.
+
+4. **A version is a jsonb snapshot, not a shadow schema.** What is being preserved is
+   the *document* an approver signed. A shadow table per entity would have to be
+   migrated in step with the live one forever, and the first time it drifted every
+   historic version would silently start reading differently. The cost is that a
+   snapshot is not queryable field by field, which is the right trade: nobody filters
+   the register on what it said in March.
+
+### Closed by Sprint 2
+
+`B19` · `B20` · `B21` · `B22` · `B24` · `K102` · `K103` · `K104` · `L107` · `L108` ·
+`M110` · `M111` · `M112` · `R141` · `R142`, and `R143`'s three indexes as a
+side-effect of the filters that need them.
+
+`R142` went further than extracting the five tabs: `utils/ropaVocabularies.ts` held
+about eighty English labels and thirty hints as string literals, which is why every
+enum in the register rendered in English even on the tabs that were translated. The
+module now exposes values only, and `useRopaVocabulary()` resolves wording through
+`ropa.vocab` / `ropa.vocab_hints`. That is the "format enums through the message
+catalogue" half of the finding, and it is the half that was going to be forgotten.
+
+### Two guards and a fixture suite
+
+- **`npm run check:ropa-i18n --workspace=apps/web`** is R142's "add a check so it
+  cannot regress". It fails on a literal in a translated position and on a `t()` key
+  that is not in `en/ropa.json` — the second because next-intl renders a missing key
+  as its own dotted path, in every locale, and neither `tsc` nor `check:messages` can
+  see it: the first sees a string literal, the second compares the catalogues only
+  against each other.
+- **`npm run test:ropa-lifecycle --workspace=apps/api`** — 83 assertions over
+  `lib/ropaLifecycle.ts`. Everything in it decides something on the user's behalf and
+  fails silently: a review date that drifts three days a cycle looks fine in a
+  browser; a reminder ladder matching "anything in the past" looks fine until an
+  owner has been emailed about the same record forty nights running; a child-row diff
+  paired by position looks fine and is a lie somebody will act on.
+
+### One bug found while building, in code Sprint 2 did not otherwise touch
+
+`utils/pagination.ts` decided whether a cursor's sort value was a date by trying to
+parse it. Every caller sorted on a timestamp, so it was right every time — until
+K102 added `name` and `completenessScore` as sort options. An activity named "2024"
+mints a cursor that parses as a date, so the second page compares a varchar column
+against a timestamp; a score of 85 parses as 85 milliseconds past the epoch. Both
+surface as a list that silently ends after one page, which reads as "there are no
+more records". The cursor now records the type rather than inviting a guess, older
+cursors held in open tabs still decode, and the codec moved to `utils/cursor.ts` so
+that encoding one no longer requires a database connection — which is what let it be
+covered by fixtures at all.
+
+### Deliberately not built, so the omissions are not mistaken for oversights
+
+- **Restoring a version.** Versions are listed, read and diffed against each other or
+  against the record as it stands; nothing writes one back. A restore has to decide
+  what happens to child rows created since, and doing that badly is worse than not
+  offering it. `pre_restore` is already in the `reason` vocabulary for when it lands.
+- **`K105`'s column chooser and grouping, and `K106`'s audit mode.** Both are P1/P2
+  and neither is what "the register cannot be filtered" meant.
+- **`M113`** — presence, locking, delegation, and the change-proposal model for
+  approved records. All P2, and the last of them is a different shape of workflow
+  from the one B20 asked for.
+- **`L109`'s undo**, and bulk retention-schedule application, which depends on `E`.
+- **The org-level approval requirement.** `organizations.settings` carries
+  `ropaReviewCadenceMonths`, which the review cycle reads. There is no equivalent
+  "approval is mandatory before publishing" switch: making one would change what
+  `ropa.update` does for every existing customer on the day it shipped, and that is a
+  decision for a release note rather than a sprint.
+- **The 34 route-segment error boundaries** are still hardcoded English, ROPA's three
+  among them. They are one shared template; translating three of them would leave the
+  register inconsistent with the rest of the app. `check:ropa-i18n` skips them by
+  name, with that reason recorded where it skips them.
 
 ---
 
@@ -248,9 +374,9 @@ paragraph and it is the single largest thing left in the data model.*
 
 Scored as audited, before Sprint 0. Left as scored, because what the numbers say about how
 the module was built is the part that outlives the patch. Sprint 0 moved only the tenancy row —
-the rest were scored on capability and it built none. **Sprint 1 built capability, so the
+the rest were scored on capability and it built none. **Sprints 1 and 2 built capability, so the
 right-hand column below now carries a second figure wherever it moves; the reasoning in each
-line is the reasoning as audited.**
+line is the reasoning as audited, and the italic note says what has changed since.**
 
 | Dimension | Score | One line |
 |---|---|---|
@@ -259,16 +385,16 @@ line is the reasoning as audited.**
 | Data model fidelity | **2/10** → **5/10** | One flat row per activity; no per-category retention, no purpose/basis pairs, no lineage. *Per-category retention, subject and element catalogues and structured transfers exist; purposes are still not first-class — A1* |
 | Special categories (Art. 9 / 10) | **2/10** → **8/10** | A boolean. No Art. 9(2)(a)–(j) condition; no Art. 10 concept at all. *Both now recorded per data category, with the national-law citation the four conditions that need it demand* |
 | Chapter V transfers (44–49) | **1/10** → **7/10** | Tab non-functional; adequacy list wrong where it works; no DPF, no SCC metadata, no chaining. *Mechanism-specific evidence, DPF, computed adequacy and the repealed-2010-clauses warning are in; onward-transfer chaining is not — H79* |
-| Register operations (lifecycle, review, ownership) | **1/10** → **4/10** | No owner, no approval, no review cycle, no delete UI, no versioning. *Owners and a publication gate exist; review cycle, approval, versioning and delete are Sprint 2* |
+| Register operations (lifecycle, review, ownership) | **1/10** → **8/10** | No owner, no approval, no review cycle, no delete UI, no versioning. *All of it exists: owners, publication gate, review cycle with attestation, approval workflow, versions, archive, restore, duplicate and dependency-aware delete. Restoring a version is the piece that is not there* |
 | Assessments (LIA / DPIA / TIA) | **2/10** | LIA table exists with zero procedures; DPIA has no route; TIA is per-vendor, not per-transfer |
-| Evidence and audit trail | **1/10** → **2/10** | History reads `newValue`/`details`; the columns are `changes`/`metadata`. Always empty. *Diff and child-row logging fixed, and the publication exception is now dated and attributed; still no versioning, snapshots or export* |
+| Evidence and audit trail | **1/10** → **5/10** | History reads `newValue`/`details`; the columns are `changes`/`metadata`. Always empty. *Diff and child-row logging fixed; the publication exception, every approval decision and every attestation are now dated and attributed, and versions are snapshotted and diffable. The audit trail itself is still unfiltered, unpaged and unexportable — I85–I90* |
 | Exports and regulator readiness | **3/10** | Two divergent PDFs, neither an Article 30 record; CSV exports only loaded pages |
-| Search, filter, views | **1/10** → **2/10** | Client-side search over the loaded 25 rows. No filters at all. *One server-side filter now exists — owner — because B18 is meaningless without it. Everything else is K102–K104* |
-| Bulk operations | **0/10** | Two buttons with no handlers, behind a selection UI that cannot select. *Removed, so the score is now honest rather than misleading* |
+| Search, filter, views | **1/10** → **8/10** | Client-side search over the loaded 25 rows. No filters at all. *Server-side search across the register and its children, seventeen filters, five sorts and saved views, shareable. The column chooser and grouping (K105) and audit mode (K106) are not there* |
+| Bulk operations | **0/10** → **7/10** | Two buttons with no handlers, behind a selection UI that cannot select. *Selection works, including select-all-matching-filter rather than the loaded page, and carries owner, status, review date, tags, archive, delete and a server-side export. No undo, and no bulk publish — the Article 30 gate is a per-record judgement* |
 | Population and discovery | **4/10** | 32 seeded templates and a genuinely good CSV importer; nothing else |
 | Cross-module automation | **3/10** | Re-consent detection and embeddings work; seven ROPA-adjacent jobs are dormant |
 | Tenancy and data integrity | **4/10** → **8/10** | Ownership checks are excellent; one cross-tenant write; mass assignment on three mutations. *All fixed, and the guard extended to the class it could not see* |
-| i18n | **4/10** | List and four tabs translated; five tabs hardcoded English. *Unchanged by design: Sprint 1's new panels match the tabs they sit in, and R142 extracts all of them in one sweep* |
+| i18n | **4/10** → **9/10** | List and four tabs translated; five tabs hardcoded English. *All of it is extracted, including the ~110 enum labels and hints in `utils/ropaVocabularies.ts` that made every picker read in English regardless of locale, and `check:ropa-i18n` fails on a regression. The 34 shared route error boundaries are still English, app-wide* |
 | Visual design and responsiveness | **8/10** | Genuinely good. Fast, clean, coherent — and the reason the defects are a surprise |
 
 **What is genuinely good, and should be said before the register of failures:** the CSV importer's
@@ -1452,12 +1578,24 @@ owed rather than merely next: `R142`, because Sprint 1 added panels to tabs that
 hardcoded English, and `K102`–`K104`, because the register now has an owner, a completeness score
 and a publication state that nothing can filter or sort on.
 
-## Sprint 2 — make it maintainable
+## Sprint 2 — make it maintainable — **DONE, 19 August 2026**
 
 Review cycle and attestation (B19) · approval workflow and versioning (B20, B21) · archive, delete
 and duplicate (B22, B24) · server-side search, filters and saved views (K102–K104) · working bulk
 operations (L107, L108) · tasks and comments (M110, M111) · notification coverage (M112) ·
 accessibility and i18n (R141, R142).
+
+All fifteen are built. Migration `0047_numerous_black_bolt` is generated and not yet applied.
+`R142` also took `utils/ropaVocabularies.ts` — about a hundred and ten English labels and hints
+that made every enum in the register read in English even on the translated tabs — and
+`check:ropa-i18n` is the guard that stops both halves regressing. See §0.3 for the four decisions
+that departed from this list, what was deliberately left, and the pagination bug the new sort
+options exposed.
+
+**Sprint 3 is now the next thing to build**, and nothing in it was started. `J93`, the canonical
+Article 30 export, is the one owed rather than merely next: the register now holds materially more
+than the exports render, and every one of them — the CSV, both PDFs, the audit pack — still reads
+the Sprint 0 field set.
 
 ## Sprint 3 — make it defensible
 

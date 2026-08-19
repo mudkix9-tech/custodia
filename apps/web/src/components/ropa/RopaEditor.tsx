@@ -27,6 +27,9 @@ import { RecipientsTab } from './tabs/RecipientsTab';
 import { TransfersTab } from './tabs/TransfersTab';
 import { DpiaTab } from './tabs/DpiaTab';
 import { HistoryTab } from './tabs/HistoryTab';
+import { GovernanceTab } from './tabs/GovernanceTab';
+import { WorkTab } from './tabs/WorkTab';
+import { RecordActions } from './RecordActions';
 
 const TABS = [
   { id: 'general', label: 'tabs.general' },
@@ -37,6 +40,11 @@ const TABS = [
   { id: 'retention', label: 'tabs.retention' },
   { id: 'security', label: 'tabs.security' },
   { id: 'dpia', label: 'tabs.dpia' },
+  // B19–B21 and M110/M111. Two tabs rather than five, because each is one workflow
+  // read top to bottom: what happens *to* the record, and the work and discussion
+  // arising from it.
+  { id: 'governance', label: 'tabs.governance' },
+  { id: 'work', label: 'tabs.work' },
   { id: 'history', label: 'tabs.history' },
 ];
 
@@ -70,6 +78,9 @@ const ropaSchema = z.object({
 export function RopaEditor({ initialData = null }: { initialData?: any }) {
   const router = useRouter();
   const t = useTranslations('ropa.editor');
+  // The status and approval pills are register vocabulary, not editor vocabulary,
+  // and the register already carries the translations.
+  const tRopa = useTranslations('ropa');
   const searchParams = useSearchParams();
   const isNew = !initialData;
   const [activeTab, setActiveTab] = useState('general');
@@ -212,6 +223,10 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
 
   // B18. team.list is already org-scoped and returns only the public columns.
   const { data: orgMembers = [] } = trpc.team.list.useQuery(undefined, { enabled: !isNew });
+  // B20/M111 need to know who is looking: only the assigned reviewer may decide an
+  // approval, and only an author may delete their own comment.
+  const { data: me } = trpc.settings.getUserSettings.useQuery(undefined, { enabled: !isNew });
+  const currentUserId = me?.id;
 
   // B25/B26. Server-scored, so the ring and the panel agree with the gate that
   // actually refuses the save — a second implementation here would drift from it.
@@ -242,7 +257,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
     const newSelected = assignedClientIds.includes(clientId)
       ? assignedClientIds.filter(id => id !== clientId)
       : [...assignedClientIds, clientId];
-      
+
     setAssignedClientIds(newSelected);
     await updateClientsMutation.mutateAsync({
       processingActivityId: initialData.id,
@@ -294,6 +309,11 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         setTimeout(() => setSaveStatus('idle'), 2000);
       } catch (err) {
         setSaveStatus('error');
+        // R141. The save indicator is a colour change in the corner of a sticky
+        // header; a screen-reader user gets no signal from it at all, and an
+        // autosaved editor that has silently stopped saving is the worst version
+        // of that.
+        announce(t('error_saving'));
       }
     }, 500);
 
@@ -346,8 +366,12 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
       setSaveStatus('idle');
       if (err?.data?.code === 'PRECONDITION_FAILED') {
         setPublicationRefusal(err.message);
+        // The refusal names which Articles are unanswered, and it appears in a
+        // panel the user may not be looking at.
+        announce(err.message);
       } else {
         setSaveStatus('error');
+        announce(t('error_saving'));
       }
     }
   };
@@ -362,7 +386,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
       <div className="border-b border-ink-900/8 bg-[#08090A]/90 backdrop-blur sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-              <Button 
+              <Button
               variant="ghost"
               size="icon"
               onClick={() => router.push('/ropa')}
@@ -376,13 +400,22 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </h1>
               {!isNew && (
                 <div className="flex items-center gap-2 mt-1 text-[12px]">
+                  {/* Translated rather than printing the raw column value, which is
+                      what a German reader used to get. */}
                   <span className={`px-2 py-0.5 rounded-md ${
-                    formData.status === 'active' ? 'bg-[#C9A227]/10 text-[#C9A227]' : 
+                    formData.status === 'active' ? 'bg-[#C9A227]/10 text-[#C9A227]' :
                     'bg-white/5 text-[#6E747A]'
                   }`}>
-                    {formData.status}
+                    {tRopa(`status_types.${formData.status}`)}
                   </span>
-                  
+                  {/* B20. Approval is a separate fact from status — a record can be
+                      published and awaiting re-approval at the same time. */}
+                  {initialData?.approvalState && initialData.approvalState !== 'draft' && (
+                    <span className="px-2 py-0.5 rounded-md bg-white/5 text-[#9BA1A6]">
+                      {tRopa(`approval.states.${initialData.approvalState}`)}
+                    </span>
+                  )}
+
                   {/* Save Status Indicator */}
                   {autoSaveTabs.includes(activeTab) && (
                     <span className="text-[#6E747A] flex items-center gap-1">
@@ -395,7 +428,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             {!isNew && completeness && (
               <button
@@ -434,8 +467,17 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 <Lightbulb className="w-4 h-4" /> {t('help_me_fill')}
               </Button>
             )}
+            {/* B22/B24. Archive, restore, duplicate and delete. Three of them used
+                to be dead buttons removed in Sprint 0 precisely because they did
+                nothing; they are here now because they do. */}
+            {!isNew && (
+              <RecordActions
+                activity={initialData}
+                onChanged={() => utils.ropa.get.invalidate({ id: initialData.id })}
+              />
+            )}
             {isNew && (
-              <Button 
+              <Button
                 onClick={handleCreate}
                 disabled={!formData.name || !formData.purpose || !formData.lawfulBasis}
                 className="flex items-center gap-1.5"
@@ -446,16 +488,41 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           </div>
         </div>
 
-        {/* Tabs Navigation */}
+        {/* Tabs Navigation.
+            R141. A real tablist: roving tabindex, arrow keys, and aria-controls
+            pointing at the panel below. A row of plain buttons announces eleven
+            unrelated controls and gives no way to tell which one is showing. */}
         {!isNew && (
-          <div className="max-w-7xl mx-auto px-6 flex items-center gap-1 overflow-x-auto hide-scrollbar">
+          <div
+            role="tablist"
+            aria-label={t('tablist_label')}
+            onKeyDown={(e) => {
+              const index = TABS.findIndex((tab) => tab.id === activeTab);
+              const move = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+              if (move === 0 && e.key !== 'Home' && e.key !== 'End') return;
+              e.preventDefault();
+              const next =
+                e.key === 'Home' ? 0
+                : e.key === 'End' ? TABS.length - 1
+                : (index + move + TABS.length) % TABS.length;
+              setActiveTab(TABS[next]!.id);
+              document.getElementById(`ropa-tab-${TABS[next]!.id}`)?.focus();
+            }}
+            className="max-w-7xl mx-auto px-6 flex items-center gap-1 overflow-x-auto hide-scrollbar"
+          >
             {TABS.map(tab => (
               <button
                 key={tab.id}
+                id={`ropa-tab-${tab.id}`}
+                role="tab"
+                type="button"
+                aria-selected={activeTab === tab.id}
+                aria-controls="ropa-tabpanel"
+                tabIndex={activeTab === tab.id ? 0 : -1}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 text-[13.5px] whitespace-nowrap transition-colors border-b-2 ${
-                  activeTab === tab.id 
-                    ? 'border-[#C9A227] text-[#C9A227] font-medium' 
+                className={`px-4 py-3 text-[13.5px] whitespace-nowrap transition-colors border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#C9A227]/60 ${
+                  activeTab === tab.id
+                    ? 'border-[#C9A227] text-[#C9A227] font-medium'
                     : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:border-white/10'
                 }`}
               >
@@ -467,8 +534,14 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-6">
-        
+      <div
+        id="ropa-tabpanel"
+        role={isNew ? undefined : 'tabpanel'}
+        aria-labelledby={isNew ? undefined : `ropa-tab-${activeTab}`}
+        tabIndex={isNew ? undefined : -1}
+        className="flex-1 max-w-7xl w-full mx-auto p-6"
+      >
+
         {!isNew && showExceptionForm && (
           <div className="mb-6 bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated space-y-4">
             <div className="flex items-start justify-between gap-4">
@@ -499,8 +572,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
             </ul>
 
             <div className="space-y-2 pt-2 border-t border-white/10">
-              <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('gate.exception_label')}</label>
+              <label htmlFor="ropa-gate-exception-label" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('gate.exception_label')}</label>
               <Textarea
+                id="ropa-gate-exception-label"
                 value={exceptionReason}
                 onChange={(e) => setExceptionReason(e.target.value)}
                 rows={3}
@@ -537,7 +611,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
         )}
 
         {relevantImpacts.length > 0 && !showImpacts && (
-          <div 
+          <div
             onClick={() => setShowImpacts(true)}
             className="mb-6 bg-blue-500/10 border border-blue-500/25 text-blue-300 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center justify-between cursor-pointer hover:bg-blue-500/15 transition-colors"
           >
@@ -573,7 +647,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                         {t('view_full_update')} <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
-                    <button 
+                    <button
                       onClick={() => acknowledgeMutation.mutate({ updateId: update.id })}
                       disabled={acknowledgeMutation.isPending}
                       className="shrink-0 bg-[#0D0F11] border border-blue-500/25 hover:border-blue-400 text-blue-400 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
@@ -592,10 +666,11 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           <div className="space-y-6 max-w-3xl">
             <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
               <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">{t('general.title')}</h2>
-              
+
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.activity_name')} <span className="text-clay-600">*</span></label>
-                <Input 
+                <label htmlFor="ropa-general-activity-name" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.activity_name')} <span className="text-clay-600">*</span></label>
+                <Input
+                  id="ropa-general-activity-name"
                   {...register('name')}
                   placeholder={t('general.activity_name_ph')}
                 />
@@ -603,8 +678,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.purpose')} <span className="text-clay-600">*</span></label>
-                <Textarea 
+                <label htmlFor="ropa-general-purpose" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.purpose')} <span className="text-clay-600">*</span></label>
+                <Textarea
+                  id="ropa-general-purpose"
                   {...register('purpose')}
                   rows={3}
                   placeholder={t('general.purpose_ph')}
@@ -612,8 +688,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.description')}</label>
-                <Textarea 
+                <label htmlFor="ropa-general-description" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.description')}</label>
+                <Textarea
+                  id="ropa-general-description"
                   value={formData.description || ''}
                   onChange={(e) => handleFieldChange('description', e.target.value)}
                   rows={2}
@@ -622,13 +699,13 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
 
               {isNew && (
                 <div className="space-y-2 pt-4 border-t border-ink-900/8">
-                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('legal.lawful_basis')} *</label>
+                  <label htmlFor="ropa-legal-lawful-basis" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('legal.lawful_basis')} *</label>
                   <Controller
                     name="lawfulBasis"
                     control={control}
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
+                        <SelectTrigger id="ropa-legal-lawful-basis">
                           <SelectValue placeholder={t('legal.select_lawful_basis')} />
                         </SelectTrigger>
                         <SelectContent>
@@ -646,16 +723,19 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 </div>
               )}
 
+              {/* R141. A group of switches needs a group name, not a label: a
+                  htmlFor pointing at the first of eight is worse than nothing,
+                  because it claims to name a control it does not describe. */}
               {!isNew && allClients.length > 0 && (
-                <div className="space-y-3 pt-4 border-t border-ink-900/8">
-                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.client_assignment')}</label>
+                <fieldset className="space-y-3 pt-4 border-t border-ink-900/8">
+                  <legend className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.client_assignment')}</legend>
                   <p className="text-[12px] text-[#6E747A] mb-2">{t('general.client_assignment_desc')}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2">
                     {allClients.map((client: any) => (
                       <label key={client.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
                         assignedClientIds.includes(client.id) ? 'border-indigo-500/30 bg-indigo-500/15' : 'border-white/10 hover:border-ink-900/30'
                       }`}>
-                        <Switch 
+                        <Switch
                           checked={assignedClientIds.includes(client.id)}
                           onCheckedChange={() => handleClientToggle(client.id)}
                           className="mt-0.5"
@@ -666,17 +746,17 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                       </label>
                     ))}
                   </div>
-                </div>
+                </fieldset>
               )}
-              
+
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-ink-900/8">
                 <div className="space-y-2">
-                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.status')}</label>
-                  <Select 
+                  <label htmlFor="ropa-general-status" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.status')}</label>
+                  <Select
                     value={formData.status}
                     onValueChange={(value) => handleFieldChange('status', value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="ropa-general-status">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -692,14 +772,14 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
-                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.risk_level')}</label>
-                  <Select 
+                  <label htmlFor="ropa-general-risk-level" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.risk_level')}</label>
+                  <Select
                     value={formData.riskLevel}
                     onValueChange={(value) => handleFieldChange('riskLevel', value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="ropa-general-risk-level">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -718,12 +798,12 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               {!isNew && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-ink-900/8">
                   <div className="space-y-2">
-                    <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.business_owner')}</label>
+                    <label htmlFor="ropa-general-business-owner" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.business_owner')}</label>
                     <Select
                       value={formData.businessOwnerId || 'none'}
                       onValueChange={(v) => handleFieldChange('businessOwnerId', v === 'none' ? null : v)}
                     >
-                      <SelectTrigger><SelectValue placeholder={t('general.owner_unassigned')} /></SelectTrigger>
+                      <SelectTrigger id="ropa-general-business-owner"><SelectValue placeholder={t('general.owner_unassigned')} /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">{t('general.owner_unassigned')}</SelectItem>
                         {orgMembers.map((m: any) => (
@@ -735,12 +815,12 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.privacy_owner')}</label>
+                    <label htmlFor="ropa-general-privacy-owner" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('general.privacy_owner')}</label>
                     <Select
                       value={formData.privacyOwnerId || 'none'}
                       onValueChange={(v) => handleFieldChange('privacyOwnerId', v === 'none' ? null : v)}
                     >
-                      <SelectTrigger><SelectValue placeholder={t('general.owner_unassigned')} /></SelectTrigger>
+                      <SelectTrigger id="ropa-general-privacy-owner"><SelectValue placeholder={t('general.owner_unassigned')} /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">{t('general.owner_unassigned')}</SelectItem>
                         {orgMembers.map((m: any) => (
@@ -806,8 +886,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 {formData.involvesAutomatedDecisionMaking && (
                   <div className="space-y-4 pl-3 border-l-2 border-[#C9A227]/30">
                     <div className="space-y-2">
-                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('adm.logic')}</label>
+                      <label htmlFor="ropa-adm-logic" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('adm.logic')}</label>
                       <Textarea
+                        id="ropa-adm-logic"
                         value={formData.admLogic || ''}
                         onChange={(e) => handleFieldChange('admLogic', e.target.value)}
                         rows={3}
@@ -817,8 +898,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('adm.significance')}</label>
+                      <label htmlFor="ropa-adm-significance" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('adm.significance')}</label>
                       <Textarea
+                        id="ropa-adm-significance"
                         value={formData.admSignificance || ''}
                         onChange={(e) => handleFieldChange('admSignificance', e.target.value)}
                         rows={2}
@@ -827,8 +909,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('adm.human_intervention')}</label>
+                      <label htmlFor="ropa-adm-human-intervention" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('adm.human_intervention')}</label>
                       <Textarea
+                        id="ropa-adm-human-intervention"
                         value={formData.admHumanIntervention || ''}
                         onChange={(e) => handleFieldChange('admHumanIntervention', e.target.value)}
                         rows={2}
@@ -858,9 +941,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           <div className="space-y-6 max-w-3xl">
             <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
               <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">{t('legal.title')}</h2>
-              
+
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('legal.lawful_basis')} <span className="text-clay-600">*</span></label>
+                <label htmlFor="ropa-legal-lawful-basis" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('legal.lawful_basis')} <span className="text-clay-600">*</span></label>
                 <div className="mb-6">
                   <Label className="block text-sm font-medium text-[#E6E8EA] mb-1.5">{t('legal.role')}</Label>
                   <Controller
@@ -868,7 +951,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     control={control}
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
+                        <SelectTrigger id="ropa-legal-lawful-basis">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -956,9 +1039,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           <div className="space-y-6 max-w-3xl">
             <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
               <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">{t('retention.title')}</h2>
-              
+
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.retention_period')} <span className="text-clay-600">*</span></label>
+                <label htmlFor="ropa-retention-period" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.retention_period')} <span className="text-clay-600">*</span></label>
                 <Select
                   value={retentionIsCustom ? 'custom' : (formData.retentionPeriod || '')}
                   onValueChange={(value) => {
@@ -973,7 +1056,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     handleFieldChange('retentionPeriod', value);
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="ropa-retention-period">
                     <SelectValue placeholder={t('retention.select_retention')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -988,6 +1071,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                 </Select>
                 {retentionIsCustom && (
                   <Input
+                    aria-label={t('retention.custom')}
                     value={formData.retentionPeriod === 'custom' ? '' : (formData.retentionPeriod || '')}
                     onChange={(e) => handleFieldChange('retentionPeriod', e.target.value)}
                     placeholder={t('retention.custom_ph')}
@@ -996,8 +1080,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.justification')} <span className="text-clay-600">*</span></label>
-                <Textarea 
+                <label htmlFor="ropa-retention-justification" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.justification')} <span className="text-clay-600">*</span></label>
+                <Textarea
+                  id="ropa-retention-justification"
                   value={formData.retentionJustification || ''}
                   onChange={(e) => handleFieldChange('retentionJustification', e.target.value)}
                   rows={3}
@@ -1007,8 +1092,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.next_review')}</label>
-                  <Input 
+                  <label htmlFor="ropa-retention-next-review" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.next_review')}</label>
+                  <Input
+                    id="ropa-retention-next-review"
                     type="date"
                     value={formData.retentionReviewDate ? new Date(formData.retentionReviewDate).toISOString().split('T')[0] : ''}
                     onChange={(e) => handleFieldChange('retentionReviewDate', e.target.value ? new Date(e.target.value) : null)}
@@ -1017,8 +1103,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.deletion_procedure')}</label>
-                <Textarea 
+                <label htmlFor="ropa-retention-deletion-procedure" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('retention.deletion_procedure')}</label>
+                <Textarea
+                  id="ropa-retention-deletion-procedure"
                   value={formData.deletionProcedure || ''}
                   onChange={(e) => handleFieldChange('deletionProcedure', e.target.value)}
                   rows={2}
@@ -1034,9 +1121,9 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
           <div className="space-y-6 max-w-3xl">
             <div className="bg-[#08090A] hairline rounded-2xl p-6 space-y-5 fade-up">
               <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">{t('security.title')}</h2>
-              
-              <div className="space-y-3">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('security.standard_measures')}</label>
+
+              <fieldset className="space-y-3">
+                <legend className="text-[12.5px] font-medium text-[#E6E8EA]">{t('security.standard_measures')}</legend>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
                     { id: 'encryption_at_rest', label: t('security.encryption_at_rest') },
@@ -1049,11 +1136,11 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     { id: 'audit_logging', label: t('security.audit_logs') },
                   ].map(measure => (
                     <label key={measure.id} className="flex items-start gap-3 p-3 bg-white/50 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
-                      <Switch 
+                      <Switch
                         checked={Array.isArray(formData.securityMeasures) && formData.securityMeasures.includes(measure.id)}
                         onCheckedChange={(checked) => {
                           const current = Array.isArray(formData.securityMeasures) ? formData.securityMeasures : [];
-                          const updated = checked 
+                          const updated = checked
                             ? [...current, measure.id]
                             : current.filter((m: string) => m !== measure.id);
                           handleFieldChange('securityMeasures', updated);
@@ -1064,11 +1151,12 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
                     </label>
                   ))}
                 </div>
-              </div>
+              </fieldset>
 
               <div className="space-y-2 mt-4">
-                <label className="text-[12.5px] font-medium text-[#E6E8EA]">{t('security.additional_notes')}</label>
-                <Textarea 
+                <label htmlFor="ropa-security-additional-notes" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('security.additional_notes')}</label>
+                <Textarea
+                  id="ropa-security-additional-notes"
                   value={formData.securityMeasuresDetail || ''}
                   onChange={(e) => handleFieldChange('securityMeasuresDetail', e.target.value)}
                   rows={3}
@@ -1081,14 +1169,32 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
 
         {/* Tab 8: DPIA */}
         {activeTab === 'dpia' && !isNew && (
-          <DpiaTab 
-            activityId={initialData.id} 
-            dpiaId={formData.dpiaId} 
-            onDpiaLinked={(id) => handleFieldChange('dpiaId', id)} 
+          <DpiaTab
+            activityId={initialData.id}
+            dpiaId={formData.dpiaId}
+            onDpiaLinked={(id) => handleFieldChange('dpiaId', id)}
           />
         )}
 
-        {/* Tab 9: History */}
+        {/* B19–B21. Review cycle, attestations, approval and versions. */}
+        {activeTab === 'governance' && !isNew && (
+          <GovernanceTab
+            activity={initialData}
+            orgMembers={orgMembers as any}
+            currentUserId={currentUserId}
+            onChanged={() => {
+              utils.ropa.get.invalidate({ id: initialData.id });
+              utils.ropa.list.invalidate();
+            }}
+          />
+        )}
+
+        {/* M110/M111. Tasks and comments. */}
+        {activeTab === 'work' && !isNew && (
+          <WorkTab activityId={initialData.id} orgMembers={orgMembers as any} currentUserId={currentUserId} />
+        )}
+
+        {/* Tab: History */}
         {activeTab === 'history' && !isNew && (
           <HistoryTab activityId={initialData.id} />
         )}

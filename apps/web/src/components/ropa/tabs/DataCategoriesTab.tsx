@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { Trash2, Plus, ChevronDown, ChevronRight, AlertTriangle, Scale } from 'lucide-react';
@@ -10,14 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataSubjectsPanel } from './DataSubjectsPanel';
-import {
-  SPECIAL_CATEGORY_TYPES,
-  ARTICLE_9_CONDITIONS,
-  IDENTIFIABILITY_LEVELS,
-  RETENTION_TRIGGERS,
-  article9RequiresNationalLaw,
-  labelFor,
-} from '@/utils/ropaVocabularies';
+import { article9RequiresNationalLaw, useRopaVocabulary } from '@/utils/ropaVocabularies';
 
 /**
  * Art. 30(1)(c), second limb — the categories of personal data.
@@ -35,6 +29,8 @@ import {
  * activity-level dropdown could only ever hold one.
  */
 export function DataCategoriesTab({ activityId }: { activityId: string }) {
+  const t = useTranslations('ropa.categories');
+  const vocab = useRopaVocabulary();
   const utils = trpc.useUtils();
   const { data = [], isLoading } = trpc.ropa.dataCategories.list.useQuery({ processingActivityId: activityId });
   const { data: catalogue = [] } = trpc.ropa.catalogue.elements.list.useQuery({ includeArchived: false });
@@ -92,10 +88,10 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
-      title: 'Remove data category?',
-      description: 'Are you sure you want to remove this data category?',
+      title: t('remove_title'),
+      description: t('remove_body'),
       variant: 'destructive',
-      confirmText: 'Remove',
+      confirmText: t('remove'),
     });
     if (confirmed) {
       await deleteMutation.mutateAsync({ id });
@@ -130,7 +126,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
       cell: ({ row }: any) => (
         <button
           onClick={() => setExpanded(expanded === row.original.id ? null : row.original.id)}
-          aria-label={expanded === row.original.id ? 'Hide detail' : 'Show detail'}
+          aria-label={expanded === row.original.id ? t('hide_detail') : t('show_detail')}
           aria-expanded={expanded === row.original.id}
           className="text-[#6E747A] hover:text-[#F4F5F6] transition-colors"
         >
@@ -141,7 +137,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
     },
     {
       accessorKey: 'category',
-      header: 'Data Category',
+      header: t('col_category'),
       cell: ({ row, getValue, column, table }: any) => {
         // A catalogue-linked row is not free text: renaming it here would silently
         // break the link that answers "which activities process health data?".
@@ -153,7 +149,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
     },
     {
       accessorKey: 'categoryGroup',
-      header: 'Group',
+      header: t('col_group'),
       cell: ({ row, getValue, column, table }: any) =>
         row.original.catalogueId
           ? <span className="text-[#9BA1A6] px-2">{getValue()}</span>
@@ -161,12 +157,12 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
     },
     {
       accessorKey: 'source',
-      header: 'Source',
+      header: t('col_source'),
       cell: EditableCell,
     },
     {
       accessorKey: 'retentionPeriod',
-      header: 'Retention',
+      header: t('col_retention'),
       // Read-only here, edited in the detail panel. A period on its own is not a
       // retention rule — "6 years" from collection and from the end of the contract
       // are different answers — so the field that holds it is never offered without
@@ -180,25 +176,29 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
               onClick={() => setExpanded(row.original.id)}
               className="px-2 text-[12px] text-amber-400 hover:underline"
             >
-              Not recorded
+              {t('not_recorded')}
             </button>
           );
         }
         return (
           <button onClick={() => setExpanded(row.original.id)} className="px-2 text-left">
             <span className="text-[#F4F5F6] text-[13px]">{value}</span>
-            {trigger && <span className="text-[#6E747A] text-[12px]"> from {labelFor(RETENTION_TRIGGERS, trigger).toLowerCase()}</span>}
+            {trigger && (
+              <span className="text-[#6E747A] text-[12px]">
+                {' '}{t('counted_from_inline', { trigger: vocab.label('retention_trigger', trigger).toLowerCase() })}
+              </span>
+            )}
           </button>
         );
       },
     },
     {
       id: 'classification',
-      header: 'Classification',
+      header: t('col_classification'),
       cell: ({ row }: any) => {
         const r = row.original;
         if (!r.isSpecialCategory && !r.isCriminalData) {
-          return <span className="text-[#6E747A] text-[13px]">Standard</span>;
+          return <span className="text-[#6E747A] text-[13px]">{t('standard')}</span>;
         }
         // The two are not the same thing, and conflating them is the most common
         // mistake in a hand-built register — so they never share a badge.
@@ -212,7 +212,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
                   ? 'bg-clay-600/10 text-clay-600 border-clay-600/30'
                   : 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30'
               }`}>
-                {needsCondition && <AlertTriangle className="w-3 h-3" />} Art. 9
+                {needsCondition && <AlertTriangle className="w-3 h-3" aria-hidden="true" />} {t('art9')}
               </span>
             )}
             {r.isCriminalData && (
@@ -221,7 +221,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
                   ? 'bg-clay-600/10 text-clay-600 border-clay-600/30'
                   : 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30'
               }`}>
-                {needsAuthority && <AlertTriangle className="w-3 h-3" />} Art. 10
+                {needsAuthority && <AlertTriangle className="w-3 h-3" aria-hidden="true" />} {t('art10')}
               </span>
             )}
           </div>
@@ -230,14 +230,14 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
     },
     {
       accessorKey: 'isSpecialCategory',
-      header: 'Special',
+      header: t('col_special'),
       cell: ({ getValue, row, column, table }: any) => (
         <input
           type="checkbox"
-          aria-label="Special category data"
+          aria-label={t('special_aria')}
           checked={getValue() || false}
           disabled={!!row.original.catalogueId}
-          title={row.original.catalogueId ? 'Set by the catalogue entry.' : undefined}
+          title={row.original.catalogueId ? t('set_by_catalogue') : undefined}
           onChange={(e) => table.options.meta?.updateData(row.index, column.id, e.target.checked)}
           className="rounded border-white/20 text-[#C9A227] focus:ring-[#C9A227]/40 bg-transparent disabled:opacity-40"
         />
@@ -250,7 +250,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Delete"
+          aria-label={t('remove')}
           onClick={() => handleDelete(row.original.id)}
           className="w-7 h-7 text-[#6E747A] hover:text-clay-600 hover:bg-white/5"
         >
@@ -272,28 +272,25 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
       <DataSubjectsPanel activityId={activityId} />
 
       <div className="bg-[#08090A] hairline rounded-2xl p-6">
-        <h2 className="text-[14px] font-medium text-[#F4F5F6] mb-1">Data Categories</h2>
-        <p className="text-[12px] text-[#6E747A] mb-4">
-          Art. 30(1)(c) — what personal data this activity processes. Expand a row for the Art. 9(2) condition,
-          the Art. 10 authority and the retention rule for that category.
-        </p>
+        <h2 className="text-[14px] font-medium text-[#F4F5F6] mb-1">{t('title')}</h2>
+        <p className="text-[12px] text-[#6E747A] mb-4">{t('subtitle')}</p>
 
         <div className="flex gap-3 mb-5 max-w-xl">
           <Select value={selectedCatalogueId || 'none'} onValueChange={(v) => setSelectedCatalogueId(v === 'none' ? '' : v)}>
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Add from your data element catalogue..." />
+            <SelectTrigger className="flex-1" aria-label={t('add_from_catalogue')}>
+              <SelectValue placeholder={t('add_from_catalogue')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Add from your data element catalogue...</SelectItem>
+              <SelectItem value="none">{t('add_from_catalogue')}</SelectItem>
               {catalogue.map((c: any) => (
                 <SelectItem key={c.id} value={c.id} disabled={alreadyAdded.has((c.name || '').toLowerCase())}>
-                  {c.elementGroup} · {c.name}{alreadyAdded.has((c.name || '').toLowerCase()) ? ' — already added' : ''}
+                  {c.elementGroup} · {c.name}{alreadyAdded.has((c.name || '').toLowerCase()) ? t('already_added') : ''}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Button onClick={handleAddFromCatalogue} disabled={!selectedCatalogueId || createMutation.isPending}>
-            <Plus className="w-4 h-4" /> Add
+            <Plus className="w-4 h-4" aria-hidden="true" /> {t('add')}
           </Button>
         </div>
 
@@ -305,7 +302,7 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
           enableInlineAdd={true}
           onAddRow={handleAdd}
           onInlineEdit={handleInlineEdit}
-          emptyStateMessage="No data categories added yet."
+          emptyStateMessage={t('empty')}
         />
       </div>
 
@@ -317,53 +314,52 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
               <p className="text-[12px] text-[#6E747A]">{detail.categoryGroup}</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => setExpanded(null)} className="text-[#6E747A] hover:text-[#F4F5F6]">
-              Close
+              {t('close')}
             </Button>
           </div>
 
           {/* ---- Retention, per category (A4) ---------------------------- */}
           <section className="space-y-3">
             <h4 className="text-[12.5px] font-medium text-[#E6E8EA] flex items-center gap-2">
-              Retention <span className="text-[11px] text-[#6E747A] font-normal">Art. 30(1)(f)</span>
+              {t('retention')} <span className="text-[11px] text-[#6E747A] font-normal">{t('art_30_1_f')}</span>
             </h4>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[12px] text-[#9BA1A6]">Period</label>
+                <label htmlFor="cat-period" className="text-[12px] text-[#9BA1A6]">{t('period')}</label>
                 <Input
+                  id="cat-period"
                   key={`${detail.id}-period`}
                   defaultValue={detail.retentionPeriod || ''}
                   onBlur={(e) => e.target.value !== (detail.retentionPeriod || '') && handleFieldChange(detail.id, 'retentionPeriod', e.target.value || null)}
-                  placeholder="E.g. 6 years"
+                  placeholder={t('period_ph')}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[12px] text-[#9BA1A6]">Counted from</label>
+                <label htmlFor="cat-trigger" className="text-[12px] text-[#9BA1A6]">{t('counted_from')}</label>
                 <Select
                   value={detail.retentionTrigger || 'none'}
                   onValueChange={(v) => handleFieldChange(detail.id, 'retentionTrigger', v === 'none' ? null : v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select a trigger..." /></SelectTrigger>
+                  <SelectTrigger id="cat-trigger"><SelectValue placeholder={t('select_trigger')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Not specified</SelectItem>
-                    {RETENTION_TRIGGERS.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    <SelectItem value="none">{t('not_specified')}</SelectItem>
+                    {vocab.options('retention_trigger').map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <p className="text-[12px] text-[#6E747A]">
-              A period without the event it runs from is not a rule — &quot;6 years&quot; from collection and from the
-              end of the contract are different answers.
-            </p>
+            <p className="text-[12px] text-[#6E747A]">{t('retention_hint')}</p>
             <div className="space-y-1.5">
-              <label className="text-[12px] text-[#9BA1A6]">Justification</label>
+              <label htmlFor="cat-retjust" className="text-[12px] text-[#9BA1A6]">{t('justification')}</label>
               <Textarea
+                id="cat-retjust"
                 key={`${detail.id}-retjust`}
                 defaultValue={detail.retentionJustification || ''}
                 onBlur={(e) => e.target.value !== (detail.retentionJustification || '') && handleFieldChange(detail.id, 'retentionJustification', e.target.value || null)}
                 rows={2}
-                placeholder="Statutory citation or business reason."
+                placeholder={t('justification_ph')}
               />
             </div>
           </section>
@@ -372,41 +368,38 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
           {detail.isSpecialCategory && (
             <section className="space-y-3 border-t border-white/10 pt-5">
               <h4 className="text-[12.5px] font-medium text-[#E6E8EA] flex items-center gap-2">
-                <Scale className="w-3.5 h-3.5 text-[#C9A227]" />
-                Special category condition <span className="text-[11px] text-[#6E747A] font-normal">Art. 9(2)</span>
+                <Scale className="w-3.5 h-3.5 text-[#C9A227]" aria-hidden="true" />
+                {t('special_condition')} <span className="text-[11px] text-[#6E747A] font-normal">{t('art_9_2')}</span>
               </h4>
-              <p className="text-[12px] text-[#6E747A]">
-                Art. 9(1) prohibits processing this data. Recording the category without the condition that lifts
-                the prohibition documents the problem and not the answer.
-              </p>
+              <p className="text-[12px] text-[#6E747A]">{t('special_condition_hint')}</p>
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[12px] text-[#9BA1A6]">Type of special category data</label>
+                  <label htmlFor="cat-sct" className="text-[12px] text-[#9BA1A6]">{t('special_type')}</label>
                   <Select
                     value={detail.specialCategoryType || 'none'}
                     onValueChange={(v) => handleFieldChange(detail.id, 'specialCategoryType', v === 'none' ? null : v)}
                   >
-                    <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                    <SelectTrigger id="cat-sct"><SelectValue placeholder={t('select')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Not specified</SelectItem>
-                      {SPECIAL_CATEGORY_TYPES.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      <SelectItem value="none">{t('not_specified')}</SelectItem>
+                      {vocab.options('special_category_type').map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[12px] text-[#9BA1A6]">Art. 9(2) condition</label>
+                  <label htmlFor="cat-a9c" className="text-[12px] text-[#9BA1A6]">{t('art_9_2_condition')}</label>
                   <Select
                     value={detail.article9Condition || 'none'}
                     onValueChange={(v) => handleFieldChange(detail.id, 'article9Condition', v === 'none' ? null : v)}
                   >
-                    <SelectTrigger><SelectValue placeholder="Select a condition..." /></SelectTrigger>
+                    <SelectTrigger id="cat-a9c"><SelectValue placeholder={t('select_condition')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Not specified</SelectItem>
-                      {ARTICLE_9_CONDITIONS.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      <SelectItem value="none">{t('not_specified')}</SelectItem>
+                      {vocab.options('article_9_condition').map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -415,26 +408,24 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
 
               {detail.article9Condition && (
                 <p className="text-[12px] text-[#9BA1A6] bg-white/5 rounded-xl px-3 py-2">
-                  {ARTICLE_9_CONDITIONS.find((c) => c.value === detail.article9Condition)?.hint}
+                  {vocab.hint('article_9_condition', detail.article9Condition)}
                 </p>
               )}
 
               {article9RequiresNationalLaw(detail.article9Condition) && (
                 <div className="space-y-1.5">
-                  <label className="text-[12px] text-[#9BA1A6]">
-                    Union or Member State law relied on <span className="text-clay-600">*</span>
+                  <label htmlFor="cat-natlaw" className="text-[12px] text-[#9BA1A6]">
+                    {t('national_law')} <span className="text-clay-600" aria-hidden="true">*</span>
                   </label>
                   <Textarea
+                    id="cat-natlaw"
                     key={`${detail.id}-natlaw`}
                     defaultValue={detail.article9NationalLawBasis || ''}
                     onBlur={(e) => e.target.value !== (detail.article9NationalLawBasis || '') && handleFieldChange(detail.id, 'article9NationalLawBasis', e.target.value || null)}
                     rows={2}
-                    placeholder="E.g. Employment Rights Act 1996 s.1; § 26 BDSG."
+                    placeholder={t('national_law_ph')}
                   />
-                  <p className="text-[12px] text-[#6E747A]">
-                    Conditions (b), (h), (i) and (j) are only available where such a law provides for them. Naming it
-                    is the difference between a condition and an assertion.
-                  </p>
+                  <p className="text-[12px] text-[#6E747A]">{t('national_law_hint')}</p>
                 </div>
               )}
             </section>
@@ -450,23 +441,23 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
                 className="mt-1 rounded border-white/20 text-[#C9A227] focus:ring-[#C9A227]/40 bg-transparent"
               />
               <div>
-                <p className="text-[13px] font-medium text-[#F4F5F6]">Criminal convictions and offences</p>
-                <p className="text-[12px] text-[#6E747A]">
-                  Art. 10 — not an Art. 9 category. It needs official authority or a specific Union or Member State
-                  authorisation of its own, which an Art. 9(2) condition does not carry.
-                </p>
+                <p className="text-[13px] font-medium text-[#F4F5F6]">{t('criminal')}</p>
+                <p className="text-[12px] text-[#6E747A]">{t('criminal_hint')}</p>
               </div>
             </label>
 
             {detail.isCriminalData && (
               <div className="space-y-1.5 pl-7">
-                <label className="text-[12px] text-[#9BA1A6]">Authority or authorisation <span className="text-clay-600">*</span></label>
+                <label htmlFor="cat-art10" className="text-[12px] text-[#9BA1A6]">
+                  {t('authority')} <span className="text-clay-600" aria-hidden="true">*</span>
+                </label>
                 <Textarea
+                  id="cat-art10"
                   key={`${detail.id}-art10`}
                   defaultValue={detail.article10Basis || ''}
                   onBlur={(e) => e.target.value !== (detail.article10Basis || '') && handleFieldChange(detail.id, 'article10Basis', e.target.value || null)}
                   rows={2}
-                  placeholder="E.g. DBS checks under the Rehabilitation of Offenders Act 1974 (Exceptions) Order 1975."
+                  placeholder={t('authority_ph')}
                 />
               </div>
             )}
@@ -476,44 +467,44 @@ export function DataCategoriesTab({ activityId }: { activityId: string }) {
           <section className="space-y-4 border-t border-white/10 pt-5">
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[12px] text-[#9BA1A6]">Identifiability</label>
+                <label htmlFor="cat-ident" className="text-[12px] text-[#9BA1A6]">{t('identifiability')}</label>
                 <Select
                   value={detail.identifiability || 'none'}
                   onValueChange={(v) => handleFieldChange(detail.id, 'identifiability', v === 'none' ? null : v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectTrigger id="cat-ident"><SelectValue placeholder={t('select')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Not specified</SelectItem>
-                    {IDENTIFIABILITY_LEVELS.map((l) => (
-                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                    <SelectItem value="none">{t('not_specified')}</SelectItem>
+                    {vocab.options('identifiability').map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {detail.identifiability && (
-                  <p className="text-[12px] text-[#6E747A]">
-                    {IDENTIFIABILITY_LEVELS.find((l) => l.value === detail.identifiability)?.hint}
-                  </p>
+                  <p className="text-[12px] text-[#6E747A]">{vocab.hint('identifiability', detail.identifiability)}</p>
                 )}
               </div>
               <div className="space-y-1.5">
-                <label className="text-[12px] text-[#9BA1A6]">Source detail</label>
+                <label htmlFor="cat-srcdetail" className="text-[12px] text-[#9BA1A6]">{t('source_detail')}</label>
                 <Input
+                  id="cat-srcdetail"
                   key={`${detail.id}-srcdetail`}
                   defaultValue={detail.sourceDetail || ''}
                   onBlur={(e) => e.target.value !== (detail.sourceDetail || '') && handleFieldChange(detail.id, 'sourceDetail', e.target.value || null)}
-                  placeholder="Art. 14(2)(f) — where it came from, if not the subject."
+                  placeholder={t('source_detail_ph')}
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[12px] text-[#9BA1A6]">Why this category is necessary</label>
+              <label htmlFor="cat-necessity" className="text-[12px] text-[#9BA1A6]">{t('necessity')}</label>
               <Textarea
+                id="cat-necessity"
                 key={`${detail.id}-necessity`}
                 defaultValue={detail.necessityJustification || ''}
                 onBlur={(e) => e.target.value !== (detail.necessityJustification || '') && handleFieldChange(detail.id, 'necessityJustification', e.target.value || null)}
                 rows={2}
-                placeholder="Art. 5(1)(c) data minimisation — what the purpose could not achieve without it."
+                placeholder={t('necessity_ph')}
               />
             </div>
           </section>

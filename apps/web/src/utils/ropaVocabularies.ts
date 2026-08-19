@@ -1,8 +1,9 @@
 /**
- * Display labels for the register's controlled vocabularies.
+ * The register's controlled vocabularies, as values only.
  *
  * The values live in `apps/api/src/constants/ropaVocabularies.ts`, which is what
- * validates them; this file only names them for a human. The split mirrors
+ * validates them; this file lists the ones the web workspace renders and resolves
+ * their wording through the message catalogue. The split mirrors
  * `utils/countries.ts` against `constants/transferDestinations.ts` — the API owns
  * the truth, the web owns the wording.
  *
@@ -11,43 +12,33 @@
  * `ropa.transferDestinations` rather than copied here. A second copy of that list is
  * precisely what produced D17.
  *
- * These strings are English. The five child tabs are hardcoded English throughout
- * and extracting them is one sweep (R142, Sprint 2) — adding a half-translated tab
- * now would leave German and French readers seeing raw key paths, which next-intl
- * renders verbatim and which is worse than consistent English.
+ * R142. These labels used to be English string literals in this file, which is why
+ * every enum in the register rendered in English to German and French readers even
+ * on the tabs that were otherwise translated. They now resolve through
+ * `ropa.vocab.<group>.<value>`, and the hints — which are the part that actually
+ * helps someone tell Art. 9(2)(h) from (i) — through `ropa.vocab_hints`. A value
+ * with no entry in `HINTED` has no hint, which is what keeps a missing hint from
+ * rendering as a raw dotted key path; next-intl does not fall back.
  */
+
+import { useTranslations } from 'next-intl';
 
 export type Option = { value: string; label: string; hint?: string };
 
-/** Art. 9(1). */
-export const SPECIAL_CATEGORY_TYPES: Option[] = [
-  { value: 'racial_or_ethnic_origin', label: 'Racial or ethnic origin' },
-  { value: 'political_opinions', label: 'Political opinions' },
-  { value: 'religious_or_philosophical_beliefs', label: 'Religious or philosophical beliefs' },
-  { value: 'trade_union_membership', label: 'Trade union membership' },
-  { value: 'genetic_data', label: 'Genetic data' },
-  { value: 'biometric_data_for_id', label: 'Biometric data for identification' },
-  { value: 'health_data', label: 'Health data' },
-  { value: 'sex_life', label: 'Sex life' },
-  { value: 'sexual_orientation', label: 'Sexual orientation' },
-];
+export const SPECIAL_CATEGORY_TYPES = [
+  'racial_or_ethnic_origin',
+  'political_opinions',
+  'religious_or_philosophical_beliefs',
+  'trade_union_membership',
+  'genetic_data',
+  'biometric_data_for_id',
+  'health_data',
+  'sex_life',
+  'sexual_orientation',
+] as const;
 
-/**
- * Art. 9(2)(a)–(j). The labels are shortened; the hint carries enough of the
- * condition for someone to tell (h) from (i) without opening the Regulation.
- */
-export const ARTICLE_9_CONDITIONS: Option[] = [
-  { value: 'a', label: '(a) Explicit consent', hint: 'The subject has given explicit consent to the processing for one or more specified purposes.' },
-  { value: 'b', label: '(b) Employment and social security law', hint: 'Necessary for obligations in employment, social security or social protection law. Requires Union or Member State law.' },
-  { value: 'c', label: '(c) Vital interests', hint: 'Necessary to protect vital interests where the subject is incapable of giving consent.' },
-  { value: 'd', label: '(d) Not-for-profit body', hint: 'Legitimate activities of a foundation, association or not-for-profit with a political, philosophical, religious or trade-union aim.' },
-  { value: 'e', label: '(e) Manifestly made public', hint: 'The data were manifestly made public by the data subject.' },
-  { value: 'f', label: '(f) Legal claims', hint: 'Necessary for the establishment, exercise or defence of legal claims, or for courts acting judicially.' },
-  { value: 'g', label: '(g) Substantial public interest', hint: 'Necessary for reasons of substantial public interest. Requires Union or Member State law.' },
-  { value: 'h', label: '(h) Health or social care', hint: 'Preventive or occupational medicine, medical diagnosis, health or social care. Requires Union or Member State law.' },
-  { value: 'i', label: '(i) Public health', hint: 'Public interest in the area of public health. Requires Union or Member State law.' },
-  { value: 'j', label: '(j) Archiving, research, statistics', hint: 'Archiving in the public interest, scientific or historical research, or statistical purposes. Requires Union or Member State law.' },
-];
+/** Art. 9(2)(a)–(j). */
+export const ARTICLE_9_CONDITIONS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] as const;
 
 /** The four that are only available where Union or Member State law provides. */
 export const ARTICLE_9_CONDITIONS_REQUIRING_NATIONAL_LAW = ['b', 'h', 'i', 'j'];
@@ -57,77 +48,109 @@ export function article9RequiresNationalLaw(condition?: string | null): boolean 
 }
 
 /** Recital 26. */
-export const IDENTIFIABILITY_LEVELS: Option[] = [
-  { value: 'direct', label: 'Directly identifying', hint: 'Identifies a person on its own — a name, an email address, a national ID.' },
-  { value: 'indirect', label: 'Indirectly identifying', hint: 'Identifies a person in combination with other data held.' },
-  { value: 'pseudonymised', label: 'Pseudonymised', hint: 'Art. 4(5). Still personal data, and squarely inside the Regulation.' },
-  { value: 'anonymous', label: 'Anonymous', hint: 'Recital 26. Outside the Regulation entirely — only if re-identification is genuinely impossible.' },
-];
+export const IDENTIFIABILITY_LEVELS = ['direct', 'indirect', 'pseudonymised', 'anonymous'] as const;
 
-export const SENSITIVITY_LEVELS: Option[] = [
-  { value: 'standard', label: 'Standard' },
-  { value: 'confidential', label: 'Confidential', hint: 'Commercially or personally sensitive without being an Art. 9 category — salary, bank details.' },
-  { value: 'special', label: 'Special category', hint: 'Art. 9(1) or Art. 10.' },
-];
+export const SENSITIVITY_LEVELS = ['standard', 'confidential', 'special'] as const;
 
-export const RETENTION_TRIGGERS: Option[] = [
-  { value: 'collection', label: 'Date of collection' },
-  { value: 'last_interaction', label: 'Last interaction' },
-  { value: 'end_of_contract', label: 'End of contract' },
-  { value: 'end_of_employment', label: 'End of employment' },
-  { value: 'account_closure', label: 'Account closure' },
-  { value: 'consent_withdrawal', label: 'Withdrawal of consent' },
-  { value: 'case_closure', label: 'Case closure' },
-  { value: 'statutory_period_end', label: 'End of statutory period' },
-];
+export const RETENTION_TRIGGERS = [
+  'collection',
+  'last_interaction',
+  'end_of_contract',
+  'end_of_employment',
+  'account_closure',
+  'consent_withdrawal',
+  'case_closure',
+  'statutory_period_end',
+] as const;
 
-export const VOLUME_BANDS: Option[] = [
-  { value: 'under_100', label: 'Under 100' },
-  { value: '100_999', label: '100 – 999' },
-  { value: '1k_10k', label: '1,000 – 10,000' },
-  { value: '10k_100k', label: '10,000 – 100,000' },
-  { value: '100k_1m', label: '100,000 – 1 million' },
-  { value: 'over_1m', label: 'Over 1 million' },
-];
+export const VOLUME_BANDS = ['under_100', '100_999', '1k_10k', '10k_100k', '100k_1m', 'over_1m'] as const;
 
 /** Art. 30(1)(d). */
-export const RECIPIENT_CATEGORIES: Option[] = [
-  { value: 'internal_department', label: 'Internal department' },
-  { value: 'group_company', label: 'Group company' },
-  { value: 'it_service_provider', label: 'IT service provider' },
-  { value: 'cloud_hosting_provider', label: 'Cloud hosting provider' },
-  { value: 'payment_provider', label: 'Payment provider' },
-  { value: 'marketing_agency', label: 'Marketing agency' },
-  { value: 'professional_adviser', label: 'Professional adviser' },
-  { value: 'auditor', label: 'Auditor' },
-  { value: 'insurer', label: 'Insurer' },
-  { value: 'bank_or_financial_institution', label: 'Bank or financial institution' },
-  { value: 'courier_or_logistics', label: 'Courier or logistics' },
-  { value: 'public_authority', label: 'Public authority' },
-  { value: 'court_or_tribunal', label: 'Court or tribunal' },
-  { value: 'law_enforcement', label: 'Law enforcement' },
-  { value: 'regulator', label: 'Regulator' },
-  { value: 'other', label: 'Other' },
-];
+export const RECIPIENT_CATEGORIES = [
+  'internal_department',
+  'group_company',
+  'it_service_provider',
+  'cloud_hosting_provider',
+  'payment_provider',
+  'marketing_agency',
+  'professional_adviser',
+  'auditor',
+  'insurer',
+  'bank_or_financial_institution',
+  'courier_or_logistics',
+  'public_authority',
+  'court_or_tribunal',
+  'law_enforcement',
+  'regulator',
+  'other',
+] as const;
 
-export const RECIPIENT_ROLES: Option[] = [
-  { value: 'processor', label: 'Processor', hint: 'Art. 28. Processes on your documented instructions and needs a DPA.' },
-  { value: 'sub_processor', label: 'Sub-processor', hint: 'Art. 28(2). Engaged by your processor, with your prior authorisation.' },
-  { value: 'joint_controller', label: 'Joint controller', hint: 'Art. 26. You jointly determine purposes and means, and need an arrangement.' },
-  { value: 'independent_controller', label: 'Independent controller', hint: 'Determines its own purposes. The disclosure hands over controllership.' },
-];
+export const RECIPIENT_ROLES = ['processor', 'sub_processor', 'joint_controller', 'independent_controller'] as const;
 
-export const TRANSFER_MECHANISMS: Option[] = [
-  { value: 'adequacy_decision', label: 'Adequacy decision (Art. 45)' },
-  { value: 'scc', label: 'Standard Contractual Clauses (Art. 46(2)(c))' },
-  { value: 'bcr', label: 'Binding Corporate Rules (Art. 47)' },
-  { value: 'dpf', label: 'EU–US Data Privacy Framework' },
-  { value: 'art49_derogation', label: 'Derogation (Art. 49)' },
-  { value: 'codes_of_conduct', label: 'Approved code of conduct (Art. 46(2)(e))' },
-  { value: 'certification', label: 'Approved certification (Art. 46(2)(f))' },
-  { value: 'pending_assessment', label: 'Not yet assessed' },
-  { value: 'other', label: 'Other' },
-];
+export const TRANSFER_MECHANISMS = [
+  'adequacy_decision',
+  'scc',
+  'bcr',
+  'dpf',
+  'art49_derogation',
+  'codes_of_conduct',
+  'certification',
+  'pending_assessment',
+  'other',
+] as const;
+
+export const SCC_YEARS = ['2021', '2010'] as const;
+export const SCC_REPEALED_YEARS = ['2010'];
+
+export const SCC_MODULES = ['module_one', 'module_two', 'module_three', 'module_four'] as const;
+
+export const ARTICLE_49_SUB_REASONS = [
+  'a_explicit_consent',
+  'b_contract_with_subject',
+  'c_contract_in_subject_interest',
+  'd_public_interest',
+  'e_legal_claims',
+  'f_vital_interests',
+  'g_public_register',
+  'compelling_legitimate_interests',
+] as const;
+
+export const DPF_SCOPES = ['non_hr', 'hr', 'both'] as const;
+
+/** Every group this module can render, keyed by the message namespace segment. */
+export const VOCAB_GROUPS = {
+  special_category_type: SPECIAL_CATEGORY_TYPES,
+  article_9_condition: ARTICLE_9_CONDITIONS,
+  identifiability: IDENTIFIABILITY_LEVELS,
+  sensitivity: SENSITIVITY_LEVELS,
+  retention_trigger: RETENTION_TRIGGERS,
+  volume_band: VOLUME_BANDS,
+  recipient_category: RECIPIENT_CATEGORIES,
+  recipient_role: RECIPIENT_ROLES,
+  transfer_mechanism: TRANSFER_MECHANISMS,
+  scc_year: SCC_YEARS,
+  scc_module: SCC_MODULES,
+  article_49_sub_reason: ARTICLE_49_SUB_REASONS,
+  dpf_scope: DPF_SCOPES,
+} as const;
+
+export type VocabGroup = keyof typeof VOCAB_GROUPS;
+
+/**
+ * Which values carry an explanatory hint.
+ *
+ * Listed rather than inferred, because next-intl renders a missing key as its own
+ * dotted path — `ropa.vocab_hints.recipient_role.auditor` in the middle of a form.
+ * Asking for a hint that does not exist has to be impossible, not merely unlikely.
+ */
+const HINTED: Partial<Record<VocabGroup, readonly string[]>> = {
+  article_9_condition: ARTICLE_9_CONDITIONS,
+  identifiability: IDENTIFIABILITY_LEVELS,
+  sensitivity: ['confidential', 'special'],
+  recipient_role: RECIPIENT_ROLES,
+  scc_year: ['2010'],
+  article_49_sub_reason: ['a_explicit_consent', 'compelling_legitimate_interests'],
+};
 
 const MECHANISM_ALIASES: Record<string, string> = {
   'standard contractual clauses (sccs)': 'scc',
@@ -154,40 +177,9 @@ const MECHANISM_ALIASES: Record<string, string> = {
 export function normaliseTransferMechanism(value?: string | null): string | null {
   if (!value) return null;
   const v = value.trim().toLowerCase();
-  if (TRANSFER_MECHANISMS.some((m) => m.value === v)) return v;
+  if ((TRANSFER_MECHANISMS as readonly string[]).includes(v)) return v;
   return MECHANISM_ALIASES[v] ?? null;
 }
-
-export const SCC_YEARS: Option[] = [
-  { value: '2021', label: '2021 clauses (2021/914)' },
-  { value: '2010', label: '2010 clauses — repealed', hint: 'Repealed with effect from 27 December 2022. A transfer relying on these has no Art. 46 mechanism.' },
-];
-
-export const SCC_REPEALED_YEARS = ['2010'];
-
-export const SCC_MODULES: Option[] = [
-  { value: 'module_one', label: 'Module 1 — controller to controller' },
-  { value: 'module_two', label: 'Module 2 — controller to processor' },
-  { value: 'module_three', label: 'Module 3 — processor to processor' },
-  { value: 'module_four', label: 'Module 4 — processor to controller' },
-];
-
-export const ARTICLE_49_SUB_REASONS: Option[] = [
-  { value: 'a_explicit_consent', label: '(a) Explicit informed consent', hint: 'The subject was told of the possible risks of a transfer without a mechanism, and consented anyway.' },
-  { value: 'b_contract_with_subject', label: '(b) Necessary for a contract with the subject' },
-  { value: 'c_contract_in_subject_interest', label: '(c) Contract concluded in the subject’s interest' },
-  { value: 'd_public_interest', label: '(d) Important reasons of public interest' },
-  { value: 'e_legal_claims', label: '(e) Establishment, exercise or defence of legal claims' },
-  { value: 'f_vital_interests', label: '(f) Vital interests, subject incapable of consent' },
-  { value: 'g_public_register', label: '(g) Transfer from a public register' },
-  { value: 'compelling_legitimate_interests', label: 'Compelling legitimate interests', hint: 'The 49(1) second sub-paragraph: non-repetitive, limited subjects, supervisory authority informed.' },
-];
-
-export const DPF_SCOPES: Option[] = [
-  { value: 'non_hr', label: 'Non-HR data only' },
-  { value: 'hr', label: 'HR data only' },
-  { value: 'both', label: 'HR and non-HR data' },
-];
 
 /** Kept in step with `MECHANISM_REQUIRED_FIELDS` in the API constants. */
 export const MECHANISM_FIELDS: Record<string, string[]> = {
@@ -202,7 +194,37 @@ export const MECHANISM_FIELDS: Record<string, string[]> = {
   other: ['mechanismDetail'],
 };
 
-export function labelFor(options: Option[], value?: string | null): string {
-  if (!value) return '';
-  return options.find((o) => o.value === value)?.label ?? value;
+/**
+ * Resolves a vocabulary into the reader's language.
+ *
+ * A hook rather than a function because next-intl's catalogue is context, and the
+ * alternative — threading a `t` through every component that renders a picker —
+ * is how half of these came to be hardcoded in the first place.
+ */
+export function useRopaVocabulary() {
+  const t = useTranslations('ropa.vocab');
+  const h = useTranslations('ropa.vocab_hints');
+
+  const label = (group: VocabGroup, value?: string | null): string => {
+    if (!value) return '';
+    return (VOCAB_GROUPS[group] as readonly string[]).includes(value)
+      ? t(`${group}.${value}` as any)
+      // An unrecognised value is legacy data, not a missing translation: showing it
+      // verbatim is right, and asking the catalogue for it would render a key path.
+      : value;
+  };
+
+  const hint = (group: VocabGroup, value?: string | null): string | undefined => {
+    if (!value || !HINTED[group]?.includes(value)) return undefined;
+    return h(`${group}.${value}` as any);
+  };
+
+  const options = (group: VocabGroup): Option[] =>
+    (VOCAB_GROUPS[group] as readonly string[]).map((value) => ({
+      value,
+      label: label(group, value),
+      hint: hint(group, value),
+    }));
+
+  return { label, hint, options };
 }

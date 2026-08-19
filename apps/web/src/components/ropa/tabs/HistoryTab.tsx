@@ -1,22 +1,28 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
-import { Clock, Loader2, ArrowRight, Activity, PlusCircle, Trash2, Edit } from 'lucide-react';
+import { Clock, Loader2, Activity, PlusCircle, Trash2, Edit } from 'lucide-react';
 
 export function HistoryTab({ activityId }: { activityId: string }) {
+  const t = useTranslations('ropa.history');
   const { data: logs, isLoading } = trpc.ropa.history.list.useQuery({ activityId });
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   if (isLoading) {
-    return <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" /></div>;
+    return (
+      <div className="p-8 flex justify-center" role="status" aria-label={t('loading')}>
+        <Loader2 className="w-6 h-6 animate-spin text-[#C9A227]" aria-hidden="true" />
+      </div>
+    );
   }
 
   if (!logs || logs.length === 0) {
     return (
       <div className="py-12 text-center border border-dashed border-white/20 rounded-2xl bg-[#08090A]/50 max-w-3xl">
         <Clock className="w-6 h-6 text-[#6E747A] mx-auto mb-3" />
-        <p className="text-[13px] text-[#6E747A]">No history found for this activity.</p>
+        <p className="text-[13px] text-[#6E747A]">{t('empty')}</p>
       </div>
     );
   }
@@ -33,9 +39,9 @@ export function HistoryTab({ activityId }: { activityId: string }) {
   const getActionText = (log: any) => {
     if (log.description) return log.description;
     switch (log.action) {
-      case 'ropa.create': return 'Created activity';
-      case 'ropa.update': return 'Updated activity';
-      case 'ropa.delete': return 'Deleted activity';
+      case 'ropa.create': return t('created');
+      case 'ropa.update': return t('updated');
+      case 'ropa.delete': return t('deleted');
       default: return log.action;
     }
   };
@@ -50,7 +56,7 @@ export function HistoryTab({ activityId }: { activityId: string }) {
       .filter(([key]) => !['updatedAt', 'createdAt'].includes(key))
       .map(([key, value]: [string, any]) => ({ key, old: value?.old, new: value?.new }));
 
-    if (changes.length === 0) return <div className="text-[12px] text-[#6E747A] italic mt-2">No structural changes recorded for this save.</div>;
+    if (changes.length === 0) return <div className="text-[12px] text-[#6E747A] italic mt-2">{t('no_changes')}</div>;
 
     return (
       <div className="mt-3 space-y-2">
@@ -59,13 +65,16 @@ export function HistoryTab({ activityId }: { activityId: string }) {
             <div className="px-3 py-1.5 bg-white/5 border-b border-white/10 font-medium text-[#E6E8EA]">
               {change.key}
             </div>
+            {/* R141. The minus and plus are the non-colour carriers of "before" and
+                "after"; red-and-green alone is the one pairing a colour-blind reader
+                is least likely to separate. */}
             <div className="grid grid-cols-2 divide-x divide-ink-900/10">
               <div className="p-2 bg-red-500/10 text-red-400 break-all">
-                <span className="text-red-400 select-none mr-2">-</span>
+                <span className="mr-2 select-none text-red-400" aria-label={t('before')}>-</span>
                 {typeof change.old === 'object' ? JSON.stringify(change.old) : String(change.old || 'null')}
               </div>
               <div className="p-2 bg-green-500/10 text-green-400 break-all">
-                <span className="text-green-400 select-none mr-2">+</span>
+                <span className="mr-2 select-none text-green-400" aria-label={t('after')}>+</span>
                 {typeof change.new === 'object' ? JSON.stringify(change.new) : String(change.new || 'null')}
               </div>
             </div>
@@ -79,8 +88,8 @@ export function HistoryTab({ activityId }: { activityId: string }) {
     <div className="space-y-6 max-w-3xl fade-up">
       <div className="bg-[#08090A] hairline rounded-2xl p-6">
         <h2 className="text-[14px] font-medium text-[#F4F5F6] mb-6 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-[#6E747A]" />
-          Audit Trail
+          <Activity className="w-4 h-4 text-[#6E747A]" aria-hidden="true" />
+          {t('title')}
         </h2>
 
         <div className="space-y-4">
@@ -96,9 +105,19 @@ export function HistoryTab({ activityId }: { activityId: string }) {
                 </div>
                 
                 <div className="bg-[#0D0F11] hairline rounded-xl p-4 shadow-panel-elevated">
-                  <div 
-                    className="flex items-start justify-between cursor-pointer"
+                  <div
+                    role={log.action === 'ropa.update' ? 'button' : undefined}
+                    tabIndex={log.action === 'ropa.update' ? 0 : undefined}
+                    aria-expanded={log.action === 'ropa.update' ? isExpanded : undefined}
+                    className="flex items-start justify-between cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"
                     onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                    onKeyDown={(e) => {
+                      if (log.action !== 'ropa.update') return;
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setExpandedLogId(isExpanded ? null : log.id);
+                      }
+                    }}
                   >
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5">{getActionIcon(log.action)}</div>
@@ -110,7 +129,7 @@ export function HistoryTab({ activityId }: { activityId: string }) {
                     
                     {log.action === 'ropa.update' && (
                       <div className="text-[12px] text-[#C9A227] font-medium bg-[#C9A227]/10 px-2 py-1 rounded">
-                        {isExpanded ? 'Hide Diff' : 'View Diff'}
+                        {isExpanded ? t('hide_diff') : t('view_diff')}
                       </div>
                     )}
                   </div>
