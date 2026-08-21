@@ -57,7 +57,9 @@ for (const envVar of requiredEnvVars) {
 }
 
 const server = fastify({
-  maxParamLength: 5000,
+  routerOptions: {
+    maxParamLength: 5000,
+  },
   logger: {
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
     transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined
