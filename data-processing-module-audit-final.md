@@ -27,7 +27,11 @@ cycle with attestation, an approval workflow, point-in-time versions, archive,
 restore, duplicate and dependency-aware delete, server-side search and filters with
 saved views, working bulk operations, tasks and comments, notification coverage, and
 the i18n and accessibility sweep the five child tabs had been waiting for. See §0.3.
-Migration `0047_numerous_black_bolt` is generated and **not yet applied**.
+Migration `0047_numerous_black_bolt` is applied to production.
+
+**The three items §0.3 held back were built on 19 August 2026** — version restore, the
+organisation-level approval requirement, and the migration itself. See §0.3's amended
+tail for the two defects that surfaced while building them.
 
 **The document is otherwise unrevised.** Part II's findings are left exactly as written,
 each with a **FIXED** marker, its commit, and a one-line note on what the fix was, so the
@@ -49,8 +53,17 @@ every guard green, plus one new guard and 32 new assertions.
 `packages/db/drizzle/0047_numerous_black_bolt.sql` — purely additive: six
 `CREATE TABLE`, thirteen `ADD COLUMN` on `processing_activities`, and the indexes and
 foreign keys they need. No drops, no type changes, no `SET NOT NULL` without a
-default. **Not yet applied** — unlike 0046, which was applied before this document was
-written.
+default.
+
+**Applied to production**, and verified rather than assumed: `drizzle.__drizzle_migrations`
+went 44 → 45 rows with the greatest `created_at` matching 0047's journal `when`
+exactly, all 13 columns are present with their defaults and NOT NULLs, and the two
+constraints that carry logic landed with them — the partial unique index
+(`WHERE decision = 'pending'`) that allows one open approval per activity, and
+`UNIQUE (processing_activity_id, version)`. The five existing activities are intact and
+defaulted correctly. The journal drift §0.2 recorded is unchanged and did not affect
+what ran: drizzle takes the single greatest `created_at` and 0047 was the only entry
+past it.
 
 | Item | What was added |
 |---|---|
@@ -136,25 +149,85 @@ covered by fixtures at all.
 
 ### Deliberately not built, so the omissions are not mistaken for oversights
 
-- **Restoring a version.** Versions are listed, read and diffed against each other or
-  against the record as it stands; nothing writes one back. A restore has to decide
-  what happens to child rows created since, and doing that badly is worse than not
-  offering it. `pre_restore` is already in the `reason` vocabulary for when it lands.
 - **`K105`'s column chooser and grouping, and `K106`'s audit mode.** Both are P1/P2
   and neither is what "the register cannot be filtered" meant.
 - **`M113`** — presence, locking, delegation, and the change-proposal model for
   approved records. All P2, and the last of them is a different shape of workflow
   from the one B20 asked for.
 - **`L109`'s undo**, and bulk retention-schedule application, which depends on `E`.
-- **The org-level approval requirement.** `organizations.settings` carries
-  `ropaReviewCadenceMonths`, which the review cycle reads. There is no equivalent
-  "approval is mandatory before publishing" switch: making one would change what
-  `ropa.update` does for every existing customer on the day it shipped, and that is a
-  decision for a release note rather than a sprint.
+- **Translated requirement labels.** `CompletenessPanel` renders `req.label` — the
+  English fallback the API attaches to each `Requirement` — so the "what's missing"
+  list reads in English in every locale. That is true of all fifteen requirements and
+  predates this sprint; it needs an id-to-catalogue-key mapping on the web side, not a
+  string extraction, so `check:ropa-i18n` cannot see it either. Named here because
+  R142 otherwise reads as finished.
 - **The 34 route-segment error boundaries** are still hardcoded English, ROPA's three
   among them. They are one shared template; translating three of them would leave the
   register inconsistent with the rest of the app. `check:ropa-i18n` skips them by
   name, with that reason recorded where it skips them.
+
+### Amended — the three held-back items, built 19 August 2026
+
+**Version restore (B21).** `ropa.versions.restore` puts the record back to what a
+version said. Three decisions make it safe enough to offer, and they are the three
+reasons it was held back:
+
+- *It snapshots first*, as `pre_restore` — a restore is an edit, and the state it
+  overwrites is exactly what somebody wants back when they realise they restored the
+  wrong version. Those snapshots are not themselves offered for restore.
+- *It restores what the record said, not where it was.* Publication, review dates,
+  archive state, approval and the links to a DPIA, an LIA or a client are excluded
+  (`RESTORE_EXCLUDED_FIELDS`). Restoring `status` would republish a record somebody
+  deliberately withdrew, around B23's gate, on the strength of a button labelled
+  "restore". An approved record drops back to draft, because a restore always rewrites
+  substantive content — the same rule an ordinary edit follows, reached differently.
+- *It reconciles child rows on their primary key* rather than deleting and
+  re-inserting them. This is the part that had to be got right:
+  `transfer_impact_assessments.processing_transfer_id` references
+  `processing_transfers.id` **with no `ON DELETE` clause**, so the obvious
+  implementation fails outright against any transfer that has had a TIA — and where it
+  did succeed it would sever the link between a Chapter V transfer and the assessment
+  justifying it, which is the pair an auditor asks to see together. Rows present in
+  both are updated; only rows added since are deleted, and a TIA on one of those is
+  refused by name rather than as a raw constraint violation. Confirmed against the
+  live schema: the database does refuse the delete, and reconciliation leaves the TIA
+  pointing at its transfer.
+
+**The organisation-level approval requirement (B20).**
+`organizations.settings.ropaApprovalRequired`, read by `evaluatePublication` and set
+through `ropa.governance.update` (admin only). **Off unless turned on** — that default
+is the whole reason it is a setting: making approval mandatory changes what
+`ropa.update` does for every existing customer on the day it ships, and the refusal
+names a workflow nobody has been trained on.
+
+It is the one blocker a publication exception may **not** clear. The Article 30
+blockers are about a record being *incomplete*, which a named and dated exception can
+legitimately override — that is B23's design. Approval is about a record being
+*unreviewed*, and a control anybody can wave through with ten characters is not a
+control. It appears in the blocker list beside the Article 30 ones, deep-linked to the
+Review & approval tab, so the editor can say which tab fixes it.
+
+### Two defects found while building these
+
+**Existing activities scored 0 on the completeness *filter*.** `completeness_score`
+defaulted to 0 for every row that predated 0047, and nothing recomputed it until the
+record was next edited — so the ring on the register showed the truth while the filter
+called every one of them "under 50%". `completenessBatch` now writes back any score
+that has drifted, in the pass that computes them anyway: it heals the first time
+anyone opens the list, for every organisation, with no runbook step to forget. Only
+rows that differ are touched, so the second load writes nothing, and like
+`refreshCompleteness` it does not touch `updated_at`.
+
+**A snapshot's timestamps come back out of jsonb as strings**, and a drizzle
+`timestamp` column calls `.toISOString()` on whatever it is handed. Writing a snapshot
+back without reviving them throws at the first child row carrying a date — an SCC
+execution date, a DPF expiry, a `retentionReviewDate`. `reviveSnapshotDates` is
+deliberately strict about the full ISO instant so that free text merely starting with
+digits is left alone. Caught before it shipped, and covered both by fixtures and by
+the live round-trip.
+
+The lifecycle fixtures are 101 assertions (from 83) and the completeness fixtures 55
+(from 42).
 
 ---
 
@@ -385,7 +458,7 @@ line is the reasoning as audited, and the italic note says what has changed sinc
 | Data model fidelity | **2/10** → **5/10** | One flat row per activity; no per-category retention, no purpose/basis pairs, no lineage. *Per-category retention, subject and element catalogues and structured transfers exist; purposes are still not first-class — A1* |
 | Special categories (Art. 9 / 10) | **2/10** → **8/10** | A boolean. No Art. 9(2)(a)–(j) condition; no Art. 10 concept at all. *Both now recorded per data category, with the national-law citation the four conditions that need it demand* |
 | Chapter V transfers (44–49) | **1/10** → **7/10** | Tab non-functional; adequacy list wrong where it works; no DPF, no SCC metadata, no chaining. *Mechanism-specific evidence, DPF, computed adequacy and the repealed-2010-clauses warning are in; onward-transfer chaining is not — H79* |
-| Register operations (lifecycle, review, ownership) | **1/10** → **8/10** | No owner, no approval, no review cycle, no delete UI, no versioning. *All of it exists: owners, publication gate, review cycle with attestation, approval workflow, versions, archive, restore, duplicate and dependency-aware delete. Restoring a version is the piece that is not there* |
+| Register operations (lifecycle, review, ownership) | **1/10** → **9/10** | No owner, no approval, no review cycle, no delete UI, no versioning. *All of it exists: owners, publication gate, review cycle with attestation, an approval workflow an organisation can make mandatory, versions that restore as well as diff, archive, duplicate and dependency-aware delete. The change-proposal model for approved records (M113) is the remaining shape* |
 | Assessments (LIA / DPIA / TIA) | **2/10** | LIA table exists with zero procedures; DPIA has no route; TIA is per-vendor, not per-transfer |
 | Evidence and audit trail | **1/10** → **5/10** | History reads `newValue`/`details`; the columns are `changes`/`metadata`. Always empty. *Diff and child-row logging fixed; the publication exception, every approval decision and every attestation are now dated and attributed, and versions are snapshotted and diffable. The audit trail itself is still unfiltered, unpaged and unexportable — I85–I90* |
 | Exports and regulator readiness | **3/10** | Two divergent PDFs, neither an Article 30 record; CSV exports only loaded pages |
@@ -1585,7 +1658,10 @@ and duplicate (B22, B24) · server-side search, filters and saved views (K102–
 operations (L107, L108) · tasks and comments (M110, M111) · notification coverage (M112) ·
 accessibility and i18n (R141, R142).
 
-All fifteen are built. Migration `0047_numerous_black_bolt` is generated and not yet applied.
+All fifteen are built, and so are the three items §0.3 first held back — version
+restore, the organisation-level approval requirement, and the migration itself, which
+is applied and verified.
+
 `R142` also took `utils/ropaVocabularies.ts` — about a hundred and ten English labels and hints
 that made every enum in the register read in English even on the translated tabs — and
 `check:ropa-i18n` is the guard that stops both halves regressing. See §0.3 for the four decisions

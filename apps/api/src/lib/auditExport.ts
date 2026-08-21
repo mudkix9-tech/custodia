@@ -7,6 +7,8 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getS3BucketForOrg, getS3ClientForRegion } from '../lib/s3.js';
 import { renderPdf } from '../lib/pdfClient.js';
+import { buildArticle30Record, flattenActivities } from './ropaArticle30.js';
+import { article30Xlsx, article30Csv, article30Json } from './ropaExportFormats.js';
 import { db } from '../db.js';
 import { eq, and, isNull, desc, inArray } from 'drizzle-orm';
 import {
@@ -123,67 +125,37 @@ export async function generateAuditFile(
   const logoUrl = (org.branding as any)?.logoUrl;
 
   // ── ROPA ──────────────────────────────────────────────────
-  const activities = await db.query.processingActivities.findMany({
-    where: and(eq(processingActivities.organizationId, orgId), isNull(processingActivities.deletedAt)),
-    with: {
-      dataCategories: true,
-      recipients: { with: { vendor: true } },
-    },
-  });
+  //
+  // J93/J99. The pack's Article 30 section is the canonical record, the same one
+  // the register's own Export PDF produces. It used to be assembled here, from a
+  // relational query and a hand-rolled controller/processor split, into a second
+  // and differently incomplete rendering: eight columns, no controller identity,
+  // no Art. 9(2) conditions, no transfer safeguard evidence, and no negative
+  // assertions — so a customer handing this pack to a regulator was handing over a
+  // document that disagreed with the one they had reviewed on screen.
+  //
+  // The split it did was wrong as well as duplicated: it filed by `client_id`, so
+  // an agency doing its own marketing to a client's contacts appeared under
+  // Art. 30(2) as processing carried out on that client's behalf. The builder
+  // splits by declared role (N114).
+  const article30 = await buildArticle30Record(db, orgId, { filterSummary: null });
+  const article30Activities = flattenActivities(article30);
 
-  // Fetch transfers separately
-  let allTransfers: any[] = [];
-  if (activities.length > 0) {
-    const actIds = activities.map(a => a.id);
-    allTransfers = await db.select().from(processingTransfers).where(inArray(processingTransfers.processingActivityId, actIds));
-  }
-
-  const activitiesWithTransfers = activities.map((a: any) => ({
-    ...a,
-    transfers: allTransfers.filter((t: any) => t.processingActivityId === a.id),
-  }));
-
-  const controllerActivities = activitiesWithTransfers.filter(a => !a.clientId);
-
-  const clientIds = [...new Set(activitiesWithTransfers.filter(a => a.clientId).map(a => a.clientId!))];
-  let clientRecords: any[] = [];
-  if (clientIds.length > 0) {
-    clientRecords = await db.select().from(clients).where(inArray(clients.id, clientIds as string[]));
-  }
-  const clientMap = new Map(clientRecords.map(c => [c.id, c.name]));
-  const processorActivities = activitiesWithTransfers
-    .filter(a => a.clientId)
-    .map(a => ({ ...a, clientName: clientMap.get(a.clientId!) || 'Unknown Client' }));
-
-  const ropaData = {
+  const ropaPdf = await renderPdf('ropa-register', {
+    ...JSON.parse(JSON.stringify(article30)),
     orgName: org.name,
-    orgLegalName: org.legalName || org.name,
-    orgCountry: org.countryCode || '',
-    orgAddress: org.address,
-    dpoName: org.dpoName,
-    dpoEmail: org.dpoEmail,
     logoUrl,
-    generatedAt,
-    controllerActivities,
-    processorActivities,
-    locale: (org as any).defaultLanguage || 'en',
-  };
-  const ropaPdf = await renderPdf('ropa-register', ropaData);
+  });
   archive.append(ropaPdf, { name: 'ropa/article-30-report.pdf' });
 
-  const ropaCsv = await generateCsv(activities.map((a: any) => ({
-    name: a.name,
-    purpose: a.purpose,
-    lawful_basis: a.lawfulBasis,
-    data_subjects: (a.dataSubjectCategories as string[] || []).join('; '),
-    data_categories: (a.dataCategories || []).map((c: any) => c.category).join('; '),
-    recipients: (a.recipients || []).map((r: any) => r.name).join('; '),
-    retention: a.retentionPeriod,
-    security_measures: (a.securityMeasures as string[] || []).join('; '),
-    status: a.status,
-    risk_level: a.riskLevel,
-  })));
-  archive.append(ropaCsv, { name: 'ropa/processing-activities.csv' });
+  // J95. Excel, not only CSV — it is what every supervisory authority and every
+  // external auditor actually asks for, and one sheet per object is the shape
+  // their own templates use.
+  archive.append(article30Xlsx(article30), { name: 'ropa/article-30-register.xlsx' });
+  archive.append(article30Csv(article30), { name: 'ropa/processing-activities.csv' });
+  // J98. The exchange format, so a customer leaving can take the register with
+  // them without reverse-engineering our schema.
+  archive.append(JSON.stringify(article30Json(article30), null, 2), { name: 'ropa/article-30-register.json' });
 
   // ── VENDORS ───────────────────────────────────────────────
   const orgVendors = await db.query.organizationVendors.findMany({
@@ -328,9 +300,12 @@ export async function generateAuditFile(
     const risksWithMeasures = risksByDpiaId.get(dpia.id) || [];
 
     const linkedActivityIds = (dpia.processingActivityIds as string[]) || [];
-    const linkedNames = activities
-      .filter((a: any) => linkedActivityIds.includes(a.id))
-      .map((a: any) => a.name);
+    // Named from the Article 30 record rather than a second query. Its list is
+    // already every non-deleted activity in the organisation, which is what the
+    // relational query this replaced was fetching.
+    const linkedNames = article30Activities
+      .filter((a) => linkedActivityIds.includes(a.id))
+      .map((a) => a.name);
 
     const dpiaData = {
       orgName: org.name,

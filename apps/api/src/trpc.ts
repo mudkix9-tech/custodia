@@ -19,6 +19,7 @@ import {
   generateDescription, 
   fetchResourceBeforeState 
 } from './utils/auditLogger.js';
+import { childTableForPath, extractParentResourceId } from './lib/auditTrail.js';
 import { auditLogs, notificationQueue, organizations } from 'db';
 
 export interface Context {
@@ -384,6 +385,30 @@ const auditLogMiddleware = t.middleware(async ({ ctx, type, path, getRawInput, n
     const after = (input?.data && typeof input.data === 'object') ? input.data : input;
     changes = calculateDiff(previousState, after as Record<string, any>);
   }
+
+  // I86. Which *record* this change belongs to, as opposed to which row it wrote.
+  //
+  // A data category, recipient or transfer is addressed by its own id, so
+  // `extractResourceId` returns the child's id and the activity's History tab —
+  // which filters on the activity id — never saw it. Most of what an Art. 30
+  // record actually contains had no visible trail at all, which is D13 and is
+  // what I86 asks for.
+  //
+  // The parent is read from the mutation's *result*, after the fact, because that
+  // is the only place it is reliably known: the input to an update or a delete
+  // carries the child id alone, and a delete has no row left to look it up from
+  // once it has run. `next()` returns the tRPC middleware envelope, so the row is
+  // under `.data`.
+  let parentResourceId: string | null = null;
+  const childResourceType = childTableForPath(path);
+  if (childResourceType) {
+    const returned = (result as any)?.ok ? (result as any).data : null;
+    parentResourceId = extractParentResourceId(returned)
+      // A create carries the parent in its own input, and a bulk operation returns
+      // an array rather than a row — both fall back to the input, which is correct
+      // for exactly those cases and null for the rest.
+      ?? extractParentResourceId(rawInput);
+  }
   
   setImmediate(async () => {
     try {
@@ -401,6 +426,8 @@ const auditLogMiddleware = t.middleware(async ({ ctx, type, path, getRawInput, n
         action: path,
         resourceType: extractResourceType(path),
         resourceId: resourceId || null,
+        parentResourceId,
+        childResourceType,
         description: generateDescription(path, rawInput),
         changes: changes,
         metadata: sanitizeForAuditLog(rawInput),

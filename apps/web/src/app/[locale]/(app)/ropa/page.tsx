@@ -9,6 +9,7 @@ import { severityClasses } from '@/utils/severity';
 import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X, ShieldAlert, Library, CalendarClock, Archive } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toCsvRow } from '@/utils/csv';
+import { ExportMenu } from '@/components/ropa/ExportMenu';
 import { parseRopaCsv, type RowError } from '@/utils/ropaImport';
 import { useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -100,23 +101,22 @@ export default function RopaListPage() {
     { enabled: loadedIds.length > 0 },
   );
   const bulkCreateMutation = trpc.ropa.bulkCreate.useMutation();
-  const generatePdfMutation = trpc.export.generatePdf.useMutation();
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
   // Rejected rows are listed in the page rather than a toast: the point is that
   // the customer can fix the file, which means seeing every line that failed.
   const [importErrors, setImportErrors] = useState<RowError[] | null>(null);
-  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const { data: reconsentFlags, refetch: refetchFlags } = trpc.reconsent.list.useQuery({ status: flagsTab });
   const dismissFlagMutation = trpc.reconsent.dismiss.useMutation({
     onSuccess: () => refetchFlags()
   });
 
-  // Exports the loaded pages. A selection exports server-side through the bulk
-  // bar (L107); this is the "give me what I am looking at" button and the label
-  // says as much.
+  // The loaded pages, and nothing more. It sits under `Export → Loaded rows` and
+  // says so there: a selection exports server-side through the bulk bar (L107),
+  // and the whole register exports through the menu above it (J94). This is the
+  // "give me what I am looking at" case, which is a real one and a different one.
   const handleExportCSV = () => {
     if (!processingActivities || processingActivities.length === 0) return;
     
@@ -206,27 +206,6 @@ export default function RopaListPage() {
     reader.readAsText(file);
   };
 
-  const handleExportPDF = async () => {
-    setIsExportingPdf(true);
-    try {
-      const result = await generatePdfMutation.mutateAsync({ type: 'full_audit' });
-      if (result.success && result.pdfData) {
-        const linkSource = `data:application/pdf;base64,${result.pdfData}`;
-        const downloadLink = document.createElement("a");
-        downloadLink.href = linkSource;
-        downloadLink.download = result.filename;
-        downloadLink.click();
-      }
-    } catch (err) {
-      console.error(err);
-      toast(t('export_pdf_failed'), {
-        tone: 'error',
-        description: err instanceof Error ? err.message : undefined,
-      });
-    } finally {
-      setIsExportingPdf(false);
-    }
-  };
 
   const columns = [
     {
@@ -459,21 +438,16 @@ export default function RopaListPage() {
               <Upload className="w-4 h-4" />
               {isImporting ? t('importing') : t('import_csv')}
             </button>
-            <button 
-              onClick={handleExportCSV}
-              className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-white/10 shadow-panel-elevated"
-            >
-              <Download className="w-4 h-4" />
-              {t('export_csv')}
-            </button>
-            <button 
-              onClick={handleExportPDF}
-              disabled={isExportingPdf}
-              className="px-4 py-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 border border-white/10 shadow-panel-elevated disabled:opacity-50"
-            >
-              <FileText className="w-4 h-4" />
-              {isExportingPdf ? t('generating') : t('export_pdf')}
-            </button>
+            {/* J93-J98. One menu, everything built on the server from the whole
+                register — or from the filter on screen, which is the same query
+                with a `where`. The two buttons this replaces were an eight-column
+                CSV of the loaded page and a nine-field PDF that shared nothing
+                with the audit pack's Article 30 document. */}
+            <ExportMenu
+              filters={filters}
+              isFiltered={activeFilterCount(filters) > 0}
+              onExportLoaded={handleExportCSV}
+            />
             <button 
               onClick={() => router.push('/ropa/new')}
               className="px-4 py-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] font-medium text-[13px] rounded-lg transition-colors flex items-center gap-2 shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"

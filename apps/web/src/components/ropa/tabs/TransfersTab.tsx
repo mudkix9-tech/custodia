@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { DataGrid } from 'ui';
+import { TransferTiaPanel } from '../TransferTiaPanel';
 import { trpc } from '@/utils/trpc';
 import { Trash2, ExternalLink, ShieldCheck, AlertTriangle, ChevronDown, ChevronRight, Globe } from 'lucide-react';
 import Link from 'next/link';
@@ -582,6 +583,14 @@ export function TransfersTab({ activityId }: { activityId: string }) {
                 <p className="text-[12px] text-[#6E747A]">{t('tia_needed_hint')}</p>
               </div>
             </label>
+          </section>
+
+          {/* F58. The assessment for *this* transfer, inside the transfer's own
+              detail panel. `tia.ts` files one per vendor, which cannot describe an
+              organisation sending two different data sets to the same processor
+              under two different mechanisms. */}
+          <section className="border-t border-white/10 pt-5">
+            <TransferTiaPanel transferId={detail.id} />
           </section>
         </div>
       )}

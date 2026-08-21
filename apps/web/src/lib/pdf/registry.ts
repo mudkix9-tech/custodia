@@ -7,7 +7,6 @@ import { DpiaReport } from './templates/dpiaReport';
 import { DsarRegister } from './templates/dsarRegister';
 import { ExecutiveReport } from './templates/executiveReport';
 import { GroupSummary } from './templates/groupSummary';
-import { RopaRecord } from './templates/ropaRecord';
 import { RopaRegister } from './templates/ropaRegister';
 import { TrainingCertificate } from './templates/trainingCertificate';
 import { TrainingReport } from './templates/trainingReport';
@@ -19,10 +18,14 @@ import { VendorRegister } from './templates/vendorRegister';
  * The registry exists so all twelve documents render from one route handler:
  * Vercel's Hobby plan caps a deployment at twelve Serverless Functions, and a
  * route per document would have spent that budget on nothing but PDFs.
+ *
+ * `ropa-record` is gone (J93). It and `ropa-register` were two different, and
+ * differently incomplete, Article 30 documents — nine fields per activity against
+ * eight — and which one a customer got depended on which button they pressed.
+ * There is one now, built server-side by `lib/ropaArticle30.ts`.
  */
 export const PDF_TEMPLATES = {
   assessment: AssessmentReport,
-  'ropa-record': RopaRecord,
   'ropa-register': RopaRegister,
   executive: ExecutiveReport,
   'training-certificate': TrainingCertificate,
@@ -44,7 +47,6 @@ export const isPdfDoc = (value: string): value is PdfDoc =>
 /** Default download filename per document; the caller may override it. */
 export const PDF_FILENAMES: Record<PdfDoc, string> = {
   assessment: 'assessment-report.pdf',
-  'ropa-record': 'ropa-record.pdf',
   'ropa-register': 'article-30-record.pdf',
   executive: 'executive-summary.pdf',
   'training-certificate': 'training-certificate.pdf',

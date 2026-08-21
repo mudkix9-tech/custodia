@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { ScreeningPanel } from '../ScreeningPanel';
 
 export interface DpiaResidualRisk {
   id: string;
@@ -325,6 +326,11 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
   if (!dpiaId || !dpia) {
     return (
       <div className="space-y-6 max-w-3xl fade-up">
+        {/* F56. The screening comes first, because it is what decides whether a
+            DPIA is needed at all. Before this the tab opened on "Create DPIA",
+            which asks the user to answer Art. 35(1) by pressing a button. */}
+        <ScreeningPanel activityId={activityId} />
+
         <div className="bg-[#08090A] hairline rounded-2xl p-8 text-center space-y-4">
           <div className="mx-auto w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
             <ShieldAlert className="w-6 h-6 text-clay-600" />
@@ -455,6 +461,8 @@ export function DpiaTab({ activityId, dpiaId, onDpiaLinked }: { activityId: stri
 
   return (
     <div className="space-y-6 max-w-5xl fade-up">
+      <ScreeningPanel activityId={activityId} />
+
       {/* DPIA Header */}
       <div className="bg-[#08090A] hairline rounded-2xl p-6">
         <div className="flex items-center justify-between mb-6">

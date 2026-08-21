@@ -346,6 +346,62 @@ check(
   'The register has to be able to say what was published incomplete, and why.',
 );
 
+// --- B20, the org-level approval requirement -----------------------------------
+//
+// Off by default, and when on it is the one blocker the exception may not clear.
+// The Art. 30 blockers are about a record being *incomplete*, which a named and
+// dated exception can legitimately override — that is B23's design. Approval is
+// about a record being *unreviewed*, and a control anybody can wave through with
+// ten characters is not a control.
+
+check(
+  evaluatePublication(completeBundle(), { approvalRequired: false, approvalState: 'draft' }).canPublish,
+  'with the setting off, an unapproved record publishes exactly as before',
+  'This is the default, and it is what stops the feature changing behaviour for every existing customer.',
+);
+
+const unapproved = evaluatePublication(completeBundle(), { approvalRequired: true, approvalState: 'draft' });
+check(!unapproved.canPublish, 'with the setting on, an unapproved record is refused');
+check(
+  unapproved.blockers.some((b) => b.id === 'approval'),
+  'the refusal appears as a blocker beside the Article 30 ones',
+  'A bare error message would not tell the editor which tab to send the user to.',
+);
+check(
+  unapproved.blockers.find((b) => b.id === 'approval')?.tab === 'governance',
+  'the approval blocker deep-links to the tab that fixes it',
+);
+
+check(
+  evaluatePublication(completeBundle(), { approvalRequired: true, approvalState: 'approved' }).canPublish,
+  'an approved record publishes',
+);
+for (const state of ['in_review', 'rejected', null, undefined]) {
+  check(
+    !evaluatePublication(completeBundle(), { approvalRequired: true, approvalState: state as any }).canPublish,
+    `"${state}" is not approved`,
+  );
+}
+
+// The property that makes the setting worth having.
+const forced = evaluatePublication(completeBundle(), {
+  approvalRequired: true,
+  approvalState: 'draft',
+  exceptionReason: 'The DPO has accepted this risk pending the January review.',
+});
+check(
+  !forced.canPublish,
+  'a publication exception does not override the approval requirement',
+  'An organisation that turns this on is saying nothing goes live unreviewed; an exceptable control is not one.',
+);
+check(!forced.viaException, 'and it is not reported as an exception either');
+
+// An incomplete *and* unapproved record reports both, so fixing one does not
+// surprise the user with the other.
+const both = evaluatePublication(empty, { approvalRequired: true, approvalState: 'draft' });
+check(both.blockers.length > 1, 'both kinds of blocker are listed together');
+check(both.blockers.some((b) => b.id === 'approval'), 'including the approval one');
+
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {
   console.log(`${failures} FAILED.`);

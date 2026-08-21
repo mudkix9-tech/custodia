@@ -29,6 +29,9 @@ import {
   escapeLikePattern,
   normaliseTags,
   extractMentions,
+  restorableActivityFields,
+  reconcileChildren,
+  reviveSnapshotDates,
   DEFAULT_REVIEW_CADENCE_MONTHS,
   type VersionSnapshot,
 } from './ropaLifecycle.js';
@@ -236,6 +239,83 @@ check(
   && realDiff.children.dataCategories!.changed[0]!.field === 'retentionPeriod',
   'only the row that actually changed is reported as changed',
   `A positional diff reports three here. Got ${JSON.stringify(realDiff.children.dataCategories!.changed)}.`,
+);
+
+// --- restore -------------------------------------------------------------------
+
+const snapshotActivity = {
+  id: 'a1', organizationId: 'org1', name: 'Payroll', purpose: 'Paying people',
+  retentionPeriod: '6_years', retentionReviewDate: '2026-12-01T00:00:00.000Z',
+  status: 'active', publishedAt: '2026-03-01T00:00:00.000Z', publishedBy: 'u1',
+  lastReviewedAt: '2026-03-01T00:00:00.000Z', nextReviewAt: '2027-03-01T00:00:00.000Z',
+  reviewCadenceMonths: 12, archivedAt: null, dpiaId: 'd1', clientId: 'c1',
+  dataSubjectCategories: ['Employees'], createdBy: 'u9', tags: ['payroll'],
+};
+const restorable = restorableActivityFields(snapshotActivity);
+
+check(restorable.name === 'Payroll' && restorable.purpose === 'Paying people',
+  'a restore brings back what the record said');
+check(JSON.stringify(restorable.tags) === JSON.stringify(['payroll']), 'tags are content and come back');
+
+// The distinction the whole exclusion list exists for.
+check(
+  !('status' in restorable) && !('publishedAt' in restorable) && !('publishedBy' in restorable),
+  'a restore does not republish the record',
+  'Restoring status would put a withdrawn record back to active around B23\'s gate, on a button labelled "restore".',
+);
+check(
+  !('lastReviewedAt' in restorable) && !('nextReviewAt' in restorable) && !('reviewCadenceMonths' in restorable),
+  'a restore does not undo an attestation made since',
+);
+check(!('dpiaId' in restorable) && !('clientId' in restorable), 'a restore does not re-link records that may be gone');
+check(
+  !('id' in restorable) && !('organizationId' in restorable),
+  'identity columns never reach the .set()',
+  'An organizationId in a restore is how one becomes a cross-tenant write.',
+);
+check(!('dataSubjectCategories' in restorable), 'the derived mirror is rebuilt, not restored');
+
+// jsonb has no Date type, so every timestamp came back as a string.
+check(
+  restorable.retentionReviewDate instanceof Date,
+  'a timestamp in a snapshot is revived as a Date',
+  'A drizzle timestamp column calls .toISOString() on what it is handed; a string throws.',
+);
+check(
+  (restorable.retentionReviewDate as Date).toISOString() === '2026-12-01T00:00:00.000Z',
+  'reviving a timestamp does not move it',
+);
+check(reviveSnapshotDates({ a: '6_years' }).a === '6_years', 'a retention period is not a date');
+check(reviveSnapshotDates({ a: '2026-12-01' }).a === '2026-12-01', 'a bare date string is left alone',
+  'Only a full instant is revived, so free text starting with digits survives.');
+check(reviveSnapshotDates({ a: null }).a === null, 'null survives revival');
+
+// --- reconcileChildren ---------------------------------------------------------
+
+const plan = reconcileChildren(
+  [{ id: 'c1', v: 'now' }, { id: 'c2', v: 'now' }, { id: 'c4', v: 'added since' }],
+  [{ id: 'c1', v: 'then' }, { id: 'c2', v: 'then' }, { id: 'c3', v: 'deleted since' }],
+);
+
+check(plan.update.length === 2 && plan.update.every((r) => r.v === 'then'),
+  'a row present in both is updated to what the snapshot said');
+check(plan.insert.length === 1 && plan.insert[0]!.id === 'c3', 'a row deleted since is re-inserted');
+check(plan.deleteIds.length === 1 && plan.deleteIds[0] === 'c4', 'a row added since is deleted');
+
+// The property that makes a restore safe against the TIA foreign key: a row that
+// exists in both is never deleted, so anything referencing it survives.
+check(
+  !plan.deleteIds.includes('c1') && !plan.deleteIds.includes('c2'),
+  'an unchanged row is never deleted and re-created',
+  'transfer_impact_assessments.processing_transfer_id has no ON DELETE — a delete-and-reinsert restore would fail outright.',
+);
+check(
+  reconcileChildren([], [{ id: 'x' }]).insert.length === 1,
+  'restoring onto an empty collection inserts everything',
+);
+check(
+  reconcileChildren([{ id: 'x' }], []).deleteIds.length === 1,
+  'restoring an empty collection deletes everything added since',
 );
 
 // --- completeness bands --------------------------------------------------------

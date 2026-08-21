@@ -29,6 +29,7 @@ import { DpiaTab } from './tabs/DpiaTab';
 import { HistoryTab } from './tabs/HistoryTab';
 import { GovernanceTab } from './tabs/GovernanceTab';
 import { WorkTab } from './tabs/WorkTab';
+import { LiaPanel } from './LiaPanel';
 import { RecordActions } from './RecordActions';
 
 const TABS = [
@@ -1006,16 +1007,17 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
               {normaliseLawfulBasis(formData.lawfulBasis) === 'legitimate_interest' && (
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                   <h3 className="text-[13px] font-medium text-amber-400 mb-1">{t('legal.lia_required')}</h3>
-                  {/* The "Start / View LIA" button that sat here had no onClick and
-                      nothing to route to: legitimate_interest_assessments carries the
-                      full three-part test and has zero procedures. The advice is
-                      correct and stays; the control that promised to act on it does
-                      not. Building the LIA is F55. */}
                   <p className="text-[12.5px] text-[#9BA1A6]">{t('legal.lia_desc')}</p>
                 </div>
               )}
 
             </div>
+
+            {/* F55. The assessment itself, below the basis that requires it. Sprint 0
+                removed a "Start LIA" button from the panel above because there was
+                nothing behind it; the panel is where the assessment belongs, so it is
+                here rather than behind a control that would have to be found. */}
+            <LiaPanel activityId={initialData.id} lawfulBasis={normaliseLawfulBasis(formData.lawfulBasis)} />
           </div>
         )}
 
@@ -1182,6 +1184,7 @@ export function RopaEditor({ initialData = null }: { initialData?: any }) {
             activity={initialData}
             orgMembers={orgMembers as any}
             currentUserId={currentUserId}
+            isAdmin={me?.role === 'admin' || me?.role === 'owner'}
             onChanged={() => {
               utils.ropa.get.invalidate({ id: initialData.id });
               utils.ropa.list.invalidate();

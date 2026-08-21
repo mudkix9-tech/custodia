@@ -260,6 +260,13 @@
       "when": 1787125701973,
       "tag": "0047_numerous_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1787146900880,
+      "tag": "0048_steep_blue_shield",
+      "breakpoints": true
     }
   ]
 }

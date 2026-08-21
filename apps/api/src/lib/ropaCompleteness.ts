@@ -125,12 +125,27 @@ export type TransferInput = {
   tiaCompleted?: boolean | null;
 };
 
+/**
+ * F55. The LIA is a sibling of the four child tables rather than one of them —
+ * there is at most one current assessment per activity, and it is optional for
+ * every basis but one.
+ *
+ * `null` and "absent" are the same thing here: an activity whose basis is not
+ * legitimate interests has no LIA and needs none, and the requirement below is
+ * `not_applicable` in that case rather than missing.
+ */
+export type LiaSummary = {
+  status?: string | null;
+  outcome?: string | null;
+} | null;
+
 export type ActivityBundle = {
   activity: ActivityInput;
   dataSubjects: DataSubjectInput[];
   dataCategories: DataCategoryInput[];
   recipients: RecipientInput[];
   transfers: TransferInput[];
+  lia?: LiaSummary;
 };
 
 const filled = (v?: string | null) => typeof v === 'string' && v.trim().length > 0;
@@ -144,7 +159,7 @@ const filled = (v?: string | null) => typeof v === 'string' && v.trim().length >
 const hasRetention = (v?: string | null) => filled(v) && v!.trim() !== 'custom';
 
 export function scoreActivity(bundle: ActivityBundle): CompletenessResult {
-  const { activity, dataSubjects, dataCategories, recipients, transfers } = bundle;
+  const { activity, dataSubjects, dataCategories, recipients, transfers, lia } = bundle;
   const reqs: Requirement[] = [];
 
   const add = (r: Requirement) => reqs.push(r);
@@ -182,6 +197,50 @@ export function scoreActivity(bundle: ActivityBundle): CompletenessResult {
     id: 'lawfulBasis', article: 'Art. 6(1)', label: 'Lawful basis', tab: 'legal',
     weight: 10, blocksPublication: true,
     status: filled(activity.lawfulBasis) ? 'met' : 'missing',
+  });
+
+  /**
+   * F55. Art. 6(1)(f) is the one basis that carries its own evidential burden.
+   *
+   * Every other basis is a fact about the processing — there is consent or there
+   * is not, the contract exists or it does not. Legitimate interests is a
+   * *judgement*, and Art. 5(2) makes the controller responsible for demonstrating
+   * it was made. A register asserting the basis with no assessment behind it is
+   * asserting the one thing it cannot evidence, which is why this blocks
+   * publication: a draft LIA is enough, because starting the balancing test is
+   * the act being required, not finishing it.
+   *
+   * The three-line ladder matters. "No assessment" and "an assessment that
+   * concluded do-not-proceed" are opposite findings, and a scorer that treated
+   * both as missing would tell a customer to write an LIA they have already
+   * written and acted on.
+   */
+  const claimsLegitimateInterests = (activity.lawfulBasis ?? '').startsWith('legitimate_interest');
+  add({
+    id: 'legitimateInterestAssessment',
+    article: 'Art. 6(1)(f)',
+    label: 'Legitimate interest assessment',
+    tab: 'legal',
+    weight: 9,
+    blocksPublication: true,
+    status: !claimsLegitimateInterests
+      ? 'not_applicable'
+      : !lia
+        ? 'missing'
+        : lia.outcome === 'do_not_proceed'
+          ? 'missing'
+          : lia.status === 'completed'
+            ? 'met'
+            : 'partial',
+    detail: !claimsLegitimateInterests
+      ? undefined
+      : !lia
+        ? 'This activity relies on legitimate interests. Article 5(2) requires the three-part test to be documented.'
+        : lia.outcome === 'do_not_proceed'
+          ? 'The assessment concluded that the processing should not proceed on this basis. Change the basis or revisit the assessment.'
+          : lia.status !== 'completed'
+            ? 'The assessment is still a draft. Complete it before the record is relied on.'
+            : undefined,
   });
 
   // ---- Art. 30(1)(c), first limb: categories of data subject --------------
@@ -406,9 +465,44 @@ export function scoreActivity(bundle: ActivityBundle): CompletenessResult {
  */
 export function evaluatePublication(
   bundle: ActivityBundle,
-  opts: { exceptionReason?: string | null } = {},
+  opts: {
+    exceptionReason?: string | null;
+    /** B20, org-level. `organizations.settings.ropaApprovalRequired`. Off by default. */
+    approvalRequired?: boolean;
+    /** The activity's current `approval_state`. */
+    approvalState?: string | null;
+  } = {},
 ): { canPublish: boolean; blockers: Requirement[]; viaException: boolean } {
   const { blockers } = scoreActivity(bundle);
+
+  // B20. An organisation that turns this on is saying "nothing goes live without a
+  // second pair of eyes", and it is the one blocker the exception below may not
+  // clear. The Art. 30 blockers are about a record being *incomplete*, which a named
+  // and dated exception can legitimately override — B23's whole design. Approval is
+  // about a record being *unreviewed*, and a control anyone can wave through with ten
+  // characters is not a control. Kept as a blocker rather than a bare refusal so the
+  // editor lists it beside the others instead of failing with a bare message.
+  const needsApproval = !!opts.approvalRequired && opts.approvalState !== 'approved';
+  if (needsApproval) {
+    return {
+      canPublish: false,
+      blockers: [
+        ...blockers,
+        {
+          id: 'approval',
+          article: 'Internal control',
+          label: 'Approved by a reviewer',
+          status: 'missing',
+          weight: 0,
+          blocksPublication: true,
+          tab: 'governance',
+          detail: 'Your organisation requires an approval before an activity may be published.',
+        },
+      ],
+      viaException: false,
+    };
+  }
+
   if (blockers.length === 0) return { canPublish: true, blockers: [], viaException: false };
 
   const reason = opts.exceptionReason?.trim() ?? '';

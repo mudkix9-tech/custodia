@@ -248,6 +248,97 @@ export function buildSnapshot(bundle: ActivityBundle, takenAt: Date): VersionSna
   };
 }
 
+/**
+ * B21's restore. Fields a restore does **not** write back.
+ *
+ * A restore returns the record to what it *said*, not to where it was in its own
+ * lifecycle. Restoring `status` would republish a record that somebody deliberately
+ * took back to draft, bypassing B23's gate entirely; restoring the review dates
+ * would undo an attestation made since; restoring `dpiaId` would re-link an
+ * assessment somebody unlinked, and — the column carries no foreign key — would do
+ * it silently even if that DPIA has been deleted.
+ *
+ * The identity columns are here for the obvious reason and the boring one: `id` and
+ * `organizationId` in a `.set()` are how a restore becomes a cross-tenant write.
+ */
+export const RESTORE_EXCLUDED_FIELDS: readonly string[] = [
+  // Identity of the row.
+  'id', 'organizationId', 'createdAt', 'createdBy', 'deletedAt', 'duplicatedFromId',
+  // Publication — B23's gate owns this.
+  'status', 'publishedAt', 'publishedBy',
+  'publicationExceptionReason', 'publicationExceptionBy', 'publicationExceptionAt',
+  // Review cycle — B19 owns this, and an attestation made since is not undone by
+  // restoring the text of an older version.
+  'lastReviewedAt', 'nextReviewAt', 'reviewedBy', 'reviewCadenceMonths',
+  // Archive state — B22 owns this.
+  'archivedAt', 'archivedBy', 'statusBeforeArchive',
+  // Links to other records, which may no longer exist and carry no foreign key.
+  'dpiaId', 'liaId', 'clientId',
+  // The derived mirror; rebuilt from the restored child rows instead.
+  'dataSubjectCategories',
+];
+
+/** An ISO-8601 instant, as `JSON.stringify` writes a Date. */
+const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * Turns the timestamps in a snapshot row back into Dates.
+ *
+ * A snapshot is jsonb, so every Date in it came back out as a string — and a
+ * drizzle `timestamp` column calls `.toISOString()` on whatever it is handed, which
+ * a string does not have. Writing a snapshot back without this throws at the first
+ * child row that carries a date: an SCC execution date, a DPF expiry, a
+ * `retentionReviewDate`. The pattern is deliberately strict about the full instant
+ * so that free text which merely starts with digits is left alone.
+ */
+export function reviveSnapshotDates<T extends Record<string, any>>(row: T): T {
+  const out: Record<string, any> = {};
+  for (const [key, value] of Object.entries(row)) {
+    out[key] = typeof value === 'string' && ISO_INSTANT.test(value) ? new Date(value) : value;
+  }
+  return out as T;
+}
+
+/** The subset of a snapshot's activity that a restore writes back. */
+export function restorableActivityFields(snapshotActivity: Record<string, any>): Record<string, any> {
+  return reviveSnapshotDates(
+    Object.fromEntries(
+      Object.entries(snapshotActivity).filter(([key]) => !RESTORE_EXCLUDED_FIELDS.includes(key)),
+    ),
+  );
+}
+
+export type ChildReconciliation<T> = { insert: T[]; update: T[]; deleteIds: string[] };
+
+/**
+ * What a restore has to do to one child collection, matched on primary key.
+ *
+ * Deliberately not "delete everything and re-insert the snapshot", which is the
+ * obvious implementation and the wrong one twice over.
+ * `transfer_impact_assessments.processing_transfer_id` references
+ * `processing_transfers.id` with no `ON DELETE`, so wholesale deletion fails outright
+ * against any transfer a TIA has been performed on — and where it did succeed it
+ * would break the link between a Chapter V transfer and the assessment that
+ * justifies it, which is the pair an auditor asks to see together.
+ *
+ * Matching on id means a row present in both is *updated*, never recreated, so
+ * everything pointing at it survives. Only rows added since the snapshot are
+ * deleted, which is the small set where a refusal is both possible and meaningful.
+ */
+export function reconcileChildren<T extends { id: string }>(
+  current: readonly T[],
+  snapshot: readonly T[],
+): ChildReconciliation<T> {
+  const currentIds = new Set(current.map((row) => String(row.id)));
+  const snapshotIds = new Set(snapshot.map((row) => String(row.id)));
+
+  return {
+    insert: snapshot.filter((row) => !currentIds.has(String(row.id))),
+    update: snapshot.filter((row) => currentIds.has(String(row.id))),
+    deleteIds: current.map((row) => String(row.id)).filter((id) => !snapshotIds.has(id)),
+  };
+}
+
 export type FieldChange = { field: string; from: unknown; to: unknown };
 
 export type SnapshotDiff = {

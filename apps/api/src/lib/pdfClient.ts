@@ -14,7 +14,6 @@
 
 export type PdfDoc =
   | 'assessment'
-  | 'ropa-record'
   | 'ropa-register'
   | 'executive'
   | 'training-certificate'

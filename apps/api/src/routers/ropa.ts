@@ -1,9 +1,9 @@
 import { paginatedQuery } from '../utils/pagination.js';
 import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { z } from 'zod';
-import { router, protectedProcedure, requirePermission } from '../trpc.js';
+import { router, protectedProcedure, requirePermission, requireRole } from '../trpc.js';
 import { db } from '../db.js';
-import { processingActivities, legitimateInterestAssessments, processingDataCategories, processingDataSubjects, processingRecipients, processingTransfers, dataElementCatalogue, dataSubjectCategoryCatalogue, auditLogs, vendors, organizationVendors, clientProcessingActivities, reconsentFlags, dpias, users, organizations, processingActivityAttestations, processingActivityApprovals, processingActivityVersions, processingActivityTasks, processingActivityComments, ropaSavedViews, complianceGaps } from 'db';
+import { processingActivities, legitimateInterestAssessments, processingDataCategories, processingDataSubjects, processingRecipients, processingTransfers, dataElementCatalogue, dataSubjectCategoryCatalogue, auditLogs, vendors, organizationVendors, clientProcessingActivities, reconsentFlags, dpias, dpiaScreenings, users, organizations, transferImpactAssessments, processingActivityAttestations, processingActivityApprovals, processingActivityVersions, processingActivityTasks, processingActivityComments, ropaSavedViews, complianceGaps } from 'db';
 import { eq, and, or, desc, inArray, not, count, isNull, isNotNull, asc, sql, lt, gte, lte, ne, ilike } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { TRPCError } from '@trpc/server';
@@ -45,8 +45,46 @@ import {
   escapeLikePattern,
   normaliseTags,
   extractMentions,
+  restorableActivityFields,
+  reconcileChildren,
+  reviveSnapshotDates,
   type VersionSnapshot,
 } from '../lib/ropaLifecycle.js';
+import {
+  ARTICLE_35_3_CRITERIA,
+  WP248_CRITERIA,
+  SCREENING_CRITERIA,
+  NATIONAL_BLACKLISTS,
+  LIA_OUTCOMES,
+  LIA_BENEFICIARIES,
+  LIA_IMPORTANCE,
+  TIA_STATUSES,
+  TIA_CONCLUSIONS,
+  TIA_LEGAL_CONCLUSIONS,
+  TIA_TRANSFER_FREQUENCIES,
+  TIA_TECHNICAL_MEASURES,
+  TIA_ORGANISATIONAL_MEASURES,
+  TIA_CONTRACTUAL_MEASURES,
+  TIA_EFFECTIVE_ALONE_MEASURES,
+} from '../constants/assessmentVocabularies.js';
+import { evaluateLia, evaluateTia, screenForDpia, prefillScreening, contentHash } from '../lib/assessments.js';
+import {
+  describeChanges,
+  changeTypeOf,
+  flattenAuditRow,
+  AUDIT_CHANGE_TYPES,
+  CHANGE_TYPE_SUFFIXES,
+} from '../lib/auditTrail.js';
+import { buildArticle30Record } from '../lib/ropaArticle30.js';
+import {
+  article30Xlsx,
+  article30Csv,
+  article30Json,
+  regulatorXlsx,
+  REGULATOR_TEMPLATES,
+} from '../lib/ropaExportFormats.js';
+import { encodeCursor, decodeCursor } from '../utils/cursor.js';
+import { renderPdf } from '../lib/pdfClient.js';
 
 const sanitize = (text?: string) => {
   if (!text) return text;
@@ -316,13 +354,32 @@ async function backfillDataSubjects(dbc: any, orgId: string, activityId: string)
 
 /** Everything `scoreActivity` needs for one activity, in four child queries. */
 async function loadBundle(dbc: any, activity: any): Promise<ActivityBundle> {
-  const [dataSubjects, dataCategories, recipients, transfers] = await Promise.all([
+  const [dataSubjects, dataCategories, recipients, transfers, lias] = await Promise.all([
     dbc.select().from(processingDataSubjects).where(eq(processingDataSubjects.processingActivityId, activity.id)),
     dbc.select().from(processingDataCategories).where(eq(processingDataCategories.processingActivityId, activity.id)),
     dbc.select().from(processingRecipients).where(eq(processingRecipients.processingActivityId, activity.id)),
     dbc.select().from(processingTransfers).where(eq(processingTransfers.processingActivityId, activity.id)),
+    // F55. A fifth query on every score, and it earns it: the LIA is the one
+    // requirement whose answer lives outside the four child tables, and without
+    // it the scorer cannot tell an activity claiming legitimate interests with an
+    // assessment behind it from one claiming it with nothing.
+    dbc.select().from(legitimateInterestAssessments)
+      .where(and(
+        eq(legitimateInterestAssessments.processingActivityId, activity.id),
+        ne(legitimateInterestAssessments.status, 'superseded'),
+      ))
+      .orderBy(desc(legitimateInterestAssessments.createdAt))
+      .limit(1),
   ]);
-  return { activity, dataSubjects, dataCategories, recipients, transfers };
+  const lia = (lias as any[])[0];
+  return {
+    activity,
+    dataSubjects,
+    dataCategories,
+    recipients,
+    transfers,
+    lia: lia ? { status: lia.status, outcome: lia.outcome } : null,
+  };
 }
 
 /**
@@ -457,6 +514,22 @@ async function orgReviewCadence(dbc: any, orgId: string): Promise<number> {
     .where(eq(organizations.id, orgId));
   const configured = (org?.settings as Record<string, any> | null)?.ropaReviewCadenceMonths;
   return typeof configured === 'number' && configured > 0 ? configured : DEFAULT_REVIEW_CADENCE_MONTHS;
+}
+
+/**
+ * B20, org-level. Whether an activity must be approved before it may be published.
+ *
+ * **Off unless explicitly turned on**, and that default is the whole reason this is a
+ * setting rather than a rule. Making approval mandatory changes what `ropa.update`
+ * does for every existing customer on the day it ships: a register that published
+ * fine yesterday starts refusing, and the refusal names a workflow nobody has been
+ * trained on. Opting in is a decision an organisation makes with a release note in
+ * front of them.
+ */
+async function orgApprovalRequired(dbc: any, orgId: string): Promise<boolean> {
+  const [org] = await dbc.select({ settings: organizations.settings }).from(organizations)
+    .where(eq(organizations.id, orgId));
+  return (org?.settings as Record<string, any> | null)?.ropaApprovalRequired === true;
 }
 
 /**
@@ -673,6 +746,150 @@ function buildRegisterFilters(input: RegisterFilters, userId: string): any[] {
 
   return filters;
 }
+
+// ---------------------------------------------------------------------------
+// Sprint 3 payloads.
+//
+// Same bargain as the four update schemas above: ownership of the row is checked
+// separately, and these bound what may be written into it. Unknown keys are
+// stripped rather than rejected, because both forms autosave `watch()` wholesale.
+// ---------------------------------------------------------------------------
+
+/** F55. Everything an LIA form may write. `status` is not here on purpose — it moves through `complete` and `supersede`, which check something first. */
+const liaUpdateSchema = z.object({
+  title: z.string().max(255).nullish(),
+
+  purposeTestLegitimateInterest: z.string().max(8000).nullish(),
+  purposeTestIsLawful: z.boolean().nullish(),
+  purposeTestEvidence: z.string().max(4000).nullish(),
+  purposeTestBeneficiary: z.enum(LIA_BENEFICIARIES).nullish(),
+  purposeTestImportance: z.enum(LIA_IMPORTANCE).nullish(),
+
+  necessityTestIsNecessary: z.string().max(8000).nullish(),
+  necessityTestAlternatives: z.string().max(8000).nullish(),
+  necessityTestConclusion: z.string().max(8000).nullish(),
+  necessityTestProportionate: z.boolean().nullish(),
+
+  balancingTestImpact: z.string().max(8000).nullish(),
+  balancingTestExpectation: z.string().max(8000).nullish(),
+  balancingTestSafeguards: z.string().max(8000).nullish(),
+  balancingTestOverrides: z.string().max(8000).nullish(),
+  balancingTestInvolvesChildren: z.boolean().nullish(),
+  balancingTestInvolvesSpecialCategory: z.boolean().nullish(),
+  balancingTestRelationship: z.string().max(4000).nullish(),
+
+  objectionMechanism: z.string().max(4000).nullish(),
+  optOutOffered: z.boolean().nullish(),
+
+  outcome: z.enum(LIA_OUTCOMES).nullish(),
+  outcomeRationale: z.string().max(4000).nullish(),
+
+  evidence: z.array(z.object({
+    id: z.string().max(60),
+    name: z.string().max(255),
+    url: z.string().max(1000).nullish(),
+    note: z.string().max(1000).nullish(),
+  })).max(30).optional(),
+
+  nextReviewAt: z.coerce.date().nullish(),
+});
+
+/** F58. The six EDPB steps as one payload. */
+const tiaUpdateSchema = z.object({
+  title: z.string().max(255).nullish(),
+
+  // Step 1 — know your transfer.
+  dataExporter: z.string().max(255).nullish(),
+  dataImporter: z.string().max(255).nullish(),
+  transferPurpose: z.string().max(4000).nullish(),
+  dataCategories: z.array(z.string().max(120)).max(60).optional(),
+  dataSubjectCategories: z.array(z.string().max(120)).max(60).optional(),
+  transferFrequency: z.enum(TIA_TRANSFER_FREQUENCIES).nullish(),
+  onwardTransfers: z.string().max(4000).nullish(),
+
+  // Step 2 is the mechanism, which is the transfer's own and is not writable here:
+  // a TIA that disagrees with the transfer it assesses is not a state the register
+  // should be able to reach. `mechanismDetail` is the assessor's own note about it.
+  mechanismDetail: z.string().max(4000).nullish(),
+
+  // Step 3 — the destination's law.
+  surveillanceLawsExist: z.boolean().nullish(),
+  surveillanceLawsDetail: z.string().max(8000).nullish(),
+  independentDpaExists: z.boolean().nullish(),
+  effectiveRemediesExist: z.boolean().nullish(),
+  relevantCaseLaw: z.string().max(4000).nullish(),
+  legalAssessmentConclusion: z.enum(TIA_LEGAL_CONCLUSIONS).nullish(),
+  legalAssessmentDetail: z.string().max(8000).nullish(),
+
+  // Step 4 — supplementary measures, from the catalogue rather than free text, so
+  // that "is this measure one that can work alone?" has an answer.
+  technicalMeasures: z.array(z.enum(TIA_TECHNICAL_MEASURES)).max(20).optional(),
+  organizationalMeasures: z.array(z.enum(TIA_ORGANISATIONAL_MEASURES)).max(20).optional(),
+  contractualMeasures: z.array(z.enum(TIA_CONTRACTUAL_MEASURES)).max(20).optional(),
+  measuresDetail: z.string().max(8000).nullish(),
+
+  // Step 5 — residual risk and the conclusion.
+  residualRiskLevel: z.enum(['low', 'medium', 'high', 'critical']).nullish(),
+  residualRiskJustification: z.string().max(8000).nullish(),
+  conclusion: z.enum(TIA_CONCLUSIONS).nullish(),
+  conditions: z.string().max(4000).nullish(),
+
+  // Step 6 — re-evaluation.
+  reevaluationIntervalMonths: z.number().int().min(1).max(60).nullish(),
+  reevaluationTriggers: z.string().max(4000).nullish(),
+});
+
+/**
+ * J96. What an export was narrowed by, in a sentence the document can print.
+ *
+ * An Article 30 record covering half the register and not saying so is worse than
+ * one covering all of it: a supervisory authority reading it has no way to know
+ * the omissions are deliberate, and the controller has no way to prove later that
+ * they were. Every filtered export carries this line on its face.
+ */
+function summariseFilters(input: RegisterFilters): string | null {
+  const parts: string[] = [];
+  if (input.q) parts.push(`matching "${input.q}"`);
+  if (input.status?.length) parts.push(`status: ${input.status.join(', ')}`);
+  if (input.approvalState?.length) parts.push(`approval: ${input.approvalState.join(', ')}`);
+  if (input.role?.length) parts.push(`role: ${input.role.join(', ')}`);
+  if (input.lawfulBasis?.length) parts.push(`lawful basis: ${input.lawfulBasis.join(', ')}`);
+  if (input.riskLevel?.length) parts.push(`risk: ${input.riskLevel.join(', ')}`);
+  if (input.tags?.length) parts.push(`tags: ${input.tags.join(', ')}`);
+  if (input.ownership === 'mine') parts.push('owned by the exporter');
+  if (input.ownership === 'unowned') parts.push('with no owner');
+  if (input.ownerId) parts.push('for one owner');
+  if (input.clientId) parts.push('for one client');
+  if (input.hasSpecialCategory !== undefined) parts.push(input.hasSpecialCategory ? 'with special category data' : 'without special category data');
+  if (input.hasTransfer !== undefined) parts.push(input.hasTransfer ? 'with third-country transfers' : 'without third-country transfers');
+  if (input.transferCountry) parts.push(`transferring to ${input.transferCountry}`);
+  if (input.retentionSet !== undefined) parts.push(input.retentionSet ? 'with a retention period' : 'with no retention period');
+  if (input.requiresDpia !== undefined) parts.push(input.requiresDpia ? 'requiring a DPIA' : 'not requiring a DPIA');
+  if (input.dpiaLinked !== undefined) parts.push(input.dpiaLinked ? 'with a DPIA linked' : 'with no DPIA linked');
+  if (input.reviewOverdue) parts.push('overdue for review');
+  if (input.completenessBand) parts.push(`completeness: ${input.completenessBand}`);
+  if (input.createdFrom || input.createdTo) parts.push('created within a date range');
+  if (input.updatedFrom || input.updatedTo) parts.push('updated within a date range');
+  if (input.includeArchived) parts.push('including archived records');
+
+  if (parts.length === 0) return null;
+  return `Activities ${parts.join('; ')}.`;
+}
+
+/**
+ * The Article 30 record as the PDF template consumes it.
+ *
+ * A JSON round trip, and that is the point rather than laziness: `renderPdf` POSTs
+ * the payload to the Next.js app, so every Date on the wire arrives as a string
+ * anyway. Doing the conversion here means the template's props say what actually
+ * reaches it, instead of declaring `Date` and receiving `string` — which is how a
+ * template ends up calling `.toISOString()` on a string in production and nowhere
+ * else.
+ */
+function serialiseArticle30(record: Awaited<ReturnType<typeof buildArticle30Record>>): unknown {
+  return JSON.parse(JSON.stringify(record));
+}
+
 
 export const ropaRouter = router({
   /**
@@ -966,7 +1183,14 @@ export const ropaRouter = router({
       const becomingActive = sanitizedData.status === 'active' && activity.status !== 'active';
       if (becomingActive) {
         const bundle = await loadBundle(ctx.db, { ...activity, ...sanitizedData });
-        const verdict = evaluatePublication(bundle, { exceptionReason: input.publicationExceptionReason });
+        const verdict = evaluatePublication(bundle, {
+          exceptionReason: input.publicationExceptionReason,
+          // B20. Read from the row rather than from `sanitizedData`: approval is not
+          // a field a caller may set on the way past, and the same save that asks to
+          // publish must not also be able to claim the approval that permits it.
+          approvalRequired: await orgApprovalRequired(ctx.db, ctx.user!.orgId),
+          approvalState: activity.approvalState,
+        });
 
         if (!verdict.canPublish) {
           throw new TRPCError({
@@ -1793,6 +2017,191 @@ export const ropaRouter = router({
           note: sanitize(input.note) ?? null,
         });
       }),
+
+    /**
+     * B21's other half — put the record back as it was.
+     *
+     * Three things make this safe enough to offer, and they are the three reasons it
+     * was held back when the rest of versioning shipped.
+     *
+     * **It snapshots first.** A restore is an edit like any other, and the state it
+     * overwrites is exactly the state somebody will want back when they realise they
+     * restored the wrong version. That is what `pre_restore` is for.
+     *
+     * **It restores what the record said, not where it was.** Publication, review
+     * dates, archive state and approval are excluded — see RESTORE_EXCLUDED_FIELDS.
+     * Restoring `status` would republish a record somebody deliberately withdrew,
+     * around B23's gate, on the strength of a button labelled "restore".
+     *
+     * **It reconciles child rows on their primary key** rather than deleting and
+     * re-inserting them. `transfer_impact_assessments.processing_transfer_id`
+     * references `processing_transfers.id` with no `ON DELETE`, so the obvious
+     * implementation fails outright against any transfer that has had a TIA — and
+     * where it succeeded it would sever the link between a Chapter V transfer and the
+     * assessment justifying it. Rows in both are updated; only rows added since are
+     * deleted, and a TIA on one of those is refused by name rather than as a raw
+     * constraint violation.
+     */
+    restore: protectedProcedure
+      .use(requirePermission('ropa', 'edit'))
+      .input(z.object({ id: z.string().uuid(), note: z.string().max(500).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+
+        const [version] = await ctx.db.select().from(processingActivityVersions)
+          .where(and(
+            eq(processingActivityVersions.id, input.id),
+            eq(processingActivityVersions.organizationId, ctx.user!.orgId),
+          ));
+        if (!version) throw new TRPCError({ code: 'NOT_FOUND' });
+
+        const [activity] = await ctx.db.select().from(processingActivities)
+          .where(and(
+            eq(processingActivities.id, version.processingActivityId),
+            eq(processingActivities.organizationId, ctx.user!.orgId),
+            isNull(processingActivities.deletedAt),
+          ));
+        if (!activity) throw new TRPCError({ code: 'NOT_FOUND', message: 'Activity not found' });
+
+        const snapshot = version.snapshot as unknown as VersionSnapshot;
+
+        const plans = [
+          { table: processingDataSubjects, rows: snapshot.dataSubjects ?? [] },
+          { table: processingDataCategories, rows: snapshot.dataCategories ?? [] },
+          { table: processingRecipients, rows: snapshot.recipients ?? [] },
+          { table: processingTransfers, rows: snapshot.transfers ?? [] },
+        ] as const;
+
+        // Worked out before anything is written, so a refusal leaves the record
+        // untouched rather than half restored.
+        const reconciled = await Promise.all(plans.map(async (plan) => {
+          const current = await ctx.db.select().from(plan.table)
+            .where(eq(plan.table.processingActivityId, activity.id));
+          return { ...plan, ...reconcileChildren(current as any[], plan.rows as any[]) };
+        }));
+
+        const transferPlan = reconciled[3]!;
+        if (transferPlan.deleteIds.length > 0) {
+          const blocked = await ctx.db.select({
+            id: transferImpactAssessments.id,
+            country: transferImpactAssessments.destinationCountry,
+          })
+            .from(transferImpactAssessments)
+            .where(and(
+              eq(transferImpactAssessments.organizationId, ctx.user!.orgId),
+              inArray(transferImpactAssessments.processingTransferId, transferPlan.deleteIds),
+            ));
+          if (blocked.length > 0) {
+            throw new TRPCError({
+              code: 'PRECONDITION_FAILED',
+              message: `This version predates ${blocked.length} transfer impact assessment${blocked.length === 1 ? '' : 's'} (${blocked.map((b: any) => b.country).join(', ')}). Restoring it would remove the transfer${blocked.length === 1 ? '' : 's'} they assess. Delete the assessment${blocked.length === 1 ? '' : 's'} first if that is what you mean.`,
+            });
+          }
+        }
+
+        await snapshotActivity(ctx.db, activity, {
+          reason: 'pre_restore',
+          userId: ctx.user!.id,
+          note: `Superseded by a restore of v${version.version}`,
+        });
+
+        const restored = restorableActivityFields(snapshot.activity ?? {});
+        const [updated] = await ctx.db.update(processingActivities)
+          .set({
+            ...restored,
+            updatedAt: new Date(),
+            // A restore always rewrites substantive content, so an approved record
+            // is no longer the record anybody approved. Same rule as an ordinary
+            // edit — see editInvalidatesApproval — reached by a different route.
+            ...(activity.approvalState === 'approved'
+              ? { approvalState: 'draft', approvedAt: null, approvedBy: null }
+              : {}),
+          })
+          .where(and(
+            eq(processingActivities.id, activity.id),
+            eq(processingActivities.organizationId, ctx.user!.orgId),
+          ))
+          .returning();
+
+        for (const plan of reconciled) {
+          for (const row of plan.update) {
+            // reviveSnapshotDates because the snapshot is jsonb: every Date in it
+            // came back as a string, and a drizzle timestamp column calls
+            // .toISOString() on what it is given.
+            const { id, processingActivityId, createdAt, ...rest } = reviveSnapshotDates(row as any);
+            await ctx.db.update(plan.table)
+              .set({ ...rest, processingActivityId: activity.id, updatedAt: new Date() })
+              .where(eq(plan.table.id, id));
+          }
+          if (plan.insert.length > 0) {
+            await ctx.db.insert(plan.table).values(
+              plan.insert.map((row: any) => ({
+                ...reviveSnapshotDates(row),
+                processingActivityId: activity.id,
+              })),
+            );
+          }
+          if (plan.deleteIds.length > 0) {
+            await ctx.db.delete(plan.table).where(inArray(plan.table.id, plan.deleteIds));
+          }
+        }
+
+        await syncDataSubjectMirror(ctx.db, activity.id);
+        await refreshCompleteness(ctx.db, activity.id);
+        await orgEmbeddingsQueue.add('embed-ropa', {
+          orgId: ctx.user!.orgId,
+          entityType: 'processing_activity',
+          entityId: activity.id,
+          action: 'upsert',
+        });
+
+        return { activity: updated, restoredFrom: version.version };
+      }),
+  }),
+
+  /**
+   * B20. The organisation-level switch that decides whether approval is a workflow
+   * or a requirement. Admin-only: it changes what publishing means for everybody.
+   */
+  governance: router({
+    get: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .query(async ({ ctx }) => {
+        checkOrgContext(ctx.user);
+        const [org] = await ctx.db.select({ settings: organizations.settings }).from(organizations)
+          .where(eq(organizations.id, ctx.user!.orgId));
+        const settings = (org?.settings as Record<string, any> | null) ?? {};
+        return {
+          approvalRequired: settings.ropaApprovalRequired === true,
+          reviewCadenceMonths: typeof settings.ropaReviewCadenceMonths === 'number'
+            ? settings.ropaReviewCadenceMonths
+            : DEFAULT_REVIEW_CADENCE_MONTHS,
+        };
+      }),
+
+    update: protectedProcedure
+      .use(requireRole('admin'))
+      .input(z.object({
+        approvalRequired: z.boolean().optional(),
+        reviewCadenceMonths: z.number().int().min(1).max(120).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+
+        // Merged in SQL rather than read-modify-written in JS: `settings` is shared
+        // with every other feature that keeps something there, and a whole-object
+        // write would drop whatever landed between the read and the write.
+        const patch: Record<string, any> = {};
+        if (input.approvalRequired !== undefined) patch.ropaApprovalRequired = input.approvalRequired;
+        if (input.reviewCadenceMonths !== undefined) patch.ropaReviewCadenceMonths = input.reviewCadenceMonths;
+        if (Object.keys(patch).length === 0) return { ok: true };
+
+        await ctx.db.update(organizations)
+          .set({ settings: sql`coalesce(${organizations.settings}, '{}'::jsonb) || ${JSON.stringify(patch)}::jsonb` })
+          .where(eq(organizations.id, ctx.user!.orgId));
+
+        return { ok: true };
+      }),
   }),
 
   // -------------------------------------------------------------------------
@@ -2386,22 +2795,195 @@ export const ropaRouter = router({
   }),
 
   // Advanced features and nested routers to be expanded...
+  /**
+   * I85–I89. The activity's trail — filtered, paginated, child rows included, and
+   * exportable.
+   *
+   * What was here fetched every audit row whose `resource_id` matched the activity,
+   * newest first, with no limit and no filter. Three things were wrong with that
+   * and all three are what an auditor actually asks for: a register with a year of
+   * edits returned thousands of rows to render a tab; child-table changes were
+   * invisible because they file against their own id (I86); and there was no way
+   * to answer "what did this person change in March", which is the only question
+   * anybody brings to a trail.
+   */
   history: router({
     list: protectedProcedure
       .use(requirePermission('ropa', 'view'))
+      .input(z.object({
+        activityId: z.string().uuid(),
+        actorId: z.string().uuid().optional(),
+        /** A field *name*, matched against the diff's keys. */
+        field: z.string().max(80).optional(),
+        changeType: z.enum(AUDIT_CHANGE_TYPES).optional(),
+        from: z.coerce.date().optional(),
+        to: z.coerce.date().optional(),
+        limit: z.number().min(1).max(100).default(25),
+        cursor: z.string().nullish(),
+      }))
+      .query(async ({ ctx, input }) => {
+        await assertParentOwned(ctx.db, processingActivities, input.activityId, ctx.user!.orgId, 'Activity');
+
+        const filters: any[] = [
+          eq(auditLogs.organizationId, ctx.user!.orgId),
+          // I86. The record's own events, plus everything that happened in one of
+          // its child rows. Without the second half, adding a data category — most
+          // of what an Art. 30 record consists of — left no trace on the record.
+          or(
+            eq(auditLogs.resourceId, input.activityId),
+            eq(auditLogs.parentResourceId, input.activityId),
+          ),
+        ];
+
+        if (input.actorId) filters.push(eq(auditLogs.userId, input.actorId));
+        if (input.from) filters.push(gte(auditLogs.createdAt, input.from));
+        if (input.to) filters.push(lte(auditLogs.createdAt, input.to));
+
+        if (input.changeType) {
+          const suffixes = CHANGE_TYPE_SUFFIXES[input.changeType];
+          if (suffixes.length > 0) {
+            filters.push(or(...suffixes.map((suffix) => ilike(auditLogs.action, `%.${suffix}`))));
+          } else {
+            // 'other' is the complement, and has to be expressed as one: an empty
+            // suffix list would otherwise filter nothing and quietly return
+            // everything under a label that promises the opposite.
+            const known = [
+              ...CHANGE_TYPE_SUFFIXES.create,
+              ...CHANGE_TYPE_SUFFIXES.update,
+              ...CHANGE_TYPE_SUFFIXES.delete,
+            ];
+            filters.push(and(...known.map((suffix) => not(ilike(auditLogs.action, `%.${suffix}`)))));
+          }
+        }
+
+        if (input.field) {
+          // The diff is `{ field: { old, new } }`, so a field filter is a jsonb key
+          // test rather than a text search — `?` on the top level of `changes`.
+          // Searching the serialised blob would match a *value* that happens to
+          // contain the field name, which is a filter that lies about its results.
+          filters.push(sql`${auditLogs.changes} ? ${input.field}`);
+        }
+
+        // Keyset on (created_at, id), not on created_at alone. The audit
+        // middleware writes through `setImmediate`, so a burst of child-row edits
+        // from one save lands with timestamps that collide at millisecond
+        // resolution — and a cursor comparing only the timestamp drops every row
+        // that shares the boundary instant.
+        if (input.cursor) {
+          try {
+            const { sortValue, id } = decodeCursor(input.cursor);
+            const at = new Date(String(sortValue));
+            filters.push(or(
+              lt(auditLogs.createdAt, at),
+              and(eq(auditLogs.createdAt, at), lt(auditLogs.id, id)),
+            ));
+          } catch {
+            // A cursor from an older build, or a mangled one. Serving page one is
+            // the right failure: the alternative is a 500 on a tab that was open
+            // across a deploy.
+          }
+        }
+
+        const rows = await ctx.db.select().from(auditLogs)
+          .where(and(...filters))
+          .orderBy(desc(auditLogs.createdAt), desc(auditLogs.id))
+          .limit(input.limit + 1);
+
+        const page = (rows as any[]).slice(0, input.limit);
+        const last = page[page.length - 1];
+
+        return {
+          entries: page.map((row) => ({
+            ...row,
+            // I85. Rendered here rather than in the browser, so the tab, the CSV
+            // and the PDF all say the same thing about the same edit.
+            renderedChanges: describeChanges(row.changes),
+            changeType: changeTypeOf(row.action ?? ''),
+          })),
+          nextCursor: rows.length > input.limit && last ? encodeCursor(last.createdAt, last.id) : null,
+        };
+      }),
+
+    /** The distinct people who have touched this record, for the actor filter. */
+    actors: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
       .input(z.object({ activityId: z.string().uuid() }))
       .query(async ({ ctx, input }) => {
-        checkOrgContext(ctx.user);
-        
-        // We can just use standard filtering on resourceId
-        const logs = await ctx.db.select().from(auditLogs)
+        await assertParentOwned(ctx.db, processingActivities, input.activityId, ctx.user!.orgId, 'Activity');
+
+        const rows = await ctx.db.selectDistinct({
+          userId: auditLogs.userId,
+          userEmail: auditLogs.userEmail,
+        }).from(auditLogs)
           .where(and(
             eq(auditLogs.organizationId, ctx.user!.orgId),
-            eq(auditLogs.resourceId, input.activityId)
-          ))
-          .orderBy(desc(auditLogs.createdAt));
-          
-        return logs;
+            or(
+              eq(auditLogs.resourceId, input.activityId),
+              eq(auditLogs.parentResourceId, input.activityId),
+            ),
+          ));
+
+        return (rows as any[]).filter((r) => r.userId);
+      }),
+
+    /**
+     * I89. The trail as a file — one activity's, or the whole register's.
+     *
+     * CSV rather than PDF, and one row per changed field rather than one per
+     * event: a spreadsheet is what a regulator asks for precisely so it can be
+     * sorted on a field name, and that only works if the field is a column.
+     *
+     * Capped at 10,000 rows. An uncapped export of a register's whole trail is a
+     * query that succeeds in staging and times out in production against the one
+     * customer who needed it.
+     */
+    export: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .input(z.object({
+        activityId: z.string().uuid().optional(),
+        from: z.coerce.date().optional(),
+        to: z.coerce.date().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+
+        const filters: any[] = [eq(auditLogs.organizationId, ctx.user!.orgId)];
+
+        if (input.activityId) {
+          await assertParentOwned(ctx.db, processingActivities, input.activityId, ctx.user!.orgId, 'Activity');
+          filters.push(or(
+            eq(auditLogs.resourceId, input.activityId),
+            eq(auditLogs.parentResourceId, input.activityId),
+          ));
+        } else {
+          // The whole register's trail means ROPA actions, not every audit row the
+          // organisation has ever written. `resource_type` is what the middleware
+          // sets from the path, so this is the module's own history.
+          filters.push(eq(auditLogs.resourceType, 'processing_activity'));
+        }
+
+        if (input.from) filters.push(gte(auditLogs.createdAt, input.from));
+        if (input.to) filters.push(lte(auditLogs.createdAt, input.to));
+
+        const rows = await ctx.db.select().from(auditLogs)
+          .where(and(...filters))
+          .orderBy(desc(auditLogs.createdAt))
+          .limit(10000);
+
+        const flattened = (rows as any[]).flatMap(flattenAuditRow);
+        const headers = ['timestamp', 'user', 'action', 'description', 'field', 'old_value', 'new_value', 'ip_address', 'record_id', 'changed_in'];
+        const cell = (value: string) => (/[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
+        const csv = [
+          headers.join(','),
+          ...flattened.map((row) => headers.map((h) => cell(row[h] ?? '')).join(',')),
+        ].join('\r\n');
+
+        return {
+          csv,
+          rowCount: flattened.length,
+          truncated: rows.length >= 10000,
+          filename: `audit-trail-${input.activityId ? input.activityId.slice(0, 8) : 'register'}-${new Date().toISOString().slice(0, 10)}.csv`,
+        };
       }),
   }),
 
@@ -2469,15 +3051,41 @@ export const ropaRouter = router({
       const byRecipient = bucket(recipients as any[]);
       const byTransfer = bucket(transfers as any[]);
 
+      // K103. Backfills `completeness_score` for anything the stored column has not
+      // caught up with, in the same pass that computes the scores anyway.
+      //
+      // Every activity that existed before 0047 has a stored score of 0 — the column
+      // defaulted, and nothing recomputes it until the record is next edited. The
+      // ring on the register would show the truth while the completeness *filter*
+      // called every one of them "under 50%", which is a filter that quietly lies
+      // about the register. Doing it here means it heals the first time anyone opens
+      // the list, for every organisation, with no runbook step to forget.
+      //
+      // A write in a query path is a cache fill, and a self-limiting one: only rows
+      // that actually differ are touched, so the second load writes nothing. It does
+      // not touch `updated_at`, for the reasons refreshCompleteness does not either.
+      const stale: { id: string; score: number }[] = [];
       for (const activity of activities as any[]) {
-        empty[activity.id] = scoreActivity({
+        const score = scoreActivity({
           activity,
           dataSubjects: bySubject.get(activity.id) ?? [],
           dataCategories: byCategory.get(activity.id) ?? [],
           recipients: byRecipient.get(activity.id) ?? [],
           transfers: byTransfer.get(activity.id) ?? [],
         }).score;
+        empty[activity.id] = score;
+        if ((activity.completenessScore ?? 0) !== score) stale.push({ id: activity.id, score });
       }
+
+      for (const row of stale) {
+        await ctx.db.update(processingActivities)
+          .set({ completenessScore: row.score })
+          .where(and(
+            eq(processingActivities.id, row.id),
+            eq(processingActivities.organizationId, ctx.user!.orgId),
+          ));
+      }
+
       return empty;
     }),
 
@@ -2497,6 +3105,654 @@ export const ropaRouter = router({
       euEea: EU_EEA_COUNTRIES,
       adequacy: ADEQUACY_DECISIONS,
     })),
+
+  /**
+   * F55. The legitimate interest assessment.
+   *
+   * The table has existed since the beginning and nothing ever wrote a row —
+   * `processing_activities.lia_id` sat empty beside every register entry claiming
+   * Art. 6(1)(f), which is the one basis that cannot be asserted without
+   * documented reasoning. This is that interface.
+   *
+   * One current assessment per activity. Redoing the balancing test supersedes
+   * the previous one rather than editing it, because "we assessed this in March
+   * and concluded X" is a statement somebody relied on, and rewriting it in June
+   * destroys the only evidence that the reliance was reasonable at the time.
+   */
+  lia: router({
+    get: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .input(z.object({ processingActivityId: z.string().uuid() }))
+      .query(async ({ ctx, input }) => {
+        await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
+
+        const [current] = await ctx.db.select().from(legitimateInterestAssessments)
+          .where(and(
+            eq(legitimateInterestAssessments.processingActivityId, input.processingActivityId),
+            eq(legitimateInterestAssessments.organizationId, ctx.user!.orgId),
+            ne(legitimateInterestAssessments.status, 'superseded'),
+          ))
+          .orderBy(desc(legitimateInterestAssessments.createdAt))
+          .limit(1);
+
+        if (!current) return { assessment: null, evaluation: null, history: [] as any[] };
+
+        const history = await ctx.db.select({
+          id: legitimateInterestAssessments.id,
+          version: legitimateInterestAssessments.version,
+          status: legitimateInterestAssessments.status,
+          outcome: legitimateInterestAssessments.outcome,
+          completedAt: legitimateInterestAssessments.completedAt,
+          createdAt: legitimateInterestAssessments.createdAt,
+        }).from(legitimateInterestAssessments)
+          .where(and(
+            eq(legitimateInterestAssessments.processingActivityId, input.processingActivityId),
+            eq(legitimateInterestAssessments.organizationId, ctx.user!.orgId),
+            eq(legitimateInterestAssessments.status, 'superseded'),
+          ))
+          .orderBy(desc(legitimateInterestAssessments.version));
+
+        return { assessment: current, evaluation: evaluateLia(current), history };
+      }),
+
+    save: protectedProcedure
+      .use(requirePermission('ropa', 'edit'))
+      .input(z.object({
+        processingActivityId: z.string().uuid(),
+        data: liaUpdateSchema,
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const activity = await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
+
+        const values = {
+          ...input.data,
+          purposeTestLegitimateInterest: sanitize(input.data.purposeTestLegitimateInterest ?? undefined) ?? null,
+          necessityTestIsNecessary: sanitize(input.data.necessityTestIsNecessary ?? undefined) ?? null,
+          balancingTestImpact: sanitize(input.data.balancingTestImpact ?? undefined) ?? null,
+          balancingTestOverrides: sanitize(input.data.balancingTestOverrides ?? undefined) ?? null,
+          updatedAt: new Date(),
+        };
+
+        const [existing] = await ctx.db.select().from(legitimateInterestAssessments)
+          .where(and(
+            eq(legitimateInterestAssessments.processingActivityId, input.processingActivityId),
+            eq(legitimateInterestAssessments.organizationId, ctx.user!.orgId),
+            ne(legitimateInterestAssessments.status, 'superseded'),
+          ))
+          .orderBy(desc(legitimateInterestAssessments.createdAt))
+          .limit(1);
+
+        let row: any;
+        if (existing) {
+          // A completed assessment that is edited drops back to draft, for the same
+          // reason an approved activity does when its substance changes: the state
+          // records that somebody signed off *this* text, and the text has moved.
+          const reopened = existing.status === 'completed' ? { status: 'draft', completedAt: null } : {};
+          [row] = await ctx.db.update(legitimateInterestAssessments)
+            .set({ ...values, ...reopened })
+            .where(and(
+              eq(legitimateInterestAssessments.id, existing.id),
+              eq(legitimateInterestAssessments.organizationId, ctx.user!.orgId),
+            ))
+            .returning();
+        } else {
+          [row] = await ctx.db.insert(legitimateInterestAssessments).values({
+            ...values,
+            organizationId: ctx.user!.orgId,
+            processingActivityId: input.processingActivityId,
+            title: input.data.title ?? `Legitimate interest assessment — ${activity.name}`,
+            status: 'draft',
+            version: 1,
+            createdBy: ctx.user!.id,
+            assessedBy: ctx.user!.id,
+          }).returning();
+
+          // The waiting column, finally written. It is what lets the register show
+          // the assessment beside the basis without a second query per row.
+          await ctx.db.update(processingActivities)
+            .set({ liaId: row.id })
+            .where(and(
+              eq(processingActivities.id, input.processingActivityId),
+              eq(processingActivities.organizationId, ctx.user!.orgId),
+            ));
+        }
+
+        await refreshCompleteness(ctx.db, input.processingActivityId);
+        return { assessment: row, evaluation: evaluateLia(row) };
+      }),
+
+    /**
+     * Mark the assessment done.
+     *
+     * Refused where anything blocking is unanswered, and the refusal names what.
+     * A "completed" LIA with an empty balancing conclusion is the document a
+     * supervisory authority asks for and finds wanting, and the product should
+     * not be the thing that told the customer it was finished.
+     */
+    complete: protectedProcedure
+      .use(requirePermission('ropa', 'edit'))
+      .input(z.object({
+        id: z.string().uuid(),
+        nextReviewAt: z.coerce.date().nullish(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const existing = await assertOwned(ctx.db, {
+          table: legitimateInterestAssessments,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Assessment',
+        });
+
+        const evaluation = evaluateLia(existing);
+        if (!evaluation.canComplete) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `The assessment is not complete: ${evaluation.blockers.map((b) => b.id).join(', ')}`,
+          });
+        }
+
+        const now = new Date();
+        const [row] = await ctx.db.update(legitimateInterestAssessments)
+          .set({
+            status: 'completed',
+            completedAt: now,
+            assessedAt: now,
+            assessedBy: ctx.user!.id,
+            lastReviewedAt: now,
+            // A year unless told otherwise. An LIA whose facts have not been looked
+            // at since it was written is an LIA that no longer says anything about
+            // today's processing, and nothing else in the schema would ever ask.
+            nextReviewAt: input.nextReviewAt ?? nextReviewFrom(now, 12),
+            updatedAt: now,
+          })
+          .where(and(
+            eq(legitimateInterestAssessments.id, input.id),
+            eq(legitimateInterestAssessments.organizationId, ctx.user!.orgId),
+          ))
+          .returning();
+
+        await refreshCompleteness(ctx.db, existing.processingActivityId);
+        return row;
+      }),
+
+    /** Start again: supersede the current assessment and open a fresh draft from it. */
+    supersede: protectedProcedure
+      .use(requirePermission('ropa', 'edit'))
+      .input(z.object({ id: z.string().uuid(), reason: z.string().max(500).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const existing = await assertOwned(ctx.db, {
+          table: legitimateInterestAssessments,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Assessment',
+        });
+
+        await ctx.db.update(legitimateInterestAssessments)
+          .set({ status: 'superseded', updatedAt: new Date() })
+          .where(and(
+            eq(legitimateInterestAssessments.id, input.id),
+            eq(legitimateInterestAssessments.organizationId, ctx.user!.orgId),
+          ));
+
+        // The new draft starts from the old text rather than from nothing. What is
+        // being redone is a judgement about facts that have mostly not changed, and
+        // retyping four paragraphs is how a review becomes an annual formality
+        // nobody performs.
+        const { id, createdAt, updatedAt, completedAt, ...carried } = existing as any;
+        const [row] = await ctx.db.insert(legitimateInterestAssessments).values({
+          ...carried,
+          status: 'draft',
+          version: (existing.version ?? 1) + 1,
+          completedAt: null,
+          outcomeRationale: input.reason ?? existing.outcomeRationale,
+          createdBy: ctx.user!.id,
+          assessedBy: ctx.user!.id,
+          assessedAt: new Date(),
+        }).returning();
+        if (!row) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to open the new assessment' });
+
+        await ctx.db.update(processingActivities)
+          .set({ liaId: row.id })
+          .where(and(
+            eq(processingActivities.id, existing.processingActivityId),
+            eq(processingActivities.organizationId, ctx.user!.orgId),
+          ));
+
+        await refreshCompleteness(ctx.db, existing.processingActivityId);
+        return row;
+      }),
+
+    delete: protectedProcedure
+      .use(requirePermission('ropa', 'edit'))
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ ctx, input }) => {
+        const existing = await assertOwned(ctx.db, {
+          table: legitimateInterestAssessments,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Assessment',
+        });
+
+        // Only a draft. A completed assessment is evidence somebody relied on, and
+        // the way to stop relying on it is to supersede it — which keeps it.
+        if (existing.status === 'completed') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'A completed assessment cannot be deleted. Supersede it instead.',
+          });
+        }
+
+        const [deleted] = await ctx.db.delete(legitimateInterestAssessments)
+          .where(and(
+            eq(legitimateInterestAssessments.id, input.id),
+            eq(legitimateInterestAssessments.organizationId, ctx.user!.orgId),
+          ))
+          .returning();
+
+        await ctx.db.update(processingActivities)
+          .set({ liaId: null })
+          .where(and(
+            eq(processingActivities.id, existing.processingActivityId),
+            eq(processingActivities.organizationId, ctx.user!.orgId),
+            eq(processingActivities.liaId, input.id),
+          ));
+
+        await refreshCompleteness(ctx.db, existing.processingActivityId);
+        return deleted;
+      }),
+  }),
+
+  /**
+   * F56. The Art. 35(1) screening, with a recorded outcome either way.
+   *
+   * `requires_dpia` was a boolean flipped by the special-category checkbox and
+   * nothing else. It could not say who decided, when, against which criteria, or
+   * why — and the EDPB is explicit that the reasoning behind a "no DPIA required"
+   * has to be documented. A screening supersedes rather than overwrites, so the
+   * March answer survives the June one.
+   */
+  screening: router({
+    /** The criteria themselves, plus the blacklist that applies to this org. */
+    criteria: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .query(async ({ ctx }) => {
+        checkOrgContext(ctx.user);
+        const [org] = await ctx.db.select({ countryCode: organizations.countryCode })
+          .from(organizations).where(eq(organizations.id, ctx.user!.orgId));
+        const jurisdiction = org?.countryCode ?? null;
+        return {
+          statutory: ARTICLE_35_3_CRITERIA,
+          wp248: WP248_CRITERIA,
+          jurisdiction,
+          blacklist: [
+            ...NATIONAL_BLACKLISTS.EU!,
+            ...(jurisdiction ? NATIONAL_BLACKLISTS[jurisdiction.toUpperCase()] ?? [] : []),
+          ],
+        };
+      }),
+
+    current: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .input(z.object({ processingActivityId: z.string().uuid() }))
+      .query(async ({ ctx, input }) => {
+        const activity = await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
+
+        const [current] = await ctx.db.select().from(dpiaScreenings)
+          .where(and(
+            eq(dpiaScreenings.processingActivityId, input.processingActivityId),
+            eq(dpiaScreenings.organizationId, ctx.user!.orgId),
+            ne(dpiaScreenings.status, 'superseded'),
+          ))
+          .orderBy(desc(dpiaScreenings.createdAt))
+          .limit(1);
+
+        const [org] = await ctx.db.select({ countryCode: organizations.countryCode })
+          .from(organizations).where(eq(organizations.id, ctx.user!.orgId));
+
+        // A screening that has never been started still needs an opening position,
+        // and the register already answers half the questionnaire. Returning the
+        // prefill rather than an empty form is the difference between a screening
+        // people complete and one they abandon.
+        if (!current) {
+          const categories = await ctx.db.select({ isCriminalData: processingDataCategories.isCriminalData })
+            .from(processingDataCategories)
+            .where(eq(processingDataCategories.processingActivityId, input.processingActivityId));
+          const answers = prefillScreening(activity, {
+            hasCriminalData: (categories as any[]).some((c) => c.isCriminalData),
+          });
+          return {
+            screening: null,
+            prefill: answers,
+            result: screenForDpia(answers, { jurisdiction: org?.countryCode }),
+            history: [] as any[],
+          };
+        }
+
+        const history = await ctx.db.select({
+          id: dpiaScreenings.id,
+          verdict: dpiaScreenings.verdict,
+          decision: dpiaScreenings.decision,
+          rationale: dpiaScreenings.rationale,
+          screenedAt: dpiaScreenings.screenedAt,
+          createdAt: dpiaScreenings.createdAt,
+        }).from(dpiaScreenings)
+          .where(and(
+            eq(dpiaScreenings.processingActivityId, input.processingActivityId),
+            eq(dpiaScreenings.organizationId, ctx.user!.orgId),
+            eq(dpiaScreenings.status, 'superseded'),
+          ))
+          .orderBy(desc(dpiaScreenings.createdAt));
+
+        return {
+          screening: current,
+          prefill: null,
+          result: screenForDpia((current.answers ?? {}) as Record<string, boolean>, {
+            jurisdiction: current.jurisdiction ?? org?.countryCode,
+            blacklistSelections: (current.blacklistMatches ?? []) as string[],
+          }),
+          history,
+        };
+      }),
+
+    save: protectedProcedure
+      .use(requirePermission('ropa', 'edit'))
+      .input(z.object({
+        processingActivityId: z.string().uuid(),
+        answers: z.record(z.enum(SCREENING_CRITERIA), z.boolean()),
+        blacklistSelections: z.array(z.string().max(80)).max(40).default([]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
+
+        const [org] = await ctx.db.select({ countryCode: organizations.countryCode })
+          .from(organizations).where(eq(organizations.id, ctx.user!.orgId));
+        const jurisdiction = org?.countryCode ?? null;
+
+        const result = screenForDpia(input.answers as Record<string, boolean>, {
+          jurisdiction,
+          blacklistSelections: input.blacklistSelections,
+        });
+
+        const [existing] = await ctx.db.select().from(dpiaScreenings)
+          .where(and(
+            eq(dpiaScreenings.processingActivityId, input.processingActivityId),
+            eq(dpiaScreenings.organizationId, ctx.user!.orgId),
+            eq(dpiaScreenings.status, 'open'),
+          ))
+          .orderBy(desc(dpiaScreenings.createdAt))
+          .limit(1);
+
+        const values = {
+          answers: input.answers as any,
+          criteriaMet: result.criteriaMet as any,
+          blacklistMatches: result.blacklistMatches as any,
+          verdict: result.verdict,
+          jurisdiction,
+          updatedAt: new Date(),
+        };
+
+        let row: any;
+        if (existing) {
+          [row] = await ctx.db.update(dpiaScreenings)
+            .set(values)
+            .where(and(
+              eq(dpiaScreenings.id, existing.id),
+              eq(dpiaScreenings.organizationId, ctx.user!.orgId),
+            ))
+            .returning();
+        } else {
+          [row] = await ctx.db.insert(dpiaScreenings).values({
+            ...values,
+            organizationId: ctx.user!.orgId,
+            processingActivityId: input.processingActivityId,
+            status: 'open',
+            createdBy: ctx.user!.id,
+          }).returning();
+        }
+
+        return { screening: row, result };
+      }),
+
+    /**
+     * Record the decision — including, and especially, a decision not to do one.
+     *
+     * `rationale` is mandatory. That is the entire finding F56 names: a register
+     * full of activities marked "DPIA not required" with no reasoning is a
+     * register that cannot demonstrate the Art. 35(1) judgement was ever made,
+     * and the boolean it used to write could not carry one.
+     */
+    decide: protectedProcedure
+      .use(requirePermission('ropa', 'edit'))
+      .input(z.object({
+        id: z.string().uuid(),
+        decision: z.enum(['required', 'recommended', 'not_required']),
+        rationale: z.string().trim().min(20).max(4000),
+        nextReviewAt: z.coerce.date().nullish(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const existing = await assertOwned(ctx.db, {
+          table: dpiaScreenings,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Screening',
+        });
+
+        const now = new Date();
+        const [row] = await ctx.db.update(dpiaScreenings)
+          .set({
+            decision: input.decision,
+            rationale: sanitize(input.rationale),
+            status: 'decided',
+            screenedBy: ctx.user!.id,
+            screenedAt: now,
+            // A screening is only true of the processing it screened. Re-screening
+            // annually is what stops "not required, decided in 2024" being cited
+            // about a system that has since gained a scoring model.
+            nextReviewAt: input.nextReviewAt ?? nextReviewFrom(now, 12),
+            updatedAt: now,
+          })
+          .where(and(
+            eq(dpiaScreenings.id, input.id),
+            eq(dpiaScreenings.organizationId, ctx.user!.orgId),
+          ))
+          .returning();
+
+        // The register's own flag follows the decision rather than the checkbox
+        // that used to set it. 'recommended' counts as required for the flag: the
+        // register shows one boolean, and the safer reading of "may need one" is
+        // the one that keeps it visible in the DPIA filter.
+        await ctx.db.update(processingActivities)
+          .set({ requiresDpia: input.decision !== 'not_required' })
+          .where(and(
+            eq(processingActivities.id, existing.processingActivityId),
+            eq(processingActivities.organizationId, ctx.user!.orgId),
+          ));
+
+        await refreshCompleteness(ctx.db, existing.processingActivityId);
+        return row;
+      }),
+
+    /** Re-screen: close the current one and open a fresh questionnaire from it. */
+    rescreen: protectedProcedure
+      .use(requirePermission('ropa', 'edit'))
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ ctx, input }) => {
+        const existing = await assertOwned(ctx.db, {
+          table: dpiaScreenings,
+          id: input.id,
+          orgId: ctx.user!.orgId,
+          label: 'Screening',
+        });
+
+        const [row] = await ctx.db.insert(dpiaScreenings).values({
+          organizationId: ctx.user!.orgId,
+          processingActivityId: existing.processingActivityId,
+          answers: existing.answers as any,
+          criteriaMet: existing.criteriaMet as any,
+          blacklistMatches: existing.blacklistMatches as any,
+          verdict: existing.verdict,
+          jurisdiction: existing.jurisdiction,
+          status: 'open',
+          createdBy: ctx.user!.id,
+        }).returning();
+        if (!row) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to open the new screening' });
+
+        await ctx.db.update(dpiaScreenings)
+          .set({ status: 'superseded', supersededById: row.id, updatedAt: new Date() })
+          .where(and(
+            eq(dpiaScreenings.id, input.id),
+            eq(dpiaScreenings.organizationId, ctx.user!.orgId),
+          ));
+
+        return row;
+      }),
+  }),
+
+  /**
+   * J93–J98. Every regulator-facing output the register produces, from one dataset.
+   *
+   * The module used to produce three different Article 30 documents and none of
+   * them was complete: `export.generatePdf` rendered nine fields per activity, the
+   * audit pack rendered eight, and the register's CSV button exported whatever the
+   * browser happened to have loaded — twenty-five rows of an eight-column table,
+   * labelled in the UI as an export of the register. Everything Sprints 1 and 2
+   * added was absent from all three.
+   *
+   * These procedures are all thin: `buildArticle30Record` does the reading and
+   * `ropaExportFormats` does the rendering, so the PDF, the workbook, the CSV, the
+   * JSON and the four regulator packs cannot disagree about what the register says.
+   *
+   * Every one of them takes the register filter schema, which makes J96 fall out
+   * of J94 rather than being a second implementation: "export the activities I am
+   * looking at" is the same query as "export everything", with a `where`.
+   */
+  export: router({
+    /** J93. The canonical Article 30 record, as a PDF. */
+    article30Pdf: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .input(registerFilterSchema.partial().default({}))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+
+        const filters = registerFilterSchema.parse(input ?? {});
+        const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
+          where: buildRegisterFilters(filters, ctx.user!.id),
+          filterSummary: summariseFilters(filters),
+        });
+
+        const pdf = await renderPdf('ropa-register', serialiseArticle30(record));
+        return {
+          pdfData: pdf.toString('base64'),
+          filename: `article-30-record-${new Date().toISOString().slice(0, 10)}.pdf`,
+          counts: record.counts,
+        };
+      }),
+
+    /** J95. One sheet per object, which is what an auditor asks for. */
+    xlsx: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .input(registerFilterSchema.partial().default({}))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+
+        const filters = registerFilterSchema.parse(input ?? {});
+        const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
+          where: buildRegisterFilters(filters, ctx.user!.id),
+          filterSummary: summariseFilters(filters),
+        });
+
+        return {
+          data: article30Xlsx(record).toString('base64'),
+          filename: `article-30-register-${new Date().toISOString().slice(0, 10)}.xlsx`,
+          counts: record.counts,
+        };
+      }),
+
+    /** J94. The whole register as CSV, from the database rather than the browser. */
+    csv: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .input(registerFilterSchema.partial().default({}))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+
+        const filters = registerFilterSchema.parse(input ?? {});
+        const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
+          where: buildRegisterFilters(filters, ctx.user!.id),
+          filterSummary: summariseFilters(filters),
+        });
+
+        return {
+          csv: article30Csv(record),
+          filename: `article-30-register-${new Date().toISOString().slice(0, 10)}.csv`,
+          counts: record.counts,
+        };
+      }),
+
+    /** J98. Keyed by Article, so a receiving system needs no knowledge of our schema. */
+    json: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .input(registerFilterSchema.partial().default({}))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+
+        const filters = registerFilterSchema.parse(input ?? {});
+        const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
+          where: buildRegisterFilters(filters, ctx.user!.id),
+          filterSummary: summariseFilters(filters),
+        });
+
+        return {
+          json: JSON.stringify(article30Json(record), null, 2),
+          filename: `article-30-register-${new Date().toISOString().slice(0, 10)}.json`,
+          counts: record.counts,
+        };
+      }),
+
+    /** The packs on offer, for the export menu. */
+    templates: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .query(() =>
+        Object.values(REGULATOR_TEMPLATES).map((t) => ({
+          id: t.id,
+          title: t.title,
+          authority: t.authority,
+          language: t.language,
+        })),
+      ),
+
+    /**
+     * J97. The supervisory authority's own template, in its own language.
+     *
+     * A CNIL register submitted with English column headings is a document the
+     * *contrôleur* has to translate before reading. The columns are data rather
+     * than code (see `REGULATOR_TEMPLATES`), so adding the Garante's template is a
+     * table entry and every pack keeps reading the same dataset.
+     */
+    regulator: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .input(z.object({
+        template: z.enum(['cnil', 'ico', 'dsk', 'aepd']),
+        filters: registerFilterSchema.partial().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+
+        const filters = registerFilterSchema.parse(input.filters ?? {});
+        const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
+          where: buildRegisterFilters(filters, ctx.user!.id),
+          filterSummary: summariseFilters(filters),
+        });
+
+        const template = REGULATOR_TEMPLATES[input.template]!;
+        return {
+          data: regulatorXlsx(record, input.template).toString('base64'),
+          filename: `${input.template}-${new Date().toISOString().slice(0, 10)}.xlsx`,
+          title: template.title,
+          authority: template.authority,
+          counts: record.counts,
+        };
+      }),
+  }),
 
   /**
    * A2/A3. The org-level catalogues the child rows point at. Seeded on first read —
@@ -3224,6 +4480,266 @@ export const ropaRouter = router({
           .returning();
         if (deleted) await refreshCompleteness(ctx.db, deleted.processingActivityId);
         return deleted;
-      })
+      }),
+    /**
+     * F58. A transfer impact assessment, per transfer, org-scoped.
+     *
+     * `tia.ts` files an assessment against a *vendor*, which is the wrong unit
+     * twice over. A vendor is a shared catalogue row, so vendor-keyed writes were
+     * how D3 let one organisation's completed TIA flip every other tenant's
+     * transfer to "TIA: Completed" — fixed in Sprint 0 by scoping the propagation,
+     * but the assessment itself is still one per vendor. An organisation sending
+     * HR data to a processor under 2021 SCCs and marketing data to the same
+     * processor under a derogation has two transfers with two different risk
+     * pictures and one assessment covering both.
+     *
+     * Here the assessment hangs off the transfer, which hangs off the activity,
+     * which carries the organisation — so tenancy is proved through the chain by
+     * `assertOwned` and there is no vendor-keyed write anywhere in this router.
+     */
+    tia: router({
+      get: protectedProcedure
+        .use(requirePermission('ropa', 'view'))
+        .input(z.object({ transferId: z.string().uuid() }))
+        .query(async ({ ctx, input }) => {
+          const transfer = await assertOwned(ctx.db, {
+            table: processingTransfers,
+            id: input.transferId,
+            orgId: ctx.user!.orgId,
+            label: 'Transfer',
+            via: [{ table: processingActivities, on: eq(processingTransfers.processingActivityId, processingActivities.id) }],
+          });
+
+          const [tia] = await ctx.db.select().from(transferImpactAssessments)
+            .where(and(
+              eq(transferImpactAssessments.processingTransferId, input.transferId),
+              eq(transferImpactAssessments.organizationId, ctx.user!.orgId),
+            ))
+            .orderBy(desc(transferImpactAssessments.createdAt))
+            .limit(1);
+
+          const isAdequate = isAdequateDestination(transfer.destinationCountry);
+          return {
+            transfer,
+            assessment: tia ?? null,
+            evaluation: tia ? evaluateTia(tia, { isAdequate }) : null,
+            isAdequate,
+            measures: {
+              technical: TIA_TECHNICAL_MEASURES,
+              organisational: TIA_ORGANISATIONAL_MEASURES,
+              contractual: TIA_CONTRACTUAL_MEASURES,
+              effectiveAlone: TIA_EFFECTIVE_ALONE_MEASURES,
+            },
+          };
+        }),
+
+      save: protectedProcedure
+        .use(requirePermission('ropa', 'edit'))
+        .input(z.object({
+          transferId: z.string().uuid(),
+          data: tiaUpdateSchema,
+        }))
+        .mutation(async ({ ctx, input }) => {
+          const transfer = await assertOwned(ctx.db, {
+            table: processingTransfers,
+            id: input.transferId,
+            orgId: ctx.user!.orgId,
+            label: 'Transfer',
+            via: [{ table: processingActivities, on: eq(processingTransfers.processingActivityId, processingActivities.id) }],
+          });
+
+          const [existing] = await ctx.db.select().from(transferImpactAssessments)
+            .where(and(
+              eq(transferImpactAssessments.processingTransferId, input.transferId),
+              eq(transferImpactAssessments.organizationId, ctx.user!.orgId),
+            ))
+            .orderBy(desc(transferImpactAssessments.createdAt))
+            .limit(1);
+
+          const values: any = {
+            ...input.data,
+            surveillanceLawsDetail: sanitize(input.data.surveillanceLawsDetail ?? undefined) ?? null,
+            residualRiskJustification: sanitize(input.data.residualRiskJustification ?? undefined) ?? null,
+            updatedAt: new Date(),
+          };
+
+          let row: any;
+          if (existing) {
+            // Editing a completed assessment reopens it, for the reason the LIA
+            // does: 'completed' records that somebody signed off this text.
+            if (existing.status === 'completed') {
+              values.status = 'draft';
+              values.approvedBy = null;
+              values.approvedAt = null;
+            }
+            [row] = await ctx.db.update(transferImpactAssessments)
+              .set(values)
+              .where(and(
+                eq(transferImpactAssessments.id, existing.id),
+                eq(transferImpactAssessments.organizationId, ctx.user!.orgId),
+              ))
+              .returning();
+          } else {
+            [row] = await ctx.db.insert(transferImpactAssessments).values({
+              ...values,
+              organizationId: ctx.user!.orgId,
+              processingTransferId: input.transferId,
+              processingActivityId: transfer.processingActivityId,
+              vendorId: transfer.vendorId ?? null,
+              // The transfer already knows these two and disagreeing with it is
+              // not a state the register should be able to reach.
+              destinationCountry: transfer.destinationCountry,
+              transferMechanism: transfer.transferMechanism,
+              status: 'draft',
+              createdBy: ctx.user!.id,
+              assessedBy: ctx.user!.id,
+            }).returning();
+          }
+
+          return {
+            assessment: row,
+            evaluation: evaluateTia(row, { isAdequate: isAdequateDestination(transfer.destinationCountry) }),
+          };
+        }),
+
+      /**
+       * Complete the assessment and act on its conclusion.
+       *
+       * The conclusion is the point: 'suspend' has to *do* something, or a TIA is
+       * a document that concluded a transfer was unlawful and left it running.
+       * The propagation is scoped by transfer id — whose parent activity has
+       * already been proved to belong to this organisation — rather than by
+       * vendor id, which is what D3 was.
+       */
+      complete: protectedProcedure
+        .use(requirePermission('ropa', 'edit'))
+        .input(z.object({
+          id: z.string().uuid(),
+          suspensionReason: z.string().max(2000).optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          const existing = await assertOwned(ctx.db, {
+            table: transferImpactAssessments,
+            id: input.id,
+            orgId: ctx.user!.orgId,
+            label: 'Assessment',
+          });
+
+          if (!existing.processingTransferId) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'This assessment is not linked to a transfer.',
+            });
+          }
+
+          const isAdequate = isAdequateDestination(existing.destinationCountry);
+          const evaluation = evaluateTia(existing, { isAdequate });
+          if (!evaluation.canComplete) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: evaluation.contradictions.length > 0
+                ? `The assessment contradicts itself: ${evaluation.contradictions.join(', ')}`
+                : `The assessment is not complete: ${evaluation.steps.filter((s) => s.status !== 'met').map((s) => s.id).join(', ')}`,
+            });
+          }
+
+          const suspending = existing.conclusion === 'suspend';
+          if (suspending && !input.suspensionReason?.trim()) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'A suspension has to say why. It stops a transfer that is running.',
+            });
+          }
+
+          const now = new Date();
+          const [row] = await ctx.db.update(transferImpactAssessments)
+            .set({
+              status: 'completed',
+              approvedBy: ctx.user!.id,
+              approvedAt: now,
+              lastReviewedAt: now,
+              nextReviewAt: nextReviewFrom(now, existing.reevaluationIntervalMonths || 12),
+              suspendedAt: suspending ? now : null,
+              suspendedBy: suspending ? ctx.user!.id : null,
+              suspensionReason: suspending ? sanitize(input.suspensionReason) : null,
+              updatedAt: now,
+            })
+            .where(and(
+              eq(transferImpactAssessments.id, input.id),
+              eq(transferImpactAssessments.organizationId, ctx.user!.orgId),
+            ))
+            .returning();
+
+          // Scoped to the one transfer this assessment is about. Nothing here
+          // reaches another organisation's rows even if the vendor is shared,
+          // because the id was proved through the activity above.
+          await ctx.db.update(processingTransfers)
+            .set({
+              tiaCompleted: true,
+              tiaRiskLevel: suspending ? 'critical' : existing.residualRiskLevel,
+              updatedAt: now,
+            })
+            .where(eq(processingTransfers.id, existing.processingTransferId));
+
+          if (existing.processingActivityId) {
+            await refreshCompleteness(ctx.db, existing.processingActivityId);
+
+            if (suspending) {
+              const [activity] = await ctx.db.select().from(processingActivities)
+                .where(and(
+                  eq(processingActivities.id, existing.processingActivityId),
+                  eq(processingActivities.organizationId, ctx.user!.orgId),
+                ));
+              if (activity) {
+                await queueNotification({
+                  organizationId: ctx.user!.orgId,
+                  type: 'compliance.gap_detected' as any,
+                  title: 'Transfer suspended',
+                  body: `The transfer impact assessment for "${activity.name}" concluded that the transfer to ${existing.destinationCountry} must be suspended.`,
+                  actionUrl: `/ropa/${existing.processingActivityId}?tab=transfers`,
+                });
+              }
+            }
+          }
+
+          return row;
+        }),
+
+      /** Every transfer in the register with its assessment state — the TIA queue. */
+      queue: protectedProcedure
+        .use(requirePermission('ropa', 'view'))
+        .query(async ({ ctx }) => {
+          checkOrgContext(ctx.user);
+
+          const rows = await ctx.db.select({
+            transferId: processingTransfers.id,
+            activityId: processingActivities.id,
+            activityName: processingActivities.name,
+            destinationCountry: processingTransfers.destinationCountry,
+            transferMechanism: processingTransfers.transferMechanism,
+            tiaCompleted: processingTransfers.tiaCompleted,
+            tiaRiskLevel: processingTransfers.tiaRiskLevel,
+            assessmentId: transferImpactAssessments.id,
+            assessmentStatus: transferImpactAssessments.status,
+            conclusion: transferImpactAssessments.conclusion,
+            nextReviewAt: transferImpactAssessments.nextReviewAt,
+          })
+            .from(processingTransfers)
+            .innerJoin(processingActivities, eq(processingTransfers.processingActivityId, processingActivities.id))
+            .leftJoin(transferImpactAssessments, eq(transferImpactAssessments.processingTransferId, processingTransfers.id))
+            .where(and(
+              eq(processingActivities.organizationId, ctx.user!.orgId),
+              isNull(processingActivities.deletedAt),
+            ))
+            .orderBy(desc(processingTransfers.createdAt));
+
+          return (rows as any[]).map((row) => ({
+            ...row,
+            // An adequate destination needs no TIA at all, and listing one as
+            // "assessment missing" is how a queue trains people to ignore it.
+            isAdequate: isAdequateDestination(row.destinationCountry),
+          }));
+        }),
+    }),
   }),
 });

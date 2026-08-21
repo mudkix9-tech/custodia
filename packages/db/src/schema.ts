@@ -212,6 +212,25 @@ export const clients = pgTable('clients', {
   
   complianceSummary: jsonb('compliance_summary').default({}),
   notes: text('notes'),
+
+  // -------------------------------------------------------------------------
+  // N114. Art. 30(2)(a) requires the processor's record to name "each controller
+  // on behalf of which the processor is acting" — and, where applicable, that
+  // controller's representative and data protection officer.
+  //
+  // The agency case is the whole point: forty clients, forty Art. 30(2) records,
+  // each of which has to carry *that client's* identity rather than the agency's.
+  // `name` and `contactEmail` were all there was, so every processor record the
+  // module produced named the agency's own DPO as the controller's.
+  // -------------------------------------------------------------------------
+  controllerAddress: jsonb('controller_address'),
+  controllerRepresentative: jsonb('controller_representative'),
+  controllerDpoName: varchar('controller_dpo_name', { length: 255 }),
+  controllerDpoEmail: varchar('controller_dpo_email', { length: 255 }),
+  // Art. 30(2)(b): "the categories of processing carried out on behalf of each
+  // controller". A record-level field, not a per-activity one — it is the
+  // relationship that is being described.
+  processingCategories: jsonb('processing_categories').$type<string[]>().default([]),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -394,32 +413,91 @@ export const clientProcessingActivities = pgTable('client_processing_activities'
   };
 });
 
+/**
+ * F55. The Art. 6(1)(f) three-part test, written down.
+ *
+ * The table shipped with the schema and nothing ever wrote a row: there was no
+ * interface, no link from the activity, and `processing_activities.lia_id` sat
+ * empty next to every register entry claiming legitimate interests. That is the
+ * one lawful basis that *requires* documented reasoning — Art. 5(2) and the ICO's
+ * own guidance both put the burden on the controller — so a register asserting it
+ * without an LIA is asserting something it cannot evidence.
+ *
+ * The five narrative columns were `NOT NULL`, which is why a draft could not be
+ * saved: a balancing test is written over a week, not in one sitting, and a form
+ * that refuses to keep half an answer is a form people finish in a Word document
+ * instead. They are nullable now and the *outcome* is what `status` gates.
+ */
 export const legitimateInterestAssessments = pgTable('legitimate_interest_assessments', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id),
   processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
-  
-  purposeTestLegitimateInterest: text('purpose_test_legitimate_interest').notNull(),
+
+  // 'draft' | 'completed' | 'superseded'. A completed LIA is one the API has
+  // checked has an answer in all three parts and an outcome; nothing else may be
+  // completed, because "completed" is what the publication gate reads.
+  status: varchar('status', { length: 20 }).default('draft').notNull(),
+  title: varchar('title', { length: 255 }),
+
+  purposeTestLegitimateInterest: text('purpose_test_legitimate_interest'),
   purposeTestIsLawful: boolean('purpose_test_is_lawful').default(true),
   purposeTestEvidence: text('purpose_test_evidence'),
-  
-  necessityTestIsNecessary: text('necessity_test_is_necessary').notNull(),
+  // WP217's third purpose-test limb: whose interest is it, and how substantial.
+  // 'controller' | 'third_party' | 'both', and 'compelling' | 'moderate' | 'minor'.
+  purposeTestBeneficiary: varchar('purpose_test_beneficiary', { length: 30 }),
+  purposeTestImportance: varchar('purpose_test_importance', { length: 30 }),
+
+  necessityTestIsNecessary: text('necessity_test_is_necessary'),
   necessityTestAlternatives: text('necessity_test_alternatives'),
   necessityTestConclusion: text('necessity_test_conclusion'),
-  
-  balancingTestImpact: text('balancing_test_impact').notNull(),
+  // Art. 5(1)(c). "Could you do this with less data?" is the question that
+  // separates necessary from convenient, and it was not being asked.
+  necessityTestProportionate: boolean('necessity_test_proportionate'),
+
+  balancingTestImpact: text('balancing_test_impact'),
   balancingTestExpectation: text('balancing_test_expectation'),
   balancingTestSafeguards: text('balancing_test_safeguards'),
-  balancingTestOverrides: text('balancing_test_overrides').notNull(),
-  
-  outcome: varchar('outcome', { length: 50 }).notNull(),
+  balancingTestOverrides: text('balancing_test_overrides'),
+  // The four factors that decide a balancing test in practice, kept as their own
+  // columns because "does this involve children?" is a question a reviewer scans
+  // for and should not have to read three paragraphs to answer.
+  balancingTestInvolvesChildren: boolean('balancing_test_involves_children').default(false),
+  balancingTestInvolvesSpecialCategory: boolean('balancing_test_involves_special_category').default(false),
+  balancingTestRelationship: text('balancing_test_relationship'),
+  // Art. 21(1) is not optional for this basis: the right to object must be
+  // offered, and how it is offered is part of the assessment.
+  objectionMechanism: text('objection_mechanism'),
+  optOutOffered: boolean('opt_out_offered').default(false),
+
+  // 'proceed' | 'proceed_with_safeguards' | 'do_not_proceed'
+  outcome: varchar('outcome', { length: 50 }),
+  outcomeRationale: text('outcome_rationale'),
+
+  // Supporting material, as [{ name, url, note }]. A DPIA, a consultation
+  // response or a signed-off memo is what turns an assessment into evidence.
+  evidence: jsonb('evidence').$type<LiaEvidenceRow[]>().default([]).notNull(),
+
   assessedBy: uuid('assessed_by').references(() => users.id),
   assessedAt: timestamp('assessed_at', { withTimezone: true }).defaultNow(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
-  
+  lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
+
+  version: integer('version').default(1).notNull(),
+  createdBy: uuid('created_by').references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  activityIdx: index('idx_lia_activity').on(table.processingActivityId),
+  orgIdx: index('idx_lia_org').on(table.organizationId, table.status),
+}));
+
+export type LiaEvidenceRow = {
+  id: string;
+  name: string;
+  url?: string | null;
+  note?: string | null;
+};
 
 // ---------------------------------------------------------------------------
 // Register operations — review, approval, versioning, work and discussion.
@@ -533,6 +611,14 @@ export const processingActivityVersions = pgTable('processing_activity_versions'
   // blob.
   score: integer('score'),
   status: varchar('status', { length: 50 }),
+
+  // I90. sha256 over the snapshot in canonical form (lib/contentHash.ts). The
+  // register can be *proved* unaltered rather than asserted to be: a regulator
+  // holding an exported pack can recompute the digest of what it was given and
+  // compare it against what the approval recorded. Nullable because versions
+  // taken before 0048 have no hash and inventing one would be worse than saying
+  // so.
+  contentHash: varchar('content_hash', { length: 64 }),
 
   createdBy: uuid('created_by').references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -893,36 +979,197 @@ export const processingTransfers = pgTable('processing_transfers', {
 // DPIA (Data Protection Impact Assessment)
 // ============================================================================
 
+/**
+ * F56. The Art. 35(1) question, asked and answered on the record.
+ *
+ * A DPIA is either required or it is not, and the Regulation puts the burden of
+ * *showing which* on the controller — the EDPB is explicit that where the nine
+ * criteria are considered and a DPIA is judged unnecessary, the reasoning must be
+ * documented (WP248 rev.01). The register had `requires_dpia`, a boolean flipped
+ * by a special-category checkbox, and no record of anybody deciding anything.
+ *
+ * A new screening supersedes rather than overwrites, because "we screened this in
+ * March and it did not need one" is the statement being preserved, and it stops
+ * being true when the processing changes.
+ */
+export const dpiaScreenings = pgTable('dpia_screenings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+
+  // { [criterionId]: true | false }. An unanswered criterion is simply absent,
+  // which is a different statement from "no" and is scored as such.
+  answers: jsonb('answers').$type<Record<string, boolean>>().default({}).notNull(),
+  // The criterion ids that came back true, denormalised so the list renders and
+  // the PDF prints without re-deriving the verdict.
+  criteriaMet: jsonb('criteria_met').$type<string[]>().default([]).notNull(),
+  // Entries from the national Art. 35(4) blacklists that matched.
+  blacklistMatches: jsonb('blacklist_matches').$type<string[]>().default([]).notNull(),
+
+  // 'required' | 'recommended' | 'not_required' — what the criteria say.
+  verdict: varchar('verdict', { length: 20 }),
+  // What the organisation decided, where it differs. An override is allowed —
+  // Art. 35(3) is a non-exhaustive list and a controller may reasonably conclude
+  // either way — but it is never allowed to be silent.
+  decision: varchar('decision', { length: 20 }),
+  // Required by the API whenever `decision` is set. This is the column the whole
+  // table exists for: a "no DPIA required" with no rationale is the finding.
+  rationale: text('rationale'),
+
+  // Which national supervisory authority's list was applied, so a screening done
+  // under the Irish list is not silently reread as a German one.
+  jurisdiction: char('jurisdiction', { length: 2 }),
+
+  // Set once a DPIA has been opened from this screening.
+  dpiaId: uuid('dpia_id'),
+
+  // 'open' | 'decided' | 'superseded'
+  status: varchar('status', { length: 20 }).default('open').notNull(),
+  supersededById: uuid('superseded_by_id'),
+
+  screenedBy: uuid('screened_by').references(() => users.id),
+  screenedAt: timestamp('screened_at', { withTimezone: true }),
+  nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  activityIdx: index('idx_dpia_screenings_activity').on(table.processingActivityId, table.createdAt),
+  orgIdx: index('idx_dpia_screenings_org').on(table.organizationId, table.status),
+}));
+
 export const dpias = pgTable('dpias', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-  
+
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
   processingActivityIds: jsonb('processing_activity_ids').default([]),
-  
+
   processingDescription: text('processing_description'),
   necessityAssessment: text('necessity_assessment'),
   proportionalityAssessment: text('proportionality_assessment'),
-  
+
   overallRiskLevel: varchar('overall_risk_level', { length: 20 }),
   residualRiskLevel: varchar('residual_risk_level', { length: 20 }),
   requiresPriorConsultation: boolean('requires_prior_consultation').default(false),
-  
+
   status: varchar('status', { length: 50 }).default('draft'),
   version: integer('version').default(1),
-  
+
   approvedBy: uuid('approved_by').references(() => users.id),
   approvedAt: timestamp('approved_at', { withTimezone: true }),
-  
+
   lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
-  
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   residualRisks: jsonb('residual_risks').$type<DpiaResidualRiskRow[]>().default([]),
   lastMitigationReminderSentAt: timestamp('last_mitigation_reminder_sent_at', { withTimezone: true }),
-});
+
+  // -------------------------------------------------------------------------
+  // F57. What Art. 35(7) actually asks for, and what Art. 35(2) and (9) add.
+  //
+  // The table held (b) and (c) and nothing else. A DPIA without the systematic
+  // description in 35(7)(a), the DPO advice required by 35(2), and either a
+  // record of consulting data subjects or a reason for not doing so under 35(9)
+  // is not a DPIA a supervisory authority would accept — it is a risk register
+  // with a title.
+  // -------------------------------------------------------------------------
+
+  // 35(7)(a): the nature, scope, context and purposes, and — where the basis is
+  // legitimate interests — the interest pursued.
+  purposes: text('purposes'),
+  scopeDescription: text('scope_description'),
+  contextDescription: text('context_description'),
+  legitimateInterestPursued: text('legitimate_interest_pursued'),
+  dataFlowDescription: text('data_flow_description'),
+
+  // 35(2). The DPO advice, and — because the controller is the one who decides —
+  // whether it was followed, with a reason where it was not.
+  dpoConsulted: boolean('dpo_consulted').default(false),
+  dpoOpinion: text('dpo_opinion'),
+  // 'approve' | 'approve_with_conditions' | 'object'
+  dpoOpinionOutcome: varchar('dpo_opinion_outcome', { length: 30 }),
+  dpoOpinionBy: uuid('dpo_opinion_by').references(() => users.id),
+  dpoOpinionAt: timestamp('dpo_opinion_at', { withTimezone: true }),
+  dpoAdviceFollowed: boolean('dpo_advice_followed'),
+  dpoAdviceDepartureReason: text('dpo_advice_departure_reason'),
+
+  // 35(9). "Where appropriate, the controller shall seek the views of data
+  // subjects." Not seeking them is a legitimate answer; not recording that you
+  // considered it is not.
+  consultationSought: boolean('consultation_sought').default(false),
+  consultationMethod: varchar('consultation_method', { length: 60 }),
+  consultationSummary: text('consultation_summary'),
+  consultationNotSoughtReason: text('consultation_not_sought_reason'),
+  consultationAt: timestamp('consultation_at', { withTimezone: true }),
+
+  // Sign-off. Separate from `approved_by` on purpose: that column records the
+  // internal approval workflow, this one records the controller decision about
+  // whether the processing may proceed and on what conditions.
+  // 'proceed' | 'proceed_with_conditions' | 'do_not_proceed'
+  signOffDecision: varchar('sign_off_decision', { length: 30 }),
+  signOffConditions: text('sign_off_conditions'),
+  signedOffBy: uuid('signed_off_by').references(() => users.id),
+  signedOffAt: timestamp('signed_off_at', { withTimezone: true }),
+
+  // Art. 36. Where the residual risk stays high, the authority has to be asked
+  // before processing starts, and the reference it gives back is the evidence.
+  priorConsultationStatus: varchar('prior_consultation_status', { length: 30 }),
+  priorConsultationAuthority: varchar('prior_consultation_authority', { length: 120 }),
+  priorConsultationSubmittedAt: timestamp('prior_consultation_submitted_at', { withTimezone: true }),
+  priorConsultationReference: varchar('prior_consultation_reference', { length: 120 }),
+  priorConsultationResponse: text('prior_consultation_response'),
+  priorConsultationRespondedAt: timestamp('prior_consultation_responded_at', { withTimezone: true }),
+
+  // Which built-in template this was started from (lib/dpiaTemplates.ts), so a
+  // reader can tell a tailored CCTV assessment from a blank one.
+  templateId: varchar('template_id', { length: 60 }),
+  screeningId: uuid('screening_id'),
+
+  ownerId: uuid('owner_id').references(() => users.id),
+  reviewCadenceMonths: integer('review_cadence_months'),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (table) => ({
+  orgIdx: index('idx_dpias_org').on(table.organizationId, table.status),
+  reviewIdx: index('idx_dpias_review').on(table.organizationId, table.nextReviewAt),
+}));
+
+/**
+ * F57. The same jsonb-snapshot bargain `processing_activity_versions` makes, for
+ * the same reason: what a sign-off signed is a document, and a shadow schema per
+ * entity drifts. A DPIA is versioned on sign-off and on request.
+ */
+export const dpiaVersions = pgTable('dpia_versions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  dpiaId: uuid('dpia_id').notNull().references(() => dpias.id, { onDelete: 'cascade' }),
+
+  version: integer('version').notNull(),
+  // 'signed_off' | 'manual' | 'reviewed'
+  reason: varchar('reason', { length: 30 }).notNull(),
+  note: text('note'),
+
+  snapshot: jsonb('snapshot').notNull(),
+  // I90's hash, applied here too: a sign-off nobody can prove was not edited
+  // afterwards is not a sign-off.
+  contentHash: varchar('content_hash', { length: 64 }),
+  status: varchar('status', { length: 50 }),
+  residualRiskLevel: varchar('residual_risk_level', { length: 20 }),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  dpiaIdx: index('idx_dpia_versions_dpia').on(table.dpiaId, table.version),
+  orgIdx: index('idx_dpia_versions_org').on(table.organizationId),
+  unq: unique('dpia_versions_dpia_version_unq').on(table.dpiaId, table.version),
+}));
+
 
 /**
  * Shapes stored in jsonb columns.
@@ -970,29 +1217,69 @@ export type VendorQuestionnaireAnswer = {
   textAnswer: string;
 };
 
+/**
+ * F57. A risk in an Art. 35(7)(c) sense, which is a risk *to the data subject* —
+ * not to the business.
+ *
+ * `likelihood` and `severity` were integers with no scale attached and no residual
+ * pair, so a matrix could not be drawn: there was one score before mitigation and
+ * one after, and nothing said what either meant. The new columns are the four
+ * corners of the matrix plus the two things that make a risk actionable — who it
+ * happens to, and where it comes from.
+ */
 export const dpiaRisks = pgTable('dpia_risks', {
   id: uuid('id').defaultRandom().primaryKey(),
   dpiaId: uuid('dpia_id').notNull().references(() => dpias.id, { onDelete: 'cascade' }),
-  
+
   description: text('description').notNull(),
   likelihood: integer('likelihood'),
   severity: integer('severity'),
   initialRiskScore: integer('initial_risk_score'),
   residualRiskScore: integer('residual_risk_score'),
-  
+
+  // The other half of the matrix. Without these, "residual_risk_score" is a number
+  // somebody typed rather than a position the measures moved the risk to.
+  residualLikelihood: integer('residual_likelihood'),
+  residualSeverity: integer('residual_severity'),
+
+  // 'illegitimate_access' | 'unwanted_modification' | 'disappearance' are the CNIL
+  // triad; the rest cover the harms Recital 75 names. Free-form would have made
+  // "which risks recur across our register?" unanswerable again.
+  riskCategory: varchar('risk_category', { length: 40 }),
+  // Recital 75's harms, as [{ type }] — discrimination, identity theft, financial
+  // loss, reputational damage, loss of confidentiality, de-pseudonymisation.
+  harms: jsonb('harms').$type<string[]>().default([]).notNull(),
+  affectedSubjects: text('affected_subjects'),
+  sourceOfRisk: text('source_of_risk'),
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  dpiaIdx: index('idx_dpia_risks_dpia').on(table.dpiaId),
+}));
 
 export const dpiaMeasures = pgTable('dpia_measures', {
   id: uuid('id').defaultRandom().primaryKey(),
   dpiaRiskId: uuid('dpia_risk_id').notNull().references(() => dpiaRisks.id, { onDelete: 'cascade' }),
-  
+
   description: text('description').notNull(),
   status: varchar('status', { length: 50 }).default('planned'),
   implementedAt: timestamp('implemented_at', { withTimezone: true }),
-  
+
+  // Art. 35(7)(d) asks for the measures "envisaged to address the risks",
+  // which means measures somebody has agreed to deliver by a date. A row with
+  // neither is a sentence, and the DPIA gets signed off on the strength of it.
+  measureType: varchar('measure_type', { length: 30 }),
+  ownerId: uuid('owner_id').references(() => users.id),
+  dueDate: timestamp('due_date', { withTimezone: true }),
+  effectiveness: varchar('effectiveness', { length: 20 }),
+  evidence: text('evidence'),
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  riskIdx: index('idx_dpia_measures_risk').on(table.dpiaRiskId),
+}));
 
 // ============================================================================
 // VENDORS
@@ -1305,6 +1592,44 @@ export const transferImpactAssessments = pgTable('transfer_impact_assessments', 
   
   // Version
   version: integer('version').default(1),
+
+  // -------------------------------------------------------------------------
+  // F58. Recommendations 01/2020 has six steps and the table stopped at five.
+  //
+  // Step 1 is "know your transfer", which means naming the exporter, the importer
+  // and what is actually sent — a TIA that says "US, SCCs" and nothing else
+  // assesses nothing. Step 6 is re-evaluation "at appropriate intervals", which
+  // needs an interval rather than a date somebody sets once.
+  //
+  // `processing_transfer_id` already existed and nothing wrote it: every TIA was
+  // filed against a *vendor*, so an organisation transferring three different
+  // data sets to the same processor under different mechanisms had one assessment
+  // covering all three. The link is what makes the assessment per transfer.
+  // -------------------------------------------------------------------------
+  processingActivityId: uuid('processing_activity_id').references(() => processingActivities.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }),
+
+  // Step 1.
+  dataExporter: varchar('data_exporter', { length: 255 }),
+  dataImporter: varchar('data_importer', { length: 255 }),
+  transferPurpose: text('transfer_purpose'),
+  dataSubjectCategories: jsonb('data_subject_categories').$type<string[]>().default([]),
+  transferFrequency: varchar('transfer_frequency', { length: 40 }),
+  onwardTransfers: text('onward_transfers'),
+
+  // Step 6. Months, not a date: an interval survives the review being done and
+  // the next one being scheduled from it, which a single `next_review_at` does not.
+  reevaluationIntervalMonths: integer('reevaluation_interval_months'),
+  reevaluationTriggers: text('reevaluation_triggers'),
+
+  // The suspension decision, which is the one conclusion that has to *do*
+  // something. Recorded here as well as propagated onto the transfer rows,
+  // because "who stopped this and when" is the question asked afterwards.
+  suspendedAt: timestamp('suspended_at', { withTimezone: true }),
+  suspendedBy: uuid('suspended_by').references(() => users.id),
+  suspensionReason: text('suspension_reason'),
+
+  assessedBy: uuid('assessed_by').references(() => users.id),
   
   createdBy: uuid('created_by').references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -1421,6 +1746,17 @@ export const auditLogs = pgTable("audit_logs", {
   description: text('description').notNull(),
   changes: jsonb('changes'),
   metadata: jsonb('metadata'),
+
+  // I86. A data category, recipient or transfer is edited by its *own* id, so
+  // every child-row change filed itself under an id the activity's History tab
+  // never queries — and most of what an Art. 30 record actually contains had no
+  // visible trail at all. The parent is resolved by the audit middleware from the
+  // mutation's own result, which is the only place it is reliably known.
+  parentResourceId: varchar('parent_resource_id', { length: 255 }),
+  // I85. The child table the change happened in ('processing_data_categories'),
+  // so the timeline can say "Data category" rather than "processing activity"
+  // against a row that is neither.
+  childResourceType: varchar('child_resource_type', { length: 100 }),
   
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
@@ -1428,6 +1764,12 @@ export const auditLogs = pgTable("audit_logs", {
   createdAtIdx: index('idx_audit_logs_created_at').on(table.createdAt),
   actionIdx: index('idx_audit_logs_action').on(table.action),
   resourceTypeIdx: index('idx_audit_logs_resource_type').on(table.resourceType),
+  // I88. The activity timeline is "this organisation, this record, newest first",
+  // and it is now filtered and paginated rather than fetched whole. Without a
+  // composite the planner scans the org index and sorts, which on a register with
+  // a year of history is the slowest query the editor makes.
+  orgResourceIdx: index('idx_audit_logs_org_resource').on(table.organizationId, table.resourceId, table.createdAt),
+  parentIdx: index('idx_audit_logs_parent').on(table.parentResourceId, table.createdAt),
 }));
 
 // ============================================================================
@@ -2254,6 +2596,12 @@ export const processingActivitiesRelations = relations(processingActivities, ({ 
   versions: many(processingActivityVersions),
   tasks: many(processingActivityTasks),
   comments: many(processingActivityComments),
+  // Sprint 3. The three assessments that hang off an activity. Each is a `many`
+  // even where the product treats one as current — an LIA is superseded rather
+  // than overwritten, and a screening from March is still evidence in June.
+  liaAssessments: many(legitimateInterestAssessments),
+  screenings: many(dpiaScreenings),
+  transferAssessments: many(transferImpactAssessments),
   businessOwner: one(users, {
     fields: [processingActivities.businessOwnerId],
     references: [users.id],
@@ -2332,6 +2680,86 @@ export const processingActivityCommentsRelations = relations(processingActivityC
   }),
 }));
 
+export const legitimateInterestAssessmentsRelations = relations(legitimateInterestAssessments, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [legitimateInterestAssessments.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  assessor: one(users, {
+    fields: [legitimateInterestAssessments.assessedBy],
+    references: [users.id],
+  }),
+}));
+
+export const dpiaScreeningsRelations = relations(dpiaScreenings, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [dpiaScreenings.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  screener: one(users, {
+    fields: [dpiaScreenings.screenedBy],
+    references: [users.id],
+  }),
+}));
+
+export const dpiasRelations = relations(dpias, ({ one, many }) => ({
+  risks: many(dpiaRisks),
+  versions: many(dpiaVersions),
+  owner: one(users, {
+    fields: [dpias.ownerId],
+    references: [users.id],
+  }),
+  signedOffByUser: one(users, {
+    fields: [dpias.signedOffBy],
+    references: [users.id],
+  }),
+}));
+
+export const dpiaRisksRelations = relations(dpiaRisks, ({ one, many }) => ({
+  dpia: one(dpias, {
+    fields: [dpiaRisks.dpiaId],
+    references: [dpias.id],
+  }),
+  measures: many(dpiaMeasures),
+}));
+
+export const dpiaMeasuresRelations = relations(dpiaMeasures, ({ one }) => ({
+  risk: one(dpiaRisks, {
+    fields: [dpiaMeasures.dpiaRiskId],
+    references: [dpiaRisks.id],
+  }),
+  owner: one(users, {
+    fields: [dpiaMeasures.ownerId],
+    references: [users.id],
+  }),
+}));
+
+export const dpiaVersionsRelations = relations(dpiaVersions, ({ one }) => ({
+  dpia: one(dpias, {
+    fields: [dpiaVersions.dpiaId],
+    references: [dpias.id],
+  }),
+  author: one(users, {
+    fields: [dpiaVersions.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const transferImpactAssessmentsRelations = relations(transferImpactAssessments, ({ one }) => ({
+  activity: one(processingActivities, {
+    fields: [transferImpactAssessments.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  transfer: one(processingTransfers, {
+    fields: [transferImpactAssessments.processingTransferId],
+    references: [processingTransfers.id],
+  }),
+  vendor: one(vendors, {
+    fields: [transferImpactAssessments.vendorId],
+    references: [vendors.id],
+  }),
+}));
+
 export const ropaSavedViewsRelations = relations(ropaSavedViews, ({ one }) => ({
   organization: one(organizations, {
     fields: [ropaSavedViews.organizationId],
@@ -2373,11 +2801,12 @@ export const processingDataSubjectsRelations = relations(processingDataSubjects,
 // `many(processingTransfers)` on the activity needs this back-reference for the
 // same reason the data-category one does — Drizzle infers the join from the
 // child's `one()`, and throws while *building* the query when it is missing.
-export const processingTransfersRelations = relations(processingTransfers, ({ one }) => ({
+export const processingTransfersRelations = relations(processingTransfers, ({ one, many }) => ({
   activity: one(processingActivities, {
     fields: [processingTransfers.processingActivityId],
     references: [processingActivities.id],
   }),
+  assessments: many(transferImpactAssessments),
   vendor: one(vendors, {
     fields: [processingTransfers.vendorId],
     references: [vendors.id],

@@ -2,56 +2,72 @@ import React from 'react';
 import { z } from 'zod';
 import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
-import { processingActivities, organizations } from 'db';
+import { processingActivities, organizations, clients } from 'db';
 import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { dataExportQueue } from '../lib/queue.js';
 import { renderPdf } from '../lib/pdfClient.js';
 import type { ExecutiveReportData } from '../lib/auditTemplates/executiveReport.js';
+import { buildArticle30Record } from '../lib/ropaArticle30.js';
+import { assertParentOwned } from '../lib/tenancy.js';
 
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
 };
 
 export const exportRouter = router({
+  /**
+   * J93. The Article 30 record — now the canonical one.
+   *
+   * This procedure used to render `ropa-record`, a nine-field-per-activity view
+   * that shared nothing with the eight-field one the audit pack produced. Which
+   * document a customer received depended on which button they pressed, and
+   * neither carried the controller's identity, the Art. 9(2) conditions, the
+   * transfer safeguard evidence, or the negative assertions that make an empty
+   * column mean something.
+   *
+   * `buildArticle30Record` is the one dataset now, shared with the workbook, the
+   * CSV, the JSON and the four regulator packs. Kept here as well as on
+   * `ropa.export.article30Pdf` because the support module's QBR pre-read calls it,
+   * and because a route that has been in the API since the first release should
+   * not start 404ing to move a button.
+   */
   generatePdf: protectedProcedure
     .use(requirePermission('ropa', 'view'))
-    .input(z.object({ 
+    .input(z.object({
       type: z.enum(['full_audit', 'client_summary']),
       clientId: z.string().uuid().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       checkOrgContext(ctx.user);
 
-      // Fetch org details
       const org = await ctx.db.query.organizations.findFirst({
         where: eq(organizations.id, ctx.user!.orgId)
       });
 
-      // Fetch ROPA data
-      const query = ctx.db.select().from(processingActivities).where(eq(processingActivities.organizationId, ctx.user!.orgId));
-      // If client_summary, filter by client (assuming we add a where clause if needed)
-      const activities = await query;
-
-      // The template lives in apps/web/src/lib/pdf/templates/ropaRecord.tsx and
-      // renders with @react-pdf/renderer, so this process needs no browser.
       try {
-        const pdfBuffer = await renderPdf('ropa-record', {
-          organizationName: org?.name || 'Organization',
-          reportDate: new Date().toLocaleDateString(),
-          reportType: input.type,
-          activities: activities.map((a: any) => ({
-            name: a.name,
-            purpose: a.purpose,
-            description: a.description,
-            lawfulBasis: a.lawfulBasis,
-            status: a.status,
-            riskLevel: a.riskLevel,
-            retentionPeriod: a.retentionPeriod,
-            retentionJustification: a.retentionJustification,
-            securityMeasures: Array.isArray(a.securityMeasures) ? a.securityMeasures : [],
-          })),
+        // `client_summary` narrows to one client's records, which is N114's
+        // agency case: the deliverable is that client's Art. 30(2) record, not
+        // the agency's whole register with their name on the cover.
+        //
+        // The client id is proved first and the organisation predicate is stated
+        // here as well as inside the builder. `buildArticle30Record` adds its own
+        // — it is the one door every export goes through and an export that leaks
+        // another tenant's register is the worst failure this module has — but a
+        // client-supplied foreign key still has to be proved where it is used, or
+        // this reads as a filter on an id nobody checked.
+        const where = [eq(processingActivities.organizationId, ctx.user!.orgId)];
+        if (input.clientId) {
+          await assertParentOwned(ctx.db, clients, input.clientId, ctx.user!.orgId, 'Client');
+          where.push(eq(processingActivities.clientId, input.clientId));
+        }
+
+        const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
+          where,
+          filterSummary: input.clientId ? 'Activities carried out on behalf of one client.' : null,
         });
+
+        const pdfBuffer = await renderPdf('ropa-register', JSON.parse(JSON.stringify(record)));
 
         // Still base64 so the frontend can download it directly; uploading to S3
         // and returning a URL remains the intended end state.
@@ -59,7 +75,7 @@ export const exportRouter = router({
         return {
           success: true,
           pdfData: base64Pdf,
-          filename: `ropa_audit_${org?.slug || 'export'}_${new Date().getTime()}.pdf`
+          filename: `article-30-record-${org?.slug || 'export'}-${new Date().toISOString().slice(0, 10)}.pdf`
         };
       } catch (err) {
         console.error('ROPA PDF generation failed:', err);

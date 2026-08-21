@@ -1,7 +1,7 @@
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import { paginatedQuery } from '../utils/pagination.js';
 import { z } from 'zod';
-import { router, protectedProcedure } from '../trpc.js';
+import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { db } from '../db.js';
 import { 
   clients, 
@@ -113,6 +113,54 @@ export const clientsRouter = router({
         )).returning();
       if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
       await dispatchWebhook(ctx.user.orgId, 'client.updated', { clientId: updated.id });
+      return updated;
+    }),
+
+  /**
+   * N114. The client's identity as a *controller*, which is what Art. 30(2)(a)
+   * asks a processor's record to carry.
+   *
+   * Its own procedure rather than more fields on `update`, because these are not
+   * CRM fields: they are the contents of a statutory record, and the agency case
+   * is the whole point. Forty clients means forty Art. 30(2) records, each of
+   * which has to name *that* client's representative and DPO. `name` and
+   * `contactEmail` were all the schema had, so every processor record the module
+   * produced named the agency's own DPO as the controller's — which is a document
+   * that misidentifies the controller to a supervisory authority.
+   */
+  updateControllerIdentity: protectedProcedure
+    .use(requirePermission('ropa', 'edit'))
+    .input(z.object({
+      id: z.string().uuid(),
+      legalName: z.string().max(255).nullish(),
+      controllerAddress: z.object({
+        street: z.string().max(255).optional(),
+        city: z.string().max(120).optional(),
+        postalCode: z.string().max(20).optional(),
+        region: z.string().max(120).optional(),
+        country: z.string().max(120).optional(),
+      }).nullish(),
+      controllerRepresentative: z.object({
+        name: z.string().max(255).optional(),
+        email: z.string().max(255).optional(),
+        address: z.string().max(500).optional(),
+      }).nullish(),
+      controllerDpoName: z.string().max(255).nullish(),
+      controllerDpoEmail: z.string().max(255).nullish(),
+      // Art. 30(2)(b): "the categories of processing carried out on behalf of
+      // each controller" — a property of the relationship, not of one activity.
+      processingCategories: z.array(z.string().max(120)).max(40).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const [updated] = await ctx.db.update(clients)
+        .set({ ...data, updatedAt: new Date() })
+        .where(and(
+          eq(clients.id, id),
+          eq(clients.organizationId, ctx.user!.orgId)
+        )).returning();
+      if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
+      await dispatchWebhook(ctx.user!.orgId, 'client.updated', { clientId: updated.id });
       return updated;
     }),
 

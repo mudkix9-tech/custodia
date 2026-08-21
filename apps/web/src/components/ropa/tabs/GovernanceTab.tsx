@@ -11,12 +11,14 @@
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  CalendarClock, ShieldCheck, History, Check, X, Send, RotateCcw, FileClock, ArrowLeftRight,
+  CalendarClock, ShieldCheck, History, Check, X, Send, RotateCcw, FileClock, ArrowLeftRight, Undo2,
 } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useToast } from '@/components/ui/Toast';
 import { announce } from '@/components/layout/Announcer';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,15 +49,18 @@ function Person({ name, email }: { name?: string | null; email?: string | null }
   return <span className="text-[#E6E8EA]">{name || email || '—'}</span>;
 }
 
-export function GovernanceTab({ activity, orgMembers, currentUserId, onChanged }: {
+export function GovernanceTab({ activity, orgMembers, currentUserId, isAdmin, onChanged }: {
   activity: any;
   orgMembers: { id: string; name?: string | null; email: string }[];
   currentUserId?: string;
+  /** Whether the caller may change the org-level approval requirement (B20). */
+  isAdmin?: boolean;
   onChanged: () => void;
 }) {
   const t = useTranslations('ropa.governance');
   const toast = useToast();
   const utils = trpc.useUtils();
+  const { confirm, dialog } = useConfirm();
   const activityId = activity.id;
 
   const date = (value: string | Date | null | undefined) =>
@@ -121,6 +126,20 @@ export function GovernanceTab({ activity, orgMembers, currentUserId, onChanged }
   const approvalState: string = activity.approvalState || 'draft';
   const isReviewer = activity.currentReviewerId && activity.currentReviewerId === currentUserId;
 
+  // B20, org-level. Everyone can see whether approval is mandatory — it changes what
+  // the Publish button will do — and only an admin can change it, which the API
+  // enforces and the switch below reflects.
+  const { data: governance } = trpc.ropa.governance.get.useQuery();
+  const setGovernance = trpc.ropa.governance.update.useMutation({
+    onSuccess: () => {
+      utils.ropa.governance.get.invalidate();
+      utils.ropa.completeness.invalidate({ id: activityId });
+      toast(t('approval.requirement_saved'));
+    },
+    onError: (err) => toast(t('failed'), { tone: 'error', description: err.message }),
+  });
+  const canAdminister = isAdmin === true;
+
   // --- B21 -----------------------------------------------------------------
   const [diffFrom, setDiffFrom] = useState<string | null>(null);
   const { data: versions = [] } = trpc.ropa.versions.list.useQuery({ processingActivityId: activityId });
@@ -136,8 +155,31 @@ export function GovernanceTab({ activity, orgMembers, currentUserId, onChanged }
     onError: (err) => toast(t('failed'), { tone: 'error', description: err.message }),
   });
 
+  const restore = trpc.ropa.versions.restore.useMutation({
+    onSuccess: (res: any) => {
+      utils.ropa.versions.list.invalidate({ processingActivityId: activityId });
+      onChanged();
+      const message = t('versions.restored', { version: res.restoredFrom });
+      toast(message);
+      announce(message);
+    },
+    // A restore can be refused for a reason worth reading — a transfer in this
+    // version has a TIA against it — so the message is shown rather than swallowed.
+    onError: (err) => toast(t('versions.restore_failed'), { tone: 'error', description: err.message }),
+  });
+
+  const handleRestore = async (version: any) => {
+    const ok = await confirm({
+      title: t('versions.restore_title', { version: version.version }),
+      description: t('versions.restore_body'),
+      confirmText: t('versions.restore'),
+    });
+    if (ok) restore.mutate({ id: version.id });
+  };
+
   return (
     <div className="max-w-4xl space-y-6">
+      {dialog}
       {/* ---- B19. Review cycle and attestation ---- */}
       <Panel title={t('review.title')} subtitle={t('review.subtitle')} icon={CalendarClock}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -253,6 +295,27 @@ export function GovernanceTab({ activity, orgMembers, currentUserId, onChanged }
           {activity.approvedAt && (
             <span className="text-[12.5px] text-[#6E747A]">{t('approval.approved_on', { date: date(activity.approvedAt) })}</span>
           )}
+        </div>
+
+        {/* Said before the workflow rather than after it: whether approval is
+            mandatory changes what the Publish button does, and finding that out from
+            a refusal is the worst time to find it out. */}
+        <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-white/10 bg-[#0D0F11] px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[12.5px] text-[#E6E8EA]">{t('approval.requirement')}</p>
+            <p className="mt-0.5 text-[12px] text-[#6E747A]">
+              {governance?.approvalRequired ? t('approval.requirement_on') : t('approval.requirement_off')}
+            </p>
+            {!canAdminister && (
+              <p className="mt-0.5 text-[12px] text-[#6E747A]">{t('approval.requirement_admin_only')}</p>
+            )}
+          </div>
+          <Switch
+            checked={governance?.approvalRequired ?? false}
+            disabled={!canAdminister || setGovernance.isPending}
+            aria-label={t('approval.requirement')}
+            onCheckedChange={(checked) => setGovernance.mutate({ approvalRequired: checked })}
+          />
         </div>
 
         {approvalState === 'in_review' ? (
@@ -400,15 +463,31 @@ export function GovernanceTab({ activity, orgMembers, currentUserId, onChanged }
                 <Person name={v.authorName} email={v.authorEmail} />
                 {typeof v.score === 'number' && <span className="text-[#6E747A]">{t('versions.score', { score: v.score })}</span>}
                 {v.note && <span className="w-full text-[#9BA1A6]">{v.note}</span>}
-                <button
-                  type="button"
-                  onClick={() => setDiffFrom(diffFrom === v.id ? null : v.id)}
-                  aria-expanded={diffFrom === v.id}
-                  className="ml-auto inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[12px] text-[#9BA1A6] transition-colors hover:text-[#F4F5F6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"
-                >
-                  <ArrowLeftRight className="h-3 w-3" aria-hidden="true" />
-                  {diffFrom === v.id ? t('versions.hide_diff') : t('versions.compare_current')}
-                </button>
+                <span className="ml-auto inline-flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setDiffFrom(diffFrom === v.id ? null : v.id)}
+                    aria-expanded={diffFrom === v.id}
+                    className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[12px] text-[#9BA1A6] transition-colors hover:text-[#F4F5F6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"
+                  >
+                    <ArrowLeftRight className="h-3 w-3" aria-hidden="true" />
+                    {diffFrom === v.id ? t('versions.hide_diff') : t('versions.compare_current')}
+                  </button>
+                  {/* `pre_restore` snapshots are the safety net a restore leaves
+                      behind. Offering to restore one is not wrong, but it is almost
+                      never what somebody means, so it is not offered by default. */}
+                  {v.reason !== 'pre_restore' && (
+                    <button
+                      type="button"
+                      onClick={() => handleRestore(v)}
+                      disabled={restore.isPending}
+                      className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[12px] text-[#9BA1A6] transition-colors hover:text-[#C9A227] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"
+                    >
+                      <Undo2 className="h-3 w-3" aria-hidden="true" />
+                      {t('versions.restore')}
+                    </button>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
