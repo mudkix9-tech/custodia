@@ -39,7 +39,7 @@ export function DraftPanel({ activityId }: { activityId?: string }) {
   const generate = trpc.ropa.draft.generate.useMutation();
   const decide = trpc.ropa.draft.decide.useMutation();
   const acceptAll = trpc.ropa.draft.acceptAll.useMutation();
-  const apply = trpc.ropa.draft.apply.useMutation();
+  const applyDraft = trpc.ropa.draft.applyDraft.useMutation();
   const discard = trpc.ropa.draft.discard.useMutation();
 
   const draft = trpc.ropa.draft.get.useQuery({ id: draftId! }, { enabled: !!draftId });
@@ -169,11 +169,11 @@ export function DraftPanel({ activityId }: { activityId?: string }) {
 
           <div className="flex justify-end">
             <Button
-              disabled={acceptedCount === 0 || apply.isPending}
+              disabled={acceptedCount === 0 || applyDraft.isPending}
               onClick={async () => {
                 setError(null);
                 try {
-                  const result = await apply.mutateAsync({ id: draftId, targetActivityId: activityId ?? null });
+                  const result = await applyDraft.mutateAsync({ id: draftId, targetActivityId: activityId ?? null });
                   setDraftId(null);
                   setPrompt('');
                   if (result.created) router.push(`/ropa/${result.activityId}`);

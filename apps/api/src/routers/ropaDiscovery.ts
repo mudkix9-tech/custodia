@@ -464,7 +464,7 @@ export const ropaDraftRouter = router({
    * six somebody entered by hand; and a reviewer who wants them gone can delete
    * them where deleting them is visible.
    */
-  apply: protectedProcedure
+  applyDraft: protectedProcedure
     .use(requirePermission('ropa', 'edit'))
     .input(z.object({ id: z.string().uuid(), targetActivityId: z.string().uuid().nullish() }))
     .mutation(async ({ ctx, input }) => {
