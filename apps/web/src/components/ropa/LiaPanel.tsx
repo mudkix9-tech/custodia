@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { useToast } from '@/components/ui/Toast';
 import { Scale, Loader2, CheckCircle2, AlertTriangle, RotateCcw, Trash2 } from 'lucide-react';
+import { TextField, CheckField, ChoiceField } from './fields';
 
 /**
  * F55. The Article 6(1)(f) three-part test.
@@ -27,8 +28,6 @@ import { Scale, Loader2, CheckCircle2, AlertTriangle, RotateCcw, Trash2 } from '
  */
 
 type Gap = { id: string; part: string; blocks: boolean };
-
-const PARTS = ['purpose', 'necessity', 'balancing', 'outcome'] as const;
 
 export function LiaPanel({ activityId, lawfulBasis }: { activityId: string; lawfulBasis: string | null | undefined }) {
   const t = useTranslations('ropa.lia');
@@ -119,48 +118,18 @@ export function LiaPanel({ activityId, lawfulBasis }: { activityId: string; lawf
     );
   };
 
-  const Text = ({ field, label, hint, rows = 3 }: { field: string; label: string; hint?: string; rows?: number }) => (
-    <div>
-      <label htmlFor={`lia-${field}`} className="text-[12.5px] font-medium text-[#E6E8EA]">{label}</label>
-      {hint ? <p className="mt-0.5 mb-1.5 text-[11.5px] text-[#6E747A]">{hint}</p> : null}
-      <textarea
-        id={`lia-${field}`}
-        rows={rows}
-        value={form[field] ?? ''}
-        onChange={(e) => set(field, e.target.value)}
-        className="mt-1 w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60"
-      />
-    </div>
-  );
+  // These three close over `form` and `set`, and are declared here rather than
+  // inline for the reason `fields.tsx` explains: a component declared inside a
+  // render is a new type each time, so the textarea would be remounted — and
+  // lose focus — after every keystroke.
+  const Text = (props: { field: string; label: string; hint?: string; rows?: number }) =>
+    TextField({ idPrefix: 'lia', value: form[props.field] ?? '', onChange: (v) => set(props.field, v), ...props });
 
-  const Check = ({ field, label }: { field: string; label: string }) => (
-    <label className="flex items-start gap-2 text-[12.5px] text-[#E6E8EA]">
-      <input
-        type="checkbox"
-        checked={!!form[field]}
-        onChange={(e) => set(field, e.target.checked)}
-        className="mt-0.5 accent-[#C9A227]"
-      />
-      <span>{label}</span>
-    </label>
-  );
+  const Check = (props: { field: string; label: string }) =>
+    CheckField({ checked: !!form[props.field], onChange: (v) => set(props.field, v), ...props });
 
-  const Choice = ({ field, label, options }: { field: string; label: string; options: Array<[string, string]> }) => (
-    <div>
-      <label htmlFor={`lia-${field}`} className="text-[12.5px] font-medium text-[#E6E8EA]">{label}</label>
-      <select
-        id={`lia-${field}`}
-        value={form[field] ?? ''}
-        onChange={(e) => set(field, e.target.value || null)}
-        className="mt-1 w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6]"
-      >
-        <option value="">—</option>
-        {options.map(([value, labelText]) => (
-          <option key={value} value={value}>{labelText}</option>
-        ))}
-      </select>
-    </div>
-  );
+  const Choice = (props: { field: string; label: string; options: Array<[string, string]> }) =>
+    ChoiceField({ idPrefix: 'lia', value: form[props.field] ?? '', onChange: (v) => set(props.field, v), ...props });
 
   return (
     <div className="space-y-6 max-w-3xl fade-up">
@@ -210,39 +179,31 @@ export function LiaPanel({ activityId, lawfulBasis }: { activityId: string; lawf
                 <p className="text-[11.5px] text-[#6E747A]">{t('part_purpose_hint')}</p>
               </div>
               <div>
-                <Text field="purposeTestLegitimateInterest" label={t('f_interest')} hint={t('f_interest_hint')} rows={4} />
+                {Text({ field: 'purposeTestLegitimateInterest', label: t('f_interest'), hint: t('f_interest_hint'), rows: 4 })}
                 <GapNote id="purpose_interest" />
               </div>
-              <Check field="purposeTestIsLawful" label={t('f_is_lawful')} />
+              {Check({ field: 'purposeTestIsLawful', label: t('f_is_lawful') })}
               <GapNote id="purpose_unlawful" />
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Choice
-                    field="purposeTestBeneficiary"
-                    label={t('f_beneficiary')}
-                    options={[
+                  {Choice({ field: 'purposeTestBeneficiary', label: t('f_beneficiary'), options: [
                       ['controller', t('beneficiary_controller')],
                       ['third_party', t('beneficiary_third_party')],
                       ['both', t('beneficiary_both')],
-                    ]}
-                  />
+                    ] })}
                   <GapNote id="purpose_beneficiary" />
                 </div>
                 <div>
-                  <Choice
-                    field="purposeTestImportance"
-                    label={t('f_importance')}
-                    options={[
+                  {Choice({ field: 'purposeTestImportance', label: t('f_importance'), options: [
                       ['compelling', t('importance_compelling')],
                       ['moderate', t('importance_moderate')],
                       ['minor', t('importance_minor')],
-                    ]}
-                  />
+                    ] })}
                   <GapNote id="purpose_importance" />
                 </div>
               </div>
               <div>
-                <Text field="purposeTestEvidence" label={t('f_evidence')} rows={2} />
+                {Text({ field: 'purposeTestEvidence', label: t('f_evidence'), rows: 2 })}
                 <GapNote id="purpose_evidence" />
               </div>
             </section>
@@ -254,17 +215,17 @@ export function LiaPanel({ activityId, lawfulBasis }: { activityId: string; lawf
                 <p className="text-[11.5px] text-[#6E747A]">{t('part_necessity_hint')}</p>
               </div>
               <div>
-                <Text field="necessityTestIsNecessary" label={t('f_necessary')} rows={4} />
+                {Text({ field: 'necessityTestIsNecessary', label: t('f_necessary'), rows: 4 })}
                 <GapNote id="necessity_statement" />
               </div>
               <div>
-                <Text field="necessityTestAlternatives" label={t('f_alternatives')} />
+                {Text({ field: 'necessityTestAlternatives', label: t('f_alternatives') })}
                 <GapNote id="necessity_alternatives" />
               </div>
-              <Check field="necessityTestProportionate" label={t('f_proportionate')} />
+              {Check({ field: 'necessityTestProportionate', label: t('f_proportionate') })}
               <GapNote id="necessity_proportionate" />
               <div>
-                <Text field="necessityTestConclusion" label={t('f_necessity_conclusion')} rows={2} />
+                {Text({ field: 'necessityTestConclusion', label: t('f_necessity_conclusion'), rows: 2 })}
                 <GapNote id="necessity_conclusion" />
               </div>
             </section>
@@ -276,32 +237,32 @@ export function LiaPanel({ activityId, lawfulBasis }: { activityId: string; lawf
                 <p className="text-[11.5px] text-[#6E747A]">{t('part_balancing_hint')}</p>
               </div>
               <div>
-                <Text field="balancingTestImpact" label={t('f_impact')} rows={4} />
+                {Text({ field: 'balancingTestImpact', label: t('f_impact'), rows: 4 })}
                 <GapNote id="balancing_impact" />
               </div>
               <div>
-                <Text field="balancingTestExpectation" label={t('f_expectation')} />
+                {Text({ field: 'balancingTestExpectation', label: t('f_expectation') })}
                 <GapNote id="balancing_expectation" />
               </div>
               <div>
-                <Text field="balancingTestRelationship" label={t('f_relationship')} rows={2} />
+                {Text({ field: 'balancingTestRelationship', label: t('f_relationship'), rows: 2 })}
                 <GapNote id="balancing_relationship" />
               </div>
               <div className="space-y-2">
-                <Check field="balancingTestInvolvesChildren" label={t('f_involves_children')} />
-                <Check field="balancingTestInvolvesSpecialCategory" label={t('f_involves_special')} />
+                {Check({ field: 'balancingTestInvolvesChildren', label: t('f_involves_children') })}
+                {Check({ field: 'balancingTestInvolvesSpecialCategory', label: t('f_involves_special') })}
               </div>
               <div>
-                <Text field="balancingTestSafeguards" label={t('f_safeguards')} />
+                {Text({ field: 'balancingTestSafeguards', label: t('f_safeguards') })}
                 <GapNote id="balancing_safeguards" />
               </div>
               <div>
-                <Text field="objectionMechanism" label={t('f_objection')} rows={2} />
+                {Text({ field: 'objectionMechanism', label: t('f_objection'), rows: 2 })}
                 <GapNote id="objection_mechanism" />
               </div>
-              <Check field="optOutOffered" label={t('f_opt_out')} />
+              {Check({ field: 'optOutOffered', label: t('f_opt_out') })}
               <div>
-                <Text field="balancingTestOverrides" label={t('f_outcome')} rows={4} />
+                {Text({ field: 'balancingTestOverrides', label: t('f_outcome'), rows: 4 })}
                 <GapNote id="balancing_overrides" />
               </div>
             </section>
@@ -310,19 +271,15 @@ export function LiaPanel({ activityId, lawfulBasis }: { activityId: string; lawf
             <section className="space-y-4 border-t border-ink-900/8 pt-5">
               <h3 className="text-[13px] font-medium text-[#F4F5F6]">{t('part_outcome')}</h3>
               <div>
-                <Choice
-                  field="outcome"
-                  label={t('f_outcome')}
-                  options={[
+                {Choice({ field: 'outcome', label: t('f_outcome'), options: [
                     ['proceed', t('outcome_proceed')],
                     ['proceed_with_safeguards', t('outcome_proceed_with_safeguards')],
                     ['do_not_proceed', t('outcome_do_not_proceed')],
-                  ]}
-                />
+                  ] })}
                 <GapNote id="outcome" />
               </div>
               <div>
-                <Text field="outcomeRationale" label={t('f_outcome_rationale')} rows={3} />
+                {Text({ field: 'outcomeRationale', label: t('f_outcome_rationale'), rows: 3 })}
                 <GapNote id="outcome_rationale" />
               </div>
             </section>
@@ -334,7 +291,7 @@ export function LiaPanel({ activityId, lawfulBasis }: { activityId: string; lawf
                 disabled={!dirty || saveMutation.isPending}
                 className="rounded-lg bg-[#C9A227] px-4 py-2 text-[13px] font-medium text-[#0D0F11] hover:bg-[#D8B23A] disabled:opacity-40"
               >
-                {saveMutation.isPending ? t('completing') : t('saved')}
+                {saveMutation.isPending ? t('saving') : t('save')}
               </button>
 
               {!isCompleted ? (

@@ -402,6 +402,63 @@ const both = evaluatePublication(empty, { approvalRequired: true, approvalState:
 check(both.blockers.length > 1, 'both kinds of blocker are listed together');
 check(both.blockers.some((b) => b.id === 'approval'), 'including the approval one');
 
+// --- F55: the LIA requirement --------------------------------------------------
+//
+// The one requirement whose answer lives outside the four child tables, and the
+// only lawful basis that carries its own evidential burden. Every case below is
+// one a browser cannot tell apart: a register asserting legitimate interests with
+// no assessment looks exactly like one with a completed assessment behind it.
+
+const liBundle = (lia: ActivityBundle['lia']): ActivityBundle => ({
+  ...completeBundle(),
+  activity: { ...completeBundle().activity, lawfulBasis: 'legitimate_interests' },
+  lia,
+});
+
+check(
+  idOf(completeBundle(), 'legitimateInterestAssessment')?.status === 'not_applicable',
+  'an activity on another lawful basis is not asked for an LIA',
+);
+check(
+  idOf(liBundle(null), 'legitimateInterestAssessment')?.status === 'missing',
+  'legitimate interests with no assessment is missing',
+);
+check(
+  idOf(liBundle({ status: 'draft', outcome: null }), 'legitimateInterestAssessment')?.status === 'partial',
+  'a draft assessment is partial credit, not none',
+  'Starting the balancing test is the act being required; finishing it is the next one.',
+);
+check(
+  idOf(liBundle({ status: 'completed', outcome: 'proceed' }), 'legitimateInterestAssessment')?.status === 'met',
+  'a completed assessment concluding "proceed" is met',
+);
+check(
+  idOf(liBundle({ status: 'completed', outcome: 'do_not_proceed' }), 'legitimateInterestAssessment')?.status === 'missing',
+  'a completed assessment concluding "do not proceed" is not an answer',
+  'The register would be asserting a basis its own assessment rejected.',
+);
+check(
+  !evaluatePublication(liBundle(null)).canPublish,
+  'legitimate interests with no assessment blocks publication',
+);
+check(
+  evaluatePublication(liBundle({ status: 'draft', outcome: null })).canPublish,
+  'a draft assessment is enough to publish',
+  'Art. 5(2) asks that the reasoning be documented, and a draft is documentation in progress. A gate demanding a finished one would refuse every record on the day its basis was chosen.',
+);
+check(
+  evaluatePublication(liBundle(null), {
+    exceptionReason: 'Reviewed by the DPO on 3 August; assessment due 15 August.',
+  }).canPublish,
+  'a named and dated exception clears it, like the other Art. 30 blockers',
+  'Unlike the approval blocker, which is about a record being unreviewed rather than incomplete.',
+);
+check(
+  scoreActivity(liBundle({ status: 'completed', outcome: 'proceed' })).score
+    > scoreActivity(liBundle(null)).score,
+  'having an assessment scores higher than not having one',
+);
+
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {
   console.log(`${failures} FAILED.`);

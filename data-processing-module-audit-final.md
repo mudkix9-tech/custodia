@@ -33,13 +33,178 @@ Migration `0047_numerous_black_bolt` is applied to production.
 organisation-level approval requirement, and the migration itself. See §0.3's amended
 tail for the two defects that surfaced while building them.
 
+**Sprint 3 was built on 21 August 2026.** The register is now defensible: one canonical
+Article 30 export with controller identity, all seven sub-paragraphs, both records and
+negative assertions, rendered as PDF, XLSX, CSV, an EDPB-shaped JSON and four regulator
+template packs from a single server-side dataset; a filterable, paginated audit trail
+that finally shows child-row changes and can be exported; the LIA, the DPIA screening,
+a DPIA module with its own route, and a per-transfer TIA. See §0.4. Migration
+`0048_steep_blue_shield` is generated and **not yet applied**.
+
 **The document is otherwise unrevised.** Part II's findings are left exactly as written,
 each with a **FIXED** marker, its commit, and a one-line note on what the fix was, so the
 audit and the remediation can be read against each other. Part I still describes the
 module **as audited** — most of the behaviours it documents no longer exist — and
-Parts III to VI still stand as the record of what was found, with §0.2 and §0.3 stating
-which Part IV items are now closed. The Article 30 verdict in Part III is superseded for
-the items Sprints 1 and 2 built and unchanged for everything else.
+Parts III to VI still stand as the record of what was found, with §0.2, §0.3 and §0.4
+stating which Part IV items are now closed. The Article 30 verdict in Part III is
+superseded for the items Sprints 1 to 3 built and unchanged for everything else.
+
+---
+
+## 0.4 Build status — Sprint 3
+
+Built 21 August 2026. `npm run check` passes at 0 type errors in both workspaces with
+every guard green, plus two new fixture suites (159 assertions) and nine added to the
+completeness suite.
+
+### Schema
+
+`packages/db/drizzle/0048_steep_blue_shield.sql` — three `CREATE TABLE`, ninety-one
+`ADD COLUMN`, eight indexes, and five `DROP NOT NULL`. No drops, no type changes, no
+`SET NOT NULL`. The five loosened constraints are all on
+`legitimate_interest_assessments` and are the reason F55 could not be built without one:
+the narrative columns and the outcome were `NOT NULL`, so a *draft* could not be saved.
+A balancing test is written over a week, and a form that refuses to keep half an answer
+is a form people finish in Word instead.
+
+**Not yet applied to production.** Everything below is written against the schema; the
+migration is generated, committed, and reviewed, and `npm run migrate --workspace=packages/db`
+is the remaining step. `check:schema` fails until it is committed, which is what that
+guard is for.
+
+| Item | What was added |
+|---|---|
+| **F55** | `legitimate_interest_assessments` gains `status`, the WP217 purpose-test limbs, `necessity_test_proportionate`, the four balancing factors, `objection_mechanism`, `outcome_rationale`, `evidence`, `version` — and loses five `NOT NULL`s |
+| **F56** | `dpia_screenings` — answers, criteria met, blacklist matches, verdict, decision, **rationale**, jurisdiction, supersession chain |
+| **F57** | `dpias` gains twenty-nine columns: Art. 35(7)(a) description, DPO advice under 35(2), consultation under 35(9), sign-off, Art. 36 prior consultation, template and screening links, owner, cadence; `dpia_risks` gains the residual half of the matrix plus category, harms, affected subjects and source; `dpia_measures` gains type, owner, due date, effectiveness and evidence; `dpia_versions` is new |
+| **F58** | `transfer_impact_assessments` gains `processing_activity_id`, the step-1 "know your transfer" columns, the step-6 re-evaluation interval and triggers, and the suspension decision |
+| **I86** | `audit_logs.parent_resource_id` and `child_resource_type`, with the two indexes the filtered timeline needs |
+| **I90** | `processing_activity_versions.content_hash`, and the same on `dpia_versions` |
+| **N114** | `clients` gains `controller_address`, `controller_representative`, `controller_dpo_name`, `controller_dpo_email`, `processing_categories` |
+
+### Six decisions worth stating
+
+1. **One dataset, five renderers.** `lib/ropaArticle30.ts` builds the Article 30 record
+   and `lib/ropaExportFormats.ts` renders it; the PDF, the XLSX, the CSV, the JSON and
+   the four regulator packs all read the same object. That split is the whole of J93.
+   The module previously produced *three* Article 30 documents — `export.generatePdf`
+   rendered nine fields per activity through `ropa-record`, the audit pack rendered
+   eight through `ropa-register`, and the register's CSV button exported whichever
+   twenty-five rows the browser had loaded — and which one a customer got depended on
+   which button they pressed. `ropaRecord.tsx` is deleted.
+
+2. **Negative assertions are content, not chrome.** "No transfers to third countries" is
+   a statement an Article 30 record has to make; a blank cell is not it, and a
+   supervisory authority reading one cannot tell a controller with no transfers from one
+   that has not filled the column in. Every record now prints what it asserts it does
+   *not* do, and so does the register. They are English in every locale, deliberately:
+   they are the *content* of the record rather than UI copy, and a locale-shifting
+   assertion is a different assertion. Translating the whole document is J101, a P2, and
+   it has to translate all of it rather than half.
+
+3. **A draft LIA is enough to publish; "do not proceed" is not.** F55's own bar is
+   "blocked until an LIA is at least drafted". Art. 5(2) asks that the reasoning be
+   documented, and documentation in progress is documentation — a gate demanding a
+   finished assessment would refuse every record on the day its basis was chosen, which
+   is how a control gets switched off. The one case that blocks is an assessment whose
+   own outcome was `do_not_proceed`: the register would be asserting a basis its own
+   assessment rejected.
+
+4. **The screening's rationale is mandatory for every decision, including "not
+   required".** That is the entire finding F56 names. The boolean it replaces could not
+   carry one, so a register full of activities marked "DPIA not required" could not
+   demonstrate that the Art. 35(1) judgement had ever been made. Unanswered criteria are
+   tracked separately from "no" and the verdict says how many are outstanding: "we
+   considered whether this is large-scale and concluded it is not" and "nobody looked"
+   are different statements.
+
+5. **The TIA is per transfer, and it can contradict itself.** `tia.ts` files one per
+   *vendor*, which cannot describe an organisation sending HR data to a processor under
+   2021 SCCs and marketing data to the same processor under a derogation. The new
+   assessment hangs off the transfer, so tenancy is proved through the activity and no
+   vendor-keyed write exists in the router — the class D3 was. `evaluateTia` also
+   reports three contradictions, of which the load-bearing one is a conclusion of "not
+   essentially equivalent" followed by only contractual and organisational measures:
+   Recommendations 01/2020 § 48 is explicit that those cannot bind a public authority
+   whose law permits the access. That assessment reads as complete on screen and is the
+   one an authority would reject.
+
+6. **National Art. 35(4) lists are applied by jurisdiction, not merged.** A German
+   *Muss-Liste* entry ticked by an Irish controller is not a statutory trigger for them.
+   Merging the six lists would have told most customers a DPIA was mandatory when it was
+   not, which is the direction of error that gets a control ignored.
+
+### Closed by Sprint 3
+
+`F55` · `F56` · `F57` · `F58` · `I85` · `I86` · `I87` (already closed by D1) · `I88` ·
+`I89` · `I90` · `J93` · `J94` · `J95` · `J97` · `N114`, and `J96`, `J98` and `J99` as
+side-effects: filtered export falls out of J94 once both take the same filter schema,
+the EDPB JSON is a third renderer over the same dataset, and the audit pack now carries
+the canonical record plus the workbook and the JSON.
+
+`F60` (Art. 36 prior consultation tracking) is closed too, as columns and a payload
+rather than as a workflow — it is a P1 that turned out to be five fields on the DPIA
+that the sign-off already needed.
+
+### Two guards and two fixture suites
+
+- **`npm run test:assessments --workspace=apps/api`** — 109 assertions over
+  `lib/assessments.ts`, `lib/dpiaTemplates.ts` and `lib/auditTrail.ts`. Everything in
+  those three answers a legal question and returns a plausible-looking value when it is
+  wrong: a screening reporting "not required" over three unanswered criteria renders
+  identically to one that considered them; a content hash that varies with key order
+  reports tampering on every verification; a risk with no residual assessment scored as
+  "no residual risk" reports low against three unaddressed risks.
+- **`npm run test:ropa-exports --workspace=apps/api`** — 50 assertions over the renderers,
+  reading each workbook back out of its own buffer. An export is the one output nobody
+  looks at until a regulator does, and `tsc` sees a valid `Buffer` whether the sheet
+  names collided, the empty sheets lost their headers, or the Art. 9(2) column printed an
+  empty string for a category with no condition recorded.
+- `check:ropa-i18n` now covers `components/dpia` and `app/[locale]/(app)/dpia`. A new
+  surface outside the guard is how the next year of hardcoded English gets in.
+
+### Deliberately not built, so the omissions are not mistaken for oversights
+
+- **`J101`'s locale-aware exports.** The PDF, the workbook and the CSV are English
+  whatever the reader's locale, apart from the four regulator packs, whose headers are in
+  the authority's own language because that is the point of a pack. Translating the
+  register itself means translating the *record*, not the chrome — including the negative
+  assertions and the Article citations — and half of it would be worse than none.
+- **`J100`'s scheduled exports and board summary**, `J98`'s DOCX, and `J96`'s export
+  presets. All P1/P2, and none is what "the register cannot be exported" meant.
+- **`F59`'s Art. 6(4) compatibility assessment and `F61`'s assessment library.** P1. The
+  library in particular wants due dates, owners and reminders across all three
+  assessments, which is the same shape as B19's review cadence and belongs with it rather
+  than bolted onto three separate tables.
+- **`F63`'s assessment re-trigger on material change.** P2, and it depends on P125's
+  generalised material-change evaluation, which is Sprint 4.
+- **`I91`'s "show me the register as at <date>"** and `I92`'s hash-chained log. The
+  content hash in I90 is the building block for both; neither is what "the trail cannot
+  be read" meant.
+- **The DPIA measure editor.** Measures are created from templates, listed under their
+  risk, and carry an owner, a type and a due date in the schema and the API — but the
+  route's editor renders them read-only. Adding one by hand still goes through
+  `dpia.measures.create`. Named here because the risk matrix above it is fully editable
+  and the asymmetry otherwise reads as a bug.
+
+### Two things found while building
+
+**An export inherited a pagination side-effect.** `buildRegisterFilters` adds
+`next_review_at IS NOT NULL` when the sort is `nextReviewAt` — correct for the list,
+because a NULL compares false against a cursor and the page would silently end early.
+An export does not paginate, so carrying it over would have dropped every activity with
+no review date out of an Article 30 record, and the document could not have disclosed
+the omission because the server would not have known it happened. `exportFilters()`
+normalises the sort away; every export procedure goes through it.
+
+**A form that took one character per click.** The four Sprint 3 panels each declared
+their field helpers *inside* the render — `const Text = (...) => ...`. A component
+declared inside a render is a new component type on every render, so React remounts the
+subtree instead of updating it, and a controlled textarea that remounts loses focus. The
+shared helpers moved to `components/ropa/fields.tsx` and each panel now *calls* its thin
+wrapper rather than rendering it as JSX, which inlines the elements with no new type.
+Invisible to `tsc`, invisible to a screenshot, and obvious the moment anyone types a
+second character.
 
 ---
 
@@ -1668,18 +1833,25 @@ that made every enum in the register read in English even on the translated tabs
 that departed from this list, what was deliberately left, and the pagination bug the new sort
 options exposed.
 
-**Sprint 3 is now the next thing to build**, and nothing in it was started. `J93`, the canonical
-Article 30 export, is the one owed rather than merely next: the register now holds materially more
-than the exports render, and every one of them — the CSV, both PDFs, the audit pack — still reads
-the Sprint 0 field set.
-
-## Sprint 3 — make it defensible
+## Sprint 3 — make it defensible — **DONE, 21 August 2026**
 
 One canonical Article 30 export with controller identity, both records and negative assertions
 (J93) · server-side and XLSX export (J94, J95) · regulator template packs (J97) · fixed, filterable,
 snapshot-able audit trail (I85–I90) · the LIA (F55) · DPIA screening with recorded outcomes (F56) ·
 a DPIA module with a route (F57) · per-transfer TIA, org-scoped (F58) · Article 30(2) that works for
 agencies (N114).
+
+All fifteen are built, and `J96`, `J98`, `J99` and `F60` fell out of them. The three
+divergent Article 30 documents are one, built server-side from `lib/ropaArticle30.ts`
+and rendered five ways; `ropaRecord.tsx` is deleted. Migration `0048_steep_blue_shield`
+is generated and awaiting `npm run migrate`. See §0.4 for the six decisions that
+departed from this list, what was deliberately left, and the two defects found while
+building.
+
+**Sprint 4 is now the next thing to build**, and nothing in it was started. `O120` — firing
+the ROPA webhooks the product already advertises (D39) — is the one owed rather than merely
+next: the events are documented, the subscriptions can be created, and nothing dispatches
+them.
 
 ## Sprint 4 — make it indispensable
 

@@ -137,6 +137,22 @@ export interface RopaRegisterData {
   logoUrl?: string;
 }
 
+/**
+ * How many per-activity detail pages this document will render.
+ *
+ * The summary tables cover every record and are cheap; the detail pages are one
+ * page each, and the route that renders this has a 60-second ceiling
+ * (`maxDuration` in api/internal/pdf/[doc]/route.ts). A four-hundred-activity
+ * register would exceed it and the export would fail outright.
+ *
+ * The cap is *stated on the document* rather than applied quietly. A regulator
+ * reading a record has no way to know that pages are missing, and a silently
+ * truncated Article 30 record is precisely the failure this template exists to
+ * remove — so the summary still lists every activity, the note says how many
+ * detail pages were rendered, and it points at the workbook, which has no limit.
+ */
+const DETAIL_PAGE_LIMIT = 60;
+
 const dash = (value: string | null | undefined) => (value && value.trim() ? value : '—');
 
 const subjectsCell = (a: Activity) =>
@@ -449,7 +465,7 @@ export const RopaRegister: React.FC<{ data: RopaRegisterData }> = ({ data }) => 
         </ContentPage>
       ) : null}
 
-      {allActivities.map((a) => {
+      {allActivities.slice(0, DETAIL_PAGE_LIMIT).map((a) => {
         section += 1;
         return (
           <ActivityDetail
@@ -462,10 +478,26 @@ export const RopaRegister: React.FC<{ data: RopaRegisterData }> = ({ data }) => 
         );
       })}
 
-      {allActivities.length > 0 ? (
+      {allActivities.length > DETAIL_PAGE_LIMIT ? (
         <ContentPage headerLabel={header}>
           <Section
             num={String(section + 1).padStart(2, '0')}
+            title="Scope of this document"
+            description="What is and is not printed here."
+          >
+            <View>
+              <Text style={styles.emptyText}>
+                {`The summary tables above cover all ${allActivities.length} records in scope. Full detail pages are printed for the first ${DETAIL_PAGE_LIMIT}; the remaining ${allActivities.length - DETAIL_PAGE_LIMIT} are included in the register workbook (XLSX), which carries every field for every record without limit. Narrow the register filter and export again to print detail pages for a specific subset.`}
+              </Text>
+            </View>
+          </Section>
+        </ContentPage>
+      ) : null}
+
+      {allActivities.length > 0 ? (
+        <ContentPage headerLabel={header}>
+          <Section
+            num={String(section + 2).padStart(2, '0')}
             title="Negative assertions"
             description="What each record states it does not do. A blank field is not a statement; these are."
           >

@@ -133,6 +133,28 @@
       "low": "Low",
       "medium": "Medium",
       "high": "High"
+    },
+    "controller": {
+      "title": "Controller identity",
+      "subtitle": "What Article 30(2)(a) requires this record to say about the controller you act for. It appears in the client's Article 30(2) record exactly as entered here.",
+      "legal_name": "Legal entity name",
+      "legal_name_hint": "The registered name, not the trading name — this is what a supervisory authority matches against.",
+      "street": "Street",
+      "city": "City",
+      "postal_code": "Postal code",
+      "country": "Country",
+      "representative_name": "Representative (Art. 27)",
+      "representative_hint": "Required where the controller is not established in the Union.",
+      "representative_email": "Representative email",
+      "dpo_name": "Data protection officer",
+      "dpo_hint": "The client's own DPO. Leaving it blank prints “None designated”, which is a statement rather than a gap.",
+      "dpo_email": "DPO email",
+      "processing_categories": "Categories of processing carried out for this controller",
+      "processing_categories_hint": "Article 30(2)(b). Comma separated. A property of the relationship, not of one activity.",
+      "save": "Save",
+      "saving": "Saving",
+      "saved": "Saved",
+      "save_failed": "The controller identity could not be saved."
     }
   }
 }

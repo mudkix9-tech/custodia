@@ -469,13 +469,20 @@ async function snapshotActivity(
     .where(eq(processingActivityVersions.processingActivityId, activity.id));
 
   const version = Number(highest ?? 0) + 1;
+  const snapshot = buildSnapshot(bundle, new Date());
   const [row] = await dbc.insert(processingActivityVersions).values({
     organizationId: activity.organizationId,
     processingActivityId: activity.id,
     version,
     reason: opts.reason,
     note: opts.note ?? null,
-    snapshot: buildSnapshot(bundle, new Date()) as any,
+    snapshot: snapshot as any,
+    // I90. A sha256 over the snapshot in canonical form. What it buys is that
+    // "the register has not been altered since it was approved" stops being a
+    // claim the vendor makes about its own database: a regulator holding the
+    // exported pack can recompute the digest of what it was given and compare it
+    // against what the approval recorded.
+    contentHash: contentHash(snapshot),
     score: scoreActivity(bundle).score,
     status: activity.status,
     createdBy: opts.userId,
@@ -847,6 +854,20 @@ const tiaUpdateSchema = z.object({
  * the omissions are deliberate, and the controller has no way to prove later that
  * they were. Every filtered export carries this line on its face.
  */
+/**
+ * The register's filters, minus the part that only makes sense while paginating.
+ *
+ * `buildRegisterFilters` adds `next_review_at IS NOT NULL` when the sort is
+ * `nextReviewAt`, because a NULL compares false against a cursor and the list
+ * would silently end early. An export does not paginate, so carrying that
+ * predicate over would quietly drop every activity with no review date from an
+ * Article 30 record — an omission the document could not disclose, because the
+ * server would not know it had happened.
+ */
+function exportFilters(input: RegisterFilters): RegisterFilters {
+  return { ...input, sort: 'updatedAt' };
+}
+
 function summariseFilters(input: RegisterFilters): string | null {
   const parts: string[] = [];
   if (input.q) parts.push(`matching "${input.q}"`);
@@ -1927,6 +1948,7 @@ export const ropaRouter = router({
           note: processingActivityVersions.note,
           score: processingActivityVersions.score,
           status: processingActivityVersions.status,
+          contentHash: processingActivityVersions.contentHash,
           createdAt: processingActivityVersions.createdAt,
           createdBy: processingActivityVersions.createdBy,
           authorName: users.name,
@@ -1936,6 +1958,40 @@ export const ropaRouter = router({
           .leftJoin(users, eq(processingActivityVersions.createdBy, users.id))
           .where(eq(processingActivityVersions.processingActivityId, input.processingActivityId))
           .orderBy(desc(processingActivityVersions.version));
+      }),
+
+    /**
+     * I90. Recompute the digest and say whether the snapshot still matches it.
+     *
+     * The comparison is against the *stored snapshot*, not against the live
+     * record: a version that no longer hashes to what it recorded means the
+     * snapshot itself was altered, which is the only thing a digest can prove.
+     * Whether the live record has been edited since is what the version list is
+     * for, and is not tampering.
+     */
+    verify: protectedProcedure
+      .use(requirePermission('ropa', 'view'))
+      .input(z.object({ id: z.string().uuid() }))
+      .query(async ({ ctx, input }) => {
+        checkOrgContext(ctx.user);
+        const [row] = await ctx.db.select().from(processingActivityVersions)
+          .where(and(
+            eq(processingActivityVersions.id, input.id),
+            eq(processingActivityVersions.organizationId, ctx.user!.orgId),
+          ));
+        if (!row) throw new TRPCError({ code: 'NOT_FOUND' });
+
+        const recomputed = contentHash(row.snapshot);
+        return {
+          version: row.version,
+          storedHash: row.contentHash,
+          recomputedHash: recomputed,
+          // A version taken before 0048 carries no hash. "Cannot be verified" and
+          // "fails verification" are opposite findings, and a caller that could
+          // not tell them apart would report tampering on every historic record.
+          verifiable: !!row.contentHash,
+          intact: !!row.contentHash && row.contentHash === recomputed,
+        };
       }),
 
     /** B21's "exportable as at a date" — one full snapshot, read back. */
@@ -3636,7 +3692,7 @@ export const ropaRouter = router({
 
         const filters = registerFilterSchema.parse(input ?? {});
         const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
-          where: buildRegisterFilters(filters, ctx.user!.id),
+          where: buildRegisterFilters(exportFilters(filters), ctx.user!.id),
           filterSummary: summariseFilters(filters),
         });
 
@@ -3657,7 +3713,7 @@ export const ropaRouter = router({
 
         const filters = registerFilterSchema.parse(input ?? {});
         const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
-          where: buildRegisterFilters(filters, ctx.user!.id),
+          where: buildRegisterFilters(exportFilters(filters), ctx.user!.id),
           filterSummary: summariseFilters(filters),
         });
 
@@ -3677,7 +3733,7 @@ export const ropaRouter = router({
 
         const filters = registerFilterSchema.parse(input ?? {});
         const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
-          where: buildRegisterFilters(filters, ctx.user!.id),
+          where: buildRegisterFilters(exportFilters(filters), ctx.user!.id),
           filterSummary: summariseFilters(filters),
         });
 
@@ -3697,7 +3753,7 @@ export const ropaRouter = router({
 
         const filters = registerFilterSchema.parse(input ?? {});
         const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
-          where: buildRegisterFilters(filters, ctx.user!.id),
+          where: buildRegisterFilters(exportFilters(filters), ctx.user!.id),
           filterSummary: summariseFilters(filters),
         });
 
@@ -3739,7 +3795,7 @@ export const ropaRouter = router({
 
         const filters = registerFilterSchema.parse(input.filters ?? {});
         const record = await buildArticle30Record(ctx.db, ctx.user!.orgId, {
-          where: buildRegisterFilters(filters, ctx.user!.id),
+          where: buildRegisterFilters(exportFilters(filters), ctx.user!.id),
           filterSummary: summariseFilters(filters),
         });
 

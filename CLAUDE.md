@@ -36,6 +36,19 @@ locale, which `check:messages` cannot see because it only compares the three cat
 against each other. `test:ropa-lifecycle` (apps/api) covers review cadence, the reminder
 ladder, approval transitions, snapshot diffing and the pagination cursor codec.
 
+`check:ropa-i18n` is a **text scan**, not a parse, and it is noisy in the safe direction.
+Its JSX-text rule matches `>…<`, so a type annotation like `() => Promise<void>` reads as
+a text node containing the word "Promise". The fix is to restructure the annotation
+(`() => unknown`), not to add an `ALLOWED` entry — that list is for UI copy that really
+is meant to stay English, and a stale entry there fails too.
+
+**Two more fixture suites arrived with Sprint 3.** `test:assessments` covers the DPIA
+screening verdict, LIA completeness, the TIA's six steps and its self-contradiction
+checks, the risk matrix, the content hash and the audit-diff renderer.
+`test:ropa-exports` reads each generated workbook back out of its own buffer, because
+`tsc` sees a valid `Buffer` whether or not the sheet names collided or an empty sheet
+lost its headers.
+
 **`npx eslint` cannot run at all.** `apps/web/eslint.config.mjs` throws
 `TypeError: tailwind.configs.flat/recommended is not iterable` on ESLint 9.39.4.
 Pre-existing plugin incompatibility. **No code in this repo has been lint-checked**, so
@@ -209,6 +222,46 @@ would make the codec untestable by the standalone fixtures.
 
 ---
 
+## Assessments and exports — Sprint 3
+
+**There is one Article 30 document, and it is built server-side.** `lib/ropaArticle30.ts`
+produces the dataset; `lib/ropaExportFormats.ts` renders it as XLSX, CSV, EDPB JSON and
+the four regulator packs; `apps/web/src/lib/pdf/templates/ropaRegister.tsx` renders the
+PDF. Add a format by adding a renderer over the same dataset — never by reading
+`processing_activities` again. The module used to have three divergent Article 30
+documents and the one a customer received depended on which button they pressed.
+
+`REGULATOR_TEMPLATES` is **data, not code**: adding the Italian Garante's template is a
+table entry with a column list. Headers are in the authority's own language on purpose.
+
+**The negative assertions are English in every locale, deliberately.** They are content
+of the record rather than UI copy — "No personal data under this activity is transferred
+to a third country" is a *statement the controller makes*, and a locale-shifting
+assertion is a different assertion. Do not route them through the catalogue; J101 is
+where translating the whole document belongs.
+
+**An export must not inherit the register's sort.** `buildRegisterFilters` adds
+`next_review_at IS NOT NULL` when sorting by review date, because a NULL compares false
+against a cursor and a paginated list would end early. An export does not paginate, so
+that predicate silently drops every activity with no review date. Every export procedure
+goes through `exportFilters()`, which normalises the sort away. Do not call
+`buildRegisterFilters` directly from a new export.
+
+**The audit middleware resolves the parent from the mutation's *result*, not its input.**
+A child row is addressed by its own id, so `ropa.dataCategories.update` cannot say which
+activity changed until the row comes back. `trpc.ts` reads `parentResourceId` after
+`next()`, and `ropa.history.list` filters on `resourceId OR parentResourceId`. A new
+child router needs an entry in `CHILD_TABLE_BY_PATH` (`lib/auditTrail.ts`) or its edits
+stay invisible in the History tab.
+
+**A draft LIA is enough to publish; `do_not_proceed` is not.** `blocksPublication` on the
+`legitimateInterestAssessment` requirement is computed rather than constant — see the
+comment in `ropaCompleteness.ts`. `loadBundle` now runs a fifth query for the LIA, and
+`completenessBatch` does not; if the two ever disagree about a legitimate-interests
+record, that is why.
+
+---
+
 ## Database
 
 Schema is one file: `packages/db/src/schema.ts`. The package is imported as `db`
@@ -275,6 +328,16 @@ rather than introducing theme tokens.
 
 **i18n** is `next-intl` with per-namespace JSON in `src/messages/{en,de,fr}/`. Adding a
 key means adding it to all three. Missing keys render as the raw key path.
+
+**A component declared inside a render is a new component type on every render.** React
+compares types to decide between updating and remounting, so a `const Field = (...) =>`
+written inside a page component is torn down and rebuilt on each pass — and a controlled
+input that remounts loses focus. The form then accepts one character per click.
+`components/ropa/fields.tsx` holds the shared controls; a panel that needs to close over
+its own `form`/`set` wraps them in a thin local function and **calls** it —
+`{Text({ field, label })}` — rather than rendering `<Text/>`, which inlines the elements
+with no new type. Invisible to `tsc`, invisible to a screenshot, obvious on the second
+keystroke.
 
 Several older client components carry `// @ts-nocheck`. Do not add it to new files — the
 web workspace is at 0 errors and new code should be genuinely typechecked.

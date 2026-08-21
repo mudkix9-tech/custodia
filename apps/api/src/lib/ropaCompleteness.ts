@@ -210,10 +210,20 @@ export function scoreActivity(bundle: ActivityBundle): CompletenessResult {
    * publication: a draft LIA is enough, because starting the balancing test is
    * the act being required, not finishing it.
    *
-   * The three-line ladder matters. "No assessment" and "an assessment that
-   * concluded do-not-proceed" are opposite findings, and a scorer that treated
-   * both as missing would tell a customer to write an LIA they have already
+   * The ladder matters. "No assessment", "a draft" and "an assessment that
+   * concluded do-not-proceed" are three different findings, and a scorer that
+   * flattened them would tell a customer to write an LIA they have already
    * written and acted on.
+   *
+   * **A draft is enough to publish**, which is F55's own bar — "blocked until an
+   * LIA is at least drafted". The reasoning being documented is what Art. 5(2)
+   * asks for, and documentation in progress is documentation; a gate demanding a
+   * finished assessment would refuse every record on the day its basis was
+   * chosen, which is how a control gets switched off. It still scores `partial`,
+   * so the register keeps saying the record is unfinished.
+   *
+   * `do_not_proceed` blocks, and that is the case worth the conditional: the
+   * organisation's own assessment has rejected the basis the record asserts.
    */
   const claimsLegitimateInterests = (activity.lawfulBasis ?? '').startsWith('legitimate_interest');
   add({
@@ -222,7 +232,7 @@ export function scoreActivity(bundle: ActivityBundle): CompletenessResult {
     label: 'Legitimate interest assessment',
     tab: 'legal',
     weight: 9,
-    blocksPublication: true,
+    blocksPublication: claimsLegitimateInterests && (!lia || lia.outcome === 'do_not_proceed'),
     status: !claimsLegitimateInterests
       ? 'not_applicable'
       : !lia

@@ -136,6 +136,28 @@
       "low": "Faible",
       "medium": "Moyen",
       "high": "Élevé"
+    },
+    "controller": {
+      "title": "Identité du responsable de traitement",
+      "subtitle": "Ce que l'article 30(2)(a) exige au sujet du responsable pour lequel vous agissez. Ces éléments figurent tels quels dans le registre article 30(2) de ce client.",
+      "legal_name": "Dénomination sociale",
+      "legal_name_hint": "Le nom enregistré, pas le nom commercial — c'est celui qu'une autorité de contrôle rapproche.",
+      "street": "Rue",
+      "city": "Ville",
+      "postal_code": "Code postal",
+      "country": "Pays",
+      "representative_name": "Représentant (art. 27)",
+      "representative_hint": "Requis lorsque le responsable n'est pas établi dans l'Union.",
+      "representative_email": "Courriel du représentant",
+      "dpo_name": "Délégué à la protection des données",
+      "dpo_hint": "Le DPO du client. Laissé vide, le registre indique « Aucun désigné » — une affirmation, pas une lacune.",
+      "dpo_email": "Courriel du DPO",
+      "processing_categories": "Catégories de traitements effectués pour ce responsable",
+      "processing_categories_hint": "Article 30(2)(b). Séparées par des virgules. Une propriété de la relation, pas d'une activité isolée.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement",
+      "saved": "Enregistré",
+      "save_failed": "L'identité du responsable n'a pas pu être enregistrée."
     }
   }
 }

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { useToast } from '@/components/ui/Toast';
 import { ShieldAlert, Loader2, CheckCircle2, AlertTriangle, Plus, Trash2, ShieldCheck } from 'lucide-react';
+import { TextField } from '@/components/ropa/fields';
 
 /**
  * F57. The Article 35(7) structure, in one place.
@@ -104,19 +105,14 @@ export function DpiaEditor({ dpiaId }: { dpiaId: string }) {
   const dpia = data.dpia;
   const isSignedOff = !!dpia.signedOffAt;
 
-  const Text = ({ field, label, hint, rows = 3 }: { field: string; label: string; hint?: string; rows?: number }) => (
-    <div>
-      <label htmlFor={`dpia-${field}`} className="text-[12.5px] font-medium text-[#E6E8EA]">{label}</label>
-      {hint ? <p className="mt-0.5 mb-1 text-[11.5px] text-[#6E747A]">{hint}</p> : null}
-      <textarea
-        id={`dpia-${field}`}
-        rows={rows}
-        value={form[field] ?? ''}
-        onChange={(e) => set(field, e.target.value)}
-        className="mt-1 w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6]"
-      />
-    </div>
-  );
+  // Called rather than rendered as `{Text({  })}` — see `components/ropa/fields.tsx`.
+  const Text = (props: { field: string; label: string; hint?: string; rows?: number }) =>
+    TextField({
+      idPrefix: 'dpia',
+      value: form[props.field] ?? '',
+      onChange: (v) => set(props.field, v),
+      ...props,
+    });
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-6">
@@ -151,19 +147,19 @@ export function DpiaEditor({ dpiaId }: { dpiaId: string }) {
       {/* 35(7)(a) */}
       <section className="bg-[#08090A] hairline rounded-2xl p-6 space-y-4">
         <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">{t('s_description')}</h2>
-        <Text field="processingDescription" label={t('f_processing_description')} hint={t('f_processing_description_hint')} rows={5} />
-        <Text field="purposes" label={t('f_purposes')} />
-        <Text field="scopeDescription" label={t('f_scope')} />
-        <Text field="contextDescription" label={t('f_context')} />
-        <Text field="legitimateInterestPursued" label={t('f_legitimate_interest')} rows={2} />
-        <Text field="dataFlowDescription" label={t('f_data_flow')} />
+        {Text({ field: 'processingDescription', label: t('f_processing_description'), hint: t('f_processing_description_hint'), rows: 5 })}
+        {Text({ field: 'purposes', label: t('f_purposes') })}
+        {Text({ field: 'scopeDescription', label: t('f_scope') })}
+        {Text({ field: 'contextDescription', label: t('f_context') })}
+        {Text({ field: 'legitimateInterestPursued', label: t('f_legitimate_interest'), rows: 2 })}
+        {Text({ field: 'dataFlowDescription', label: t('f_data_flow') })}
       </section>
 
       {/* 35(7)(b) */}
       <section className="bg-[#08090A] hairline rounded-2xl p-6 space-y-4">
         <h2 className="text-[14px] font-medium text-[#F4F5F6] border-b border-ink-900/8 pb-3">{t('s_necessity')}</h2>
-        <Text field="necessityAssessment" label={t('f_necessity')} rows={5} />
-        <Text field="proportionalityAssessment" label={t('f_proportionality')} rows={5} />
+        {Text({ field: 'necessityAssessment', label: t('f_necessity'), rows: 5 })}
+        {Text({ field: 'proportionalityAssessment', label: t('f_proportionality'), rows: 5 })}
       </section>
 
       {/* 35(7)(c)+(d) — the matrix */}

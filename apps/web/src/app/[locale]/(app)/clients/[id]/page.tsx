@@ -6,6 +6,7 @@ import { useConfirm } from '@/components/ui/ConfirmDialog';
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { ControllerIdentityPanel } from '@/components/clients/ControllerIdentityPanel';
 import { trpc } from '@/utils/trpc';
 import { DataGrid } from 'ui';
 import { 
@@ -145,6 +146,11 @@ function OverviewTab({ client }: { client: any }) {
             </div>
           </div>
         </section>
+
+        {/* N114. Art. 30(2)(a) needs this client's identity as a controller, not
+            the agency's. Beside the CRM details rather than inside them, because
+            what is being recorded is the contents of a statutory record. */}
+        <ControllerIdentityPanel client={client} />
 
         <section className="bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-panel-elevated">
           <div className="flex items-center justify-between mb-4">

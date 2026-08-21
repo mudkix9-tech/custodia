@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Database, Building2, UserCircle, GraduationCap,
   FileText, Cookie, AlertTriangle, ShieldCheck, Sparkles, BarChart3, Scale,
-  Settings, LifeBuoy, Code2,
+  Settings, LifeBuoy, Code2, ShieldAlert,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -27,6 +27,10 @@ export const NAV_GROUPS: { id: string; items: NavItem[] }[] = [
     id: 'group_records',
     items: [
       { id: 'ropa', icon: Database, href: '/ropa' },
+      // F57. The DPIA module had no entry because it had no route: the whole
+      // capability was one tab inside an activity, so an assessment covering four
+      // activities had to be reached through whichever one happened to be linked.
+      { id: 'dpia', icon: ShieldAlert, href: '/dpia' },
       { id: 'vendors', icon: Building2, href: '/vendors' },
       { id: 'clients', icon: Users, href: '/clients' },
     ],

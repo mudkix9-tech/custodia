@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { useToast } from '@/components/ui/Toast';
 import { Globe2, Loader2, AlertTriangle, CheckCircle2, Circle, CircleDashed } from 'lucide-react';
+import { TextField } from './fields';
 
 /**
  * F58. The EDPB six-step transfer impact assessment, per transfer.
@@ -101,18 +102,15 @@ export function TransferTiaPanel({ transferId }: { transferId: string }) {
   const assessment = data.assessment;
   const isCompleted = assessment?.status === 'completed';
 
-  const Text = ({ field, label, rows = 2 }: { field: string; label: string; rows?: number }) => (
-    <div>
-      <label htmlFor={`tia-${field}`} className="text-[12.5px] font-medium text-[#E6E8EA]">{label}</label>
-      <textarea
-        id={`tia-${field}`}
-        rows={rows}
-        value={form[field] ?? ''}
-        onChange={(e) => set(field, e.target.value)}
-        className="mt-1 w-full bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6]"
-      />
-    </div>
-  );
+  // Called rather than rendered as `{Text({  })}` — see `fields.tsx`.
+  const Text = (props: { field: string; label: string; rows?: number }) =>
+    TextField({
+      idPrefix: 'tia',
+      value: form[props.field] ?? '',
+      onChange: (v) => set(props.field, v),
+      rows: 2,
+      ...props,
+    });
 
   const Tri = ({ field, label }: { field: string; label: string }) => (
     <div className="flex items-start justify-between gap-4 py-2">
@@ -248,7 +246,7 @@ export function TransferTiaPanel({ transferId }: { transferId: string }) {
                 />
               </div>
             </div>
-            <Text field="transferPurpose" label={t('f_purpose')} />
+            {Text({ field: 'transferPurpose', label: t('f_purpose') })}
             <div>
               <label htmlFor="tia-transferFrequency" className="text-[12.5px] font-medium text-[#E6E8EA]">{t('f_frequency')}</label>
               <select
@@ -264,7 +262,7 @@ export function TransferTiaPanel({ transferId }: { transferId: string }) {
                 <option value="continuous">{t('frequency_continuous')}</option>
               </select>
             </div>
-            <Text field="onwardTransfers" label={t('f_onward')} />
+            {Text({ field: 'onwardTransfers', label: t('f_onward') })}
           </section>
 
           <section className="space-y-3 border-t border-white/5 pt-4">
@@ -273,16 +271,16 @@ export function TransferTiaPanel({ transferId }: { transferId: string }) {
               {t('f_mechanism')}: <span className="text-[#F4F5F6]">{assessment.transferMechanism}</span>
             </p>
             <p className="text-[11.5px] text-[#6E747A]">{t('f_mechanism_note')}</p>
-            <Text field="mechanismDetail" label={t('f_mechanism_detail')} />
+            {Text({ field: 'mechanismDetail', label: t('f_mechanism_detail') })}
           </section>
 
           <section className="space-y-1 border-t border-white/5 pt-4">
             <h4 className="text-[12px] font-medium text-[#C9A227] mb-2">{t('step3')}</h4>
-            <Tri field="surveillanceLawsExist" label={t('f_surveillance')} />
-            <Text field="surveillanceLawsDetail" label={t('f_surveillance_detail')} rows={3} />
-            <Tri field="independentDpaExists" label={t('f_independent_dpa')} />
-            <Tri field="effectiveRemediesExist" label={t('f_remedies')} />
-            <Text field="relevantCaseLaw" label={t('f_case_law')} />
+            {Tri({ field: 'surveillanceLawsExist', label: t('f_surveillance') })}
+            {Text({ field: 'surveillanceLawsDetail', label: t('f_surveillance_detail'), rows: 3 })}
+            {Tri({ field: 'independentDpaExists', label: t('f_independent_dpa') })}
+            {Tri({ field: 'effectiveRemediesExist', label: t('f_remedies') })}
+            {Text({ field: 'relevantCaseLaw', label: t('f_case_law') })}
             <div className="pt-2">
               <label htmlFor="tia-legalAssessmentConclusion" className="text-[12.5px] font-medium text-[#E6E8EA]">
                 {t('f_legal_conclusion')}
@@ -299,15 +297,15 @@ export function TransferTiaPanel({ transferId }: { transferId: string }) {
                 <option value="not_equivalent">{t('legal_not_equivalent')}</option>
               </select>
             </div>
-            <Text field="legalAssessmentDetail" label={t('f_legal_detail')} rows={3} />
+            {Text({ field: 'legalAssessmentDetail', label: t('f_legal_detail'), rows: 3 })}
           </section>
 
           <section className="space-y-4 border-t border-white/5 pt-4">
             <h4 className="text-[12px] font-medium text-[#C9A227]">{t('step4')}</h4>
-            <MeasureGroup field="technicalMeasures" label={t('f_technical')} options={data.measures.technical} />
-            <MeasureGroup field="organizationalMeasures" label={t('f_organisational')} options={data.measures.organisational} />
-            <MeasureGroup field="contractualMeasures" label={t('f_contractual')} options={data.measures.contractual} />
-            <Text field="measuresDetail" label={t('f_measures_detail')} rows={3} />
+            {MeasureGroup({ field: 'technicalMeasures', label: t('f_technical'), options: data.measures.technical })}
+            {MeasureGroup({ field: 'organizationalMeasures', label: t('f_organisational'), options: data.measures.organisational })}
+            {MeasureGroup({ field: 'contractualMeasures', label: t('f_contractual'), options: data.measures.contractual })}
+            {Text({ field: 'measuresDetail', label: t('f_measures_detail'), rows: 3 })}
           </section>
 
           <section className="space-y-3 border-t border-white/5 pt-4">
@@ -342,8 +340,8 @@ export function TransferTiaPanel({ transferId }: { transferId: string }) {
                 </select>
               </div>
             </div>
-            <Text field="residualRiskJustification" label={t('f_residual_justification')} rows={3} />
-            <Text field="conditions" label={t('f_conditions')} />
+            {Text({ field: 'residualRiskJustification', label: t('f_residual_justification'), rows: 3 })}
+            {Text({ field: 'conditions', label: t('f_conditions') })}
           </section>
 
           <section className="space-y-3 border-t border-white/5 pt-4">
@@ -360,7 +358,7 @@ export function TransferTiaPanel({ transferId }: { transferId: string }) {
                 className="mt-1 w-full bg-[#08090A] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#F4F5F6]"
               />
             </div>
-            <Text field="reevaluationTriggers" label={t('f_triggers')} />
+            {Text({ field: 'reevaluationTriggers', label: t('f_triggers') })}
           </section>
 
           {form.conclusion === 'suspend' && !isCompleted ? (

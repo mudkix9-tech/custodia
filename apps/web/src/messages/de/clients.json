@@ -136,6 +136,28 @@
       "low": "Niedrig",
       "medium": "Mittel",
       "high": "Hoch"
+    },
+    "controller": {
+      "title": "Identität des Verantwortlichen",
+      "subtitle": "Was Art. 30 Abs. 2 lit. a über den Verantwortlichen verlangt, für den Sie tätig sind. Die Angaben erscheinen genau so im Verzeichnis nach Art. 30 Abs. 2 dieses Mandanten.",
+      "legal_name": "Name der juristischen Person",
+      "legal_name_hint": "Der eingetragene Name, nicht der Handelsname — danach gleicht eine Aufsichtsbehörde ab.",
+      "street": "Straße",
+      "city": "Ort",
+      "postal_code": "Postleitzahl",
+      "country": "Land",
+      "representative_name": "Vertreter (Art. 27)",
+      "representative_hint": "Erforderlich, wenn der Verantwortliche nicht in der Union niedergelassen ist.",
+      "representative_email": "E-Mail des Vertreters",
+      "dpo_name": "Datenschutzbeauftragter",
+      "dpo_hint": "Der Datenschutzbeauftragte des Mandanten. Bleibt das Feld leer, erscheint „Nicht benannt“ — eine Aussage, keine Lücke.",
+      "dpo_email": "E-Mail des Datenschutzbeauftragten",
+      "processing_categories": "Kategorien von Verarbeitungen für diesen Verantwortlichen",
+      "processing_categories_hint": "Art. 30 Abs. 2 lit. b. Durch Komma getrennt. Eine Eigenschaft der Beziehung, nicht einer einzelnen Tätigkeit.",
+      "save": "Speichern",
+      "saving": "Wird gespeichert",
+      "saved": "Gespeichert",
+      "save_failed": "Die Identität des Verantwortlichen konnte nicht gespeichert werden."
     }
   }
 }

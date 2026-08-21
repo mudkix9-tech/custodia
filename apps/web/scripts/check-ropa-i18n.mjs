@@ -34,6 +34,12 @@ const CATALOGUE = path.resolve(ROOT, 'messages/en/ropa.json');
 const TARGETS = [
   'components/ropa',
   'app/[locale]/(app)/ropa',
+  // F57 gave the DPIA its own route and components. They render the same objects
+  // the register's DPIA tab does, out of the same `ropa` catalogue, so they are
+  // held to the same standard — a new surface outside the guard is how the next
+  // year of hardcoded English gets in.
+  'components/dpia',
+  'app/[locale]/(app)/dpia',
   'utils/ropaVocabularies.ts',
   'utils/ropaFormat.ts',
 ];

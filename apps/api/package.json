@@ -22,7 +22,8 @@
     "test:ropa-completeness": "tsx src/lib/ropaCompleteness.test.ts",
     "test:ropa-vocab": "tsx src/constants/ropaVocabularies.test.ts",
     "test:ropa-lifecycle": "tsx src/lib/ropaLifecycle.test.ts",
-    "test:assessments": "tsx src/lib/assessments.test.ts"
+    "test:assessments": "tsx src/lib/assessments.test.ts",
+    "test:ropa-exports": "tsx src/lib/ropaExportFormats.test.ts"
   },
   "keywords": [],
   "author": "",
