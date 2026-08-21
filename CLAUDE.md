@@ -49,6 +49,16 @@ checks, the risk matrix, the content hash and the audit-diff renderer.
 `tsc` sees a valid `Buffer` whether or not the sheet names collided or an empty sheet
 lost its headers.
 
+**Two more arrived with Sprint 4.** `test:retention` covers disposal-date arithmetic
+(calendar-aware, so 31 January plus a month is 28 February and not 3 March), the
+period parser, schedule validation, legal-hold expiry, and the three data maps.
+`test:ropa-intelligence` covers material-change classification, the privacy-notice /
+DSAR-scope / blast-radius builders, AI-draft validation and the intake mapping.
+Everything in those two returns a *plausible* value when it is wrong — a disposal
+date out by a month reads exactly like a correct one, and a notice that omits its
+transfers section because no mechanism was recorded is a published Art. 13(1)(f)
+hole. Fixtures are the only thing that can tell them apart.
+
 **`npx eslint` cannot run at all.** `apps/web/eslint.config.mjs` throws
 `TypeError: tailwind.configs.flat/recommended is not iterable` on ESLint 9.39.4.
 Pre-existing plugin incompatibility. **No code in this repo has been lint-checked**, so
@@ -262,6 +272,90 @@ record, that is why.
 
 ---
 
+## Population, retention and intelligence — Sprint 4
+
+**Five sub-routers hang off `ropa`, in their own files.** `routers/ropa.ts` was already
+4,800 lines, so `ropa.retention`, `ropa.intake`, `ropa.discovery`, `ropa.draft` and
+`ropa.insights` live in `routers/ropaRetention.ts`, `ropaIntake.ts`, `ropaDiscovery.ts`
+(which exports two routers) and `ropaInsights.ts`. The tenancy guard scans every file in
+`src/routers`, so the split costs nothing in coverage.
+
+**Retention has two sources of truth and the schedule wins.** `retentionAnswer()` in
+`lib/retention.ts` resolves Art. 30(1)(f) from a `retention_schedules` row where one is
+attached and from the free-text `retention_period` where it is not, and it *says which*
+in `source`. The free-text columns on the activity and the category are deliberately
+kept — attaching a schedule is an upgrade, not a migration.
+
+**`computeDisposalDate` returns a reason, not a nullable date.** `no_period` ("nobody
+decided how long") and `no_anchor` ("the clock has not started") are different findings
+that send someone to fix different things, and `no_anchor` is the *ordinary* state of a
+correct employment schedule until an employment ends. Only `collection` starts its own
+clock; every other trigger waits for `processing_activities.retention_anchor_at`.
+
+**Nothing in the retention module deletes anything.** The nightly scan writes a `due`
+row into `retention_disposals` and stops; a person records what was disposed of, in
+which systems, over how many records. A product that executed its customers' retention
+policy would be destroying evidence on a schedule, on the strength of a period somebody
+typed into a form. `disposalDueKey()` is what makes the scan idempotent — it is a
+function of the *obligation*, so re-running finds yesterday's row.
+
+**P125's evaluation is rules-first, and the model may only ever raise.** `evaluateMaterialChange`
+(pure, in `lib/materialChange.ts`) decides three consequences separately — re-consent,
+notice update, DPIA re-assessment — because they do not travel together: a new data
+category on a consent activity needs fresh consent, the same change on a contract
+activity needs an Art. 13(3) notice update and no consent at all. A model is asked
+exactly one question, whether a *rewritten purpose* describes different processing, and
+`applyNarrativeVerdict` can only upgrade a verdict the rules already found possible. A
+model that could clear "a third-country transfer was added" would have a veto over
+Chapter V. `workers/reconsent.ts` is untouched and still runs.
+
+**Delegated intake never writes to the register.** `ropa.intake.open/saveProgress/submit/decline`
+are `publicProcedure`s keyed on an unguessable token — the respondent has no account —
+and all four are in the tenancy guard's `ALLOWED_WRITES` for the same reason
+`vendors.submitQuestionnaireAnswers` is. What comes back sits in `answers` until a
+reviewer accepts it field by field through `merge`. `mapAnswersToFields` deliberately
+produces **no candidate** for "I am not sure": a guess that arrives labelled as an
+answer is worse than a gap.
+
+**Discovery follows the `consent_findings` upsert-and-resolve pattern.**
+`UNIQUE (organization_id, source, source_key)` means a scan bumps `last_seen_at`,
+anything the run did not touch flips to `resolved`, and re-running is free. Dismissal
+survives both halves — a signal a human judged must not come back next week with a
+fresh id and the same text.
+
+**The webhook queue name was wrong, and that is why no webhook had ever been
+delivered.** `utils/webhookDispatcher.ts` enqueued on `webhooks`; `workers/webhooks.ts`
+consumes `webhook-deliveries`. Every delivery row ever written sat at `pending`,
+including the test button, which reported success because *enqueueing* succeeded. Both
+are `webhook-deliveries` now. ROPA events are emitted explicitly from
+`lib/ropaEvents.ts` rather than by wiring `TRPC_PATH_TO_EVENT` into the audit
+middleware: an event is a public contract, emitted where the code knows what happened,
+not where a string matched.
+
+**`routes/v1` is registered.** `server.register(v1Routes, { prefix: '/api/v1' })` in
+`index.ts` — the file carried a "NOT REGISTERED" banner, so the *vendors* endpoint was
+unreachable too. `routes/v1/ropa.ts` is read-and-append by design: no PATCH, no DELETE,
+because an Article 30 record carries an optimistic lock, a publication gate, a
+completeness recompute, a version snapshot, an approval state and a subject-category
+mirror, and a REST write that bypassed any one of them would leave the register in a
+state the editor cannot represent.
+
+**The ROPA compliance pillar reads `completeness_score`.** `calculateRopaScore` scored
+`!lawfulBasis` and `!purpose` at fifty points each, so 23% of the headline number could
+not detect a register with no retention, no subjects, no recipients and no transfers
+(D19). It now averages the denormalised score and applies a multiplier for open
+*critical* ROPA gaps, capped at four so a register with thirty findings still
+distinguishes bad from worse.
+
+**Three new dispatchers, all in `DORMANT_JOBS`.** `ropa-discovery`, `ropa-retention`
+and `ropa-intake` each fan out one job per organisation, and each either emails someone
+or fills a queue a customer then has to work through. The first run against an
+established register finds real work — forty vendors nothing references, a decade of
+elapsed retention — and that should arrive because an organisation switched the feature
+on. `material-change` is dormant for the same reason.
+
+---
+
 ## Database
 
 Schema is one file: `packages/db/src/schema.ts`. The package is imported as `db`
@@ -275,7 +369,39 @@ npm run check:schema --workspace=packages/db # fails if schema.ts and drizzle/ h
 ```
 
 Edit `schema.ts` and generate. Never hand-write a migration file — `check:schema` will
-fail on the drift.
+fail on the drift. **`check:schema` asks git**, so a generated-but-uncommitted migration
+reports as drift; commit the `.sql`, its `meta/NNNN_snapshot.json` and `meta/_journal.json`
+together.
+
+**The migration state is not what the journal implies, and `drizzle-kit` will not tell
+you.** Checked against the live database on 21 August 2026:
+
+- **Three applied migrations no longer match their own files.** `0039`, `0042` and `0043`
+  have hashes in `drizzle.__drizzle_migrations` that do not match the SHA-256 of the
+  `.sql` on disk, so somebody edited them after they ran. Every object they create is
+  present in the database, so nothing is *missing* — but the committed file no longer
+  describes what was applied, and a database rebuilt from `drizzle/` would differ from
+  production. This is silent: the postgres-js migrator chooses what to run by comparing
+  timestamps, **not hashes**, so a hash mismatch never causes a re-run and never errors.
+- **`meta/_journal.json` has 39 entries for 53 `.sql` files**, with idx 20–30 missing
+  entirely. The migrator only runs what the journal lists, so those eleven files are
+  inert. Again invisible on a database that already has them.
+
+Neither matters to the running system and both matter to disaster recovery, so the thing
+not to do is assume `npm run migrate` on a fresh database reproduces production.
+
+**Postgres truncates identifiers at 63 characters, and drizzle-kit composes foreign-key
+names as `<table>_<column>_<reftable>_<refcolumn>_fk`.** `0049` tripped this four times —
+anything referencing `processing_activities` from a table with a long name of its own. It
+emits a NOTICE, not an error, and no names collided; the consequence is that the
+constraint name in the database is *not* the one in the `.sql`, so a hand-written
+`DROP CONSTRAINT` copied out of a migration file will not find its target. Check for
+collisions after adding foreign keys to a long-named table:
+
+```sql
+SELECT conname, count(*) FROM pg_constraint WHERE connamespace = 'public'::regnamespace
+GROUP BY conname HAVING count(*) > 1;
+```
 
 **`with:` in a relational query is not typechecked.** For a table with no
 `relations()` block, Drizzle widens the `with` key type and `tsc` accepts any name.

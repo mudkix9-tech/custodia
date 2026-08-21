@@ -6,7 +6,7 @@ import { DataGrid } from 'ui';
 import { trpc } from '@/utils/trpc';
 import { normaliseLawfulBasis, isLawfulBasisKey, isRetentionPreset } from '@/utils/ropaFormat';
 import { severityClasses } from '@/utils/severity';
-import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X, ShieldAlert, Library, CalendarClock, Archive } from 'lucide-react';
+import { FileText, Plus, Download, Upload, AlertCircle, CheckCircle2, ChevronRight, X, ShieldAlert, Library, CalendarClock, Archive, Compass, Radar, ClipboardList } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toCsvRow } from '@/utils/csv';
 import { ExportMenu } from '@/components/ropa/ExportMenu';
@@ -23,6 +23,10 @@ export default function RopaListPage() {
   const t = useTranslations('ropa');
   const router = useRouter();
   const toast = useToast();
+  // C34–C36. The badge is the only thing on the register that says discovery has
+  // found anything; without it the queue is a page nobody navigates to twice.
+  const discoverySummary = trpc.ropa.discovery.summary.useQuery();
+  const discoveryCount = discoverySummary.data?.openTotal ?? 0;
   const [flagsTab, setFlagsTab] = useState<'flagged'|'dismissed'>('flagged');
 
   React.useEffect(() => {
@@ -410,6 +414,33 @@ export default function RopaListPage() {
             <p className="text-[13.5px] text-[#6E747A] mt-2">
               {t('subtitle')}
             </p>
+
+            {/* Sprint 4. The four surfaces that hang off the register rather than
+                sitting inside an activity. As a rail under the title rather than
+                four more buttons in the action row: they are places you go, not
+                things you do to what is on screen, and the action row was already
+                four items wide at the point it starts wrapping on a laptop. */}
+            <nav aria-label={t('nav.label')} className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4">
+              {([
+                ['/ropa/insights', Compass, t('nav.insights')],
+                ['/ropa/retention', CalendarClock, t('nav.retention')],
+                ['/ropa/discovery', Radar, t('nav.discovery'), discoveryCount],
+                ['/ropa/intake', ClipboardList, t('nav.intake')],
+              ] as const).map(([href, Icon, label, badge]) => (
+                <button
+                  key={href}
+                  type="button"
+                  onClick={() => router.push(href)}
+                  className="flex items-center gap-1.5 text-[13px] text-[#9BA1A6] hover:text-[#C9A227] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]/60 rounded"
+                >
+                  <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                  {label}
+                  {badge ? (
+                    <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-[#C9A227]/15 text-[#C9A227] text-[11px]">{badge}</span>
+                  ) : null}
+                </button>
+              ))}
+            </nav>
           </div>
           
           <div className="flex items-center gap-3">

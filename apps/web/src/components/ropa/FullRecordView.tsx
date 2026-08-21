@@ -7,6 +7,7 @@ import { trpc } from '@/utils/trpc';
 import { ArrowLeft, Printer, Baby, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CompletenessRing } from './CompletenessPanel';
+import { ActivityFlow } from './ActivityFlow';
 import { countryName } from '@/utils/countries';
 import { isRetentionPreset, normaliseLawfulBasis } from '@/utils/ropaFormat';
 import {
@@ -401,6 +402,14 @@ export function FullRecordView({ activity }: { activity: any }) {
             <p className="text-[13px] text-[#6E747A] italic mb-4">{t('record.no_security')}</p>
           )}
           <Field label={t('record.security_detail')} value={activity.securityMeasuresDetail} />
+        </Section>
+
+        {/* ---- D41: the flow ------------------------------------------------- */}
+        {/* Placed after the record and before the outstanding list, because it is a
+            summary of everything above it — and because on paper it is the page a
+            reader looks at first and the one they keep. */}
+        <Section title={t('record.flow')} article="Art. 30(1)(c)–(f)">
+          <ActivityFlow activityId={activity.id} />
         </Section>
 
         {/* ---- What is still missing ---------------------------------------- */}

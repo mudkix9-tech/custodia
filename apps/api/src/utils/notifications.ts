@@ -59,6 +59,23 @@ export const NOTIFICATION_TYPES = {
   'ropa.activity_changed': { defaultChannels: ['in_app'], urgency: 'low' },
   'ropa.completeness_dropped': { defaultChannels: ['email', 'in_app'], urgency: 'high' },
 
+  // Sprint 4. The intake pair go to a recipient outside the organisation, so they
+  // are email-only by construction: there is no in-app inbox to deliver to and no
+  // Slack workspace the respondent is in.
+  'ropa.intake.request': { defaultChannels: ['email'], urgency: 'medium' },
+  'ropa.intake.reminder': { defaultChannels: ['email'], urgency: 'medium' },
+  'ropa.intake.submitted': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
+  // Discovery and retention are queues, not events. In-app keeps them where the
+  // work is; an email per discovered vendor on the first scan of a 43-vendor
+  // register is forty-three emails and one unsubscribe.
+  'ropa.discovery.found': { defaultChannels: ['in_app'], urgency: 'low' },
+  'ropa.retention.due': { defaultChannels: ['email', 'in_app'], urgency: 'high' },
+  'ropa.retention.review_due': { defaultChannels: ['in_app'], urgency: 'medium' },
+  // P125. A material change is the one Sprint 4 event that carries a deadline of
+  // its own — Art. 13(3) requires the subject to be informed *prior to* the further
+  // processing, so a verdict nobody sees is a verdict that arrives too late.
+  'ropa.material_change': { defaultChannels: ['email', 'in_app'], urgency: 'high' },
+
   // Training
   'training.assigned': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
   'training.due_7d': { defaultChannels: ['email', 'in_app'], urgency: 'medium' },
@@ -75,6 +92,13 @@ interface QueueNotificationParams {
   body: string;
   actionUrl?: string;
   metadata?: Record<string, any>;
+  /**
+   * C33. An explicit recipient, for someone who has no account in this
+   * organisation. Set, the email worker uses it verbatim; unset, it falls back to
+   * the user or to every org admin — which is the right default and the wrong
+   * behaviour entirely for a message carrying an access token.
+   */
+  emailTo?: string | null;
 }
 
 export async function queueNotification(params: QueueNotificationParams) {
@@ -97,6 +121,7 @@ export async function queueNotification(params: QueueNotificationParams) {
       title: params.title,
       body: params.body,
       actionUrl: params.actionUrl,
+      emailTo: params.emailTo || undefined,
       payload: params.metadata || null,
       priority: notificationType.urgency,
       status: 'pending',

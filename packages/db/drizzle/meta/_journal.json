@@ -267,6 +267,13 @@
       "when": 1787146900880,
       "tag": "0048_steep_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1787314065479,
+      "tag": "0049_striped_mephistopheles",
+      "breakpoints": true
     }
   ]
 }

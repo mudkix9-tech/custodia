@@ -30,11 +30,15 @@ export async function calculateComplianceScore(orgId: string) {
       requiresDpia: true,
       lawfulBasis: true,
       purpose: true,
+      // P123. The denormalised Article 30 completeness score, which the API keeps
+      // in step after every mutation that can move it. The ROPA pillar used to be
+      // computed from `lawfulBasis` and `purpose` alone; see calculateRopaScore.
+      completenessScore: true,
     }
   });
 
   const [ropa, vendors, dpia, policies, dsar, breach, training, transfers, consent] = await Promise.all([
-    calculateRopaScore(activities),
+    calculateRopaScore(orgId, activities),
     calculateVendorScore(orgId),
     calculateDpiaScore(orgId, activities),
     calculatePolicyScore(orgId),
@@ -111,19 +115,54 @@ async function calculateConsentScore(orgId: string) {
   return Math.max(0, score);
 }
 
-async function calculateRopaScore(activities: any[]) {
+/**
+ * P123/D19. The ROPA pillar, against Article 30 rather than against two columns.
+ *
+ * What this replaced scored `!lawfulBasis` and `!purpose`, at fifty points each,
+ * over published activities. Twenty-three per cent of the headline number could
+ * therefore not detect a register with no retention periods, no data subject
+ * categories, no recipients and no transfers documented — the four findings a
+ * supervisory authority raises on the first page.
+ *
+ * It now reads `completeness_score`, which is `scoreActivity()` over the activity
+ * and its four child tables, denormalised by the API after every mutation that can
+ * move it. Reading the stored column rather than recomputing is the whole reason
+ * that column exists: recomputing means five queries per activity on a nightly job
+ * that already runs on the same 512MB box as Chromium.
+ *
+ * The critical-gap multiplier is the second half, and it is doing something the
+ * average cannot. A register of forty tidy activities and one that transfers
+ * special-category data to a third country with no safeguard averages out at
+ * roughly "fine"; a critical Chapter V finding is not something an average should
+ * be able to absorb. Same mechanism the DPIA pillar already uses, and deliberately
+ * capped at four multiplications so a register with thirty findings does not floor
+ * the pillar to zero and stop distinguishing bad from worse.
+ */
+async function calculateRopaScore(orgId: string, activities: any[]) {
   const activeActivities = activities.filter(a => a.status === 'active');
-  if (activeActivities.length === 0) return 100; // No data, no issues
+  // Consistent with every other pillar here: nothing to assess scores 100. A
+  // register with no activities at all is a finding, but it belongs to the gap
+  // scanner, which can say so in words rather than by moving a number nobody can
+  // interpret.
+  if (activeActivities.length === 0) return 100;
 
-  const getCompleteness = (a: any) => {
-    let score = 100;
-    if (!a.lawfulBasis) score -= 50;
-    if (!a.purpose) score -= 50;
-    return Math.max(0, score);
-  };
+  const avgCompleteness = activeActivities.reduce(
+    (sum, a) => sum + Math.max(0, Math.min(100, a.completenessScore ?? 0)),
+    0,
+  ) / activeActivities.length;
 
-  const avgCompleteness = activeActivities.reduce((sum, a) => sum + getCompleteness(a), 0) / activeActivities.length;
-  return Math.round(avgCompleteness);
+  const criticalGaps = await db.query.complianceGaps.findMany({
+    where: and(
+      eq(complianceGaps.organizationId, orgId),
+      eq(complianceGaps.entityType, 'ropa'),
+      eq(complianceGaps.severity, 'critical'),
+      inArray(complianceGaps.status, ['open', 'in_progress']),
+    ),
+    columns: { id: true },
+  });
+
+  const multiplier = Math.pow(0.85, Math.min(criticalGaps.length, 4));
+  return Math.max(0, Math.min(100, Math.round(avgCompleteness * multiplier)));
 }
 
 async function calculateVendorScore(orgId: string) {

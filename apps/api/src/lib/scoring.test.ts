@@ -32,9 +32,11 @@ async function runTests() {
     db.query.consentDomains.findMany = (async () => []) as any;
     db.query.consentFindings.findMany = (async () => []) as any;
 
-    // Mock 1 processing activity that requires a DPIA and is complete enough for ROPA
+    // Mock 1 processing activity that requires a DPIA and is complete enough for ROPA.
+    // `completenessScore` is what the ROPA pillar reads since P123 — the pillar used
+    // to derive its own from lawfulBasis and purpose, which is D19.
     db.query.processingActivities.findMany = (async () => [
-      { id: 'act-1', organizationId: 'test-org', requiresDpia: true, status: 'active', deletedAt: null, lawfulBasis: 'consent', purpose: 'Testing' }
+      { id: 'act-1', organizationId: 'test-org', requiresDpia: true, status: 'active', deletedAt: null, lawfulBasis: 'consent', purpose: 'Testing', completenessScore: 100 }
     ]) as any;
 
     // ── Test 1: Full compliance, no gaps ──

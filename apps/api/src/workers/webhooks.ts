@@ -36,7 +36,10 @@ export const webhookWorker = createWorker('webhook-deliveries', async (job) => {
         'X-Custodia-Signature': signature,
         'X-Custodia-Event': delivery.eventType,
         'X-Custodia-Delivery': delivery.eventId,
-        'X-Custodia-Timestamp': delivery.payload.timestamp,
+        // The envelope dispatchWebhook builds carries `created`, not `timestamp`.
+        // Reading the wrong key put the literal string "undefined" into the header
+        // subscribers are told to use for replay protection.
+        'X-Custodia-Timestamp': delivery.payload?.created ?? new Date().toISOString(),
       },
       body: payloadString,
     });
@@ -83,7 +86,10 @@ export const webhookWorker = createWorker('webhook-deliveries', async (job) => {
       }
     }
 
-    throw error; // Let BullMQ handle retry mechanism
+    // Rethrown so pg-boss retries. `createQueue().add()` translates the
+    // BullMQ-shaped { attempts, backoff } the dispatcher passes into
+    // retryLimit / retryDelay / retryBackoff, so the retry is real now.
+    throw error;
   }
 }, { drainDelay: 15 });
 

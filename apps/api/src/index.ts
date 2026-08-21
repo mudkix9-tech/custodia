@@ -24,6 +24,7 @@ import { generateAssessmentPdfWorker } from './workers/generateAssessmentPdf.js'
 import { scheduleGlobalJobs } from './workers/index.js';
 import cmpRoutes from './routes/cmp.js';
 import { ssoRoutes } from './routes/sso.js';
+import v1Routes from './routes/v1/index.js';
 import { complianceWorker } from './workers/compliance.js';
 import { paddleWebhookHandler } from './webhooks/paddle.js';
 import { inboundEmailWebhookHandler } from './webhooks/inbound.js';
@@ -110,6 +111,13 @@ server.register(fastifyCookie);
 server.register(cmpRoutes);
 server.register(paddleWebhookHandler);
 server.register(inboundEmailWebhookHandler);
+
+// O119. The public REST API. Every route inside is behind apiKeyAuthMiddleware,
+// which resolves the organisation from the key — no endpoint takes an org id, so a
+// key can only ever address its own tenant. Registered here for the first time:
+// routes/v1/index.ts carried a "NOT REGISTERED" banner and nothing mounted it, so
+// the vendors endpoint documented in the product was unreachable as well (D40).
+server.register(v1Routes, { prefix: '/api/v1' });
 
 // Health checks
 server.get('/api/health', async (request, reply) => {

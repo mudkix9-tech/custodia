@@ -6,7 +6,9 @@ import * as schema from '../../../../packages/db/src/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 
 
-import { randomBytes } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
+import { ROPA_WEBHOOK_EVENTS } from '../lib/ropaEvents.js';
+import { dispatchWebhook, webhookQueue } from '../utils/webhookDispatcher.js';
 
 const paginationInput = z.object({
   limit: z.number().min(1).max(100).default(25),
@@ -14,10 +16,11 @@ const paginationInput = z.object({
 });
 
 export const WEBHOOK_EVENTS = {
-  // Processing Activities
-  'ropa.created': 'A new processing activity was created',
-  'ropa.updated': 'A processing activity was updated',
-  'ropa.deleted': 'A processing activity was deleted',
+  // Processing Activities. O120 added the last eight and, more to the point, made
+  // the first three actually fire — they had been offered for subscription with no
+  // emitter behind them since the feature shipped (D39). The catalogue lives in
+  // lib/ropaEvents.ts, which is also where they are emitted from.
+  ...ROPA_WEBHOOK_EVENTS,
 
   // Vendors
   'vendor.added': 'A vendor was added to the organization',
@@ -103,8 +106,22 @@ export const webhooksRouter = router({
     .use(requireRole("admin"))
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const { dispatchWebhook } = require('../utils/webhookDispatcher');
-      await dispatchWebhook(ctx.user!.orgId, 'webhook.test', { message: 'Test webhook delivery' }, input.id as any);
+      // The webhook has to belong to the caller before it is addressed by id: a
+      // bare `dispatchWebhook(orgId, …, input.id)` filters the hooks by org and
+      // then by id, so this is defence rather than the only check — but the
+      // NOT_FOUND is what tells a caller probing ids nothing they did not know.
+      const [hook] = await ctx.db.select().from(schema.webhooks).where(
+        and(
+          eq(schema.webhooks.id, input.id),
+          eq(schema.webhooks.organizationId, ctx.user!.orgId),
+        ),
+      );
+      if (!hook) throw new Error('Webhook not found');
+
+      // `require` in an ESM module throws ReferenceError at runtime. It typechecks,
+      // because @types/node declares `require` globally; the file is `"type":
+      // "module"`, so nothing here has ever run.
+      await dispatchWebhook(ctx.user!.orgId, 'webhook.test', { message: 'Test webhook delivery' }, hook.id);
       return { success: true };
     }),
 
@@ -147,9 +164,7 @@ export const webhooksRouter = router({
       );
       if (!delivery) throw new Error('Delivery not found');
 
-      const { v4: uuidv4 } = await import('uuid');
-      const { webhookQueue } = require('../utils/webhookDispatcher');
-      const eventId = uuidv4();
+      const eventId = randomUUID();
 
       const newPayload = {
         ...delivery.payload as any,

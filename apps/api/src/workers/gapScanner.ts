@@ -3,6 +3,16 @@ import { db } from '../db.js';
 import { complianceGaps, organizations, organizationVendors, vendors } from 'db';
 import { and, eq, isNull, inArray } from 'drizzle-orm';
 import { DETECTION_RULES } from '../constants/gapRules.js';
+import { ROPA_DETECTION_RULES } from '../constants/ropaGapRules.js';
+
+/**
+ * P124. The vendor-shaped rules and the register rules, scanned as one pass.
+ *
+ * One list rather than two scans, because the auto-resolve step below closes any
+ * open gap the run did not re-detect — and a second scan that did not know about
+ * the first's findings would resolve every one of them on every run.
+ */
+const ALL_DETECTION_RULES = [...DETECTION_RULES, ...ROPA_DETECTION_RULES];
 
 export const gapScannerWorker = createWorker('gap-scanner', async (job: any) => {
   const { orgId } = job.data;
@@ -28,11 +38,15 @@ function escalateSeverityIfStale(existing: any) {
 async function scanOrganization(orgId: string) {
   const detectedNow = new Set<string>();
 
-  for (const rule of DETECTION_RULES) {
+  for (const rule of ALL_DETECTION_RULES) {
     const matches = await rule.detect(orgId);
 
     for (const match of matches) {
-      const gap = rule.buildGap(match);
+      // `gdprArticles` lives on the rule rather than on each gap it builds, and
+      // nothing was carrying it across — so the column has been an empty array on
+      // every gap ever written, and "which Article does this finding speak to" was
+      // unanswerable in the one place a customer asks it.
+      const gap = { gdprArticles: rule.gdprArticles ?? [], ...rule.buildGap(match) };
       const fingerprint = `${gap.entityType}:${gap.entityId}:${gap.gapType}`;
       detectedNow.add(fingerprint);
 

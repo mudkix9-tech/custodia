@@ -22,6 +22,10 @@ export * from './generateAssessmentPdf.js';
 export * from './trialExpiry.js';
 export * from './consentScan.js';
 export * from './ropaReviews.js';
+export * from './ropaDiscovery.js';
+export * from './ropaRetention.js';
+export * from './ropaIntakeReminders.js';
+export * from './materialChange.js';
 import { createQueue } from '../lib/queue.js';
 
 import { getBoss, wrapJobPayload } from '../lib/queue.js';
@@ -56,6 +60,18 @@ export async function scheduleGlobalJobs() {
   // both sit in DORMANT_JOBS until an organisation opts in — see CLAUDE.md's
   // recurring-job checklist.
   await boss.schedule('ropa-reviews-dispatcher', '0 6 * * *', wrapJobPayload('ropa-reviews-dispatcher', {}));
+
+  // Sprint 4. Three dispatchers, all fanning out one job per organisation, all in
+  // DORMANT_JOBS because each of them writes into a queue a customer then has to
+  // work through — and the first run against an established register finds real
+  // work. A customer should meet that because they switched discovery on, not
+  // because we deployed on a Tuesday.
+  //
+  // Staggered by an hour each rather than sharing 02:00 with the gap scanner: they
+  // all sweep the same register on the same 512MB box that also runs Chromium.
+  await boss.schedule('ropa-discovery', '0 4 * * 1', wrapJobPayload('ropa-discovery-dispatch', {}));
+  await boss.schedule('ropa-retention', '0 5 * * *', wrapJobPayload('ropa-retention-dispatch', {}));
+  await boss.schedule('ropa-intake', '0 9 * * *', wrapJobPayload('ropa-intake-dispatch', {}));
 }
 
 

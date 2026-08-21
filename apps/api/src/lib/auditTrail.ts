@@ -215,6 +215,11 @@ export const CHILD_TABLE_BY_PATH: Readonly<Record<string, string>> = {
   'ropa.lia': 'legitimate_interest_assessments',
   'ropa.screening': 'dpia_screenings',
   'ropa.transfers.tia': 'transfer_impact_assessments',
+  // E51. A disposal is addressed by its own id and belongs to an activity, so
+  // without this entry "we deleted 12,400 payroll records on 3 March" would be
+  // invisible in the History tab of the record it was deleted under — which is
+  // the one place anyone would look for it.
+  'ropa.retention.disposals': 'retention_disposals',
 };
 
 export function childTableForPath(path: string): string | null {

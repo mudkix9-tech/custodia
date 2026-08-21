@@ -95,7 +95,14 @@ const channelHandlers: Record<string, (notification: any) => Promise<void>> = {
   email: async (notification) => {
     let recipients: string[] = [];
     
-    if (notification.userId) {
+    if (notification.emailTo) {
+      // C33. An address set by the enqueuer, for a recipient who has no account and
+      // is never going to get one — the delegated-intake questionnaire goes to a
+      // department head by email and nothing else. Without this branch the row
+      // would fall through to "all org admins", which is the wrong people and, for
+      // a message carrying an access token, actively wrong.
+      recipients = String(notification.emailTo).split(',').map((s) => s.trim()).filter(Boolean);
+    } else if (notification.userId) {
       const [u] = await db.select().from(users).where(eq(users.id, notification.userId));
       if (u) recipients.push(u.email);
     } else {

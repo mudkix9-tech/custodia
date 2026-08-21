@@ -154,6 +154,17 @@ const DORMANT_JOBS = new Set<string>([
   'vendor-intelligence:weekly-organization-discovery-trigger',
   'ropa-reviews:ropa-review-reminder-checker',
   'ropa-reviews-dispatcher:ropa-reviews-dispatcher',
+  // Sprint 4. Each of these either emails somebody or fills a queue a customer then
+  // has to work through, and the first run against an established register finds
+  // real work — forty vendors nothing references, a decade of elapsed retention.
+  // That should arrive because an organisation switched the feature on.
+  'ropa-discovery:ropa-discovery-dispatch',
+  'ropa-discovery:ropa-discovery-scan',
+  'ropa-retention:ropa-retention-dispatch',
+  'ropa-retention:ropa-retention-scan',
+  'ropa-intake:ropa-intake-dispatch',
+  'ropa-intake:ropa-intake-reminders',
+  'material-change:material-change',
 ]);
 
 export function parseJobAllowlist(raw = process.env.WORKERS_ENABLED_JOBS): Set<string> | null {

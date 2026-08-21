@@ -287,6 +287,20 @@ export const processingActivities = pgTable('processing_activities', {
   retentionJustification: text('retention_justification'),
   retentionReviewDate: timestamp('retention_review_date', { withTimezone: true }),
   deletionProcedure: text('deletion_procedure'),
+
+  // E47/E48. The schedule this activity retains under, and the date its clock runs
+  // from. The free-text `retention_period` above stays: attaching a schedule is an
+  // upgrade rather than a migration, and the two disagree loudly rather than
+  // silently — `retentionAnswer()` prefers the schedule and the register says so.
+  //
+  // `retentionAnchorAt` is what makes a disposal date computable. A period is
+  // meaningless without the event it runs from, and for most activities that event
+  // is not the row's creation date — an employment record's clock starts when the
+  // employment ends. Null means "the trigger has not happened yet", which is a
+  // different statement from "the period has not elapsed" and is why the disposal
+  // report can distinguish them.
+  retentionScheduleId: uuid('retention_schedule_id'),
+  retentionAnchorAt: timestamp('retention_anchor_at', { withTimezone: true }),
   
   securityMeasures: jsonb('security_measures').default([]),
   securityMeasuresDetail: text('security_measures_detail'),
@@ -395,6 +409,11 @@ export const reconsentFlags = pgTable('reconsent_flags', {
   status: varchar('status', { length: 50 }).default('flagged'), // 'flagged' | 'dismissed' | 'campaign_launched'
   dismissedBy: uuid('dismissed_by').references(() => users.id),
   dismissedAt: timestamp('dismissed_at', { withTimezone: true }),
+
+  // P125. The generalised evaluation writes a material_change_event and, where the
+  // verdict includes re-consent, one of these — so the existing queue keeps working
+  // and the two records agree about why. Null on every flag written before Sprint 4.
+  materialChangeEventId: uuid('material_change_event_id'),
 });
 
 export const clientProcessingActivities = pgTable('client_processing_activities', {
@@ -894,7 +913,13 @@ export const processingDataCategories = pgTable('processing_data_categories', {
   retentionPeriod: varchar('retention_period', { length: 100 }),
   retentionTrigger: varchar('retention_trigger', { length: 100 }),
   retentionJustification: text('retention_justification'),
-  
+
+  // E47. The schedule this category retains under, where one applies. Per category
+  // rather than only per activity because that is the level Art. 30(1)(f) is
+  // actually answered at — a recruitment activity keeps the CV for six months and
+  // the equal-opportunities monitoring data for six years, under two different laws.
+  retentionScheduleId: uuid('retention_schedule_id'),
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -2602,6 +2627,18 @@ export const processingActivitiesRelations = relations(processingActivities, ({ 
   liaAssessments: many(legitimateInterestAssessments),
   screenings: many(dpiaScreenings),
   transferAssessments: many(transferImpactAssessments),
+  // Sprint 4. Retention, intake, discovery, drafting and material change all hang
+  // off the activity; each target below declares the one(activity) back-reference
+  // Drizzle infers the join from.
+  retentionSchedule: one(retentionSchedules, {
+    fields: [processingActivities.retentionScheduleId],
+    references: [retentionSchedules.id],
+  }),
+  disposals: many(retentionDisposals),
+  legalHolds: many(legalHoldActivities),
+  intakeRequests: many(ropaIntakeRequests),
+  drafts: many(ropaActivityDrafts),
+  materialChanges: many(materialChangeEvents),
   businessOwner: one(users, {
     fields: [processingActivities.businessOwnerId],
     references: [users.id],
@@ -2824,6 +2861,10 @@ export const processingDataCategoriesRelations = relations(processingDataCategor
   catalogueEntry: one(dataElementCatalogue, {
     fields: [processingDataCategories.catalogueId],
     references: [dataElementCatalogue.id],
+  }),
+  retentionSchedule: one(retentionSchedules, {
+    fields: [processingDataCategories.retentionScheduleId],
+    references: [retentionSchedules.id],
   }),
 }));
 
@@ -3295,3 +3336,659 @@ export const auditEvidence = pgTable('audit_evidence', {
     orgValidIdx: index('idx_audit_evidence_org_valid').on(table.organizationId, table.validUntil),
   };
 });
+
+// ============================================================================
+// SPRINT 4 — retention management, delegated intake, discovery, AI drafting,
+// completeness trend and generalised material-change evaluation.
+// ============================================================================
+
+/**
+ * E47. A retention rule as a reusable object an organisation owns, rather than a
+ * string typed again into every activity.
+ *
+ * The register already had `retention_period` on the activity and on each data
+ * category, and both are free varchars — which is why a register can hold "7
+ * years", "7 yrs", "seven years" and "6_months" for the same statutory clock, and
+ * why nothing could answer "which activities does the accounting retention rule
+ * cover, and who owns it". A schedule is the object that answer hangs off: it has
+ * a period, the *event the period runs from*, the law that sets it, the
+ * jurisdiction that law belongs to, an owner and a review date.
+ *
+ * The free-text columns on the activity and the category are deliberately kept.
+ * Attaching a schedule is an upgrade, not a migration — a register that refuses to
+ * open until every period has been re-entered as a schedule is a register that
+ * gets abandoned at the first tab.
+ */
+export const retentionSchedules = pgTable('retention_schedules', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+
+  name: varchar('name', { length: 160 }).notNull(),
+  description: text('description'),
+
+  /**
+   * E48/E49. A number and a unit rather than a string, so a disposal date can be
+   * computed rather than read. `indefinite` and `until_event` carry no number:
+   * the first is a claim that needs a justification (and fails a gap rule without
+   * one), the second defers to a trigger that has no clock of its own.
+   */
+  periodValue: integer('period_value'),
+  periodUnit: varchar('period_unit', { length: 20 }).notNull().default('years'),
+
+  /**
+   * E48. The event the period runs from. "Six years" is not a retention rule;
+   * "six years from the end of the contract" is, and the two produce disposal
+   * dates that can be a decade apart for the same record.
+   */
+  trigger: varchar('trigger', { length: 40 }).notNull().default('collection'),
+  triggerDetail: text('trigger_detail'),
+
+  /** The provision that sets the period, and the law it belongs to. */
+  statutoryCitation: varchar('statutory_citation', { length: 255 }),
+  jurisdiction: char('jurisdiction', { length: 2 }),
+
+  /** Art. 5(1)(e) asks the controller to justify the period, not merely state it. */
+  justification: text('justification'),
+
+  /** What happens at the end — deletion is not the only lawful answer. */
+  disposalMethod: varchar('disposal_method', { length: 30 }).notNull().default('deletion'),
+
+  ownerId: uuid('owner_id').references(() => users.id),
+  reviewIntervalMonths: integer('review_interval_months'),
+  lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
+  nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
+
+  status: varchar('status', { length: 20 }).notNull().default('active'),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+}, (table) => {
+  return {
+    orgIdx: index('idx_retention_schedules_org').on(table.organizationId),
+    // E50 review queue is "every schedule whose review date has passed", across
+    // the whole organisation, which is this index exactly.
+    orgReviewIdx: index('idx_retention_schedules_org_review').on(table.organizationId, table.nextReviewAt),
+    // A schedule name is how people refer to the rule in conversation; two rules
+    // called "Payroll" in one organisation is a data-entry slip, not a fact.
+    orgNameUnq: unique('retention_schedules_org_name_unq').on(table.organizationId, table.name),
+  };
+});
+
+/**
+ * E52. A legal hold suspends a retention rule for named activities.
+ *
+ * Litigation hold is the one thing that legitimately overrides storage limitation,
+ * and a register with no way to express it produces exactly one of two failures: a
+ * disposal that destroys evidence, or a blanket "we never delete anything" that
+ * abandons Art. 5(1)(e) entirely. The hold carries a reason, an owner and an
+ * expiry, because a hold nobody ever releases is the second failure wearing a hat.
+ */
+export const legalHolds = pgTable('legal_holds', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+
+  reference: varchar('reference', { length: 120 }).notNull(),
+  reason: text('reason').notNull(),
+  /** litigation | regulatory_investigation | audit | internal_investigation | other */
+  holdType: varchar('hold_type', { length: 40 }).notNull().default('litigation'),
+
+  ownerId: uuid('owner_id').references(() => users.id),
+  issuedAt: timestamp('issued_at', { withTimezone: true }).notNull().defaultNow(),
+  /**
+   * Nullable, and the nullability is the point: an open-ended hold is a real thing
+   * and pretending otherwise would make people invent a date. The review date
+   * below is what stops it being forgotten.
+   */
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
+
+  status: varchar('status', { length: 20 }).notNull().default('active'),
+  releasedAt: timestamp('released_at', { withTimezone: true }),
+  releasedBy: uuid('released_by').references(() => users.id),
+  releaseNote: text('release_note'),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_legal_holds_org').on(table.organizationId),
+    orgStatusIdx: index('idx_legal_holds_org_status').on(table.organizationId, table.status),
+  };
+});
+
+/**
+ * Which activities a hold covers. A join table rather than a jsonb array on the
+ * hold, because the question asked far more often is the reverse one — "is this
+ * activity under hold right now" — and the disposal report asks it once per
+ * activity.
+ */
+export const legalHoldActivities = pgTable('legal_hold_activities', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  legalHoldId: uuid('legal_hold_id').notNull().references(() => legalHolds.id, { onDelete: 'cascade' }),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+  note: text('note'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    holdIdx: index('idx_legal_hold_activities_hold').on(table.legalHoldId),
+    activityIdx: index('idx_legal_hold_activities_activity').on(table.processingActivityId),
+    unq: unique('legal_hold_activities_hold_activity_unq').on(table.legalHoldId, table.processingActivityId),
+  };
+});
+
+/**
+ * E51. The disposal log — what was due, what was done, and the evidence for it.
+ *
+ * Two kinds of row live here and they are the same shape on purpose. The worker
+ * writes a `due` row when a schedule clock runs out on an activity; a person
+ * completes it with a method, a count and evidence. A register that can only say
+ * "we delete after seven years" is asserting a policy; one that can show the run
+ * that executed it, on which date, over how many records, is showing compliance.
+ *
+ * `due_key` is what makes the worker idempotent. It is the schedule clock for one
+ * activity expressed as a date, so re-running the scan on the same day finds the
+ * row it wrote yesterday instead of writing a second one — the same pattern
+ * `consent_findings` uses, and the reason the column is NOT NULL.
+ */
+export const retentionDisposals = pgTable('retention_disposals', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+  retentionScheduleId: uuid('retention_schedule_id').references(() => retentionSchedules.id, { onDelete: 'set null' }),
+  dataCategoryId: uuid('data_category_id').references(() => processingDataCategories.id, { onDelete: 'set null' }),
+
+  dueKey: varchar('due_key', { length: 64 }).notNull().default(''),
+  dueAt: timestamp('due_at', { withTimezone: true }).notNull(),
+
+  /** due | completed | deferred | on_hold | not_required */
+  status: varchar('status', { length: 20 }).notNull().default('due'),
+
+  performedAt: timestamp('performed_at', { withTimezone: true }),
+  performedBy: uuid('performed_by').references(() => users.id),
+  /** deletion | anonymisation | return_to_controller | archive */
+  method: varchar('method', { length: 30 }),
+  recordCount: integer('record_count'),
+  /** Which systems the disposal was executed in — the part an auditor asks about. */
+  systems: jsonb('systems').default([]),
+  evidence: jsonb('evidence').default([]),
+  note: text('note'),
+
+  /** E52. Set when the due date passed while a hold covered the activity. */
+  legalHoldId: uuid('legal_hold_id').references(() => legalHolds.id, { onDelete: 'set null' }),
+  deferredUntil: timestamp('deferred_until', { withTimezone: true }),
+  deferralReason: text('deferral_reason'),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_retention_disposals_org').on(table.organizationId),
+    orgStatusDueIdx: index('idx_retention_disposals_org_status_due').on(table.organizationId, table.status, table.dueAt),
+    activityIdx: index('idx_retention_disposals_activity').on(table.processingActivityId),
+    unq: unique('retention_disposals_activity_due_key_unq').on(table.processingActivityId, table.dueKey),
+  };
+});
+
+/**
+ * C32/C33. A questionnaire sent to whoever actually knows what the processing does.
+ *
+ * The population problem is not that the fields are hard; it is that the person
+ * who can answer them does not have a Custodia account and is never going to get
+ * one. So the request is addressed by email and answered through an unguessable
+ * token — the same access-control shape `vendor_questionnaires` uses, for the same
+ * reason.
+ *
+ * What comes back is *not* written into the register. It lands in `answers` and
+ * waits for a privacy reviewer to accept it field by field, which is the whole
+ * difference between delegated intake and letting a department head edit the
+ * Article 30 record directly.
+ */
+export const ropaIntakeRequests = pgTable('ropa_intake_requests', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+
+  /**
+   * Null for an interview-mode request that will create a new activity; set when
+   * the request asks a business owner to confirm or update one that exists.
+   */
+  processingActivityId: uuid('processing_activity_id').references(() => processingActivities.id, { onDelete: 'cascade' }),
+
+  token: uuid('token').defaultRandom().notNull().unique(),
+
+  /** interview | review | update — decides which question set is served. */
+  kind: varchar('kind', { length: 20 }).notNull().default('interview'),
+
+  recipientEmail: varchar('recipient_email', { length: 255 }).notNull(),
+  recipientName: varchar('recipient_name', { length: 160 }),
+  department: varchar('department', { length: 120 }),
+
+  subject: varchar('subject', { length: 255 }),
+  message: text('message'),
+  locale: varchar('locale', { length: 5 }).notNull().default('en'),
+
+  /**
+   * The questions as served, frozen on the request. A question set that changes
+   * under a half-finished response is a response that answers questions nobody
+   * asked, and the merge screen has to be able to show what was actually put to
+   * the respondent.
+   */
+  questions: jsonb('questions').notNull().default([]),
+  answers: jsonb('answers').notNull().default({}),
+
+  /** draft | sent | opened | submitted | merged | declined | cancelled | expired */
+  status: varchar('status', { length: 20 }).notNull().default('draft'),
+
+  dueAt: timestamp('due_at', { withTimezone: true }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  openedAt: timestamp('opened_at', { withTimezone: true }),
+  submittedAt: timestamp('submitted_at', { withTimezone: true }),
+  submittedByName: varchar('submitted_by_name', { length: 160 }),
+  declinedReason: text('declined_reason'),
+
+  remindersSent: integer('reminders_sent').notNull().default(0),
+  lastReminderAt: timestamp('last_reminder_at', { withTimezone: true }),
+
+  /**
+   * Which answers a reviewer took, keyed by question id. Kept after the merge so
+   * "where did this field come from" has an answer that is not a guess — the audit
+   * trail records the write, this records the provenance.
+   */
+  mergedFields: jsonb('merged_fields').default({}),
+  mergedAt: timestamp('merged_at', { withTimezone: true }),
+  mergedBy: uuid('merged_by').references(() => users.id),
+  createdActivityId: uuid('created_activity_id').references(() => processingActivities.id, { onDelete: 'set null' }),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_ropa_intake_org').on(table.organizationId),
+    orgStatusIdx: index('idx_ropa_intake_org_status').on(table.organizationId, table.status),
+    activityIdx: index('idx_ropa_intake_activity').on(table.processingActivityId),
+    // The reminder ladder scans "sent, not submitted, due soon" across every org.
+    dueIdx: index('idx_ropa_intake_due').on(table.status, table.dueAt),
+  };
+});
+
+/**
+ * C34–C36. Something outside the register suggests processing the register does
+ * not account for.
+ *
+ * Three sources, one table, because the *shape* of the finding is identical and so
+ * is the reviewer decision: a vendor nothing references, a tracker no activity
+ * explains, a connected SaaS app with no record behind it. Splitting them into
+ * three tables would mean three queues, three dismissal flows and three chances
+ * for one of them to be forgotten.
+ *
+ * The unique key over (org, source, source_key) is the same bargain
+ * `consent_findings` makes: an upsert bumps `last_seen_at`, a completed scan
+ * resolves anything it did not touch, and re-running the scan is free. Dismissal
+ * survives it — a signal a human has already judged does not come back next week
+ * with a fresh id and the same text.
+ */
+export const ropaDiscoverySignals = pgTable('ropa_discovery_signals', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+
+  /** vendor_register | tracker_scan | saas_connector */
+  source: varchar('source', { length: 30 }).notNull(),
+  /**
+   * The natural key within the source — a vendor id, a tracker name on a domain, a
+   * connector app identifier. NOT NULL and defaulted to '' because Postgres treats
+   * NULLs in a unique constraint as distinct, which would let every scan insert a
+   * fresh duplicate.
+   */
+  sourceKey: varchar('source_key', { length: 255 }).notNull().default(''),
+
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  /** high | medium | low — how confident the rule is that this is real processing. */
+  confidence: varchar('confidence', { length: 20 }).notNull().default('medium'),
+
+  /** The draft a reviewer would accept, as fields rather than prose. */
+  suggestedName: varchar('suggested_name', { length: 255 }),
+  suggestedPurpose: text('suggested_purpose'),
+  suggestedLawfulBasis: varchar('suggested_lawful_basis', { length: 50 }),
+  suggestedDataCategories: jsonb('suggested_data_categories').default([]),
+  suggestedDataSubjects: jsonb('suggested_data_subjects').default([]),
+  suggestedRecipients: jsonb('suggested_recipients').default([]),
+  suggestedTransfers: jsonb('suggested_transfers').default([]),
+
+  /** What the rule saw. Rendered on the card, because a suggestion with no evidence is a guess. */
+  evidence: jsonb('evidence').default({}),
+
+  vendorId: uuid('vendor_id'),
+  consentDomainId: uuid('consent_domain_id').references(() => consentDomains.id, { onDelete: 'set null' }),
+  integrationId: uuid('integration_id').references(() => organizationIntegrations.id, { onDelete: 'set null' }),
+
+  /** open | accepted | dismissed | resolved */
+  status: varchar('status', { length: 20 }).notNull().default('open'),
+
+  acceptedActivityId: uuid('accepted_activity_id').references(() => processingActivities.id, { onDelete: 'set null' }),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+  acceptedBy: uuid('accepted_by').references(() => users.id),
+
+  dismissedReason: text('dismissed_reason'),
+  dismissedAt: timestamp('dismissed_at', { withTimezone: true }),
+  dismissedBy: uuid('dismissed_by').references(() => users.id),
+
+  firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).defaultNow(),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).defaultNow(),
+  detectionCount: integer('detection_count').notNull().default(1),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_ropa_discovery_org').on(table.organizationId),
+    orgStatusIdx: index('idx_ropa_discovery_org_status').on(table.organizationId, table.status),
+    unq: unique('ropa_discovery_signals_org_source_key_unq').on(table.organizationId, table.source, table.sourceKey),
+  };
+});
+
+/**
+ * C37. A proposed activity, field by field, with what the reviewer did to each.
+ *
+ * The existing panel returns a blob of prose and can apply two fields of it. What
+ * makes AI drafting worth having is the opposite property: every proposed value is
+ * separately visible, separately sourced, and separately accepted or rejected —
+ * because a draft a DPO cannot audit is a draft a DPO has to retype.
+ *
+ * The decisions are stored rather than applied-and-forgotten, so that "who put this
+ * in the register" is answerable about a field a model proposed and a human
+ * accepted, which is not the same statement as either alone.
+ */
+export const ropaActivityDrafts = pgTable('ropa_activity_drafts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+
+  /** Set when drafting *into* an existing activity rather than proposing a new one. */
+  processingActivityId: uuid('processing_activity_id').references(() => processingActivities.id, { onDelete: 'cascade' }),
+  discoverySignalId: uuid('discovery_signal_id').references(() => ropaDiscoverySignals.id, { onDelete: 'set null' }),
+  intakeRequestId: uuid('intake_request_id').references(() => ropaIntakeRequests.id, { onDelete: 'set null' }),
+
+  /** The one-line description the draft was generated from. */
+  prompt: text('prompt').notNull(),
+  model: varchar('model', { length: 80 }),
+
+  /** field id -> { value, rationale, confidence, article } */
+  proposal: jsonb('proposal').notNull().default({}),
+  /** field id -> { decision: accepted|rejected|pending, value, decidedAt, decidedBy } */
+  decisions: jsonb('decisions').notNull().default({}),
+
+  /** proposed | partially_applied | applied | discarded */
+  status: varchar('status', { length: 20 }).notNull().default('proposed'),
+
+  appliedActivityId: uuid('applied_activity_id').references(() => processingActivities.id, { onDelete: 'set null' }),
+  appliedAt: timestamp('applied_at', { withTimezone: true }),
+  appliedBy: uuid('applied_by').references(() => users.id),
+
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_ropa_drafts_org').on(table.organizationId),
+    orgStatusIdx: index('idx_ropa_drafts_org_status').on(table.organizationId, table.status),
+    activityIdx: index('idx_ropa_drafts_activity').on(table.processingActivityId),
+  };
+});
+
+/**
+ * P123. One row per organisation per day: what the register scored and what was
+ * missing from it.
+ *
+ * A completeness score with no history answers "is the register complete"; a trend
+ * answers "is it getting better", which is the question a DPO is actually asked at
+ * a board meeting and the one a spreadsheet cannot answer at all. Kept as a daily
+ * roll-up rather than derived from the version table because versions are written
+ * on edit — a register nobody touched for a month would have no points on the
+ * graph, and a flat line is a real answer.
+ *
+ * `by_requirement` is the interesting column: the same requirement keys
+ * `scoreActivity` produces, counted, so "retention is missing on 40 of 112
+ * activities" is a number rather than an impression.
+ */
+export const ropaCompletenessSnapshots = pgTable('ropa_completeness_snapshots', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+
+  capturedOn: date('captured_on').notNull(),
+
+  activityCount: integer('activity_count').notNull().default(0),
+  activeCount: integer('active_count').notNull().default(0),
+  averageScore: integer('average_score').notNull().default(0),
+  /** Activities carrying at least one publication blocker. */
+  blockedCount: integer('blocked_count').notNull().default(0),
+  /** { low, medium, high } — the same bands the register filters on. */
+  bands: jsonb('bands').notNull().default({}),
+  /** requirement id -> number of activities where it is missing or partial. */
+  byRequirement: jsonb('by_requirement').notNull().default({}),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_ropa_completeness_snapshots_org').on(table.organizationId, table.capturedOn),
+    unq: unique('ropa_completeness_snapshots_org_day_unq').on(table.organizationId, table.capturedOn),
+  };
+});
+
+/**
+ * P125. A change to an activity, classified against what the change obliges.
+ *
+ * The re-consent worker was the best idea in the module and it watched one field.
+ * The generalisation is not "watch more fields" — it is that a material change has
+ * *three different consequences* and they do not travel together. Adding a data
+ * category to a consent-based activity needs fresh consent; adding a recipient to
+ * a contract-based one needs the privacy notice updated under Art. 13(3) and no
+ * consent at all; widening the subject population to children needs the DPIA
+ * looked at again under Art. 35(11) and possibly neither of the other two.
+ *
+ * So the row holds the diff, a verdict per consequence, and one status — because
+ * the register user works a queue, not three.
+ */
+export const materialChangeEvents = pgTable('material_change_events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  processingActivityId: uuid('processing_activity_id').notNull().references(() => processingActivities.id, { onDelete: 'cascade' }),
+
+  /** The two snapshots the diff was taken between, where both exist. */
+  fromVersionId: uuid('from_version_id').references(() => processingActivityVersions.id, { onDelete: 'set null' }),
+  toVersionId: uuid('to_version_id').references(() => processingActivityVersions.id, { onDelete: 'set null' }),
+
+  /** The changed fields, in the shape `diffSnapshots` returns. */
+  changes: jsonb('changes').notNull().default([]),
+
+  /** none | advisory | material — the overall verdict, for the badge on the queue. */
+  materiality: varchar('materiality', { length: 20 }).notNull().default('advisory'),
+  /** Subset of ['reconsent','notice_update','dpia_reassessment']. */
+  consequences: jsonb('consequences').notNull().default([]),
+  /** consequence -> { required, confidence, reasoning, articles } */
+  verdicts: jsonb('verdicts').notNull().default({}),
+
+  /** rules | ai — whether a model was asked, or the deterministic rules settled it. */
+  evaluatedBy: varchar('evaluated_by', { length: 20 }).notNull().default('rules'),
+
+  /** open | acknowledged | actioned | dismissed */
+  status: varchar('status', { length: 20 }).notNull().default('open'),
+  reviewedBy: uuid('reviewed_by').references(() => users.id),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  reviewNote: text('review_note'),
+
+  detectedAt: timestamp('detected_at', { withTimezone: true }).defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+  return {
+    orgIdx: index('idx_material_change_org').on(table.organizationId),
+    orgStatusIdx: index('idx_material_change_org_status').on(table.organizationId, table.status),
+    activityIdx: index('idx_material_change_activity').on(table.processingActivityId),
+  };
+});
+
+// ---------------------------------------------------------------------------
+// Sprint 4 relations.
+//
+// `with:` in a relational query is not typechecked — Drizzle widens the key type
+// for a table with no relations() block and the dialect throws while *building*
+// the query, so the caller fails on every invocation. check:relations resolves
+// every key against this file; each `many()` below carries its `one()` back.
+// ---------------------------------------------------------------------------
+
+export const retentionSchedulesRelations = relations(retentionSchedules, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [retentionSchedules.organizationId],
+    references: [organizations.id],
+  }),
+  owner: one(users, {
+    fields: [retentionSchedules.ownerId],
+    references: [users.id],
+  }),
+  activities: many(processingActivities),
+  disposals: many(retentionDisposals),
+}));
+
+export const legalHoldsRelations = relations(legalHolds, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [legalHolds.organizationId],
+    references: [organizations.id],
+  }),
+  owner: one(users, {
+    fields: [legalHolds.ownerId],
+    references: [users.id],
+  }),
+  activities: many(legalHoldActivities),
+  disposals: many(retentionDisposals),
+}));
+
+export const legalHoldActivitiesRelations = relations(legalHoldActivities, ({ one }) => ({
+  hold: one(legalHolds, {
+    fields: [legalHoldActivities.legalHoldId],
+    references: [legalHolds.id],
+  }),
+  activity: one(processingActivities, {
+    fields: [legalHoldActivities.processingActivityId],
+    references: [processingActivities.id],
+  }),
+}));
+
+export const retentionDisposalsRelations = relations(retentionDisposals, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [retentionDisposals.organizationId],
+    references: [organizations.id],
+  }),
+  activity: one(processingActivities, {
+    fields: [retentionDisposals.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  schedule: one(retentionSchedules, {
+    fields: [retentionDisposals.retentionScheduleId],
+    references: [retentionSchedules.id],
+  }),
+  dataCategory: one(processingDataCategories, {
+    fields: [retentionDisposals.dataCategoryId],
+    references: [processingDataCategories.id],
+  }),
+  hold: one(legalHolds, {
+    fields: [retentionDisposals.legalHoldId],
+    references: [legalHolds.id],
+  }),
+  performer: one(users, {
+    fields: [retentionDisposals.performedBy],
+    references: [users.id],
+  }),
+}));
+
+export const ropaIntakeRequestsRelations = relations(ropaIntakeRequests, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [ropaIntakeRequests.organizationId],
+    references: [organizations.id],
+  }),
+  activity: one(processingActivities, {
+    fields: [ropaIntakeRequests.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  creator: one(users, {
+    fields: [ropaIntakeRequests.createdBy],
+    references: [users.id],
+  }),
+  drafts: many(ropaActivityDrafts),
+}));
+
+export const ropaDiscoverySignalsRelations = relations(ropaDiscoverySignals, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [ropaDiscoverySignals.organizationId],
+    references: [organizations.id],
+  }),
+  acceptedActivity: one(processingActivities, {
+    fields: [ropaDiscoverySignals.acceptedActivityId],
+    references: [processingActivities.id],
+  }),
+  domain: one(consentDomains, {
+    fields: [ropaDiscoverySignals.consentDomainId],
+    references: [consentDomains.id],
+  }),
+  integration: one(organizationIntegrations, {
+    fields: [ropaDiscoverySignals.integrationId],
+    references: [organizationIntegrations.id],
+  }),
+  drafts: many(ropaActivityDrafts),
+}));
+
+export const ropaActivityDraftsRelations = relations(ropaActivityDrafts, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [ropaActivityDrafts.organizationId],
+    references: [organizations.id],
+  }),
+  activity: one(processingActivities, {
+    fields: [ropaActivityDrafts.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  signal: one(ropaDiscoverySignals, {
+    fields: [ropaActivityDrafts.discoverySignalId],
+    references: [ropaDiscoverySignals.id],
+  }),
+  intakeRequest: one(ropaIntakeRequests, {
+    fields: [ropaActivityDrafts.intakeRequestId],
+    references: [ropaIntakeRequests.id],
+  }),
+  author: one(users, {
+    fields: [ropaActivityDrafts.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const ropaCompletenessSnapshotsRelations = relations(ropaCompletenessSnapshots, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [ropaCompletenessSnapshots.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const materialChangeEventsRelations = relations(materialChangeEvents, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [materialChangeEvents.organizationId],
+    references: [organizations.id],
+  }),
+  activity: one(processingActivities, {
+    fields: [materialChangeEvents.processingActivityId],
+    references: [processingActivities.id],
+  }),
+  fromVersion: one(processingActivityVersions, {
+    fields: [materialChangeEvents.fromVersionId],
+    references: [processingActivityVersions.id],
+  }),
+  toVersion: one(processingActivityVersions, {
+    fields: [materialChangeEvents.toVersionId],
+    references: [processingActivityVersions.id],
+  }),
+  reviewer: one(users, {
+    fields: [materialChangeEvents.reviewedBy],
+    references: [users.id],
+  }),
+}));

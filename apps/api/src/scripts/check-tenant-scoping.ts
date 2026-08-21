@@ -229,6 +229,25 @@ const ALLOWED_WRITES: Record<string, Exception> = {
   'vendors.ts::submitQuestionnaireAnswers::vendorQuestionnaires': {
     reason: 'Vendor-facing questionnaire return path. The recipient has no Custodia account; the unguessable token is the access control.',
   },
+  // C32/C33. The four below are the delegated-intake return path, and they are the
+  // same shape and the same rationale as the vendor questionnaire above: the
+  // respondent is a department head with no Custodia account who is never going to
+  // get one, so the unguessable token *is* the access control. Each write is keyed
+  // on that token alone, which resolves to exactly one row in one organisation —
+  // adding an org predicate would mean the caller naming the org, which is the
+  // hole `integrations.listConnections` had.
+  'ropaIntake.ts::open::ropaIntakeRequests': {
+    reason: 'Token-authenticated intake questionnaire; marks the request opened. No account exists to scope to.',
+  },
+  'ropaIntake.ts::saveProgress::ropaIntakeRequests': {
+    reason: 'Token-authenticated intake questionnaire; saves a partial response. No account exists to scope to.',
+  },
+  'ropaIntake.ts::submit::ropaIntakeRequests': {
+    reason: 'Token-authenticated intake questionnaire; records the submitted answers. Nothing here reaches the register — a reviewer merges field by field.',
+  },
+  'ropaIntake.ts::decline::ropaIntakeRequests': {
+    reason: 'Token-authenticated intake questionnaire; records that the recipient declined.',
+  },
 };
 
 type WriteFinding = { file: string; line: number; table: string; op: string; values: string[]; key: string };

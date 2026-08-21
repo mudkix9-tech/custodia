@@ -40,6 +40,17 @@ const TARGETS = [
   // year of hardcoded English gets in.
   'components/dpia',
   'app/[locale]/(app)/dpia',
+  // C32/C33. The delegated-intake questionnaire sits outside the (app) group
+  // because its reader has no account, but its chrome is register copy and comes
+  // out of the same catalogue. A new surface outside this guard is how the next
+  // year of hardcoded English gets in.
+  //
+  // The *questions* it renders are English whatever the reader's locale, and that
+  // is deliberate rather than an omission: they are served by the API and frozen
+  // onto the request when it was sent, so the merge screen can show a reviewer
+  // what was actually put to the respondent. Same call J93 made about the negative
+  // assertions — translating the set belongs with translating the record.
+  'app/[locale]/intake',
   'utils/ropaVocabularies.ts',
   'utils/ropaFormat.ts',
 ];

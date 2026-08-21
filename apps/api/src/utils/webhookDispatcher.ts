@@ -5,7 +5,17 @@ import { eq, and, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 
 
-export const webhookQueue = createQueue('webhooks');
+/**
+ * O120. The queue name is `webhook-deliveries` because that is the name the worker
+ * passes to `createWorker`, and pg-boss routes by queue name.
+ *
+ * It used to be `webhooks`. Nothing consumed that queue, so every delivery row this
+ * function wrote sat at `status: 'pending'` for ever and no webhook this product has
+ * ever offered was actually delivered — including the test button, which reported
+ * success because enqueueing succeeded. `tsc` cannot see a string mismatch between
+ * two files, and there is no integration test that would have.
+ */
+export const webhookQueue = createQueue('webhook-deliveries');
 
 export async function dispatchWebhook(organizationId: string, eventType: string, payload: any, specificWebhookId?: string) {
   // 1. Find active webhooks for this org that subscribe to this event

@@ -39,15 +39,244 @@ negative assertions, rendered as PDF, XLSX, CSV, an EDPB-shaped JSON and four re
 template packs from a single server-side dataset; a filterable, paginated audit trail
 that finally shows child-row changes and can be exported; the LIA, the DPIA screening,
 a DPIA module with its own route, and a per-transfer TIA. See §0.4. Migration
-`0048_steep_blue_shield` is generated and **not yet applied**.
+`0048_steep_blue_shield` is applied.
+
+**Sprint 4 was built on 21 August 2026.** The register is now populated by something
+other than typing: delegated intake questionnaires answered over a token by the people
+who actually know, discovery from the vendor register, the tracker scan and connected
+SaaS, AI drafting with a decision per field, retention schedules with triggers and
+disposal evidence, legal holds, the three data maps, a public REST API and webhooks
+that fire, a real ROPA score with a daily trend, fourteen register gap rules, and
+generalised material-change evaluation with three separable consequences. See §0.5.
+Migration `0049_striped_mephistopheles` is applied, and so is `0048` — see §0.5 for
+what was checked afterwards, and for the four foreign-key names Postgres truncated.
 
 **The document is otherwise unrevised.** Part II's findings are left exactly as written,
 each with a **FIXED** marker, its commit, and a one-line note on what the fix was, so the
 audit and the remediation can be read against each other. Part I still describes the
 module **as audited** — most of the behaviours it documents no longer exist — and
-Parts III to VI still stand as the record of what was found, with §0.2, §0.3 and §0.4
+Parts III to VI still stand as the record of what was found, with §0.2 to §0.5
 stating which Part IV items are now closed. The Article 30 verdict in Part III is
-superseded for the items Sprints 1 to 3 built and unchanged for everything else.
+superseded for the items Sprints 1 to 4 built and unchanged for everything else.
+
+---
+
+## 0.5 Build status — Sprint 4
+
+Built 21 August 2026. `npm run check` passes at 0 type errors in both workspaces with
+every guard green, plus two new fixture suites (149 assertions).
+
+### Schema
+
+`packages/db/drizzle/0049_striped_mephistopheles.sql` — nine `CREATE TABLE`, four
+`ADD COLUMN`, twenty-two indexes, six unique constraints and thirty-nine foreign
+keys. **No drops, no type changes, no `SET NOT NULL`, no `DROP NOT NULL`.** It is
+purely additive, which is what made it possible to ship a retention model beside
+the free-text columns rather than in place of them.
+
+**Applied to the live database on 21 August 2026 at 12:07 UTC**, and then checked
+object by object rather than taken on trust: all nine tables present, all four added
+columns present, thirty-nine foreign keys, twenty-two indexes, six unique
+constraints. `0048` is applied too — §0.4 recorded it as awaiting `npm run migrate`
+and that was **wrong**; the migration table has it applied on 19 August, two days
+before §0.4 was written. Nothing in Sprints 3 or 4 is inert any longer.
+
+**Postgres truncated four of the new foreign-key names to 63 characters** and said
+so, at NOTICE level, during the run:
+`ropa_intake_requests_processing_activity_id_processing_activiti`,
+`ropa_intake_requests_created_activity_id_processing_activities_`,
+`ropa_discovery_signals_accepted_activity_id_processing_activiti`,
+`ropa_discovery_signals_integration_id_organization_integrations`.
+Harmless here — checked, and no two constraint names in the schema collide — but the
+names in the database now differ from the names in `0049`, so a future
+`DROP CONSTRAINT` written from the migration file would not find its target. The
+underlying cause is that drizzle-kit composes an FK name from
+`<table>_<column>_<reftable>_<refcolumn>_fk`, and both of these tables have long
+names pointing at `processing_activities`.
+
+| Item | What was added |
+|---|---|
+| **E47** | `retention_schedules` — period value and unit, trigger, trigger detail, statutory citation, jurisdiction, justification, disposal method, owner, review cadence, status |
+| **E48** | `processing_activities.retention_schedule_id` and `retention_anchor_at`; `processing_data_categories.retention_schedule_id` |
+| **E51** | `retention_disposals` — due key, due date, status, method, record count, systems, evidence, performer, deferral |
+| **E52** | `legal_holds` and `legal_hold_activities` |
+| **C32/C33** | `ropa_intake_requests` — token, recipient, frozen question set, answers, status, due and expiry, reminder counter, merge provenance |
+| **C34–C36** | `ropa_discovery_signals` — source, source key, confidence, the suggested draft as fields, evidence, accept/dismiss trail, `UNIQUE (org, source, source_key)` |
+| **C37** | `ropa_activity_drafts` — prompt, model, proposal and decisions as jsonb, apply trail |
+| **P123** | `ropa_completeness_snapshots` — one row per org per day, with `by_requirement` |
+| **P125** | `material_change_events`; `reconsent_flags.material_change_event_id` |
+
+### Eight decisions worth stating
+
+1. **The retention schedule and the free-text period both stay, and the schedule
+   wins.** `retentionAnswer()` resolves Art. 30(1)(f) from whichever the register
+   actually holds and reports *which* in `source`. A migration that required every
+   period to be re-entered as a schedule before the Retention tab would open is a
+   migration nobody completes; a register that silently preferred one without
+   saying so is D19 in a different tab. Attaching a schedule is an upgrade.
+
+2. **`computeDisposalDate` returns a reason, not a nullable date.** `no_period`
+   and `no_anchor` are different findings and they send someone to fix different
+   things — the first is "nobody decided how long", the second is "the clock has
+   not started", and the second is the *ordinary* state of a correctly configured
+   employment schedule until an employment ends. Only `collection` starts its own
+   clock from the activity's creation date; every other trigger waits for
+   `retention_anchor_at`, because the event lives in a business system Custodia
+   does not watch. The due report counts all three separately, and "no disposal
+   date" is usually the more actionable number.
+
+3. **Nothing in the retention module deletes anything.** The nightly scan writes a
+   `due` row and stops. A product that executed its customers' retention policy
+   would be destroying evidence on a schedule, on the strength of a period somebody
+   typed into a form — and the one time it got a trigger date wrong there would be
+   nothing to recover. The disposal log is a work queue; the work happens in the
+   system that holds the data, and what is recorded here is the method, the count,
+   the systems and the evidence, which is the part an auditor asks for.
+
+4. **A material change has three consequences and they do not travel together.**
+   This is the whole of P125 and it is why "extend the re-consent worker" was the
+   wrong shape. Adding a data category to a consent-based activity needs fresh
+   consent. The same change on a contract-based one needs the privacy notice
+   updated under Art. 13(3) and no consent whatever — and a product that told the
+   controller to ask for permission it does not rely on is a product whose advice
+   gets switched off. Widening the subject population to children needs the DPIA
+   looked at again under Art. 35(11) and possibly neither of the other two.
+   `evaluateMaterialChange` returns a verdict per consequence, with the Articles.
+
+5. **The rules decide; the model is asked one question and may only raise.**
+   Whether a recipient was added is a fact about two rows, not a judgement — sending
+   it to a model costs money, adds latency and adds a way for the answer to be
+   wrong. The one thing that *is* a judgement is whether a rewritten purpose
+   describes different processing, and that is the only call `materialChange.ts`
+   makes. `applyNarrativeVerdict` can upgrade a verdict the rules already found
+   possible and cannot clear one they found decisive: a model that could downgrade
+   "a new third-country transfer was added" to immaterial would have a veto over
+   Chapter V. `workers/reconsent.ts` is untouched and still runs.
+
+6. **Delegated intake proposes; it never writes.** What comes back from a
+   questionnaire sits in `answers` until a reviewer accepts it field by field. A
+   department head who can edit the Article 30 record directly is not delegated
+   intake — it is an unreviewed register with more authors. The mapping is also
+   deliberately unclever in two places: "I am not sure" produces **no candidate**
+   rather than a confident `false`, and a "yes, data leaves the EEA" is recorded as
+   a prompt with a note saying it cannot be accepted as a transfer record, because
+   a business owner genuinely does not know where their SaaS vendor hosts data.
+
+7. **The AI draft reports what it rejected.** `validateProposal` drops any value the
+   register's own vocabularies cannot hold — a lawful basis of "legitimate business
+   need", a destination country written as "United States" — and returns the
+   rejections, which the panel shows. A field silently discarded is one the reviewer
+   believes was considered and found not to apply, which is precisely the
+   distinction F56 spent a sprint making about unanswered screening criteria. The
+   plural `legitimate_interests` is normalised rather than rejected: the value is
+   right and the spelling is not.
+
+8. **The REST API is read-and-append.** `GET` the register, `GET` one record with
+   its four child collections, `GET` the canonical Article 30 export, `POST` a
+   draft. No `PATCH`, no `DELETE`. An Article 30 record carries an optimistic lock,
+   a publication gate, a completeness recompute, a version snapshot, an approval
+   state and a subject-category mirror; a REST write that bypassed any one of them
+   would leave the register in a state the editor cannot represent. Writes that
+   matter go through tRPC, where all six run.
+
+### Closed by Sprint 4
+
+`C32` · `C33` · `C34` · `C35` · `C36` · `C37` · `D41` · `D42` · `D43` · `E47` ·
+`E48` · `E49` · `E50` · `E51` · `E52` · `O119` · `O120` · `P123` · `P124` · `P125`,
+and `D44` and `D45`-adjacent reverse lookups as a side-effect: the org-level data
+map answers "which activities process health data", "which send data to the US" and
+"which involve this vendor" from the same facets, which is D44 in full.
+
+`D19` (the blind ROPA compliance pillar), `D20` (`retentionReviewDate` write-only),
+`D38`'s retention half (`6_months` printed raw) and `D40` (no public API) are closed
+too, as consequences rather than as items.
+
+### Three bugs found while building, in code Sprint 4 did not otherwise touch
+
+**No webhook this product has ever offered was delivered.**
+`utils/webhookDispatcher.ts` enqueued on a queue named `webhooks`;
+`workers/webhooks.ts` consumes one named `webhook-deliveries`. pg-boss routes by
+queue name, so every delivery row ever written sat at `status: 'pending'` for
+ever — including the one the Test button creates, which reported success because
+*enqueueing* succeeded. `tsc` cannot see a string mismatch between two files and
+there is no integration test that would. D39 recorded that the three ROPA events
+were never *emitted*; this is the layer under it, and it was worse.
+
+**Two procedures in `webhooks.ts` used `require` in an ESM module.**
+`webhooks.test` and `webhooks.redeliver` both call `require('../utils/webhookDispatcher')`.
+The package is `"type": "module"`, so that is a `ReferenceError` at runtime — and it
+typechecks, because `@types/node` declares `require` globally. Neither has ever run.
+Both are static imports now, and `test` gained the ownership check it was missing.
+
+**`X-Custodia-Timestamp` was the string "undefined" on every delivery.** The worker
+read `delivery.payload.timestamp`; the envelope `dispatchWebhook` builds carries
+`created`. Subscribers are told to use that header for replay protection.
+
+### Two guards and two fixture suites
+
+- **`npm run test:retention --workspace=apps/api`** — 71 assertions over
+  `lib/retention.ts` and `lib/ropaDataMap.ts`. A disposal date that is out by a month
+  reads exactly like one that is right, and the whole product between the arithmetic
+  and the customer is a table of dates. The load-bearing cases: 31 January plus one
+  month is 28 February and not 3 March; `pending_assessment` counts as *no* Chapter V
+  mechanism on the transfer map; a hold whose expiry has passed is not in force even
+  though nobody released it; and "reviewed annually" is never parsed into a
+  one-year disposal date.
+- **`npm run test:ropa-intelligence --workspace=apps/api`** — 78 assertions over
+  `lib/materialChange.ts`, `lib/registerOutputs.ts`, `lib/ropaDrafting.ts` and
+  `lib/ropaIntake.ts`. Every one of those four produces something that *looks like an
+  answer* when it is wrong. The cases worth naming: the same change produces
+  re-consent on a consent activity and only a notice update on a contract one; a
+  model saying "not material" cannot clear a transfer the rules found decisive; a
+  transfer with no mechanism is left out of the notice and reported as a gap rather
+  than described; and "I am not sure" produces no merge candidate.
+- `check:ropa-i18n` now covers `app/[locale]/intake`, the token-authenticated
+  questionnaire. It sits outside the `(app)` group because its reader has no
+  account, and a new surface outside the guard is how the next year of hardcoded
+  English gets in.
+
+### Deliberately not built, so the omissions are not mistaken for oversights
+
+- **The intake questionnaire is English in every locale.** Its chrome is
+  translated; the *questions* are served by the API and frozen onto the request when
+  it was sent. That is the same call J93 made about the negative assertions — they
+  are the content of the request rather than UI copy, and the merge screen has to be
+  able to show a reviewer what was actually put to the respondent. Translating the
+  question set belongs with J101.
+- **`C38`'s industry template packs, `C39`'s competitor import and `C40`'s database
+  scans.** All P2/P3. The 32 agnostic templates still live only in onboarding.
+- **`D45`'s vendor-centric view and `D46`'s field-level lineage.** P2 and P3.
+- **`P126`'s change-driven prompts, `P127`'s AI review, `P128`'s regulatory diffs
+  and `P129`'s ask-the-register.** P1 and P2. `P128` in particular is not a build
+  problem — the impact-assessment jobs exist and are in `DORMANT_JOBS` (D34).
+- **`P130` is built as three server-side builders and one screen, not as four.** The
+  notice sections, the DSAR scope and the blast radius are `ropa.insights.outputs.*`
+  and are reachable through the API and the insights page; wiring them into the DSAR
+  and Breach modules' own screens is where they belong long-term, and that is those
+  modules' work rather than the register's.
+- **A DSAR id on its own cannot narrow the scope, and the endpoint says so.**
+  `dsar_requests` records who the requester *is* — name, email, an identifier blob —
+  and not which category of data subject they fall into, so `outputs.dsarScope`
+  passed a `dsarId` alone returns the whole register with a note explaining why.
+  The alternative was to read a column that does not exist, get `undefined`, and
+  return everything as though it had been narrowed — which is the shape of failure
+  this module has been audited for twice. Adding that column is DSAR module work.
+- **`O121` and `O122`'s integrations** — Zapier, Jira, Sheets, Confluence, SIEM
+  streaming, MCP. P1/P2, and none of them is what "there is no API" meant.
+- **The intake merge does not create child rows for transfers.** A respondent's
+  "yes, I think so" about data leaving the EEA is a prompt for a DPO, not a Chapter V
+  record, and the merge says so rather than writing a transfer with no mechanism.
+
+### One thing found while building, in Sprint 4's own code
+
+**The tenancy guard caught a delete that could not actually leak.**
+`retention.holds.removeActivity` deletes a `legal_hold_activities` row keyed on a
+hold id proved owned two lines earlier and an activity id that only narrows it —
+the same shape as `clients.unlinkActivity`, which is in `ALLOWED_WRITES` with that
+reason. Pass 2 flagged it because the *statement* carried no scope of its own, which
+is exactly the property `tia.save` lacked when it rewrote every tenant's transfer
+rows. It now carries a scoping subquery rather than an allowlist entry: an argument
+about a statement's shape is worth less than the statement proving it.
 
 ---
 
@@ -67,10 +296,20 @@ the narrative columns and the outcome were `NOT NULL`, so a *draft* could not be
 A balancing test is written over a week, and a form that refuses to keep half an answer
 is a form people finish in Word instead.
 
-**Not yet applied to production.** Everything below is written against the schema; the
-migration is generated, committed, and reviewed, and `npm run migrate --workspace=packages/db`
-is the remaining step. `check:schema` fails until it is committed, which is what that
-guard is for.
+**Generated and committed; not yet applied to production.** `check:schema` is green, so
+`schema.ts` and `drizzle/` agree — the outstanding step is
+`npm run migrate --workspace=packages/db` against the live database. Everything below is
+written against the schema and is inert until that runs. Unlike 0046 and 0047, which §0.2
+and §0.3 record as applied and verified, **0048 has not been run and nothing here has been
+verified against live data.**
+
+*Corrected 21 August 2026, after Sprint 4 ran the migration. **This paragraph was wrong.**
+`drizzle.__drizzle_migrations` has 0048 applied on 19 August — before §0.4 was written,
+not after. The likeliest explanation is that a `npm run migrate` run alongside Sprint 2's
+held-back items carried it, and this section was written from the intent rather than from
+the database. It is left in place rather than rewritten, because the useful record is that
+the status of a migration was asserted here without being checked, and the check is one
+query. Everything in this section is applied and verified — see §0.5.*
 
 | Item | What was added |
 |---|---|
@@ -133,6 +372,15 @@ guard is for.
    *Muss-Liste* entry ticked by an Irish controller is not a statutory trigger for them.
    Merging the six lists would have told most customers a DPIA was mandatory when it was
    not, which is the direction of error that gets a control ignored.
+
+7. **The PDF states its own limit instead of truncating quietly.** The route that renders
+   it has a sixty-second ceiling (`maxDuration`), and a per-activity detail page each is
+   the expensive part — a four-hundred-activity register would exceed it and the export
+   would fail outright. So the summary tables cover every record, detail pages are capped
+   at sixty, and the document *prints how many were rendered and where the rest are*. A
+   silently truncated Article 30 record is precisely the failure this template was built
+   to remove; a stated one is a limitation the reader can act on. The workbook has no cap,
+   which is what the note points at.
 
 ### Closed by Sprint 3
 
@@ -612,25 +860,26 @@ paragraph and it is the single largest thing left in the data model.*
 
 Scored as audited, before Sprint 0. Left as scored, because what the numbers say about how
 the module was built is the part that outlives the patch. Sprint 0 moved only the tenancy row —
-the rest were scored on capability and it built none. **Sprints 1 and 2 built capability, so the
-right-hand column below now carries a second figure wherever it moves; the reasoning in each
+the rest were scored on capability and it built none. **Sprints 1, 2 and 3 built capability, so the
+right-hand column below carries a later figure wherever it moves; the reasoning in each
 line is the reasoning as audited, and the italic note says what has changed since.**
 
 | Dimension | Score | One line |
 |---|---|---|
-| Article 30(1) field coverage | **3/10** → **7/10** | (b) and (g) present; (a) absent; (c) unwritable; (d) partial; (e) broken; (f) enum-only. *(c), (d), (e) and (f) now writable and structured; (a) still needs the controller identity block — J93* |
-| Article 30(2) processor record | **2/10** | Role captured, then ignored by both PDFs; the split keys on a column nothing writes |
+| Article 30(1) field coverage | **3/10** → **7/10** → **9/10** | (b) and (g) present; (a) absent; (c) unwritable; (d) partial; (e) broken; (f) enum-only. *(c) to (f) writable and structured after Sprint 1; (a) is now in the record — controller, legal name, address, country, Art. 27 representative and DPO, with "None designated" printed where there is none. What holds it below 10 is A1: one lawful basis per activity, because purposes are still not first-class* |
+| Article 30(2) processor record | **2/10** → **8/10** | Role captured, then ignored by both PDFs; the split keys on a column nothing writes. *The split now keys on declared **role**, consults both links (D16's join table first), and each section carries that client's own legal entity, address, representative, DPO and 30(2)(b) categories. A processor record with no controller recorded prints "Controller not recorded" rather than being hidden. Multiple controllers per activity is still one-to-one — N115* |
 | Data model fidelity | **2/10** → **5/10** | One flat row per activity; no per-category retention, no purpose/basis pairs, no lineage. *Per-category retention, subject and element catalogues and structured transfers exist; purposes are still not first-class — A1* |
+| Retention management | **1/10** → **8/10** | A six-option dropdown writing the word `custom`, a `retentionReviewDate` nothing read, and no trigger, disposal or hold model at all. *Schedules are org-level objects with a period, a trigger, a citation, a jurisdiction, an owner and a review cadence; disposal dates are computed, and the report distinguishes "no period recorded" from "the clock has not started"; the disposal log holds method, count, systems and evidence; legal holds suspend it and are evaluated rather than trusted. Nothing deletes anything — see §0.5. Below 10 because retention conflict detection (E53) and the statutory library per jurisdiction (E54) are unbuilt* |
 | Special categories (Art. 9 / 10) | **2/10** → **8/10** | A boolean. No Art. 9(2)(a)–(j) condition; no Art. 10 concept at all. *Both now recorded per data category, with the national-law citation the four conditions that need it demand* |
-| Chapter V transfers (44–49) | **1/10** → **7/10** | Tab non-functional; adequacy list wrong where it works; no DPF, no SCC metadata, no chaining. *Mechanism-specific evidence, DPF, computed adequacy and the repealed-2010-clauses warning are in; onward-transfer chaining is not — H79* |
+| Chapter V transfers (44–49) | **1/10** → **7/10** → **8/10** | Tab non-functional; adequacy list wrong where it works; no DPF, no SCC metadata, no chaining. *Mechanism-specific evidence, DPF, computed adequacy and the repealed-2010-clauses warning arrived in Sprint 1; Sprint 3 adds the per-transfer TIA with the EDPB six steps, a supplementary-measures catalogue that knows which measures work alone, a suspension decision that propagates, and safeguard evidence rendered into the export. Onward-transfer chaining is still not there — H79* |
 | Register operations (lifecycle, review, ownership) | **1/10** → **9/10** | No owner, no approval, no review cycle, no delete UI, no versioning. *All of it exists: owners, publication gate, review cycle with attestation, an approval workflow an organisation can make mandatory, versions that restore as well as diff, archive, duplicate and dependency-aware delete. The change-proposal model for approved records (M113) is the remaining shape* |
-| Assessments (LIA / DPIA / TIA) | **2/10** | LIA table exists with zero procedures; DPIA has no route; TIA is per-vendor, not per-transfer |
-| Evidence and audit trail | **1/10** → **5/10** | History reads `newValue`/`details`; the columns are `changes`/`metadata`. Always empty. *Diff and child-row logging fixed; the publication exception, every approval decision and every attestation are now dated and attributed, and versions are snapshotted and diffable. The audit trail itself is still unfiltered, unpaged and unexportable — I85–I90* |
-| Exports and regulator readiness | **3/10** | Two divergent PDFs, neither an Article 30 record; CSV exports only loaded pages |
+| Assessments (LIA / DPIA / TIA) | **2/10** → **8/10** | LIA table exists with zero procedures; DPIA has no route; TIA is per-vendor, not per-transfer. *All three built: the LIA's three-part test with a publication gate that reads it, an Art. 35(1) screening whose rationale is mandatory either way, a DPIA module at `/dpia` with the 35(7) structure, five templates, a 1–4 matrix, DPO advice, 35(9) consultation and hashed sign-off, and a TIA per transfer that refuses to complete when it contradicts itself. Missing: the Art. 6(4) compatibility assessment (F59) and the cross-assessment library with due dates and reminders (F61)* |
+| Evidence and audit trail | **1/10** → **5/10** → **8/10** | History reads `newValue`/`details`; the columns are `changes`/`metadata`. Always empty. *Sprint 0 fixed the diff and the child-row logging; Sprint 2 dated and attributed every lifecycle act. Sprint 3 makes the trail readable: field labels rather than column names, values rendered as values, child-row edits filed against the record they belong to, filters by actor, field, type and date, keyset pagination, a CSV export, and a sha256 over every version so "unaltered since approval" can be checked rather than asserted. "Show me the register as at a date" (I91) and the hash-chained log (I92) are not there* |
+| Exports and regulator readiness | **3/10** → **9/10** | Two divergent PDFs, neither an Article 30 record; CSV exports only loaded pages. *One canonical record now, built server-side and rendered five ways — PDF, XLSX with a sheet per object, CSV, an EDPB-shaped JSON, and CNIL/ICO/DSK/AEPD packs headed in the authority's own language. Every field the register holds reaches it, every export carries the negative assertions, and a filtered export says so on its cover. What holds it below 10 is J101: the document itself is English in every locale* |
 | Search, filter, views | **1/10** → **8/10** | Client-side search over the loaded 25 rows. No filters at all. *Server-side search across the register and its children, seventeen filters, five sorts and saved views, shareable. The column chooser and grouping (K105) and audit mode (K106) are not there* |
 | Bulk operations | **0/10** → **7/10** | Two buttons with no handlers, behind a selection UI that cannot select. *Selection works, including select-all-matching-filter rather than the loaded page, and carries owner, status, review date, tags, archive, delete and a server-side export. No undo, and no bulk publish — the Article 30 gate is a per-record judgement* |
-| Population and discovery | **4/10** | 32 seeded templates and a genuinely good CSV importer; nothing else |
-| Cross-module automation | **3/10** | Re-consent detection and embeddings work; seven ROPA-adjacent jobs are dormant |
+| Population and discovery | **4/10** → **8/10** | 32 seeded templates and a genuinely good CSV importer; nothing else. *Sprint 4 adds delegated intake over a token, discovery from the vendor register, the tracker scan and connected SaaS on one upsert-and-resolve queue, and AI drafting where every field arrives with its reasoning and is accepted separately. What holds it below 10 is C38–C40: industry template packs still live only in onboarding, there is no importer for a competitor export, and nothing scans a database schema* |
+| Cross-module automation | **3/10** → **7/10** | Re-consent detection and embeddings work; seven ROPA-adjacent jobs are dormant. *Material-change evaluation is generalised to every field that can be material and routes to three separable consequences; the register now produces the Art. 13/14 notice sections, a DSAR search scope and a breach blast radius; and webhooks fire — the reason they never had is in §0.5. What holds it below 10 is that the three outputs are served but not yet read by the DSAR and Breach modules on their own screens, and that P126–P129 are unbuilt* |
 | Tenancy and data integrity | **4/10** → **8/10** | Ownership checks are excellent; one cross-tenant write; mass assignment on three mutations. *All fixed, and the guard extended to the class it could not see* |
 | i18n | **4/10** → **9/10** | List and four tabs translated; five tabs hardcoded English. *All of it is extracted, including the ~110 enum labels and hints in `utils/ropaVocabularies.ts` that made every picker read in English regardless of locale, and `check:ropa-i18n` fails on a regression. The 34 shared route error boundaries are still English, app-wide* |
 | Visual design and responsiveness | **8/10** | Genuinely good. Fast, clean, coherent — and the reason the defects are a surprise |
@@ -858,15 +1107,25 @@ The two Article 30 PDFs disagree about what an Article 30 record is, and the bet
 different module. Neither is filterable, versioned, hash-stamped or archived as a point-in-time
 snapshot.
 
+*Superseded by Sprint 3 (J93–J99). Every row of that table is gone. `ropaRecord.tsx` is
+deleted, and there is one Article 30 record — built server-side by `lib/ropaArticle30.ts`
+and rendered as PDF, XLSX, CSV, an EDPB-shaped JSON and four regulator template packs,
+all from the same dataset, all filterable through the register's own filter schema, and
+all carrying the negative assertions that make an empty column mean something. Versions
+are hash-stamped (I90). The audit ZIP now appends the same document rather than a second
+opinion about it. What the table's last sentence still names correctly is the archive: a
+point-in-time export is a version snapshot, not an export artefact, and I91's "show me the
+register as at <date>" is not built.*
+
 ## 1.8 Cross-module wiring — intended versus actual
 
 | Intended link | Actual state |
 |---|---|
 | Vendors → Recipients | Works. Live DPA status, risk score, location |
 | Vendors → auto-transfer creation | Works, against a wrong adequacy list (D17) |
-| Vendor TIA → transfer TIA status | **Cross-tenant write** (D3) |
-| Activity → DPIA | One-way link; the DPIA has no route of its own |
-| Activity → LIA | A button with no handler; zero procedures |
+| Vendor TIA → transfer TIA status | **Cross-tenant write** (D3) *— scoped in Sprint 0; superseded in Sprint 3 by a TIA that hangs off the transfer, so no vendor-keyed write remains* |
+| Activity → DPIA | One-way link; the DPIA has no route of its own *— `/dpia` exists (F57), and a screening opens one with its risks pre-populated* |
+| Activity → LIA | A button with no handler; zero procedures *— built (F55); `lia_id` is written, and the completeness scorer reads the assessment* |
 | Activity → privacy policy | `policy-ropa-sync` exists, is dormant, and feeds the model only name/purpose/basis |
 | Activity → DSAR fulfilment | No link. A DSAR cannot be scoped by the register |
 | Activity → breach assessment | No link. A breach cannot inherit categories or subjects |
@@ -1251,6 +1510,14 @@ due-diligence report.
 Four of seven sub-paragraphs are absent or unrecordable. The Irish DPC, the CNIL and the Bavarian
 DPA all publish ROPA templates whose column sets exceed what this module can store.
 
+*Superseded. Sprint 1 made (c) to (g) recordable and structured; Sprint 3 added (a) and put
+all seven into one document. The verdict now: **the register can answer an Article 30(4)
+request, and the CNIL, ICO, DSK and AEPD templates are produced directly from it.** Three
+gaps in this table survive and are not Sprint 3 work — the joint-controller counterparty
+(no name, contact or Art. 26 allocation, G66), one lawful basis per activity because
+purposes are not first-class (A1), and Art. 32(1)(a)–(d) mapping with evidence behind the
+security checkboxes (A13). The first is the one an auditor would raise first.*
+
 ## Article 30(2) — the processor's record
 
 | Requirement | State |
@@ -1265,11 +1532,25 @@ The processor record is also structurally unreachable: the audit PDF's Art. 30(2
 `/for-agencies` page — cannot produce the record Article 30(2) requires of it. Both PDF templates
 also ignore `role` entirely, so a processor's record is printed as a controller's.
 
+*Superseded by N114. The split now keys on declared **role** rather than on the presence of
+a client link, which is a correction as well as a fix: an agency doing its own marketing to
+a client's contacts is a controller record, and filing it under 30(2) would assert a
+processor relationship the organisation has not claimed. Both links are consulted, the join
+table the UI actually writes taking precedence over `clientId`. (a) is answered per client —
+legal entity, address, contact, Art. 27 representative and that client's own DPO, which the
+old templates got wrong by printing the agency's; (b) has its own field on the client
+relationship, where it belongs, because it describes the relationship rather than one
+activity. Still one controller per activity (N115), and the client-branded handover PDF is
+N116.*
+
 ## Article 30(3)–(5)
 
 - **(3)** written, including electronic, form — satisfied.
 - **(4)** available to the supervisory authority on request — two divergent PDFs, one incomplete and
-  one unreachable from the module; no snapshot, no integrity stamp, no export log.
+  one unreachable from the module; no snapshot, no integrity stamp, no export log. *Sprint 3:
+  one document, reachable from the register, in five formats plus four regulator packs;
+  versions are snapshotted and hash-stamped. **No export log** — who exported what, when and
+  for whom is I92 and is not built, so the third clause of this line still stands.*
 - **(5)** the sub-250-employee derogation — nowhere assessed or asserted. Nothing records that
   processing is "not occasional", involves special categories, or is likely to result in risk, which
   is exactly the assessment that decides whether the register is mandatory at all.
@@ -1370,6 +1651,19 @@ prior consultation (submission, authority, date, reference, response, conditions
 question with no answer box anywhere in the product. **Recording a documented "no DPIA required"
 decision is itself an accountability artefact, and is currently impossible.**
 
+*Superseded by F56 and F57, and this paragraph is the one Sprint 3 answers most directly.
+All nine WP248 criteria are asked, alongside the three Art. 35(3) cases the Article settles
+by itself and the national Art. 35(4) lists — applied **by jurisdiction**, because a German
+Muss-Liste entry is not a statutory trigger for an Irish controller and merging them would
+tell most customers a DPIA was mandatory when it was not. The last sentence is the item
+that mattered: the rationale is now mandatory for every decision, "not required" included,
+and re-screening supersedes rather than overwrites, so the March answer survives the June
+one. 35(7)(a)–(d), 35(2), 35(9) and sign-off are the DPIA module's own structure, and 35(2)
+and 35(9) both refuse silence — departing from the DPO's advice needs a reason, and so does
+not seeking the views of data subjects. Art. 36 is columns and a payload rather than a
+workflow (F60), and **Art. 35(11) re-assessment on material change is not built** — it
+depends on P125 and is Sprint 4.*
+
 ## Articles 44–49 — transfers
 
 The chapter is non-functional (D6–D8) and, where it functions, wrong (D17). Beyond the defects:
@@ -1392,7 +1686,18 @@ The chapter is non-functional (D6–D8) and, where it functions, wrong (D17). Be
 - **Schrems II supplementary measures** — a text field bound to a non-column, against an EDPB
   Recommendations 01/2020 expectation of documented, *effective*, itemised measures.
 - **Per-transfer TIA, re-assessment cadence, transfer suspension workflow, Art. 48 foreign-court
-  orders, UK IDTA/Addendum and Swiss FADP equivalence** — all absent.
+  orders, UK IDTA/Addendum and Swiss FADP equivalence** — all absent. *Sprint 3 closes the
+  first three (F58): a TIA per transfer with the EDPB six-step structure, a re-evaluation
+  **interval** rather than a single date — an interval survives the review being done — and a
+  suspension that has to be justified and propagates onto the transfer row it stops. Art. 48,
+  the UK IDTA and Swiss equivalence remain absent.*
+
+*The Schrems II line above is also superseded. Supplementary measures come from the
+Recommendations 01/2020 catalogue rather than a text field, grouped as the EDPB groups them,
+and the assessment refuses to complete when it concludes the destination is not essentially
+equivalent and then selects only contractual and organisational measures — § 48 is explicit
+that those cannot bind a public authority whose law permits the access. That assessment reads
+as complete on screen, which is why the check is in the API rather than the browser.*
 
 ## Beyond GDPR
 
@@ -1844,7 +2149,7 @@ agencies (N114).
 All fifteen are built, and `J96`, `J98`, `J99` and `F60` fell out of them. The three
 divergent Article 30 documents are one, built server-side from `lib/ropaArticle30.ts`
 and rendered five ways; `ropaRecord.tsx` is deleted. Migration `0048_steep_blue_shield`
-is generated and awaiting `npm run migrate`. See §0.4 for the six decisions that
+is applied — see §0.4's correction, which records that this line was wrong too. See §0.4 for the six decisions that
 departed from this list, what was deliberately left, and the two defects found while
 building.
 
@@ -1853,13 +2158,28 @@ the ROPA webhooks the product already advertises (D39) — is the one owed rathe
 next: the events are documented, the subscriptions can be created, and nothing dispatches
 them.
 
-## Sprint 4 — make it indispensable
+## Sprint 4 — make it indispensable — **DONE, 21 August 2026**
 
 Delegated intake and data-collection requests (C32, C33) · discovery from vendors, trackers and SaaS
 (C34–C36) · AI activity drafting with field-level accept (C37) · retention schedules with triggers
 and disposal evidence (E47–E52) · data-flow and transfer maps (D41–D43) · REST API and live webhooks
 (O119, O120) · real gap rules and a real ROPA score (P123, P124) · generalised material-change
 evaluation (P125) · register-driven notice, DSAR scope and breach blast radius (P130).
+
+All twenty are built. `D44`'s three reverse lookups fell out of the org-level data map,
+and `D19`, `D20`, `D40` and `D38`'s retention half closed as consequences. `O120` turned
+out to be owed twice over: the events were never emitted *and* the delivery queue name
+did not match the worker's, so no webhook this product has ever offered had actually
+been delivered — see §0.5 for that and the two other pre-existing bugs found beside it.
+
+**The next thing to build is the module-to-module wiring, and it is no longer a
+register problem.** `P130`'s three builders exist and are served by
+`ropa.insights.outputs.*`; what is missing is the DSAR module reading its own scope and
+the Breach module reading its own blast radius, on their own screens. Beside that:
+`P126`–`P129` (change-driven prompts, AI review of an existing record, regulatory-change
+diffs, ask-the-register), `C38`–`C40`'s remaining population routes, `F59`/`F61`'s
+assessment library, `I91`/`I92`'s point-in-time register and hash-chained log, and
+`J100`/`J101`'s scheduled and translated exports. None is P0.
 
 ---
 
@@ -1886,13 +2206,54 @@ To beat a spreadsheet decisively you need five things, in this order:
 
 Custodia currently has partial credit on none of the five.
 
+*Rescored after Sprint 3. **Four of the five are now done, and the fifth is the whole of
+Sprint 4.*** *Rescored again after Sprint 4: **all five.***
+
+1. *Fields you cannot forget — **done**. Completeness scoring, the "what's missing" panel
+   and a publication gate that refuses `active` without Art. 30's blockers (B23, B25, B26).*
+2. *Fields you cannot get wrong — **done**. Org catalogues for elements and subject
+   categories, Art. 9(2) and Art. 10 conditions, computed adequacy, mechanism-specific
+   transfer evidence, per-category retention with a trigger.*
+3. *Work you do not have to do — **not started**. Delegated intake, discovery from vendors,
+   trackers and SaaS, and AI drafting with field-level accept are C32–C37, and they are the
+   reason a forty-person company still spends the afternoon typing.*
+   *— **Done after Sprint 4.** A questionnaire the person who actually knows can answer over
+   a link with no account; a queue that says "twelve of your forty-three vendors are in no
+   activity, this tracker is on your site and nothing explains it, Google Workspace is
+   connected and no record covers it"; and a draft from one line of description where every
+   field arrives with its reasoning and is accepted separately. What none of it does is
+   write to the register on its own, which is the property that makes it usable at all.*
+4. *Work you cannot forget — **done**. Review cadence with attestation, an approval workflow
+   an organisation can make mandatory, the reminder ladder, the overdue queue, tasks and
+   comments.*
+5. *An output you can hand to a regulator without editing it — **done**. One canonical,
+   complete, versioned, hash-stamped Article 30 export, in the format and the language the
+   authority publishes its own template in.*
+
+*Which changes the answer to the question this section asks. Today, honestly: **a register
+that tells you what is wrong with it, and an output you do not have to rewrite.** A
+spreadsheet cannot compute a completeness score against Article 30, refuse to publish an
+incomplete record, keep a versioned trail of who approved what, or produce the CNIL's own
+template in French. What it still does better is population — and that is item 3, and item 3
+is the next sprint.*
+
+*Amended after Sprint 4. Item 3 is done, so the honest answer moves again: **a register
+that populates itself from what you already told the product, and tells you what is still
+wrong with it.** The thing a spreadsheet cannot do is not the scoring — it is knowing that
+twelve of your vendors appear in no row of it, that the disposal you promised in the
+retention column came due in March, and that the recipient somebody added last week means
+the privacy notice is now wrong. That is not a better spreadsheet; it is a different
+object.*
+
 ## Why choose this over OneTrust?
 
 Not on feature count — OneTrust has all of Part IV. The winnable positions are:
 
 - **Price and time-to-value.** €99/month against a five-figure contract plus implementation. If a
   forty-person company can get a defensible register in an afternoon, that is a real product. Today
-  they cannot, because the fields are unrecordable.
+  they cannot, because the fields are unrecordable. *Recordable since Sprint 1, and defensible
+  since Sprint 3 — the afternoon is now spent on data entry rather than on discovering the
+  product cannot hold the answer. Closing the gap the rest of the way is C32–C37.*
 - **Opinionation.** OneTrust is a configurable framework that needs a consultant. Custodia can ship
   the answer: pre-built, jurisdiction-aware, opinionated defaults, and a register that tells you what
   is wrong instead of waiting to be configured. The 32 templates and the amber "Not recorded"
@@ -2115,3 +2476,94 @@ column — 68 columns and 3 unique constraints present, row counts unchanged. **
 part of the new interface was opened in a browser. The tRPC procedures, the seeding path, the
 subject-category backfill and every screen listed in §0.2 are unrun. They typecheck, the tenancy
 guard passes over them, and that is a different claim from working.*
+
+---
+
+*Amended 21 August 2026 with the Sprint 3 build (§0.4), a rescored scorecard, superseding notes
+against the Part I and Part III passages Sprint 3 answers, a rescored Part VI, and the Part V build
+order marked. The findings in Part II are still unchanged. Part I still describes the module as
+audited and now documents rather more behaviour that no longer exists — the outputs table in §1.7
+in particular describes an export surface that has been deleted — and is kept for the same reason
+as before.*
+
+*What was and was not exercised for Sprint 3, stated as plainly as the two caveats above.*
+
+***Verified:*** *`npm run check` at 0 type errors in both workspaces with every guard green,
+including `check:tenancy` over 176 procedures and 115 write statements and `check:ropa-i18n` over
+30 files. 495 assertions across seven fixture suites, two of them new: `assessments.test.ts` (109)
+covers the screening verdict order — Art. 35(3) settling the question before the nine criteria get
+to downgrade it — the jurisdiction-scoped blacklists, unanswered-versus-“no”, the LIA’s conditional
+blockers, the TIA’s three self-contradictions, the risk matrix and its unmitigated-risk fallback,
+and the content hash’s stability under key reordering and Date-versus-string round trips.
+`ropaExportFormats.test.ts` (50) reads every generated workbook back out of its own buffer and
+asserts on the cells: that “None” is printed rather than a blank, that a missing Art. 10 basis says
+so, that an empty regulator sheet still carries its headers, and that the processor record names
+the client rather than the agency. `check:schema` confirms `schema.ts` and `drizzle/` agree.*
+
+***Not exercised, and this is a longer list than Sprint 1’s:*** *migration `0048` is **generated
+and committed but not applied** — unlike 0046 and 0047, nothing in Sprint 3 has been run against a
+live database, so every claim about the schema is a claim about the migration file.* [**Corrected
+21 August 2026: 0048 was already applied when this was written. See §0.4.**] * No part of the
+new interface was opened in a browser: the LIA panel, the screening panel, the TIA panel, the
+`/dpia` route and its editor, the export menu and the rebuilt History tab are unrun. **No PDF has
+been rendered** — `ropaRegister.tsx` was rewritten against a payload shape the fixtures verify the
+server produces, but `@react-pdf/renderer` was never invoked on it, so the sixty-page detail cap,
+the section numbering and the layout are reasoned rather than observed. The four regulator packs
+were checked as workbooks, not against an authority’s published template side by side. They
+typecheck, the guards pass over them, the fixtures cover the logic underneath them, and that is
+still a different claim from working.*
+
+---
+
+*Amended 21 August 2026 with the Sprint 4 build (§0.5), a rescored scorecard carrying a new
+Retention management row, a rescored Part VI, and the Part V build order marked with what
+comes next. Part II's findings are still unchanged, and Part I still describes the module as
+audited.*
+
+*What was and was not exercised for Sprint 4, stated as plainly as the three caveats above.*
+
+***Verified:*** *`npm run check` at 0 type errors in both workspaces with every guard green,
+including `check:tenancy` over 207 procedures and 143 write statements, `check:relations` over
+49 relations blocks, `check:messages` over 3,190 keys in three locales and `check:ropa-i18n`
+over 42 files. 644 assertions across nine fixture suites, two of them new.
+`retention.test.ts` (71) covers the calendar arithmetic — 31 January plus one month lands on
+28 February, 29 February plus a year clamps — the three disposal-date outcomes, the refusal to
+parse "reviewed annually" into a date, indefinite retention being lawful *with* a justification
+and a finding without one, hold expiry evaluated rather than trusted, and the transfer map
+counting `pending_assessment` as no mechanism. `ropaIntelligence.test.ts` (78) covers the
+consequence split between a consent activity and a contract one, a narrowing not obliging a
+DPIA, the model's inability to clear a verdict the rules found decisive, a transfer with no
+mechanism being reported as a notice gap rather than described, an invented lawful basis never
+reaching the register, and "I am not sure" producing no merge candidate. `drizzle-kit generate`
+run a second time reports no changes, so `schema.ts` and `drizzle/` agree.*
+
+*And, added after the fact: **migration `0049` was applied on 21 August 2026 at 12:07 UTC**
+and then checked against `information_schema` rather than taken on trust — nine tables, four
+added columns, thirty-nine foreign keys, twenty-two indexes, six unique constraints, and no
+two constraint names in the schema colliding despite four being truncated at 63 characters.
+That is a structural check, not a behavioural one: it says the objects exist and says nothing
+about whether a disposal row is ever written into them.*
+
+*One thing was verified here that the three previous sprints did not do: **`next build`
+completes**, and all six new routes appear in the route table — `/ropa/retention`,
+`/ropa/discovery`, `/ropa/intake`, `/ropa/insights` and `/intake/[token]`, plus the rebuilt
+`/ropa/new`. That is not the same as the pages working, but it does rule out the class of
+failure `tsc` cannot see on its own: a server/client boundary violation, a bad import in a
+route segment, or a page that cannot be compiled at all. The sitemap's vendor lookup fails
+during the build for want of a database and falls back to static routes, which is
+pre-existing and is what `check:sitemap` asserts against.*
+
+***Not exercised:*** *no part of the new interface
+was opened in a browser: the retention workbench, the discovery queue, the intake console, the
+public questionnaire, the insights page with its four tabs, the draft panel and the activity
+flow are unrun. **No model was called** — `ropa.draft.generate` and the material-change
+narrative judgement are covered by fixtures over `validateProposal` and `applyNarrativeVerdict`
+respectively, but no Anthropic request has been made through either path, so the prompts are
+reasoned rather than observed. **No webhook was delivered.** The queue-name fix is a
+one-character-class change that `tsc` cannot verify and no test exercises; it is correct by
+inspection against `createWorker`'s own argument, and that is the whole strength of the claim.
+**No email was sent**, so the intake token round trip — the one flow in Sprint 4 that depends on
+a message reaching somebody outside the organisation — is unproven end to end. The three
+dispatchers are in `DORMANT_JOBS` and have therefore never executed, including against the
+author's own data. They typecheck, the guards pass over them, the fixtures cover the logic
+underneath them, and that is still a different claim from working.*

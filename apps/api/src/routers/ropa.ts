@@ -83,6 +83,12 @@ import {
   regulatorXlsx,
   REGULATOR_TEMPLATES,
 } from '../lib/ropaExportFormats.js';
+import { ropaRetentionRouter } from './ropaRetention.js';
+import { ropaIntakeRouter } from './ropaIntake.js';
+import { ropaDiscoveryRouter, ropaDraftRouter } from './ropaDiscovery.js';
+import { ropaInsightsRouter } from './ropaInsights.js';
+import { emitRopaEvent, completenessMoved } from '../lib/ropaEvents.js';
+import { materialChangeQueue } from '../workers/materialChange.js';
 import { encodeCursor, decodeCursor } from '../utils/cursor.js';
 import { renderPdf } from '../lib/pdfClient.js';
 
@@ -913,6 +919,21 @@ function serialiseArticle30(record: Awaited<ReturnType<typeof buildArticle30Reco
 
 
 export const ropaRouter = router({
+  // -------------------------------------------------------------------------
+  // Sprint 4. Five sub-routers in their own files.
+  //
+  // This one is already 4,800 lines and each of these is a self-contained surface
+  // with its own tables — a reader looking for "why did this record not get
+  // deleted" should land in a file about retention, not scroll past nine tabs of
+  // register CRUD to reach it. The tenancy guard scans every file in this
+  // directory, so the split costs nothing in coverage.
+  // -------------------------------------------------------------------------
+  retention: ropaRetentionRouter,
+  intake: ropaIntakeRouter,
+  discovery: ropaDiscoveryRouter,
+  draft: ropaDraftRouter,
+  insights: ropaInsightsRouter,
+
   /**
    * K102–K104. The register, filtered on the server.
    *
@@ -1079,6 +1100,10 @@ export const ropaRouter = router({
         entityId: newActivity.id,
         action: 'upsert'
       });
+
+      // O120/D39. `ropa.created` has been offered for subscription since webhooks
+      // shipped and nothing has ever emitted it.
+      await emitRopaEvent(ctx.user!.orgId, 'ropa.created', newActivity);
 
       return newActivity;
     }),
@@ -1325,6 +1350,40 @@ export const ropaRouter = router({
         });
       }
 
+      // ---- O120 and P125 --------------------------------------------------
+      if (changedKeys.length > 0) {
+        await emitRopaEvent(ctx.user!.orgId, 'ropa.updated', updated, { fields: changedKeys });
+      }
+      if (becomingActive) {
+        await emitRopaEvent(ctx.user!.orgId, 'ropa.published', updated);
+      }
+      // A move worth telling an integration about, not every point. The editor
+      // autosaves, and a webhook per point is a webhook per keystroke — which is
+      // how a subscriber's endpoint gets rate-limited and the integration switched
+      // off.
+      if (scoreMove && completenessMoved(scoreMove.before, scoreMove.after)) {
+        await emitRopaEvent(ctx.user!.orgId, 'ropa.completeness.changed', updated, {
+          before: scoreMove.before,
+          after: scoreMove.after,
+        });
+      }
+
+      // P125. The generalised evaluation runs off the *version history*, not off
+      // this payload — a save is one edit and a material change is the distance
+      // between two published states, which is exactly what B21's snapshots hold.
+      // So it is only worth asking after a publication, when a new snapshot exists
+      // to compare the previous one against.
+      if (becomingActive) {
+        const timeBlock = Math.floor(Date.now() / (5 * 60 * 1000));
+        await materialChangeQueue.add('material-change', {
+          organizationId: ctx.user!.orgId,
+          activityId: updated.id,
+        }, {
+          singletonKey: `material-change-${updated.id}-${timeBlock}`,
+          delay: 5000,
+        });
+      }
+
       return updated;
     }),
 
@@ -1350,6 +1409,8 @@ export const ropaRouter = router({
         entityId: deleted.id,
         action: 'delete'
       });
+
+      await emitRopaEvent(ctx.user!.orgId, 'ropa.deleted', deleted);
 
       return deleted;
     }),
@@ -1462,6 +1523,8 @@ export const ropaRouter = router({
         entityId: input.id,
         action: 'upsert',
       });
+
+      if (updated) await emitRopaEvent(ctx.user!.orgId, 'ropa.archived', updated);
 
       return updated;
     }),
@@ -1636,6 +1699,11 @@ export const ropaRouter = router({
             eq(processingActivities.id, input.processingActivityId),
             eq(processingActivities.organizationId, ctx.user!.orgId),
           ));
+
+        await emitRopaEvent(ctx.user!.orgId, 'ropa.reviewed', { ...activity, lastReviewedAt: now, nextReviewAt }, {
+          attestedBy: ctx.user!.id,
+          scoreAtAttestation: score,
+        });
 
         return attestation;
       }),
@@ -1861,6 +1929,19 @@ export const ropaRouter = router({
           actionUrl: `/ropa/${input.processingActivityId}?tab=approval`,
           metadata: { activityId: input.processingActivityId, decision: input.decision },
         });
+
+        if (input.decision === 'approved') {
+          await emitRopaEvent(ctx.user!.orgId, 'ropa.approved', {
+            ...activity,
+            approvalState: 'approved',
+          }, {
+            approvedBy: ctx.user!.id,
+            versionId: version?.id ?? null,
+            // I90. The hash of the snapshot the approval froze, so a subscriber can
+            // record what was approved rather than a claim that something was.
+            contentHash: version?.contentHash ?? null,
+          });
+        }
 
         return decided;
       }),
@@ -4490,11 +4571,24 @@ export const ropaRouter = router({
         vendorId: z.string().uuid().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
+        const activity = await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
         const [inserted] = await ctx.db.insert(processingTransfers).values({
           ...input,
         }).returning();
         await refreshCompleteness(ctx.db, input.processingActivityId);
+
+        // O120. A new third-country transfer is the single event in this register
+        // an integration most wants to hear about — it is an Art. 13(1)(f)
+        // disclosure obligation and a Chapter V position at the same moment.
+        await emitRopaEvent(ctx.user!.orgId, 'ropa.transfer.added', activity, {
+          transfer: {
+            id: inserted?.id,
+            destinationCountry: inserted?.destinationCountry,
+            destinationEntity: inserted?.destinationEntity ?? null,
+            transferMechanism: inserted?.transferMechanism,
+          },
+        });
+
         return inserted;
       }),
     update: protectedProcedure
