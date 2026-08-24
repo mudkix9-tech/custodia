@@ -2,7 +2,6 @@ import { createWorker, createQueue, getBoss } from '../lib/queue.js';
 import { db } from '../db.js';
 import { vendors, organizationVendors, vendorIncidents, organizationVendorIncidentAlerts } from 'db';
 import { eq, and, sql, or } from 'drizzle-orm';
-import crypto from 'crypto';
 import { queueNotification } from '../utils/notifications.js';
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import { recalculateVendorRiskForAllOrgs } from '../routers/vendors.js';
@@ -30,7 +29,7 @@ export function getDomain(urlStr: string): string {
   }
 }
 
-// Ingestion sources
+// Ingestion sources -- the real feeds a future RSS parser will consume.
 const EDPB_FEED_URL = 'https://edpb.europa.eu/feed/news_en';
 const GDPRHUB_FEED_URL = 'https://gdprhub.eu/index.php?title=Special:RecentChanges&feed=rss';
 
@@ -224,70 +223,14 @@ export async function publishIncidentAndAlertOrgs(incidentId: string, matchedVen
 }
 
 // Ingestion Worker Tasks
+// D16: this used to discard the fetched RSS bodies and process three hardcoded
+// samples instead -- fabricated breaches about Mailchimp, Meta and Google
+// Analytics, each stamped incidentDate: new Date(), fanned out to every tenant
+// tracking those vendors and pinned their breach factor at maximum forever.
+// Ingestion is unimplemented until real RSS parsing exists; the job also remains
+// in DORMANT_JOBS, so nothing below executes today.
 export async function scrapeBreachFeeds() {
-  console.log('[Incident Scraper] Running daily ingestion crawls...');
-
-  // A. EDPB enforcement and fines (Simulated fetch with live fallback)
-  try {
-    const res = await fetch(EDPB_FEED_URL);
-    if (res.ok) {
-      console.log('[Incident Scraper] Successfully contacted EDPB feed');
-    }
-  } catch (e: any) {
-    console.warn('[Incident Scraper] EDPB feed fetch failed, using fallback parser');
-  }
-
-  // B. GDPRhub Wiki Feed (Simulated fetch with live fallback)
-  try {
-    const res = await fetch(GDPRHUB_FEED_URL);
-    if (res.ok) {
-      console.log('[Incident Scraper] Successfully contacted GDPRhub feed');
-    }
-  } catch (e: any) {
-    console.warn('[Incident Scraper] GDPRhub feed fetch failed');
-  }
-
-  // Fallback / Seed mock incident list for demonstration purposes
-  const sampleIncidents = [
-    {
-      incidentType: 'breach' as const,
-      title: 'Mailchimp Discloses Security Breach Affecting API Keys',
-      summary: 'Mailchimp disclosed that unauthorized actors gained access to an internal tool, compromising customer account data and API keys.',
-      sourceUrl: 'https://techcrunch.com/2026/mailchimp-breach-api-keys',
-      sourceName: 'TechCrunch',
-      incidentDate: new Date(),
-      severity: 'critical' as const,
-      affectedDataCategories: ['Email addresses', 'Names', 'API keys']
-    },
-    {
-      incidentType: 'fine' as const,
-      title: 'Meta Platforms Fined €390M by Irish DPC Over Advertising Consent',
-      summary: 'The Irish DPC issued a €390M fine to Meta Platforms (Facebook/Instagram) regarding the lawfulness of processing for personalized advertising.',
-      sourceUrl: 'https://dataprotection.ie/en/news-media/press-releases/meta-decisions',
-      sourceName: 'Irish DPC',
-      incidentDate: new Date(),
-      severity: 'high' as const,
-      fineAmount: 390000000,
-      fineCurrency: 'EUR'
-    },
-    {
-      incidentType: 'investigation' as const,
-      title: 'CNIL Launches Investigation Into Google Analytics Custom Deployments',
-      summary: 'The French DPA (CNIL) announced it is reviewing several Google Analytics deployments to assess compliance with international data transfer rulings.',
-      sourceUrl: 'https://cnil.fr/en/investigation-google-analytics',
-      sourceName: 'CNIL',
-      incidentDate: new Date(),
-      severity: 'medium' as const
-    }
-  ];
-
-  for (const item of sampleIncidents) {
-    try {
-      await processNewIncident(item);
-    } catch (err: any) {
-      console.error(`[Incident Scraper] Failed to process incident "${item.title}":`, err.message);
-    }
-  }
+  console.warn('[Incident Scraper] Feed ingestion is not implemented; no incidents ingested.');
 }
 
 // BullMQ Worker Initialization

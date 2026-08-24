@@ -10,7 +10,6 @@ import { useSearchParams } from 'next/navigation';
 import { DiscoveryTab } from '@/components/vendors/DiscoveryTab';
 import { AddCustomVendorModal } from '@/components/vendors/AddCustomVendorModal';
 import { useTranslations } from 'next-intl';
-import { toCsvRow } from '@/utils/csv';
 import { useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageShell } from '@/components/layout/PageShell';
@@ -36,7 +35,11 @@ export default function VendorsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const toast = useToast();
   const utils = trpc.useUtils();
-  
+
+  // Whole-register figures: the tiles, tab count and DPA coverage used to be
+  // computed over whichever pages of 25 rows happened to be loaded.
+  const { data: riskStats } = trpc.vendors.getRiskStats.useQuery();
+
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'register' | 'discovery'>('register');
 
@@ -47,42 +50,28 @@ export default function VendorsPage() {
     }
   }, [searchParams]);
 
-  const handleExportRegister = () => {
-    if (vendors.length === 0) {
+  const handleExportRegister = async () => {
+    // Server-side export: the client-side version serialised only the loaded
+    // pages, so an auditor received a file describing a quarter of the register.
+    const { csv, count } = await utils.vendors.exportRegisterCsv.fetch();
+    if (count === 0) {
       toast('Nothing to export', { tone: 'error', description: 'The vendor register is empty.' });
       return;
     }
-    const headers = ['Vendor', 'Category', 'Country', 'DPA Status', 'Risk Level', 'Risk Score', 'Website'];
-    const csv = [
-      toCsvRow(headers),
-      ...vendors.map((v: any) =>
-        toCsvRow([
-          v.name,
-          v.category || '',
-          v.headquartersCountry || '',
-          v.dpaStatus || '',
-          v.riskLevel || '',
-          v.riskScore ?? '',
-          v.website || '',
-        ])
-      ),
-    ].join('\r\n');
-
     const link = document.createElement('a');
     link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     link.setAttribute('download', `vendor_register_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast(`Exported ${vendors.length} vendor${vendors.length === 1 ? '' : 's'}`);
+    toast(`Exported ${count} vendor${count === 1 ? '' : 's'}`);
   };
 
-  // Derived metrics
-  const totalVendors = vendors.length;
-  const dpasSigned = vendors.filter((v: any) => v.dpaStatus === 'signed').length;
-  const dpaCoverage = totalVendors > 0 ? Math.round((dpasSigned / totalVendors) * 100) : 0;
-  const missingDpas = vendors.filter((v: any) => v.dpaStatus === 'not_started' || v.dpaStatus === 'expired').length;
-  const highRiskVendors = vendors.filter((v: any) => v.riskLevel === 'high' || v.riskLevel === 'critical').length;
+  // Derived metrics -- whole-register values from getRiskStats
+  const totalVendors = riskStats?.total ?? 0;
+  const dpaCoverage = totalVendors > 0 ? Math.round(((riskStats?.dpasSigned ?? 0) / totalVendors) * 100) : 0;
+  const missingDpas = riskStats?.missingDpas ?? 0;
+  const highRiskVendors = riskStats?.highOrCritical ?? 0;
 
   const columns = [
     {

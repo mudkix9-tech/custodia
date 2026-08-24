@@ -145,24 +145,5 @@ export const tiaRouter = router({
 
         return inserted;
       }
-    }),
-    
-    // PDF Export placeholder (simulating Puppeteer pipeline)
-    exportPdf: protectedProcedure
-      .use(requireRole("admin"))
-      .input(z.object({ tiaId: z.string().uuid() }))
-      .mutation(async ({ ctx, input }) => {
-        const [tia] = await ctx.db.select()
-          .from(transferImpactAssessments)
-          .where(and(
-            eq(transferImpactAssessments.id, input.tiaId),
-            eq(transferImpactAssessments.organizationId, ctx.user!.orgId)
-          ));
-          
-        if (!tia) throw new TRPCError({ code: 'NOT_FOUND' });
-        
-        // Mocking PDF generation and S3 upload
-        const mockS3Url = `https://s3.custodia.io/exports/tia_${tia.id}.pdf`;
-        return { url: mockS3Url };
-      })
+    })
 });

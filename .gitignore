@@ -51,3 +51,5 @@ vendor-pipeline/review-queue.db
 
 # Local tooling notes, not shared work.
 .commandcode/
+.playwright-mcp/
+/*.png

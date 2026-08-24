@@ -32,7 +32,7 @@ const VENDORS = [
     euHostingDetail: 'Available on EU Data Center (Frankfurt)',
     securityCertifications: ['soc2_type2', 'iso27001'],
     subProcessorListUrl: 'https://legal.hubspot.com/hubspot-sub-processors',
-    transferMechanisms: ['standard_contractual_clauses']
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'Stripe',
@@ -47,7 +47,7 @@ const VENDORS = [
     euHostingAvailable: false,
     securityCertifications: ['soc1', 'soc2_type2', 'pci_dss'],
     subProcessorListUrl: 'https://stripe.com/legal/sub-processors',
-    transferMechanisms: ['standard_contractual_clauses']
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'Amazon Web Services (AWS)',
@@ -63,7 +63,7 @@ const VENDORS = [
     euHostingDetail: 'Multiple EU regions available (e.g., eu-west-1)',
     securityCertifications: ['soc1', 'soc2_type2', 'soc3', 'iso27001', 'iso27017', 'iso27018'],
     subProcessorListUrl: 'https://aws.amazon.com/compliance/sub-processors/',
-    transferMechanisms: ['standard_contractual_clauses']
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'Google Workspace',
@@ -79,7 +79,7 @@ const VENDORS = [
     euHostingDetail: 'Data regions can be set to Europe',
     securityCertifications: ['soc2_type2', 'soc3', 'iso27001'],
     subProcessorListUrl: 'https://workspace.google.com/terms/subprocessors.html',
-    transferMechanisms: ['standard_contractual_clauses']
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'Mailchimp',
@@ -95,7 +95,7 @@ const VENDORS = [
     euHostingDetail: 'Data hosted in US servers',
     securityCertifications: ['soc2_type2'],
     subProcessorListUrl: 'https://mailchimp.com/legal/subprocessors/',
-    transferMechanisms: ['standard_contractual_clauses']
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'Slack',
@@ -111,7 +111,7 @@ const VENDORS = [
     euHostingDetail: 'Slack Enterprise Grid offers EU data residency',
     securityCertifications: ['soc2_type2', 'soc3', 'iso27001'],
     subProcessorListUrl: 'https://slack.com/trust/compliance/subprocessors',
-    transferMechanisms: ['standard_contractual_clauses']
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   // Add more vendors to reach ~50
   {
@@ -127,7 +127,7 @@ const VENDORS = [
     euHostingAvailable: false,
     securityCertifications: ['soc2_type2'],
     subProcessorListUrl: 'https://www.notion.so/Subprocessors-24edaf4ce7234ecda4fecddb3815b3c5',
-    transferMechanisms: ['standard_contractual_clauses']
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'Meta (Facebook)',
@@ -142,7 +142,7 @@ const VENDORS = [
     euHostingAvailable: false,
     securityCertifications: ['iso27001'],
     subProcessorListUrl: 'https://www.facebook.com/legal/terms/subprocessorlist',
-    transferMechanisms: ['standard_contractual_clauses']
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'Postmark',
@@ -157,7 +157,7 @@ const VENDORS = [
     euHostingAvailable: false,
     securityCertifications: ['soc2_type2'],
     subProcessorListUrl: 'https://postmarkapp.com/subprocessors',
-    transferMechanisms: ['standard_contractual_clauses']
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'GitHub',
@@ -172,7 +172,7 @@ const VENDORS = [
     euHostingAvailable: false,
     securityCertifications: ['soc1', 'soc2_type2', 'iso27001'],
     subProcessorListUrl: 'https://docs.github.com/en/site-policy/privacy-policies/github-subprocessors',
-    transferMechanisms: ['standard_contractual_clauses']
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'Shopify',
@@ -369,7 +369,7 @@ const VENDORS = [
     euHostingAvailable: false,
     securityCertifications: ['soc2_type2', 'iso27001'],
     subProcessorListUrl: 'https://business.safety.google/adssubprocessors/',
-    transferMechanisms: ['standard_contractual_clauses'],
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework'],
     isPrivacyFriendly: false
   },
   {

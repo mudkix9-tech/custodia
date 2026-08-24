@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { FieldError } from '@/components/ui/FieldError';
-import { FileText, CheckCircle2, AlertTriangle, ShieldCheck, Download, ExternalLink } from 'lucide-react';
+import { FileText, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -39,7 +39,6 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
   const [step, setStep] = useState(1);
   const { data: tia, isLoading } = trpc.tia.getForVendor.useQuery({ vendorId });
   const saveMutation = trpc.tia.save.useMutation();
-  const exportMutation = trpc.tia.exportPdf.useMutation();
   const utils = trpc.useUtils();
 
   // Form state
@@ -100,12 +99,6 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
     utils.tia.getForVendor.invalidate({ vendorId });
   };
 
-  const handleExport = async () => {
-    if (!tia) return;
-    const res = await exportMutation.mutateAsync({ tiaId: tia.id });
-    window.open(res.url, '_blank');
-  };
-
   if (isLoading) return <div className="p-8 text-[#6E747A]">Loading TIA...</div>;
 
   const isUS = formData.destinationCountry === 'US';
@@ -145,14 +138,7 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
             <div className="bg-[#C9A227]/10 text-[#C9A227] p-4 rounded-xl border border-[#C9A227]/30 text-sm">
               <ShieldCheck className="w-5 h-5 mb-2 text-[#C9A227]" />
               <div className="font-bold mb-1">TIA Completed</div>
-              <div className="text-xs opacity-80 mb-3">Approved on {format(new Date(tia.approvedAt!), 'MMM d, yyyy')}</div>
-              <Button 
-                variant="outline"
-                onClick={handleExport}
-                className="w-full flex items-center justify-center gap-2 bg-[#0D0F11] border-[#C9A227]/30 text-[#C9A227] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#C9A227]/20 transition-colors"
-              >
-                <Download className="w-4 h-4" /> Export PDF
-              </Button>
+              <div className="text-xs opacity-80">Approved on {format(new Date(tia.approvedAt!), 'MMM d, yyyy')}</div>
             </div>
           </div>
         )}

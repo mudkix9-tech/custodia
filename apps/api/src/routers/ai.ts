@@ -22,7 +22,7 @@ import { TRPCError } from '@trpc/server';
 import { PDFParse } from 'pdf-parse';
 import crypto from 'crypto';
 import { calculateVendorRisk } from './vendors.js';
-import { trackAiUsage } from '../lib/billing.js';
+import { trackAiUsage, TIER_LIMITS } from '../lib/billing.js';
 import { COPILOT_MODEL } from '../lib/anthropicModels.js';
 
 const ai = genai;
@@ -1024,19 +1024,29 @@ export const aiRouter = router({
       });
       if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
       
-      let limit = 2000;
-      
-      if ((org.aiDpasAnalyzed || 0) >= limit) {
-        throw new TRPCError({ 
-          code: 'TOO_MANY_REQUESTS', 
-          message: `Monthly DPA analysis limit reached (${limit}/${limit}). Please upgrade your plan.`
+      // D13: this quota used to be a lifetime counter (no reset anywhere) with a
+      // hardcoded 2000 ceiling, incremented before the work -- so a failed parse
+      // still cost the unit and the "monthly limit" error was wrong on both counts.
+      // It now shares aiLastResetAt with trackAiUsage's monthly window, reads the
+      // plan's TIER_LIMITS.ai allowance, and is only consumed on success.
+      const tier = (org.subscriptionTier as keyof typeof TIER_LIMITS) || 'professional';
+      const dpaLimit = TIER_LIMITS[tier]?.ai;
+      const now = new Date();
+      const lastReset = org.aiLastResetAt ? new Date(org.aiLastResetAt) : null;
+      let analysed = org.aiDpasAnalyzed || 0;
+      if (!lastReset ||
+          lastReset.getMonth() !== now.getMonth() ||
+          lastReset.getFullYear() !== now.getFullYear()) {
+        analysed = 0;
+      }
+
+      if (dpaLimit !== Infinity && analysed >= dpaLimit) {
+        throw new TRPCError({
+          code: 'TOO_MANY_REQUESTS',
+          message: `Monthly DPA analysis limit reached (${analysed}/${dpaLimit}). Please upgrade your plan.`
         });
       }
- 
-      await ctx.db.update(organizations)
-        .set({ aiDpasAnalyzed: (org.aiDpasAnalyzed || 0) + 1 })
-        .where(eq(organizations.id, orgId));
- 
+
       try {
         const buffer = Buffer.from(input.fileBase64, 'base64');
         const parser = new PDFParse({ data: buffer });
@@ -1136,7 +1146,19 @@ Use this EXACT JSON schema:
               eq(organizationVendors.organizationId, orgId),
             ));
         }
- 
+
+        // Consume the quota only after the analysis succeeded, and persist the
+        // rollover so the counter resets on the first analysis of a new month.
+        const now = new Date();
+        await ctx.db.update(organizations)
+          .set({
+            aiDpasAnalyzed: analysed + 1,
+            aiLastResetAt: lastReset && lastReset.getMonth() === now.getMonth() && lastReset.getFullYear() === now.getFullYear()
+              ? lastReset
+              : now,
+          })
+          .where(eq(organizations.id, orgId));
+
         return jsonResponse;
       } catch (err: any) {
         console.error('DPA Analysis Error:', err);

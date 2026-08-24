@@ -14,7 +14,7 @@ import {
   actionItems,
   pendingSignups
 } from 'db';
-import { eq, and, desc, inArray, isNull } from 'drizzle-orm';
+import { eq, and, or, desc, inArray, isNull } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import React from 'react';
@@ -273,10 +273,16 @@ export const assessmentsRouter = router({
   // VENDOR COMPLIANCE QUESTIONNAIRES PROCEDURES (PHASE 7)
   // ============================================================================
   getTemplates: protectedProcedure.query(async ({ ctx }) => {
+    // A system template carries organizationId IS NULL (see getSystemTemplates
+    // below), so filtering on equality with the org id hid the seeded catalogue
+    // from every organisation and the questionnaire feature was unsendable.
     return await db.select()
       .from(vendorAssessmentTemplates)
       .where(
-        eq(vendorAssessmentTemplates.organizationId, ctx.user.orgId)
+        or(
+          isNull(vendorAssessmentTemplates.organizationId),
+          eq(vendorAssessmentTemplates.organizationId, ctx.user.orgId)
+        )
       )
       .orderBy(desc(vendorAssessmentTemplates.createdAt));
   }),

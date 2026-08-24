@@ -99,7 +99,9 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
           })
           .filter(Boolean)
           .join('\n')
-          .replace(/\s+/g, ' ')
+          // Horizontal whitespace only: collapsing \n too destroyed the line
+          // structure the SubProcessorList diff splits on.
+          .replace(/[^\S\n]+/g, ' ')
           .replace(/\b(?:202\d|19\d\d)\b/g, '')
           .trim();
 

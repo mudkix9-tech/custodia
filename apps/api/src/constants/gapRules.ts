@@ -25,7 +25,7 @@ export const DETECTION_RULES = [
       title: `Missing DPA: ${record.vendor?.name || 'Unknown Vendor'}`,
       description: `No signed Data Processing Agreement with ${record.vendor?.name || 'Unknown Vendor'}.`,
       severity: record.vendor?.riskLevel === 'critical' ? 'critical' : 'high',
-      resolutionUrl: `/vendors/${record.id}`,
+      resolutionUrl: `/vendors/${record.vendorId}`,
     }),
   },
   {
@@ -51,7 +51,7 @@ export const DETECTION_RULES = [
       title: `DPA Expired or Expiring Soon: ${record.vendor?.name || 'Unknown'}`,
       description: `The DPA is expired or will expire within 30 days.`,
       severity: record.vendor?.riskLevel === 'critical' ? 'critical' : 'medium',
-      resolutionUrl: `/vendors/${record.id}`,
+      resolutionUrl: `/vendors/${record.vendorId}`,
     }),
   },
   {
@@ -76,7 +76,7 @@ export const DETECTION_RULES = [
       title: `Overdue Vendor Review: ${record.vendor?.name || 'Unknown'}`,
       description: `Vendor review is overdue by more than 1 year.`,
       severity: 'high',
-      resolutionUrl: `/vendors/${record.id}`,
+      resolutionUrl: `/vendors/${record.vendorId}`,
     }),
   },
 
@@ -205,7 +205,7 @@ export const DETECTION_RULES = [
       title: `Special Category Data: Missing DPA for ${record.vendor?.name || 'Vendor'}`,
       description: `Vendor ${record.vendor?.name || 'Vendor'} processes special category data (Article 9) but has no signed DPA (Article 28).`,
       severity: 'critical',
-      resolutionUrl: `/vendors/${record.id}`,
+      resolutionUrl: `/vendors/${record.vendorId}`,
     }),
   },
   {
@@ -248,7 +248,7 @@ export const DETECTION_RULES = [
       title: `Unsecured Third-Country Transfer: ${record.vendor?.name || 'Vendor'}`,
       description: `Vendor ${record.vendor?.name || 'Vendor'} is located in a non-adequate third country (${record.vendor?.headquartersCountry}) and has no documented safeguards (e.g. SCCs or BCRs).`,
       severity: 'high',
-      resolutionUrl: `/vendors/${record.id}`,
+      resolutionUrl: `/vendors/${record.vendorId}`,
     }),
   },
   {
@@ -258,6 +258,7 @@ export const DETECTION_RULES = [
     detect: async (orgId: string) => {
       const list = await db.select({
         id: organizationVendors.id,
+        vendorId: organizationVendors.vendorId,
         vendorName: vendors.name,
         dpaClauseCoverage: organizationVendors.dpaClauseCoverage
       })
@@ -280,7 +281,7 @@ export const DETECTION_RULES = [
       title: `Missing Sub-processor Clause: ${record.vendorName}`,
       description: `The Data Processing Agreement with ${record.vendorName} does not include the mandatory Article 28(3)(d) clause regulating sub-processor notification and restrictions.`,
       severity: 'high',
-      resolutionUrl: `/vendors/${record.id}`,
+      resolutionUrl: `/vendors/${record.vendorId}`,
     }),
   },
   {
@@ -290,6 +291,7 @@ export const DETECTION_RULES = [
     detect: async (orgId: string) => {
       const list = await db.select({
         id: organizationVendors.id,
+        vendorId: organizationVendors.vendorId,
         vendorName: vendors.name,
         dpaClauseCoverage: organizationVendors.dpaClauseCoverage
       })
@@ -331,7 +333,7 @@ export const DETECTION_RULES = [
       title: `Incomplete DPA Clauses: ${record.vendorName}`,
       description: `The Data Processing Agreement with ${record.vendorName} covers only ${record.coveredCount}/8 required Article 28 clauses, which poses a medium compliance risk.`,
       severity: 'medium',
-      resolutionUrl: `/vendors/${record.id}`,
+      resolutionUrl: `/vendors/${record.vendorId}`,
     }),
   },
 ];

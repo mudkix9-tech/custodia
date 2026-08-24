@@ -108,11 +108,14 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
 
   let allAssessments: any[] = [];
   if (orgIds.length > 0) {
+    // vendorAssessments.vendorId FKs organizationVendors.id, not vendors.id --
+    // matching it against the global id found no rows and silently dropped the
+    // questionnaire modifier from every recalculated score.
     allAssessments = await dbInstance.select()
       .from(vendorAssessments)
       .where(and(
         inArray(vendorAssessments.organizationId, orgIds),
-        eq(vendorAssessments.vendorId, vendorId)
+        inArray(vendorAssessments.vendorId, orgVendors.map((ov: any) => ov.id))
       ))
       .orderBy(desc(vendorAssessments.completedAt), desc(vendorAssessments.expiresAt));
   }
@@ -120,7 +123,7 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
   const updates: Array<{ id: string; score: number; level: string; factors: any }> = [];
 
   for (const orgVendor of orgVendors) {
-    const assessments = allAssessments.filter((a: any) => a.organizationId === orgVendor.organizationId);
+    const assessments = allAssessments.filter((a: any) => a.organizationId === orgVendor.organizationId && a.vendorId === orgVendor.id);
 
     let scoreModifier = 0;
     if (assessments.length > 0) {
@@ -212,7 +215,7 @@ export const vendorsRouter = router({
     .query(async ({ ctx, input }) => {
       const res = await paginatedQuery(
         organizationVendors,
-        ctx.user.orgId,
+        ctx.user!.orgId,
         { limit: input.limit, after: input.cursor || undefined },
         'createdAt',
         'desc'
@@ -262,16 +265,17 @@ export const vendorsRouter = router({
       .from(organizationVendors)
       .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
       .where(and(
-        eq(organizationVendors.organizationId, ctx.user.orgId),
+        eq(organizationVendors.organizationId, ctx.user!.orgId),
         eq(organizationVendors.vendorId, input.vendorId)
       ));
       return records[0];
     }),
 
   linkVendor: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({ vendorId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      await enforceLimit(ctx.db, ctx.user.orgId, 'vendors', 1);
+      await enforceLimit(ctx.db, ctx.user!.orgId, 'vendors', 1);
       const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
       if (!vendor) throw new Error("Vendor not found");
 
@@ -289,19 +293,19 @@ export const vendorsRouter = router({
       );
 
       const [newLink] = await ctx.db.insert(organizationVendors).values({
-        organizationId: ctx.user.orgId,
+        organizationId: ctx.user!.orgId,
         vendorId: input.vendorId,
         dpaStatus: 'not_started',
         riskScore: score,
         riskLevel: level,
         riskFactors: factors,
         lastRiskAssessment: new Date(),
-        addedBy: ctx.user.id,
+        addedBy: ctx.user!.id,
       }).returning();
       if (!newLink) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Insert returned no row.' });
       
       await orgEmbeddingsQueue.add('embed-vendor', {
-        orgId: ctx.user.orgId,
+        orgId: ctx.user!.orgId,
         entityType: 'vendor',
         entityId: newLink.id,
         action: 'upsert'
@@ -311,6 +315,7 @@ export const vendorsRouter = router({
     }),
 
   updateOrgVendor: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       vendorId: z.string().uuid(),
       dpaStatus: z.string().optional(),
@@ -325,7 +330,7 @@ export const vendorsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const [orgVendor] = await ctx.db.select().from(organizationVendors).where(and(
-        eq(organizationVendors.organizationId, ctx.user.orgId),
+        eq(organizationVendors.organizationId, ctx.user!.orgId),
         eq(organizationVendors.vendorId, input.vendorId)
       ));
       if (!orgVendor) throw new Error("Link not found");
@@ -368,7 +373,7 @@ export const vendorsRouter = router({
         .where(eq(organizationVendors.id, orgVendor.id));
 
       await orgEmbeddingsQueue.add('embed-vendor', {
-        orgId: ctx.user.orgId,
+        orgId: ctx.user!.orgId,
         entityType: 'vendor',
         entityId: orgVendor.id,
         action: 'upsert'
@@ -379,6 +384,7 @@ export const vendorsRouter = router({
 
   // CUSTOM VENDORS
   createCustom: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       name: z.string(),
       website: z.string().optional(),
@@ -392,7 +398,7 @@ export const vendorsRouter = router({
       contractRenewalDate: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await enforceLimit(ctx.db, ctx.user.orgId, 'vendors', 1);
+      await enforceLimit(ctx.db, ctx.user!.orgId, 'vendors', 1);
       const [newVendor] = await ctx.db.insert(vendors).values({
         name: input.name,
         website: input.website,
@@ -402,7 +408,7 @@ export const vendorsRouter = router({
         euHostingAvailable: input.euHostingAvailable,
         securityCertifications: input.securityCertifications,
         isGlobal: false,
-        organizationId: ctx.user.orgId
+        organizationId: ctx.user!.orgId
       }).returning();
 
       if (!newVendor) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
@@ -418,7 +424,7 @@ export const vendorsRouter = router({
       const { score, level, factors } = calculateVendorRisk(newVendor, initialOrgVendor, 0);
 
       const [newLink] = await ctx.db.insert(organizationVendors).values({
-        organizationId: ctx.user.orgId,
+        organizationId: ctx.user!.orgId,
         vendorId: newVendor.id,
         dpaStatus: 'not_started',
         riskScore: score,
@@ -428,12 +434,12 @@ export const vendorsRouter = router({
         dataSubjectVolume: input.dataSubjectVolume || '<1K',
         certifications: input.certifications || [],
         contractRenewalDate: input.contractRenewalDate || null,
-        addedBy: ctx.user.id,
+        addedBy: ctx.user!.id,
       }).returning();
       if (!newLink) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Insert returned no row.' });
 
       await orgEmbeddingsQueue.add('embed-vendor', {
-        orgId: ctx.user.orgId,
+        orgId: ctx.user!.orgId,
         entityType: 'vendor',
         entityId: newLink.id,
         action: 'upsert'
@@ -466,23 +472,37 @@ export const vendorsRouter = router({
       }),
 
     addLinked: protectedProcedure
+      .use(requirePermission('vendors', 'edit'))
       .input(z.object({
         parentVendorId: z.string().uuid(),
         subProcessorVendorId: z.string().uuid(),
         purpose: z.string().optional()
       }))
       .mutation(async ({ ctx, input }) => {
+        // A sub-processor row hangs off the shared catalogue, so an unproved
+        // parentVendorId let any member attach fabricated sub-processors to AWS's
+        // global row and shift every tenant's derived risk score. Only a custom
+        // vendor this organisation owns may be edited.
+        const [parent] = await ctx.db.select({ id: vendors.id })
+          .from(vendors)
+          .where(and(
+            eq(vendors.id, input.parentVendorId),
+            eq(vendors.organizationId, ctx.user!.orgId)
+          ));
+        if (!parent) throw new TRPCError({ code: 'NOT_FOUND', message: 'Parent vendor not found' });
+
         const [sub] = await ctx.db.insert(vendorSubProcessors).values({
           parentVendorId: input.parentVendorId,
           subProcessorVendorId: input.subProcessorVendorId,
           purpose: input.purpose
         }).returning();
-        
+
         await recalculateVendorRiskForAllOrgs(ctx.db, input.parentVendorId);
         return sub;
       }),
 
     addUnlinked: protectedProcedure
+      .use(requirePermission('vendors', 'edit'))
       .input(z.object({
         parentVendorId: z.string().uuid(),
         name: z.string().min(1),
@@ -490,13 +510,23 @@ export const vendorsRouter = router({
         purpose: z.string().optional()
       }))
       .mutation(async ({ ctx, input }) => {
+        // Same proof as addLinked: the row describes the vendor, but the write
+        // mutates the shared catalogue unless the parent is org-owned.
+        const [parent] = await ctx.db.select({ id: vendors.id })
+          .from(vendors)
+          .where(and(
+            eq(vendors.id, input.parentVendorId),
+            eq(vendors.organizationId, ctx.user!.orgId)
+          ));
+        if (!parent) throw new TRPCError({ code: 'NOT_FOUND', message: 'Parent vendor not found' });
+
         const [sub] = await ctx.db.insert(vendorSubProcessors).values({
           parentVendorId: input.parentVendorId,
           name: input.name,
           country: input.country,
           purpose: input.purpose
         }).returning();
-        
+
         await recalculateVendorRiskForAllOrgs(ctx.db, input.parentVendorId);
         return sub;
       }),
@@ -545,12 +575,46 @@ export const vendorsRouter = router({
   }),
 
   getRiskStats: protectedProcedure.query(async ({ ctx }) => {
-    const list = await ctx.db.select().from(organizationVendors).where(eq(organizationVendors.organizationId, ctx.user.orgId));
+    const list = await ctx.db.select().from(organizationVendors).where(eq(organizationVendors.organizationId, ctx.user!.orgId));
     const total = list.length;
     const highOrCritical = list.filter((v: any) => v.riskLevel === 'high' || v.riskLevel === 'critical').length;
     const low = list.filter((v: any) => v.riskLevel === 'low').length;
     const medium = list.filter((v: any) => v.riskLevel === 'medium').length;
-    return { total, highOrCritical, low, medium };
+    // Whole-register DPA figures: the register page used to derive these from
+    // the 25 rows it happened to have loaded, understating coverage in every
+    // CSV an auditor saw.
+    const dpasSigned = list.filter((v: any) => v.dpaStatus === 'signed').length;
+    const missingDpas = list.filter((v: any) => v.dpaStatus === 'not_started' || v.dpaStatus === 'expired').length;
+    return { total, highOrCritical, low, medium, dpasSigned, missingDpas };
+  }),
+
+  // Server-side export over the entire register. The client-side version
+  // serialised only the loaded pages, so an organisation with 60 vendors handed
+  // an auditor a file describing 25.
+  exportRegisterCsv: protectedProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.db.select({
+      name: vendors.name,
+      category: vendors.category,
+      headquartersCountry: vendors.headquartersCountry,
+      website: vendors.website,
+      dpaStatus: organizationVendors.dpaStatus,
+      riskLevel: organizationVendors.riskLevel,
+      riskScore: organizationVendors.riskScore,
+    })
+      .from(organizationVendors)
+      .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+      .where(eq(organizationVendors.organizationId, ctx.user!.orgId))
+      .orderBy(desc(organizationVendors.riskScore));
+
+    const field = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const csv = [
+      ['Vendor', 'Category', 'Country', 'DPA Status', 'Risk Level', 'Risk Score', 'Website'].map(field).join(','),
+      ...rows.map((r) => [
+        r.name, r.category, r.headquartersCountry, r.dpaStatus, r.riskLevel, r.riskScore, r.website,
+      ].map(field).join(',')),
+    ].join('\r\n');
+
+    return { csv, count: rows.length };
   }),
 
   getSubProcessorChanges: protectedProcedure
@@ -560,7 +624,7 @@ export const vendorsRouter = router({
         .from(organizationVendors)
         .where(and(
           eq(organizationVendors.id, input.orgVendorId),
-          eq(organizationVendors.organizationId, ctx.user.orgId)
+          eq(organizationVendors.organizationId, ctx.user!.orgId)
         ));
       if (!ov) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization vendor link not found' });
 
@@ -580,6 +644,7 @@ export const vendorsRouter = router({
     }),
 
   reviewSubProcessorChange: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       changeId: z.string().uuid(),
       status: z.enum(['acknowledged', 'objected']),
@@ -590,7 +655,7 @@ export const vendorsRouter = router({
         .from(vendorSubProcessorChanges)
         .where(and(
           eq(vendorSubProcessorChanges.id, input.changeId),
-          eq(vendorSubProcessorChanges.organizationId, ctx.user.orgId)
+          eq(vendorSubProcessorChanges.organizationId, ctx.user!.orgId)
         ));
       if (!change) throw new TRPCError({ code: 'NOT_FOUND', message: 'Sub-processor change record not found' });
 
@@ -598,7 +663,7 @@ export const vendorsRouter = router({
         .set({
           status: input.status,
           notes: input.notes || null,
-          reviewedBy: ctx.user.id,
+          reviewedBy: ctx.user!.id,
           reviewedAt: new Date()
         })
         .where(eq(vendorSubProcessorChanges.id, input.changeId))
@@ -627,7 +692,7 @@ export const vendorsRouter = router({
         organizationVendorIncidentAlerts,
         and(
           eq(organizationVendorIncidentAlerts.incidentId, vendorIncidents.id),
-          eq(organizationVendorIncidentAlerts.organizationId, ctx.user.orgId)
+          eq(organizationVendorIncidentAlerts.organizationId, ctx.user!.orgId)
         )
       )
       .leftJoin(users, eq(organizationVendorIncidentAlerts.acknowledgedBy, users.id))
@@ -657,13 +722,14 @@ export const vendorsRouter = router({
       const list = await ctx.db.select()
         .from(organizationVendorIncidentAlerts)
         .where(and(
-          eq(organizationVendorIncidentAlerts.organizationId, ctx.user.orgId),
+          eq(organizationVendorIncidentAlerts.organizationId, ctx.user!.orgId),
           eq(organizationVendorIncidentAlerts.status, 'unread')
         ));
       return { count: list.length };
     }),
 
   reviewIncidentAlert: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       alertId: z.string().uuid(),
       status: z.enum(['unread', 'acknowledged', 'action_taken', 'dismissed']),
@@ -674,7 +740,7 @@ export const vendorsRouter = router({
         .from(organizationVendorIncidentAlerts)
         .where(and(
           eq(organizationVendorIncidentAlerts.id, input.alertId),
-          eq(organizationVendorIncidentAlerts.organizationId, ctx.user.orgId)
+          eq(organizationVendorIncidentAlerts.organizationId, ctx.user!.orgId)
         ));
       if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Alert not found' });
 
@@ -682,7 +748,7 @@ export const vendorsRouter = router({
         .set({
           status: input.status,
           actionNotes: input.actionNotes || null,
-          acknowledgedBy: ctx.user.id,
+          acknowledgedBy: ctx.user!.id,
           acknowledgedAt: new Date()
         })
         .where(eq(organizationVendorIncidentAlerts.id, input.alertId))
@@ -738,6 +804,7 @@ export const vendorsRouter = router({
     }),
 
   confirmDpaAnalysis: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       orgVendorId: z.string().uuid(),
       dpaClauseCoverage: z.record(z.boolean()),
@@ -749,7 +816,7 @@ export const vendorsRouter = router({
         .from(organizationVendors)
         .where(and(
           eq(organizationVendors.id, input.orgVendorId),
-          eq(organizationVendors.organizationId, ctx.user.orgId)
+          eq(organizationVendors.organizationId, ctx.user!.orgId)
         ));
       if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization vendor link not found' });
 
@@ -766,12 +833,13 @@ export const vendorsRouter = router({
         .returning();
 
       // Recalculate risk
-      await updateVendorRiskScore(ctx.db, ctx.user.orgId, existing.vendorId);
+      await updateVendorRiskScore(ctx.db, ctx.user!.orgId, existing.vendorId);
 
       return updated;
     }),
 
   saveDpaAnalysisDraft: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       orgVendorId: z.string().uuid(),
       dpaAiAnalysis: z.any()
@@ -781,7 +849,7 @@ export const vendorsRouter = router({
         .from(organizationVendors)
         .where(and(
           eq(organizationVendors.id, input.orgVendorId),
-          eq(organizationVendors.organizationId, ctx.user.orgId)
+          eq(organizationVendors.organizationId, ctx.user!.orgId)
         ));
       if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization vendor link not found' });
 
@@ -803,12 +871,13 @@ export const vendorsRouter = router({
         .from(vendorQuestionnaires)
         .where(and(
           eq(vendorQuestionnaires.orgVendorId, input.orgVendorId),
-          eq(vendorQuestionnaires.organizationId, ctx.user.orgId)
+          eq(vendorQuestionnaires.organizationId, ctx.user!.orgId)
         ))
         .orderBy(desc(vendorQuestionnaires.createdAt));
     }),
 
   createQuestionnaire: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       orgVendorId: z.string().uuid(),
       questions: z.array(z.object({
@@ -823,13 +892,13 @@ export const vendorsRouter = router({
         .from(organizationVendors)
         .where(and(
           eq(organizationVendors.id, input.orgVendorId),
-          eq(organizationVendors.organizationId, ctx.user.orgId)
+          eq(organizationVendors.organizationId, ctx.user!.orgId)
         ));
       if (!orgVendor) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
 
       const [newQ] = await ctx.db.insert(vendorQuestionnaires)
         .values({
-          organizationId: ctx.user.orgId,
+          organizationId: ctx.user!.orgId,
           vendorId: orgVendor.vendorId,
           orgVendorId: input.orgVendorId,
           questions: input.questions,
@@ -842,6 +911,7 @@ export const vendorsRouter = router({
     }),
 
   confirmQuestionnaire: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       questionnaireId: z.string().uuid(),
       scoreModifier: z.number().min(-10).max(25),
@@ -853,7 +923,7 @@ export const vendorsRouter = router({
         .from(vendorQuestionnaires)
         .where(and(
           eq(vendorQuestionnaires.id, input.questionnaireId),
-          eq(vendorQuestionnaires.organizationId, ctx.user.orgId)
+          eq(vendorQuestionnaires.organizationId, ctx.user!.orgId)
         ));
       if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Questionnaire not found' });
 
@@ -871,7 +941,7 @@ export const vendorsRouter = router({
         .returning();
 
       // Recalculate risk score for this vendor
-      await updateVendorRiskScore(ctx.db, ctx.user.orgId, existing.vendorId);
+      await updateVendorRiskScore(ctx.db, ctx.user!.orgId, existing.vendorId);
 
       return updated;
     }),
@@ -934,7 +1004,7 @@ export const vendorsRouter = router({
       status: z.enum(['undocumented', 'added_to_register', 'dismissed', 'false_positive']).optional()
     }))
     .query(async ({ ctx, input }) => {
-      const conditions = [eq(vendorDiscoveries.organizationId, ctx.user.orgId)];
+      const conditions = [eq(vendorDiscoveries.organizationId, ctx.user!.orgId)];
       if (input.status) {
         conditions.push(eq(vendorDiscoveries.status, input.status));
       }
@@ -979,18 +1049,19 @@ export const vendorsRouter = router({
       })
       .from(vendorDiscoveries)
       .where(and(
-        eq(vendorDiscoveries.organizationId, ctx.user.orgId),
+        eq(vendorDiscoveries.organizationId, ctx.user!.orgId),
         eq(vendorDiscoveries.status, 'undocumented')
       ));
       return result?.count || 0;
     }),
 
   triggerDiscoveryScan: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       websiteUrl: z.string().url().optional()
     }))
     .mutation(async ({ ctx, input }) => {
-      const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, ctx.user.orgId));
+      const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, ctx.user!.orgId));
       if (!org) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization not found' });
 
       const websiteUrl = input.websiteUrl || (org.settings as any)?.websiteUrl || `https://${org.slug}.com`;
@@ -1004,7 +1075,7 @@ export const vendorsRouter = router({
 
       if (vendorJobsQueue) {
         await vendorJobsQueue.add('vendor-discovery', {
-          organizationId: ctx.user.orgId,
+          organizationId: ctx.user!.orgId,
           domain,
           websiteUrl
         });
@@ -1014,6 +1085,7 @@ export const vendorsRouter = router({
     }),
 
   dismissDiscovery: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       id: z.string().uuid()
     }))
@@ -1021,18 +1093,19 @@ export const vendorsRouter = router({
       const [updated] = await ctx.db.update(vendorDiscoveries)
         .set({
           status: 'dismissed',
-          resolvedBy: ctx.user.id,
+          resolvedBy: ctx.user!.id,
           resolvedAt: new Date()
         })
         .where(and(
           eq(vendorDiscoveries.id, input.id),
-          eq(vendorDiscoveries.organizationId, ctx.user.orgId)
+          eq(vendorDiscoveries.organizationId, ctx.user!.orgId)
         ))
         .returning();
       return updated;
     }),
 
   confirmDiscovery: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       id: z.string().uuid(),
       vendorId: z.string().uuid().optional(),
@@ -1045,7 +1118,7 @@ export const vendorsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const [discovery] = await ctx.db.select().from(vendorDiscoveries).where(and(
         eq(vendorDiscoveries.id, input.id),
-        eq(vendorDiscoveries.organizationId, ctx.user.orgId)
+        eq(vendorDiscoveries.organizationId, ctx.user!.orgId)
       ));
       if (!discovery) throw new TRPCError({ code: 'NOT_FOUND', message: 'Discovery record not found' });
 
@@ -1058,7 +1131,7 @@ export const vendorsRouter = router({
           category: input.customVendorData.category || 'Other',
           isGlobal: false,
           isAutoDiscovered: true,
-          organizationId: ctx.user.orgId
+          organizationId: ctx.user!.orgId
         }).returning();
 
         if (!newVendor) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create custom vendor' });
@@ -1071,7 +1144,7 @@ export const vendorsRouter = router({
 
       // Check if already linked
       const [existingLink] = await ctx.db.select().from(organizationVendors).where(and(
-        eq(organizationVendors.organizationId, ctx.user.orgId),
+        eq(organizationVendors.organizationId, ctx.user!.orgId),
         eq(organizationVendors.vendorId, finalVendorId)
       ));
 
@@ -1086,20 +1159,20 @@ export const vendorsRouter = router({
         );
 
         const [newLink] = await ctx.db.insert(organizationVendors).values({
-          organizationId: ctx.user.orgId,
+          organizationId: ctx.user!.orgId,
           vendorId: finalVendorId,
           dpaStatus: 'not_started',
           riskScore: score,
           riskLevel: level,
           riskFactors: factors,
           lastRiskAssessment: new Date(),
-          addedBy: ctx.user.id
+          addedBy: ctx.user!.id
         }).returning();
         if (!newLink) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Insert returned no row.' });
 
         if (orgEmbeddingsQueue) {
           await orgEmbeddingsQueue.add('embed-vendor', {
-            orgId: ctx.user.orgId,
+            orgId: ctx.user!.orgId,
             entityType: 'vendor',
             entityId: newLink.id,
             action: 'upsert'
@@ -1111,7 +1184,7 @@ export const vendorsRouter = router({
         .set({
           status: 'added_to_register',
           matchedVendorId: finalVendorId,
-          resolvedBy: ctx.user.id,
+          resolvedBy: ctx.user!.id,
           resolvedAt: new Date()
         })
         .where(eq(vendorDiscoveries.id, input.id))
@@ -1121,6 +1194,7 @@ export const vendorsRouter = router({
     }),
 
   verifyVendorProfile: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       vendorId: z.string().uuid()
     }))
@@ -1129,11 +1203,11 @@ export const vendorsRouter = router({
         .set({
           isAutoDiscovered: false,
           lastVerifiedAt: new Date(),
-          verifiedBy: ctx.user.id
+          verifiedBy: ctx.user!.id
         })
         .where(and(
           eq(vendors.id, input.vendorId),
-          eq(vendors.organizationId, ctx.user.orgId)
+          eq(vendors.organizationId, ctx.user!.orgId)
         ))
         .returning();
 
