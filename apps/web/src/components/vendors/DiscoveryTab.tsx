@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/Toast';
+import { useTranslations } from 'next-intl';
 
 // Mirrors the category palette in the consent Coverage panel, so the same category
 // reads the same way in both places.
@@ -23,6 +24,7 @@ const CONSENT_CATEGORY_STYLES: Record<string, string> = {
 
 export function DiscoveryTab() {
   const toast = useToast();
+  const t = useTranslations('vendors.discovery');
   const utils = trpc.useUtils();
   const [subTab, setSubTab] = useState<'inbox' | 'archive'>('inbox');
   const [scanUrl, setScanUrl] = useState('');
@@ -55,7 +57,7 @@ export function DiscoveryTab() {
     try {
       await triggerMutation.mutateAsync({ websiteUrl: scanUrl || undefined });
       setScanUrl('');
-      toast('Discovery scan queued', { description: 'Results appear in the inbox in a few minutes.' });
+      toast(t('scan.queued'), { description: t('scan.queued_detail') });
     } catch (e: any) {
       setScanError(e.message || "Failed to start discovery scan.");
     } finally {
@@ -69,7 +71,7 @@ export function DiscoveryTab() {
       utils.vendors.getDiscoveries.invalidate();
       utils.vendors.getOrgVendors.invalidate();
     } catch (e: any) {
-      toast('Could not confirm the vendor', { tone: 'error', description: e.message });
+      toast(t('errors.confirm'), { tone: 'error', description: e.message });
     }
   };
 
@@ -96,7 +98,7 @@ export function DiscoveryTab() {
       utils.vendors.getDiscoveries.invalidate();
       utils.vendors.getOrgVendors.invalidate();
     } catch (e: any) {
-      toast('Could not create the vendor', { tone: 'error', description: e.message });
+      toast(t('errors.create'), { tone: 'error', description: e.message });
     }
   };
 
@@ -105,7 +107,7 @@ export function DiscoveryTab() {
       await dismissMutation.mutateAsync({ id });
       utils.vendors.getDiscoveries.invalidate();
     } catch (e: any) {
-      toast('Could not dismiss the finding', { tone: 'error', description: e.message });
+      toast(t('errors.dismiss'), { tone: 'error', description: e.message });
     }
   };
 
@@ -117,10 +119,10 @@ export function DiscoveryTab() {
         <div className="space-y-1 max-w-lg">
           <h3 className="font-semibold text-[#F4F5F6] text-[15px] flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[#C9A227]" />
-            Trigger Website & DNS Discovery Scan
+            {t('scan.title')}
           </h3>
           <p className="text-[13px] text-[#6E747A] leading-relaxed">
-            Scan your public site for tracking scripts, pixels, CDNs, and MX/SPF records to discover undocumented shadow IT.
+            {t('scan.subtitle')}
           </p>
         </div>
         <div className="flex flex-col gap-2 shrink-0 w-full md:w-auto">
@@ -138,7 +140,7 @@ export function DiscoveryTab() {
               className="shrink-0"
             >
               {isScanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-              Scan Website
+              {t('scan.button')}
             </Button>
           </div>
           {scanError && <p className="text-[11px] text-rose-600 font-semibold">{scanError}</p>}
@@ -157,7 +159,7 @@ export function DiscoveryTab() {
               className={`py-4 px-0 h-auto rounded-none text-xs font-semibold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${subTab === 'inbox' ? 'border-[#C9A227] text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-transparent'}`}
             >
               <Inbox className="w-4 h-4" />
-              Actionable Inbox
+              {t('tabs.inbox')}
             </Button>
             <Button
               variant="ghost"
@@ -165,11 +167,11 @@ export function DiscoveryTab() {
               className={`py-4 px-0 h-auto rounded-none text-xs font-semibold uppercase tracking-wider border-b-2 flex items-center gap-1.5 transition-colors ${subTab === 'archive' ? 'border-[#C9A227] text-[#C9A227] hover:text-[#C9A227] hover:bg-transparent' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-transparent'}`}
             >
               <Archive className="w-4 h-4" />
-              Scan Logs & Archive
+              {t('tabs.archive')}
             </Button>
           </div>
           <span className="text-[10px] text-[#6E747A] font-bold uppercase tracking-widest">
-            {displayDiscoveries.length} items
+            {t('item_count', { count: displayDiscoveries.length })}
           </span>
         </div>
 
@@ -177,11 +179,11 @@ export function DiscoveryTab() {
         {listLoading ? (
           <div className="p-12 text-center text-xs text-[#6E747A] flex items-center justify-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin text-[#C9A227]" />
-            Loading scan details...
+            {t('loading')}
           </div>
         ) : displayDiscoveries.length === 0 ? (
           <div className="p-16 text-center text-xs text-[#6E747A]">
-            No discoveries logged in this view.
+            {t('empty')}
           </div>
         ) : (
           <div className="divide-y divide-ink-900/5">
@@ -193,14 +195,14 @@ export function DiscoveryTab() {
                   matchBadge = (
                     <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      Global Registry Match
+                      {t('badges.registry_match')}
                     </span>
                   );
                 } else {
                   matchBadge = (
                     <span className="inline-flex items-center gap-1 bg-amber-500/10 border border-amber-900/50 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
                       <HelpCircle className="w-3 h-3 text-amber-400" />
-                      Unrecognized Domain
+                      {t('badges.unrecognised')}
                     </span>
                   );
                 }
@@ -213,7 +215,7 @@ export function DiscoveryTab() {
                 }
                 matchBadge = (
                   <span className={`inline-flex items-center gap-1 border text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${badgeStyle}`}>
-                    {discovery.status.replace(/_/g, ' ')}
+                    {t(`status.${discovery.status}`)}
                   </span>
                 );
               }
@@ -238,11 +240,11 @@ export function DiscoveryTab() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-xs text-[#6E747A] capitalize">
-                          Source: {discovery.discoveryMethod.replace('_', ' ')}
+                          {t('source', { method: t(`methods.${discovery.discoveryMethod}`) })}
                         </span>
                         <span className="text-[#6E747A] text-xs">|</span>
                         <span className="text-xs text-[#6E747A]">
-                          First seen: {new Date(discovery.firstDetectedAt).toLocaleDateString()}
+                          {t('first_seen', { when: new Date(discovery.firstDetectedAt).toLocaleDateString() })}
                         </span>
                         <span className="text-[#6E747A] text-xs">|</span>
                         {matchBadge}
@@ -257,9 +259,9 @@ export function DiscoveryTab() {
                               className={`inline-flex items-center gap-1 border text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                                 CONSENT_CATEGORY_STYLES[tracker.requiredCategory] ?? CONSENT_CATEGORY_STYLES.default
                               }`}
-                              title={`${tracker.provider} requires consent for "${tracker.requiredCategory}" before it may run.`}
+                              title={t('consent_tooltip', { provider: tracker.provider, category: tracker.requiredCategory })}
                             >
-                              Needs {tracker.requiredCategory} consent
+                              {t('needs_consent', { category: tracker.requiredCategory })}
                             </span>
                           </>
                         )}
@@ -274,7 +276,7 @@ export function DiscoveryTab() {
                         size="icon"
                         onClick={() => handleDismiss(discovery.id)}
                         className="text-[#6E747A] hover:text-[#F4F5F6] hover:bg-white/5 transition-colors border border-white/10"
-                        title="Dismiss / Ignore"
+                        title={t('dismiss')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -282,7 +284,7 @@ export function DiscoveryTab() {
                         <Button
                           onClick={() => handleConfirmGlobal(discovery.id, matchedVendor.id)}
                         >
-                          Link {matchedVendor.name}
+                          {t('link_vendor', { name: matchedVendor.name })}
                         </Button>
                       ) : (
                         <Button
@@ -290,7 +292,7 @@ export function DiscoveryTab() {
                           onClick={() => handleOpenCustomModal({ discovery })}
                           className="bg-indigo-500/10 text-indigo-400 border-indigo-900/50 hover:bg-indigo-500/15 hover:text-indigo-300"
                         >
-                          Add Custom Vendor
+                          {t('add_custom')}
                         </Button>
                       )}
                     </div>
@@ -307,7 +309,7 @@ export function DiscoveryTab() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#0D0F11] border border-white/10 rounded-2xl w-full max-w-[450px] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-white/10 flex justify-between items-center">
-              <h3 className="font-serif text-lg text-[#F4F5F6]">Add Discovered Vendor</h3>
+              <h3 className="font-serif text-lg text-[#F4F5F6]">{t('modal.title')}</h3>
               <Button
                 variant="ghost" 
                 onClick={() => { setIsCustomModalOpen(false); setSelectedDiscovery(null); }} 
@@ -318,7 +320,7 @@ export function DiscoveryTab() {
             </div>
             <div className="p-6 space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#6E747A] uppercase tracking-wider">Service Name</label>
+                <label className="text-xs font-bold text-[#6E747A] uppercase tracking-wider">{t('modal.service_name')}</label>
                 <Input
                   type="text"
                   value={customName}
@@ -326,7 +328,7 @@ export function DiscoveryTab() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#6E747A] uppercase tracking-wider">Domain (Website)</label>
+                <label className="text-xs font-bold text-[#6E747A] uppercase tracking-wider">{t('modal.domain')}</label>
                 <Input
                   type="text"
                   value={selectedDiscovery.discovery.detectedDomain}
@@ -334,7 +336,7 @@ export function DiscoveryTab() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#6E747A] uppercase tracking-wider">Category</label>
+                <label className="text-xs font-bold text-[#6E747A] uppercase tracking-wider">{t('modal.category')}</label>
                 <Select
                   value={customCategory}
                   onValueChange={(val) => setCustomCategory(val)}
@@ -343,12 +345,12 @@ export function DiscoveryTab() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Analytics">Analytics</SelectItem>
-                    <SelectItem value="Marketing">Marketing</SelectItem>
-                    <SelectItem value="Hosting">Hosting / Infrastructure</SelectItem>
-                    <SelectItem value="Customer Support">Customer Support</SelectItem>
-                    <SelectItem value="HR / Payroll">HR / Payroll</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="Analytics">{t('categories.analytics')}</SelectItem>
+                    <SelectItem value="Marketing">{t('categories.marketing')}</SelectItem>
+                    <SelectItem value="Hosting">{t('categories.hosting')}</SelectItem>
+                    <SelectItem value="Customer Support">{t('categories.support')}</SelectItem>
+                    <SelectItem value="HR / Payroll">{t('categories.hr')}</SelectItem>
+                    <SelectItem value="Other">{t('categories.other')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -356,8 +358,8 @@ export function DiscoveryTab() {
               <div className="bg-amber-500/10 border border-amber-900/50 text-amber-300 rounded-xl p-3.5 text-xs flex gap-2.5 leading-relaxed">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                 <div>
-                  <span className="font-bold block mb-0.5">Profile Verification Warning</span>
-                  This vendor will be added as a custom profile marked as auto-discovered. You will be prompted to complete their data locations and certifications inside their details page.
+                  <span className="font-bold block mb-0.5">{t('modal.warning_title')}</span>
+                  {t('modal.warning_body')}
                 </div>
               </div>
             </div>
@@ -366,12 +368,12 @@ export function DiscoveryTab() {
                 variant="outline"
                 onClick={() => { setIsCustomModalOpen(false); setSelectedDiscovery(null); }}
               >
-                Cancel
+                {t('modal.cancel')}
               </Button>
               <Button
                 onClick={handleConfirmCustom}
               >
-                Create and Link
+                {t('modal.submit')}
               </Button>
             </div>
           </div>

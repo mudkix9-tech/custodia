@@ -465,7 +465,7 @@ is enabled.
 | **D23** | No `groundingMetadata` captured — the audit trail is discarded where it is produced | `gather-vendors.ts` **[C]** |
 | **D24** | TIA update path with `status:'completed'` does not set `organizationVendors.tiaCompleted`; only the insert path does | `routers/tia.ts:100–130` **[V]** |
 | **D25** | TIA save drops all six EDPB Step 1 fields and both Step 6 fields the schema models | `routers/tia.ts` Zod input vs `schema.ts:1631–1646` **[C]** |
-| **D26** | `organizationVendors.transferMechanisms` is read by the risk engine and does not exist | `vendorRisk.ts:79` vs `schema.ts:1365+` **[V]** |
+| **D26** | `organizationVendors.transferMechanisms` is read by the risk engine *and by the third-country gap rule* and does not exist; only `vendors` has the column | `vendorRisk.ts:79`, `gapRules.ts:229` vs `schema.ts:1333`, `:1365+` **[V]** |
 | **D27** | `recalculateVendorRiskForAllOrgs` matches `vendorAssessments.vendorId` against the global vendor id; the column FKs `organizationVendors.id` | `vendors.ts:113`, `schema.ts:1462` **[V]** |
 | **D28** | `aliases` never seeded | `seed-vendors.ts` (0 occurrences) **[V]** |
 | **D29** | `vendors.riskScore` never populated; `getPrivacyAlternatives` sorts by it and `AlternativesSection` displays it | `vendors.ts:734`, `AlternativesSection.tsx` **[V]** |
@@ -579,6 +579,15 @@ can never fire (D3).
 ## Week 1 — stop the bleeding
 
 Every item is under a day; several are one line. This list alone closes seven P0s.
+
+**D6 is the exception, and the omission is deliberate.** It is filed P0-live above —
+a vendor self-attesting favourably lowers its own risk rating before any DPO sees it —
+but the fix is a human review step before an assessment score moves the register, which
+is a workflow with a UI and belongs in Weeks 2–6. Suppressing `scoreAdjustment` on its
+own would be a one-line Week 1 change and is worth taking if the questionnaire ships to
+customers before that review step does; leaving both undone is the thing not to do
+quietly. Recorded here because a P0 that appears in no sprint is how a register loses
+its authority.
 
 | Fix | Effort |
 |---|---|

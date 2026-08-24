@@ -265,6 +265,19 @@ export const requirePlatformAdmin = () => {
   });
 };
 
+/**
+ * Default grants per built-in role. A custom role can override these per
+ * resource/action; an explicit deny in `user.permissions` beats everything.
+ *
+ * `vendors:manage` is deliberately absent from every list below. It gates the
+ * platform-operator action on the global incident feed (`vendors.publishIncident`,
+ * which fans an alert out to every tenant subscribed to a vendor), so it resolves
+ * to owner-only through `*:*` until a real platform-admin role exists. That is
+ * intended, not an omission -- do not "fix" it by adding it to `admin`, and do
+ * not copy the string onto a tenant-facing procedure, which wants
+ * `vendors:edit`. Any action named here but granted to nobody should carry the
+ * same note.
+ */
 export const ROLE_PERMISSION_DEFAULTS: Record<string, string[]> = {
   owner: ['*:*'], // everything
   admin: [

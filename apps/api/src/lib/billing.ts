@@ -2,16 +2,13 @@ import { db } from '../db.js';
 import { users, processingActivities, organizationVendors, dpias, consentDomains, organizations } from 'db';
 import { eq, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import { TIER_LIMITS, isNewAiWindow, aiWindowReset } from '../constants/aiQuota.js';
 
-export const TIER_LIMITS = {
-  // Legacy mapping (just in case they somehow exist or sneak in)
-  free: { users: Infinity, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: 50, ai: 2000, customBranding: true, sso: false },
-  starter: { users: Infinity, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: 50, ai: 2000, customBranding: true, sso: false },
-  agency: { users: Infinity, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: 50, ai: 2000, customBranding: true, sso: false },
-  // Active Tiers
-  professional: { users: Infinity, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: 50, ai: 2000, customBranding: true, sso: false },
-  enterprise: { users: Infinity, ropa: Infinity, vendors: Infinity, dpia: Infinity, domains: Infinity, ai: Infinity, customBranding: true, sso: true },
-};
+// The plan table and the monthly window rules live in constants/aiQuota.ts so
+// they can be reached by the standalone fixtures -- this file imports db.js,
+// which throws on import without DATABASE_URL. Re-exported so existing importers
+// of TIER_LIMITS are unaffected.
+export { TIER_LIMITS, isNewAiWindow, aiWindowReset } from '../constants/aiQuota.js';
 
 export type ResourceType = 'users' | 'ropa' | 'vendors' | 'dpia' | 'domains' | 'ai';
 
@@ -115,13 +112,11 @@ export async function trackAiUsage(orgId: string, tokensOrQueries = 1, tx?: any)
     const lastReset = org.aiLastResetAt ? new Date(org.aiLastResetAt) : now;
     let currentUsage = org.aiQueriesUsed || 0;
 
-    if (
-      lastReset.getMonth() !== now.getMonth() ||
-      lastReset.getFullYear() !== now.getFullYear()
-    ) {
+    if (isNewAiWindow(lastReset, now)) {
       currentUsage = 0;
+      // Both counters, because both hang off aiLastResetAt -- see isNewAiWindow.
       await txn.update(organizations)
-        .set({ aiQueriesUsed: 0, aiLastResetAt: now })
+        .set(aiWindowReset(now))
         .where(eq(organizations.id, orgId));
     }
 

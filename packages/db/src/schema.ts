@@ -1384,6 +1384,14 @@ export const organizationVendors = pgTable('organization_vendors', {
   processingActivities: jsonb('processing_activities').default([]),
   purpose: text('purpose'),
   usingEuHosting: boolean('using_eu_hosting').default(false),
+  // The safeguard THIS organisation relies on, which is not always the one the
+  // shared catalogue records: an org may have signed its own SCCs, or know of a
+  // DPF certification the catalogue has not caught up with. `lib/vendorRisk.ts`
+  // and the third-country gap rule have unioned this with `vendors.transfer_mechanisms`
+  // since they were written -- against a column that did not exist, so the org
+  // half was always empty and an org that had closed its Art. 44 gap still saw
+  // it reported (audit D26).
+  transferMechanisms: jsonb('transfer_mechanisms').$type<string[]>().default([]),
   
   riskScore: integer('risk_score').default(0).notNull(),
   riskLevel: varchar('risk_level', { length: 20 }),

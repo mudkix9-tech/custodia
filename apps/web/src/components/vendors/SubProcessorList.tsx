@@ -5,12 +5,29 @@ import { trpc } from '@/utils/trpc';
 import { Network, Plus, Trash2, ShieldCheck, AlertTriangle, Link as LinkIcon, Search, Calendar, Check, X, ChevronDown, ChevronUp, AlertOctagon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { useToast } from '@/components/ui/Toast';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 
-export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; orgVendorId: string }) {
+/**
+ * `catalogueOwned` says whether this organisation owns the vendor row itself --
+ * i.e. it is a custom vendor it created, not a shared catalogue entry.
+ *
+ * The sub-processor table hangs off the *global* vendor, so a write to it moves
+ * every tenant's derived risk score. The API therefore refuses `addLinked` /
+ * `addUnlinked` / `remove` for anything this org does not own. Rendering the
+ * controls anyway meant clicking "Add Sub-processor" on AWS returned
+ * "Parent vendor not found" about a vendor plainly on the screen, so the
+ * controls are hidden here and the reason is stated instead of guessed at.
+ *
+ * For a catalogue vendor the list is maintained by the change detector against
+ * the vendor's own published page, which is what Article 28(2) actually asks
+ * about; a per-organisation override table is the real fix and is not built yet.
+ */
+export function SubProcessorList({ vendorId, orgVendorId, catalogueOwned }: { vendorId: string; orgVendorId: string; catalogueOwned: boolean }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -38,15 +55,29 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
   const addUnlinkedMutation = trpc.vendors.subProcessors.addUnlinked.useMutation();
   const removeMutation = trpc.vendors.subProcessors.remove.useMutation();
   const { confirm, dialog } = useConfirm();
+  const toast = useToast();
+  const t = useTranslations('vendors.sub_processors');
   const utils = trpc.useUtils();
 
-  if (isLoading) return <div className="p-8 text-[#6E747A]">Loading sub-processors...</div>;
+  if (isLoading) return <div className="p-8 text-[#6E747A]">{t('loading')}</div>;
 
+  // Both mutations are refused by the API for a vendor this organisation does not
+  // own. The controls are hidden in that case, so these catches are a backstop
+  // rather than the path -- but an unhandled rejection here is a modal that stays
+  // open having silently done nothing.
   const handleAdd = async () => {
-    if (addMode === 'linked') {
-      await addLinkedMutation.mutateAsync({ parentVendorId: vendorId, subProcessorVendorId: selectedSubProcessorId });
-    } else {
-      await addUnlinkedMutation.mutateAsync({ parentVendorId: vendorId, name: manualName, country: manualCountry });
+    try {
+      if (addMode === 'linked') {
+        await addLinkedMutation.mutateAsync({ parentVendorId: vendorId, subProcessorVendorId: selectedSubProcessorId });
+      } else {
+        await addUnlinkedMutation.mutateAsync({ parentVendorId: vendorId, name: manualName, country: manualCountry });
+      }
+    } catch (err: unknown) {
+      toast(t('errors.add_failed'), {
+        tone: 'error',
+        description: err instanceof Error ? err.message : undefined,
+      });
+      return;
     }
     setShowAddModal(false);
     setSelectedSubProcessorId('');
@@ -55,7 +86,15 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
   };
 
   const handleRemove = async (id: string) => {
-    await removeMutation.mutateAsync({ id });
+    try {
+      await removeMutation.mutateAsync({ id });
+    } catch (err: unknown) {
+      toast(t('errors.remove_failed'), {
+        tone: 'error',
+        description: err instanceof Error ? err.message : undefined,
+      });
+      return;
+    }
     utils.vendors.subProcessors.list.invalidate({ parentVendorId: vendorId });
   };
 
@@ -63,26 +102,32 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-serif text-[#F4F5F6] mb-1">Sub-processors Chain</h3>
-          <p className="text-[14px] text-[#9BA1A6]">Track third-party vendors used by this vendor to process your data.</p>
+          <h3 className="text-xl font-serif text-[#F4F5F6] mb-1">{t('title')}</h3>
+          <p className="text-[14px] text-[#9BA1A6]">{t('subtitle')}</p>
         </div>
-        <Button 
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Sub-processor
-        </Button>
+        {catalogueOwned ? (
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            {t('add')}
+          </Button>
+        ) : (
+          <div className="max-w-xs text-right text-[12px] text-[#6E747A] leading-relaxed">
+            {t('catalogue_note')}
+          </div>
+        )}
       </div>
 
       <div className="bg-[#0D0F11] border border-white/10 rounded-2xl overflow-hidden shadow-panel-elevated">
         <table className="w-full text-left text-sm">
           <thead className="bg-[#08090A] text-[#6E747A] border-b border-white/10">
             <tr>
-              <th className="px-6 py-3 font-medium">Sub-processor</th>
-              <th className="px-6 py-3 font-medium">Jurisdiction</th>
-              <th className="px-6 py-3 font-medium">Risk Status</th>
-              <th className="px-6 py-3 font-medium">Added</th>
+              <th className="px-6 py-3 font-medium">{t('col_name')}</th>
+              <th className="px-6 py-3 font-medium">{t('col_jurisdiction')}</th>
+              <th className="px-6 py-3 font-medium">{t('col_risk')}</th>
+              <th className="px-6 py-3 font-medium">{t('col_added')}</th>
               <th className="px-6 py-3"></th>
             </tr>
           </thead>
@@ -91,7 +136,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-[#6E747A]">
                   <Network className="w-12 h-12 text-[#6E747A] mx-auto mb-3" />
-                  <p>No sub-processors recorded.</p>
+                  <p>{t('empty')}</p>
                 </td>
               </tr>
             ) : (
@@ -105,23 +150,23 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                       <div>
                         <div className="font-medium text-[#F4F5F6] flex items-center gap-2">
                           {sp.vendorData?.name || sp.name}
-                          {sp.vendorData && <span title="Linked to Global Database"><LinkIcon className="w-3 h-3 text-sage-500" /></span>}
+                          {sp.vendorData && <span title={t('linked_title')}><LinkIcon className="w-3 h-3 text-sage-500" /></span>}
                         </div>
-                        <div className="text-xs text-[#6E747A]">{sp.purpose || 'General processing'}</div>
+                        <div className="text-xs text-[#6E747A]">{sp.purpose || t('purpose_default')}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-[#9BA1A6]">
-                    {sp.vendorData?.headquartersCountry || sp.country || 'Unknown'}
+                    {sp.vendorData?.headquartersCountry || sp.country || t('unknown_country')}
                   </td>
                   <td className="px-6 py-4">
                     {sp.vendorData ? (
                       <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30">
-                        <ShieldCheck className="w-3.5 h-3.5" /> Database Match
+                        <ShieldCheck className="w-3.5 h-3.5" /> {t('database_match')}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-900/50">
-                        <AlertTriangle className="w-3.5 h-3.5" /> Unlisted Vendor
+                        <AlertTriangle className="w-3.5 h-3.5" /> {t('unlisted_vendor')}
                       </span>
                     )}
                   </td>
@@ -129,14 +174,16 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                     {format(new Date(sp.addedAt!), 'MMM d, yyyy')}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Button 
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemove(sp.id)}
-                      className="text-[#6E747A] hover:text-red-500 hover:bg-transparent transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {catalogueOwned && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemove(sp.id)}
+                        className="text-[#6E747A] hover:text-red-500 hover:bg-transparent transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))
@@ -149,8 +196,8 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 backdrop-blur-sm">
           <div className="bg-[#0D0F11] rounded-2xl shadow-panel-elevated w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-white/10">
-              <h3 className="text-xl font-serif text-[#F4F5F6]">Add Sub-processor</h3>
-              <p className="text-sm text-[#6E747A] mt-1">Connect a third-party vendor handling data for this service.</p>
+              <h3 className="text-xl font-serif text-[#F4F5F6]">{t('modal.title')}</h3>
+              <p className="text-sm text-[#6E747A] mt-1">{t('modal.subtitle')}</p>
             </div>
             
             <div className="flex border-b border-white/10 bg-[#08090A]">
@@ -159,14 +206,14 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                 onClick={() => setAddMode('linked')}
                 className={`flex-1 rounded-none px-4 py-3 h-auto text-sm font-medium transition-colors ${addMode === 'linked' ? 'bg-[#0D0F11] text-[#C9A227] border-b-2 border-[#C9A227] hover:bg-[#0D0F11] hover:text-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
               >
-                Search Database
+                {t('modal.tab_search')}
               </Button>
               <Button 
                 variant="ghost"
                 onClick={() => setAddMode('unlinked')}
                 className={`flex-1 rounded-none px-4 py-3 h-auto text-sm font-medium transition-colors ${addMode === 'unlinked' ? 'bg-[#0D0F11] text-[#C9A227] border-b-2 border-[#C9A227] hover:bg-[#0D0F11] hover:text-[#C9A227]' : 'text-[#6E747A] hover:text-[#F4F5F6]'}`}
               >
-                Manual Entry
+                {t('modal.tab_manual')}
               </Button>
             </div>
 
@@ -177,7 +224,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                     <Search className="w-5 h-5 text-[#6E747A] absolute left-3 top-1/2 -translate-y-1/2 z-10" />
                     <Input 
                       type="text" 
-                      placeholder="Search global vendor database..." 
+                      placeholder={t('modal.search_placeholder')} 
                       className="w-full pl-10 pr-4"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
@@ -196,7 +243,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                         />
                         <div>
                           <div className="font-medium text-[#F4F5F6] text-sm">{v.name}</div>
-                          <div className="text-xs text-[#6E747A]">{v.headquartersCountry || 'Unknown location'}</div>
+                          <div className="text-xs text-[#6E747A]">{v.headquartersCountry || t('modal.unknown_location')}</div>
                         </div>
                       </label>
                     ))}
@@ -205,10 +252,10 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
               ) : (
                 <div className="space-y-4">
                   <div className="bg-amber-500/10 text-amber-300 text-xs p-3 rounded-lg border border-amber-900/50">
-                    Use manual entry only if the vendor doesn't exist in our global database. Manual sub-processors do not receive automated risk scores.
+                    {t('modal.manual_warning')}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Company Name</label>
+                    <label className="block text-sm font-medium text-[#F4F5F6] mb-1">{t('modal.company_name')}</label>
                     <Input 
                       type="text" 
                       value={manualName}
@@ -216,7 +263,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#F4F5F6] mb-1">Country Code (e.g., US, IE)</label>
+                    <label className="block text-sm font-medium text-[#F4F5F6] mb-1">{t('modal.country_code')}</label>
                     <Input 
                       type="text" 
                       maxLength={2}
@@ -235,13 +282,13 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                 onClick={() => setShowAddModal(false)}
                 className="text-[#9BA1A6] hover:text-[#F4F5F6]"
               >
-                Cancel
+                {t('modal.cancel')}
               </Button>
               <Button 
                 onClick={handleAdd}
                 disabled={addMode === 'linked' ? !selectedSubProcessorId : !manualName}
               >
-                Add Sub-processor
+                {t('modal.submit')}
               </Button>
             </div>
           </div>
@@ -251,13 +298,13 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
       {/* Timeline Section */}
       <div className="mt-12 border-t border-white/10 pt-8 space-y-6">
         <div>
-          <h3 className="text-xl font-serif text-[#F4F5F6] mb-1">Sub-processor Change History</h3>
-          <p className="text-[14px] text-[#9BA1A6]">Track and respond to changes detected on the public sub-processor webpage of this vendor.</p>
+          <h3 className="text-xl font-serif text-[#F4F5F6] mb-1">{t('history.title')}</h3>
+          <p className="text-[14px] text-[#9BA1A6]">{t('history.subtitle')}</p>
         </div>
 
         {changes?.length === 0 ? (
           <div className="bg-[#08090A]/50 border border-white/5 rounded-xl p-6 text-center text-[#6E747A] text-sm">
-            No changes have been detected or recorded for this vendor.
+            {t('history.empty')}
           </div>
         ) : (
           <div className="relative pl-6 border-l border-white/10 space-y-8">
@@ -284,18 +331,18 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                       <div className="space-y-1">
                         <div className="flex items-center gap-3">
                           <span className="font-semibold text-[#F4F5F6] text-[15px]">
-                            Change Detected
+                            {t('change.detected')}
                           </span>
                           <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border
                             ${ch.status === 'pending_review' ? 'bg-amber-500/10 text-amber-400 border-amber-900/50' :
                               ch.status === 'acknowledged' ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30' :
                               'bg-red-500/10 text-red-400 border-red-900/50'}`}
                           >
-                            {ch.status.replace('_', ' ')}
+                            {t(`change.status.${ch.status}`)}
                           </span>
                         </div>
                         <div className="text-[12px] text-[#6E747A]">
-                          Detected on {format(new Date(ch.detectedAt), 'MMMM d, yyyy h:mm a')}
+                          {t('change.detected_on', { when: format(new Date(ch.detectedAt), 'MMMM d, yyyy h:mm a') })}
                         </div>
                       </div>
 
@@ -306,7 +353,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                             setReviewNotes('');
                           }}
                         >
-                          Review &amp; Respond
+                          {t('change.review')}
                         </Button>
                       )}
                     </div>
@@ -314,7 +361,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-xs font-medium text-[#6E747A] uppercase tracking-wider">
-                          Summary of Changes ({addedLines.length} additions, {removedLines.length} removals)
+                          {t('change.summary', { added: addedLines.length, removed: removedLines.length })}
                         </span>
                         <Button
                           variant="ghost"
@@ -322,9 +369,9 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                           className="flex items-center gap-1 text-xs font-medium text-[#C9A227] hover:text-[#E5C463] hover:bg-transparent transition-colors"
                         >
                           {isExpanded ? (
-                            <>Hide Changes <ChevronUp className="w-3.5 h-3.5" /></>
+                            <>{t('change.hide')} <ChevronUp className="w-3.5 h-3.5" /></>
                           ) : (
-                            <>Show Changes <ChevronDown className="w-3.5 h-3.5" /></>
+                            <>{t('change.show')} <ChevronDown className="w-3.5 h-3.5" /></>
                           )}
                         </Button>
                       </div>
@@ -333,7 +380,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                         <div className="border border-white/10 rounded-xl overflow-hidden text-xs divide-y divide-ink-900/5 bg-[#08090A]/30">
                           {addedLines.length === 0 && removedLines.length === 0 ? (
                             <div className="p-4 text-[#6E747A] italic text-center">
-                              No line additions or removals detected (boilerplate update).
+                              {t('change.no_lines')}
                             </div>
                           ) : (
                             <div className="max-h-80 overflow-y-auto font-mono space-y-2 p-4">
@@ -362,7 +409,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                         </div>
                         <div className="space-y-1">
                           <div className="font-semibold text-[#F4F5F6]">
-                            Reviewed by {ch.reviewerName} on {format(new Date(ch.reviewedAt), 'MMM d, yyyy')}
+                            {t('change.reviewed_by', { name: ch.reviewerName ?? '', when: format(new Date(ch.reviewedAt), 'MMM d, yyyy') })}
                           </div>
                           {ch.notes && <p className="italic text-[#6E747A]">"{ch.notes}"</p>}
                         </div>
@@ -381,13 +428,13 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 backdrop-blur-sm">
           <div className="bg-[#0D0F11] rounded-2xl shadow-panel-elevated w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-white/10">
-              <h3 className="text-xl font-serif text-[#F4F5F6]">Respond to Sub-processor Change</h3>
-              <p className="text-sm text-[#6E747A] mt-1">Review the detected page differences and submit your response.</p>
+              <h3 className="text-xl font-serif text-[#F4F5F6]">{t('review.title')}</h3>
+              <p className="text-sm text-[#6E747A] mt-1">{t('review.subtitle')}</p>
             </div>
 
             <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
               <div className="space-y-2">
-                <span className="text-xs font-semibold text-[#6E747A] uppercase tracking-wider block">Detected Diff Preview</span>
+                <span className="text-xs font-semibold text-[#6E747A] uppercase tracking-wider block">{t('review.diff_preview')}</span>
                 <div className="border border-white/10 rounded-xl max-h-40 overflow-y-auto font-mono text-[11px] p-3 bg-[#08090A]/30 space-y-1">
                   {(() => {
                     const oldSnapshot: string = reviewingChange.previousSnapshot || '';
@@ -400,7 +447,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                     const removed = oldLines.filter(line => !newSet.has(line));
 
                     if (added.length === 0 && removed.length === 0) {
-                      return <div className="text-[#6E747A] italic text-center p-2">Boilerplate updates only.</div>;
+                      return <div className="text-[#6E747A] italic text-center p-2">{t('review.boilerplate_only')}</div>;
                     }
                     return (
                       <>
@@ -417,10 +464,10 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-[#F4F5F6]">Review Notes</label>
+                <label className="block text-sm font-semibold text-[#F4F5F6]">{t('review.notes_label')}</label>
                 <Textarea
                   className="min-h-[96px]"
-                  placeholder="Record your assessment, e.g. 'AWS Dublin region added; complies with hosting preferences.'"
+                  placeholder={t('review.notes_placeholder')}
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
                 />
@@ -429,11 +476,9 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
               <div className="bg-amber-500/10 border border-amber-900/50 rounded-xl p-4 flex gap-3">
                 <AlertOctagon className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <h4 className="font-semibold text-amber-300 text-xs uppercase tracking-wider">DPA Objection Clause Warning</h4>
+                  <h4 className="font-semibold text-amber-300 text-xs uppercase tracking-wider">{t('review.warning_title')}</h4>
                   <p className="text-xs text-amber-300 leading-normal">
-                    Objecting to a sub-processor change is a legally significant action under GDPR.
-                    Under your DPA terms, you may have the right to terminate the agreement.
-                    Review your DPA clause coverage for termination provisions.
+                    {t('review.warning_body')}
                   </p>
                 </div>
               </div>
@@ -445,7 +490,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                 onClick={() => setReviewingChange(null)}
                 className="text-[#9BA1A6] hover:text-[#F4F5F6]"
               >
-                Cancel
+                {t('review.cancel')}
               </Button>
               <div className="flex gap-2">
                 <Button
@@ -460,7 +505,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                   }}
                   disabled={reviewMutation.isPending}
                 >
-                  Object to Change
+                  {t('review.object')}
                 </Button>
                 <Button
                   onClick={async () => {
@@ -473,7 +518,7 @@ export function SubProcessorList({ vendorId, orgVendorId }: { vendorId: string; 
                   }}
                   disabled={reviewMutation.isPending}
                 >
-                  Acknowledge Change
+                  {t('review.acknowledge')}
                 </Button>
               </div>
             </div>

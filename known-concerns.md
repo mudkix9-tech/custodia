@@ -42,6 +42,10 @@ alone. That distinction matters for deciding who owns each.
 | 13 | Sub-processor `notifiedAt` is shared across tenants | Low | Found | Open (data model) |
 | 14 | api tests: three styles, only one runs | Low | Found | Open |
 | 15 | Registry has no first-party auth-cookie patterns; every customer gets day-one noise | Medium | Found live | Open (product call) |
+| 16 | `organization_vendors` has no `transfer_mechanisms` column, but two files read one | Medium | Found | **Fixed** (migration 0050) |
+| 17 | No per-org sub-processor list; the table hangs off the shared catalogue row | Medium | Found | Open (data model) |
+| 18 | DPF certification is hand-typed in the seed with no source, date or expiry | Medium | Found | Open (P-2 provenance) |
+| 19 | Bulk `CASE` updates need explicit casts; Postgres types an all-parameter CASE as `text` | Medium | Found live | **Fixed** |
 
 Run `npm run check` from the repo root for 1, 2, 4 and 8.
 
@@ -432,6 +436,91 @@ This is a data-model bug, not an access-control one: the flag belongs on a per-o
 table. An organisation filter cannot fix it, and scoping `markNotified` to org-owned
 vendors would break the change-notification flow, which exists precisely for global
 vendors. Permission-gated for now.
+
+---
+
+## 16. `organization_vendors.transfer_mechanisms` — FIXED (migration 0050)
+
+`lib/vendorRisk.ts:79` unions the org's transfer mechanisms with the catalogue vendor's,
+and `constants/gapRules.ts` does the same in `third_country_transfer_no_safeguards`. Only
+`vendors` had the column; `organization_vendors` did not, so the org half of both unions
+was always empty and `tsc` could not see it — the values arrive as `any` off a `select()`.
+
+The consequence was not cosmetic: an organisation relying on SCCs it signed itself, or on
+a DPF certification the catalogue had not recorded, had nowhere to say so. The vendor
+scored the full 20/20 location risk and raised an Article 44 gap the org had in fact
+closed.
+
+Migration `0050_sticky_anthem` adds the column; `vendors.updateOrgVendor` accepts it,
+constrained to `constants/transferMechanisms.ts` rather than free text; and the vendor
+detail page has a control for it. **The vocabulary is the load-bearing part** — the risk
+engine matches `data_privacy_framework` exactly, so "SCCs" typed by hand scores as no
+safeguard at all. That is why both ends validate against the same list.
+
+---
+
+## 19. A bulk `CASE` update needs an explicit cast — FIXED
+
+`recalculateVendorRiskForAllOrgs` writes every organisation's recomputed score in one
+statement, as `SET risk_score = CASE id WHEN $1 THEN $2 ... END`. Every branch is a bound
+parameter, so Postgres has nothing to infer a type from, resolves the whole expression as
+`text`, and refuses the assignment:
+
+```
+column "risk_score" is of type integer but expression is of type text   (SQLSTATE 42804)
+```
+
+It threw on **every** invocation that had a row to write — which is every sub-processor
+add/remove, every questionnaire confirmation and every catalogue-driven recalculation.
+`tsc` sees a perfectly good SQL template, no fixture can reach it without a database, and
+the callers do not check, so it read as working. Found by running the recalculation script
+against the live database rather than by reading the code.
+
+Fixed by casting the CASE results: `(CASE … END)::integer` and `::varchar(20)`. The
+`risk_factors` branch already cast each value to `jsonb` and was fine, which is why the
+other two were easy to miss.
+
+If you write another bulk `CASE` update, cast it.
+
+---
+
+## 17. Sub-processors cannot be recorded per organisation
+
+`vendor_sub_processors.parent_vendor_id` references the shared catalogue row, so any write
+moves every tenant's derived risk score. `addLinked`, `addUnlinked` and `remove` are
+therefore restricted to vendors the organisation created itself, and the UI hides those
+controls on catalogue vendors rather than offering a button that returns
+`NOT_FOUND: Parent vendor not found` about a vendor on the screen.
+
+That is correct but incomplete. An organisation that learns of a sub-processor not on the
+vendor's published page — from a DPA annex, or from the vendor directly — has nowhere to
+record it. The fix is a per-organisation override table read alongside the shared list.
+
+Related: the sub-processor count feeding the risk score is the shared catalogue count, not
+a per-organisation one (audit D47).
+
+---
+
+## 18. DPF certification is asserted by hand in the seed
+
+`lib/vendorRisk.ts` gates US adequacy on the exact string `data_privacy_framework`, worth
+15 points of the location factor and the difference between "adequate" and "no DPF
+certified" in what the customer reads. That string comes from literals in
+`packages/db/src/seed-vendors.ts`: no certified-on date, no source URL, no expiry — and
+DPF certifications lapse annually.
+
+That is the same shape as the standalone pipeline's 13-name hardcoded array, which the
+audit files as a defect (D19). It is a deliberate stopgap; the durable answer is
+`vendor_field_provenance` (audit P-2) fed from the public Data Privacy Framework list.
+
+Two consequences to know now:
+
+- An **absent** `transferMechanisms` on the vertical stub vendors means "not researched",
+  not "no safeguards". The risk engine cannot tell those apart and scores both as
+  unsafeguarded — conservative, but not honest, and it inflates the high-risk tile.
+- Editing the catalogue does **not** move any stored score. `organization_vendors.risk_score`
+  is denormalised; run `npm run recalc:vendor-risk --workspace=apps/api -- --apply` after
+  `npm run seed:vendors --workspace=packages/db`.
 
 ---
 

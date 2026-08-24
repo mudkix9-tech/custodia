@@ -29,18 +29,25 @@ and exits 0. Anything treating that as CI is testing nothing — use `npm run ch
 The guards exist because every bug that has reached production-shaped code in this repo
 was invisible to `tsc`: see the multi-tenancy, database and `apps/web` sections below.
 
-**Two guards are ROPA-specific and easy to miss.** `check:ropa-i18n` (apps/web) fails on
-a hardcoded English string in the register's components *and* on a `t()` key that is not
-in `en/ropa.json` — next-intl renders a missing key as its own dotted path, in every
-locale, which `check:messages` cannot see because it only compares the three catalogues
-against each other. `test:ropa-lifecycle` (apps/api) covers review cadence, the reminder
-ladder, approval transitions, snapshot diffing and the pagination cursor codec.
+**Two guards are module-specific and easy to miss.** `check:ropa-i18n` and
+`check:vendor-i18n` (apps/web) both run `scripts/check-module-i18n.mjs`, which takes the
+module name as its argument — each entry in its `MODULES` table names a catalogue and the
+directories that resolve against it. They fail on a hardcoded English string in that
+module's components *and* on a `t()` key that is not in the catalogue — next-intl renders
+a missing key as its own dotted path, in every locale, which `check:messages` cannot see
+because it only compares the three catalogues against each other. **A module absent from
+that table has no i18n check at all**, which is how seven of the eight vendor components
+sat at zero `useTranslations` for a year. Add new surfaces to the module's `targets`.
+`test:ropa-lifecycle` (apps/api) covers review cadence, the reminder ladder, approval
+transitions, snapshot diffing and the pagination cursor codec.
 
-`check:ropa-i18n` is a **text scan**, not a parse, and it is noisy in the safe direction.
-Its JSX-text rule matches `>…<`, so a type annotation like `() => Promise<void>` reads as
-a text node containing the word "Promise". The fix is to restructure the annotation
-(`() => unknown`), not to add an `ALLOWED` entry — that list is for UI copy that really
-is meant to stay English, and a stale entry there fails too.
+It is a **text scan**, not a parse, and it is noisy in the safe direction. Its JSX-text
+rule matches `>…<`, so a type annotation like `() => Promise<void>` reads as a text node
+containing the word "Promise". The fix is to restructure the annotation (`() => unknown`),
+not to add an `ALLOWED` entry — that list is for UI copy that really is meant to stay
+English, and a stale entry there fails too. Its key check only sees single-quoted keys, so
+a dynamic `t(`status.${row.status}`)` is **not** verified: add those keys by hand and
+check them yourself.
 
 **Two more fixture suites arrived with Sprint 3.** `test:assessments` covers the DPIA
 screening verdict, LIA completeness, the TIA's six steps and its self-contradiction
@@ -58,6 +65,27 @@ Everything in those two returns a *plausible* value when it is wrong — a dispo
 date out by a month reads exactly like a correct one, and a notice that omits its
 transfers section because no mechanism was recorded is a published Art. 13(1)(f)
 hole. Fixtures are the only thing that can tell them apart.
+
+**`test:vendors` arrived with the vendor module's Sprint 0.** It covers the sub-processor
+snapshot normaliser and the diff that reads it, the monthly AI window, the DPF location
+factor, the DPA status vocabulary and the CSV quoting rules. Two things it protects are
+worth knowing before you touch them. The snapshot cleaner must collapse **horizontal**
+whitespace only (`[^\S\n]+`): `\s` includes `\n`, the reviewer's diff splits on `\n`, and
+collapsing both turns every Art. 28(2) change into "1 addition, 1 removal" over two
+unreadable blobs. And `organizations.ai_last_reset_at` is **one** window with **two**
+counters on it — `ai_queries_used` and `ai_dpas_analyzed` — so whichever path notices the
+month has rolled over must clear both (`aiWindowReset()` in `constants/aiQuota.ts`);
+clearing one turns the other back into a lifetime counter, silently.
+
+**Editing the vendor catalogue does not move any customer's score.**
+`organization_vendors.risk_score` is denormalised and written at link time, so a seed
+change — backfilling `data_privacy_framework`, say, which is what stops every US vendor
+scoring the full location risk — is inert until the derived rows are recomputed:
+
+```bash
+npm run seed:vendors     --workspace=packages/db
+npm run recalc:vendor-risk --workspace=apps/api -- --apply   # dry run without --apply
+```
 
 **`npx eslint` cannot run at all.** `apps/web/eslint.config.mjs` throws
 `TypeError: tailwind.configs.flat/recommended is not iterable` on ESLint 9.39.4.

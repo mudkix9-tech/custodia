@@ -50,21 +50,42 @@ export default function VendorsPage() {
     }
   }, [searchParams]);
 
+  const [isExporting, setIsExporting] = useState(false);
+
   const handleExportRegister = async () => {
     // Server-side export: the client-side version serialised only the loaded
     // pages, so an auditor received a file describing a quarter of the register.
-    const { csv, count } = await utils.vendors.exportRegisterCsv.fetch();
-    if (count === 0) {
-      toast('Nothing to export', { tone: 'error', description: 'The vendor register is empty.' });
-      return;
+    // That round trip can fail, and an unhandled rejection here reads to the user
+    // as a button that does nothing -- worse than the bug it replaced, because a
+    // truncated file at least arrives.
+    if (isExporting) return;
+    setIsExporting(true);
+    let objectUrl: string | null = null;
+    try {
+      const { csv, count } = await utils.vendors.exportRegisterCsv.fetch();
+      if (count === 0) {
+        toast(t('export.nothing'), { tone: 'error', description: t('export.empty_register') });
+        return;
+      }
+      objectUrl = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.setAttribute('download', `vendor_register_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast(t('export.done', { count }));
+    } catch (err: unknown) {
+      toast(t('export.failed'), {
+        tone: 'error',
+        description: err instanceof Error ? err.message : t('export.failed_detail'),
+      });
+    } finally {
+      // The blob is held alive by the object URL until it is revoked; the click
+      // has already been dispatched by the time this runs.
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setIsExporting(false);
     }
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    link.setAttribute('download', `vendor_register_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast(`Exported ${count} vendor${count === 1 ? '' : 's'}`);
   };
 
   // Derived metrics -- whole-register values from getRiskStats
@@ -142,7 +163,8 @@ export default function VendorsPage() {
           </Link>
           <button
             onClick={handleExportRegister}
-            className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated"
+            disabled={isExporting}
+            className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated"
           >
             <Download className="w-4 h-4" /> {t('export_register')}
           </button>

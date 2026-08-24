@@ -14,6 +14,7 @@ import { useAiGuidanceStore } from '@/store/aiGuidanceStore';
 import { AlternativesSection } from '@/components/vendors/AlternativesSection';
 import { QuestionnaireTab } from '@/components/vendors/QuestionnaireTab';
 import { DpaAnalysisModal } from '@/components/vendors/DpaAnalysisModal';
+import { TRANSFER_MECHANISMS } from '@/constants/transferMechanisms';
 
 export default function VendorDetailsPage() {
   const t = useTranslations('vendors');
@@ -456,6 +457,47 @@ export default function VendorDetailsPage() {
                           </select>
                         </div>
 
+                        {/* Chapter V safeguard THIS organisation relies on, which is
+                            not always the one the shared catalogue records. Until
+                            migration 0050 there was no column to write it to, so the
+                            risk engine and the third-country gap rule both read a
+                            field that was always empty and reported an Art. 44 gap
+                            an organisation had in fact closed. */}
+                        <div className="space-y-2 sm:col-span-2">
+                          <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
+                            {t('detail.dpa.inputs.transfer_mechanisms')}
+                          </label>
+                          <p className="text-[12px] text-[#6E747A] leading-relaxed">
+                            {t('detail.dpa.inputs.transfer_mechanisms_hint')}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {TRANSFER_MECHANISMS.map((mechanism) => {
+                              const selected = (vendor.orgVendor.transferMechanisms || []).includes(mechanism);
+                              return (
+                                <button
+                                  key={mechanism}
+                                  type="button"
+                                  disabled={updateMutation.isPending}
+                                  onClick={() => {
+                                    const current: string[] = vendor.orgVendor.transferMechanisms || [];
+                                    const next = selected
+                                      ? current.filter((m) => m !== mechanism)
+                                      : [...current, mechanism];
+                                    updateMutation.mutate({ vendorId, transferMechanisms: next as any });
+                                  }}
+                                  className={`px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-colors disabled:opacity-50 ${
+                                    selected
+                                      ? 'bg-[#C9A227]/10 border-[#C9A227]/40 text-[#C9A227]'
+                                      : 'bg-[#0D0F11] border-white/10 text-[#9BA1A6] hover:border-white/20'
+                                  }`}
+                                >
+                                  {t(`detail.dpa.inputs.mechanisms.${mechanism}`)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
                         {/* Contract Renewal Date */}
                         <div className="space-y-2">
                           <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
@@ -551,7 +593,14 @@ export default function VendorDetailsPage() {
 
               {activeTab === 'sub-processors' && (
                 <div className="space-y-8 animate-in fade-in">
-                  <SubProcessorList vendorId={vendorId} orgVendorId={vendor.orgVendor.id} />
+                  {/* A null organizationId is a shared catalogue row; only a
+                      vendor this org created may have its sub-processor list
+                      edited here, because the table hangs off the global vendor. */}
+                  <SubProcessorList
+                    vendorId={vendorId}
+                    orgVendorId={vendor.orgVendor.id}
+                    catalogueOwned={!!vendor.vendor.organizationId}
+                  />
                 </div>
               )}
 

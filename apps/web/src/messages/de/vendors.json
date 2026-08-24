@@ -156,7 +156,16 @@
         },
         "renewal_date": "Vertragsverlängerung am",
         "expiry_date": "AVV läuft ab am",
-        "certifications": "Sicherheitszertifizierungen"
+        "certifications": "Sicherheitszertifizierungen",
+        "transfer_mechanisms": "Von Ihnen genutzte Übermittlungsgarantien",
+        "transfer_mechanisms_hint": "Erfasst für Ihre eigene Nutzung dieses Dienstleisters. Führt der gemeinsame Katalog bereits eine Garantie, ergänzt diese Angabe sie und ersetzt sie nicht – eine Lücke nach Art. 44 wird nur gemeldet, wenn keine von beiden eine Garantie enthält.",
+        "mechanisms": {
+          "standard_contractual_clauses": "Standardvertragsklauseln",
+          "binding_corporate_rules": "Verbindliche interne Datenschutzvorschriften",
+          "data_privacy_framework": "EU-US Data Privacy Framework",
+          "adequacy_decision": "Angemessenheitsbeschluss",
+          "derogation_article_49": "Ausnahme nach Art. 49"
+        }
       },
       "template": {
         "title": "AVV-Vorlage des Anbieters",
@@ -315,5 +324,356 @@
     "submitting": "Wird hinzugefügt…",
     "added": "{name} wurde ins Verzeichnis aufgenommen",
     "failed": "Der Anbieter konnte nicht hinzugefügt werden"
+  },
+  "alternatives": {
+    "title": "Datenschutzfreundliche Alternativen",
+    "subtitle": "Ziehen Sie diese risikoärmeren Alternativen derselben Kategorie in Betracht:",
+    "risk": "Risiko: {score}",
+    "privacy_friendly": "Datenschutzfreundlich",
+    "hq": "Sitz: {country}"
+  },
+  "export": {
+    "nothing": "Nichts zu exportieren",
+    "empty_register": "Das Dienstleisterverzeichnis ist leer.",
+    "failed": "Export fehlgeschlagen",
+    "failed_detail": "Das Verzeichnis konnte nicht exportiert werden.",
+    "done": "{count} Dienstleister exportiert"
+  },
+  "sub_processors": {
+    "loading": "Unterauftragsverarbeiter werden geladen…",
+    "title": "Kette der Unterauftragsverarbeiter",
+    "subtitle": "Verfolgen Sie Drittanbieter, die dieser Dienstleister zur Verarbeitung Ihrer Daten einsetzt.",
+    "add": "Unterauftragsverarbeiter hinzufügen",
+    "catalogue_note": "Dieser Dienstleister gehört zum gemeinsamen Katalog. Seine Liste der Unterauftragsverarbeiter wird von der veröffentlichten Seite des Anbieters gepflegt und nicht hier bearbeitet.",
+    "col_name": "Unterauftragsverarbeiter",
+    "col_jurisdiction": "Rechtsraum",
+    "col_risk": "Risikostatus",
+    "col_added": "Hinzugefügt",
+    "empty": "Keine Unterauftragsverarbeiter erfasst.",
+    "linked_title": "Mit der globalen Datenbank verknüpft",
+    "purpose_default": "Allgemeine Verarbeitung",
+    "unknown_country": "Unbekannt",
+    "database_match": "Treffer in der Datenbank",
+    "unlisted_vendor": "Nicht gelisteter Anbieter",
+    "errors": {
+      "add_failed": "Unterauftragsverarbeiter konnte nicht hinzugefügt werden",
+      "remove_failed": "Unterauftragsverarbeiter konnte nicht entfernt werden"
+    },
+    "modal": {
+      "title": "Unterauftragsverarbeiter hinzufügen",
+      "subtitle": "Verknüpfen Sie einen Drittanbieter, der Daten für diesen Dienst verarbeitet.",
+      "tab_search": "Datenbank durchsuchen",
+      "tab_manual": "Manuelle Eingabe",
+      "search_placeholder": "Globale Anbieterdatenbank durchsuchen…",
+      "unknown_location": "Unbekannter Standort",
+      "manual_warning": "Nutzen Sie die manuelle Eingabe nur, wenn der Anbieter nicht in unserer globalen Datenbank vorhanden ist. Manuell erfasste Unterauftragsverarbeiter erhalten keine automatische Risikobewertung.",
+      "company_name": "Firmenname",
+      "country_code": "Ländercode (z. B. US, IE)",
+      "cancel": "Abbrechen",
+      "submit": "Unterauftragsverarbeiter hinzufügen"
+    },
+    "history": {
+      "title": "Änderungsverlauf der Unterauftragsverarbeiter",
+      "subtitle": "Verfolgen und beantworten Sie Änderungen, die auf der öffentlichen Unterauftragsverarbeiter-Seite dieses Anbieters erkannt wurden.",
+      "empty": "Für diesen Dienstleister wurden keine Änderungen erkannt oder erfasst."
+    },
+    "change": {
+      "detected": "Änderung erkannt",
+      "detected_on": "Erkannt am {when}",
+      "review": "Prüfen & antworten",
+      "summary": "Zusammenfassung der Änderungen ({added} Ergänzungen, {removed} Streichungen)",
+      "hide": "Änderungen ausblenden",
+      "show": "Änderungen anzeigen",
+      "no_lines": "Keine Zeilen hinzugefügt oder entfernt (Aktualisierung von Standardtext).",
+      "reviewed_by": "Geprüft von {name} am {when}",
+      "status": {
+        "pending_review": "Prüfung ausstehend",
+        "acknowledged": "bestätigt",
+        "objected": "widersprochen"
+      }
+    },
+    "review": {
+      "title": "Auf Änderung der Unterauftragsverarbeiter antworten",
+      "subtitle": "Prüfen Sie die erkannten Seitenunterschiede und geben Sie Ihre Antwort ab.",
+      "diff_preview": "Vorschau der erkannten Unterschiede",
+      "boilerplate_only": "Nur Aktualisierungen von Standardtext.",
+      "notes_label": "Prüfnotizen",
+      "notes_placeholder": "Halten Sie Ihre Bewertung fest, z. B. „AWS-Region Dublin ergänzt; entspricht den Hosting-Vorgaben.“",
+      "warning_title": "Warnung zur Widerspruchsklausel des AV-Vertrags",
+      "warning_body": "Der Widerspruch gegen eine Änderung der Unterauftragsverarbeiter ist nach der DSGVO eine rechtlich erhebliche Handlung. Nach Ihren AV-Bedingungen haben Sie möglicherweise ein Kündigungsrecht. Prüfen Sie Ihre AV-Klauseln auf Kündigungsbestimmungen.",
+      "cancel": "Abbrechen",
+      "object": "Der Änderung widersprechen",
+      "acknowledge": "Änderung bestätigen"
+    }
+  },
+  "discovery": {
+    "loading": "Scan-Details werden geladen…",
+    "empty": "In dieser Ansicht sind keine Funde erfasst.",
+    "item_count": "{count} Einträge",
+    "dismiss": "Verwerfen / ignorieren",
+    "add_custom": "Eigenen Dienstleister anlegen",
+    "link_vendor": "{name} verknüpfen",
+    "source": "Quelle: {method}",
+    "first_seen": "Erstmals gesehen: {when}",
+    "needs_consent": "Benötigt Einwilligung „{category}“",
+    "consent_tooltip": "{provider} benötigt eine Einwilligung für „{category}“, bevor der Dienst ausgeführt werden darf.",
+    "scan": {
+      "title": "Website- und DNS-Discovery-Scan starten",
+      "subtitle": "Durchsuchen Sie Ihre öffentliche Website nach Tracking-Skripten, Pixeln, CDNs sowie MX-/SPF-Einträgen, um nicht dokumentierte Schatten-IT zu finden.",
+      "button": "Website scannen",
+      "queued": "Discovery-Scan eingereiht",
+      "queued_detail": "Die Ergebnisse erscheinen in wenigen Minuten im Posteingang."
+    },
+    "tabs": {
+      "inbox": "Posteingang",
+      "archive": "Scan-Protokolle & Archiv"
+    },
+    "badges": {
+      "registry_match": "Treffer im globalen Register",
+      "unrecognised": "Unbekannte Domain"
+    },
+    "status": {
+      "undocumented": "nicht dokumentiert",
+      "added_to_register": "ins Verzeichnis aufgenommen",
+      "dismissed": "verworfen",
+      "false_positive": "Fehlalarm"
+    },
+    "methods": {
+      "website_scan": "Website-Scan",
+      "dns_analysis": "DNS-Analyse"
+    },
+    "categories": {
+      "analytics": "Analyse",
+      "marketing": "Marketing",
+      "hosting": "Hosting / Infrastruktur",
+      "support": "Kundensupport",
+      "hr": "Personal / Lohnabrechnung",
+      "other": "Sonstiges"
+    },
+    "errors": {
+      "confirm": "Dienstleister konnte nicht bestätigt werden",
+      "create": "Dienstleister konnte nicht angelegt werden",
+      "dismiss": "Fund konnte nicht verworfen werden"
+    },
+    "modal": {
+      "title": "Gefundenen Dienstleister hinzufügen",
+      "service_name": "Name des Dienstes",
+      "domain": "Domain (Website)",
+      "category": "Kategorie",
+      "warning_title": "Hinweis zur Profilprüfung",
+      "warning_body": "Dieser Dienstleister wird als eigenes Profil mit der Markierung „automatisch erkannt“ angelegt. Sie werden aufgefordert, Datenstandorte und Zertifizierungen auf der Detailseite zu ergänzen.",
+      "cancel": "Abbrechen",
+      "submit": "Anlegen und verknüpfen"
+    }
+  },
+  "dpa_analysis": {
+    "title": "Ergebnisse der KI-AV-Analyse",
+    "subtitle": "Prüfung der Klauseln nach Art. 28 DSGVO, erstellt von Claude.",
+    "quality_score": "Qualitätswert des AV-Vertrags",
+    "recommendation": "KI-Empfehlung",
+    "recommendation_good": "Dieser AV-Vertrag erfüllt die Anforderungen von Art. 28 weitgehend. Die wesentlichen Garantien sind vorhanden.",
+    "recommendation_poor": "Achtung: In diesem AV-Vertrag fehlen zwingende Klauseln nach Art. 28 oder er enthält problematische Formulierungen. Prüfen Sie die Details unten.",
+    "special_category_title": "Kontextwarnung zu besonderen Kategorien personenbezogener Daten (Hinweis)",
+    "special_category_note": "Hinweis: Die Datenkategorie-Einstufung des Dienstleisters wurde dadurch nicht geändert. Prüfen Sie Ihre Einstufungen im Verarbeitungsverzeichnis.",
+    "checklist_title": "Pflichtklauseln nach Art. 28 Abs. 3 – Checkliste",
+    "analysis_label": "Analyse: ",
+    "problematic_title": "Problematische Formulierungen erkannt",
+    "clause_type": "Klauseltyp: {type}",
+    "severity": "Schweregrad: {severity}",
+    "ai_assisted": "KI-gestützte Bewertung",
+    "save_draft": "Als Entwurf speichern",
+    "apply": "AV-Checkliste übernehmen und sperren",
+    "clauses": {
+      "documentedInstructions": "Dokumentierte Weisungen (Art. 28 Abs. 3 lit. a)",
+      "confidentiality": "Vertraulichkeitszusagen (Art. 28 Abs. 3 lit. b)",
+      "securityMeasures": "Sicherheitsmaßnahmen (Art. 28 Abs. 3 lit. c)",
+      "subProcessorRestrictions": "Beschränkungen für Unterauftragsverarbeiter (Art. 28 Abs. 3 lit. d)",
+      "dataSubjectRights": "Unterstützung bei Betroffenenrechten (Art. 28 Abs. 3 lit. e)",
+      "securityBreachDpia": "Meldung von Verletzungen & DSFA (Art. 28 Abs. 3 lit. f)",
+      "deletionOnTermination": "Löschung oder Rückgabe der Daten (Art. 28 Abs. 3 lit. g)",
+      "auditRights": "Audits & Überprüfungen (Art. 28 Abs. 3 lit. h)"
+    },
+    "clause_status": {
+      "present": "vorhanden",
+      "weak": "schwach",
+      "missing": "fehlt"
+    }
+  },
+  "questionnaire": {
+    "title": "Verlauf der Bewertungen",
+    "subtitle": "Verfolgen Sie Fragebögen, abgeschlossene Audits und Anpassungen des Compliance-Risikos.",
+    "send": "Bewertung senden",
+    "review_saved": "Compliance-Prüfung gespeichert.",
+    "empty_title": "Keine Bewertungen gefunden",
+    "empty_body": "An diesen Dienstleister wurden noch keine Sicherheitsprüfungen gesendet. Senden Sie eine, um ein Compliance-Audit zu beginnen.",
+    "recipient": "Empfänger: {name} ({email})",
+    "default_recipient": "Sicherheitsverantwortliche Person",
+    "sent_date": "Sendedatum",
+    "completed_date": "Abschlussdatum",
+    "score": "Punktzahl",
+    "not_available": "K. A.",
+    "copied": "Kopiert",
+    "copy_link": "Formularlink kopieren",
+    "copy_link_title": "Zugangslink kopieren",
+    "print_title": "Prüfbericht drucken",
+    "audit_review": "Audit-Prüfung",
+    "audit_review_title": "Audit-Prüfung & Korrekturen",
+    "audit_assessment": "Audit-Bewertung:",
+    "errors": {
+      "dispatch": "Die Bewertung konnte nicht versendet werden.",
+      "review": "Die Prüfung konnte nicht aktualisiert werden."
+    },
+    "status": {
+      "sent": "gesendet",
+      "in_progress": "in Bearbeitung",
+      "completed": "abgeschlossen",
+      "expired": "abgelaufen"
+    },
+    "form": {
+      "title": "Neue Fragebogen-Anfrage",
+      "cancel": "Abbrechen",
+      "template": "Bewertungsvorlage *",
+      "template_placeholder": "Vorlage auswählen",
+      "recipient_name": "Name des Empfängers",
+      "recipient_name_placeholder": "z. B. Compliance-Beauftragte:r",
+      "recipient_email": "E-Mail des Empfängers *",
+      "recipient_email_placeholder": "z. B. security@partner.com",
+      "sending": "Wird versendet…",
+      "submit": "Anfrage senden"
+    },
+    "review": {
+      "title": "Prüfung & Korrektur durch Auditor",
+      "adjustment": "Punktkorrektur (-50 bis +50)",
+      "notes": "Prüfnotizen des Auditors",
+      "notes_placeholder": "Halten Sie Verifizierungsnotizen, Beobachtungen oder Gründe für Korrekturen fest…",
+      "cancel": "Abbrechen",
+      "saving": "Wird gespeichert…",
+      "submit": "Prüfung speichern"
+    }
+  },
+  "tia": {
+    "loading": "TIA wird geladen…",
+    "process": "Schrems-II-Verfahren",
+    "completed": "TIA abgeschlossen",
+    "approved_on": "Genehmigt am {when}",
+    "yes": "Ja",
+    "no": "Nein",
+    "save_draft": "Entwurf speichern",
+    "approve": "TIA genehmigen & abschließen",
+    "previous": "← Vorheriger Schritt",
+    "next": "Nächster Schritt →",
+    "steps": {
+      "1": "Details der Übermittlung",
+      "2": "Rechtliche Bewertung",
+      "3": "Zusätzliche Maßnahmen",
+      "4": "Restrisiko",
+      "5": "Schlussfolgerung"
+    },
+    "mechanisms": {
+      "sccs": "Standardvertragsklauseln (SCC)",
+      "bcrs": "Verbindliche interne Datenschutzvorschriften (BCR)",
+      "derogation": "Ausnahme nach Art. 49",
+      "adequacy": "Angemessenheitsbeschluss"
+    },
+    "step1": {
+      "title": "Schritt 1: Details der Übermittlung",
+      "subtitle": "Bestimmen Sie die konkreten Parameter der internationalen Datenübermittlung.",
+      "destination": "Zielland",
+      "mechanism": "Übermittlungsmechanismus",
+      "mechanism_placeholder": "Übermittlungsmechanismus auswählen",
+      "us_context_label": "US-Kontext:",
+      "us_context": "Seit der Ungültigkeitserklärung des Privacy Shield erfordern Übermittlungen in die USA auf Grundlage von SCC eine TIA, um Risiken im Zusammenhang mit FISA 702 und EO 12333 zu bewerten."
+    },
+    "step2": {
+      "title": "Schritt 2: Rechtliche Bewertung",
+      "subtitle": "Bewerten Sie die für die übermittelten Daten geltenden Gesetze und Praktiken des Drittlands.",
+      "surveillance": "Gibt es Überwachungsgesetze, die den Zugriff auf die Daten erzwingen?",
+      "remedies": "Gibt es wirksame, durchsetzbare Rechtsbehelfe für betroffene Personen?",
+      "conclusion": "Ergebnis der rechtlichen Bewertung",
+      "select_conclusion": "Ergebnis auswählen…",
+      "equivalent": "Die Gesetze bieten ein im Wesentlichen gleichwertiges Schutzniveau (keine zusätzlichen Maßnahmen erforderlich)",
+      "not_equivalent": "Die Gesetze bieten kein im Wesentlichen gleichwertiges Schutzniveau",
+      "uncertain": "Unklar / es besteht problematische Gesetzgebung"
+    },
+    "step3": {
+      "title": "Schritt 3: Zusätzliche Maßnahmen",
+      "subtitle": "Bestimmen Sie die vom Datenimporteur umgesetzten zusätzlichen Maßnahmen zur Risikominderung.",
+      "not_required": "Nach Schritt 2 sind zusätzliche Maßnahmen nicht zwingend erforderlich. Sie können zur Schlussfolgerung springen.",
+      "technical": "Technische Maßnahmen",
+      "details_placeholder": "Details…",
+      "measures": {
+        "e2ee": "Ende-zu-Ende-Verschlüsselung",
+        "pseudonymisation": "Pseudonymisierung",
+        "data_minimisation": "Datenminimierung bei der Übertragung"
+      }
+    },
+    "step4": {
+      "title": "Schritt 4: Restrisiko",
+      "subtitle": "Bewerten Sie das Risikoniveau nach Anwendung aller zusätzlichen Maßnahmen.",
+      "level": "Höhe des Restrisikos",
+      "justification": "Begründung",
+      "justification_placeholder": "Erläutern Sie, warum das Restrisiko vertretbar oder nicht vertretbar ist…",
+      "levels": {
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch",
+        "critical": "Kritisch"
+      }
+    },
+    "step5": {
+      "title": "Schritt 5: Schlussfolgerung",
+      "decision": "Endgültige Entscheidung",
+      "proceed": "Übermittlung fortsetzen",
+      "proceed_with_conditions": "Unter Auflagen fortsetzen",
+      "suspend": "Übermittlung aussetzen",
+      "conditions": "Auflagen angeben"
+    }
+  },
+  "incidents": {
+    "loading": "Vorfall-Feed wird geladen…",
+    "title": "Verletzungen & aufsichtsbehördliche Informationen",
+    "subtitle": "Warnungen, DSGVO-Bußgelder und Meldungen zu Datenschutzverletzungen für diesen Dienstleister.",
+    "empty_title": "Keine Vorfälle erfasst",
+    "empty_body": "Für diesen Dienstleister wurden keine Datenschutzverletzungen, Bußgelder oder behördlichen Maßnahmen festgestellt.",
+    "meta": "{when} | Quelle: {source}",
+    "date_unknown": "Datum unbekannt",
+    "default_source": "Aufsichtsbehördlicher Feed",
+    "default_reviewer": "Workspace-Administration",
+    "source": "Quelle",
+    "alert_label": "Warnung: {status}",
+    "penalty": "Bußgeld",
+    "affected_categories": "Betroffene Datenkategorien",
+    "art33_title": "Empfohlene Maßnahme nach Art. 33",
+    "art33_body": "Wenn diese Verletzung personenbezogene Daten betrifft, die Sie diesem Dienstleister übermittelt haben, müssen Sie Ihre Aufsichtsbehörde nach Art. 33 möglicherweise innerhalb von 72 Stunden benachrichtigen. Prüfen Sie die Angaben oben und bewerten Sie, ob Ihre betroffenen Personen berührt sind.",
+    "reviewed_by": "Geprüft von {name}",
+    "action_required": "Handlung erforderlich: Sicherheitswarnung prüfen",
+    "respond": "Antworten & Maßnahme dokumentieren",
+    "select_action": "Antwortmaßnahme auswählen",
+    "notes_label": "Notizen & interne Dokumentation",
+    "notes_placeholder": "Dokumentieren Sie Ihre Maßnahmen, z. B. „Bestätigt: durch die Offenlegung des API-Schlüssels sind keine betroffenen Personen berührt.“",
+    "cancel": "Abbrechen",
+    "submit": "Bewertung absenden",
+    "severity": {
+      "low": "niedrig",
+      "medium": "mittel",
+      "high": "hoch",
+      "critical": "kritisch"
+    },
+    "type": {
+      "breach": "Verletzung",
+      "fine": "Bußgeld",
+      "investigation": "Untersuchung"
+    },
+    "alert_status": {
+      "unread": "ungelesen",
+      "acknowledged": "bestätigt",
+      "action_taken": "Maßnahme ergriffen",
+      "dismissed": "verworfen"
+    },
+    "actions": {
+      "acknowledged": "Bestätigen",
+      "action_taken": "Maßnahme ergriffen",
+      "dismissed": "Verwerfen"
+    }
   }
 }

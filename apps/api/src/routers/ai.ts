@@ -22,7 +22,8 @@ import { TRPCError } from '@trpc/server';
 import { PDFParse } from 'pdf-parse';
 import crypto from 'crypto';
 import { calculateVendorRisk } from './vendors.js';
-import { trackAiUsage, TIER_LIMITS } from '../lib/billing.js';
+import { trackAiUsage } from '../lib/billing.js';
+import { TIER_LIMITS, isNewAiWindow, aiWindowReset } from '../constants/aiQuota.js';
 import { COPILOT_MODEL } from '../lib/anthropicModels.js';
 
 const ai = genai;
@@ -1027,18 +1028,18 @@ export const aiRouter = router({
       // D13: this quota used to be a lifetime counter (no reset anywhere) with a
       // hardcoded 2000 ceiling, incremented before the work -- so a failed parse
       // still cost the unit and the "monthly limit" error was wrong on both counts.
-      // It now shares aiLastResetAt with trackAiUsage's monthly window, reads the
-      // plan's TIER_LIMITS.ai allowance, and is only consumed on success.
+      // It now rides trackAiUsage's monthly window, reads the plan's own
+      // dpaAnalyses allowance, and is only consumed on success.
+      //
+      // The rollover has to clear BOTH counters (aiWindowReset), because one
+      // timestamp governs both and whichever path notices the new month is the
+      // one that has to open it -- see the note on isNewAiWindow.
       const tier = (org.subscriptionTier as keyof typeof TIER_LIMITS) || 'professional';
-      const dpaLimit = TIER_LIMITS[tier]?.ai;
-      const now = new Date();
+      const dpaLimit = TIER_LIMITS[tier]?.dpaAnalyses ?? TIER_LIMITS.professional.dpaAnalyses;
+      const startedAt = new Date();
       const lastReset = org.aiLastResetAt ? new Date(org.aiLastResetAt) : null;
-      let analysed = org.aiDpasAnalyzed || 0;
-      if (!lastReset ||
-          lastReset.getMonth() !== now.getMonth() ||
-          lastReset.getFullYear() !== now.getFullYear()) {
-        analysed = 0;
-      }
+      const rolledOver = isNewAiWindow(lastReset, startedAt);
+      const analysed = rolledOver ? 0 : (org.aiDpasAnalyzed || 0);
 
       if (dpaLimit !== Infinity && analysed >= dpaLimit) {
         throw new TRPCError({
@@ -1147,17 +1148,20 @@ Use this EXACT JSON schema:
             ));
         }
 
-        // Consume the quota only after the analysis succeeded, and persist the
-        // rollover so the counter resets on the first analysis of a new month.
-        const now = new Date();
-        await ctx.db.update(organizations)
-          .set({
-            aiDpasAnalyzed: analysed + 1,
-            aiLastResetAt: lastReset && lastReset.getMonth() === now.getMonth() && lastReset.getFullYear() === now.getFullYear()
-              ? lastReset
-              : now,
-          })
-          .where(eq(organizations.id, orgId));
+        // Consume the quota only after the analysis succeeded. The increment is
+        // done in SQL rather than from the value read before the model call --
+        // that read is now separated from this write by the whole Gemini round
+        // trip, so two concurrent analyses would otherwise both write n+1 and
+        // one of them would be free.
+        if (rolledOver) {
+          await ctx.db.update(organizations)
+            .set({ ...aiWindowReset(startedAt), aiDpasAnalyzed: 1 })
+            .where(eq(organizations.id, orgId));
+        } else {
+          await ctx.db.update(organizations)
+            .set({ aiDpasAnalyzed: sql`COALESCE(${organizations.aiDpasAnalyzed}, 0) + 1` })
+            .where(eq(organizations.id, orgId));
+        }
 
         return jsonResponse;
       } catch (err: any) {

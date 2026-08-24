@@ -153,7 +153,16 @@
         },
         "renewal_date": "Contract Renewal Date",
         "expiry_date": "DPA Expiry Date",
-        "certifications": "Security Certifications"
+        "certifications": "Security Certifications",
+        "transfer_mechanisms": "Transfer safeguards you rely on",
+        "transfer_mechanisms_hint": "Recorded against your own use of this vendor. If the shared catalogue already lists a safeguard, this adds to it rather than replacing it — an Article 44 gap is only raised when neither records one.",
+        "mechanisms": {
+          "standard_contractual_clauses": "Standard Contractual Clauses",
+          "binding_corporate_rules": "Binding Corporate Rules",
+          "data_privacy_framework": "EU–US Data Privacy Framework",
+          "adequacy_decision": "Adequacy Decision",
+          "derogation_article_49": "Article 49 Derogation"
+        }
       },
       "template": {
         "title": "Vendor DPA Template",
@@ -312,5 +321,356 @@
     "submitting": "Adding…",
     "added": "{name} added to the register",
     "failed": "Could not add the vendor"
+  },
+  "alternatives": {
+    "title": "Privacy Alternatives",
+    "subtitle": "Consider these lower-risk alternative vendors within the same category:",
+    "risk": "Risk: {score}",
+    "privacy_friendly": "Privacy Friendly",
+    "hq": "HQ: {country}"
+  },
+  "export": {
+    "nothing": "Nothing to export",
+    "empty_register": "The vendor register is empty.",
+    "failed": "Export failed",
+    "failed_detail": "The register could not be exported.",
+    "done": "Exported {count} vendors"
+  },
+  "sub_processors": {
+    "loading": "Loading sub-processors…",
+    "title": "Sub-processors Chain",
+    "subtitle": "Track third-party vendors used by this vendor to process your data.",
+    "add": "Add Sub-processor",
+    "catalogue_note": "This vendor is part of the shared catalogue, so its sub-processor list is maintained from the vendor's own published page rather than edited here.",
+    "col_name": "Sub-processor",
+    "col_jurisdiction": "Jurisdiction",
+    "col_risk": "Risk Status",
+    "col_added": "Added",
+    "empty": "No sub-processors recorded.",
+    "linked_title": "Linked to global database",
+    "purpose_default": "General processing",
+    "unknown_country": "Unknown",
+    "database_match": "Database Match",
+    "unlisted_vendor": "Unlisted Vendor",
+    "errors": {
+      "add_failed": "Could not add sub-processor",
+      "remove_failed": "Could not remove sub-processor"
+    },
+    "modal": {
+      "title": "Add Sub-processor",
+      "subtitle": "Connect a third-party vendor handling data for this service.",
+      "tab_search": "Search Database",
+      "tab_manual": "Manual Entry",
+      "search_placeholder": "Search global vendor database…",
+      "unknown_location": "Unknown location",
+      "manual_warning": "Use manual entry only if the vendor does not exist in our global database. Manual sub-processors do not receive automated risk scores.",
+      "company_name": "Company Name",
+      "country_code": "Country Code (e.g. US, IE)",
+      "cancel": "Cancel",
+      "submit": "Add Sub-processor"
+    },
+    "history": {
+      "title": "Sub-processor Change History",
+      "subtitle": "Track and respond to changes detected on the public sub-processor webpage of this vendor.",
+      "empty": "No changes have been detected or recorded for this vendor."
+    },
+    "change": {
+      "detected": "Change Detected",
+      "detected_on": "Detected on {when}",
+      "review": "Review & Respond",
+      "summary": "Summary of changes ({added} additions, {removed} removals)",
+      "hide": "Hide Changes",
+      "show": "Show Changes",
+      "no_lines": "No line additions or removals detected (boilerplate update).",
+      "reviewed_by": "Reviewed by {name} on {when}",
+      "status": {
+        "pending_review": "pending review",
+        "acknowledged": "acknowledged",
+        "objected": "objected"
+      }
+    },
+    "review": {
+      "title": "Respond to Sub-processor Change",
+      "subtitle": "Review the detected page differences and submit your response.",
+      "diff_preview": "Detected Diff Preview",
+      "boilerplate_only": "Boilerplate updates only.",
+      "notes_label": "Review Notes",
+      "notes_placeholder": "Record your assessment, e.g. 'AWS Dublin region added; complies with hosting preferences.'",
+      "warning_title": "DPA Objection Clause Warning",
+      "warning_body": "Objecting to a sub-processor change is a legally significant action under the GDPR. Under your DPA terms, you may have the right to terminate the agreement. Review your DPA clause coverage for termination provisions.",
+      "cancel": "Cancel",
+      "object": "Object to Change",
+      "acknowledge": "Acknowledge Change"
+    }
+  },
+  "discovery": {
+    "loading": "Loading scan details…",
+    "empty": "No discoveries logged in this view.",
+    "item_count": "{count} items",
+    "dismiss": "Dismiss / Ignore",
+    "add_custom": "Add Custom Vendor",
+    "link_vendor": "Link {name}",
+    "source": "Source: {method}",
+    "first_seen": "First seen: {when}",
+    "needs_consent": "Needs {category} consent",
+    "consent_tooltip": "{provider} requires consent for \"{category}\" before it may run.",
+    "scan": {
+      "title": "Trigger Website & DNS Discovery Scan",
+      "subtitle": "Scan your public site for tracking scripts, pixels, CDNs, and MX/SPF records to discover undocumented shadow IT.",
+      "button": "Scan Website",
+      "queued": "Discovery scan queued",
+      "queued_detail": "Results appear in the inbox in a few minutes."
+    },
+    "tabs": {
+      "inbox": "Actionable Inbox",
+      "archive": "Scan Logs & Archive"
+    },
+    "badges": {
+      "registry_match": "Global Registry Match",
+      "unrecognised": "Unrecognised Domain"
+    },
+    "status": {
+      "undocumented": "undocumented",
+      "added_to_register": "added to register",
+      "dismissed": "dismissed",
+      "false_positive": "false positive"
+    },
+    "methods": {
+      "website_scan": "website scan",
+      "dns_analysis": "DNS analysis"
+    },
+    "categories": {
+      "analytics": "Analytics",
+      "marketing": "Marketing",
+      "hosting": "Hosting / Infrastructure",
+      "support": "Customer Support",
+      "hr": "HR / Payroll",
+      "other": "Other"
+    },
+    "errors": {
+      "confirm": "Could not confirm the vendor",
+      "create": "Could not create the vendor",
+      "dismiss": "Could not dismiss the finding"
+    },
+    "modal": {
+      "title": "Add Discovered Vendor",
+      "service_name": "Service Name",
+      "domain": "Domain (Website)",
+      "category": "Category",
+      "warning_title": "Profile Verification Warning",
+      "warning_body": "This vendor will be added as a custom profile marked as auto-discovered. You will be prompted to complete their data locations and certifications inside their details page.",
+      "cancel": "Cancel",
+      "submit": "Create and Link"
+    }
+  },
+  "dpa_analysis": {
+    "title": "AI DPA Analysis Results",
+    "subtitle": "GDPR Article 28 clause review drafted by Claude.",
+    "quality_score": "DPA Quality Score",
+    "recommendation": "AI Recommendation",
+    "recommendation_good": "This DPA shows high compliance with Article 28 requirements. Key safeguards are present.",
+    "recommendation_poor": "Caution: this DPA is missing critical Article 28 mandatory clauses or contains problematic language. Review the details below.",
+    "special_category_title": "Contextual Special Category Data Warning (Advisory)",
+    "special_category_note": "Note: this has not changed the vendor's data category classification. Verify your classifications under ROPA.",
+    "checklist_title": "Article 28(3) Mandatory Clause Checklist",
+    "analysis_label": "Analysis: ",
+    "problematic_title": "Problematic Language Identified",
+    "clause_type": "Clause type: {type}",
+    "severity": "{severity} severity",
+    "ai_assisted": "AI-assisted assessment",
+    "save_draft": "Save as draft",
+    "apply": "Apply and lock DPA checklist",
+    "clauses": {
+      "documentedInstructions": "Documented Instructions (Art. 28(3)(a))",
+      "confidentiality": "Confidentiality Assurances (Art. 28(3)(b))",
+      "securityMeasures": "Security Measures (Art. 28(3)(c))",
+      "subProcessorRestrictions": "Sub-processor Restrictions (Art. 28(3)(d))",
+      "dataSubjectRights": "Data Subject Rights Assistance (Art. 28(3)(e))",
+      "securityBreachDpia": "Breach Notification & DPIA (Art. 28(3)(f))",
+      "deletionOnTermination": "Deletion or Return of Data (Art. 28(3)(g))",
+      "auditRights": "Audit & Inspections (Art. 28(3)(h))"
+    },
+    "clause_status": {
+      "present": "present",
+      "weak": "weak",
+      "missing": "missing"
+    }
+  },
+  "questionnaire": {
+    "title": "Assessments History",
+    "subtitle": "Track vendor questionnaires, completed audits, and compliance risk adjustments.",
+    "send": "Send Assessment",
+    "review_saved": "Compliance review saved.",
+    "empty_title": "No Assessments Found",
+    "empty_body": "No security review requests have been sent to this vendor yet. Send one to begin a compliance audit.",
+    "recipient": "Recipient: {name} ({email})",
+    "default_recipient": "Security Lead",
+    "sent_date": "Sent Date",
+    "completed_date": "Completed Date",
+    "score": "Score",
+    "not_available": "N/A",
+    "copied": "Copied",
+    "copy_link": "Copy Form Link",
+    "copy_link_title": "Copy access token link",
+    "print_title": "Print review report",
+    "audit_review": "Audit Review",
+    "audit_review_title": "Audit review & overrides",
+    "audit_assessment": "Audit Assessment:",
+    "errors": {
+      "dispatch": "Failed to dispatch the assessment.",
+      "review": "Failed to update the review."
+    },
+    "status": {
+      "sent": "sent",
+      "in_progress": "in progress",
+      "completed": "completed",
+      "expired": "expired"
+    },
+    "form": {
+      "title": "New Questionnaire Request",
+      "cancel": "Cancel",
+      "template": "Assessment Template *",
+      "template_placeholder": "Select template",
+      "recipient_name": "Recipient Name",
+      "recipient_name_placeholder": "e.g. Compliance Officer",
+      "recipient_email": "Recipient Email *",
+      "recipient_email_placeholder": "e.g. security@partner.com",
+      "sending": "Dispatching…",
+      "submit": "Send Request"
+    },
+    "review": {
+      "title": "Auditor Review & Override",
+      "adjustment": "Score Adjustment Modifier (-50 to +50)",
+      "notes": "Auditor Review Notes",
+      "notes_placeholder": "Record verification notes, observations, or grounds for adjustments…",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "submit": "Save Review"
+    }
+  },
+  "tia": {
+    "loading": "Loading TIA…",
+    "process": "Schrems II Process",
+    "completed": "TIA Completed",
+    "approved_on": "Approved on {when}",
+    "yes": "Yes",
+    "no": "No",
+    "save_draft": "Save Draft",
+    "approve": "Approve & Complete TIA",
+    "previous": "← Previous Step",
+    "next": "Next Step →",
+    "steps": {
+      "1": "Transfer Details",
+      "2": "Legal Assessment",
+      "3": "Supplementary Measures",
+      "4": "Residual Risk",
+      "5": "Conclusion"
+    },
+    "mechanisms": {
+      "sccs": "Standard Contractual Clauses (SCCs)",
+      "bcrs": "Binding Corporate Rules (BCRs)",
+      "derogation": "Article 49 Derogation",
+      "adequacy": "Adequacy Decision"
+    },
+    "step1": {
+      "title": "Step 1: Transfer Details",
+      "subtitle": "Identify the specific parameters of the international data transfer.",
+      "destination": "Destination Country",
+      "mechanism": "Transfer Mechanism",
+      "mechanism_placeholder": "Select transfer mechanism",
+      "us_context_label": "US Context:",
+      "us_context": "Since the invalidation of the Privacy Shield, transfers to the US using SCCs require a TIA to assess risks associated with FISA 702 and EO 12333."
+    },
+    "step2": {
+      "title": "Step 2: Legal Assessment",
+      "subtitle": "Assess the laws and practices of the third country applicable to the transferred data.",
+      "surveillance": "Are there surveillance laws that compel access to the data?",
+      "remedies": "Are there effective, enforceable legal remedies for data subjects?",
+      "conclusion": "Conclusion of Legal Assessment",
+      "select_conclusion": "Select conclusion…",
+      "equivalent": "Laws provide essentially equivalent protection (no supplementary measures needed)",
+      "not_equivalent": "Laws do not provide essentially equivalent protection",
+      "uncertain": "Uncertain / problematic legislation exists"
+    },
+    "step3": {
+      "title": "Step 3: Supplementary Measures",
+      "subtitle": "Identify the supplementary measures implemented by the data importer to mitigate risks.",
+      "not_required": "Based on Step 2, supplementary measures are not strictly required. You can skip to the Conclusion.",
+      "technical": "Technical Measures",
+      "details_placeholder": "Details…",
+      "measures": {
+        "e2ee": "End-to-End Encryption",
+        "pseudonymisation": "Pseudonymisation",
+        "data_minimisation": "Data Minimisation in Transit"
+      }
+    },
+    "step4": {
+      "title": "Step 4: Residual Risk",
+      "subtitle": "Assess the risk level after applying all supplementary measures.",
+      "level": "Residual Risk Level",
+      "justification": "Justification",
+      "justification_placeholder": "Explain why the residual risk is acceptable or unacceptable…",
+      "levels": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      }
+    },
+    "step5": {
+      "title": "Step 5: Conclusion",
+      "decision": "Final Decision",
+      "proceed": "Proceed with Transfer",
+      "proceed_with_conditions": "Proceed with Conditions",
+      "suspend": "Suspend Transfer",
+      "conditions": "Specify Conditions"
+    }
+  },
+  "incidents": {
+    "loading": "Loading incident feed…",
+    "title": "Breach & Regulatory Intelligence",
+    "subtitle": "Alerts, GDPR enforcement fines, and data breach updates tracked for this vendor.",
+    "empty_title": "Zero incidents on record",
+    "empty_body": "No data breaches, fines, or regulatory actions have been detected for this vendor.",
+    "meta": "{when} | Source: {source}",
+    "date_unknown": "Date unknown",
+    "default_source": "Regulatory feed",
+    "default_reviewer": "Workspace admin",
+    "source": "Source",
+    "alert_label": "Alert: {status}",
+    "penalty": "Administrative Penalty",
+    "affected_categories": "Affected Data Categories",
+    "art33_title": "Article 33 Recommended Action",
+    "art33_body": "If this breach affects personal data you shared with this vendor, you may need to notify your supervisory authority within 72 hours under Article 33. Review the breach details above and assess whether your data subjects are affected.",
+    "reviewed_by": "Reviewed by {name}",
+    "action_required": "Action required: review security incident alert",
+    "respond": "Respond & Document Action",
+    "select_action": "Select Response Action",
+    "notes_label": "Notes & Internal Documentation",
+    "notes_placeholder": "Document your action notes, e.g. 'Confirmed no data subjects are affected by the API key disclosure.'",
+    "cancel": "Cancel",
+    "submit": "Submit Assessment",
+    "severity": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high",
+      "critical": "critical"
+    },
+    "type": {
+      "breach": "breach",
+      "fine": "fine",
+      "investigation": "investigation"
+    },
+    "alert_status": {
+      "unread": "unread",
+      "acknowledged": "acknowledged",
+      "action_taken": "action taken",
+      "dismissed": "dismissed"
+    },
+    "actions": {
+      "acknowledged": "Acknowledge",
+      "action_taken": "Action Taken",
+      "dismissed": "Dismiss"
+    }
   }
 }

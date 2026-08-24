@@ -13,7 +13,9 @@
     "migrate": "tsx src/migrate.ts",
     "gather:vendors": "tsx src/scripts/gather-vendors.ts",
     "seed:trackers": "tsx src/seed-trackers.ts",
-    "check:schema": "node scripts/check-schema.mjs"
+    "check:schema": "node scripts/check-schema.mjs",
+    "seed:vendors": "tsx src/seed-vendors.ts",
+    "reset:subprocessor-baselines": "tsx src/scripts/reset-sub-processor-baselines.ts"
   },
   "keywords": [],
   "author": "",

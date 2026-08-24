@@ -17,6 +17,38 @@ if (!connectionString) throw new Error('DATABASE_URL is not set');
 const sql = postgres(connectionString);
 const db = drizzle(sql, { schema });
 
+/**
+ * The global vendor catalogue seed.
+ *
+ * `transferMechanisms` is load-bearing, not descriptive: `lib/vendorRisk.ts`
+ * gates US adequacy on the exact string `data_privacy_framework`, so a US vendor
+ * without it scores the full 20/20 location risk and inflates every customer's
+ * "high risk vendors" tile. That string appeared nowhere in this file until
+ * August 2026, which is why every US vendor was pinned at maximum.
+ *
+ * Two things to know before editing it:
+ *
+ * 1. **These are hand-typed regulatory assertions with no provenance.** There is
+ *    no certified-on date, no source URL and no expiry, and DPF certifications
+ *    lapse annually. That is the same shape as the standalone pipeline's
+ *    13-name hardcoded array, which is a defect. This is a stopgap until
+ *    `vendor_field_provenance` (audit P-2) can record value, source, retrieved-at
+ *    and verified-by per field, at which point the DPF flag should come from the
+ *    public Data Privacy Framework list rather than from here.
+ *
+ * 2. **An absent `transferMechanisms` means "not researched", not "no
+ *    safeguards".** Most of the vertical entries below are name/website/country
+ *    stubs. The risk engine cannot currently tell the two apart and scores both
+ *    as unsafeguarded, which is the conservative direction but not an honest one.
+ *    Do not "fix" a stub by guessing a mechanism onto it; the two entries that
+ *    carry an inline comment are there because the identical corporate
+ *    certification was already recorded on a sibling product in this same file.
+ *
+ * Changing a mechanism here does NOT move any customer's score on its own:
+ * `organization_vendors.risk_score` is denormalised and written at link time.
+ * Re-run the seed, then
+ * `npm run recalc:vendor-risk --workspace=apps/api -- --apply`.
+ */
 const VENDORS = [
   {
     name: 'HubSpot',
@@ -277,7 +309,9 @@ const VENDORS = [
     website: 'https://linkedin.com/talent',
     category: 'Recruitment',
     headquartersCountry: 'US',
-    suggestedForIndustries: ['recruitment']
+    suggestedForIndustries: ['recruitment'],
+    // Microsoft's DPF certification, the same one recorded on GitHub below.
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'Clio',
@@ -319,7 +353,9 @@ const VENDORS = [
     website: 'https://quickbooks.intuit.com',
     category: 'Accounting',
     headquartersCountry: 'US',
-    suggestedForIndustries: ['accounting']
+    suggestedForIndustries: ['accounting'],
+    // Intuit's DPF certification, the same one recorded on Mailchimp above.
+    transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework']
   },
   {
     name: 'FreshBooks',

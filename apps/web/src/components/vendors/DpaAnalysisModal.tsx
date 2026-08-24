@@ -5,13 +5,18 @@ import {
   X, ShieldCheck, ShieldAlert, AlertTriangle, HelpCircle, 
   Sparkles, CheckCircle2, ChevronDown, ChevronUp, FileText 
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface DpaAnalysisModalProps {
   isOpen: boolean;
   onClose: () => void;
   analysisData: any;
-  onConfirm: (checklist: Record<string, boolean>) => Promise<void>;
-  onSaveDraft: (rawAnalysis: any) => Promise<void>;
+  // `=> unknown` rather than `=> Promise<void>`: check:vendor-i18n is a text scan
+  // whose JSX-text rule matches `>…<`, so `Promise<void>` reads as a text node
+  // containing the word "Promise". Restructuring the annotation is the documented
+  // fix; an ALLOWED entry is for copy that is meant to stay English.
+  onConfirm: (checklist: Record<string, boolean>) => unknown;
+  onSaveDraft: (rawAnalysis: any) => unknown;
   isSubmitting: boolean;
 }
 
@@ -23,6 +28,7 @@ export function DpaAnalysisModal({
   onSaveDraft,
   isSubmitting
 }: DpaAnalysisModalProps) {
+  const t = useTranslations('vendors.dpa_analysis');
   const [expandedClauses, setExpandedClauses] = useState<Record<string, boolean>>({});
 
   if (!isOpen || !analysisData) return null;
@@ -31,23 +37,25 @@ export function DpaAnalysisModal({
     setExpandedClauses(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // The keys are matched against the analyser's output and against
+  // `dpaClauseCoverage`, so they stay as they are; only the label is UI copy.
   const checklistKeys = [
-    { key: 'documentedInstructions', label: 'Documented Instructions (Art. 28.3.a)' },
-    { key: 'confidentiality', label: 'Confidentiality Assurances (Art. 28.3.b)' },
-    { key: 'securityMeasures', label: 'Security Measures (Art. 28.3.c)' },
-    { key: 'subProcessorRestrictions', label: 'Sub-processor Restrictions (Art. 28.3.d)' },
-    { key: 'dataSubjectRights', label: 'Data Subject Rights Assistance (Art. 28.3.e)' },
-    { key: 'securityBreachDpia', label: 'Breach Notification & DPIA (Art. 28.3.f)' },
-    { key: 'deletionOnTermination', label: 'Deletion or Return of Data (Art. 28.3.g)' },
-    { key: 'auditRights', label: 'Audit & Inspections (Art. 28.3.h)' }
-  ];
+    'documentedInstructions',
+    'confidentiality',
+    'securityMeasures',
+    'subProcessorRestrictions',
+    'dataSubjectRights',
+    'securityBreachDpia',
+    'deletionOnTermination',
+    'auditRights',
+  ] as const;
 
   const checklist = analysisData.checklist || {};
   const problematic = analysisData.problematic_language || [];
 
   const handleApply = () => {
     const finalChecklist: Record<string, boolean> = {};
-    checklistKeys.forEach(({ key }) => {
+    checklistKeys.forEach((key) => {
       const status = checklist[key]?.status;
       finalChecklist[key] = status === 'present';
     });
@@ -63,8 +71,8 @@ export function DpaAnalysisModal({
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-indigo-500/10 border border-indigo-900/50 rounded-lg text-indigo-400 shadow-panel-elevated"><Sparkles className="w-5 h-5" /></div>
             <div>
-              <h3 className="text-lg font-serif text-[#F4F5F6]">AI DPA Analysis Results</h3>
-              <p className="text-xs text-[#6E747A]">GDPR Article 28 clause review drafted by Claude.</p>
+              <h3 className="text-lg font-serif text-[#F4F5F6]">{t('title')}</h3>
+              <p className="text-xs text-[#6E747A]">{t('subtitle')}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg text-[#6E747A] hover:text-[#F4F5F6] hover:bg-white/5 transition-colors">
@@ -77,16 +85,16 @@ export function DpaAnalysisModal({
           {/* Summary Score Panel */}
           <div className="grid md:grid-cols-4 gap-6 bg-ink-900 text-white rounded-xl p-5 shadow-inner">
             <div className="text-center border-r border-bone-50/10 py-2">
-              <div className="text-[10px] font-bold text-bone-50/50 uppercase tracking-widest mb-1">DPA Quality Score</div>
+              <div className="text-[10px] font-bold text-bone-50/50 uppercase tracking-widest mb-1">{t('quality_score')}</div>
               <div className="text-3xl font-black">{analysisData.overall_score || 0} / 100</div>
             </div>
 
             <div className="border-r border-bone-50/10 py-2 col-span-3 text-left px-4 flex flex-col justify-center">
-              <span className="text-[10px] font-bold text-bone-50/50 uppercase tracking-widest mb-1">AI Recommendation</span>
+              <span className="text-[10px] font-bold text-bone-50/50 uppercase tracking-widest mb-1">{t('recommendation')}</span>
               <p className="text-xs text-bone-50/80 leading-relaxed">
-                {analysisData.overall_score >= 80 
-                  ? "This DPA shows high compliance with Article 28 requirements. Key safeguards are present."
-                  : "Caution: This DPA is missing critical Article 28 mandatory clauses or contains problematic language. Review details below."}
+                {analysisData.overall_score >= 80
+                  ? t('recommendation_good')
+                  : t('recommendation_poor')}
               </p>
             </div>
           </div>
@@ -96,10 +104,10 @@ export function DpaAnalysisModal({
             <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-xl text-xs flex gap-3 leading-relaxed">
               <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400" />
               <div>
-                <span className="font-bold block mb-0.5">Contextual Special Category Data Warning (Advisory)</span>
+                <span className="font-bold block mb-0.5">{t('special_category_title')}</span>
                 {analysisData.special_category_rationale}
                 <span className="block mt-1.5 text-neutral-500 italic">
-                  Note: This has not changed the vendor's data category classification. Verify your classifications under ROPA.
+                  {t('special_category_note')}
                 </span>
               </div>
             </div>
@@ -107,9 +115,9 @@ export function DpaAnalysisModal({
 
           {/* Article 28 Clause Review Checklist */}
           <div className="space-y-3">
-            <h4 className="font-bold text-[#F4F5F6] text-sm">Article 28(3) Mandatory Clause Checklist</h4>
+            <h4 className="font-bold text-[#F4F5F6] text-sm">{t('checklist_title')}</h4>
             <div className="space-y-2">
-              {checklistKeys.map(({ key, label }) => {
+              {checklistKeys.map((key) => {
                 const item = checklist[key] || {};
                 const isPresent = item.status === 'present';
                 const isWeak = item.status === 'weak';
@@ -131,11 +139,11 @@ export function DpaAnalysisModal({
                         ) : (
                           <AlertTriangle className={`w-4 h-4 ${isWeak ? 'text-amber-500' : 'text-rose-500'}`} />
                         )}
-                        <span className="text-xs font-semibold text-[#F4F5F6]">{label}</span>
+                        <span className="text-xs font-semibold text-[#F4F5F6]">{t(`clauses.${key}`)}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusBadge}`}>
-                          {item.status || 'missing'}
+                          {t(`clause_status.${item.status || 'missing'}`)}
                         </span>
                         {isExpanded ? <ChevronUp className="w-4 h-4 text-[#6E747A]" /> : <ChevronDown className="w-4 h-4 text-[#6E747A]" />}
                       </div>
@@ -145,7 +153,7 @@ export function DpaAnalysisModal({
                       <div className="px-4 pb-4 pt-1 space-y-3 border-t border-white/5 bg-[#0D0F11] text-xs leading-relaxed animate-in slide-in-from-top-1 duration-100">
                         {item.notes && (
                           <p className="text-[#9BA1A6]">
-                            <span className="font-bold text-[#F4F5F6]">Analysis: </span>
+                            <span className="font-bold text-[#F4F5F6]">{t('analysis_label')}</span>
                             {item.notes}
                           </p>
                         )}
@@ -167,15 +175,15 @@ export function DpaAnalysisModal({
             <div className="space-y-3">
               <h4 className="font-bold text-sm flex items-center gap-1.5 text-rose-300">
                 <ShieldAlert className="w-4 h-4 shrink-0" />
-                Problematic Language Identified
+                {t('problematic_title')}
               </h4>
               <div className="space-y-2">
                 {problematic.map((p: any, idx: number) => (
                   <div key={idx} className="p-4 bg-rose-500/5 border border-rose-500/20 rounded-xl space-y-2">
                     <div className="flex justify-between items-center text-xs font-bold text-rose-300">
-                      <span className="capitalize">Clause type: {p.clauseType.replace('_', ' ')}</span>
+                      <span className="capitalize">{t('clause_type', { type: p.clauseType.replace('_', ' ') })}</span>
                       <span className="uppercase tracking-widest text-[9px] bg-rose-500/10 px-2 py-0.5 rounded border border-rose-200/50">
-                        {p.severity} severity
+                        {t('severity', { severity: p.severity })}
                       </span>
                     </div>
                     <p className="text-xs text-rose-950/80 leading-relaxed">{p.notes}</p>
@@ -194,7 +202,7 @@ export function DpaAnalysisModal({
         {/* Footer */}
         <div className="p-4 border-t border-white/10 bg-[#08090A]/50 flex justify-between items-center">
           <span className="text-[10px] text-[#6E747A] font-bold uppercase tracking-widest">
-            🛡️ AI-assisted Assessment
+            {t('ai_assisted')}
           </span>
 
           <div className="flex gap-2.5">
@@ -203,14 +211,14 @@ export function DpaAnalysisModal({
               disabled={isSubmitting}
               className="px-4 py-2 border border-white/10 hover:bg-white/5 rounded-lg text-xs font-semibold text-[#E6E8EA] transition-colors shadow-panel-elevated disabled:opacity-50"
             >
-              Save as draft
+              {t('save_draft')}
             </button>
             <button
               onClick={handleApply}
               disabled={isSubmitting}
               className="bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] font-semibold text-xs px-5 py-2.5 rounded-lg shadow-card hover:shadow-sage-500/10 transition-all duration-300 disabled:opacity-50"
             >
-              Apply and lock DPA checklist
+              {t('apply')}
             </button>
           </div>
         </div>

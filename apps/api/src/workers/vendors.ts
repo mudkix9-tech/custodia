@@ -5,6 +5,7 @@ import { eq, and, isNotNull, lte, gt, inArray, sql } from 'drizzle-orm';
 import { calculateVendorRisk } from '../routers/vendors.js';
 import { runClusterTask, scanDomainForThirdParties } from '../lib/browserPool.js';
 import { getRootDomain } from '../lib/domains.js';
+import { normaliseSubProcessorSnapshot } from '../lib/vendorSubProcessors.js';
 import { queueNotification } from '../utils/notifications.js';
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import crypto from 'crypto';
@@ -82,28 +83,10 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
           continue;
         }
 
-        // Clean & normalize text content to prevent boilerplate noise
-        const cleanedText = textContent
-          .split('\n')
-          .map(line => {
-            const trimmed = line.trim();
-            const isCookieBanner = /cookie/i.test(trimmed) && /(use|experience|accept|agree|decline|consent|settings|manage|policy)/i.test(trimmed);
-            const isCopyright = /copyright|all rights reserved|©/i.test(trimmed);
-            const isBoilerplateLink = /^(privacy policy|terms of service|terms & conditions|contact us|about us|help center|support)$/i.test(trimmed) || 
-                                      (trimmed.includes('|') && /(privacy|terms|contact|about|support)/i.test(trimmed));
-            
-            if (isCookieBanner || isCopyright || isBoilerplateLink) {
-              return '';
-            }
-            return trimmed;
-          })
-          .filter(Boolean)
-          .join('\n')
-          // Horizontal whitespace only: collapsing \n too destroyed the line
-          // structure the SubProcessorList diff splits on.
-          .replace(/[^\S\n]+/g, ' ')
-          .replace(/\b(?:202\d|19\d\d)\b/g, '')
-          .trim();
+        // Clean & normalize text content to prevent boilerplate noise.
+        // The chain itself lives in lib/vendorSubProcessors.ts so it can be
+        // covered by fixtures -- its failure mode is a snapshot that looks fine.
+        const cleanedText = normaliseSubProcessorSnapshot(textContent);
 
         const currentHash = crypto.createHash('sha256').update(cleanedText).digest('hex');
 

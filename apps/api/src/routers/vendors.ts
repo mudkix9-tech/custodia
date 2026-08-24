@@ -11,6 +11,9 @@ import { isAdequateDestination } from '../constants/transferDestinations.js';
 
 import { calculateVendorRisk } from '../lib/vendorRisk.js';
 import { enforceLimit } from '../lib/billing.js';
+import { DPA_STATUS_SIGNED, DPA_STATUS_MISSING } from '../constants/dpaStatus.js';
+import { csvDocument } from '../utils/csv.js';
+import { TRANSFER_MECHANISMS } from '../constants/transferMechanisms.js';
 export { calculateVendorRisk };
 
 export async function updateVendorRiskScore(dbInstance: any, orgId: string, vendorId: string) {
@@ -163,17 +166,24 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
   }
 
   if (updates.length > 0) {
+    // Every branch of these CASE expressions is a bound parameter, so Postgres has
+    // nothing to infer a type from and resolves the whole expression as `text` --
+    // which it then refuses to assign to an integer column:
+    //   column "risk_score" is of type integer but expression is of type text
+    // The casts are what make this run at all. It threw on every invocation that
+    // had a row to write, which is every sub-processor add/remove and every
+    // catalogue-driven recalculation, and `tsc` sees a perfectly good SQL template.
     await dbInstance.update(organizationVendors)
       .set({
         riskScore: sql`
-          CASE id 
+          (CASE id 
           ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${u.score}`), sql` `)}
-          END
+          END)::integer
         `,
         riskLevel: sql`
-          CASE id 
+          (CASE id 
           ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${u.level}`), sql` `)}
-          END
+          END)::varchar(20)
         `,
         riskFactors: sql`
           CASE id 
@@ -193,24 +203,30 @@ const paginationInput = z.object({
 
 export const vendorsRouter = router({
   // GLOBAL
-  getAllGlobal: protectedProcedure.query(async ({ ctx }) => {
+  getAllGlobal: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .query(async ({ ctx }) => {
     return await ctx.db.select().from(vendors).where(eq(vendors.isGlobal, true));
   }),
 
   getById: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const result = await ctx.db.select().from(vendors).where(eq(vendors.id, input.id));
       return result[0];
     }),
 
-  suggestGlobal: protectedProcedure.query(async ({ ctx }) => {
+  suggestGlobal: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .query(async ({ ctx }) => {
     // Mock suggestion for now. Can be enhanced to look at what's missing.
     return await ctx.db.select().from(vendors).where(eq(vendors.isGlobal, true)).limit(5);
   }),
 
   // ORG
   getOrgVendors: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
     .input(paginationInput)
     .query(async ({ ctx, input }) => {
       const res = await paginatedQuery(
@@ -256,6 +272,7 @@ export const vendorsRouter = router({
     }),
 
   getOrgVendorDetails: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
     .input(z.object({ vendorId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const records = await ctx.db.select({
@@ -327,6 +344,11 @@ export const vendorsRouter = router({
       certifications: z.array(z.string()).optional(),
       contractRenewalDate: z.string().nullable().optional(),
       dpaClauseCoverage: z.record(z.boolean()).optional(),
+      // The safeguard this organisation relies on, which may differ from the
+      // shared catalogue's. Constrained to the vocabulary the risk engine and the
+      // gap rule actually match on -- a free-text 'SCCs' scored as no safeguard
+      // at all, which is the trap the audit's finding 4 describes.
+      transferMechanisms: z.array(z.enum(TRANSFER_MECHANISMS)).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const [orgVendor] = await ctx.db.select().from(organizationVendors).where(and(
@@ -349,6 +371,7 @@ export const vendorsRouter = router({
       // in new Date() bound a timestamp to a date column.
       if (input.contractRenewalDate !== undefined) updates.contractRenewalDate = input.contractRenewalDate || null;
       if (input.dpaClauseCoverage !== undefined) updates.dpaClauseCoverage = input.dpaClauseCoverage;
+      if (input.transferMechanisms !== undefined) updates.transferMechanisms = input.transferMechanisms;
 
       // Fetch sub-processor count
       const subs = await ctx.db.select()
@@ -574,50 +597,69 @@ export const vendorsRouter = router({
       })
   }),
 
-  getRiskStats: protectedProcedure.query(async ({ ctx }) => {
-    const list = await ctx.db.select().from(organizationVendors).where(eq(organizationVendors.organizationId, ctx.user!.orgId));
-    const total = list.length;
-    const highOrCritical = list.filter((v: any) => v.riskLevel === 'high' || v.riskLevel === 'critical').length;
-    const low = list.filter((v: any) => v.riskLevel === 'low').length;
-    const medium = list.filter((v: any) => v.riskLevel === 'medium').length;
-    // Whole-register DPA figures: the register page used to derive these from
-    // the 25 rows it happened to have loaded, understating coverage in every
-    // CSV an auditor saw.
-    const dpasSigned = list.filter((v: any) => v.dpaStatus === 'signed').length;
-    const missingDpas = list.filter((v: any) => v.dpaStatus === 'not_started' || v.dpaStatus === 'expired').length;
-    return { total, highOrCritical, low, medium, dpasSigned, missingDpas };
-  }),
+  getRiskStats: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .query(async ({ ctx }) => {
+      // Counted in SQL. These tiles are the whole register -- the page used to
+      // derive them from the 25 rows it happened to have loaded -- so pulling
+      // every column of every row back to call .filter() on it scaled the wrong
+      // way for the one caller that most needed it not to.
+      const [row] = await ctx.db.select({
+        total: sql<number>`count(*)::int`,
+        highOrCritical: sql<number>`count(*) filter (where ${inArray(organizationVendors.riskLevel, ['high', 'critical'])})::int`,
+        low: sql<number>`count(*) filter (where ${eq(organizationVendors.riskLevel, 'low')})::int`,
+        medium: sql<number>`count(*) filter (where ${eq(organizationVendors.riskLevel, 'medium')})::int`,
+        dpasSigned: sql<number>`count(*) filter (where ${eq(organizationVendors.dpaStatus, DPA_STATUS_SIGNED)})::int`,
+        missingDpas: sql<number>`count(*) filter (where ${inArray(organizationVendors.dpaStatus, [...DPA_STATUS_MISSING])})::int`,
+      })
+        .from(organizationVendors)
+        .where(eq(organizationVendors.organizationId, ctx.user!.orgId));
+
+      return {
+        total: row?.total ?? 0,
+        highOrCritical: row?.highOrCritical ?? 0,
+        low: row?.low ?? 0,
+        medium: row?.medium ?? 0,
+        dpasSigned: row?.dpasSigned ?? 0,
+        missingDpas: row?.missingDpas ?? 0,
+      };
+    }),
 
   // Server-side export over the entire register. The client-side version
   // serialised only the loaded pages, so an organisation with 60 vendors handed
   // an auditor a file describing 25.
-  exportRegisterCsv: protectedProcedure.query(async ({ ctx }) => {
-    const rows = await ctx.db.select({
-      name: vendors.name,
-      category: vendors.category,
-      headquartersCountry: vendors.headquartersCountry,
-      website: vendors.website,
-      dpaStatus: organizationVendors.dpaStatus,
-      riskLevel: organizationVendors.riskLevel,
-      riskScore: organizationVendors.riskScore,
-    })
-      .from(organizationVendors)
-      .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
-      .where(eq(organizationVendors.organizationId, ctx.user!.orgId))
-      .orderBy(desc(organizationVendors.riskScore));
+  exportRegisterCsv: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .query(async ({ ctx }) => {
+      const rows = await ctx.db.select({
+        name: vendors.name,
+        category: vendors.category,
+        headquartersCountry: vendors.headquartersCountry,
+        website: vendors.website,
+        dpaStatus: organizationVendors.dpaStatus,
+        riskLevel: organizationVendors.riskLevel,
+        riskScore: organizationVendors.riskScore,
+      })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(eq(organizationVendors.organizationId, ctx.user!.orgId))
+        .orderBy(desc(organizationVendors.riskScore));
 
-    const field = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-    const csv = [
-      ['Vendor', 'Category', 'Country', 'DPA Status', 'Risk Level', 'Risk Score', 'Website'].map(field).join(','),
-      ...rows.map((r) => [
-        r.name, r.category, r.headquartersCountry, r.dpaStatus, r.riskLevel, r.riskScore, r.website,
-      ].map(field).join(',')),
-    ].join('\r\n');
+      // csvDocument rather than a local quoting helper: this file and
+      // ropaExportFormats.ts had one each, disagreeing about when to quote, and
+      // only one of them was covered by the importer's round-trip test.
+      const csv = csvDocument([
+        ['Vendor', 'Category', 'Country', 'DPA Status', 'Risk Level', 'Risk Score', 'Website'],
+        ...rows.map((r) => [
+          r.name, r.category, r.headquartersCountry, r.dpaStatus, r.riskLevel, r.riskScore, r.website,
+        ]),
+      ]);
 
-    return { csv, count: rows.length };
-  }),
+      return { csv, count: rows.length };
+    }),
 
   getSubProcessorChanges: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
     .input(z.object({ orgVendorId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const [ov] = await ctx.db.select()
@@ -673,6 +715,7 @@ export const vendorsRouter = router({
     }),
 
   getIncidentsForVendor: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
     .input(z.object({ vendorId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const [v] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
@@ -718,6 +761,7 @@ export const vendorsRouter = router({
     }),
 
   getUnreadIncidentAlertsCount: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
     .query(async ({ ctx }) => {
       const list = await ctx.db.select()
         .from(organizationVendorIncidentAlerts)
@@ -759,8 +803,10 @@ export const vendorsRouter = router({
 
   // Publishing fans an alert out to every organisation subscribed to this vendor,
   // so this is a platform-operator action sitting on a tenant-facing router. It had
-  // no permission check at all; `manage` is the narrowest gate available today.
-  // Recorded in known-concerns.md -- it wants a real platform-admin role.
+  // no permission check at all. `vendors:manage` is granted by no built-in role --
+  // see the note on ROLE_PERMISSION_DEFAULTS -- so this resolves to owner-only via
+  // `*:*`. That is the intent, deliberately narrower than `vendors:edit`, until a
+  // real platform-admin role exists. Recorded in known-concerns.md.
   publishIncident: protectedProcedure
     .use(requirePermission('vendors', 'manage'))
     .input(z.object({ incidentId: z.string().uuid() }))
@@ -784,6 +830,7 @@ export const vendorsRouter = router({
     }),
 
   getPrivacyAlternatives: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
     .input(z.object({ vendorId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
@@ -865,6 +912,7 @@ export const vendorsRouter = router({
     }),
 
   getQuestionnaires: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
     .input(z.object({ orgVendorId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       return await ctx.db.select()
@@ -998,6 +1046,7 @@ export const vendorsRouter = router({
     }),
 
   getDiscoveries: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
     .input(z.object({
       limit: z.number().min(1).max(100).default(25),
       cursor: z.string().nullish(),
@@ -1043,6 +1092,7 @@ export const vendorsRouter = router({
     }),
 
   getUndocumentedCount: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
     .query(async ({ ctx }) => {
       const [result] = await ctx.db.select({
         count: sql<number>`count(*)::int`

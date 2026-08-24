@@ -224,6 +224,10 @@ export const DETECTION_RULES = [
         const isAdequate = isAdequateDestination(country);
         if (isEu || isAdequate) return false;
 
+        // Both halves are real as of migration 0050. The org half was a phantom
+        // read for as long as this rule existed -- `organization_vendors` had no
+        // such column -- so an organisation that had signed its own SCCs still
+        // saw the Art. 44 gap reported against it (audit D26).
         const mechanisms = [
           ...(r.vendor.transferMechanisms || []),
           ...(r.transferMechanisms || [])

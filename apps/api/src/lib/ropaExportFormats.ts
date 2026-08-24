@@ -29,6 +29,7 @@
 import * as XLSX from 'xlsx';
 import type { Article30Activity, Article30Record } from './ropaArticle30.js';
 import { flattenActivities } from './ropaArticle30.js';
+import { csvCell } from '../utils/csv.js';
 
 // ---------------------------------------------------------------------------
 // Cell helpers.
@@ -583,11 +584,6 @@ export function article30Json(record: Article30Record): unknown {
 // ---------------------------------------------------------------------------
 // CSV, kept for round-tripping with the importer.
 // ---------------------------------------------------------------------------
-
-const csvCell = (value: unknown): string => {
-  const text = value === null || value === undefined ? '' : String(value);
-  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-};
 
 /**
  * J94. The whole register as CSV, server-side.

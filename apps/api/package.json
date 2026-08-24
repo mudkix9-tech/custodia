@@ -25,7 +25,9 @@
     "test:assessments": "tsx src/lib/assessments.test.ts",
     "test:ropa-exports": "tsx src/lib/ropaExportFormats.test.ts",
     "test:retention": "tsx src/lib/retention.test.ts",
-    "test:ropa-intelligence": "tsx src/lib/ropaIntelligence.test.ts"
+    "test:ropa-intelligence": "tsx src/lib/ropaIntelligence.test.ts",
+    "recalc:vendor-risk": "tsx src/scripts/recalculate-vendor-risk.ts",
+    "test:vendors": "tsx src/lib/vendors.test.ts"
   },
   "keywords": [],
   "author": "",

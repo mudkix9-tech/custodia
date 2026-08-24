@@ -156,7 +156,16 @@
         },
         "renewal_date": "Date de renouvellement du contrat",
         "expiry_date": "Date d'expiration du DPA",
-        "certifications": "Certifications de sécurité"
+        "certifications": "Certifications de sécurité",
+        "transfer_mechanisms": "Garanties de transfert sur lesquelles vous vous appuyez",
+        "transfer_mechanisms_hint": "Enregistrées pour votre propre usage de ce prestataire. Si le catalogue partagé mentionne déjà une garantie, celle-ci s'y ajoute sans la remplacer — une lacune au titre de l'article 44 n'est signalée que si aucune des deux n'en mentionne.",
+        "mechanisms": {
+          "standard_contractual_clauses": "Clauses contractuelles types",
+          "binding_corporate_rules": "Règles d'entreprise contraignantes",
+          "data_privacy_framework": "Data Privacy Framework UE–États-Unis",
+          "adequacy_decision": "Décision d'adéquation",
+          "derogation_article_49": "Dérogation de l'article 49"
+        }
       },
       "template": {
         "title": "Modèle de DPA du fournisseur",
@@ -315,5 +324,356 @@
     "submitting": "Ajout…",
     "added": "{name} a été ajouté au registre",
     "failed": "Impossible d'ajouter le fournisseur"
+  },
+  "alternatives": {
+    "title": "Alternatives respectueuses de la vie privée",
+    "subtitle": "Envisagez ces prestataires alternatifs à moindre risque dans la même catégorie :",
+    "risk": "Risque : {score}",
+    "privacy_friendly": "Respectueux de la vie privée",
+    "hq": "Siège : {country}"
+  },
+  "export": {
+    "nothing": "Rien à exporter",
+    "empty_register": "Le registre des prestataires est vide.",
+    "failed": "Échec de l'export",
+    "failed_detail": "Le registre n'a pas pu être exporté.",
+    "done": "{count} prestataires exportés"
+  },
+  "sub_processors": {
+    "loading": "Chargement des sous-traitants ultérieurs…",
+    "title": "Chaîne de sous-traitants ultérieurs",
+    "subtitle": "Suivez les tiers auxquels ce prestataire fait appel pour traiter vos données.",
+    "add": "Ajouter un sous-traitant ultérieur",
+    "catalogue_note": "Ce prestataire fait partie du catalogue partagé : sa liste de sous-traitants ultérieurs est tenue à jour à partir de la page publiée par le prestataire, et non modifiée ici.",
+    "col_name": "Sous-traitant ultérieur",
+    "col_jurisdiction": "Juridiction",
+    "col_risk": "Statut de risque",
+    "col_added": "Ajouté le",
+    "empty": "Aucun sous-traitant ultérieur enregistré.",
+    "linked_title": "Lié à la base de données globale",
+    "purpose_default": "Traitement général",
+    "unknown_country": "Inconnu",
+    "database_match": "Correspondance en base",
+    "unlisted_vendor": "Prestataire non répertorié",
+    "errors": {
+      "add_failed": "Impossible d'ajouter le sous-traitant ultérieur",
+      "remove_failed": "Impossible de supprimer le sous-traitant ultérieur"
+    },
+    "modal": {
+      "title": "Ajouter un sous-traitant ultérieur",
+      "subtitle": "Reliez un tiers qui traite des données pour ce service.",
+      "tab_search": "Rechercher dans la base",
+      "tab_manual": "Saisie manuelle",
+      "search_placeholder": "Rechercher dans la base globale des prestataires…",
+      "unknown_location": "Localisation inconnue",
+      "manual_warning": "N'utilisez la saisie manuelle que si le prestataire n'existe pas dans notre base globale. Les sous-traitants ultérieurs saisis manuellement ne reçoivent pas de score de risque automatique.",
+      "company_name": "Raison sociale",
+      "country_code": "Code pays (par ex. US, IE)",
+      "cancel": "Annuler",
+      "submit": "Ajouter le sous-traitant ultérieur"
+    },
+    "history": {
+      "title": "Historique des modifications de sous-traitants ultérieurs",
+      "subtitle": "Suivez les modifications détectées sur la page publique des sous-traitants ultérieurs de ce prestataire et répondez-y.",
+      "empty": "Aucune modification détectée ou enregistrée pour ce prestataire."
+    },
+    "change": {
+      "detected": "Modification détectée",
+      "detected_on": "Détectée le {when}",
+      "review": "Examiner et répondre",
+      "summary": "Résumé des modifications ({added} ajouts, {removed} suppressions)",
+      "hide": "Masquer les modifications",
+      "show": "Afficher les modifications",
+      "no_lines": "Aucun ajout ni suppression de ligne détecté (mise à jour de texte type).",
+      "reviewed_by": "Examiné par {name} le {when}",
+      "status": {
+        "pending_review": "examen en attente",
+        "acknowledged": "accepté",
+        "objected": "contesté"
+      }
+    },
+    "review": {
+      "title": "Répondre à une modification de sous-traitant ultérieur",
+      "subtitle": "Examinez les différences détectées sur la page et transmettez votre réponse.",
+      "diff_preview": "Aperçu des différences détectées",
+      "boilerplate_only": "Mises à jour de texte type uniquement.",
+      "notes_label": "Notes d'examen",
+      "notes_placeholder": "Consignez votre évaluation, par ex. « Région AWS Dublin ajoutée ; conforme aux exigences d'hébergement. »",
+      "warning_title": "Avertissement sur la clause d'opposition du DPA",
+      "warning_body": "S'opposer à une modification de sous-traitant ultérieur est un acte juridiquement significatif au titre du RGPD. Selon les termes de votre DPA, vous pouvez disposer d'un droit de résiliation. Vérifiez les clauses de résiliation de votre DPA.",
+      "cancel": "Annuler",
+      "object": "S'opposer à la modification",
+      "acknowledge": "Accepter la modification"
+    }
+  },
+  "discovery": {
+    "loading": "Chargement des détails de l'analyse…",
+    "empty": "Aucune découverte enregistrée dans cette vue.",
+    "item_count": "{count} éléments",
+    "dismiss": "Écarter / ignorer",
+    "add_custom": "Ajouter un prestataire personnalisé",
+    "link_vendor": "Lier {name}",
+    "source": "Source : {method}",
+    "first_seen": "Première détection : {when}",
+    "needs_consent": "Nécessite le consentement « {category} »",
+    "consent_tooltip": "{provider} nécessite un consentement pour « {category} » avant de pouvoir s'exécuter.",
+    "scan": {
+      "title": "Lancer une analyse de découverte du site et du DNS",
+      "subtitle": "Analysez votre site public à la recherche de scripts de suivi, de pixels, de CDN et d'enregistrements MX/SPF afin d'identifier le shadow IT non documenté.",
+      "button": "Analyser le site",
+      "queued": "Analyse de découverte mise en file",
+      "queued_detail": "Les résultats apparaîtront dans la boîte de réception dans quelques minutes."
+    },
+    "tabs": {
+      "inbox": "Boîte de réception",
+      "archive": "Journaux d'analyse et archives"
+    },
+    "badges": {
+      "registry_match": "Correspondance au registre global",
+      "unrecognised": "Domaine non reconnu"
+    },
+    "status": {
+      "undocumented": "non documenté",
+      "added_to_register": "ajouté au registre",
+      "dismissed": "écarté",
+      "false_positive": "faux positif"
+    },
+    "methods": {
+      "website_scan": "analyse du site",
+      "dns_analysis": "analyse DNS"
+    },
+    "categories": {
+      "analytics": "Analyse d'audience",
+      "marketing": "Marketing",
+      "hosting": "Hébergement / infrastructure",
+      "support": "Support client",
+      "hr": "RH / paie",
+      "other": "Autre"
+    },
+    "errors": {
+      "confirm": "Impossible de confirmer le prestataire",
+      "create": "Impossible de créer le prestataire",
+      "dismiss": "Impossible d'écarter la découverte"
+    },
+    "modal": {
+      "title": "Ajouter le prestataire détecté",
+      "service_name": "Nom du service",
+      "domain": "Domaine (site web)",
+      "category": "Catégorie",
+      "warning_title": "Avertissement de vérification du profil",
+      "warning_body": "Ce prestataire sera ajouté comme profil personnalisé marqué « détecté automatiquement ». Il vous sera demandé de compléter ses localisations de données et ses certifications sur sa page de détail.",
+      "cancel": "Annuler",
+      "submit": "Créer et lier"
+    }
+  },
+  "dpa_analysis": {
+    "title": "Résultats de l'analyse du DPA par l'IA",
+    "subtitle": "Revue des clauses de l'article 28 du RGPD rédigée par Claude.",
+    "quality_score": "Score de qualité du DPA",
+    "recommendation": "Recommandation de l'IA",
+    "recommendation_good": "Ce DPA présente une forte conformité aux exigences de l'article 28. Les garanties essentielles sont présentes.",
+    "recommendation_poor": "Attention : ce DPA omet des clauses obligatoires de l'article 28 ou contient des formulations problématiques. Examinez les détails ci-dessous.",
+    "special_category_title": "Avertissement contextuel sur les catégories particulières de données (indicatif)",
+    "special_category_note": "Remarque : la classification des catégories de données du prestataire n'a pas été modifiée. Vérifiez vos classifications dans le registre des traitements.",
+    "checklist_title": "Liste de contrôle des clauses obligatoires de l'article 28(3)",
+    "analysis_label": "Analyse : ",
+    "problematic_title": "Formulations problématiques identifiées",
+    "clause_type": "Type de clause : {type}",
+    "severity": "Gravité : {severity}",
+    "ai_assisted": "Évaluation assistée par IA",
+    "save_draft": "Enregistrer comme brouillon",
+    "apply": "Appliquer et verrouiller la liste de contrôle du DPA",
+    "clauses": {
+      "documentedInstructions": "Instructions documentées (art. 28(3)(a))",
+      "confidentiality": "Engagements de confidentialité (art. 28(3)(b))",
+      "securityMeasures": "Mesures de sécurité (art. 28(3)(c))",
+      "subProcessorRestrictions": "Restrictions relatives aux sous-traitants ultérieurs (art. 28(3)(d))",
+      "dataSubjectRights": "Assistance aux droits des personnes concernées (art. 28(3)(e))",
+      "securityBreachDpia": "Notification des violations et AIPD (art. 28(3)(f))",
+      "deletionOnTermination": "Suppression ou restitution des données (art. 28(3)(g))",
+      "auditRights": "Audits et inspections (art. 28(3)(h))"
+    },
+    "clause_status": {
+      "present": "présente",
+      "weak": "faible",
+      "missing": "absente"
+    }
+  },
+  "questionnaire": {
+    "title": "Historique des évaluations",
+    "subtitle": "Suivez les questionnaires prestataires, les audits réalisés et les ajustements du risque de conformité.",
+    "send": "Envoyer une évaluation",
+    "review_saved": "Revue de conformité enregistrée.",
+    "empty_title": "Aucune évaluation trouvée",
+    "empty_body": "Aucune demande de revue de sécurité n'a encore été envoyée à ce prestataire. Envoyez-en une pour lancer un audit de conformité.",
+    "recipient": "Destinataire : {name} ({email})",
+    "default_recipient": "Responsable sécurité",
+    "sent_date": "Date d'envoi",
+    "completed_date": "Date d'achèvement",
+    "score": "Score",
+    "not_available": "N/D",
+    "copied": "Copié",
+    "copy_link": "Copier le lien du formulaire",
+    "copy_link_title": "Copier le lien du jeton d'accès",
+    "print_title": "Imprimer le rapport d'examen",
+    "audit_review": "Revue d'audit",
+    "audit_review_title": "Revue d'audit et ajustements",
+    "audit_assessment": "Évaluation d'audit :",
+    "errors": {
+      "dispatch": "Échec de l'envoi de l'évaluation.",
+      "review": "Échec de la mise à jour de la revue."
+    },
+    "status": {
+      "sent": "envoyée",
+      "in_progress": "en cours",
+      "completed": "terminée",
+      "expired": "expirée"
+    },
+    "form": {
+      "title": "Nouvelle demande de questionnaire",
+      "cancel": "Annuler",
+      "template": "Modèle d'évaluation *",
+      "template_placeholder": "Sélectionner un modèle",
+      "recipient_name": "Nom du destinataire",
+      "recipient_name_placeholder": "par ex. Responsable conformité",
+      "recipient_email": "E-mail du destinataire *",
+      "recipient_email_placeholder": "par ex. security@partner.com",
+      "sending": "Envoi en cours…",
+      "submit": "Envoyer la demande"
+    },
+    "review": {
+      "title": "Revue et ajustement par l'auditeur",
+      "adjustment": "Ajustement du score (-50 à +50)",
+      "notes": "Notes de revue de l'auditeur",
+      "notes_placeholder": "Consignez les notes de vérification, observations ou motifs d'ajustement…",
+      "cancel": "Annuler",
+      "saving": "Enregistrement…",
+      "submit": "Enregistrer la revue"
+    }
+  },
+  "tia": {
+    "loading": "Chargement de l'AITD…",
+    "process": "Procédure Schrems II",
+    "completed": "AITD terminée",
+    "approved_on": "Approuvée le {when}",
+    "yes": "Oui",
+    "no": "Non",
+    "save_draft": "Enregistrer le brouillon",
+    "approve": "Approuver et clôturer l'AITD",
+    "previous": "← Étape précédente",
+    "next": "Étape suivante →",
+    "steps": {
+      "1": "Détails du transfert",
+      "2": "Évaluation juridique",
+      "3": "Mesures supplémentaires",
+      "4": "Risque résiduel",
+      "5": "Conclusion"
+    },
+    "mechanisms": {
+      "sccs": "Clauses contractuelles types (CCT)",
+      "bcrs": "Règles d'entreprise contraignantes (BCR)",
+      "derogation": "Dérogation de l'article 49",
+      "adequacy": "Décision d'adéquation"
+    },
+    "step1": {
+      "title": "Étape 1 : détails du transfert",
+      "subtitle": "Identifiez les paramètres précis du transfert international de données.",
+      "destination": "Pays de destination",
+      "mechanism": "Mécanisme de transfert",
+      "mechanism_placeholder": "Sélectionner un mécanisme de transfert",
+      "us_context_label": "Contexte américain :",
+      "us_context": "Depuis l'invalidation du Privacy Shield, les transferts vers les États-Unis fondés sur les CCT nécessitent une AITD afin d'évaluer les risques liés au FISA 702 et à l'EO 12333."
+    },
+    "step2": {
+      "title": "Étape 2 : évaluation juridique",
+      "subtitle": "Évaluez les lois et pratiques du pays tiers applicables aux données transférées.",
+      "surveillance": "Existe-t-il des lois de surveillance imposant l'accès aux données ?",
+      "remedies": "Existe-t-il des recours juridiques effectifs et opposables pour les personnes concernées ?",
+      "conclusion": "Conclusion de l'évaluation juridique",
+      "select_conclusion": "Sélectionner une conclusion…",
+      "equivalent": "Les lois offrent une protection substantiellement équivalente (aucune mesure supplémentaire nécessaire)",
+      "not_equivalent": "Les lois n'offrent pas de protection substantiellement équivalente",
+      "uncertain": "Incertain / législation problématique existante"
+    },
+    "step3": {
+      "title": "Étape 3 : mesures supplémentaires",
+      "subtitle": "Identifiez les mesures supplémentaires mises en œuvre par l'importateur de données pour atténuer les risques.",
+      "not_required": "D'après l'étape 2, des mesures supplémentaires ne sont pas strictement requises. Vous pouvez passer à la conclusion.",
+      "technical": "Mesures techniques",
+      "details_placeholder": "Détails…",
+      "measures": {
+        "e2ee": "Chiffrement de bout en bout",
+        "pseudonymisation": "Pseudonymisation",
+        "data_minimisation": "Minimisation des données en transit"
+      }
+    },
+    "step4": {
+      "title": "Étape 4 : risque résiduel",
+      "subtitle": "Évaluez le niveau de risque après application de toutes les mesures supplémentaires.",
+      "level": "Niveau de risque résiduel",
+      "justification": "Justification",
+      "justification_placeholder": "Expliquez pourquoi le risque résiduel est acceptable ou inacceptable…",
+      "levels": {
+        "low": "Faible",
+        "medium": "Moyen",
+        "high": "Élevé",
+        "critical": "Critique"
+      }
+    },
+    "step5": {
+      "title": "Étape 5 : conclusion",
+      "decision": "Décision finale",
+      "proceed": "Poursuivre le transfert",
+      "proceed_with_conditions": "Poursuivre sous conditions",
+      "suspend": "Suspendre le transfert",
+      "conditions": "Préciser les conditions"
+    }
+  },
+  "incidents": {
+    "loading": "Chargement du flux d'incidents…",
+    "title": "Violations et informations réglementaires",
+    "subtitle": "Alertes, amendes RGPD et actualités de violations de données suivies pour ce prestataire.",
+    "empty_title": "Aucun incident enregistré",
+    "empty_body": "Aucune violation de données, amende ou action réglementaire n'a été détectée pour ce prestataire.",
+    "meta": "{when} | Source : {source}",
+    "date_unknown": "Date inconnue",
+    "default_source": "Flux réglementaire",
+    "default_reviewer": "Administration de l'espace de travail",
+    "source": "Source",
+    "alert_label": "Alerte : {status}",
+    "penalty": "Sanction administrative",
+    "affected_categories": "Catégories de données concernées",
+    "art33_title": "Action recommandée au titre de l'article 33",
+    "art33_body": "Si cette violation concerne des données à caractère personnel que vous avez transmises à ce prestataire, vous devrez peut-être notifier votre autorité de contrôle dans les 72 heures au titre de l'article 33. Examinez les détails ci-dessus et évaluez si vos personnes concernées sont touchées.",
+    "reviewed_by": "Examiné par {name}",
+    "action_required": "Action requise : examiner l'alerte d'incident de sécurité",
+    "respond": "Répondre et documenter l'action",
+    "select_action": "Sélectionner l'action de réponse",
+    "notes_label": "Notes et documentation interne",
+    "notes_placeholder": "Documentez vos notes d'action, par ex. « Confirmé : aucune personne concernée n'est affectée par la divulgation de la clé d'API. »",
+    "cancel": "Annuler",
+    "submit": "Soumettre l'évaluation",
+    "severity": {
+      "low": "faible",
+      "medium": "moyen",
+      "high": "élevé",
+      "critical": "critique"
+    },
+    "type": {
+      "breach": "violation",
+      "fine": "amende",
+      "investigation": "enquête"
+    },
+    "alert_status": {
+      "unread": "non lue",
+      "acknowledged": "accusée",
+      "action_taken": "action engagée",
+      "dismissed": "écartée"
+    },
+    "actions": {
+      "acknowledged": "Accuser réception",
+      "action_taken": "Action engagée",
+      "dismissed": "Écarter"
+    }
   }
 }

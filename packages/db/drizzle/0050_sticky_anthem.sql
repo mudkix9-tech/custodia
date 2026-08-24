@@ -1,0 +1,1 @@
+ALTER TABLE "organization_vendors" ADD COLUMN "transfer_mechanisms" jsonb DEFAULT '[]'::jsonb;
