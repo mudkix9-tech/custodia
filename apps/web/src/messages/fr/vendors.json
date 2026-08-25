@@ -622,8 +622,18 @@
       "measures": {
         "e2ee": "Chiffrement de bout en bout",
         "pseudonymisation": "Pseudonymisation",
-        "data_minimisation": "Minimisation des données en transit"
-      }
+        "data_minimisation": "Minimisation des données en transit",
+        "access_policy": "Politique de contrôle d’accès documentée",
+        "transparency_reporting": "Rapports de transparence sur les demandes des autorités",
+        "staff_training": "Personnel formé au traitement des demandes des autorités",
+        "onward_transfer_controls": "Contrôles des transferts ultérieurs vers les sous-traitants",
+        "challenge_requests": "Engagement à contester les demandes disproportionnées",
+        "notify_access_requests": "Engagement à informer l’exportateur des demandes d’accès",
+        "audit_rights": "Droits d’audit sur l’importateur",
+        "warrant_canary": "Warrant canary ou divulgation équivalente"
+      },
+      "organizational": "Mesures organisationnelles",
+      "contractual": "Mesures contractuelles"
     },
     "step4": {
       "title": "Étape 4 : risque résiduel",

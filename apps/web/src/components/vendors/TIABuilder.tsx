@@ -14,6 +14,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 
+/**
+ * One supplementary measure, in any of the three groups.
+ *
+ * Recommendations 01/2020 §3 asks for technical, organisational *and*
+ * contractual measures. The wizard only ever rendered the technical ones, and
+ * the other two arrays were typed `z.array(z.any())` — so they validated,
+ * round-tripped through the save, and arrived at the PDF template empty, every
+ * time. A shared shape is what makes that hard to do again.
+ */
+const measureSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  implemented: z.boolean(),
+  detail: z.string(),
+});
+
+/** The three groups, in the order Recommendations 01/2020 §3 lists them. */
+const MEASURE_GROUPS = ['technicalMeasures', 'organizationalMeasures', 'contractualMeasures'] as const;
+
 const tiaSchema = z.object({
   transferMechanism: z.string().min(1, 'Transfer mechanism is required'),
   destinationCountry: z.string().length(2, 'Must be a 2-letter country code'),
@@ -33,14 +52,13 @@ const tiaSchema = z.object({
   conditions: z.string().optional(),
   reevaluationIntervalMonths: z.string().optional(),
   reevaluationTriggers: z.string().optional(),
-  technicalMeasures: z.array(z.object({
-    id: z.string(),
-    label: z.string(),
-    implemented: z.boolean(),
-    detail: z.string()
-  })),
-  organizationalMeasures: z.array(z.any()).optional(),
-  contractualMeasures: z.array(z.any()).optional(),
+  // One shape for all three groups. `organizationalMeasures` and
+  // `contractualMeasures` were `z.array(z.any())` and had no inputs anywhere in
+  // the wizard, so Recommendations 01/2020 §3 could only ever be answered on its
+  // technical third — and the exported Chapter V document said so.
+  technicalMeasures: z.array(measureSchema),
+  organizationalMeasures: z.array(measureSchema),
+  contractualMeasures: z.array(measureSchema),
   conclusion: z.enum(['proceed', 'proceed_with_conditions', 'suspend']).optional(),
   conclusionNotes: z.string().optional()
 });
@@ -84,6 +102,19 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
         { id: 'e2ee', label: '', implemented: false, detail: '' },
         { id: 'pseudonymisation', label: '', implemented: false, detail: '' },
         { id: 'data_minimisation', label: '', implemented: false, detail: '' }
+      ],
+      // The other two thirds of Recommendations 01/2020 §3.
+      organizationalMeasures: [
+        { id: 'access_policy', label: '', implemented: false, detail: '' },
+        { id: 'transparency_reporting', label: '', implemented: false, detail: '' },
+        { id: 'staff_training', label: '', implemented: false, detail: '' },
+        { id: 'onward_transfer_controls', label: '', implemented: false, detail: '' }
+      ],
+      contractualMeasures: [
+        { id: 'challenge_requests', label: '', implemented: false, detail: '' },
+        { id: 'notify_access_requests', label: '', implemented: false, detail: '' },
+        { id: 'audit_rights', label: '', implemented: false, detail: '' },
+        { id: 'warrant_canary', label: '', implemented: false, detail: '' }
       ],
       conclusion: 'proceed_with_conditions',
       conclusionNotes: ''
@@ -362,28 +393,55 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
             ) : (
               <div className="space-y-8">
                 <p className="text-sm text-[#9BA1A6]">{t('step3.subtitle')}</p>
-                
-                {/* Technical Measures */}
-                <div>
-                  <h4 className="font-medium text-[#F4F5F6] mb-3 border-b border-white/10 pb-2">{t('step3.technical')}</h4>
-                  <div className="space-y-3">
-                    {formData.technicalMeasures.map((m: any, i: number) => (
-                      <div key={m.measure} className="flex gap-4 items-start bg-[#08090A] p-3 rounded-lg border border-white/5">
-                        <input type="checkbox" checked={m.implemented} onChange={e => {
-                          const newM = [...formData.technicalMeasures];
-                          newM[i].implemented = e.target.checked;
-                          setFormData({...formData, technicalMeasures: newM});
-                        }} className="mt-1 text-[#C9A227] rounded" />
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">{t(`step3.measures.${m.id}`)}</div>
-                          {m.implemented && (
-                            <Input type="text" placeholder={t('step3.details_placeholder')} className="w-full mt-2 text-xs" {...register(`technicalMeasures.${i}.detail` as const)} />
-                          )}
+
+                {/* All three groups Recommendations 01/2020 §3 asks for. Only the
+                    technical one was ever rendered, so the other two reached the
+                    exported Chapter V document empty every time. */}
+                {MEASURE_GROUPS.map((group) => (
+                  <div key={group}>
+                    <h4 className="font-medium text-[#F4F5F6] mb-3 border-b border-white/10 pb-2">
+                      {t(`step3.${group.replace('Measures', '')}` as any)}
+                    </h4>
+                    <div className="space-y-3">
+                      {((formData as any)[group] ?? []).map((m: any, i: number) => (
+                        // Keyed on the measure's own id. This read `m.measure`,
+                        // a property these items do not have, so every row was
+                        // keyed `undefined` and React fell back to the index.
+                        <div key={m.id ?? i} className="flex gap-4 items-start bg-[#08090A] p-3 rounded-lg border border-white/5">
+                          <input
+                            type="checkbox"
+                            checked={m.implemented}
+                            aria-label={t(`step3.measures.${m.id}` as any)}
+                            onChange={(e) => {
+                              // Copied per element rather than mutated in place:
+                              // `newM[i].implemented = …` writes through to the
+                              // object the form still holds, so the change was
+                              // invisible to react-hook-form until something
+                              // else re-rendered.
+                              const next = ((formData as any)[group] ?? []).map(
+                                (item: any, index: number) =>
+                                  index === i ? { ...item, implemented: e.target.checked } : item
+                              );
+                              setFormData({ ...formData, [group]: next });
+                            }}
+                            className="mt-1 text-[#C9A227] rounded"
+                          />
+                          <div className="flex-1">
+                            <div className="text-sm font-medium">{t(`step3.measures.${m.id}` as any)}</div>
+                            {m.implemented && (
+                              <Input
+                                type="text"
+                                placeholder={t('step3.details_placeholder')}
+                                className="w-full mt-2 text-xs"
+                                {...register(`${group}.${i}.detail` as const)}
+                              />
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             )}
           </div>

@@ -619,8 +619,18 @@
       "measures": {
         "e2ee": "End-to-End Encryption",
         "pseudonymisation": "Pseudonymisation",
-        "data_minimisation": "Data Minimisation in Transit"
-      }
+        "data_minimisation": "Data Minimisation in Transit",
+        "access_policy": "Documented access-control policy",
+        "transparency_reporting": "Transparency reporting on government requests",
+        "staff_training": "Staff trained on handling authority requests",
+        "onward_transfer_controls": "Controls on onward transfers to sub-processors",
+        "challenge_requests": "Commitment to challenge disproportionate requests",
+        "notify_access_requests": "Commitment to notify the exporter of access requests",
+        "audit_rights": "Audit rights over the importer",
+        "warrant_canary": "Warrant canary or equivalent disclosure"
+      },
+      "organizational": "Organisational Measures",
+      "contractual": "Contractual Measures"
     },
     "step4": {
       "title": "Step 4: Residual Risk",

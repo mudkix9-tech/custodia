@@ -2091,6 +2091,34 @@ export const vendorsRouter = router({
             for (const v of full) catalogueById.set(v.id, v);
           }
 
+          /**
+           * The real sub-processor count per catalogue vendor, in one grouped
+           * read.
+           *
+           * This was hardcoded to `0`, which made the same vendor score
+           * differently depending on which door it came through: `linkVendor`
+           * queries `vendorSubProcessors` and passes the count, so a vendor with
+           * four known sub-processors takes the full 10/10 on chain depth there
+           * and 0/10 when it arrives by spreadsheet. Importing a register — the
+           * path the audit calls the biggest change to the first-run experience
+           * — therefore understated the risk of exactly the vendors the
+           * catalogue knows most about.
+           *
+           * Newly created custom vendors have none by construction and simply
+           * miss from the map, which `?? 0` reads correctly.
+           */
+          const subCounts = new Map<string, number>();
+          if (targetIds.length > 0) {
+            const grouped = await tx.select({
+              parentVendorId: vendorSubProcessors.parentVendorId,
+              n: count(),
+            })
+              .from(vendorSubProcessors)
+              .where(inArray(vendorSubProcessors.parentVendorId, targetIds))
+              .groupBy(vendorSubProcessors.parentVendorId);
+            for (const row of grouped) subCounts.set(row.parentVendorId, Number(row.n));
+          }
+
           const links = writable.map((row) => {
             const targetVendorId = row.match?.vendorId ?? createdIds.get(row.rowNumber)!;
             const catalogueRow = catalogueById.get(targetVendorId);
@@ -2103,7 +2131,7 @@ export const vendorsRouter = router({
                 dataCategoriesShared: row.dataCategoriesShared,
                 dataSubjectVolume: '<1K',
               },
-              0,
+              subCounts.get(targetVendorId) ?? 0,
             );
 
             return {

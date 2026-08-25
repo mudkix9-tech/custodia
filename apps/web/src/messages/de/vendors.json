@@ -622,8 +622,18 @@
       "measures": {
         "e2ee": "Ende-zu-Ende-Verschlüsselung",
         "pseudonymisation": "Pseudonymisierung",
-        "data_minimisation": "Datenminimierung bei der Übertragung"
-      }
+        "data_minimisation": "Datenminimierung bei der Übertragung",
+        "access_policy": "Dokumentierte Zugriffskontrollrichtlinie",
+        "transparency_reporting": "Transparenzberichte über behördliche Anfragen",
+        "staff_training": "Mitarbeitende im Umgang mit Behördenanfragen geschult",
+        "onward_transfer_controls": "Kontrollen für Weiterübermittlungen an Unterauftragsverarbeiter",
+        "challenge_requests": "Zusage, unverhältnismäßige Anfragen anzufechten",
+        "notify_access_requests": "Zusage, den Exporteur über Zugriffsanfragen zu informieren",
+        "audit_rights": "Auditrechte gegenüber dem Importeur",
+        "warrant_canary": "Warrant Canary oder gleichwertige Offenlegung"
+      },
+      "organizational": "Organisatorische Maßnahmen",
+      "contractual": "Vertragliche Maßnahmen"
     },
     "step4": {
       "title": "Schritt 4: Restrisiko",
