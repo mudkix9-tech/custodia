@@ -576,6 +576,56 @@ can never fire (D3).
 
 # PART IV — Build order
 
+## 0.6 Build status — Sprint 1
+
+**Sprint 0 (Week 1 — stop the bleeding) was remediated on 24 August 2026**, commit
+`2c0b0bd`: D1, D4, D5, D7 (plus the snapshot backfill script), the removal half of
+D9, D10, D13, D8, D16, D27 and D15, together with the `transferMechanisms`
+org-vendor write path (the working half of D26) and the i18n pass that closed D14.
+D6 was left open exactly as this section warns — suppressing the modifier without a
+review step would have been quiet.
+
+**Sprint 1 (Weeks 2–6 — make the module usable) was built on 25 August 2026.**
+
+- **D2/D3 closed.** `dataCategoriesShared` is writable through `updateOrgVendor`,
+  through CSV import, and from a chip editor on the new detail-page tab; the
+  special-category factor of the risk engine and the `missing_dpa_special_category`
+  gap rule now have an input that can be non-empty.
+- **D32 closed.** Business owner, vendor contact email, criticality and processing
+  role (processor / joint controller / independent controller) are columns
+  (`organization_vendors`, migration `0051`) with inputs on the record.
+- **D30 closed.** A status lifecycle (`active` / `paused` / `offboarded`) writes the
+  column that existed unused; offboarding stamps `offboardedAt` and takes an
+  Art. 28(3)(g) deletion-certificate reference; `unlinkVendor` removes a row from
+  one organisation's register without touching the shared catalogue.
+- **D31 partially closed.** Every relationship edit stamps `lastReviewedAt`, so the
+  overdue-review gap rule can fire; `nextReviewAt` is settable.
+- **D6 closed.** Both risk-recalculation paths apply a completed questionnaire's
+  modifier only after human review (`reviewAssessment`); expired invitations still
+  carry +25.
+- **D9/D24/D25 closed.** `tia.save` accepts all six EDPB Step 1 fields and both
+  Step 6 fields; both save paths mark `organizationVendors.tiaCompleted`; `exportPdf`
+  renders a real Chapter V document via the shared pipeline (new `vendors-tia`
+  template), and the wizard gained a Step 1 section, a re-evaluation interval and
+  the export button.
+- **D11 closed.** An analysed DPA is stored to S3 under `vendors/dpas/…`, recorded in
+  `documents`, and referenced from `dpaDocumentId` — the audit pack folder fills.
+- **D33 closed for vendors.** The middleware already wrote every mutation;
+  `vendors.history` reads those rows back as a timeline (both key shapes: join-row
+  id and catalogue id) and `vendors.exportHistoryCsv` produces the regulator-shaped
+  file. Surfaced as an Audit-trail section on the record.
+- **D40 closed.** Server-side CSV import with RFC 4180 parsing, free-form header
+  mapping, prose-country normalisation, catalogue matching (exact domain > alias >
+  exact name > bounded fuzzy), preview-then-commit, and plan-limit accounting
+  against net additions. Unmatched rows become custom vendors rather than guesses.
+- **D41 closed.** Register search, risk/DPA filters and name/risk sorting are
+  server-side parameters on `getOrgVendors`.
+
+Fixtures: 75 assertions in `apps/api/src/lib/vendors.test.ts` covering the parser,
+header mapping, normalisation and matcher precedence (including the length guard
+that stops unrelated long names fuzzy-matching). All guards green; migration
+generated, not yet applied to any database.
+
 ## Week 1 — stop the bleeding
 
 Every item is under a day; several are one line. This list alone closes seven P0s.

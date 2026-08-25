@@ -6,7 +6,9 @@
   "discover_vendors": "Discover Vendors",
   "tabs": {
     "tracked_register": "Tracked Register ({count})",
-    "vendor_discovery": "Vendor Discovery & Shadow IT"
+    "vendor_discovery": "Vendor Discovery & Shadow IT",
+    "relationship": "Relationship & History",
+    "history": "Audit trail"
   },
   "metrics": {
     "total_tracked": "Total Tracked",
@@ -81,7 +83,9 @@
       "tia": "Transfer Impact",
       "sub_processors": "Sub-processors",
       "incidents": "Incidents & Breaches",
-      "questionnaire": "Security Questionnaire"
+      "questionnaire": "Security Questionnaire",
+      "relationship": "Relationship & History",
+      "history": "Audit trail"
     },
     "dpa": {
       "title": "Data Processing Agreement",
@@ -579,7 +583,15 @@
       "mechanism": "Transfer Mechanism",
       "mechanism_placeholder": "Select transfer mechanism",
       "us_context_label": "US Context:",
-      "us_context": "Since the invalidation of the Privacy Shield, transfers to the US using SCCs require a TIA to assess risks associated with FISA 702 and EO 12333."
+      "us_context": "Since the invalidation of the Privacy Shield, transfers to the US using SCCs require a TIA to assess risks associated with FISA 702 and EO 12333.",
+      "exporter": "Data exporter",
+      "importer": "Data importer",
+      "purpose": "Purpose of transfer",
+      "frequency": "Frequency",
+      "frequency_one_off": "One-off",
+      "frequency_occasional": "Occasional",
+      "frequency_continuous": "Continuous",
+      "onward": "Onward transfers"
     },
     "step2": {
       "title": "Step 2: Legal Assessment",
@@ -624,6 +636,15 @@
       "proceed_with_conditions": "Proceed with Conditions",
       "suspend": "Suspend Transfer",
       "conditions": "Specify Conditions"
+    },
+    "exporting": "Generating…",
+    "export_pdf": "Export PDF",
+    "export_failed": "PDF generation failed. Try again.",
+    "step6": {
+      "interval": "Re-evaluation interval (months)",
+      "interval_placeholder": "Select interval",
+      "interval_unset": "Not scheduled",
+      "triggers": "Re-evaluation triggers"
     }
   },
   "incidents": {
@@ -672,5 +693,89 @@
       "action_taken": "Action Taken",
       "dismissed": "Dismiss"
     }
+  },
+  "filter": {
+    "risk_all": "All risk levels",
+    "dpa_all": "All DPA statuses",
+    "sort_newest": "Sort: Newest",
+    "sort_name_asc": "Name A–Z",
+    "sort_name_desc": "Name Z–A",
+    "sort_risk_high": "Highest risk first",
+    "sort_risk_low": "Lowest risk first"
+  },
+  "criticality": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "role": {
+    "processor": "Processor",
+    "joint_controller": "Joint controller",
+    "independent_controller": "Independent controller"
+  },
+  "status_lifecycle": {
+    "active": "Active",
+    "paused": "Paused",
+    "offboarded": "Offboarded"
+  },
+  "relationship": {
+    "title": "Relationship record",
+    "business_owner": "Business owner",
+    "business_owner_placeholder": "Who owns this supplier relationship",
+    "contact_email": "Vendor contact",
+    "criticality": "Criticality",
+    "processing_role": "Processing role",
+    "unset": "Not set",
+    "data_categories": "Data categories shared",
+    "category_placeholder": "e.g. Contact data",
+    "category_add": "Add",
+    "category_remove": "Remove category",
+    "category_too_long": "Keep each category under 120 characters.",
+    "category_duplicate": "That category is already listed.",
+    "purpose": "Purpose of processing (Article 30(1)(d))",
+    "purpose_placeholder": "Why this vendor processes personal data for us",
+    "next_review": "Next review",
+    "offboarded_on": "Offboarded {date}",
+    "deletion_certificate": "Deletion certificate reference",
+    "deletion_certificate_placeholder": "Art. 28(3)(g) assurance reference",
+    "deletion_certificate_hint": "The reference of the confirmation that data was deleted or returned at the end of processing.",
+    "status": "Lifecycle status"
+  },
+  "history": {
+    "loading": "Loading trail…",
+    "empty": "No changes recorded yet. Every edit to this vendor will appear here.",
+    "description": "Every change to this vendor, who made it and when. Sourced from the organisation audit log.",
+    "export": "Export CSV",
+    "load_more": "Load more"
+  },
+  "import": {
+    "button": "Import CSV",
+    "title": "Import vendors from CSV",
+    "description": "Upload your existing vendor spreadsheet. We match rows against the catalogue where we can and create custom vendors for the rest.",
+    "choose_file": "Choose a CSV file",
+    "choose_file_hint": "A header row with columns such as Name, Website, Category, Country.",
+    "file_loaded": "{chars} characters loaded",
+    "columns_title": "Recognised columns",
+    "columns_help": "Name / Vendor / Supplier · Website / URL / Domain · Category · Country / HQ · Data categories · Owner · Contact email · Criticality · Purpose",
+    "preview": "Preview import",
+    "valid": "{count} rows ready",
+    "errors": "{count} rows have problems",
+    "col_name": "Vendor",
+    "col_action": "Action",
+    "col_confidence": "Match confidence",
+    "action_link": "Link to catalogue",
+    "action_create": "Create as custom vendor",
+    "row_error": "Row {row}:",
+    "commit": "Import {count} vendors",
+    "common_back": "Back",
+    "toast_done": "Imported {created} vendors.",
+    "failed": "Import failed.",
+    "common_cancel": "Cancel"
+  },
+  "status": {
+    "active": "Active",
+    "paused": "Paused",
+    "offboarded": "Offboarded"
   }
 }

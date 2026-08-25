@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import React, { useState, useEffect } from 'react';
@@ -15,6 +15,7 @@ import { AlternativesSection } from '@/components/vendors/AlternativesSection';
 import { QuestionnaireTab } from '@/components/vendors/QuestionnaireTab';
 import { DpaAnalysisModal } from '@/components/vendors/DpaAnalysisModal';
 import { TRANSFER_MECHANISMS } from '@/constants/transferMechanisms';
+import { VendorRelationshipPanel, VendorHistory } from '@/components/vendors/VendorRelationship';
 
 export default function VendorDetailsPage() {
   const t = useTranslations('vendors');
@@ -49,7 +50,7 @@ export default function VendorDetailsPage() {
       utils.vendors.getOrgVendorDetails.invalidate({ vendorId: variables.vendorId });
     }
   });
-  const [activeTab, setActiveTab] = useState<'dpa' | 'tia' | 'sub-processors' | 'incidents' | 'questionnaire'>('dpa');
+  const [activeTab, setActiveTab] = useState<'dpa' | 'tia' | 'sub-processors' | 'incidents' | 'questionnaire' | 'relationship'>('dpa');
   
   // DPA upload and analysis states
   const [isDpaModalOpen, setIsDpaModalOpen] = useState(false);
@@ -185,7 +186,7 @@ export default function VendorDetailsPage() {
             </div>
             <p className="text-[12px] text-bone-50/60 leading-relaxed text-left mb-6">
               {t('detail.risk.explanation', {
-                country: vendor.vendor.headquartersCountry ?? '—',
+                country: vendor.vendor.headquartersCountry ?? 'â€”',
                 dpaStatus: t(`detail.dpa.status.${vendor.orgVendor.dpaStatus ?? 'not_started'}`),
               })}
             </p>
@@ -250,11 +251,17 @@ export default function VendorDetailsPage() {
               >
                 {t('detail.tabs.incidents')}
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('questionnaire')}
                 className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'questionnaire' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
               >
                 {t('detail.tabs.questionnaire')}
+              </button>
+              <button
+                onClick={() => setActiveTab('relationship')}
+                className={`px-6 py-4 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'relationship' ? 'border-[#C9A227] text-[#C9A227] bg-[#0D0F11]' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6] hover:bg-[#08090A]'}`}
+              >
+                {t('detail.tabs.relationship')}
               </button>
             </div>
 
@@ -612,6 +619,16 @@ export default function VendorDetailsPage() {
  
               {activeTab === 'questionnaire' && (
                 <QuestionnaireTab orgVendorId={vendor.orgVendor.id} />
+              )}
+
+              {activeTab === 'relationship' && (
+                <div className="space-y-10 animate-in fade-in">
+                  <VendorRelationshipPanel vendorId={vendorId} orgVendor={vendor.orgVendor as any} />
+                  <div className="border-t border-white/10 pt-8">
+                    <h4 className="font-semibold text-[#F4F5F6] text-sm mb-6">{t('detail.tabs.history')}</h4>
+                    <VendorHistory vendorId={vendorId} />
+                  </div>
+                </div>
               )}
             </div>
           </div>

@@ -19,6 +19,7 @@ export type PdfDoc =
   | 'training-certificate'
   | 'training-report'
   | 'vendors'
+  | 'vendors-tia'
   | 'dpia'
   | 'dsar'
   | 'breaches'

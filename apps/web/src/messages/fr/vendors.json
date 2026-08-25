@@ -9,7 +9,9 @@
   "discover_vendors": "Découvrir des fournisseurs",
   "tabs": {
     "tracked_register": "Registre suivi ({count})",
-    "vendor_discovery": "Découverte de fournisseurs et Shadow IT"
+    "vendor_discovery": "Découverte de fournisseurs et Shadow IT",
+    "relationship": "Relation & historique",
+    "history": "Piste d’audit"
   },
   "metrics": {
     "total_tracked": "Total suivi",
@@ -84,7 +86,9 @@
       "tia": "Analyse d'impact du transfert",
       "sub_processors": "Sous-traitants ultérieurs",
       "incidents": "Incidents et violations",
-      "questionnaire": "Questionnaire de sécurité"
+      "questionnaire": "Questionnaire de sécurité",
+      "relationship": "Relation & historique",
+      "history": "Piste d’audit"
     },
     "dpa": {
       "title": "Contrat de sous-traitance",
@@ -582,7 +586,15 @@
       "mechanism": "Mécanisme de transfert",
       "mechanism_placeholder": "Sélectionner un mécanisme de transfert",
       "us_context_label": "Contexte américain :",
-      "us_context": "Depuis l'invalidation du Privacy Shield, les transferts vers les États-Unis fondés sur les CCT nécessitent une AITD afin d'évaluer les risques liés au FISA 702 et à l'EO 12333."
+      "us_context": "Depuis l'invalidation du Privacy Shield, les transferts vers les États-Unis fondés sur les CCT nécessitent une AITD afin d'évaluer les risques liés au FISA 702 et à l'EO 12333.",
+      "exporter": "Exportateur de données",
+      "importer": "Importateur de données",
+      "purpose": "Finalité du transfert",
+      "frequency": "Fréquence",
+      "frequency_one_off": "Ponctuel",
+      "frequency_occasional": "Occasionnel",
+      "frequency_continuous": "Continu",
+      "onward": "Transferts ultérieurs"
     },
     "step2": {
       "title": "Étape 2 : évaluation juridique",
@@ -627,6 +639,15 @@
       "proceed_with_conditions": "Poursuivre sous conditions",
       "suspend": "Suspendre le transfert",
       "conditions": "Préciser les conditions"
+    },
+    "exporting": "Génération…",
+    "export_pdf": "Exporter le PDF",
+    "export_failed": "Échec de la génération du PDF. Réessayez.",
+    "step6": {
+      "interval": "Intervalle de réévaluation (mois)",
+      "interval_placeholder": "Choisir l’intervalle",
+      "interval_unset": "Non planifié",
+      "triggers": "Déclencheurs de réévaluation"
     }
   },
   "incidents": {
@@ -675,5 +696,89 @@
       "action_taken": "Action engagée",
       "dismissed": "Écarter"
     }
+  },
+  "filter": {
+    "risk_all": "Tous les niveaux de risque",
+    "dpa_all": "Tous les statuts DPA",
+    "sort_newest": "Tri : plus récents",
+    "sort_name_asc": "Nom A–Z",
+    "sort_name_desc": "Nom Z–A",
+    "sort_risk_high": "Risque le plus élevé d’abord",
+    "sort_risk_low": "Risque le plus faible d’abord"
+  },
+  "criticality": {
+    "low": "Faible",
+    "medium": "Moyen",
+    "high": "Élevé",
+    "critical": "Critique"
+  },
+  "role": {
+    "processor": "Sous-traitant",
+    "joint_controller": "Responsable conjoint",
+    "independent_controller": "Responsable indépendant"
+  },
+  "status_lifecycle": {
+    "active": "Actif",
+    "paused": "En pause",
+    "offboarded": "Radié"
+  },
+  "relationship": {
+    "title": "Fiche relation",
+    "business_owner": "Responsable métier",
+    "business_owner_placeholder": "Qui pilote cette relation fournisseur",
+    "contact_email": "Contact fournisseur",
+    "criticality": "Criticité",
+    "processing_role": "Rôle de traitement",
+    "unset": "Non défini",
+    "data_categories": "Catégories de données partagées",
+    "category_placeholder": "ex. Données de contact",
+    "category_add": "Ajouter",
+    "category_remove": "Retirer la catégorie",
+    "category_too_long": "Chaque catégorie doit faire moins de 120 caractères.",
+    "category_duplicate": "Cette catégorie figure déjà dans la liste.",
+    "purpose": "Finalité du traitement (article 30(1)(d))",
+    "purpose_placeholder": "Pourquoi ce fournisseur traite des données pour nous",
+    "next_review": "Prochaine révision",
+    "offboarded_on": "Radié le {date}",
+    "deletion_certificate": "Référence du certificat de suppression",
+    "deletion_certificate_placeholder": "Référence de l’engagement art. 28(3)(g)",
+    "deletion_certificate_hint": "La référence confirmant que les données ont été supprimées ou restituées à la fin du traitement.",
+    "status": "Statut du cycle de vie"
+  },
+  "history": {
+    "loading": "Chargement de l’historique…",
+    "empty": "Aucun changement enregistré. Chaque modification de ce fournisseur apparaîtra ici.",
+    "description": "Chaque modification de ce fournisseur, par qui et quand. Issu du journal d’audit de l’organisation.",
+    "export": "Exporter en CSV",
+    "load_more": "Charger plus"
+  },
+  "import": {
+    "button": "Importer un CSV",
+    "title": "Importer des fournisseurs depuis un CSV",
+    "description": "Chargez votre tableur de fournisseurs existant. Les lignes sont rapprochées du catalogue lorsque c’est possible ; les autres deviennent des fournisseurs personnalisés.",
+    "choose_file": "Choisir un fichier CSV",
+    "choose_file_hint": "Avec une ligne d’en-tête : Nom, Site web, Catégorie, Pays…",
+    "file_loaded": "{chars} caractères chargés",
+    "columns_title": "Colonnes reconnues",
+    "columns_help": "Nom / Vendor / Supplier · Site web / URL / Domaine · Catégorie · Pays / Siège · Catégories de données · Responsable · E-mail de contact · Criticité · Finalité",
+    "preview": "Aperçu de l’import",
+    "valid": "{count} lignes prêtes",
+    "errors": "{count} lignes présentent des problèmes",
+    "col_name": "Fournisseur",
+    "col_action": "Action",
+    "col_confidence": "Correspondance",
+    "action_link": "Lier au catalogue",
+    "action_create": "Créer comme fournisseur personnalisé",
+    "row_error": "Ligne {row} :",
+    "commit": "Importer {count} fournisseurs",
+    "common_back": "Retour",
+    "toast_done": "{created} fournisseurs importés.",
+    "failed": "Échec de l’import.",
+    "common_cancel": "Annuler"
+  },
+  "status": {
+    "active": "Actif",
+    "paused": "En pause",
+    "offboarded": "Radié"
   }
 }

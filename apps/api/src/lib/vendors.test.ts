@@ -29,6 +29,15 @@ import {
 import { isNewAiWindow, aiWindowReset, TIER_LIMITS } from '../constants/aiQuota.js';
 import { calculateVendorRisk, type VendorRiskInput, type OrgVendorRiskInput } from './vendorRisk.js';
 import { csvCell, csvRow, csvDocument } from '../utils/csv.js';
+import {
+  parseCsvRows,
+  buildColumnMapping,
+  normaliseVendorRow,
+  matchCatalogue,
+  MATCH_EXACT_DOMAIN,
+  AUTO_LINK_THRESHOLD,
+  type CatalogueEntry,
+} from './vendorImport.js';
 import { DPA_STATUS_SIGNED, DPA_STATUS_MISSING, DPA_STATUSES } from '../constants/dpaStatus.js';
 
 let failures = 0;
@@ -246,6 +255,90 @@ check(
   csvDocument([['Vendor', 'Country'], ['Acme, Inc.', 'US']]) === 'Vendor,Country\r\n"Acme, Inc.",US',
   'a vendor name containing a comma survives a round trip intact',
 );
+
+console.log('\nvendorImport — CSV parsing\n');
+
+// --- Sprint 1, D40: the parser ---------------------------------------------------
+
+check(
+  JSON.stringify(parseCsvRows('Name,Country\nAcme,US')) === JSON.stringify([['Name', 'Country'], ['Acme', 'US']]),
+  'a plain two-row file parses',
+);
+check(
+  parseCsvRows('"Surname, Ltd",US')[0]?.[0] === 'Surname, Ltd',
+  'a quoted field keeps its comma',
+);
+check(
+  parseCsvRows('"say ""hi""",x')[0]?.[0] === 'say "hi"',
+  'an escaped quote round-trips',
+);
+check(parseCsvRows('Name\n\nAcme\n').length === 2, 'blank rows are dropped');
+check(parseCsvRows('Name\r\nAcme\r\n').length === 2, 'CRLF files parse like LF ones');
+check(parseCsvRows('\uFEFFName\nAcme').length === 2, 'an Excel BOM does not become part of the first header');
+check(
+  parseCsvRows('Name,Motto\nAcme,"Comma,\nnewline"')[1]?.length === 2,
+  'a newline inside quotes is not a row break',
+);
+
+console.log('\nvendorImport — header mapping and normalisation\n');
+
+const mapping = buildColumnMapping(['Supplier Name', 'URL', 'HQ Country', 'Data shared', 'Owner', 'Criticality']);
+check(mapping.name === 0 && mapping.website === 1 && mapping.country === 2,
+  'free-form headers map onto canonical fields',
+  JSON.stringify(mapping));
+check(mapping.dataCategoriesShared === 3 && mapping.businessOwner === 4 && mapping.criticality === 5,
+  'and the domain-specific ones too');
+
+const row = normaliseVendorRow(
+  ['Office 365', 'microsoft.com', 'United States', 'Email, HR data', 'Jane Doe', 'high'],
+  mapping,
+);
+check(!('error' in row), 'a well-formed row normalises');
+if (!('error' in row)) {
+  check(row.name === 'Office 365', 'the name survives');
+  check(row.website === 'https://microsoft.com/', 'a bare domain becomes a URL');
+  check(row.headquartersCountry === 'US', 'prose country becomes ISO-3166 alpha-2 (D42)');
+  check(JSON.stringify(row.dataCategoriesShared) === JSON.stringify(['Email', 'HR data']),
+    'a separator-delimited cell becomes a list (D2 write path)');
+  check(row.criticality === 'high', 'criticality is from the closed set or nothing');
+  check(row.matchCandidate.domain === 'microsoft.com', 'the matcher gets a bare host');
+}
+
+const badRow = normaliseVendorRow(['', '', '', '', '', ''], mapping);
+check('error' in badRow && /name/i.test(badRow.error), 'a nameless row is rejected with a reason');
+
+const badMail = normaliseVendorRow(['Acme', '', '', '', '', '', 'not-an-email'], { ...mapping, contactEmail: 6 });
+check('error' in badMail && /email/i.test(badMail.error), 'an invalid contact email is rejected rather than stored');
+
+const badCrit = normaliseVendorRow(['Acme', '', '', '', '', 'urgent'], mapping);
+check('error' in badCrit && /criticality/i.test(badCrit.error), 'an unknown criticality word fails loudly instead of writing null silently');
+
+console.log('\nvendorImport — catalogue matching\n');
+
+const catalogue: CatalogueEntry[] = [
+  { id: 'v-ms', name: 'Microsoft 365', website: 'https://www.microsoft365.com', aliases: ['Office 365', 'O365'] },
+  { id: 'v-sf', name: 'Salesforce', website: 'https://salesforce.com', aliases: null },
+  { id: 'v-zd', name: 'Zendesk', website: 'https://zendesk.com', aliases: null },
+];
+
+const byDomain = matchCatalogue({ name: 'Something Else Entirely', domain: 'salesforce.com' }, catalogue);
+check(byDomain?.vendorId === 'v-sf' && byDomain.confidence === MATCH_EXACT_DOMAIN,
+  'an exact domain beats any name difference');
+
+const byAlias = matchCatalogue({ name: 'office 365', domain: null }, catalogue);
+check(byAlias?.vendorId === 'v-ms' && byAlias.method === 'alias',
+  "an alias catches what the name misses ('Office 365' never matched Microsoft)");
+
+const byFuzzy = matchCatalogue({ name: 'Saleforce', domain: null }, catalogue);
+check(byFuzzy?.vendorId === 'v-sf' && byFuzzy.confidence >= AUTO_LINK_THRESHOLD,
+  'a one-letter typo still clears the auto-link threshold',
+  byFuzzy ? `confidence ${byFuzzy.confidence}` : 'no match');
+
+check(matchCatalogue({ name: 'Totally Unrelated Consultancy GmbH', domain: null }, catalogue) === null,
+  'an unrelated name matches nothing rather than guessing');
+
+check(matchCatalogue({ name: 'zzz', domain: null }, [{ id: 'x', name: 'abc', website: null, aliases: null }]) === null,
+  'very short names under the distance floor do not match');
 
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {

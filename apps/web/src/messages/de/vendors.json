@@ -9,7 +9,9 @@
   "discover_vendors": "Dienstleister entdecken",
   "tabs": {
     "tracked_register": "Verfolgtes Register ({count})",
-    "vendor_discovery": "Dienstleister-Entdeckung & Schatten-IT"
+    "vendor_discovery": "Dienstleister-Entdeckung & Schatten-IT",
+    "relationship": "Beziehung & Verlauf",
+    "history": "Prüfprotokoll"
   },
   "metrics": {
     "total_tracked": "Gesamt verfolgt",
@@ -84,7 +86,9 @@
       "tia": "Transfer-Folgenabschätzung",
       "sub_processors": "Unterauftragsverarbeiter",
       "incidents": "Vorfälle und Verletzungen",
-      "questionnaire": "Sicherheitsfragebogen"
+      "questionnaire": "Sicherheitsfragebogen",
+      "relationship": "Beziehung & Verlauf",
+      "history": "Prüfprotokoll"
     },
     "dpa": {
       "title": "Auftragsverarbeitungsvertrag",
@@ -582,7 +586,15 @@
       "mechanism": "Übermittlungsmechanismus",
       "mechanism_placeholder": "Übermittlungsmechanismus auswählen",
       "us_context_label": "US-Kontext:",
-      "us_context": "Seit der Ungültigkeitserklärung des Privacy Shield erfordern Übermittlungen in die USA auf Grundlage von SCC eine TIA, um Risiken im Zusammenhang mit FISA 702 und EO 12333 zu bewerten."
+      "us_context": "Seit der Ungültigkeitserklärung des Privacy Shield erfordern Übermittlungen in die USA auf Grundlage von SCC eine TIA, um Risiken im Zusammenhang mit FISA 702 und EO 12333 zu bewerten.",
+      "exporter": "Datenexporteur",
+      "importer": "Datenimporteur",
+      "purpose": "Zweck der Übermittlung",
+      "frequency": "Häufigkeit",
+      "frequency_one_off": "Einmalig",
+      "frequency_occasional": "Gelegentlich",
+      "frequency_continuous": "Fortlaufend",
+      "onward": "Weiterübermittlungen"
     },
     "step2": {
       "title": "Schritt 2: Rechtliche Bewertung",
@@ -627,6 +639,15 @@
       "proceed_with_conditions": "Unter Auflagen fortsetzen",
       "suspend": "Übermittlung aussetzen",
       "conditions": "Auflagen angeben"
+    },
+    "exporting": "Wird erstellt…",
+    "export_pdf": "PDF exportieren",
+    "export_failed": "PDF-Erstellung fehlgeschlagen. Bitte erneut versuchen.",
+    "step6": {
+      "interval": "Neubewertungsintervall (Monate)",
+      "interval_placeholder": "Intervall wählen",
+      "interval_unset": "Nicht geplant",
+      "triggers": "Neubewertungsauslöser"
     }
   },
   "incidents": {
@@ -675,5 +696,89 @@
       "action_taken": "Maßnahme ergriffen",
       "dismissed": "Verwerfen"
     }
+  },
+  "filter": {
+    "risk_all": "Alle Risikostufen",
+    "dpa_all": "Alle AVV-Statuswerte",
+    "sort_newest": "Sortierung: Neueste",
+    "sort_name_asc": "Name A–Z",
+    "sort_name_desc": "Name Z–A",
+    "sort_risk_high": "Höchstes Risiko zuerst",
+    "sort_risk_low": "Niedrigstes Risiko zuerst"
+  },
+  "criticality": {
+    "low": "Niedrig",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "critical": "Kritisch"
+  },
+  "role": {
+    "processor": "Auftragsverarbeiter",
+    "joint_controller": "Gemeinsame Verantwortlichkeit",
+    "independent_controller": "Eigenständiger Verantwortlicher"
+  },
+  "status_lifecycle": {
+    "active": "Aktiv",
+    "paused": "Pausiert",
+    "offboarded": "Abgemeldet"
+  },
+  "relationship": {
+    "title": "Beziehungsdatensatz",
+    "business_owner": "Fachverantwortlicher",
+    "business_owner_placeholder": "Wer diese Lieferantenbeziehung verantwortet",
+    "contact_email": "Lieferantenkontakt",
+    "criticality": "Kritikalität",
+    "processing_role": "Verarbeitungsrolle",
+    "unset": "Nicht gesetzt",
+    "data_categories": "Geteilte Datenkategorien",
+    "category_placeholder": "z. B. Kontaktdaten",
+    "category_add": "Hinzufügen",
+    "category_remove": "Kategorie entfernen",
+    "category_too_long": "Jede Kategorie unter 120 Zeichen halten.",
+    "category_duplicate": "Diese Kategorie ist bereits gelistet.",
+    "purpose": "Verarbeitungszweck (Artikel 30(1)(d))",
+    "purpose_placeholder": "Warum dieser Lieferant personenbezogene Daten für uns verarbeitet",
+    "next_review": "Nächste Überprüfung",
+    "offboarded_on": "Abgemeldet am {date}",
+    "deletion_certificate": "Referenz der Löschbescheinigung",
+    "deletion_certificate_placeholder": "Referenz der Art.-28(3)(g)-Zusage",
+    "deletion_certificate_hint": "Die Referenz der Bestätigung, dass Daten am Ende der Verarbeitung gelöscht oder zurückgegeben wurden.",
+    "status": "Lebenszyklus-Status"
+  },
+  "history": {
+    "loading": "Verlauf wird geladen…",
+    "empty": "Noch keine Änderungen erfasst. Jede Bearbeitung dieses Lieferanten erscheint hier.",
+    "description": "Jede Änderung an diesem Lieferanten, von wem und wann. Aus dem Prüfprotokoll der Organisation.",
+    "export": "CSV exportieren",
+    "load_more": "Mehr laden"
+  },
+  "import": {
+    "button": "CSV importieren",
+    "title": "Lieferanten aus CSV importieren",
+    "description": "Laden Sie Ihre vorhandene Lieferantentabelle hoch. Zeilen werden nach Möglichkeit mit dem Katalog abgeglichen; der Rest wird als eigene Lieferanten angelegt.",
+    "choose_file": "CSV-Datei auswählen",
+    "choose_file_hint": "Mit Kopfzeile und Spalten wie Name, Website, Kategorie, Land.",
+    "file_loaded": "{chars} Zeichen geladen",
+    "columns_title": "Erkannte Spalten",
+    "columns_help": "Name / Vendor / Supplier · Website / URL / Domain · Kategorie · Land / HQ · Datenkategorien · Verantwortlicher · Kontakt-E-Mail · Kritikalität · Zweck",
+    "preview": "Import-Vorschau",
+    "valid": "{count} Zeilen bereit",
+    "errors": "{count} Zeilen haben Probleme",
+    "col_name": "Lieferant",
+    "col_action": "Aktion",
+    "col_confidence": "Übereinstimmung",
+    "action_link": "Mit Katalog verknüpfen",
+    "action_create": "Als eigenen Lieferanten anlegen",
+    "row_error": "Zeile {row}:",
+    "commit": "{count} Lieferanten importieren",
+    "common_back": "Zurück",
+    "toast_done": "{created} Lieferanten importiert.",
+    "failed": "Import fehlgeschlagen.",
+    "common_cancel": "Abbrechen"
+  },
+  "status": {
+    "active": "Aktiv",
+    "paused": "Pausiert",
+    "offboarded": "Abgemeldet"
   }
 }

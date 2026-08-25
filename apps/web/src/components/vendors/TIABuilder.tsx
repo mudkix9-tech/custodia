@@ -17,6 +17,13 @@ import { useTranslations } from 'next-intl';
 const tiaSchema = z.object({
   transferMechanism: z.string().min(1, 'Transfer mechanism is required'),
   destinationCountry: z.string().length(2, 'Must be a 2-letter country code'),
+  // Step 1 — know your transfer (EDPB Recommendations 01/2020).
+  dataExporter: z.string().optional(),
+  dataImporter: z.string().optional(),
+  transferPurpose: z.string().optional(),
+  dataSubjectCategories: z.array(z.string()).optional(),
+  transferFrequency: z.string().optional(),
+  onwardTransfers: z.string().optional(),
   surveillanceLawsExist: z.boolean().nullable(),
   effectiveRemediesExist: z.boolean().nullable(),
   legalAssessmentConclusion: z.string().optional(),
@@ -24,6 +31,8 @@ const tiaSchema = z.object({
   residualRiskLevel: z.string().optional(),
   residualRiskJustification: z.string().optional(),
   conditions: z.string().optional(),
+  reevaluationIntervalMonths: z.string().optional(),
+  reevaluationTriggers: z.string().optional(),
   technicalMeasures: z.array(z.object({
     id: z.string(),
     label: z.string(),
@@ -41,6 +50,18 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
   const [step, setStep] = useState(1);
   const { data: tia, isLoading } = trpc.tia.getForVendor.useQuery({ vendorId });
   const saveMutation = trpc.tia.save.useMutation();
+  const exportMutation = trpc.tia.exportPdf.useMutation({
+    onSuccess: ({ pdfData, filename }) => {
+      const link = document.createElement('a');
+      link.href = `data:application/pdf;base64,${pdfData}`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    onError: () => setExportError(true),
+  });
+  const [exportError, setExportError] = useState(false);
   const utils = trpc.useUtils();
 
   // Form state
@@ -49,8 +70,16 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
     defaultValues: {
       transferMechanism: '',
       destinationCountry: 'US',
+      dataExporter: '',
+      dataImporter: '',
+      transferPurpose: '',
+      dataSubjectCategories: [] as string[],
+      transferFrequency: 'occasional',
+      onwardTransfers: '',
       surveillanceLawsExist: null,
       effectiveRemediesExist: null,
+      reevaluationIntervalMonths: '',
+      reevaluationTriggers: '',
       technicalMeasures: [
         { id: 'e2ee', label: '', implemented: false, detail: '' },
         { id: 'pseudonymisation', label: '', implemented: false, detail: '' },
@@ -77,6 +106,12 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
         ...prev,
         destinationCountry: tia.destinationCountry,
         transferMechanism: tia.transferMechanism,
+        dataExporter: tia.dataExporter ?? '',
+        dataImporter: tia.dataImporter ?? '',
+        transferPurpose: tia.transferPurpose ?? '',
+        dataSubjectCategories: Array.isArray(tia.dataSubjectCategories) ? tia.dataSubjectCategories : [],
+        transferFrequency: tia.transferFrequency ?? 'occasional',
+        onwardTransfers: tia.onwardTransfers ?? '',
         surveillanceLawsExist: tia.surveillanceLawsExist,
         independentDpaExists: tia.independentDpaExists,
         effectiveRemediesExist: tia.effectiveRemediesExist,
@@ -87,6 +122,8 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
         residualRiskLevel: tia.residualRiskLevel,
         residualRiskJustification: tia.residualRiskJustification,
         conclusion: tia.conclusion,
+        reevaluationIntervalMonths: tia.reevaluationIntervalMonths ? String(tia.reevaluationIntervalMonths) : '',
+        reevaluationTriggers: tia.reevaluationTriggers ?? '',
       }));
     }
   }, [tia]); // Only run when tia loads
@@ -96,9 +133,18 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
       vendorId,
       id: tia?.id,
       ...formData,
+      // The API takes a number; the form holds the interval as a string.
+      reevaluationIntervalMonths: formData.reevaluationIntervalMonths
+        ? Number(formData.reevaluationIntervalMonths)
+        : null,
       status,
     });
     utils.tia.getForVendor.invalidate({ vendorId });
+  };
+
+  const handleExport = () => {
+    setExportError(false);
+    exportMutation.mutate({ vendorId });
   };
 
   if (isLoading) return <div className="p-8 text-[#6E747A]">{t('loading')}</div>;
@@ -136,12 +182,24 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
         </div>
 
         {tia?.status === 'completed' && (
-          <div className="pt-6 border-t border-white/10">
+          <div className="pt-6 border-t border-white/10 space-y-3">
             <div className="bg-[#C9A227]/10 text-[#C9A227] p-4 rounded-xl border border-[#C9A227]/30 text-sm">
               <ShieldCheck className="w-5 h-5 mb-2 text-[#C9A227]" />
               <div className="font-bold mb-1">{t('completed')}</div>
               <div className="text-xs opacity-80">{t('approved_on', { when: format(new Date(tia.approvedAt!), 'MMM d, yyyy') })}</div>
             </div>
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={exportMutation.isPending}
+              className="w-full bg-[#0D0F11] border-white/10 hover:bg-white/5 text-[#E6E8EA]"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              {exportMutation.isPending ? t('exporting') : t('export_pdf')}
+            </Button>
+            {exportError && (
+              <p className="text-xs text-red-400">{t('export_failed')}</p>
+            )}
           </div>
         )}
       </div>
@@ -181,6 +239,59 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
                       <SelectItem value="adequacy">{t('mechanisms.adequacy')}</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              {/* D25 -- Step 1 "know your transfer". The schema carried these
+                  fields; the wizard never asked for them, so the saved TIA
+                  assessed a transfer it could not describe. */}
+              <div className="grid sm:grid-cols-2 gap-4 pt-2 border-t border-white/10 mt-2">
+                <div>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1">{t('step1.exporter')}</label>
+                  <Input
+                    type="text"
+                    value={formData.dataExporter}
+                    onChange={e => setFormData({ ...formData, dataExporter: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1">{t('step1.importer')}</label>
+                  <Input
+                    type="text"
+                    value={formData.dataImporter}
+                    onChange={e => setFormData({ ...formData, dataImporter: e.target.value })}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1">{t('step1.purpose')}</label>
+                  <Textarea
+                    value={formData.transferPurpose}
+                    onChange={e => setFormData({ ...formData, transferPurpose: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1">{t('step1.frequency')}</label>
+                  <Select
+                    value={formData.transferFrequency || 'occasional'}
+                    onValueChange={val => setFormData({ ...formData, transferFrequency: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="one_off">{t('step1.frequency_one_off')}</SelectItem>
+                      <SelectItem value="occasional">{t('step1.frequency_occasional')}</SelectItem>
+                      <SelectItem value="continuous">{t('step1.frequency_continuous')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1">{t('step1.onward')}</label>
+                  <Input
+                    type="text"
+                    value={formData.onwardTransfers}
+                    onChange={e => setFormData({ ...formData, onwardTransfers: e.target.value })}
+                  />
                 </div>
               </div>
             </div>
@@ -348,6 +459,38 @@ export function TIABuilder({ vendorId, defaultCountry }: { vendorId: string, def
                   />
                 </div>
               )}
+
+              {/* Step 6 -- re-evaluation at appropriate intervals (D25). An
+                  interval rather than a date: it survives the review being done
+                  and the next one being scheduled from it. */}
+              <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                <div>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1">{t('step6.interval')}</label>
+                  <Select
+                    value={formData.reevaluationIntervalMonths || 'unset'}
+                    onValueChange={val => setFormData({ ...formData, reevaluationIntervalMonths: val === 'unset' ? '' : val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('step6.interval_placeholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unset">{t('step6.interval_unset')}</SelectItem>
+                      <SelectItem value="6">6</SelectItem>
+                      <SelectItem value="12">12</SelectItem>
+                      <SelectItem value="24">24</SelectItem>
+                      <SelectItem value="36">36</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#F4F5F6] mb-1">{t('step6.triggers')}</label>
+                  <Input
+                    type="text"
+                    value={formData.reevaluationTriggers}
+                    onChange={e => setFormData({ ...formData, reevaluationTriggers: e.target.value })}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="pt-6 border-t border-white/10 flex justify-end gap-3">

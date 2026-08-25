@@ -4,11 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import { severityClasses } from '@/utils/severity';
 import { DataGrid } from 'ui';
-import { Search, FileText, Download, ShieldAlert, CheckCircle2, Clock, Link as LinkIcon, Building2, Sparkles } from 'lucide-react';
+import { Search, FileText, Download, ShieldAlert, CheckCircle2, Clock, Link as LinkIcon, Building2, Sparkles, Upload } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { useSearchParams } from 'next/navigation';
 import { DiscoveryTab } from '@/components/vendors/DiscoveryTab';
 import { AddCustomVendorModal } from '@/components/vendors/AddCustomVendorModal';
+import { ImportVendorsModal } from '@/components/vendors/ImportVendorsModal';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -16,6 +17,22 @@ import { PageShell } from '@/components/layout/PageShell';
 
 export default function VendorsPage() {
   const t = useTranslations('vendors');
+  // D41. Search, filters and sort are server-side: the register page previously
+  // filtered the 25 loaded rows client-side, so "no results" meant "not in this
+  // page" and a 60-vendor organisation searched a quarter of its own register.
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [riskFilter, setRiskFilter] = useState<'low' | 'medium' | 'high' | 'critical' | null>(null);
+  const [dpaFilter, setDpaFilter] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'createdAt' | 'name' | 'riskScore'>('createdAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [isImportOpen, setIsImportOpen] = useState(false);
+
+  React.useEffect(() => {
+    const id = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(id);
+  }, [searchInput]);
+
   const {
     data: vendorsResp,
     isLoading,
@@ -23,16 +40,13 @@ export default function VendorsPage() {
     hasNextPage,
     isFetchingNextPage
   } = trpc.vendors.getOrgVendors.useInfiniteQuery(
-    { limit: 25 },
+    { limit: 25, search, riskLevel: riskFilter ?? undefined, dpaStatus: dpaFilter ?? undefined, sortBy, sortDir },
     { getNextPageParam: (lastPage: any) => lastPage.pagination?.next_cursor }
   );
 
   const vendors = vendorsResp?.pages.flatMap((page: any) => page.data) || [];
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
   const [isAddCustomOpen, setIsAddCustomOpen] = useState(false);
-  // Declared but never connected to anything: the search box had no `value` and
-  // no `onChange`, and the grid was mounted without `globalFilter`.
-  const [searchQuery, setSearchQuery] = useState('');
   const toast = useToast();
   const utils = trpc.useUtils();
 
@@ -162,6 +176,12 @@ export default function VendorsPage() {
             <Sparkles className="w-4 h-4" /> {t('analyze_dpa')}
           </Link>
           <button
+            onClick={() => setIsImportOpen(true)}
+            className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated"
+          >
+            <Upload className="w-4 h-4" /> {t('import.button')}
+          </button>
+          <button
             onClick={handleExportRegister}
             disabled={isExporting}
             className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated"
@@ -218,17 +238,53 @@ export default function VendorsPage() {
 
           {/* DataGrid */}
           <div className="bg-[#0D0F11] border border-white/10 rounded-2xl shadow-panel-elevated overflow-hidden">
-            <div className="p-4 border-b border-white/5 bg-[#08090A]/50 flex items-center justify-between">
+            <div className="p-4 border-b border-white/5 bg-[#08090A]/50 flex flex-wrap items-center gap-3">
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6E747A]" />
                 <input
                   type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   placeholder={t('filter_placeholder')}
                   className="w-full bg-[#0D0F11] border border-white/10 rounded-lg pl-9 pr-4 py-2 text-[14px] text-[#F4F5F6] placeholder:text-[#6E747A] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
                 />
               </div>
+              <select
+                value={riskFilter ?? ''}
+                onChange={(e) => setRiskFilter((e.target.value || null) as 'low' | 'medium' | 'high' | 'critical' | null)}
+                className="bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#E6E8EA] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
+              >
+                <option value="">{t('filter.risk_all')}</option>
+                <option value="critical">{t('risk_level.critical')}</option>
+                <option value="high">{t('risk_level.high')}</option>
+                <option value="medium">{t('risk_level.medium')}</option>
+                <option value="low">{t('risk_level.low')}</option>
+              </select>
+              <select
+                value={dpaFilter ?? ''}
+                onChange={(e) => setDpaFilter(e.target.value || null)}
+                className="bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#E6E8EA] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
+              >
+                <option value="">{t('filter.dpa_all')}</option>
+                <option value="signed">{t('dpa_status.signed')}</option>
+                <option value="missing">{t('dpa_status.missing')}</option>
+                <option value="expired">{t('dpa_status.expired')}</option>
+              </select>
+              <select
+                value={`${sortBy}:${sortDir}`}
+                onChange={(e) => {
+                  const [nextBy, nextDir] = e.target.value.split(':');
+                  setSortBy(nextBy as any);
+                  setSortDir(nextDir as any);
+                }}
+                className="ml-auto bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#E6E8EA] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
+              >
+                <option value="createdAt:desc">{t('filter.sort_newest')}</option>
+                <option value="name:asc">{t('filter.sort_name_asc')}</option>
+                <option value="name:desc">{t('filter.sort_name_desc')}</option>
+                <option value="riskScore:desc">{t('filter.sort_risk_high')}</option>
+                <option value="riskScore:asc">{t('filter.sort_risk_low')}</option>
+              </select>
               <button
                 onClick={() => setIsAddCustomOpen(true)}
                 className="text-[13px] font-medium text-[#9BA1A6] hover:text-[#F4F5F6] bg-[#0D0F11] border border-white/10 px-3 py-1.5 rounded-lg shadow-panel-elevated transition-colors"
@@ -236,13 +292,12 @@ export default function VendorsPage() {
                 {t('add_custom_vendor')}
               </button>
             </div>
-            <DataGrid 
+            <DataGrid
               mode="full"
               bare
               columns={columns as any}
               data={vendors}
               isLoading={isLoading}
-              globalFilter={searchQuery}
               emptyState={
                 <EmptyState
                   icon={Building2}
@@ -276,6 +331,7 @@ export default function VendorsPage() {
         onClose={() => setIsAddCustomOpen(false)}
         onCreated={() => utils.vendors.getOrgVendors.invalidate()}
       />
+      <ImportVendorsModal open={isImportOpen} onClose={() => setIsImportOpen(false)} />
     </PageShell>
   );
 }

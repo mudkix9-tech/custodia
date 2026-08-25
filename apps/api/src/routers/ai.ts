@@ -1,7 +1,7 @@
 import { router, protectedProcedure, publicProcedure, requirePlatformAdmin } from '../trpc.js';
 import { z } from 'zod';
-import { 
-  processingActivities, 
+import {
+  processingActivities,
   organizations,
   documentEmbeddings,
   vendors,
@@ -13,7 +13,8 @@ import {
   complianceGaps,
   aiGuidanceLogs,
   vendorQuestionnaires,
-  dpias
+  dpias,
+  documents
 } from 'db';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { genai } from '../lib/genai.js';
@@ -25,6 +26,8 @@ import { calculateVendorRisk } from './vendors.js';
 import { trackAiUsage } from '../lib/billing.js';
 import { TIER_LIMITS, isNewAiWindow, aiWindowReset } from '../constants/aiQuota.js';
 import { COPILOT_MODEL } from '../lib/anthropicModels.js';
+import { Upload } from '@aws-sdk/lib-storage';
+import { getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
 
 const ai = genai;
 
@@ -1137,10 +1140,43 @@ Use this EXACT JSON schema:
         }
  
         if (input.orgVendorId) {
+          // D11. The analysed DPA is the evidence the Article 28 checklist rests
+          // on; until now it was parsed, read by the model and destroyed. Storing
+          // it against documents/ gives the audit pack its `vendors/dpas/` entry
+          // and dpaSignedAt's neighbouring column a real value.
+          const org = await ctx.db.query.organizations.findFirst({
+            where: eq(organizations.id, orgId),
+          });
+          const dataRegion = (org as any)?.dataRegion || 'eu-central-1';
+          const s3Key = `vendors/dpas/${orgId}/${input.orgVendorId}/${crypto.randomUUID()}.pdf`;
+
+          const upload = new Upload({
+            client: getS3ClientForRegion(dataRegion),
+            params: {
+              Bucket: getS3BucketForOrg(dataRegion),
+              Key: s3Key,
+              Body: buffer,
+              ContentType: 'application/pdf',
+            },
+          });
+          await upload.done();
+
+          const [doc] = await ctx.db.insert(documents).values({
+            organizationId: orgId,
+            uploaderId: ctx.user!.id,
+            filename: s3Key.split('/').pop()!,
+            originalName: 'data-processing-agreement.pdf',
+            mimeType: 'application/pdf',
+            sizeBytes: buffer.length,
+            status: 'ready',
+            s3Key,
+          }).returning();
+
           await ctx.db.update(organizationVendors)
             .set({
               dpaAiAnalysis: jsonResponse,
-              dpaAnalysisStatus: 'pending_review'
+              dpaAnalysisStatus: 'pending_review',
+              ...(doc ? { dpaDocumentId: doc.id } : {}),
             })
             .where(and(
               eq(organizationVendors.id, input.orgVendorId),

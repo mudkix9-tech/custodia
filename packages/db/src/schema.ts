@@ -1406,9 +1406,34 @@ export const organizationVendors = pgTable('organization_vendors', {
   dpaAnalysisStatus: varchar('dpa_analysis_status', { length: 50 }).default('not_analyzed').notNull(),
   dpaAiAnalysis: jsonb('dpa_ai_analysis').default({}),
   
+  // -------------------------------------------------------------------------
+  // D32. The register could say a vendor exists and nothing about the
+  // relationship: who owns it, who to chase, how much it matters, what role the
+  // vendor plays. Art. 30(1)(d) asks the last question and the DPO asks the rest.
+  //
+  // `processing_role` is the Art. 28 distinction — processor, joint controller
+  // (Art. 26), or independent controller — because obligations follow it: only a
+  // processor signs the clause checklist, and a joint controller needs an
+  // arrangement that no DPA template supplies.
+  // -------------------------------------------------------------------------
+  businessOwner: varchar('business_owner', { length: 255 }),
+  contactEmail: varchar('contact_email', { length: 255 }),
+  criticality: varchar('criticality', { length: 20 }), // 'low' | 'medium' | 'high' | 'critical'
+  processingRole: varchar('processing_role', { length: 30 }), // 'processor' | 'joint_controller' | 'independent_controller'
+
+  // -------------------------------------------------------------------------
+  // D30. Offboarding. A register that can only grow stops being evidence the
+  // moment the first contract ends: Art. 28(3)(g) is about what happens at the
+  // end of processing, and "end of processing" had no representation here.
+  // `offboarded_at` ends the relationship; `deletion_certificate_ref` records
+  // the Art. 28(3)(g) assurance that the data came back or was deleted.
+  // -------------------------------------------------------------------------
+  offboardedAt: timestamp('offboarded_at', { withTimezone: true }),
+  deletionCertificateRef: varchar('deletion_certificate_ref', { length: 255 }),
+
   lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
-  
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => {

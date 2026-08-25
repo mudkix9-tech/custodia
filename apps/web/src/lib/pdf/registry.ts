@@ -11,6 +11,7 @@ import { RopaRegister } from './templates/ropaRegister';
 import { TrainingCertificate } from './templates/trainingCertificate';
 import { TrainingReport } from './templates/trainingReport';
 import { VendorRegister } from './templates/vendorRegister';
+import { VendorsTia } from './templates/vendorsTia';
 
 /**
  * Every PDF the platform produces, addressed by name.
@@ -31,6 +32,7 @@ export const PDF_TEMPLATES = {
   'training-certificate': TrainingCertificate,
   'training-report': TrainingReport,
   vendors: VendorRegister,
+  'vendors-tia': VendorsTia,
   dpia: DpiaReport,
   dsar: DsarRegister,
   breaches: BreachRegister,
@@ -52,6 +54,7 @@ export const PDF_FILENAMES: Record<PdfDoc, string> = {
   'training-certificate': 'training-certificate.pdf',
   'training-report': 'training-compliance.pdf',
   vendors: 'vendor-register.pdf',
+  'vendors-tia': 'transfer-impact-assessment.pdf',
   dpia: 'dpia.pdf',
   dsar: 'dsar-register.pdf',
   breaches: 'breach-register.pdf',
