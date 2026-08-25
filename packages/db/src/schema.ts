@@ -1440,6 +1440,12 @@ export const organizationVendors = pgTable('organization_vendors', {
   return {
     orgVendorUnq: unique('organization_vendors_org_vendor_unq').on(table.organizationId, table.vendorId),
     vendorIdx: index('idx_ov_vendor').on(table.vendorId),
+    // The register's default listing: this organisation's live rows, newest
+    // first. Every page of the register and every keyset cursor walks it, and
+    // the sort columns below are the ones the D41 filters expose.
+    orgStatusIdx: index('idx_ov_org_status').on(table.organizationId, table.status),
+    orgRiskIdx: index('idx_ov_org_risk').on(table.organizationId, table.riskScore),
+    orgReviewIdx: index('idx_ov_org_review').on(table.organizationId, table.nextReviewAt),
   };
 });
 
@@ -1604,7 +1610,25 @@ export const transferImpactAssessments = pgTable('transfer_impact_assessments', 
   organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
   
   vendorId: uuid('vendor_id').references(() => vendors.id),
-  orgVendorId: uuid('org_vendor_id').references(() => organizationVendors.id),
+  /**
+   * `SET NULL` — not `CASCADE`, and not the `NO ACTION` this carried until
+   * August 2026.
+   *
+   * The four other children of `organization_vendors` cascade, so unlinking a
+   * vendor destroys them. A Chapter V assessment must not be in that group: it
+   * is a document about a transfer to a third country, it was true when it was
+   * written, and `organization_id` and `vendor_id` still say whose it is and
+   * what it covers after the join row is gone. With no clause at all the delete
+   * simply failed, which is the worst of the three answers — the caller saw an
+   * unexplained 500 rather than either outcome.
+   *
+   * The constraint's generated name is 68 characters and Postgres stores it
+   * truncated to 63. That is real but harmless here: identifiers are truncated
+   * at *parse* time as well, so `DROP CONSTRAINT` naming all 68 finds the
+   * 63-character target. It matters only if two names truncate to the same 63 —
+   * see the identifier-length note in CLAUDE.md and the query that checks for it.
+   */
+  orgVendorId: uuid('org_vendor_id').references(() => organizationVendors.id, { onDelete: 'set null' }),
   processingTransferId: uuid('processing_transfer_id').references(() => processingTransfers.id),
   
   // Step 1: Transfer details

@@ -14,7 +14,8 @@
     "total_tracked": "Total Tracked",
     "dpa_coverage": "DPA Coverage",
     "missing_dpas": "Missing / Expired DPAs",
-    "high_risk": "High / Critical Risk"
+    "high_risk": "High / Critical Risk",
+    "offboarded": "Offboarded"
   },
   "filter_placeholder": "Filter vendors...",
   "add_custom_vendor": "Add Custom Vendor",
@@ -26,12 +27,17 @@
     "category": "Category",
     "dpa_status": "DPA Status",
     "risk_score": "Risk Score & Level",
-    "data_locations": "Data Locations"
+    "data_locations": "Data Locations",
+    "processing_role": "Role",
+    "role_unset": "Role not set"
   },
   "dpa_status": {
     "signed": "Signed",
     "expired": "Expired",
-    "missing": "Missing"
+    "missing": "Missing",
+    "not_started": "Not started",
+    "requested": "Requested",
+    "in_review": "In review"
   },
   "locations": {
     "hq": "HQ: {country}",
@@ -701,7 +707,11 @@
     "sort_name_asc": "Name A–Z",
     "sort_name_desc": "Name Z–A",
     "sort_risk_high": "Highest risk first",
-    "sort_risk_low": "Lowest risk first"
+    "sort_risk_low": "Lowest risk first",
+    "dpa_outstanding": "DPA outstanding",
+    "status_live": "In use",
+    "status_all": "All, including offboarded",
+    "sort_review_oldest": "Least recently reviewed"
   },
   "criticality": {
     "low": "Low",
@@ -740,7 +750,27 @@
     "deletion_certificate": "Deletion certificate reference",
     "deletion_certificate_placeholder": "Art. 28(3)(g) assurance reference",
     "deletion_certificate_hint": "The reference of the confirmation that data was deleted or returned at the end of processing.",
-    "status": "Lifecycle status"
+    "status": "Lifecycle status",
+    "saving": "Saving…",
+    "saved": "All changes saved",
+    "contact_email_invalid": "Enter a valid email address.",
+    "joint_controller_hint": "A joint controller needs an Article 26 arrangement, not a DPA. The Article 28(3) clause checklist does not apply.",
+    "category_pick": "Add from the standard list…",
+    "category_custom": "custom",
+    "category_limit": "A vendor can record at most {max} data categories.",
+    "category_special_note": "This vendor receives special category data (Article 9). A DPA and a documented Article 9(2) condition are required.",
+    "review_title": "Record a review",
+    "review_last": "Last reviewed {date}",
+    "review_never": "This relationship has never been formally reviewed.",
+    "review_in_months": "Review again in {months} months",
+    "review_attest": "Mark as reviewed",
+    "unlink": "Remove from register",
+    "unlink_title": "Remove this vendor from your register?",
+    "unlink_body": "Offboarding keeps the record as evidence of a processor you used. Removing deletes it.",
+    "unlink_evidence": "This relationship holds {count} records that would be destroyed: assessments, questionnaires, sub-processor changes and transfer assessments.",
+    "unlink_confirm": "Delete the relationship and its evidence",
+    "unlink_offboard_instead": "Offboard instead",
+    "unlink_cancel": "Cancel"
   },
   "history": {
     "loading": "Loading trail…",
@@ -771,11 +801,53 @@
     "common_back": "Back",
     "toast_done": "Imported {created} vendors.",
     "failed": "Import failed.",
-    "common_cancel": "Cancel"
+    "common_cancel": "Cancel",
+    "action_existing": "Already in register",
+    "net_additions": "{count} to add",
+    "ignored_columns": "These columns were not recognised and have been ignored: {columns}",
+    "near_miss": "Possible match: {name} ({confidence}%) — below the automatic threshold, so this row will create a new vendor.",
+    "transaction_note": "The import runs as a single transaction: either every row below is written, or none is.",
+    "too_large": "That file is larger than {limit} KB. Split it and import in parts.",
+    "read_failed": "That file could not be read.",
+    "col_country": "Country",
+    "done_title": "Import complete",
+    "done_created": "{count} new vendors created",
+    "done_linked": "{count} linked to the catalogue",
+    "done_skipped": "{count} already in your register and left unchanged",
+    "done_close": "Done",
+    "import_another": "Import another file",
+    "skipped_rows": "{count} rows were skipped"
   },
   "status": {
     "active": "Active",
     "paused": "Paused",
     "offboarded": "Offboarded"
+  },
+  "data_category": {
+    "contact_details": "Contact details",
+    "identity_details": "Identity details",
+    "account_credentials": "Account credentials",
+    "employment_details": "Employment details",
+    "financial_details": "Financial details",
+    "payment_card_data": "Payment card data",
+    "government_identifiers": "Government identifiers",
+    "location_data": "Location data",
+    "device_and_usage_data": "Device and usage data",
+    "communications_content": "Communications content",
+    "customer_support_records": "Customer support records",
+    "marketing_preferences": "Marketing preferences",
+    "behavioural_profiling_data": "Behavioural profiling data",
+    "childrens_data": "Children's data",
+    "user_generated_content": "User-generated content",
+    "health_data": "Health data",
+    "genetic_data": "Genetic data",
+    "biometric_data_for_id": "Biometric data for identification",
+    "racial_or_ethnic_origin": "Racial or ethnic origin",
+    "political_opinions": "Political opinions",
+    "religious_or_philosophical_beliefs": "Religious or philosophical beliefs",
+    "trade_union_membership": "Trade union membership",
+    "sex_life": "Sex life",
+    "sexual_orientation": "Sexual orientation",
+    "criminal_offence_data": "Criminal offence data"
   }
 }

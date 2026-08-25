@@ -61,6 +61,16 @@ const server = fastify({
   routerOptions: {
     maxParamLength: 5000,
   },
+  /**
+   * Fastify's default is 1 MiB, which several procedures quietly exceed: a
+   * base64-encoded DPA (`ai.analyzeDpa`) and a vendor register spreadsheet
+   * (`vendors.importCsv`) are both routinely larger than that, and the rejection
+   * happens in the HTTP layer before tRPC or Zod sees the call — so the client
+   * receives `FST_ERR_CTP_BODY_TOO_LARGE` rather than anything about the file it
+   * just chose. Raised once, here, so the Zod `.max()` on those inputs is the
+   * limit that actually speaks to the user; each of them stays well under this.
+   */
+  bodyLimit: 12 * 1024 * 1024,
   logger: {
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
     transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined

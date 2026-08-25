@@ -1,0 +1,3 @@
+ALTER TABLE "transfer_impact_assessments" DROP CONSTRAINT "transfer_impact_assessments_org_vendor_id_organization_vendors_id_fk";
+--> statement-breakpoint
+ALTER TABLE "transfer_impact_assessments" ADD CONSTRAINT "transfer_impact_assessments_org_vendor_id_organization_vendors_id_fk" FOREIGN KEY ("org_vendor_id") REFERENCES "public"."organization_vendors"("id") ON DELETE set null ON UPDATE no action;

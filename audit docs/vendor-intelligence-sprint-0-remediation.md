@@ -254,3 +254,42 @@ And, once, for D7 — the collapsed snapshots cannot be reconstructed, only re-c
 npm run reset:subprocessor-baselines --workspace=packages/db            # dry run
 npm run reset:subprocessor-baselines --workspace=packages/db -- --apply
 ```
+
+---
+
+## 6. What could be done better / Latent risks and remaining debt
+
+Items that survived Sprint 0 and its remediation, recorded here so they remain visible:
+
+1. **`dpa-expiry-checker` terminates in `console.log` (`apps/api/src/workers/vendors.ts:620–624`).**
+   The 90/60/30/7/expired tiering and extension reset logic are sound, but the worker calls
+   a local `createNotification()` helper that logs to `console.log` under the comment
+   *"Assuming a generic notifications table exists"*. The platform has a real
+   `queueNotification`; this must be wired to `'vendor.dpa_expiring'` before removing the
+   job from `DORMANT_JOBS`.
+
+2. **`notifiedAt` is shared across tenants (`apps/api/src/routers/vendors.ts:697–706`).**
+   `vendor_sub_processors.notifiedAt` lives on the shared catalogue row. One organisation
+   acknowledging a sub-processor change marks it acknowledged for every organisation tracking
+   that vendor. The flag belongs on an organisation-scoped join row (recorded in `known-concerns.md #13`).
+
+3. **Global limit of 50 on sub-processor change detection (`apps/api/src/workers/vendors.ts:71`).**
+   The change detector queries catalogue vendors with `.limit(50)`. As the catalogue grows
+   beyond 50 entries, vendors past that ceiling will never have their sub-processor pages
+   scraped. The worker needs cursor pagination or a partitioned job queue.
+
+4. **Per-organisation sub-processor additions remain impossible (`SubProcessorList.tsx`).**
+   Gating `addLinked` / `addUnlinked` to custom vendors prevented cross-tenant data corruption,
+   but an organisation that signs a bespoke DPA annex naming specific sub-processors still has
+   nowhere to record them on a catalogue vendor. A tenant-scoped override join table is the
+   proper model (`known-concerns.md #17`).
+
+5. **Missing permission gate on `assessments.getTemplates` (`apps/api/src/routers/assessments.ts:275`).**
+   Left as a bare `protectedProcedure.query(...)` while all other vendor intelligence endpoints
+   carry `requirePermission('vendors', 'view')`.
+
+6. **Static DPF assertions without expiry tracking (`packages/db/src/seed-vendors.ts`).**
+   The DPF backfill resolves immediate location scoring, but DPF participants must recertify
+   annually. Without P-5 (the scheduled DPF participant list poller), a lapsed certification
+   will continue scoring as adequate indefinitely.
+

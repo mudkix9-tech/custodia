@@ -4,6 +4,7 @@ import { complianceGaps, organizations, organizationVendors, vendors } from 'db'
 import { and, eq, isNull, inArray } from 'drizzle-orm';
 import { DETECTION_RULES } from '../constants/gapRules.js';
 import { ROPA_DETECTION_RULES } from '../constants/ropaGapRules.js';
+import { isLiveVendorStatus } from '../constants/vendorLifecycle.js';
 
 /**
  * P124. The vendor-shaped rules and the register rules, scanned as one pass.
@@ -139,6 +140,7 @@ async function scanGroupVendorConsistency(parentOrgId: string) {
     orgId: organizationVendors.organizationId,
     vendorId: organizationVendors.vendorId,
     dpaStatus: organizationVendors.dpaStatus,
+    status: organizationVendors.status,
     vendorRiskLevel: vendors.riskLevel,
     vendorName: vendors.name
   })
@@ -150,6 +152,10 @@ async function scanGroupVendorConsistency(parentOrgId: string) {
   const grouped: Record<string, any[]> = {};
   orgVendors.forEach((ov: any) => {
     if (!ov.vendorId) return;
+    // D30. A group-inconsistency finding compares entities that still use the
+    // vendor. An entity that offboarded it last year is not "lagging behind" its
+    // siblings; it is finished, and telling it to sign a DPA is noise.
+    if (!isLiveVendorStatus(ov.status)) return;
     if (!grouped[ov.vendorId]) grouped[ov.vendorId] = [];
     grouped[ov.vendorId]!.push(ov);
   });

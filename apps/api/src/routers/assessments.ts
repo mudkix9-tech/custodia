@@ -1,4 +1,4 @@
-import { router, publicProcedure, protectedProcedure } from '../trpc.js';
+import { router, publicProcedure, protectedProcedure, requirePermission } from '../trpc.js';
 import { z } from 'zod';
 import { db } from '../db.js';
 import { 
@@ -627,7 +627,18 @@ Only return valid JSON, nothing else.`;
       return updated;
     }),
 
+  /**
+   * The human review that lets a completed questionnaire move the register (D6).
+   *
+   * Permission-gated, because Sprint 1 made this load-bearing. Until the review
+   * gate existed, `reviewedAt` was an annotation; now it is the single thing
+   * standing between a vendor's own favourable self-assessment and a lower risk
+   * rating in their customer's register, and a bare `protectedProcedure` let any
+   * authenticated member of the organisation — including a read-only one — be
+   * the human in "reviewed by a human".
+   */
   reviewAssessment: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       assessmentId: z.string().uuid(),
       scoreAdjustment: z.number().min(-50).max(50),
@@ -639,7 +650,7 @@ Only return valid JSON, nothing else.`;
         .where(
           and(
             eq(vendorAssessments.id, input.assessmentId),
-            eq(vendorAssessments.organizationId, ctx.user.orgId)
+            eq(vendorAssessments.organizationId, ctx.user!.orgId)
           )
         );
 
@@ -654,7 +665,7 @@ Only return valid JSON, nothing else.`;
         .set({
           scoreAdjustment: input.scoreAdjustment,
           aiSummary: input.aiSummary || assessment.aiSummary,
-          reviewedBy: ctx.user.id,
+          reviewedBy: ctx.user!.id,
           reviewedAt: new Date()
         })
         .where(eq(vendorAssessments.id, input.assessmentId))

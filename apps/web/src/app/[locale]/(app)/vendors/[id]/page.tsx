@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { GenericWorkspaceSkeleton } from '@/components/skeletons/PageSkeleton';
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +15,7 @@ import { AlternativesSection } from '@/components/vendors/AlternativesSection';
 import { QuestionnaireTab } from '@/components/vendors/QuestionnaireTab';
 import { DpaAnalysisModal } from '@/components/vendors/DpaAnalysisModal';
 import { TRANSFER_MECHANISMS } from '@/constants/transferMechanisms';
-import { VendorRelationshipPanel, VendorHistory } from '@/components/vendors/VendorRelationship';
+import { VendorRelationshipPanel, VendorHistory, UnlinkVendor } from '@/components/vendors/VendorRelationship';
 
 export default function VendorDetailsPage() {
   const t = useTranslations('vendors');
@@ -186,7 +186,7 @@ export default function VendorDetailsPage() {
             </div>
             <p className="text-[12px] text-bone-50/60 leading-relaxed text-left mb-6">
               {t('detail.risk.explanation', {
-                country: vendor.vendor.headquartersCountry ?? 'â€”',
+                country: vendor.vendor.headquartersCountry ?? '—',
                 dpaStatus: t(`detail.dpa.status.${vendor.orgVendor.dpaStatus ?? 'not_started'}`),
               })}
             </p>
@@ -627,6 +627,9 @@ export default function VendorDetailsPage() {
                   <div className="border-t border-white/10 pt-8">
                     <h4 className="font-semibold text-[#F4F5F6] text-sm mb-6">{t('detail.tabs.history')}</h4>
                     <VendorHistory vendorId={vendorId} />
+                  </div>
+                  <div className="border-t border-white/10 pt-8">
+                    <UnlinkVendor vendorId={vendorId} />
                   </div>
                 </div>
               )}

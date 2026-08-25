@@ -38,10 +38,12 @@ export interface VendorsTiaData {
     independentDpaExists?: boolean | null;
     effectiveRemediesExist?: boolean | null;
     legalAssessmentConclusion?: string | null;
+    legalAssessmentDetail?: string | null;
     relevantCaseLaw?: string | null;
     technicalMeasures?: TiaMeasure[] | null;
     organizationalMeasures?: TiaMeasure[] | null;
     contractualMeasures?: TiaMeasure[] | null;
+    measuresDetail?: string | null;
     residualRiskLevel?: string | null;
     residualRiskJustification?: string | null;
     conclusion?: string | null;
@@ -52,6 +54,8 @@ export interface VendorsTiaData {
     reevaluationTriggers?: string | null;
   };
   vendorName: string;
+  /** The controller. Half of the transfer being assessed, and it was not on the page. */
+  organizationName?: string | null;
   generatedAt: WireDate;
 }
 
@@ -91,13 +95,18 @@ export const VendorsTia: React.FC<{ data: VendorsTiaData }> = ({ data }) => {
         eyebrow="Chapter V · GDPR Articles 44–49"
         title="Transfer Impact Assessment"
         meta={[
+          ...(data.organizationName ? [{ label: 'Controller', value: data.organizationName }] : []),
           { label: 'Vendor', value: data.vendorName },
           { label: 'Destination', value: tia.destinationCountry },
           { label: 'Mechanism', value: titleCase(tia.transferMechanism) },
           { label: 'Status', value: tia.status },
           ...(tia.approvedAt ? [{ label: 'Approved', value: formatDate(tia.approvedAt) }] : []),
         ]}
-        note="Documented under Article 46, assessing whether safeguards ensure an essentially equivalent level of protection for personal data transferred outside the EEA."
+        note={
+          tia.status === 'completed'
+            ? 'Documented under Article 46, assessing whether safeguards ensure an essentially equivalent level of protection for personal data transferred outside the EEA.'
+            : 'DRAFT — this assessment has not been completed or approved. It does not evidence compliance with Chapter V and must not be relied on as a record of the safeguards in place.'
+        }
       />
 
       <ContentPage headerLabel={header}>
@@ -134,7 +143,11 @@ export const VendorsTia: React.FC<{ data: VendorsTiaData }> = ({ data }) => {
                 <TriState value={tia.surveillanceLawsExist} />,
               ],
               [
-                <Text style={styles.cellStrong}>Independent supervisory authority / effective remedies</Text>,
+                <Text style={styles.cellStrong}>Independent supervisory authority</Text>,
+                <TriState value={tia.independentDpaExists} />,
+              ],
+              [
+                <Text style={styles.cellStrong}>Effective remedies for data subjects</Text>,
                 <TriState value={tia.effectiveRemediesExist} />,
               ],
               [
@@ -144,7 +157,10 @@ export const VendorsTia: React.FC<{ data: VendorsTiaData }> = ({ data }) => {
             ]}
             empty="No legal assessment recorded."
           />
-          {(tia.relevantCaseLaw) && (
+          {tia.legalAssessmentDetail && (
+            <Text style={styles.bodyText}>{tia.legalAssessmentDetail}</Text>
+          )}
+          {tia.relevantCaseLaw && (
             <Text style={styles.bodyText}>Case law noted: {tia.relevantCaseLaw}</Text>
           )}
         </Section>
@@ -168,6 +184,9 @@ export const VendorsTia: React.FC<{ data: VendorsTiaData }> = ({ data }) => {
             ]}
             empty="No supplementary measures recorded."
           />
+          {tia.measuresDetail && (
+            <Text style={styles.bodyText}>{tia.measuresDetail}</Text>
+          )}
         </Section>
 
         {/* Steps 4–6 — residual risk, conclusion, re-evaluation */}

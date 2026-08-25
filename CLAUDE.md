@@ -77,6 +77,32 @@ counters on it — `ai_queries_used` and `ai_dpas_analyzed` — so whichever pat
 month has rolled over must clear both (`aiWindowReset()` in `constants/aiQuota.ts`);
 clearing one turns the other back into a lifetime counter, silently.
 
+**The audit middleware only diffs paths it recognises, and it recognises them by
+name.** `classifyActionType()` in `utils/auditClassification.ts` decides whether a
+mutation is a create/update/delete; without a match it returns `'other'` and
+`trpc.ts` computes **no `changes` blob at all**. The default rule is the path
+*suffix* (`.create` / `.update` / `.delete`), which only the ROPA router follows.
+`RESOURCE_TABLE_MAP` then has to name the table *and the column* the resource id
+addresses — the vendor router addresses a relationship by its catalogue
+`vendorId`, not by the join row's `id`. Both were wrong for the vendor module for
+a year (`vendors.org.update` is a path that has never existed), so every vendor
+edit logged with an empty diff and the History tab rendered a list of raw tRPC
+procedure names. **Adding a mutation that should appear in a History tab means
+adding it to `ACTION_TYPE_OVERRIDES`, `RESOURCE_TABLE_MAP` and
+`ACTION_DESCRIPTIONS`** — and to `extractResourceId` if it is keyed on anything
+but `id`/`vendorId`/`processingActivityId`/`orgVendorId`. The file is split from
+`auditLogger.ts` (which imports `db.js`) for the same reason `utils/cursor.ts` is
+split from `pagination.ts`: so the fixtures can reach it.
+
+**`paginatedQuery` selects from one table, so a filter on a joined table is a
+runtime 500, not a type error.** It builds `db.select().from(table)` and drops
+whatever `additionalWhere` you give it into the WHERE clause verbatim. A
+predicate naming another table compiles, passes every guard, and dies as
+`missing FROM-clause entry for table "x"` on the first call — which is how the
+vendor register's search box shipped broken. A list that needs to filter or sort
+on a joined column needs its own query and its own keyset cursor;
+`vendors.getOrgVendors` is the worked example.
+
 **Editing the vendor catalogue does not move any customer's score.**
 `organization_vendors.risk_score` is denormalised and written at link time, so a seed
 change — backfilling `data_privacy_framework`, say, which is what stops every US vendor
@@ -86,6 +112,38 @@ scoring the full location risk — is inert until the derived rows are recompute
 npm run seed:vendors     --workspace=packages/db
 npm run recalc:vendor-risk --workspace=apps/api -- --apply   # dry run without --apply
 ```
+
+**And neither does changing the formula.** The same denormalisation means a
+change to `lib/vendorRisk.ts` — or to anything it reads — is inert on every
+existing row until that recalculation runs. Two of them shipped in August 2026:
+the D6 gate (a completed questionnaire only moves the score once a human has
+reviewed it) and the Art. 9 factor moving off an English keyword scan onto the
+controlled vocabulary. Between the deploy and the recalculation, `risk_score`
+and the `risk_factors` text beside it describe two different formulas.
+
+**`data_categories_shared` is a controlled vocabulary, not free text.**
+`constants/vendorDataCategories.ts` owns the keys; the web workspace mirrors them
+and renders labels from the catalogues. This matters because the Art. 9 factor
+and the `missing_dpa_special_category` gap rule both read that column, and they
+used to read it by scanning for the English words *health*, *biometric*,
+*racial*… The module ships in three languages: a German customer typing
+`Gesundheitsdaten` into a field whose own placeholder read `z. B. Kontaktdaten`
+got a silent "no special categories here". Free text is still accepted — an
+import cannot be made to speak our vocabulary — so `isSpecialCategoryValue()`
+falls back to a keyword scan widened to English, German and French. Both write
+paths go through `normaliseDataCategoryList()`; a cap that exists on one of them
+describes nothing about what is in the column.
+
+**Offboarding is only real if the rest of the product believes it.**
+`organization_vendors.status` was written by `setStatus` and read by nothing, so
+an offboarded processor still counted in the metric tiles, still raised a
+`missing_dpa` gap, still had its DPA renewal chased and still received
+sub-processor-change alerts. Anything that counts, scores, chases or alerts
+should carry `liveVendorPredicate()` (routers) or `isLiveVendorStatus()` (row at
+a time). A NULL status is **live** — treating unknown as offboarded would empty
+every existing register. The Art. 30 export deliberately goes the other way and
+includes ended relationships, because the record is of processors used *during
+the period*.
 
 **`npx eslint` cannot run at all.** `apps/web/eslint.config.mjs` throws
 `TypeError: tailwind.configs.flat/recommended is not iterable` on ESLint 9.39.4.
@@ -422,13 +480,27 @@ not to do is assume `npm run migrate` on a fresh database reproduces production.
 names as `<table>_<column>_<reftable>_<refcolumn>_fk`.** `0049` tripped this four times —
 anything referencing `processing_activities` from a table with a long name of its own. It
 emits a NOTICE, not an error, and no names collided; the consequence is that the
-constraint name in the database is *not* the one in the `.sql`, so a hand-written
-`DROP CONSTRAINT` copied out of a migration file will not find its target. Check for
-collisions after adding foreign keys to a long-named table:
+constraint name in the database is *not* the one in the `.sql`.
+
+**This is a naming hazard, not a broken-migration hazard**, and the difference has
+cost time in both directions. Truncation happens at *parse* time as well as at
+creation time, so a `DROP CONSTRAINT` naming all 68 characters is truncated to the
+same 63 and finds its target — a generated migration that alters one of these
+constraints works fine, and `0053` is the worked example. Verified against the live
+database rather than reasoned about, because the opposite was assumed for a while
+and a whole rename procedure was written for a problem that does not exist.
+
+What truncation genuinely costs you: two different long names can collide at 63
+characters, and no name in the database is the one you would predict from
+`schema.ts`. Check both after adding foreign keys to a long-named table:
 
 ```sql
+-- collisions
 SELECT conname, count(*) FROM pg_constraint WHERE connamespace = 'public'::regnamespace
 GROUP BY conname HAVING count(*) > 1;
+-- names that were silently shortened
+SELECT conrelid::regclass AS table_name, conname FROM pg_constraint
+WHERE connamespace = 'public'::regnamespace AND length(conname) >= 63;
 ```
 
 **`with:` in a relational query is not typechecked.** For a table with no

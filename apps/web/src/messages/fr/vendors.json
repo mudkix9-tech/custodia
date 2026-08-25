@@ -17,7 +17,8 @@
     "total_tracked": "Total suivi",
     "dpa_coverage": "Couverture DPA",
     "missing_dpas": "DPA manquants / expirés",
-    "high_risk": "Risque élevé / critique"
+    "high_risk": "Risque élevé / critique",
+    "offboarded": "Clôturés"
   },
   "filter_placeholder": "Filtrer les fournisseurs...",
   "add_custom_vendor": "Ajouter un fournisseur personnalisé",
@@ -29,12 +30,17 @@
     "category": "Catégorie",
     "dpa_status": "Statut DPA",
     "risk_score": "Score et niveau de risque",
-    "data_locations": "Emplacements des données"
+    "data_locations": "Emplacements des données",
+    "processing_role": "Rôle",
+    "role_unset": "Rôle non défini"
   },
   "dpa_status": {
     "signed": "Signé",
     "expired": "Expiré",
-    "missing": "Manquant"
+    "missing": "Manquant",
+    "not_started": "Non entamé",
+    "requested": "Demandé",
+    "in_review": "En cours d’examen"
   },
   "locations": {
     "hq": "Siège social : {country}",
@@ -704,7 +710,11 @@
     "sort_name_asc": "Nom A–Z",
     "sort_name_desc": "Nom Z–A",
     "sort_risk_high": "Risque le plus élevé d’abord",
-    "sort_risk_low": "Risque le plus faible d’abord"
+    "sort_risk_low": "Risque le plus faible d’abord",
+    "dpa_outstanding": "DPA en attente",
+    "status_live": "En cours d’utilisation",
+    "status_all": "Tous, y compris clôturés",
+    "sort_review_oldest": "Revus le moins récemment"
   },
   "criticality": {
     "low": "Faible",
@@ -743,7 +753,27 @@
     "deletion_certificate": "Référence du certificat de suppression",
     "deletion_certificate_placeholder": "Référence de l’engagement art. 28(3)(g)",
     "deletion_certificate_hint": "La référence confirmant que les données ont été supprimées ou restituées à la fin du traitement.",
-    "status": "Statut du cycle de vie"
+    "status": "Statut du cycle de vie",
+    "saving": "Enregistrement…",
+    "saved": "Toutes les modifications sont enregistrées",
+    "contact_email_invalid": "Saisissez une adresse e-mail valide.",
+    "joint_controller_hint": "Un responsable conjoint requiert un accord au titre de l’article 26, et non un DPA. La liste des clauses de l’article 28(3) ne s’applique pas.",
+    "category_pick": "Ajouter depuis la liste standard…",
+    "category_custom": "personnalisé",
+    "category_limit": "Un fournisseur ne peut pas dépasser {max} catégories de données.",
+    "category_special_note": "Ce fournisseur reçoit des catégories particulières de données (article 9). Un DPA et une condition documentée au titre de l’article 9(2) sont requis.",
+    "review_title": "Consigner une revue",
+    "review_last": "Dernière revue le {date}",
+    "review_never": "Cette relation n’a jamais fait l’objet d’une revue formelle.",
+    "review_in_months": "Revoir dans {months} mois",
+    "review_attest": "Marquer comme revu",
+    "unlink": "Retirer du registre",
+    "unlink_title": "Retirer ce fournisseur de votre registre ?",
+    "unlink_body": "La clôture conserve la fiche comme preuve d’un sous-traitant utilisé. La suppression l’efface.",
+    "unlink_evidence": "Cette relation comporte {count} enregistrements qui seraient détruits : évaluations, questionnaires, changements de sous-traitants ultérieurs et analyses d’impact des transferts.",
+    "unlink_confirm": "Supprimer la relation et ses preuves",
+    "unlink_offboard_instead": "Clôturer plutôt",
+    "unlink_cancel": "Annuler"
   },
   "history": {
     "loading": "Chargement de l’historique…",
@@ -774,11 +804,53 @@
     "common_back": "Retour",
     "toast_done": "{created} fournisseurs importés.",
     "failed": "Échec de l’import.",
-    "common_cancel": "Annuler"
+    "common_cancel": "Annuler",
+    "action_existing": "Déjà au registre",
+    "net_additions": "{count} à ajouter",
+    "ignored_columns": "Ces colonnes n’ont pas été reconnues et ont été ignorées : {columns}",
+    "near_miss": "Correspondance possible : {name} ({confidence} %) — sous le seuil automatique, cette ligne créera donc un nouveau fournisseur.",
+    "transaction_note": "L’import s’exécute en une seule transaction : soit toutes les lignes sont écrites, soit aucune.",
+    "too_large": "Ce fichier dépasse {limit} Ko. Divisez-le et importez-le en plusieurs fois.",
+    "read_failed": "Ce fichier n’a pas pu être lu.",
+    "col_country": "Pays",
+    "done_title": "Import terminé",
+    "done_created": "{count} nouveaux fournisseurs créés",
+    "done_linked": "{count} rattachés au catalogue",
+    "done_skipped": "{count} déjà présents au registre et laissés inchangés",
+    "done_close": "Terminé",
+    "import_another": "Importer un autre fichier",
+    "skipped_rows": "{count} lignes ont été ignorées"
   },
   "status": {
     "active": "Actif",
     "paused": "En pause",
     "offboarded": "Radié"
+  },
+  "data_category": {
+    "contact_details": "Coordonnées",
+    "identity_details": "Données d’identité",
+    "account_credentials": "Identifiants de compte",
+    "employment_details": "Données professionnelles",
+    "financial_details": "Données financières",
+    "payment_card_data": "Données de carte de paiement",
+    "government_identifiers": "Identifiants officiels",
+    "location_data": "Données de localisation",
+    "device_and_usage_data": "Données d’appareil et d’usage",
+    "communications_content": "Contenu des communications",
+    "customer_support_records": "Dossiers d’assistance",
+    "marketing_preferences": "Préférences marketing",
+    "behavioural_profiling_data": "Données de profilage comportemental",
+    "childrens_data": "Données d’enfants",
+    "user_generated_content": "Contenu généré par l’utilisateur",
+    "health_data": "Données de santé",
+    "genetic_data": "Données génétiques",
+    "biometric_data_for_id": "Données biométriques d’identification",
+    "racial_or_ethnic_origin": "Origine raciale ou ethnique",
+    "political_opinions": "Opinions politiques",
+    "religious_or_philosophical_beliefs": "Convictions religieuses ou philosophiques",
+    "trade_union_membership": "Appartenance syndicale",
+    "sex_life": "Vie sexuelle",
+    "sexual_orientation": "Orientation sexuelle",
+    "criminal_offence_data": "Données relatives aux infractions pénales"
   }
 }

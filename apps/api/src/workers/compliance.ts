@@ -3,6 +3,7 @@ import { db } from '../db.js';
 import { complianceGaps, complianceReports, organizations, organizationVendors, processingActivities, dpias, clients, clientProcessingActivities, users, trainingCompletions } from 'db';
 import { eq, and, inArray } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { isLiveVendorStatus } from '../constants/vendorLifecycle.js';
 
 
 export const complianceQueue = createQueue('compliance');
@@ -68,6 +69,10 @@ export const complianceWorker = createWorker('compliance', async (job: any) => {
 
         // 1. Missing DPAs
         for (const v of vendorsByOrg.get(org.id) || []) {
+          // D30. An offboarded relationship does not owe an Article 28 contract.
+          // Raising a gap against one is a finding the customer cannot close
+          // except by re-signing a DPA with a processor they no longer use.
+          if (!isLiveVendorStatus(v.status)) continue;
           if (v.dpaStatus !== 'signed') {
             detectedGaps.push({
               entityType: 'vendor',

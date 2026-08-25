@@ -626,6 +626,115 @@ header mapping, normalisation and matcher precedence (including the length guard
 that stops unrelated long names fuzzy-matching). All guards green; migration
 generated, not yet applied to any database.
 
+## 0.7 Sprint 1 review and remediation — 25 August 2026
+
+**The section above was written from the diff, and several of its claims did not
+survive a read of the running code.** Everything below has been fixed; the list
+is kept because the *shape* of the errors is the lesson. Four of the five
+user-facing surfaces the sprint shipped failed on first contact, and every one
+of them type-checked, passed the tenancy guard, passed the i18n guard and passed
+`npm run check`. This module's defects do not announce themselves.
+
+**Broken at runtime, now fixed.**
+
+- **Register search 500'd on every keystroke.** `getOrgVendors` pushed predicates
+  on `vendors.name` and `vendors.category` into `paginatedQuery`, which selects
+  from a single table and never joins the catalogue — so Postgres answered
+  `missing FROM-clause entry for table "vendors"`. D41's headline feature was
+  unusable and nothing could have caught it: the SQL is only assembled at call
+  time. `getOrgVendors` no longer uses `paginatedQuery`; it is a real join with a
+  keyset cursor over (sort column, org-vendor id).
+- **The relationship record could not be typed into.** Every text input bound
+  `value` to server state, fired the mutation from `onChange` and set
+  `disabled={isPending}` — so each keystroke disabled the field, blurred it and
+  reverted the display. Business owner accepted one character per click; contact
+  email accepted none at all, because `z.string().email()` rejects `"d"` and the
+  field cleared on every failure. Replaced with a module-scope `DraftField` that
+  commits on blur.
+- **Typing a deletion-certificate reference overwrote the offboarding date.** The
+  input called `setStatus` per keystroke and `setStatus` re-stamped
+  `offboardedAt` unconditionally, so the recorded Art. 28(3)(g) date became
+  "whenever the box was last touched". Stamped once on the transition now, and
+  backdatable.
+- **The import's commit report was computed and thrown away.** The modal stored
+  `commitResult` then immediately closed, and had no branch that rendered it: 260
+  of 300 rows importing looked exactly like 300 of 300. It is now a screen, and
+  the modal resets on close instead of reopening blank.
+
+**Claimed closed, actually inert, now closed.**
+
+- **D33 recorded no diffs.** The trail read `audit_logs` correctly; nothing was
+  writing changes into it. `actionType` was decided by a `.update` path suffix
+  the vendor router does not use, and `RESOURCE_TABLE_MAP` was keyed on
+  `vendors.org` — a path shape the router has never had — so the before-state was
+  never fetched. The timeline rendered raw tRPC procedure names with empty diffs,
+  and the "regulator-shaped CSV" had three empty columns. Fixed in
+  `utils/auditClassification.ts` (split out of `auditLogger.ts` so the fixtures
+  can reach it without a database) and covered by assertions.
+- **Offboarding appeared in no timeline.** `extractResourceId` had no
+  `orgVendorId` key, so `setStatus` and `importCsv` logged `resource_id: null`.
+  `setStatus` is keyed on `vendorId` now and the key was added for the
+  questionnaire and DPA paths.
+- **`updateOrgVendor` silently undid D6.** It called `calculateVendorRisk` with
+  three arguments where the full formula takes five, dropping the reviewed
+  questionnaire's `scoreModifier` and the vendor's open DPIA gaps — so reviewing
+  a questionnaire lowered the score and then typing a business owner restored it.
+  It delegates to `updateVendorRiskScore` now: one derivation of one number.
+- **D30's status was written and read by nothing.** `getRiskStats`, both gap
+  scanners, the DPA-expiry chaser, the sub-processor change fan-out and the
+  nightly recalculation all counted offboarded rows. Offboarding Salesforce left
+  "1 DPA missing" on the dashboard for ever. All now filter on
+  `VENDOR_STATUSES_LIVE`; the register hides offboarded rows by default and the
+  Art. 30 export deliberately keeps them.
+- **D41's sort was per page.** Applied in JavaScript after the paginator had
+  already chosen 25 rows by `createdAt` — the same illusion the client-side
+  filter it replaced was creating. Now a real ORDER BY.
+- **`unlinkVendor` had no caller and destroyed evidence.** Four tables cascade
+  from the join row (assessments, questionnaires, sub-processor changes, incident
+  alerts) and `transfer_impact_assessments.org_vendor_id` has no ON DELETE at
+  all, so a vendor with a TIA failed with a foreign-key violation instead. It now
+  refuses unless the caller confirms, `unlinkImpact` names what would be lost,
+  and the UI offers offboarding first.
+- **The TIA PDF dropped two fields the same sprint added.** `legalAssessmentDetail`
+  and `measuresDetail` were saved and never rendered — the same defect as D25,
+  one layer downstream. `independentDpaExists` was collected and never printed.
+  All three render now, the controller's name is on the cover, and a draft says
+  so in place of the compliance note.
+
+**Consistency, now fixed.** The register's "missing DPA" filter hand-wrote
+`not_started` and omitted `expired`, disagreeing with `DPA_STATUS_MISSING` — the
+constant that exists to stop exactly that. `tia.save` had full-object PUT
+semantics on a six-step wizard, so a partial save nulled the steps around it, and
+`tiaCompleted` was set even where the conclusion was to suspend the transfer.
+`lastReviewedAt` was stamped by any edit, which let the overdue-review rule be
+silenced by touching the notes box; it is now `vendors.attestReview`.
+`dataCategoriesShared` was free text feeding an English keyword scan, so no
+German or French customer could ever trip the Art. 9 factor — it is a controlled
+vocabulary now (`constants/vendorDataCategories.ts`), with the keyword scan kept
+as a three-language fallback for imported free text.
+
+**Mechanical.** The detail page had picked up a UTF-8 BOM and a mojibake em dash.
+`csv: z.string().max(2_000_000)` was a promise Fastify's 1 MiB default body limit
+could not keep. The import committed row by row with no transaction, no
+within-file de-duplication and a `select` per row, and `matchCatalogue`
+re-parsed every catalogue URL for every row. `reviewAssessment` — which D6 made
+the load-bearing human gate — was an ungated `protectedProcedure`.
+
+Fixtures: **125 assertions**, up from 75. `npm run check` green end to end.
+Migration `0052` adds three register indexes. **`recalc:vendor-risk --apply`
+must be run after deploying**, because the Art. 9 detection and the D6 gate both
+changed the formula and `risk_score` is denormalised.
+
+**Deployed 25 August 2026.** `0051` and `0052` are applied to Supabase and the
+recalculation has been run. `0053` — `ON DELETE SET NULL` on
+`transfer_impact_assessments.org_vendor_id`, so a Chapter V assessment survives
+the removal of the register row that pointed at it — is generated but **not yet
+applied**. It was originally deferred on the grounds that the constraint's
+68-character generated name made the migration unrunnable; that was tested and
+proved wrong (Postgres truncates identifiers at parse time too), so no rename is
+needed and the plain generated migration is correct. What has been applied, what
+has not, and that correction are in `vendor-intelligence-deployment-notes.md`.
+
 ## Week 1 — stop the bleeding
 
 Every item is under a day; several are one line. This list alone closes seven P0s.

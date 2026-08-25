@@ -1,8 +1,9 @@
 import { createWorker, createQueue, Job } from '../lib/queue.js';
 import { db } from '../db.js';
 import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates } from 'db';
-import { eq, and, isNotNull, lte, gt, inArray, sql } from 'drizzle-orm';
+import { eq, and, isNotNull, lte, gt, inArray, or, isNull, sql } from 'drizzle-orm';
 import { calculateVendorRisk } from '../routers/vendors.js';
+import { VENDOR_STATUSES_LIVE } from '../constants/vendorLifecycle.js';
 import { runClusterTask, scanDomainForThirdParties } from '../lib/browserPool.js';
 import { getRootDomain } from '../lib/domains.js';
 import { normaliseSubProcessorSnapshot } from '../lib/vendorSubProcessors.js';
@@ -12,6 +13,22 @@ import crypto from 'crypto';
 import dns from 'dns/promises';
 import React from 'react';
 import { sendEmail, AssessmentReminder } from 'emails';
+
+/**
+ * "Relationships this organisation is still in."
+ *
+ * A local copy of the router's `liveVendorPredicate`, because importing it
+ * would pull the whole vendors router — and therefore every queue handle it
+ * touches — into the worker barrel. A NULL status is a row written before the
+ * column meant anything: live, not silently offboarded.
+ */
+function liveVendors() {
+  return or(
+    inArray(organizationVendors.status, [...VENDOR_STATUSES_LIVE]),
+    isNull(organizationVendors.status),
+  )!;
+}
+
 
 export const vendorJobsQueue = createQueue('vendor-intelligence');
 
@@ -104,9 +121,12 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
         if (v.subProcessorListHash !== currentHash) {
           console.log(`[Sub-processor Scraper] Change detected for ${v.name}!`);
 
+          // Only organisations still using the vendor. An Art. 28(2) objection
+          // window has no meaning for a relationship that ended last year, and
+          // the alert lands in the queue of someone with nothing to object to.
           const linkedOrgs = await db.select()
             .from(organizationVendors)
-            .where(eq(organizationVendors.vendorId, v.id));
+            .where(and(eq(organizationVendors.vendorId, v.id), liveVendors()));
 
           for (const orgVendor of linkedOrgs) {
             const [changeRecord] = await db.insert(vendorSubProcessorChanges).values({
@@ -174,7 +194,10 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
       .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
       .where(and(
         isNotNull(organizationVendors.dpaExpiresAt),
-        eq(organizationVendors.dpaStatus, 'signed')
+        eq(organizationVendors.dpaStatus, 'signed'),
+        // D30. Chasing the renewal of a DPA for a processor the customer stopped
+        // using is the clearest way to teach them to ignore these emails.
+        liveVendors(),
       ));
 
       const getNotificationTier = (days: number): string | null => {
@@ -309,7 +332,7 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
       })
       .from(organizationVendors)
       .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
-      .where(gt(organizationVendors.updatedAt, yesterday));
+      .where(and(gt(organizationVendors.updatedAt, yesterday), liveVendors()));
 
       if (recentlyChanged.length === 0) break;
 

@@ -31,14 +31,40 @@ import { calculateVendorRisk, type VendorRiskInput, type OrgVendorRiskInput } fr
 import { csvCell, csvRow, csvDocument } from '../utils/csv.js';
 import {
   parseCsvRows,
+  detectDelimiter,
   buildColumnMapping,
   normaliseVendorRow,
+  buildCatalogueIndex,
   matchCatalogue,
   MATCH_EXACT_DOMAIN,
   AUTO_LINK_THRESHOLD,
   type CatalogueEntry,
 } from './vendorImport.js';
 import { DPA_STATUS_SIGNED, DPA_STATUS_MISSING, DPA_STATUSES } from '../constants/dpaStatus.js';
+import {
+  hasSpecialCategory,
+  normaliseDataCategory,
+  normaliseDataCategoryList,
+  MAX_DATA_CATEGORIES,
+} from '../constants/vendorDataCategories.js';
+import {
+  VENDOR_STATUSES,
+  VENDOR_STATUSES_LIVE,
+  VENDOR_STATUS_OFFBOARDED,
+  isLiveVendorStatus,
+} from '../constants/vendorLifecycle.js';
+import { classifyActionType, RESOURCE_TABLE_MAP, extractResourceId, generateDescription } from '../utils/auditClassification.js';
+import { fieldLabel, NOISE_FIELDS, describeChanges } from './auditTrail.js';
+
+/**
+ * `parseCsvRows` returns a discriminated result now, because a file with an
+ * unbalanced quote has no honest row list. The helper keeps the assertions
+ * readable and fails loudly if a fixture feeds it something unparseable.
+ */
+function rowsOf(result: ReturnType<typeof parseCsvRows>): string[][] {
+  if ('error' in result) throw new Error(`expected rows, got: ${result.error}`);
+  return result.rows;
+}
 
 let failures = 0;
 let checks = 0;
@@ -261,23 +287,55 @@ console.log('\nvendorImport — CSV parsing\n');
 // --- Sprint 1, D40: the parser ---------------------------------------------------
 
 check(
-  JSON.stringify(parseCsvRows('Name,Country\nAcme,US')) === JSON.stringify([['Name', 'Country'], ['Acme', 'US']]),
+  JSON.stringify(rowsOf(parseCsvRows('Name,Country\nAcme,US'))) === JSON.stringify([['Name', 'Country'], ['Acme', 'US']]),
   'a plain two-row file parses',
 );
 check(
-  parseCsvRows('"Surname, Ltd",US')[0]?.[0] === 'Surname, Ltd',
+  rowsOf(parseCsvRows('"Surname, Ltd",US'))[0]?.[0] === 'Surname, Ltd',
   'a quoted field keeps its comma',
 );
 check(
-  parseCsvRows('"say ""hi""",x')[0]?.[0] === 'say "hi"',
+  rowsOf(parseCsvRows('"say ""hi""",x'))[0]?.[0] === 'say "hi"',
   'an escaped quote round-trips',
 );
-check(parseCsvRows('Name\n\nAcme\n').length === 2, 'blank rows are dropped');
-check(parseCsvRows('Name\r\nAcme\r\n').length === 2, 'CRLF files parse like LF ones');
-check(parseCsvRows('\uFEFFName\nAcme').length === 2, 'an Excel BOM does not become part of the first header');
+check(rowsOf(parseCsvRows('Name\n\nAcme\n')).length === 2, 'blank rows are dropped');
+check(rowsOf(parseCsvRows('Name\r\nAcme\r\n')).length === 2, 'CRLF files parse like LF ones');
+check(rowsOf(parseCsvRows('\uFEFFName\nAcme')).length === 2, 'an Excel BOM does not become part of the first header');
 check(
-  parseCsvRows('Name,Motto\nAcme,"Comma,\nnewline"')[1]?.length === 2,
+  rowsOf(parseCsvRows('Name,Motto\nAcme,"Comma,\nnewline"'))[1]?.length === 2,
   'a newline inside quotes is not a row break',
+);
+
+// A CRLF terminator is one row break. The previous parser pushed on \r and again
+// on \n, and only the blank-row filter hid it \u2014 so a file whose every row was
+// genuinely blank in one column would have lost rows.
+check(
+  JSON.stringify(rowsOf(parseCsvRows('a,b\r\nc,d\r\n'))) === JSON.stringify([['a', 'b'], ['c', 'd']]),
+  'CRLF does not produce a phantom row between every real one',
+);
+check(
+  rowsOf(parseCsvRows('Name,Motto\nAcme,"one\r\ntwo"'))[1]?.[1] === 'one\ntwo',
+  'a CRLF inside a quoted field is normalised to \\n, so the sub-processor diff can split on it',
+);
+
+// D40 hardening: a file we cannot honestly parse is an error, not a one-row
+// register whose single vendor is named after the rest of the document.
+const unbalanced = parseCsvRows('Name,Country\n"Acme,US\nBeta,GB');
+check('error' in unbalanced, 'an unbalanced quote is reported rather than swallowed');
+check('error' in unbalanced && unbalanced.error.includes('line 2'),
+  'and the error names the line the quote opened on',
+  'error' in unbalanced ? unbalanced.error : '');
+
+// A German or French Excel writes semicolons. Read as commas the file has one
+// column, so every row fails "a vendor name is required" and the importer looks
+// broken rather than mismatched.
+check(detectDelimiter('Name;Land;Kategorie\nAcme;DE;CRM') === ';', 'a semicolon file is detected');
+check(detectDelimiter('Name\tCountry\nAcme\tUS') === '\t', 'so is a tab-separated one');
+check(detectDelimiter('Name,Country\n"Acme, Inc.",US') === ',',
+  'a comma inside quotes does not out-vote the real delimiter');
+check(
+  JSON.stringify(rowsOf(parseCsvRows('Name;Land\nAcme;DE'))) === JSON.stringify([['Name', 'Land'], ['Acme', 'DE']]),
+  'and a semicolon file parses into the same shape as a comma one',
 );
 
 console.log('\nvendorImport — header mapping and normalisation\n');
@@ -298,8 +356,13 @@ if (!('error' in row)) {
   check(row.name === 'Office 365', 'the name survives');
   check(row.website === 'https://microsoft.com/', 'a bare domain becomes a URL');
   check(row.headquartersCountry === 'US', 'prose country becomes ISO-3166 alpha-2 (D42)');
-  check(JSON.stringify(row.dataCategoriesShared) === JSON.stringify(['Email', 'HR data']),
-    'a separator-delimited cell becomes a list (D2 write path)');
+  // A separator-delimited cell becomes a list, and the list is normalised onto
+  // the controlled vocabulary. "Email" and "HR data" are how a spreadsheet says
+  // contact details and employment details; storing them verbatim is what made
+  // "which vendors receive health data?" a reading exercise instead of a query.
+  check(JSON.stringify(row.dataCategoriesShared) === JSON.stringify(['contact_details', 'employment_details']),
+    'a separator-delimited cell becomes a normalised list (D2 write path)',
+    JSON.stringify(row.dataCategoriesShared));
   check(row.criticality === 'high', 'criticality is from the closed set or nothing');
   check(row.matchCandidate.domain === 'microsoft.com', 'the matcher gets a bare host');
 }
@@ -339,6 +402,132 @@ check(matchCatalogue({ name: 'Totally Unrelated Consultancy GmbH', domain: null 
 
 check(matchCatalogue({ name: 'zzz', domain: null }, [{ id: 'x', name: 'abc', website: null, aliases: null }]) === null,
   'very short names under the distance floor do not match');
+
+// The index is what stops the matcher re-parsing every catalogue URL for every
+// row. It must produce identical answers to the array form, or the optimisation
+// has changed the register's contents.
+const indexed = buildCatalogueIndex(catalogue);
+check(
+  matchCatalogue({ name: 'Slack', domain: 'slack.com' }, indexed)?.vendorId
+    === matchCatalogue({ name: 'Slack', domain: 'slack.com' }, catalogue)?.vendorId,
+  'the prepared index and the raw array agree',
+);
+check(indexed.byId.get('v-sf')?.name === 'Salesforce', 'the index can name a match for the preview');
+
+console.log('\nvendorDataCategories — the Article 9 vocabulary (D2/D3)\n');
+
+// --- Sprint 1 remediation: the special-category question ------------------------
+//
+// The first version scanned for English keywords. The module ships in three
+// languages, so a German customer typing into a field whose own placeholder is
+// German could never trip the Art. 9 factor — and nothing would have said so.
+
+check(hasSpecialCategory(['health_data']), 'a vocabulary key is recognised');
+check(hasSpecialCategory(['contact_details']) === false, 'an ordinary key is not');
+check(hasSpecialCategory([]) === false, 'an empty list is not special-category');
+check(hasSpecialCategory(['Gesundheitsdaten']), 'free-text German health data still trips Article 9');
+check(hasSpecialCategory(['données de santé']), 'and French, accents and all');
+check(hasSpecialCategory(['Gewerkschaftszugehörigkeit']), 'German trade-union membership too');
+check(hasSpecialCategory(['Criminal convictions']), 'Article 10 data escalates with Article 9 data');
+check(hasSpecialCategory(['Email address', 'Postal address']) === false,
+  'ordinary free text does not false-positive');
+check(hasSpecialCategory(['device_and_usage_data']) === false,
+  'a known ordinary key short-circuits before the keyword scan — "usage" must not read as a match');
+
+check(normaliseDataCategory('Health data') === 'health_data', 'free text folds onto its key');
+check(normaliseDataCategory('Gesundheitsdaten') === 'health_data', 'in German as well');
+check(normaliseDataCategory('health_data') === 'health_data', 'a key passes through unchanged');
+check(normaliseDataCategory('Widget serial numbers') === 'Widget serial numbers',
+  'something we have no key for is kept verbatim rather than forced onto the nearest one');
+
+check(
+  JSON.stringify(normaliseDataCategoryList(['Health data', 'health_data', ' Contact '])) ===
+    JSON.stringify(['health_data', 'contact_details']),
+  'the list normaliser de-duplicates across spellings',
+);
+check(
+  normaliseDataCategoryList(Array.from({ length: 80 }, (_, i) => `Category ${i}`)).length === MAX_DATA_CATEGORIES,
+  'and caps the list, so the CSV path cannot write more than the tRPC path allows',
+);
+
+// The two write paths must agree. When only the tRPC input carried the cap, an
+// import could put 300 values in a column the editor refused to save 51 into.
+const importedRow = normaliseVendorRow(
+  ['Acme', '', '', 'Gesundheitsdaten; Kontaktdaten', '', ''],
+  buildColumnMapping(['Name', 'URL', 'HQ', 'Data shared', 'Owner', 'Criticality']),
+);
+check(!('error' in importedRow) && hasSpecialCategory(importedRow.dataCategoriesShared),
+  'a German spreadsheet column arrives as an Article 9 finding, not as free text nobody reads');
+
+console.log('\nvendorImport — row warnings\n');
+
+const warnMapping = buildColumnMapping(['Name', 'HQ Country']);
+const unknownCountry = normaliseVendorRow(['Acme', 'Ruritania'], warnMapping);
+check(!('error' in unknownCountry) && unknownCountry.headquartersCountry === null,
+  'an unknown country is not guessed at');
+check(!('error' in unknownCountry) && unknownCountry.warnings.length === 1,
+  'but it is reported — a silently blank country scores as unknown and looks like one nobody filled in');
+
+const knownCountry = normaliseVendorRow(['Acme', 'Germany'], warnMapping);
+check(!('error' in knownCountry) && knownCountry.warnings.length === 0,
+  'a country we do know produces no noise');
+
+console.log('\nvendorLifecycle — the status vocabulary (D30)\n');
+
+check(VENDOR_STATUSES.includes(VENDOR_STATUS_OFFBOARDED), 'offboarded is a status, not a deletion');
+check(VENDOR_STATUSES_LIVE.includes(VENDOR_STATUS_OFFBOARDED) === false,
+  'and it is not live, so metrics and chasers can exclude it');
+check(VENDOR_STATUSES_LIVE.includes('paused'), 'paused is live — a suspended contract still has the data');
+check(isLiveVendorStatus(null), 'a row written before the column meant anything is live, not silently offboarded');
+check(isLiveVendorStatus('offboarded') === false, 'and an offboarded one is not');
+
+console.log('\nauditTrail — the vendor trail actually records changes (D33)\n');
+
+// --- Sprint 1 remediation: the middleware wiring --------------------------------
+//
+// The trail read audit_logs rows back correctly. Nothing was writing diffs into
+// them: `actionType` was decided by a `.update` path suffix the vendor router
+// does not use, and the before-state table map was keyed on `vendors.org`, a
+// path shape the router has never had. Both produce a plausible, empty timeline.
+
+check(classifyActionType('ropa.update') === 'update', 'the suffix convention still works');
+check(classifyActionType('vendors.updateOrgVendor') === 'update',
+  'and a router that names mutations after what they do is no longer classified as "other"');
+check(classifyActionType('vendors.setStatus') === 'update', 'offboarding is an update to the relationship');
+check(classifyActionType('vendors.unlinkVendor') === 'delete', 'unlinking is a delete');
+check(classifyActionType('vendors.getOrgVendors') === 'other', 'a read is still nothing');
+
+check(RESOURCE_TABLE_MAP['vendors.updateOrgVendor']?.idField === 'vendorId',
+  'the before-state lookup uses the catalogue id the router actually passes');
+check(RESOURCE_TABLE_MAP['vendors.org'] === undefined,
+  'and the path shape that never existed is gone');
+
+check(extractResourceId({ orgVendorId: 'ov-1' }) === 'ov-1',
+  'a questionnaire addressed by the join row is filed against it, not logged as null');
+check(extractResourceId({ vendorId: 'v-1', orgVendorId: 'ov-1' }) === 'v-1',
+  'and the catalogue id still wins where both are present, which is what the timeline filters on');
+
+check(generateDescription('vendors.setStatus', { status: 'offboarded' }) === 'Offboarded the vendor',
+  'the most important lifecycle event reads as a sentence');
+check(generateDescription('vendors.updateOrgVendor', {}).startsWith('Performed') === false,
+  'and an ordinary edit no longer falls through to the raw tRPC path');
+
+check(fieldLabel('dpaStatus') === 'DPA status', 'a regulator-facing label is not "Dpa status"');
+check(fieldLabel('deletionCertificateRef').includes('28(3)(g)'),
+  'the Art. 28(3)(g) reference says which Article it discharges');
+check(NOISE_FIELDS.includes('riskFactors'),
+  'the risk blob recomputed on every save stays out of the diff');
+check(NOISE_FIELDS.includes('riskScore') === false,
+  'but the score itself does not — 62 to 74 is a real event a reader wants');
+
+const rendered = describeChanges({
+  dpaStatus: { old: 'not_started', new: 'signed' },
+  riskFactors: { old: [{ a: 1 }], new: [{ a: 2 }] },
+  lastRiskAssessment: { old: '2026-08-24T00:00:00Z', new: '2026-08-25T00:00:00Z' },
+});
+check(rendered.length === 1 && rendered[0]?.label === 'DPA status',
+  'so one real change renders as one line, not as three',
+  JSON.stringify(rendered.map((r) => r.label)));
 
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {

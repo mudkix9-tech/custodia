@@ -17,7 +17,8 @@ import {
   extractResourceType, 
   extractResourceId, 
   generateDescription, 
-  fetchResourceBeforeState 
+  fetchResourceBeforeState,
+  classifyActionType
 } from './utils/auditLogger.js';
 import { childTableForPath, extractParentResourceId } from './lib/auditTrail.js';
 import { auditLogs, notificationQueue, organizations } from 'db';
@@ -371,11 +372,12 @@ const auditLogMiddleware = t.middleware(async ({ ctx, type, path, getRawInput, n
   
   if (!ctx.user) return next();
 
-  const actionType = path.endsWith('.create') ? 'create'
-    : path.endsWith('.update') ? 'update'
-    : path.endsWith('.delete') ? 'delete'
-    : 'other';
-  
+  // The suffix convention plus the exceptions that do not follow it — see
+  // classifyActionType. Inlining the suffix test here is what silently excluded
+  // every router that names its mutations after what they do rather than after
+  // the CRUD verb.
+  const actionType = classifyActionType(path);
+
   let previousState = null;
   
   // Await the raw input asynchronously

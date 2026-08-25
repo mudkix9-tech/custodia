@@ -1,4 +1,5 @@
 import { EU_EEA_COUNTRIES, isAdequateDestination } from '../constants/transferDestinations.js';
+import { hasSpecialCategory } from '../constants/vendorDataCategories.js';
 
 export interface DpaClauseCoverage {
   documentedInstructions: boolean;    // Art. 28(3)(a)
@@ -146,21 +147,20 @@ export function calculateVendorRisk(
   }
 
   // 3. Data Categories Processed (15%)
-  const specialCategoryKeywords = [
-    'health', 'biometric', 'genetic', 'racial', 'ethnic', 'political', 
-    'religious', 'union', 'sexual', 'criminal', 'medical', 'philosophical', 
-    'trade_union', 'special'
-  ];
-  
+  // The Art. 9 question is answered by the controlled vocabulary in
+  // constants/vendorDataCategories.ts, not by a substring scan for English
+  // words. The scan is still in there as the fallback for free text -- widened
+  // to German and French, because the module ships in three languages and the
+  // previous version could not see `Gesundheitsdaten`.
   const categories = orgVendor.dataCategoriesShared || [];
-  const processesSpecial = categories.some((cat: string) => 
-    specialCategoryKeywords.some(keyword => cat.toLowerCase().includes(keyword))
-  );
-  
+  const processesSpecial = hasSpecialCategory(categories);
+
   const categoriesPoints = processesSpecial ? 15 : 0;
-  const categoriesDetail = processesSpecial 
-    ? 'Processes special categories of data (Article 9) (15/15 pts)' 
-    : 'Processes standard data categories (0/15 pts)';
+  const categoriesDetail = processesSpecial
+    ? 'Processes special categories of data (Article 9) (15/15 pts)'
+    : categories.length === 0
+      ? 'No data categories recorded for this vendor (0/15 pts)'
+      : 'Processes standard data categories (0/15 pts)';
 
   // 4. Data Subject Volume (10%)
   let volumePoints = 0;

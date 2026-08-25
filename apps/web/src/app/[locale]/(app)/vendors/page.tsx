@@ -15,6 +15,18 @@ import { useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageShell } from '@/components/layout/PageShell';
 
+/**
+ * The filter's own vocabulary, mirroring the API's.
+ *
+ * `missing` is a *query*, not a status: it means DPA_STATUS_MISSING, which is
+ * `not_started` **and** `expired`. The first version of this filter hand-wrote
+ * `not_started` on the server while the metric tile beside it used the
+ * constant, so the dashboard and the list gave different answers to "how many
+ * DPAs do we owe" — by however many had lapsed.
+ */
+type DpaFilter = 'signed' | 'requested' | 'in_review' | 'not_started' | 'expired' | 'missing';
+type VendorStatusFilter = 'active' | 'paused' | 'offboarded' | 'all';
+
 export default function VendorsPage() {
   const t = useTranslations('vendors');
   // D41. Search, filters and sort are server-side: the register page previously
@@ -23,8 +35,12 @@ export default function VendorsPage() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [riskFilter, setRiskFilter] = useState<'low' | 'medium' | 'high' | 'critical' | null>(null);
-  const [dpaFilter, setDpaFilter] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'createdAt' | 'name' | 'riskScore'>('createdAt');
+  const [dpaFilter, setDpaFilter] = useState<DpaFilter | null>(null);
+  // D30. Offboarded relationships are out of the default list and reachable
+  // through this filter -- they are history rather than inventory, but Art. 30
+  // asks about the processors used during the period, not only today's.
+  const [statusFilter, setStatusFilter] = useState<VendorStatusFilter | null>(null);
+  const [sortBy, setSortBy] = useState<'createdAt' | 'name' | 'riskScore' | 'lastReviewedAt'>('createdAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [isImportOpen, setIsImportOpen] = useState(false);
 
@@ -40,7 +56,15 @@ export default function VendorsPage() {
     hasNextPage,
     isFetchingNextPage
   } = trpc.vendors.getOrgVendors.useInfiniteQuery(
-    { limit: 25, search, riskLevel: riskFilter ?? undefined, dpaStatus: dpaFilter ?? undefined, sortBy, sortDir },
+    {
+      limit: 25,
+      search,
+      riskLevel: riskFilter ?? undefined,
+      dpaStatus: dpaFilter ?? undefined,
+      status: statusFilter ?? undefined,
+      sortBy,
+      sortDir,
+    },
     { getNextPageParam: (lastPage: any) => lastPage.pagination?.next_cursor }
   );
 
@@ -117,9 +141,26 @@ export default function VendorsPage() {
           <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center border border-white/10">
             {row.original.name.charAt(0)}
           </div>
-          <Link href={`/vendors/${row.original.id}`} className="font-medium text-[#F4F5F6] hover:text-[#C9A227] transition-colors">
-            {row.original.name}
-          </Link>
+          <div className="min-w-0">
+            <Link href={`/vendors/${row.original.id}`} className="font-medium text-[#F4F5F6] hover:text-[#C9A227] transition-colors">
+              {row.original.name}
+            </Link>
+            {/* The owner is searchable, so it has to be visible: matching a row
+                on a field the grid never shows reads as a wrong result. */}
+            {row.original.businessOwner && (
+              <div className="text-[11px] text-[#6E747A] truncate">{row.original.businessOwner}</div>
+            )}
+          </div>
+          {row.original.status === 'offboarded' && (
+            <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider bg-white/5 text-[#6E747A] border border-white/10">
+              {t('status.offboarded')}
+            </span>
+          )}
+          {row.original.status === 'paused' && (
+            <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-900/50">
+              {t('status.paused')}
+            </span>
+          )}
         </div>
       ),
     },
@@ -129,12 +170,28 @@ export default function VendorsPage() {
       cell: ({ getValue }: any) => <span className="text-[#9BA1A6]">{getValue() || '-'}</span>
     },
     {
+      accessorKey: 'processingRole',
+      header: t('columns.processing_role'),
+      cell: ({ row }: any) => {
+        const role = row.original.processingRole;
+        // An unset role is a gap worth showing, not a blank: which Article
+        // applies to this relationship has not been decided.
+        if (!role) return <span className="text-[11px] text-[#6E747A]">{t('columns.role_unset')}</span>;
+        return <span className="text-[#9BA1A6] text-[13px]">{t(`role.${role}` as any)}</span>;
+      }
+    },
+    {
       accessorKey: 'dpaStatus',
       header: t('columns.dpa_status'),
       cell: ({ getValue }: any) => {
         const val = getValue();
         if (val === 'signed') return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/30"><CheckCircle2 className="w-3.5 h-3.5"/> {t('dpa_status.signed')}</span>;
         if (val === 'expired') return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-red-500/10 text-red-400 border border-red-900/50"><Clock className="w-3.5 h-3.5"/> {t('dpa_status.expired')}</span>;
+        // `requested` and `in_review` are real states in DPA_STATUSES and were
+        // both rendered as "missing", so a DPA out for signature looked
+        // identical to one nobody had asked for.
+        if (val === 'requested') return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-sky-500/10 text-sky-300 border border-sky-900/50"><Clock className="w-3.5 h-3.5"/> {t('dpa_status.requested')}</span>;
+        if (val === 'in_review') return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-sky-500/10 text-sky-300 border border-sky-900/50"><FileText className="w-3.5 h-3.5"/> {t('dpa_status.in_review')}</span>;
         return <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium bg-amber-500/10 text-amber-400 border border-amber-900/50"><FileText className="w-3.5 h-3.5"/> {t('dpa_status.missing')}</span>;
       }
     },
@@ -262,13 +319,31 @@ export default function VendorsPage() {
               </select>
               <select
                 value={dpaFilter ?? ''}
-                onChange={(e) => setDpaFilter(e.target.value || null)}
+                onChange={(e) => setDpaFilter((e.target.value || null) as DpaFilter | null)}
+                aria-label={t('filter.dpa_all')}
                 className="bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#E6E8EA] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
               >
                 <option value="">{t('filter.dpa_all')}</option>
                 <option value="signed">{t('dpa_status.signed')}</option>
-                <option value="missing">{t('dpa_status.missing')}</option>
+                {/* "Outstanding" is not_started OR expired — the same set the
+                    metric tile counts. Both remain individually selectable. */}
+                <option value="missing">{t('filter.dpa_outstanding')}</option>
+                <option value="not_started">{t('dpa_status.not_started')}</option>
+                <option value="requested">{t('dpa_status.requested')}</option>
+                <option value="in_review">{t('dpa_status.in_review')}</option>
                 <option value="expired">{t('dpa_status.expired')}</option>
+              </select>
+              <select
+                value={statusFilter ?? ''}
+                onChange={(e) => setStatusFilter((e.target.value || null) as VendorStatusFilter | null)}
+                aria-label={t('filter.status_live')}
+                className="bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#E6E8EA] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
+              >
+                <option value="">{t('filter.status_live')}</option>
+                <option value="active">{t('status.active')}</option>
+                <option value="paused">{t('status.paused')}</option>
+                <option value="offboarded">{t('status.offboarded')}</option>
+                <option value="all">{t('filter.status_all')}</option>
               </select>
               <select
                 value={`${sortBy}:${sortDir}`}
@@ -277,6 +352,7 @@ export default function VendorsPage() {
                   setSortBy(nextBy as any);
                   setSortDir(nextDir as any);
                 }}
+                aria-label={t('filter.sort_newest')}
                 className="ml-auto bg-[#0D0F11] border border-white/10 rounded-lg px-3 py-2 text-[13px] text-[#E6E8EA] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40"
               >
                 <option value="createdAt:desc">{t('filter.sort_newest')}</option>
@@ -284,6 +360,7 @@ export default function VendorsPage() {
                 <option value="name:desc">{t('filter.sort_name_desc')}</option>
                 <option value="riskScore:desc">{t('filter.sort_risk_high')}</option>
                 <option value="riskScore:asc">{t('filter.sort_risk_low')}</option>
+                <option value="lastReviewedAt:asc">{t('filter.sort_review_oldest')}</option>
               </select>
               <button
                 onClick={() => setIsAddCustomOpen(true)}

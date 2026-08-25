@@ -27,7 +27,28 @@ import { trackAiUsage } from '../lib/billing.js';
 import { TIER_LIMITS, isNewAiWindow, aiWindowReset } from '../constants/aiQuota.js';
 import { COPILOT_MODEL } from '../lib/anthropicModels.js';
 import { Upload } from '@aws-sdk/lib-storage';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
+
+/**
+ * The customer's filename, made safe to display and to put in a zip entry.
+ *
+ * Path separators and control characters are stripped rather than escaped: this
+ * value ends up as a filename inside the audit pack, and `../` in a zip entry
+ * name is a directory-traversal write on whatever extracts it.
+ */
+function sanitiseDpaFilename(raw?: string): string {
+  const fallback = 'data-processing-agreement.pdf';
+  if (!raw) return fallback;
+  const cleaned = raw
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .replace(/[\\/]/g, '-')
+    .replace(/\.{2,}/g, '.')
+    .trim()
+    .slice(0, 255);
+  if (!cleaned || cleaned === '.' || cleaned === '..') return fallback;
+  return /\.pdf$/i.test(cleaned) ? cleaned : `${cleaned}.pdf`;
+}
 
 const ai = genai;
 
@@ -1019,15 +1040,41 @@ export const aiRouter = router({
     .input(z.object({
       fileBase64: z.string(),
       orgVendorId: z.string().uuid().optional(),
+      /**
+       * The customer's own filename. An audit pack whose `vendors/dpas/` folder
+       * contains nine files all called `data-processing-agreement.pdf` is a
+       * folder nobody can use; the DPO needs to see which contract is which.
+       */
+      filename: z.string().max(255).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const orgId = ctx.user!.orgId;
-      
+
       const org = await ctx.db.query.organizations.findFirst({
         where: eq(organizations.id, orgId)
       });
       if (!org) throw new TRPCError({ code: 'NOT_FOUND' });
-      
+
+      // Ownership is proved before any work, not after. The upload and the
+      // `documents` row used to happen first and the org predicate only appeared
+      // on the final update, so a caller passing another tenant's join-row id
+      // still wrote a stored file and a document record — the update then
+      // matched nothing and the whole thing looked like a no-op.
+      let existingLink: { id: string; dpaDocumentId: string | null } | undefined;
+      if (input.orgVendorId) {
+        const [row] = await ctx.db.select({
+          id: organizationVendors.id,
+          dpaDocumentId: organizationVendors.dpaDocumentId,
+        })
+          .from(organizationVendors)
+          .where(and(
+            eq(organizationVendors.id, input.orgVendorId),
+            eq(organizationVendors.organizationId, orgId),
+          ));
+        if (!row) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
+        existingLink = row;
+      }
+
       // D13: this quota used to be a lifetime counter (no reset anywhere) with a
       // hardcoded 2000 ceiling, incremented before the work -- so a failed parse
       // still cost the unit and the "monthly limit" error was wrong on both counts.
@@ -1139,38 +1186,45 @@ Use this EXACT JSON schema:
           throw new Error('Failed to parse AI response as JSON');
         }
  
-        if (input.orgVendorId) {
+        if (input.orgVendorId && existingLink) {
           // D11. The analysed DPA is the evidence the Article 28 checklist rests
           // on; until now it was parsed, read by the model and destroyed. Storing
           // it against documents/ gives the audit pack its `vendors/dpas/` entry
           // and dpaSignedAt's neighbouring column a real value.
-          const org = await ctx.db.query.organizations.findFirst({
-            where: eq(organizations.id, orgId),
-          });
           const dataRegion = (org as any)?.dataRegion || 'eu-central-1';
           const s3Key = `vendors/dpas/${orgId}/${input.orgVendorId}/${crypto.randomUUID()}.pdf`;
+          const s3Client = getS3ClientForRegion(dataRegion);
+          const bucket = getS3BucketForOrg(dataRegion);
 
-          const upload = new Upload({
-            client: getS3ClientForRegion(dataRegion),
+          await new Upload({
+            client: s3Client,
             params: {
-              Bucket: getS3BucketForOrg(dataRegion),
+              Bucket: bucket,
               Key: s3Key,
               Body: buffer,
               ContentType: 'application/pdf',
             },
-          });
-          await upload.done();
+          }).done();
 
-          const [doc] = await ctx.db.insert(documents).values({
-            organizationId: orgId,
-            uploaderId: ctx.user!.id,
-            filename: s3Key.split('/').pop()!,
-            originalName: 'data-processing-agreement.pdf',
-            mimeType: 'application/pdf',
-            sizeBytes: buffer.length,
-            status: 'ready',
-            s3Key,
-          }).returning();
+          let doc;
+          try {
+            [doc] = await ctx.db.insert(documents).values({
+              organizationId: orgId,
+              uploaderId: ctx.user!.id,
+              filename: s3Key.split('/').pop()!,
+              originalName: sanitiseDpaFilename(input.filename),
+              mimeType: 'application/pdf',
+              sizeBytes: buffer.length,
+              status: 'ready',
+              s3Key,
+            }).returning();
+          } catch (err) {
+            // The object is already in the bucket. Leaving it there with no row
+            // pointing at it is a file nothing can ever find, delete or account
+            // for — which for a customer's contract is the worst of the three.
+            await s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: s3Key })).catch(() => {});
+            throw err;
+          }
 
           await ctx.db.update(organizationVendors)
             .set({
@@ -1182,6 +1236,24 @@ Use this EXACT JSON schema:
               eq(organizationVendors.id, input.orgVendorId),
               eq(organizationVendors.organizationId, orgId),
             ));
+
+          /**
+           * Re-analysing replaces the reference, so the document it used to
+           * point at is now unreachable — a stored copy of a customer's contract
+           * that nothing lists, nobody can delete, and which still counts
+           * against their storage. Superseded rather than deleted: the previous
+           * DPA is evidence of what was in force before, and Art. 5(1)(e) is
+           * about not keeping it *indefinitely*, not about destroying it the
+           * moment a new version arrives.
+           */
+          if (doc && existingLink.dpaDocumentId && existingLink.dpaDocumentId !== doc.id) {
+            await ctx.db.update(documents)
+              .set({ status: 'superseded' })
+              .where(and(
+                eq(documents.id, existingLink.dpaDocumentId),
+                eq(documents.organizationId, orgId),
+              ));
+          }
         }
 
         // Consume the quota only after the analysis succeeded. The increment is

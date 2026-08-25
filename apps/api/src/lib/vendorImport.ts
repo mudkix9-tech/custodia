@@ -15,22 +15,71 @@
  * file runs in fixtures without a database.
  */
 
+import {
+  normaliseDataCategoryList,
+} from '../constants/vendorDataCategories.js';
+
 // ---------------------------------------------------------------------------
 // Parsing.
 // ---------------------------------------------------------------------------
 
 /**
- * RFC 4180: quoted fields may contain commas, escaped quotes and line breaks;
- * rows end at CRLF or a bare LF. Tolerant of a trailing newline and of a BOM,
- * because both arrive from Excel exports daily. Blank rows are dropped —
+ * RFC 4180: quoted fields may contain the delimiter, escaped quotes and line
+ * breaks; rows end at CRLF or a bare LF. Tolerant of a trailing newline and of
+ * a BOM, because both arrive from Excel exports daily. Blank rows are dropped —
  * Excel writes one at the end of every second file.
+ *
+ * The delimiter is detected rather than assumed. A German or French Excel
+ * writes `;`, because the comma is its decimal separator; read as
+ * comma-delimited, such a file has exactly one column, so every row fails as
+ * "a vendor name is required" and the importer looks broken rather than
+ * mismatched.
+ *
+ * Returns an error, not rows, for a file it cannot honestly parse. An
+ * unbalanced quote used to swallow the remainder of the file into a single
+ * field, so a 400-row spreadsheet containing one stray `"` imported as one
+ * vendor whose name was the rest of the document — quietly, under a success
+ * message.
  */
-export function parseCsvRows(text: string): string[][] {
+export type CsvParseResult = { rows: string[][] } | { error: string };
+
+const DELIMITERS = [',', ';', '\t'] as const;
+
+/** The delimiter that yields the most columns on the first non-empty line. */
+export function detectDelimiter(text: string): string {
+  const firstLine = text.split(/\r?\n/).find((line) => line.trim() !== '') ?? '';
+  let best = ',';
+  let bestCount = 0;
+  for (const candidate of DELIMITERS) {
+    // Counted outside quotes only, so a quoted "Acme, Inc." does not get a vote.
+    let count = 0;
+    let inQuotes = false;
+    for (let i = 0; i < firstLine.length; i++) {
+      const char = firstLine.charAt(i);
+      if (char === '"') {
+        if (inQuotes && firstLine.charAt(i + 1) === '"') { i++; continue; }
+        inQuotes = !inQuotes;
+      } else if (!inQuotes && char === candidate) {
+        count++;
+      }
+    }
+    if (count > bestCount) {
+      best = candidate;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
+export function parseCsvRows(text: string, delimiter?: string): CsvParseResult {
   const clean = text.replace(/^\uFEFF/, '');
+  const sep = delimiter ?? detectDelimiter(clean);
   const rows: string[][] = [];
   let field = '';
   let row: string[] = [];
   let inQuotes = false;
+  let quoteOpenedAtLine = 0;
+  let line = 1;
 
   const pushField = () => {
     row.push(field);
@@ -59,19 +108,43 @@ export function parseCsvRows(text: string): string[][] {
         }
         continue;
       }
+      // A newline inside a quoted field is data. Normalised to \n so a value
+      // written on Windows and the same value written on macOS compare equal —
+      // which matters because the sub-processor diff splits on \n.
+      if (char === '\r') {
+        if (next === '\n') i++;
+        field += '\n';
+        line++;
+        continue;
+      }
+      if (char === '\n') { field += '\n'; line++; continue; }
       field += char;
       continue;
     }
 
-    if (char === ',') { pushField(); continue; }
-    if (char === '"') { inQuotes = true; continue; }
-    if (char === '\r') { pushRow(); continue; }
-    if (char === '\n') { pushRow(); continue; }
+    if (char === sep) { pushField(); continue; }
+    if (char === '"') { inQuotes = true; quoteOpenedAtLine = line; continue; }
+    if (char === '\r') {
+      // CRLF is one row terminator, not two. Consuming the LF here is what the
+      // blank-row filter below was quietly compensating for.
+      if (next === '\n') i++;
+      pushRow();
+      line++;
+      continue;
+    }
+    if (char === '\n') { pushRow(); line++; continue; }
     field += char;
   }
 
+  if (inQuotes) {
+    return {
+      error: `Unbalanced quote starting on line ${quoteOpenedAtLine}: everything after it was read as a single ` +
+        'value. Check that row for a stray double quote.',
+    };
+  }
+
   if (field !== '' || row.length > 0) pushRow();
-  return rows.filter((r) => r.some((c) => c.trim() !== ''));
+  return { rows: rows.filter((r) => r.some((c) => c.trim() !== '')) };
 }
 
 // ---------------------------------------------------------------------------
@@ -224,9 +297,22 @@ export interface NormalisedRow {
   businessOwner: string | null;
   contactEmail: string | null;
   criticality: 'low' | 'medium' | 'high' | 'critical' | null;
+  /**
+   * Values that were present in the file and are not in the register.
+   *
+   * A country spelling we do not know becomes `null`, which scores as an
+   * unknown location and reads on screen exactly like a country nobody filled
+   * in. Silence here is the failure mode: the row imports, the register looks
+   * populated, and the location risk factor is quietly wrong. Saying so is
+   * cheap and the preview has somewhere to put it.
+   */
+  warnings: string[];
   /** What the catalogue matcher matches on. */
   matchCandidate: { name: string; domain: string | null };
 }
+
+/** The register's own cap, applied here so both write paths agree. */
+const MAX_NAME_LENGTH = 255;
 
 /** One raw CSV row -> values safe to write, or the reason it cannot be. */
 export function normaliseVendorRow(
@@ -240,8 +326,14 @@ export function normaliseVendorRow(
     return value === '' ? null : value;
   };
 
-  const name = get('name');
-  if (!name) return { error: 'A vendor name is required on every row.' };
+  const rawName = get('name');
+  if (!rawName) return { error: 'A vendor name is required on every row.' };
+  if (rawName.length > MAX_NAME_LENGTH) {
+    return { error: `"${rawName.slice(0, 40)}…": the vendor name is longer than ${MAX_NAME_LENGTH} characters.` };
+  }
+  const name = rawName;
+
+  const warnings: string[] = [];
 
   const websiteRaw = get('website');
   let website: string | null = null;
@@ -260,18 +352,38 @@ export function normaliseVendorRow(
     return { error: `"${name}": criticality "${criticalityRaw}" is not one of low, medium, high, critical.` };
   }
 
+  const countryRaw = get('country');
+  const headquartersCountry = countryRaw ? normaliseCountry(countryRaw) : null;
+  if (countryRaw && !headquartersCountry) {
+    warnings.push(`Country "${countryRaw}" was not recognised and has been left blank.`);
+  }
+
+  const categoriesRaw = get('dataCategoriesShared');
+  const dataCategoriesShared = categoriesRaw
+    ? normaliseDataCategoryList(splitList(categoriesRaw))
+    : [];
+  if (categoriesRaw && splitList(categoriesRaw).length > dataCategoriesShared.length) {
+    warnings.push('Some data categories were merged as duplicates or dropped past the 50-value limit.');
+  }
+
+  const purposeRaw = get('purpose');
+  if (purposeRaw && purposeRaw.length > 2000) {
+    warnings.push('The purpose was truncated to 2,000 characters.');
+  }
+
   const domain = website ? extractDomain(website) : null;
 
   return {
     name,
     website,
-    category: get('category'),
-    headquartersCountry: get('country') ? normaliseCountry(get('country')!) : null,
-    purpose: get('purpose'),
-    dataCategoriesShared: get('dataCategoriesShared') ? splitList(get('dataCategoriesShared')!) : [],
-    businessOwner: get('businessOwner'),
+    category: get('category')?.slice(0, 100) ?? null,
+    headquartersCountry,
+    purpose: purposeRaw ? purposeRaw.slice(0, 2000) : null,
+    dataCategoriesShared,
+    businessOwner: get('businessOwner')?.slice(0, 255) ?? null,
     contactEmail: contactRaw,
     criticality: criticalityRaw ? normaliseCriticality(criticalityRaw) : null,
+    warnings,
     matchCandidate: { name, domain },
   };
 }
@@ -331,45 +443,84 @@ export interface CatalogueMatch {
 }
 
 /**
+ * The catalogue, prepared once for a whole file.
+ *
+ * `matchCatalogue` used to call `extractDomain(entry.website)` — a `new URL()`
+ * — for every catalogue entry on every row, so a 500-row import against a
+ * 3,000-row catalogue constructed a million and a half URL objects to answer
+ * one question. Domains and lowercased names are hashed here instead, which
+ * turns the two exact-match cases from a scan into a lookup and leaves only the
+ * genuinely fuzzy case walking the list.
+ */
+export interface CatalogueIndex {
+  entries: CatalogueEntry[];
+  byId: Map<string, CatalogueEntry>;
+  byDomain: Map<string, CatalogueEntry>;
+  byName: Map<string, CatalogueEntry>;
+  byAlias: Map<string, CatalogueEntry>;
+}
+
+export function buildCatalogueIndex(catalogue: CatalogueEntry[]): CatalogueIndex {
+  const index: CatalogueIndex = {
+    entries: catalogue,
+    byId: new Map(),
+    byDomain: new Map(),
+    byName: new Map(),
+    byAlias: new Map(),
+  };
+
+  for (const entry of catalogue) {
+    index.byId.set(entry.id, entry);
+    // First writer wins throughout: the seeded global catalogue is loaded ahead
+    // of an organisation's own custom rows, so a customer's duplicate "Slack"
+    // never shadows the canonical one.
+    if (entry.website) {
+      const domain = extractDomain(entry.website);
+      if (domain && !index.byDomain.has(domain)) index.byDomain.set(domain, entry);
+    }
+    const name = entry.name.trim().toLowerCase();
+    if (name && !index.byName.has(name)) index.byName.set(name, entry);
+    for (const alias of entry.aliases ?? []) {
+      const key = alias.trim().toLowerCase();
+      if (key && !index.byAlias.has(key)) index.byAlias.set(key, entry);
+    }
+  }
+
+  return index;
+}
+
+/**
  * Best catalogue entry for one row, or null under the floor.
  *
- * Domain equality beats exact alias beats exact name beats fuzzy distance —
- * the precedence `findMatchedVendor` uses in the discovery worker, stated as
- * ordered checks instead of nested ifs. Comparison is on www-stripped,
- * lowercased hostnames; the public-suffix list is P-7 work, not this sprint.
+ * Domain equality beats exact name beats exact alias beats fuzzy distance. The
+ * ordering is the confidence constants above, and it is stated here because the
+ * previous version of this comment claimed alias beat name while the constants
+ * said the opposite — the code was right, the sentence was not.
+ *
+ * Comparison is on www-stripped, lowercased hostnames; the public-suffix list
+ * is P-7 work, not this sprint.
  */
 export function matchCatalogue(
   candidate: { name: string; domain: string | null },
-  catalogue: CatalogueEntry[],
+  catalogue: CatalogueIndex | CatalogueEntry[],
 ): CatalogueMatch | null {
+  const index = Array.isArray(catalogue) ? buildCatalogueIndex(catalogue) : catalogue;
+  const lowerName = candidate.name.trim().toLowerCase();
+
+  // Exact domain cannot be beaten.
+  if (candidate.domain) {
+    const hit = index.byDomain.get(candidate.domain);
+    if (hit) return { vendorId: hit.id, confidence: MATCH_EXACT_DOMAIN, method: 'domain' };
+  }
+
+  const nameHit = index.byName.get(lowerName);
+  if (nameHit) return { vendorId: nameHit.id, confidence: MATCH_EXACT_NAME, method: 'name' };
+
+  const aliasHit = index.byAlias.get(lowerName);
+  if (aliasHit) return { vendorId: aliasHit.id, confidence: MATCH_EXACT_ALIAS, method: 'alias' };
+
   let best: CatalogueMatch | null = null;
-
-  const consider = (next: CatalogueMatch) => {
-    if (!best || next.confidence > best.confidence) best = next;
-  };
-
-  const lowerName = candidate.name.toLowerCase();
-
-  for (const entry of catalogue) {
-    if (candidate.domain && entry.website) {
-      const entryDomain = extractDomain(entry.website);
-      if (entryDomain && candidate.domain === entryDomain) {
-        // Exact domain cannot be beaten; stop scanning.
-        return { vendorId: entry.id, confidence: MATCH_EXACT_DOMAIN, method: 'domain' };
-      }
-    }
-
-    const aliasHit = (entry.aliases ?? []).some((a) => a.trim().toLowerCase() === lowerName);
-    if (aliasHit) {
-      consider({ vendorId: entry.id, confidence: MATCH_EXACT_ALIAS, method: 'alias' });
-      continue;
-    }
-
-    if (entry.name.trim().toLowerCase() === lowerName) {
-      consider({ vendorId: entry.id, confidence: MATCH_EXACT_NAME, method: 'name' });
-      continue;
-    }
-
+  for (const entry of index.entries) {
     // Fuzzy distance is meaningless across wildly different lengths -- without
     // this guard "Totally Unrelated Consultancy GmbH" lands within edit
     // distance 4 of "Zendesk" and imports as it. A candidate may differ from
@@ -378,8 +529,8 @@ export function matchCatalogue(
 
     const distance = levenshtein(candidate.name, entry.name, 4);
     const ratio = 1 - distance / Math.max(candidate.name.length, entry.name.length, 1);
-    if (ratio >= MATCH_FLOOR) {
-      consider({ vendorId: entry.id, confidence: Math.round(ratio * 100) / 100, method: 'name' });
+    if (ratio >= MATCH_FLOOR && (!best || ratio > best.confidence)) {
+      best = { vendorId: entry.id, confidence: Math.round(ratio * 100) / 100, method: 'name' };
     }
   }
 

@@ -17,7 +17,8 @@
     "total_tracked": "Gesamt verfolgt",
     "dpa_coverage": "AVV-Abdeckung",
     "missing_dpas": "Fehlende / Abgelaufene AVVs",
-    "high_risk": "Hohes / Kritisches Risiko"
+    "high_risk": "Hohes / Kritisches Risiko",
+    "offboarded": "Beendet"
   },
   "filter_placeholder": "Dienstleister filtern...",
   "add_custom_vendor": "Benutzerdefinierten Dienstleister hinzufügen",
@@ -29,12 +30,17 @@
     "category": "Kategorie",
     "dpa_status": "AVV-Status",
     "risk_score": "Risiko & Stufe",
-    "data_locations": "Datenstandorte"
+    "data_locations": "Datenstandorte",
+    "processing_role": "Rolle",
+    "role_unset": "Rolle nicht festgelegt"
   },
   "dpa_status": {
     "signed": "Unterzeichnet",
     "expired": "Abgelaufen",
-    "missing": "Fehlt"
+    "missing": "Fehlt",
+    "not_started": "Nicht begonnen",
+    "requested": "Angefordert",
+    "in_review": "In Prüfung"
   },
   "locations": {
     "hq": "Hauptsitz: {country}",
@@ -704,7 +710,11 @@
     "sort_name_asc": "Name A–Z",
     "sort_name_desc": "Name Z–A",
     "sort_risk_high": "Höchstes Risiko zuerst",
-    "sort_risk_low": "Niedrigstes Risiko zuerst"
+    "sort_risk_low": "Niedrigstes Risiko zuerst",
+    "dpa_outstanding": "AVV ausstehend",
+    "status_live": "In Verwendung",
+    "status_all": "Alle, auch beendete",
+    "sort_review_oldest": "Am längsten nicht geprüft"
   },
   "criticality": {
     "low": "Niedrig",
@@ -743,7 +753,27 @@
     "deletion_certificate": "Referenz der Löschbescheinigung",
     "deletion_certificate_placeholder": "Referenz der Art.-28(3)(g)-Zusage",
     "deletion_certificate_hint": "Die Referenz der Bestätigung, dass Daten am Ende der Verarbeitung gelöscht oder zurückgegeben wurden.",
-    "status": "Lebenszyklus-Status"
+    "status": "Lebenszyklus-Status",
+    "saving": "Wird gespeichert…",
+    "saved": "Alle Änderungen gespeichert",
+    "contact_email_invalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    "joint_controller_hint": "Ein gemeinsam Verantwortlicher benötigt eine Vereinbarung nach Art. 26, keinen AVV. Die Klauselprüfung nach Art. 28 Abs. 3 entfällt.",
+    "category_pick": "Aus der Standardliste hinzufügen…",
+    "category_custom": "eigen",
+    "category_limit": "Pro Dienstleister können höchstens {max} Datenkategorien erfasst werden.",
+    "category_special_note": "Dieser Dienstleister erhält besondere Kategorien personenbezogener Daten (Art. 9). Ein AVV und eine dokumentierte Bedingung nach Art. 9 Abs. 2 sind erforderlich.",
+    "review_title": "Prüfung dokumentieren",
+    "review_last": "Zuletzt geprüft am {date}",
+    "review_never": "Diese Beziehung wurde noch nie förmlich geprüft.",
+    "review_in_months": "Erneut prüfen in {months} Monaten",
+    "review_attest": "Als geprüft markieren",
+    "unlink": "Aus dem Verzeichnis entfernen",
+    "unlink_title": "Diesen Dienstleister aus dem Verzeichnis entfernen?",
+    "unlink_body": "Eine Beendigung erhält den Eintrag als Nachweis über einen genutzten Auftragsverarbeiter. Das Entfernen löscht ihn.",
+    "unlink_evidence": "Zu dieser Beziehung gehören {count} Datensätze, die dabei zerstört würden: Bewertungen, Fragebögen, Unterauftragsverarbeiter-Änderungen und Übermittlungs-Folgenabschätzungen.",
+    "unlink_confirm": "Beziehung und Nachweise löschen",
+    "unlink_offboard_instead": "Stattdessen beenden",
+    "unlink_cancel": "Abbrechen"
   },
   "history": {
     "loading": "Verlauf wird geladen…",
@@ -774,11 +804,53 @@
     "common_back": "Zurück",
     "toast_done": "{created} Lieferanten importiert.",
     "failed": "Import fehlgeschlagen.",
-    "common_cancel": "Abbrechen"
+    "common_cancel": "Abbrechen",
+    "action_existing": "Bereits im Verzeichnis",
+    "net_additions": "{count} hinzuzufügen",
+    "ignored_columns": "Diese Spalten wurden nicht erkannt und ignoriert: {columns}",
+    "near_miss": "Möglicher Treffer: {name} ({confidence} %) — unterhalb der automatischen Schwelle, daher wird für diese Zeile ein neuer Dienstleister angelegt.",
+    "transaction_note": "Der Import läuft als eine Transaktion: entweder werden alle Zeilen geschrieben oder keine.",
+    "too_large": "Diese Datei ist größer als {limit} KB. Bitte teilen Sie sie auf.",
+    "read_failed": "Diese Datei konnte nicht gelesen werden.",
+    "col_country": "Land",
+    "done_title": "Import abgeschlossen",
+    "done_created": "{count} neue Dienstleister angelegt",
+    "done_linked": "{count} mit dem Katalog verknüpft",
+    "done_skipped": "{count} bereits im Verzeichnis und unverändert gelassen",
+    "done_close": "Fertig",
+    "import_another": "Weitere Datei importieren",
+    "skipped_rows": "{count} Zeilen wurden übersprungen"
   },
   "status": {
     "active": "Aktiv",
     "paused": "Pausiert",
     "offboarded": "Abgemeldet"
+  },
+  "data_category": {
+    "contact_details": "Kontaktdaten",
+    "identity_details": "Identitätsdaten",
+    "account_credentials": "Zugangsdaten",
+    "employment_details": "Beschäftigungsdaten",
+    "financial_details": "Finanzdaten",
+    "payment_card_data": "Zahlungskartendaten",
+    "government_identifiers": "Amtliche Kennnummern",
+    "location_data": "Standortdaten",
+    "device_and_usage_data": "Geräte- und Nutzungsdaten",
+    "communications_content": "Kommunikationsinhalte",
+    "customer_support_records": "Support-Vorgänge",
+    "marketing_preferences": "Marketing-Präferenzen",
+    "behavioural_profiling_data": "Verhaltensbezogene Profildaten",
+    "childrens_data": "Daten von Kindern",
+    "user_generated_content": "Nutzergenerierte Inhalte",
+    "health_data": "Gesundheitsdaten",
+    "genetic_data": "Genetische Daten",
+    "biometric_data_for_id": "Biometrische Daten zur Identifizierung",
+    "racial_or_ethnic_origin": "Rassische oder ethnische Herkunft",
+    "political_opinions": "Politische Meinungen",
+    "religious_or_philosophical_beliefs": "Religiöse oder weltanschauliche Überzeugungen",
+    "trade_union_membership": "Gewerkschaftszugehörigkeit",
+    "sex_life": "Sexualleben",
+    "sexual_orientation": "Sexuelle Orientierung",
+    "criminal_offence_data": "Strafrechtliche Daten"
   }
 }

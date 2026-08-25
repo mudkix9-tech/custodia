@@ -25,7 +25,20 @@ const runMigrate = async () => {
     throw new Error('DATABASE_URL is not defined');
   }
 
-  const connection = postgres(process.env.DATABASE_URL, { max: 1 });
+  /**
+   * `prepare: false` because DATABASE_URL points at Supabase's *transaction*
+   * pooler (port 6543, `…pooler.supabase.com`). PgBouncer in transaction mode
+   * hands each statement whichever backend connection is free, so a prepared
+   * statement named on one connection is not there on the next — postgres-js
+   * prepares by default and the migration dies partway through with
+   * `prepared statement "s1" does not exist`.
+   *
+   * The runtime never hit this because `apps/api/src/db.ts` uses node-postgres,
+   * which does not prepare unless asked. This file is the only postgres-js
+   * client in the repo, which is why the incompatibility could sit here unseen:
+   * nothing exercises it except an actual migration against an actual database.
+   */
+  const connection = postgres(process.env.DATABASE_URL, { max: 1, prepare: false });
   const db = drizzle(connection);
 
   console.log('Running migrations...');

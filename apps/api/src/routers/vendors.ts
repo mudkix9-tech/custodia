@@ -3,21 +3,35 @@ import { z } from 'zod';
 import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { vendorJobsQueue } from '../workers/vendors.js';
 import { db } from '../db.js';
-import { vendors, organizationVendors, users, vendorSubProcessors, vendorSubProcessorChanges, vendorIncidents, organizationVendorIncidentAlerts, vendorQuestionnaires, vendorDiscoveries, organizations, vendorAssessments, complianceGaps } from 'db';
-import { eq, and, isNull, inArray, or, sql, desc, asc, gte, lte, ilike, lt } from 'drizzle-orm';
+import { vendors, organizationVendors, users, vendorSubProcessors, vendorSubProcessorChanges, vendorIncidents, organizationVendorIncidentAlerts, vendorQuestionnaires, vendorDiscoveries, organizations, vendorAssessments, complianceGaps, transferImpactAssessments } from 'db';
+import { eq, and, isNull, inArray, or, sql, desc, asc, gte, lte, ilike, lt, gt, ne, count } from 'drizzle-orm';
 import { router, publicProcedure, protectedProcedure, requirePermission } from '../trpc.js';
 import { TRPCError } from '@trpc/server';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
 
 import { calculateVendorRisk } from '../lib/vendorRisk.js';
 import { enforceLimit } from '../lib/billing.js';
-import { DPA_STATUS_SIGNED, DPA_STATUS_MISSING } from '../constants/dpaStatus.js';
+import { DPA_STATUS_SIGNED, DPA_STATUS_MISSING, DPA_STATUSES } from '../constants/dpaStatus.js';
+import {
+  VENDOR_STATUSES,
+  VENDOR_STATUSES_LIVE,
+  VENDOR_STATUS_ACTIVE,
+  VENDOR_STATUS_OFFBOARDED,
+  VENDOR_PROCESSING_ROLES,
+  VENDOR_CRITICALITIES,
+} from '../constants/vendorLifecycle.js';
+import {
+  normaliseDataCategoryList,
+  MAX_DATA_CATEGORIES,
+  MAX_DATA_CATEGORY_LENGTH,
+} from '../constants/vendorDataCategories.js';
 import { csvDocument } from '../utils/csv.js';
 import { TRANSFER_MECHANISMS } from '../constants/transferMechanisms.js';
 import {
   parseCsvRows,
   buildColumnMapping,
   normaliseVendorRow,
+  buildCatalogueIndex,
   matchCatalogue,
   AUTO_LINK_THRESHOLD,
   type CatalogueEntry,
@@ -29,6 +43,66 @@ import {
 } from '../lib/auditTrail.js';
 import { encodeCursor, decodeCursor } from '../utils/cursor.js';
 export { calculateVendorRisk };
+
+/**
+ * What hangs off one `organization_vendors` row.
+ *
+ * Four of these tables declare `ON DELETE CASCADE` and `transfer_impact_
+ * assessments` declares nothing, so deleting the join row either destroys the
+ * lot without a word or fails with a foreign-key violation. Counting first is
+ * what lets `unlinkVendor` refuse, and what lets the confirmation dialog name
+ * the records rather than warn in the abstract.
+ */
+/**
+ * "Relationships this organisation is still in."
+ *
+ * The predicate every count, score, chaser and export should carry. A NULL
+ * status is a row written before the column meant anything, and it is live —
+ * treating unknown as offboarded would empty an existing register at the moment
+ * this shipped.
+ */
+export function liveVendorPredicate() {
+  return or(
+    inArray(organizationVendors.status, [...VENDOR_STATUSES_LIVE]),
+    isNull(organizationVendors.status),
+  )!;
+}
+
+/**
+ * The audit rows belonging to one vendor relationship, for this organisation.
+ *
+ * Shared by the timeline and its CSV export so the two cannot drift — a file
+ * that disagrees with the screen it was exported from is worse than no file.
+ */
+function vendorTrailFilter(orgId: string, orgVendorId: string, vendorId: string) {
+  return and(
+    eq(auditLogs.organizationId, orgId),
+    or(
+      eq(auditLogs.resourceId, orgVendorId),
+      eq(auditLogs.resourceId, vendorId),
+    ),
+    or(
+      ilike(auditLogs.action, 'vendors.%'),
+      ilike(auditLogs.action, 'tia.%'),
+      ilike(auditLogs.action, 'assessments.%'),
+    ),
+  );
+}
+
+async function vendorEvidenceCounts(dbInstance: any, orgVendorId: string) {
+  const one = async (table: any, column: any) => {
+    const [row] = await dbInstance.select({ n: count() }).from(table).where(eq(column, orgVendorId));
+    return Number(row?.n ?? 0);
+  };
+  const [assessments, questionnaires, subProcessorChanges, incidentAlerts, tias] = await Promise.all([
+    one(vendorAssessments, vendorAssessments.vendorId),
+    one(vendorQuestionnaires, vendorQuestionnaires.orgVendorId),
+    one(vendorSubProcessorChanges, vendorSubProcessorChanges.orgVendorId),
+    one(organizationVendorIncidentAlerts, organizationVendorIncidentAlerts.orgVendorId),
+    one(transferImpactAssessments, transferImpactAssessments.orgVendorId),
+  ]);
+  return { assessments, questionnaires, subProcessorChanges, incidentAlerts, tias };
+}
 
 export async function updateVendorRiskScore(dbInstance: any, orgId: string, vendorId: string) {
   const [vendor] = await dbInstance.select().from(vendors).where(eq(vendors.id, vendorId));
@@ -247,99 +321,167 @@ export const vendorsRouter = router({
   }),
 
   // ORG
+  /**
+   * D41. The register, filtered, searched and sorted in the database.
+   *
+   * This deliberately does not use `paginatedQuery`. That helper selects from a
+   * single table, and the register is a join: the name, website and category are
+   * on the shared `vendors` catalogue while the risk score, DPA status and owner
+   * are on the tenant's `organization_vendors` row. Pushing a predicate on
+   * `vendors.name` through a single-table paginator produced SQL whose WHERE
+   * named a table its FROM never mentioned — Postgres answers `missing
+   * FROM-clause entry for table "vendors"` — so every search was a 500. Sorting
+   * had the mirror problem: it was applied in JavaScript to whichever page had
+   * already been fetched, which is the same illusion the client-side filter it
+   * replaced was creating, moved to the server.
+   *
+   * The cursor is a keyset over (sort column, org-vendor id). The id tiebreak is
+   * what keeps it stable when thirty vendors share a risk score of 60.
+   */
   getOrgVendors: protectedProcedure
     .use(requirePermission('vendors', 'view'))
     .input(z.object({
       limit: z.number().min(1).max(100).default(25),
       cursor: z.string().nullish(),
-      // D41. Server-side search and filters -- the register page previously had a
-      // client-side name filter over whichever pages were loaded, so "no results"
-      // meant "not in this page of 25".
       search: z.string().max(120).optional(),
       riskLevel: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-      dpaStatus: z.string().max(50).optional(),
-      status: z.string().max(50).optional(),
+      dpaStatus: z.enum([...DPA_STATUSES, 'missing']).optional(),
+      status: z.enum([...VENDOR_STATUSES, 'all']).optional(),
+      criticality: z.enum(VENDOR_CRITICALITIES).optional(),
+      processingRole: z.enum(VENDOR_PROCESSING_ROLES).optional(),
       category: z.string().max(100).optional(),
-      sortBy: z.enum(['createdAt', 'name', 'riskScore']).default('createdAt'),
+      sortBy: z.enum(['createdAt', 'name', 'riskScore', 'lastReviewedAt']).default('createdAt'),
       sortDir: z.enum(['asc', 'desc']).default('desc'),
     }))
     .query(async ({ ctx, input }) => {
-      const conditions: any[] = [];
+      const conditions = [eq(organizationVendors.organizationId, ctx.user!.orgId)];
 
       if (input.search && input.search.trim()) {
+        // ESCAPE is named explicitly because the default escape character in a
+        // Postgres LIKE is the backslash we are inserting: without it a vendor
+        // called "100%" would search as "any string".
         const term = `%${input.search.trim().replace(/[%_\\]/g, (m) => `\\${m}`)}%`;
-        conditions.push(sql`(${vendors.name} ILIKE ${term} OR ${organizationVendors.businessOwner} ILIKE ${term})`);
+        conditions.push(sql`(
+          ${vendors.name} ILIKE ${term} ESCAPE '\\'
+          OR ${vendors.website} ILIKE ${term} ESCAPE '\\'
+          OR ${organizationVendors.businessOwner} ILIKE ${term} ESCAPE '\\'
+        )`);
       }
       if (input.riskLevel) conditions.push(eq(organizationVendors.riskLevel, input.riskLevel));
       if (input.dpaStatus === 'missing') {
-        conditions.push(or(eq(organizationVendors.dpaStatus, 'not_started'), isNull(organizationVendors.dpaStatus)));
+        // "Missing" is DPA_STATUS_MISSING, not a hand-written subset of it. The
+        // metric tile, the gap rule and this filter giving different answers to
+        // "how many DPAs do we owe" is precisely what constants/dpaStatus.ts
+        // exists to prevent — and the first version of this filter dropped
+        // `expired`, so a lapsed DPA counted as missing on the dashboard and
+        // present in the register.
+        conditions.push(or(
+          inArray(organizationVendors.dpaStatus, [...DPA_STATUS_MISSING]),
+          isNull(organizationVendors.dpaStatus),
+        )!);
       } else if (input.dpaStatus) {
         conditions.push(eq(organizationVendors.dpaStatus, input.dpaStatus));
       }
-      if (input.status) conditions.push(eq(organizationVendors.status, input.status));
+      // An offboarded relationship is history, not inventory, so it is out of the
+      // default view — but it stays reachable through the explicit filter and
+      // through `all`, because Art. 30 asks for the processors used during the
+      // period, not only the ones used this morning.
+      if (input.status && input.status !== 'all') {
+        conditions.push(eq(organizationVendors.status, input.status));
+      } else if (!input.status) {
+        conditions.push(liveVendorPredicate());
+      }
+      if (input.criticality) conditions.push(eq(organizationVendors.criticality, input.criticality));
+      if (input.processingRole) conditions.push(eq(organizationVendors.processingRole, input.processingRole));
       if (input.category) conditions.push(eq(vendors.category, input.category));
 
-      const res = await paginatedQuery(
-        organizationVendors,
-        ctx.user!.orgId,
-        { limit: input.limit, after: input.cursor || undefined },
-        'createdAt',
-        'desc',
-        conditions,
-      );
+      const sortColumn = {
+        createdAt: organizationVendors.createdAt,
+        name: vendors.name,
+        riskScore: organizationVendors.riskScore,
+        lastReviewedAt: organizationVendors.lastReviewedAt,
+      }[input.sortBy];
+      const descending = input.sortDir === 'desc';
 
-      const vendorIds = res.data.map((ov: any) => ov.vendorId);
-      const vendorsMap = new Map<string, typeof vendors.$inferSelect>();
-
-      if (vendorIds.length > 0) {
-        const vendorDataList = await ctx.db.select().from(vendors).where(inArray(vendors.id, vendorIds));
-        for (const v of vendorDataList) {
-          vendorsMap.set(v.id, v);
+      if (input.cursor) {
+        try {
+          const { sortValue, id, isDate } = decodeCursor(input.cursor);
+          const value = isDate ? new Date(sortValue) : sortValue;
+          conditions.push(or(
+            descending ? lt(sortColumn, value) : gt(sortColumn, value),
+            and(
+              eq(sortColumn, value),
+              descending ? lt(organizationVendors.id, id) : gt(organizationVendors.id, id),
+            ),
+          )!);
+        } catch {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid pagination cursor.' });
         }
       }
 
-      // Returned as a new object rather than assigned back onto res.data: this
-      // endpoint hands out the vendor row merged with a few organisation_vendors
-      // columns, which is not the organizationVendors row type paginatedQuery
-      // infers. Mutating res.data laundered that difference through `any` and
-      // left callers with a declared type the response never actually matched.
-      let data = res.data.map((ov: any) => {
-        const v: Partial<typeof vendors.$inferSelect> = vendorsMap.get(ov.vendorId) ?? {};
-        return {
-          ...v,
-          orgVendorId: ov.id,
-          status: ov.status,
-          businessOwner: ov.businessOwner,
-          criticality: ov.criticality,
-          processingRole: ov.processingRole,
-          dpaStatus: ov.dpaStatus,
-          dpaSignedAt: ov.dpaSignedAt,
-          dpaExpiresAt: ov.dpaExpiresAt,
-          tiaCompleted: ov.tiaCompleted,
-          usingEuHosting: ov.usingEuHosting,
-          riskScore: ov.riskScore,
-          riskLevel: ov.riskLevel,
-          lastReviewedAt: ov.lastReviewedAt,
-          nextReviewAt: ov.nextReviewAt,
-          offboardedAt: ov.offboardedAt,
-          dataCategoriesShared: ov.dataCategoriesShared ?? [],
-        };
-      });
+      const rows = await ctx.db.select({
+        orgVendor: organizationVendors,
+        vendor: vendors,
+      })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(and(...conditions))
+        .orderBy(
+          descending ? desc(sortColumn) : asc(sortColumn),
+          descending ? desc(organizationVendors.id) : asc(organizationVendors.id),
+        )
+        .limit(input.limit + 1);
 
-      // Name and risk sorts happen here rather than in paginatedQuery: both are
-      // properties of the joined row set, not of the organization_vendors row the
-      // paginator walks, and keyset cursors over a joined sort are P2 territory
-      // for one register page.
-      if (input.sortBy !== 'createdAt') {
-        const dir = input.sortDir === 'asc' ? 1 : -1;
-        data = [...data].sort((a: any, b: any) => (
-          input.sortBy === 'name'
-            ? dir * String(a.name ?? '').localeCompare(String(b.name ?? ''))
-            : dir * ((a.riskScore ?? 0) - (b.riskScore ?? 0))
-        ));
-      }
+      const hasMore = rows.length > input.limit;
+      const page = rows.slice(0, input.limit);
 
-      return { ...res, data };
+      const data = page.map(({ orgVendor: ov, vendor: v }) => ({
+        ...v,
+        orgVendorId: ov.id,
+        status: ov.status ?? VENDOR_STATUS_ACTIVE,
+        businessOwner: ov.businessOwner,
+        contactEmail: ov.contactEmail,
+        criticality: ov.criticality,
+        processingRole: ov.processingRole,
+        purpose: ov.purpose,
+        dpaStatus: ov.dpaStatus,
+        dpaSignedAt: ov.dpaSignedAt,
+        dpaExpiresAt: ov.dpaExpiresAt,
+        tiaCompleted: ov.tiaCompleted,
+        usingEuHosting: ov.usingEuHosting,
+        riskScore: ov.riskScore,
+        riskLevel: ov.riskLevel,
+        lastReviewedAt: ov.lastReviewedAt,
+        nextReviewAt: ov.nextReviewAt,
+        offboardedAt: ov.offboardedAt,
+        deletionCertificateRef: ov.deletionCertificateRef,
+        dataCategoriesShared: ov.dataCategoriesShared ?? [],
+        linkedAt: ov.createdAt,
+      }));
+
+      const cursorValueOf = (row: (typeof page)[number]) => ({
+        createdAt: row.orgVendor.createdAt,
+        name: row.vendor.name,
+        riskScore: row.orgVendor.riskScore,
+        lastReviewedAt: row.orgVendor.lastReviewedAt,
+      }[input.sortBy]);
+
+      const lastRow = page[page.length - 1];
+      const lastValue = lastRow ? cursorValueOf(lastRow) : null;
+
+      return {
+        data,
+        pagination: {
+          has_more: hasMore,
+          // A NULL sort value cannot be keyset-paginated past — every comparison
+          // against it is false — so a page ending on one ends the list rather
+          // than serving itself again forever.
+          next_cursor: hasMore && lastRow && lastValue != null
+            ? encodeCursor(lastValue, lastRow.orgVendor.id)
+            : null,
+          previous_cursor: null,
+        },
+      };
     }),
 
   getOrgVendorDetails: protectedProcedure
@@ -423,15 +565,30 @@ export const vendorsRouter = router({
       transferMechanisms: z.array(z.enum(TRANSFER_MECHANISMS)).optional(),
       // D2. The Article 30(1)(d) write path: what data actually goes to this
       // recipient. Feeds the risk engine's special-category factor and, through
-      // it, the `missing_dpa_special_category` gap rule (D3).
-      dataCategoriesShared: z.array(z.string().min(1).max(120)).max(50).optional(),
+      // it, the `missing_dpa_special_category` gap rule (D3). Values are
+      // normalised onto the controlled vocabulary server-side rather than
+      // rejected, so an import's free text is kept rather than lost.
+      dataCategoriesShared: z.array(z.string().min(1).max(MAX_DATA_CATEGORY_LENGTH)).max(MAX_DATA_CATEGORIES).optional(),
       // D32. The relationship record.
       businessOwner: z.string().max(255).nullable().optional(),
-      contactEmail: z.string().email().nullable().optional(),
-      criticality: z.enum(['low', 'medium', 'high', 'critical']).nullable().optional(),
-      processingRole: z.enum(['processor', 'joint_controller', 'independent_controller']).nullable().optional(),
+      // `.or(z.literal(''))` because the field is edited by a human: an empty box
+      // means "clear it", and a schema that rejects the empty string makes the
+      // input unclearable and reports it as a validation failure.
+      contactEmail: z.string().email().or(z.literal('')).nullable().optional(),
+      criticality: z.enum(VENDOR_CRITICALITIES).nullable().optional(),
+      processingRole: z.enum(VENDOR_PROCESSING_ROLES).nullable().optional(),
       purpose: z.string().max(2000).nullable().optional(),
       nextReviewAt: z.string().nullable().optional(),
+      /**
+       * D31. Reviewing is an attestation, not a side effect of editing.
+       *
+       * The first version stamped `lastReviewedAt` on every save, which meant the
+       * overdue-review rule could be silenced by touching any field — and that
+       * an autosave of the notes box counted, to a regulator, as "we reviewed
+       * this processor". The caller now says so explicitly, and only the review
+       * control on the record sets it.
+       */
+      attestReview: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const [orgVendor] = await ctx.db.select().from(organizationVendors).where(and(
@@ -443,21 +600,25 @@ export const vendorsRouter = router({
       const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
 
       const updates: any = {};
+      // The signed date is handled once, after both inputs are known. Splitting
+      // it across two branches meant an explicit `dpaSignedAt: null` alongside
+      // `dpaStatus: 'signed'` silently became today — the field could be set but
+      // never cleared, and the mutation did something other than what it was
+      // asked to.
+      if (input.dpaSignedAt !== undefined) {
+        updates.dpaSignedAt = input.dpaSignedAt ? new Date(input.dpaSignedAt) : null;
+      }
       if (input.dpaStatus !== undefined) {
         updates.dpaStatus = input.dpaStatus;
-        // A signed date is part of the same fact as a signed status -- recording
+        // A signed date is part of the same fact as a signed status: recording
         // one without the other is how dpaSignedAt stayed blank in every audit
-        // pack. Default to today when only the status flips.
-        if (input.dpaStatus === 'signed') {
-          updates.dpaSignedAt = input.dpaSignedAt !== undefined
-            ? (input.dpaSignedAt ? new Date(input.dpaSignedAt) : new Date())
-            : (orgVendor.dpaSignedAt ?? new Date());
+        // pack. Fill it in only when the caller has not spoken and the row has
+        // nothing already.
+        if (input.dpaStatus === DPA_STATUS_SIGNED && input.dpaSignedAt === undefined && !orgVendor.dpaSignedAt) {
+          updates.dpaSignedAt = new Date();
         }
       }
       if (input.dpaExpiresAt !== undefined) updates.dpaExpiresAt = input.dpaExpiresAt ? new Date(input.dpaExpiresAt) : null;
-      if (input.dpaSignedAt !== undefined && input.dpaStatus !== 'signed') {
-        updates.dpaSignedAt = input.dpaSignedAt ? new Date(input.dpaSignedAt) : null;
-      }
       if (input.usingEuHosting !== undefined) updates.usingEuHosting = input.usingEuHosting;
       if (input.tiaCompleted !== undefined) updates.tiaCompleted = input.tiaCompleted;
       if (input.notes !== undefined) updates.dpaNotes = input.notes;
@@ -468,50 +629,47 @@ export const vendorsRouter = router({
       if (input.contractRenewalDate !== undefined) updates.contractRenewalDate = input.contractRenewalDate || null;
       if (input.dpaClauseCoverage !== undefined) updates.dpaClauseCoverage = input.dpaClauseCoverage;
       if (input.transferMechanisms !== undefined) updates.transferMechanisms = input.transferMechanisms;
-      if (input.dataCategoriesShared !== undefined) updates.dataCategoriesShared = input.dataCategoriesShared;
-      if (input.businessOwner !== undefined) updates.businessOwner = input.businessOwner;
-      if (input.contactEmail !== undefined) updates.contactEmail = input.contactEmail;
+      if (input.dataCategoriesShared !== undefined) {
+        updates.dataCategoriesShared = normaliseDataCategoryList(input.dataCategoriesShared);
+      }
+      if (input.businessOwner !== undefined) updates.businessOwner = input.businessOwner || null;
+      if (input.contactEmail !== undefined) updates.contactEmail = input.contactEmail || null;
       if (input.criticality !== undefined) updates.criticality = input.criticality;
       if (input.processingRole !== undefined) updates.processingRole = input.processingRole;
       if (input.purpose !== undefined) updates.purpose = input.purpose;
       if (input.nextReviewAt !== undefined) {
         updates.nextReviewAt = input.nextReviewAt ? new Date(input.nextReviewAt) : null;
       }
+      if (input.attestReview) {
+        updates.lastReviewedAt = new Date();
+      }
 
-      // Fetch sub-processor count
-      const subs = await ctx.db.select()
-        .from(vendorSubProcessors)
-        .where(eq(vendorSubProcessors.parentVendorId, input.vendorId));
-      const subProcessorsCount = subs.length;
-
-      // Recalculate Risk
-      // vendor comes from a single-row select and can be absent; scoring against
-      // undefined silently produced a risk level for a vendor that is not there.
       if (!vendor) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor not found.' });
-
-      const mergedOrgVendor = { ...orgVendor, ...updates };
-      const { score, level, factors } = calculateVendorRisk(vendor, mergedOrgVendor, subProcessorsCount);
-      updates.riskScore = score;
-      updates.riskLevel = level;
-      updates.riskFactors = factors;
-      updates.lastRiskAssessment = new Date();
-      // D31-lite. Any edit to the relationship is itself evidence of review --
-      // lastReviewedAt was written by nothing, so the overdue-review gap rule
-      // could never fire and "when did anyone look at this" had no answer.
-      updates.lastReviewedAt = new Date();
 
       await ctx.db.update(organizationVendors)
         .set(updates)
         .where(eq(organizationVendors.id, orgVendor.id));
 
-      await orgEmbeddingsQueue.add('embed-vendor', {
-        orgId: ctx.user!.orgId,
-        entityType: 'vendor',
-        entityId: orgVendor.id,
-        action: 'upsert'
-      });
+      /**
+       * The score is recomputed by `updateVendorRiskScore`, not here.
+       *
+       * This procedure used to call `calculateVendorRisk(vendor, merged, subs)`
+       * directly — three arguments, where the full formula takes five. It
+       * omitted the reviewed questionnaire's `scoreModifier` and the vendor's
+       * open DPIA gaps, so editing any field on the relationship silently
+       * discarded both: a DPO would review a questionnaire, watch the score drop
+       * ten points, then type a business owner into the box and watch it come
+       * back. Two derivations of one number is one derivation too many — the
+       * same lesson as the three divergent Article 30 documents.
+       *
+       * It also enqueues the embedding refresh, which is why this path no longer
+       * does that itself.
+       */
+      await updateVendorRiskScore(ctx.db, ctx.user!.orgId, input.vendorId);
 
-      return { success: true };
+      const [updated] = await ctx.db.select().from(organizationVendors)
+        .where(eq(organizationVendors.id, orgVendor.id));
+      return updated ?? { success: true };
     }),
 
   // CUSTOM VENDORS
@@ -722,7 +880,26 @@ export const vendorsRouter = router({
         missingDpas: sql<number>`count(*) filter (where ${inArray(organizationVendors.dpaStatus, [...DPA_STATUS_MISSING])})::int`,
       })
         .from(organizationVendors)
-        .where(eq(organizationVendors.organizationId, ctx.user!.orgId));
+        .where(and(
+          eq(organizationVendors.organizationId, ctx.user!.orgId),
+          // D30's other half. Recording an offboarding is easy; making the rest
+          // of the product believe it is the point. While these tiles counted
+          // every row, offboarding Salesforce left "1 DPA missing" on the
+          // dashboard for ever and the register's compliance score could never
+          // improve by ending a relationship — which is one of the two ways it
+          // is supposed to be able to improve.
+          liveVendorPredicate(),
+        ));
+
+      // Counted separately so the number can be shown rather than merely
+      // excluded: "6 offboarded" is a fact about the register, and a total that
+      // silently shrank would read as data loss.
+      const [offboarded] = await ctx.db.select({ n: count() })
+        .from(organizationVendors)
+        .where(and(
+          eq(organizationVendors.organizationId, ctx.user!.orgId),
+          eq(organizationVendors.status, VENDOR_STATUS_OFFBOARDED),
+        ));
 
       return {
         total: row?.total ?? 0,
@@ -731,12 +908,22 @@ export const vendorsRouter = router({
         medium: row?.medium ?? 0,
         dpasSigned: row?.dpasSigned ?? 0,
         missingDpas: row?.missingDpas ?? 0,
+        offboarded: Number(offboarded?.n ?? 0),
       };
     }),
 
-  // Server-side export over the entire register. The client-side version
-  // serialised only the loaded pages, so an organisation with 60 vendors handed
-  // an auditor a file describing 25.
+  /**
+   * Server-side export over the entire register. The client-side version
+   * serialised only the loaded pages, so an organisation with 60 vendors handed
+   * an auditor a file describing 25.
+   *
+   * Offboarded relationships are **included**, with their status and end date.
+   * This is the opposite decision to the register view, and deliberately so: the
+   * screen is a working list of who is processing data today, while the export
+   * is evidence of who processed it during the period. Dropping ended
+   * relationships from an Art. 30(1)(d) recipient list would be a hole in the
+   * record, not a tidier file.
+   */
   exportRegisterCsv: protectedProcedure
     .use(requirePermission('vendors', 'view'))
     .query(async ({ ctx }) => {
@@ -745,22 +932,47 @@ export const vendorsRouter = router({
         category: vendors.category,
         headquartersCountry: vendors.headquartersCountry,
         website: vendors.website,
+        status: organizationVendors.status,
+        processingRole: organizationVendors.processingRole,
+        businessOwner: organizationVendors.businessOwner,
+        criticality: organizationVendors.criticality,
+        purpose: organizationVendors.purpose,
+        dataCategoriesShared: organizationVendors.dataCategoriesShared,
         dpaStatus: organizationVendors.dpaStatus,
+        dpaSignedAt: organizationVendors.dpaSignedAt,
+        dpaExpiresAt: organizationVendors.dpaExpiresAt,
+        tiaCompleted: organizationVendors.tiaCompleted,
         riskLevel: organizationVendors.riskLevel,
         riskScore: organizationVendors.riskScore,
+        lastReviewedAt: organizationVendors.lastReviewedAt,
+        offboardedAt: organizationVendors.offboardedAt,
+        deletionCertificateRef: organizationVendors.deletionCertificateRef,
       })
         .from(organizationVendors)
         .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
         .where(eq(organizationVendors.organizationId, ctx.user!.orgId))
         .orderBy(desc(organizationVendors.riskScore));
 
+      const day = (d: Date | null) => (d ? new Date(d).toISOString().slice(0, 10) : '');
+
       // csvDocument rather than a local quoting helper: this file and
       // ropaExportFormats.ts had one each, disagreeing about when to quote, and
       // only one of them was covered by the importer's round-trip test.
       const csv = csvDocument([
-        ['Vendor', 'Category', 'Country', 'DPA Status', 'Risk Level', 'Risk Score', 'Website'],
+        [
+          'Vendor', 'Category', 'Country', 'Website', 'Status', 'Processing role',
+          'Business owner', 'Criticality', 'Purpose', 'Data categories shared',
+          'DPA status', 'DPA signed', 'DPA expires', 'TIA completed',
+          'Risk level', 'Risk score', 'Last reviewed', 'Offboarded', 'Deletion certificate',
+        ],
         ...rows.map((r) => [
-          r.name, r.category, r.headquartersCountry, r.dpaStatus, r.riskLevel, r.riskScore, r.website,
+          r.name, r.category, r.headquartersCountry, r.website,
+          r.status ?? VENDOR_STATUS_ACTIVE, r.processingRole,
+          r.businessOwner, r.criticality, r.purpose,
+          (r.dataCategoriesShared ?? []).join('; '),
+          r.dpaStatus, day(r.dpaSignedAt), day(r.dpaExpiresAt), r.tiaCompleted ? 'Yes' : 'No',
+          r.riskLevel, r.riskScore, day(r.lastReviewedAt),
+          day(r.offboardedAt), r.deletionCertificateRef,
         ]),
       ]);
 
@@ -1382,24 +1594,48 @@ export const vendorsRouter = router({
    * nothing; a register that can only grow stops being evidence the moment a
    * contract ends. `offboarded` is terminal-but-recorded rather than deleted --
    * Art. 28(3)(g) asks what happened to the data, which needs the row to stay.
+   *
+   * `vendorId` rather than the join-row id, so the audit middleware's
+   * `extractResourceId` can file the entry against a vendor the History tab
+   * knows how to look up. Keyed on the org-vendor id, the most important
+   * lifecycle event in the module logged with a null resource id and appeared in
+   * no timeline at all.
    */
   setStatus: protectedProcedure
     .use(requirePermission('vendors', 'edit'))
     .input(z.object({
-      orgVendorId: z.string().uuid(),
-      status: z.enum(['active', 'paused', 'offboarded']),
+      vendorId: z.string().uuid(),
+      status: z.enum(VENDOR_STATUSES),
+      /** Art. 28(3)(g): the assurance that the data came back or was deleted. */
       deletionCertificateRef: z.string().max(255).nullable().optional(),
+      /** Backdating a real offboarding date, rather than the day it was typed in. */
+      offboardedAt: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db.select().from(organizationVendors).where(and(
+        eq(organizationVendors.organizationId, ctx.user!.orgId),
+        eq(organizationVendors.vendorId, input.vendorId),
+      ));
+      if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
+
       const updates: any = {
         status: input.status,
         updatedAt: new Date(),
       };
 
-      if (input.status === 'offboarded') {
-        updates.offboardedAt = new Date();
+      if (input.status === VENDOR_STATUS_OFFBOARDED) {
+        // Stamped once, on the transition. Re-stamping on every call meant that
+        // typing a twenty-character certificate reference into the box next to
+        // it — one mutation per keystroke — reset the recorded end-of-processing
+        // date twenty times, so the Art. 28(3)(g) date became "whenever someone
+        // last touched the form".
+        if (input.offboardedAt !== undefined) {
+          updates.offboardedAt = input.offboardedAt ? new Date(input.offboardedAt) : null;
+        } else if (existing.status !== VENDOR_STATUS_OFFBOARDED || !existing.offboardedAt) {
+          updates.offboardedAt = new Date();
+        }
         if (input.deletionCertificateRef !== undefined) {
-          updates.deletionCertificateRef = input.deletionCertificateRef;
+          updates.deletionCertificateRef = input.deletionCertificateRef || null;
         }
       } else {
         // Coming back from offboarding clears the end-of-processing record --
@@ -1411,7 +1647,7 @@ export const vendorsRouter = router({
       const [updated] = await ctx.db.update(organizationVendors)
         .set(updates)
         .where(and(
-          eq(organizationVendors.id, input.orgVendorId),
+          eq(organizationVendors.id, existing.id),
           eq(organizationVendors.organizationId, ctx.user!.orgId),
         ))
         .returning();
@@ -1420,13 +1656,34 @@ export const vendorsRouter = router({
     }),
 
   /**
-   * D30. Unlink -- remove the vendor from this organisation's register without
-   * touching the shared catalogue row or anyone else's register. Distinct from
-   * offboarding in the same way a deletion differs from an archive.
+   * D30. Unlink — remove the vendor from this organisation's register without
+   * touching the shared catalogue row or anyone else's register.
+   *
+   * **This refuses when the relationship carries evidence.** Four tables cascade
+   * from `organization_vendors.id`: the completed questionnaires, the
+   * questionnaire invitations, the Art. 28(2) sub-processor change log and the
+   * incident alerts. A plain delete therefore destroyed exactly the material the
+   * audit trail two procedures down exists to preserve — and `transfer_impact_
+   * assessments.org_vendor_id` has no ON DELETE at all, so a vendor with a TIA
+   * failed the delete with a foreign-key violation instead. Silently shredding
+   * an Art. 28 file in one case and 500ing in the other are both wrong answers
+   * to "we do not use this vendor any more"; the right one is `offboarded`,
+   * which is what this points the caller at.
+   *
+   * What unlink is still for: the row added by mistake, or by a discovery scan,
+   * that never accumulated anything.
    */
   unlinkVendor: protectedProcedure
     .use(requirePermission('vendors', 'delete'))
-    .input(z.object({ vendorId: z.string().uuid() }))
+    .input(z.object({
+      vendorId: z.string().uuid(),
+      /**
+       * Delete the evidence along with the link. Not a convenience flag — the UI
+       * only offers it after naming what will be destroyed, because the caller
+       * has to be the one who decides an Art. 28 record is disposable.
+       */
+      discardEvidence: z.boolean().default(false),
+    }))
     .mutation(async ({ ctx, input }) => {
       const [existing] = await ctx.db.select()
         .from(organizationVendors)
@@ -1436,8 +1693,42 @@ export const vendorsRouter = router({
         ));
       if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
 
+      const evidence = await vendorEvidenceCounts(ctx.db, existing.id);
+      const total = Object.values(evidence).reduce((sum, n) => sum + n, 0);
+
+      if (total > 0 && !input.discardEvidence) {
+        throw new TRPCError({
+          code: 'PRECONDITION_FAILED',
+          message:
+            'This relationship holds assessment, sub-processor or transfer records. ' +
+            'Offboard it to keep them as evidence, or confirm that they should be destroyed.',
+          cause: evidence as unknown as Error,
+        });
+      }
+
+      // Detaching the TIA explicitly rather than leaving it to the constraint.
+      //
+      // `transfer_impact_assessments.org_vendor_id` is ON DELETE SET NULL as of
+      // migration 0053, which does exactly this — but it carried no clause at
+      // all before that, and on a database where 0053 has not yet run the delete
+      // below fails with a foreign-key violation the caller reads as an
+      // unexplained 500. Doing it here costs one statement and makes the
+      // intent legible at the call site: the assessment survives the unlink,
+      // deliberately, because it is a document about a transfer that happened.
+      if (total > 0) {
+        await ctx.db.update(transferImpactAssessments)
+          .set({ orgVendorId: null })
+          .where(and(
+            eq(transferImpactAssessments.orgVendorId, existing.id),
+            eq(transferImpactAssessments.organizationId, ctx.user!.orgId),
+          ));
+      }
+
       await ctx.db.delete(organizationVendors)
-        .where(eq(organizationVendors.id, existing.id));
+        .where(and(
+          eq(organizationVendors.id, existing.id),
+          eq(organizationVendors.organizationId, ctx.user!.orgId),
+        ));
 
       if (orgEmbeddingsQueue) {
         await orgEmbeddingsQueue.add('embed-vendor', {
@@ -1448,18 +1739,43 @@ export const vendorsRouter = router({
         });
       }
 
-      return { success: true };
+      return { success: true, discarded: input.discardEvidence ? evidence : null };
+    }),
+
+  /**
+   * What would be destroyed by unlinking. The modal asks before it offers the
+   * button, so that "remove from register" is never the first time somebody
+   * learns they are deleting three completed questionnaires.
+   */
+  unlinkImpact: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .input(z.object({ vendorId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [existing] = await ctx.db.select({ id: organizationVendors.id })
+        .from(organizationVendors)
+        .where(and(
+          eq(organizationVendors.organizationId, ctx.user!.orgId),
+          eq(organizationVendors.vendorId, input.vendorId),
+        ));
+      if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
+
+      const evidence = await vendorEvidenceCounts(ctx.db, existing.id);
+      return {
+        ...evidence,
+        total: Object.values(evidence).reduce((sum, n) => sum + n, 0),
+      };
     }),
 
   /**
    * D33. The vendor record's audit trail, read from the same audit_logs table
    * every tRPC mutation already writes through the middleware in trpc.ts.
    *
-   * A vendor's events are keyed two ways: rows whose resourceId is the join-row
-   * id (`vendors.org.*` mutations), and rows whose metadata carries the global
-   * vendor id (`vendors.custom.*`, sub-processor writes). Matching both is what
-   * makes the tab complete; matching only one made ROPA's first trail read as
-   * though most of the record had no history.
+   * A vendor's events are keyed two ways — the join-row id (a questionnaire, an
+   * incident alert, a DPA analysis) and the catalogue id (everything the router
+   * addresses by `vendorId`) — so both are matched. The action filter covers
+   * `tia.*` as well as `vendors.*`: the Chapter V assessment is the reason a
+   * transfer to that vendor is lawful, and a reader looking for it looks at the
+   * vendor, not at a separate module.
    */
   history: protectedProcedure
     .use(requirePermission('vendors', 'view'))
@@ -1478,28 +1794,23 @@ export const vendorsRouter = router({
         ));
       if (!ov) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
 
-      const filters: any[] = [
-        eq(auditLogs.organizationId, ctx.user!.orgId),
-        or(
-          // Mutations keyed on the join row itself...
-          eq(auditLogs.resourceId, ov.id),
-          // ...and ones keyed on the catalogue row (custom vendors, verify).
-          eq(auditLogs.resourceId, input.vendorId),
-        ),
-        // Only this module's actions: 'vendors' covers both key shapes above.
-        ilike(auditLogs.action, 'vendors.%'),
-      ];
+      const filters: any[] = [vendorTrailFilter(ctx.user!.orgId, ov.id, input.vendorId)];
 
       if (input.cursor) {
         try {
           const { sortValue, id } = decodeCursor(input.cursor);
           const at = new Date(String(sortValue));
+          if (Number.isNaN(at.getTime())) throw new Error('not a date');
           filters.push(or(
             lt(auditLogs.createdAt, at),
             and(eq(auditLogs.createdAt, at), lt(auditLogs.id, id)),
           ));
         } catch {
-          // A stale or mangled cursor serves page one rather than a 500.
+          // A cursor that cannot be read is an error, not "start again". Serving
+          // page one instead means an infinite-scroll client that requests the
+          // next page receives the first one, whose nextCursor is the same
+          // unreadable token, and loops.
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid pagination cursor.' });
         }
       }
 
@@ -1517,7 +1828,9 @@ export const vendorsRouter = router({
           renderedChanges: describeChanges(row.changes),
           changeType: changeTypeOf(row.action ?? ''),
         })),
-        nextCursor: rows.length > input.limit && last ? encodeCursor(last.createdAt, last.id) : null,
+        nextCursor: rows.length > input.limit && last && last.createdAt
+          ? encodeCursor(last.createdAt, last.id)
+          : null,
       };
     }),
 
@@ -1538,11 +1851,7 @@ export const vendorsRouter = router({
       if (!ov) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
 
       const rows = await ctx.db.select().from(auditLogs)
-        .where(and(
-          eq(auditLogs.organizationId, ctx.user!.orgId),
-          or(eq(auditLogs.resourceId, ov.id), eq(auditLogs.resourceId, input.vendorId)),
-          ilike(auditLogs.action, 'vendors.%'),
-        ))
+        .where(vendorTrailFilter(ctx.user!.orgId, ov.id, input.vendorId))
         .orderBy(desc(auditLogs.createdAt))
         .limit(10000);
 
@@ -1571,23 +1880,35 @@ export const vendorsRouter = router({
     }),
 
   /**
-   * D40. Import the spreadsheet. Parses server-side, matches against the
-   * catalogue, creates custom vendors for unmatched rows and returns a preview
-   * when asked not to commit -- so the modal can show exactly what will happen
-   * before anything is written.
+   * D40. Import the spreadsheet.
    *
-   * enforceLimit runs against the *net* additions once catalogue matches are
-   * excluded, because re-linking existing vendors must not consume plan headroom.
+   * Two phases against one procedure: `commit: false` parses, matches and
+   * reports without writing, so the modal can show exactly what will happen; the
+   * same call with `commit: true` writes it. The preview is the contract, which
+   * is why it reports the columns it *ignored* as well as the rows it accepted —
+   * a spreadsheet whose "Datenkategorien" column silently went nowhere is worse
+   * than one that was rejected, because the register then looks complete.
+   *
+   * `enforceLimit` runs against the *net* additions once rows already linked are
+   * excluded: re-importing last month's file must not consume plan headroom for
+   * vendors the organisation already tracks.
    */
   importCsv: protectedProcedure
     .use(requirePermission('vendors', 'edit'))
     .input(z.object({
-      csv: z.string().max(2_000_000),
+      // Well under the Fastify body limit set in index.ts, with room for the
+      // tRPC envelope and JSON string-escaping around it. A promise of 2 MB the
+      // HTTP layer rejected at 1 MB surfaced as an unexplained 413.
+      csv: z.string().min(1).max(600_000),
       hasHeader: z.boolean().default(true),
       commit: z.boolean().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
-      const rows = parseCsvRows(input.csv);
+      const parsed = parseCsvRows(input.csv);
+      if ('error' in parsed) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: parsed.error });
+      }
+      const rows = parsed.rows;
       if (rows.length === 0) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'The file contains no data rows.' });
       }
@@ -1604,12 +1925,18 @@ export const vendorsRouter = router({
 
       const [headerRow, ...dataRows] = rows;
       const mapping = buildColumnMapping(headerRow ?? []);
-      if (Object.keys(mapping).length === 0) {
+      if (mapping.name === undefined) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'No recognised columns. Expected headers such as Name, Website, Category, Country.',
+          message: 'No vendor name column found. Expected a header such as Name, Vendor or Supplier.',
         });
       }
+      // Which headers went nowhere. Reported, never guessed at.
+      const mappedIndices = new Set(Object.values(mapping));
+      const ignoredColumns = (headerRow ?? [])
+        .map((header, index) => ({ header: header.trim(), index }))
+        .filter(({ header, index }) => header !== '' && !mappedIndices.has(index))
+        .map(({ header }) => header);
 
       const catalogueRows = await ctx.db.select({
         id: vendors.id,
@@ -1618,18 +1945,47 @@ export const vendorsRouter = router({
         aliases: vendors.aliases,
       })
         .from(vendors)
-        .where(eq(vendors.isGlobal, true));
-      const catalogue: CatalogueEntry[] = catalogueRows;
+        .where(or(
+          eq(vendors.isGlobal, true),
+          // The organisation's own custom vendors are part of its catalogue for
+          // matching purposes: without them, re-importing a spreadsheet creates
+          // a second "Acme Ltd" beside the one the first import made.
+          eq(vendors.organizationId, ctx.user!.orgId),
+        ));
+      // Built once. `matchCatalogue` used to re-parse every catalogue entry's
+      // URL for every row, so a 500-row file against a 3,000-row catalogue
+      // constructed 1.5 million URL objects to answer one question.
+      const catalogue = buildCatalogueIndex(catalogueRows as CatalogueEntry[]);
+
+      // Duplicate rows within one file, matched on the same key the catalogue
+      // matcher uses. Two lines for "Slack" are one vendor, not a unique-index
+      // violation halfway through the commit.
+      const seenInFile = new Map<string, number>();
 
       const results = dataRows.map((cells, index) => {
+        const rowNumber = index + 2; // header is row 1
         const normalised = normaliseVendorRow(cells, mapping);
         if ('error' in normalised) {
-          return { rowNumber: index + (input.hasHeader ? 2 : 1), error: normalised.error };
+          return { rowNumber, ok: false as const, error: normalised.error };
         }
         const match = matchCatalogue(normalised.matchCandidate, catalogue);
+        const accepted = match && match.confidence >= AUTO_LINK_THRESHOLD ? match : null;
+
+        const dedupeKey = accepted
+          ? `id:${accepted.vendorId}`
+          : `name:${normalised.matchCandidate.domain ?? normalised.name.toLowerCase()}`;
+        const firstSeenAt = seenInFile.get(dedupeKey);
+        if (firstSeenAt !== undefined) {
+          return {
+            rowNumber,
+            ok: false as const,
+            error: `"${normalised.name}" is already on row ${firstSeenAt} of this file.`,
+          };
+        }
+        seenInFile.set(dedupeKey, rowNumber);
 
         return {
-          rowNumber: index + (input.hasHeader ? 2 : 1),
+          rowNumber,
           ok: true as const,
           name: normalised.name,
           website: normalised.website,
@@ -1640,105 +1996,155 @@ export const vendorsRouter = router({
           businessOwner: normalised.businessOwner,
           contactEmail: normalised.contactEmail,
           criticality: normalised.criticality,
-          match: match && match.confidence >= AUTO_LINK_THRESHOLD
-            ? { vendorId: match.vendorId, confidence: match.confidence, method: match.method }
+          warnings: normalised.warnings,
+          match: accepted
+            ? { vendorId: accepted.vendorId, confidence: accepted.confidence, method: accepted.method }
+            : null,
+          // A near-miss below the auto-link threshold is the single most useful
+          // thing a human can adjudicate, so it is shown rather than discarded.
+          nearMiss: !accepted && match
+            ? { vendorId: match.vendorId, confidence: match.confidence, name: catalogue.byId.get(match.vendorId)?.name ?? '' }
             : null,
         };
       });
 
       const valid = results.filter((r): r is Extract<typeof r, { ok: true }> => r.ok === true);
-      const errors = results.filter((r) => r.ok !== true);
+      const errors = results
+        .filter((r): r is Extract<typeof r, { ok: false }> => r.ok === false)
+        .map((r) => ({ rowNumber: r.rowNumber, error: r.error }));
+
+      const existingLinks = await ctx.db.select({ vendorId: organizationVendors.vendorId })
+        .from(organizationVendors)
+        .where(eq(organizationVendors.organizationId, ctx.user!.orgId));
+      const linked = new Set(existingLinks.map((l) => l.vendorId));
+
+      const plan = valid.map((row) => ({
+        ...row,
+        action: row.match
+          ? (linked.has(row.match.vendorId) ? ('already_linked' as const) : ('link' as const))
+          : ('create_custom' as const),
+      }));
+      const netAdditions = plan.filter((r) => r.action !== 'already_linked').length;
 
       if (!input.commit) {
         return {
           committed: false as const,
           total: dataRows.length,
           validCount: valid.length,
+          netAdditions,
           errorCount: errors.length,
+          ignoredColumns,
           errors,
-          rows: valid.map((r) => ({
-            ...r,
-            action: r.match ? ('link' as const) : ('create_custom' as const),
-          })),
+          rows: plan,
         };
       }
 
       // ---- commit ------------------------------------------------------------
-      const existingLinks = await ctx.db.select({ vendorId: organizationVendors.vendorId })
-        .from(organizationVendors)
-        .where(eq(organizationVendors.organizationId, ctx.user!.orgId));
-      const linked = new Set(existingLinks.map((l) => l.vendorId));
-
-      // Plan headroom against the *net* additions: re-linking a catalogue vendor
-      // the org already tracks must not consume an enforceLimit unit, and the
-      // preview above has already told the user which rows those are.
-      const netAdditions = valid.filter((r) => !(r.match?.vendorId && linked.has(r.match.vendorId))).length;
       if (netAdditions > 0) {
         await enforceLimit(ctx.db, ctx.user!.orgId, 'vendors', netAdditions);
       }
 
+      const writable = plan.filter((r) => r.action !== 'already_linked');
+      const skippedExisting = plan.length - writable.length;
+
+      /**
+       * One transaction for the whole file.
+       *
+       * Row-by-row commits left a half-imported register on any failure, with no
+       * way to tell which half and no way to retry only the rest — and the
+       * counters came back describing a state nobody could reconstruct. An
+       * import either happened or it did not; that is the only shape a user can
+       * reason about, and the only one they can safely repeat.
+       */
       let created = 0;
       let relinked = 0;
-      let skippedExisting = 0;
-      const commitErrors: Array<{ rowNumber: number; error: string }> = [];
+      try {
+        await ctx.db.transaction(async (tx: any) => {
+          const toCreate = writable.filter((r) => !r.match);
+          const createdIds = new Map<number, string>();
 
-      for (const row of valid) {
-        try {
-          let targetVendorId = row.match?.vendorId ?? null;
-
-          if (targetVendorId && linked.has(targetVendorId)) {
-            skippedExisting++;
-            continue;
+          if (toCreate.length > 0) {
+            const inserted = await tx.insert(vendors).values(
+              toCreate.map((row) => ({
+                name: row.name,
+                website: row.website,
+                category: row.category,
+                headquartersCountry: row.headquartersCountry,
+                description: row.purpose,
+                isGlobal: false,
+                organizationId: ctx.user!.orgId,
+              })),
+            ).returning({ id: vendors.id });
+            if (inserted.length !== toCreate.length) {
+              throw new Error('The catalogue did not accept every new vendor.');
+            }
+            toCreate.forEach((row, i) => createdIds.set(row.rowNumber, inserted[i].id));
           }
 
-          if (!targetVendorId) {
-            // Create the custom vendor, then link it.
-            const [newVendor] = await ctx.db.insert(vendors).values({
-              name: row.name,
-              website: row.website,
-              category: row.category,
-              headquartersCountry: row.headquartersCountry,
-              description: row.purpose,
-              isGlobal: false,
+          // Every catalogue row the links will need, in one read — the previous
+          // version re-selected one row per import row, including rows it had
+          // just inserted and already held.
+          const targetIds = writable.map((row) => row.match?.vendorId ?? createdIds.get(row.rowNumber)!);
+          const catalogueById = new Map<string, any>();
+          if (targetIds.length > 0) {
+            const full = await tx.select().from(vendors).where(inArray(vendors.id, targetIds));
+            for (const v of full) catalogueById.set(v.id, v);
+          }
+
+          const links = writable.map((row) => {
+            const targetVendorId = row.match?.vendorId ?? createdIds.get(row.rowNumber)!;
+            const catalogueRow = catalogueById.get(targetVendorId);
+            if (!catalogueRow) throw new Error(`Row ${row.rowNumber}: the catalogue entry could not be read back.`);
+
+            const { score, level, factors } = calculateVendorRisk(
+              catalogueRow,
+              {
+                dpaStatus: DPA_STATUS_MISSING[0],
+                dataCategoriesShared: row.dataCategoriesShared,
+                dataSubjectVolume: '<1K',
+              },
+              0,
+            );
+
+            return {
               organizationId: ctx.user!.orgId,
-            }).returning();
-            if (!newVendor) throw new Error('Insert returned no row.');
-            targetVendorId = newVendor.id;
-          }
-
-          const [catalogueRow] = await ctx.db.select().from(vendors).where(eq(vendors.id, targetVendorId));
-          if (!catalogueRow) throw new Error('Catalogue row disappeared during import.');
-          const { score, level, factors } = calculateVendorRisk(
-            catalogueRow,
-            {
-              dpaStatus: 'not_started',
+              vendorId: targetVendorId,
+              status: VENDOR_STATUS_ACTIVE,
+              dpaStatus: DPA_STATUS_MISSING[0],
+              businessOwner: row.businessOwner,
+              contactEmail: row.contactEmail,
+              criticality: row.criticality,
+              // Not defaulted to 'processor'. The role decides which Article
+              // applies, and a register that asserts every imported vendor is a
+              // processor has answered a legal question on the customer's behalf
+              // with the answer that happens to be commonest.
+              processingRole: null,
+              purpose: row.purpose,
               dataCategoriesShared: row.dataCategoriesShared,
-              dataSubjectVolume: '<1K',
-            },
-            0,
-          );
-
-          await ctx.db.insert(organizationVendors).values({
-            organizationId: ctx.user!.orgId,
-            vendorId: targetVendorId,
-            dpaStatus: 'not_started',
-            businessOwner: row.businessOwner,
-            contactEmail: row.contactEmail,
-            criticality: row.criticality,
-            processingRole: 'processor',
-            purpose: row.purpose,
-            dataCategoriesShared: row.dataCategoriesShared,
-            riskScore: score,
-            riskLevel: level,
-            riskFactors: factors,
-            lastRiskAssessment: new Date(),
-            addedBy: ctx.user!.id,
+              riskScore: score,
+              riskLevel: level,
+              riskFactors: factors,
+              lastRiskAssessment: new Date(),
+              addedBy: ctx.user!.id,
+            };
           });
 
-          if (row.match) relinked++; else created++;
-        } catch (err: any) {
-          commitErrors.push({ rowNumber: row.rowNumber, error: err.message ?? 'Import failed for this row.' });
-        }
+          if (links.length > 0) {
+            await tx.insert(organizationVendors).values(links);
+          }
+
+          created = toCreate.length;
+          relinked = writable.length - toCreate.length;
+        });
+      } catch (err: any) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `The import was rolled back and nothing was written: ${err.message ?? 'unknown error'}`,
+        });
+      }
+
+      if (orgEmbeddingsQueue) {
+        await orgEmbeddingsQueue.add('embed-org', { orgId: ctx.user!.orgId, entityType: 'vendor', action: 'upsert' });
       }
 
       return {
@@ -1748,8 +2154,49 @@ export const vendorsRouter = router({
         relinked,
         skippedExisting,
         errorCount: errors.length,
+        ignoredColumns,
         errors,
-        commitErrors,
       };
+    }),
+
+  /**
+   * D31. The review attestation, on its own.
+   *
+   * Separate from `updateOrgVendor` because reviewing is a statement about the
+   * whole record — "I have looked at this and it is accurate today" — and not a
+   * by-product of editing one field on it. When editing stamped the review date,
+   * the overdue-review rule could be silenced by touching the notes box, which
+   * is the compliance equivalent of marking your own homework.
+   */
+  attestReview: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
+    .input(z.object({
+      vendorId: z.string().uuid(),
+      /** Months until the next review; null leaves the existing date alone. */
+      nextReviewInMonths: z.number().int().min(1).max(60).nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db.select().from(organizationVendors).where(and(
+        eq(organizationVendors.organizationId, ctx.user!.orgId),
+        eq(organizationVendors.vendorId, input.vendorId),
+      ));
+      if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
+
+      const now = new Date();
+      const updates: any = { lastReviewedAt: now, updatedAt: now };
+      if (input.nextReviewInMonths) {
+        const next = new Date(now);
+        next.setMonth(next.getMonth() + input.nextReviewInMonths);
+        updates.nextReviewAt = next;
+      }
+
+      const [updated] = await ctx.db.update(organizationVendors)
+        .set(updates)
+        .where(and(
+          eq(organizationVendors.id, existing.id),
+          eq(organizationVendors.organizationId, ctx.user!.orgId),
+        ))
+        .returning();
+      return updated;
     }),
 });

@@ -105,6 +105,43 @@ export const FIELD_LABELS: Readonly<Record<string, string>> = {
   dpoOpinion: 'DPO opinion',
   residualRiskLevel: 'Residual risk',
   conclusion: 'Conclusion',
+
+  // The vendor relationship. Without these the fallback sentence-cases the
+  // column name, so a trail handed to a regulator reads "Dpa status" and
+  // "Tia completed" — and the label is what the CSV export's `field` column
+  // carries, so the typography is not only on screen.
+  dpaStatus: 'DPA status',
+  dpaSignedAt: 'DPA signed',
+  dpaExpiresAt: 'DPA expires',
+  dpaNotes: 'DPA notes',
+  dpaClauseCoverage: 'Article 28(3) clause coverage',
+  dpaDocumentId: 'DPA document',
+  dpaAnalysisStatus: 'DPA analysis status',
+  transferMechanisms: 'Transfer mechanisms',
+  dataCategoriesShared: 'Data categories shared',
+  dataSubjectVolume: 'Data subject volume',
+  usingEuHosting: 'EU hosting',
+  certifications: 'Certifications',
+  contractRenewalDate: 'Contract renewal',
+  businessOwner: 'Business owner',
+  contactEmail: 'Vendor contact',
+  criticality: 'Criticality',
+  processingRole: 'Processing role',
+  offboardedAt: 'Offboarded',
+  deletionCertificateRef: 'Deletion certificate (Art. 28(3)(g))',
+  headquartersCountry: 'Headquarters country',
+  website: 'Website',
+  dataExporter: 'Data exporter',
+  dataImporter: 'Data importer',
+  transferPurpose: 'Transfer purpose',
+  transferFrequency: 'Transfer frequency',
+  onwardTransfers: 'Onward transfers',
+  legalAssessmentConclusion: 'Legal assessment conclusion',
+  legalAssessmentDetail: 'Legal assessment detail',
+  relevantCaseLaw: 'Relevant case law',
+  measuresDetail: 'Supplementary measures detail',
+  reevaluationIntervalMonths: 'Re-evaluation interval',
+  reevaluationTriggers: 'Re-evaluation triggers',
 };
 
 export function fieldLabel(field: string): string {
@@ -131,6 +168,15 @@ export const NOISE_FIELDS: readonly string[] = [
   'completenessScore', 'completeness_score',
   'version', 'previousVersionId',
   'id', 'organizationId', 'processingActivityId',
+  // The vendor register's equivalents of completenessScore. `updateOrgVendor`
+  // recomputes all four after every save, so without them each entry in the
+  // timeline reads "Last risk assessment · 24 Aug → 25 Aug | Risk factors ·
+  // {two hundred characters of JSON} → {two hundred characters of JSON}" on top
+  // of the one field the user actually changed. `riskScore` and `riskLevel` stay
+  // visible: a score moving from 62 to 74 is a real event a reader wants.
+  'riskFactors', 'risk_factors',
+  'lastRiskAssessment', 'last_risk_assessment',
+  'dpaAiAnalysis', 'dpa_ai_analysis',
 ];
 
 export type RenderedChange = {
