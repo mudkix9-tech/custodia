@@ -1448,6 +1448,7 @@ export const organizationVendors = pgTable('organization_vendors', {
 
   lastReviewedAt: timestamp('last_reviewed_at', { withTimezone: true }),
   nextReviewAt: timestamp('next_review_at', { withTimezone: true }),
+  reviewCadence: varchar('review_cadence', { length: 30 }).default('annual'),
 
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -1789,6 +1790,64 @@ export const vendorSubProcessorEntitiesRelations = relations(vendorSubProcessorE
   parentVendor: one(vendors, {
     fields: [vendorSubProcessorEntities.parentVendorId],
     references: [vendors.id],
+  }),
+}));
+
+/**
+ * Sprint 3 — Delegated vendor intake workflow.
+ *
+ * Employees or department leads submit requests for new software / vendors
+ * with their business justification, processing purpose, and data categories.
+ * The DPO or compliance admin reviews, approves (which auto-links/creates the vendor
+ * in organization_vendors and triggers background intelligence enrichment), or rejects.
+ */
+export const vendorIntakeRequests = pgTable('vendor_intake_requests', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  requestedBy: uuid('requested_by').references(() => users.id, { onDelete: 'set null' }),
+  requesterName: varchar('requester_name', { length: 255 }),
+  requesterEmail: varchar('requester_email', { length: 255 }),
+  vendorName: varchar('vendor_name', { length: 255 }).notNull(),
+  vendorWebsite: varchar('vendor_website', { length: 500 }),
+  category: varchar('category', { length: 100 }),
+  businessOwner: varchar('business_owner', { length: 255 }),
+  purpose: text('purpose'),
+  dataCategories: jsonb('data_categories').$type<string[]>().default([]),
+  estimatedDataSubjects: varchar('estimated_data_subjects', { length: 50 }),
+  criticality: varchar('criticality', { length: 20 }).default('medium'),
+  // 'pending_review' | 'approved' | 'rejected' | 'more_info_requested'
+  status: varchar('status', { length: 50 }).default('pending_review').notNull(),
+  reviewNotes: text('review_notes'),
+  reviewedBy: uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  createdVendorId: uuid('created_vendor_id').references(() => vendors.id, { onDelete: 'set null' }),
+  createdOrgVendorId: uuid('created_org_vendor_id').references(() => organizationVendors.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  orgStatusIdx: index('idx_vir_org_status').on(table.organizationId, table.status),
+}));
+
+export const vendorIntakeRequestsRelations = relations(vendorIntakeRequests, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [vendorIntakeRequests.organizationId],
+    references: [organizations.id],
+  }),
+  requestedByUser: one(users, {
+    fields: [vendorIntakeRequests.requestedBy],
+    references: [users.id],
+  }),
+  reviewedByUser: one(users, {
+    fields: [vendorIntakeRequests.reviewedBy],
+    references: [users.id],
+  }),
+  createdVendor: one(vendors, {
+    fields: [vendorIntakeRequests.createdVendorId],
+    references: [vendors.id],
+  }),
+  createdOrgVendor: one(organizationVendors, {
+    fields: [vendorIntakeRequests.createdOrgVendorId],
+    references: [organizationVendors.id],
   }),
 }));
 

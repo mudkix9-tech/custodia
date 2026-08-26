@@ -17,6 +17,8 @@ export interface VendorRiskInput {
   securityCertifications?: string[] | null;
   transferMechanisms?: string[] | null;
   knownIncidents?: Array<{ date: string | Date; description?: string }> | null;
+  dpfStatus?: 'active' | 'lapsed' | 'discontinued' | 'none' | null;
+  dpfLapsedDate?: string | null;
 }
 
 export interface OrgVendorRiskInput {
@@ -62,7 +64,7 @@ export interface VendorRiskResult {
 
 export function calculateVendorRisk(
   vendor: VendorRiskInput,
-  orgVendor: OrgVendorRiskInput,
+  orgVendor: OrgVendorRiskInput = {} as any,
   subProcessorsCount: number = 0,
   scoreModifier: number = 0,
   dpiaGaps: VendorRiskGap[] = []
@@ -77,20 +79,25 @@ export function calculateVendorRisk(
   
   const mechanisms = [
     ...(vendor.transferMechanisms || []),
-    ...(orgVendor.transferMechanisms || [])
+    ...(orgVendor?.transferMechanisms || [])
   ].map(m => m.toLowerCase());
   
-  const hasDpf = mechanisms.includes('data_privacy_framework');
-  const isAdequate = country && isAdequateDestination(country) && (country !== 'US' || hasDpf);
+  const hasDpfMechanism = mechanisms.includes('data_privacy_framework');
+  const isDpfActive = vendor.dpfStatus === 'active' || (hasDpfMechanism && vendor.dpfStatus !== 'lapsed' && vendor.dpfStatus !== 'discontinued');
+  const isDpfLapsed = vendor.dpfStatus === 'lapsed' || vendor.dpfStatus === 'discontinued';
+  const isAdequate = country && isAdequateDestination(country) && (country !== 'US' || isDpfActive);
 
   if (isEu) {
     locationPoints = 0;
     locationDetail = `EU/EEA country (${country}) (0/20 pts)`;
   } else if (isAdequate) {
     locationPoints = 5;
-    locationDetail = `Adequate country (${country}) (5/20 pts)`;
+    locationDetail = country === 'US' ? 'United States (DPF certified) (5/20 pts)' : `Adequate country (${country}) (5/20 pts)`;
   } else if (!country) {
     locationDetail = 'Unknown country (20/20 pts)';
+  } else if (country === 'US' && isDpfLapsed) {
+    locationPoints = 20;
+    locationDetail = `United States (DPF certification lapsed${vendor.dpfLapsedDate ? ` on ${vendor.dpfLapsedDate}` : ''}) (20/20 pts)`;
   } else {
     locationPoints = 20;
     locationDetail = `${country === 'US' ? 'United States (conditional adequacy, no DPF certified)' : 'Non-adequate country (' + country + ')'} (20/20 pts)`;

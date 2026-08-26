@@ -680,6 +680,56 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
       break;
     }
 
+    case 'vendor-review-reminder': {
+      console.log('[Vendor Governance] Running vendor review reminders...');
+      const now = new Date();
+      const in14Days = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+      const dueVendors = await db
+        .select({
+          orgVendor: organizationVendors,
+          vendor: vendors,
+        })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(
+          and(
+            liveVendors(),
+            isNotNull(organizationVendors.nextReviewAt),
+            lte(organizationVendors.nextReviewAt, in14Days)
+          )
+        );
+
+      for (const { orgVendor, vendor } of dueVendors) {
+        const reviewDate = orgVendor.nextReviewAt!;
+        const isOverdue = reviewDate.getTime() < now.getTime();
+        const days = Math.ceil((reviewDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+        const title = isOverdue
+          ? `Overdue vendor review: ${vendor.name}`
+          : `Upcoming vendor review in ${days} days: ${vendor.name}`;
+
+        const body = isOverdue
+          ? `The scheduled compliance review for ${vendor.name} (${orgVendor.criticality || 'medium'} criticality) was due on ${reviewDate.toISOString().split('T')[0]}. Please attest the relationship.`
+          : `The compliance review for ${vendor.name} is due on ${reviewDate.toISOString().split('T')[0]}.`;
+
+        await queueNotification({
+          organizationId: orgVendor.organizationId,
+          type: isOverdue ? 'vendor.dpa_expired' : 'vendor.dpa_expiring_7d',
+          title,
+          body,
+          actionUrl: `/vendors`,
+          metadata: {
+            vendorId: vendor.id,
+            vendorName: vendor.name,
+            reviewDate: reviewDate.toISOString(),
+            isOverdue,
+          },
+        });
+      }
+      break;
+    }
+
     default:
       console.warn(`Unknown job: ${job.name}`);
   }

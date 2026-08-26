@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { trpc } from '@/utils/trpc';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, ShieldCheck, Globe, Lock, AlertTriangle, FileText, Upload, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Globe, Lock, AlertTriangle, FileText, Upload, CheckCircle2, Loader2, Download, Scale, Sparkles } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { SubProcessorList } from '@/components/vendors/SubProcessorList';
 import { TIABuilder } from '@/components/vendors/TIABuilder';
@@ -62,6 +62,56 @@ export default function VendorDetailsPage() {
   const confirmDpaMutation = trpc.vendors.confirmDpaAnalysis.useMutation();
   const draftDpaMutation = trpc.vendors.saveDpaAnalysisDraft.useMutation();
   const verifyProfileMutation = trpc.vendors.verifyVendorProfile.useMutation();
+  const applyCatalogueMutation = trpc.vendors.applyCatalogueDpaAnalysis.useMutation({
+    onSuccess: () => {
+      utils.vendors.getOrgVendorDetails.invalidate({ vendorId });
+    },
+  });
+
+  const [isExportingDossier, setIsExportingDossier] = useState(false);
+  const [isGeneratingDpa, setIsGeneratingDpa] = useState(false);
+
+  const handleExportDossier = async () => {
+    if (isExportingDossier) return;
+    setIsExportingDossier(true);
+    let objectUrl: string | null = null;
+    try {
+      const { markdown, filename } = await utils.vendors.exportArticle28Dossier.fetch({ vendorId });
+      objectUrl = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown;charset=utf-8;' }));
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Failed to export dossier:', err);
+    } finally {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setIsExportingDossier(false);
+    }
+  };
+
+  const handleGenerateDpa = async () => {
+    if (isGeneratingDpa) return;
+    setIsGeneratingDpa(true);
+    let objectUrl: string | null = null;
+    try {
+      const { dpaMarkdown, filename } = await utils.vendors.generateDpaAgreement.fetch({ vendorId });
+      objectUrl = URL.createObjectURL(new Blob([dpaMarkdown], { type: 'text/markdown;charset=utf-8;' }));
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Failed to generate DPA:', err);
+    } finally {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setIsGeneratingDpa(false);
+    }
+  };
 
   // Set AI guidance context when vendor data is available.
   useEffect(() => {
@@ -272,19 +322,50 @@ export default function VendorDetailsPage() {
                     <h3 className="text-xl font-serif text-[#F4F5F6] mb-2">{t('detail.dpa.title')}</h3>
                     <p className="text-[14px] text-[#9BA1A6] mb-6">{t('detail.dpa.description')}</p>
                     
-                    <div className="flex flex-wrap gap-3 mb-8">
-                      {['not_started', 'draft', 'sent', 'signed', 'expired'].map(status => (
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                      <div className="flex flex-wrap gap-2.5">
+                        {['not_started', 'draft', 'sent', 'signed', 'expired'].map(status => (
+                          <button
+                            key={status}
+                            onClick={() => handleUpdateDpa(status)}
+                            className={`px-3.5 py-1.5 rounded-lg text-[12px] font-medium uppercase tracking-wider border transition-all
+                              ${vendor.orgVendor.dpaStatus === status 
+                                ? 'bg-[#C9A227]/10 border-[#C9A227]/40 text-[#C9A227] ring-2 ring-[#C9A227]/30' 
+                                : 'bg-[#0D0F11] border-white/10 text-[#6E747A] hover:border-ink-900/30'}`}
+                          >
+                            {t(`detail.dpa.status.${status}`)}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
-                          key={status}
-                          onClick={() => handleUpdateDpa(status)}
-                          className={`px-4 py-2 rounded-lg text-[13px] font-medium uppercase tracking-wider border transition-all
-                            ${vendor.orgVendor.dpaStatus === status 
-                              ? 'bg-[#C9A227]/10 border-[#C9A227]/40 text-[#C9A227] ring-2 ring-[#C9A227]/30' 
-                              : 'bg-[#0D0F11] border-white/10 text-[#6E747A] hover:border-ink-900/30'}`}
+                          onClick={handleExportDossier}
+                          disabled={isExportingDossier}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#08090A] border border-white/10 text-[#F4F5F6] hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
                         >
-                          {t(`detail.dpa.status.${status}`)}
+                          <Download className="w-3.5 h-3.5 text-[#C9A227]" />
+                          {t('export_article_28')}
                         </button>
-                      ))}
+                        <button
+                          onClick={handleGenerateDpa}
+                          disabled={isGeneratingDpa}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#08090A] border border-white/10 text-[#F4F5F6] hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          <Scale className="w-3.5 h-3.5 text-[#9BA1A6]" />
+                          {t('generate_dpa')}
+                        </button>
+                        {vendor.vendor.dpaClauseAnalysis && (
+                          <button
+                            onClick={() => applyCatalogueMutation.mutate({ vendorId })}
+                            disabled={applyCatalogueMutation.isPending}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227] hover:bg-[#C9A227]/20 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            {t('deep_clause_analysis.apply_catalogue')}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="bg-[#08090A] rounded-xl border border-dashed border-white/20 p-8 flex flex-col items-center justify-center text-center">

@@ -732,6 +732,262 @@ const reverifyDiff = diffFreshAgainstCatalogue(
 check(reverifyDiff.length === 1 && reverifyDiff[0]?.field === 'dpaUrl',
   'reverify reports exactly the fields that moved');
 
+console.log('\nSprint 3 — Deep Article 28(3) DPA Clause Analyser (P-9)\n');
+
+import {
+  analyseDpaText,
+  verifyClauseExcerpt,
+  verifyAndSanitizeDpaAnalysis,
+} from './vendorDpaClauseAnalyzer.js';
+
+const sampleDpaText = `
+DATA PROCESSING AGREEMENT
+1. Scope and Instructions: The processor shall process personal data only on documented instructions from the controller, including with regard to transfers of personal data.
+2. Confidentiality: The processor ensures that persons authorised to process the personal data have committed themselves to confidentiality.
+3. Security: Taking into account the state of the art, the processor shall implement appropriate technical and organisational measures pursuant to Article 32.
+4. Sub-processors: The processor shall not engage another processor without prior specific or general written authorisation of the controller.
+5. Data Subject Rights: The processor assists the controller by appropriate technical and organisational measures in responding to data subjects exercising their rights under Chapter III.
+6. Incident Notification: The processor assists the controller in ensuring compliance with Article 33 and Article 34 breach notifications.
+7. Deletion: At the choice of the controller, the processor deletes or returns all personal data to the controller after the end of the provision of services.
+8. Audits: The processor makes available to the controller all information necessary to demonstrate compliance and allows for audits and inspections.
+`;
+
+const parsedAnalysis = analyseDpaText(sampleDpaText);
+check(parsedAnalysis.overallScore === 100, 'a fully compliant standard DPA text scores 100/100', `got ${parsedAnalysis.overallScore}`);
+check(parsedAnalysis.overallVerdict === 'compliant', 'verdict is compliant for full score');
+check(Object.keys(parsedAnalysis.clauses).length === 8, 'all 8 statutory Article 28(3) clauses are evaluated');
+
+check(
+  verifyClauseExcerpt(sampleDpaText, 'process personal data only on documented instructions') === true,
+  'exact substring quote verifies as genuine',
+);
+check(
+  verifyClauseExcerpt(sampleDpaText, 'this sentence was made up by an llm hallucination') === false,
+  'hallucinated quote fails substring verification',
+);
+
+const rawModelOutput: any = {
+  analysedAt: new Date().toISOString(),
+  sourceUrl: 'https://vendor.com/dpa',
+  overallScore: 100,
+  overallVerdict: 'compliant' as const,
+  weaknesses: [],
+  missingClauses: [],
+  clauses: {
+    documentedInstructions: {
+      status: 'present' as const,
+      confidence: 90,
+      excerpt: 'process personal data only on documented instructions from the controller',
+      notes: 'Standard clause',
+      citation: 'Art. 28(3)(a)',
+    },
+    confidentiality: {
+      status: 'present' as const,
+      confidence: 90,
+      excerpt: 'HALLUCINATED NON-EXISTENT SUBSTRING',
+      notes: 'Fake quote',
+      citation: 'Art. 28(3)(b)',
+    },
+  },
+};
+
+const sanitized = verifyAndSanitizeDpaAnalysis(rawModelOutput, sampleDpaText);
+check(
+  sanitized.clauses.documentedInstructions?.excerpt !== undefined,
+  'verified substring keeps excerpt',
+);
+check(
+  sanitized.clauses.confidentiality?.excerpt === undefined,
+  'hallucinated substring drops excerpt from sanitized output',
+);
+check(
+  sanitized.clauses.confidentiality?.confidence <= 40,
+  'hallucinated clause confidence is capped at 40',
+);
+
+console.log('\nSprint 3 — Real-Time DPF Risk Wiring (P-5)\n');
+
+const usActiveDpfRisk = calculateVendorRisk(
+  {
+    headquartersCountry: 'US',
+    securityCertifications: ['soc2'],
+    dpfStatus: 'active',
+  },
+  {
+    dpaStatus: 'signed',
+  }
+);
+check(
+  usActiveDpfRisk.factors.location.points === 5,
+  'US vendor with active DPF certification scores 5/20 location risk (adequate)',
+  `got ${usActiveDpfRisk.factors.location.points}`,
+);
+
+const usLapsedDpfRisk = calculateVendorRisk(
+  {
+    headquartersCountry: 'US',
+    securityCertifications: ['soc2'],
+    dpfStatus: 'lapsed',
+    dpfLapsedDate: '2025-01-01',
+  },
+  {
+    dpaStatus: 'signed',
+  }
+);
+check(
+  usLapsedDpfRisk.factors.location.points === 20,
+  'US vendor with lapsed DPF certification scores 20/20 location risk with lapse warning',
+  `got ${usLapsedDpfRisk.factors.location.points}`,
+);
+check(
+  usLapsedDpfRisk.factors.location.detail.includes('lapsed'),
+  'location factor detail explains that DPF certification has lapsed',
+);
+
+const euVendorRisk = calculateVendorRisk(
+  {
+    headquartersCountry: 'DE',
+    securityCertifications: ['iso27001'],
+  },
+  {
+    dpaStatus: 'signed',
+  }
+);
+check(
+  euVendorRisk.factors.location.points === 0,
+  'EU vendor located in Germany scores 0/20 location risk',
+);
+
+console.log('\nSprint 3 — Article 30 Recipient Register & Article 28 Dossier\n');
+
+import { buildArticle30RecipientCsv, buildArticle28DossierMarkdown } from './vendorAuditPack.js';
+
+const dummyRows = [
+  {
+    vendorName: 'CloudMed Diagnostics, Inc.',
+    category: 'Healthcare Cloud',
+    processingRole: 'Processor',
+    purpose: 'Patient analytics and diagnostic telemetry',
+    dataCategoriesShared: ['contact_details', 'health_data'],
+    isSpecialCategory: true,
+    headquartersCountry: 'DE',
+    dataProcessingLocations: ['Germany', 'Ireland'],
+    transferMechanisms: ['Adequacy Decision (EU/EEA)'],
+    dpaStatus: 'signed',
+    dpaSignedAt: '2026-01-01',
+    businessOwner: 'dpo@acme.com',
+    criticality: 'high',
+    status: 'active',
+  },
+];
+
+const csvOutput = buildArticle30RecipientCsv(dummyRows);
+check(csvOutput.includes('CloudMed Diagnostics, Inc.'), 'Article 30 CSV includes vendor name');
+check(csvOutput.includes('health_data'), 'Article 30 CSV includes shared data categories');
+check(csvOutput.includes('Yes (Art. 9)'), 'Article 30 CSV flags special category data');
+check(csvOutput.startsWith('Recipient (Vendor),Service Category'), 'Article 30 CSV has RFC 4180 headers');
+
+const dossierMd = buildArticle28DossierMarkdown({
+  organizationName: 'Acme Health Ltd',
+  generatedAt: '2026-08-26',
+  vendor: {
+    name: 'CloudMed Diagnostics, Inc.',
+    website: 'https://cloudmed.de',
+    category: 'Healthcare Cloud',
+    headquartersCountry: 'DE',
+    dpaStatus: 'signed',
+    criticality: 'high',
+  },
+  clauseCoverage: {
+    documentedInstructions: { status: 'present', citation: 'Art. 28(3)(a)', excerpt: 'Process on instructions only' },
+  },
+  subProcessors: [{ name: 'AWS Europe', country: 'IE', service: 'Hosting' }],
+  transfers: { destinationCountry: 'DE', mechanisms: ['Adequacy Decision'] },
+  provenance: [],
+});
+check(dossierMd.includes('# Article 28 Compliance Dossier'), 'Dossier contains title');
+check(dossierMd.includes('Acme Health Ltd'), 'Dossier references controller organisation');
+check(dossierMd.includes('CloudMed Diagnostics, Inc.'), 'Dossier references processor name');
+check(dossierMd.includes('Article 28(3) Mandatory Terms Evaluation'), 'Dossier contains Article 28(3) table');
+
+console.log('\nSprint 3 — Governance & Review Cadence Engine (D31)\n');
+
+import { calculateNextReviewDate, evaluateReviewStatus } from './vendorGovernance.js';
+
+const baseDate = new Date('2026-01-01T00:00:00Z');
+const quarterlyDate = calculateNextReviewDate(baseDate, 'critical');
+const biannualDate = calculateNextReviewDate(baseDate, 'high');
+const annualDate = calculateNextReviewDate(baseDate, 'low');
+
+check(
+  Math.round((quarterlyDate.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24)) === 90,
+  'critical vendor defaults to quarterly review cadence (90 days)',
+);
+check(
+  Math.round((biannualDate.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24)) === 180,
+  'high criticality vendor defaults to biannual review cadence (180 days)',
+);
+check(
+  Math.round((annualDate.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24)) === 365,
+  'low/medium vendor defaults to annual review cadence (365 days)',
+);
+
+check(evaluateReviewStatus(new Date(Date.now() - 86400000)).status === 'overdue', 'past date is overdue');
+check(
+  evaluateReviewStatus(new Date(Date.now() + 7 * 86400000)).status === 'due_soon',
+  'date in 7 days is due_soon',
+);
+check(
+  evaluateReviewStatus(new Date(Date.now() + 60 * 86400000)).status === 'scheduled',
+  'date in 60 days is scheduled',
+);
+
+console.log('\nSprint 3 — Incident Blast Radius & Category Intersection (D16)\n');
+
+import { evaluateIncidentBlastRadius } from './vendorIncidentIntelligence.js';
+
+const sharedIncident = evaluateIncidentBlastRadius(
+  {
+    title: 'Data leak involving user email addresses and patient health records',
+    affectedCategories: ['health_data', 'financial_details'],
+    severity: 'critical',
+  },
+  ['health_data', 'contact_details'],
+);
+
+check(sharedIncident.categoryIntersection.length === 1 && sharedIncident.categoryIntersection[0] === 'health_data',
+  'category intersection accurately detects overlapping categories');
+check(sharedIncident.hasSpecialCategoryExposure === true, 'special category exposure is triggered for health_data');
+check(sharedIncident.isBlastRadiusRelevant === true, 'incident is marked relevant to controller');
+check(sharedIncident.blastRadiusScore > 50, 'special category exposure escalates blast radius score');
+
+const irrelevantIncident = evaluateIncidentBlastRadius(
+  {
+    title: 'Customer billing leak',
+    affectedCategories: ['payment_card_data'],
+    severity: 'low',
+  },
+  ['telemetry_data'],
+);
+check(irrelevantIncident.isBlastRadiusRelevant === false, 'unrelated categories report no exposure');
+
+console.log('\nSprint 3 — Standard Statutory Article 28 DPA Generator\n');
+
+import { generateStandardArticle28Dpa } from './vendorDpaTemplate.js';
+
+const generatedAgreement = generateStandardArticle28Dpa({
+  controllerName: 'Acme Global Corp',
+  processorName: 'DataServe GmbH',
+  dataCategories: ['contact_details', 'identity_details'],
+  purposeOfProcessing: 'Customer identity verification and authentication',
+});
+
+check(generatedAgreement.includes('Acme Global Corp'), 'DPA includes controller name');
+check(generatedAgreement.includes('DataServe GmbH'), 'DPA includes processor name');
+check(generatedAgreement.includes('Documented Instructions (Art. 28(3)(a))'), 'DPA includes Art. 28(3)(a)');
+check(generatedAgreement.includes('Audits and Inspections (Art. 28(3)(h))'), 'DPA includes Art. 28(3)(h)');
+check(generatedAgreement.includes('Customer identity verification and authentication'), 'DPA includes specified purpose');
+
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {
   console.log(`${failures} FAILED.`);

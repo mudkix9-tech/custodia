@@ -316,6 +316,13 @@
       "when": 1787677127464,
       "tag": "0055_wonderful_proudstar",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1787769405127,
+      "tag": "0056_unusual_silver_sable",
+      "breakpoints": true
     }
   ]
 }

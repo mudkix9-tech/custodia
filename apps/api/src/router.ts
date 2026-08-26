@@ -30,6 +30,7 @@ import { groupRouter } from './routers/group.js';
 import { customRolesRouter } from './routers/customRoles.js';
 import { analyticsRouter } from './routers/analytics.js';
 import { vendorIntelligenceRouter } from './routers/vendorIntelligence.js';
+import { vendorIntakeRouter } from './routers/vendorIntake.js';
 
 export const appRouter = router({
   customRoles: customRolesRouter,
@@ -66,6 +67,7 @@ export const appRouter = router({
   group: groupRouter,
   analytics: analyticsRouter,
   vendorIntelligence: vendorIntelligenceRouter,
+  vendorIntake: vendorIntakeRouter,
 });
 
 export type AppRouter = typeof appRouter;

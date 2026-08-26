@@ -10,6 +10,7 @@ import { useSearchParams } from 'next/navigation';
 import { DiscoveryTab } from '@/components/vendors/DiscoveryTab';
 import { AddCustomVendorModal } from '@/components/vendors/AddCustomVendorModal';
 import { ImportVendorsModal } from '@/components/vendors/ImportVendorsModal';
+import { VendorIntakeTab } from '@/components/vendors/VendorIntakeTab';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -79,16 +80,19 @@ export default function VendorsPage() {
   const { data: riskStats } = trpc.vendors.getRiskStats.useQuery();
 
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'register' | 'discovery'>('register');
+  const [activeTab, setActiveTab] = useState<'register' | 'discovery' | 'intake'>('register');
 
   useEffect(() => {
     const tab = searchParams?.get('tab');
     if (tab === 'discovery') {
       setActiveTab('discovery');
+    } else if (tab === 'intake') {
+      setActiveTab('intake');
     }
   }, [searchParams]);
 
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingArt30, setIsExportingArt30] = useState(false);
 
   const handleExportRegister = async () => {
     // Server-side export: the client-side version serialised only the loaded
@@ -123,6 +127,35 @@ export default function VendorsPage() {
       // has already been dispatched by the time this runs.
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       setIsExporting(false);
+    }
+  };
+
+  const handleExportArticle30 = async () => {
+    if (isExportingArt30) return;
+    setIsExportingArt30(true);
+    let objectUrl: string | null = null;
+    try {
+      const { csv, rowCount, filename } = await utils.vendors.exportArticle30Register.fetch();
+      if (rowCount === 0) {
+        toast(t('export.nothing'), { tone: 'error', description: t('export.empty_register') });
+        return;
+      }
+      objectUrl = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast(t('export.done', { count: rowCount }));
+    } catch (err: unknown) {
+      toast(t('export.failed'), {
+        tone: 'error',
+        description: err instanceof Error ? err.message : t('export.failed_detail'),
+      });
+    } finally {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setIsExportingArt30(false);
     }
   };
 
@@ -228,24 +261,31 @@ export default function VendorsPage() {
           <h1 className="text-3xl font-serif text-[#F4F5F6] mb-2">{t('title')}</h1>
           <p className="text-[#9BA1A6] text-[15px]">{t('subtitle')}</p>
         </div>
-        <div className="flex gap-3">
-          <Link href="/vendors/analyzer" className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated">
-            <Sparkles className="w-4 h-4" /> {t('analyze_dpa')}
+        <div className="flex flex-wrap gap-2.5">
+          <Link href="/vendors/analyzer" className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] text-[13px] font-medium px-3.5 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated">
+            <Sparkles className="w-4 h-4 text-[#C9A227]" /> {t('analyze_dpa')}
           </Link>
           <button
             onClick={() => setIsImportOpen(true)}
-            className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated"
+            className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 text-[#E6E8EA] text-[13px] font-medium px-3.5 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated"
           >
-            <Upload className="w-4 h-4" /> {t('import.button')}
+            <Upload className="w-4 h-4 text-[#9BA1A6]" /> {t('import.button')}
+          </button>
+          <button
+            onClick={handleExportArticle30}
+            disabled={isExportingArt30}
+            className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed text-[#E6E8EA] text-[13px] font-medium px-3.5 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated"
+          >
+            <FileText className="w-4 h-4 text-[#C9A227]" /> {t('export_article_30')}
           </button>
           <button
             onClick={handleExportRegister}
             disabled={isExporting}
-            className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed text-[#E6E8EA] text-[14px] font-medium px-4 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated"
+            className="inline-flex items-center gap-2 bg-[#0D0F11] hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed text-[#E6E8EA] text-[13px] font-medium px-3.5 py-2 rounded-xl border border-white/10 transition-colors shadow-panel-elevated"
           >
-            <Download className="w-4 h-4" /> {t('export_register')}
+            <Download className="w-4 h-4 text-[#9BA1A6]" /> {t('export_register')}
           </button>
-          <button onClick={() => setIsDiscoverOpen(true)} className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[14px] font-medium px-4 py-2 rounded-xl transition-all shadow-card">
+          <button onClick={() => setIsDiscoverOpen(true)} className="inline-flex items-center gap-2 bg-[#C9A227] hover:bg-[#E5C463] text-[#08090A] text-[13px] font-medium px-3.5 py-2 rounded-xl transition-all shadow-card">
             <Search className="w-4 h-4" /> {t('discover_vendors')}
           </button>
         </div>
@@ -264,6 +304,12 @@ export default function VendorsPage() {
           className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'discovery' ? 'border-[#C9A227] text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'}`}
         >
           {t('tabs.vendor_discovery')}
+        </button>
+        <button
+          onClick={() => setActiveTab('intake')}
+          className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'intake' ? 'border-[#C9A227] text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'}`}
+        >
+          {t('tabs.intake')}
         </button>
       </div>
 
@@ -398,8 +444,10 @@ export default function VendorsPage() {
             )}
           </div>
         </>
-      ) : (
+      ) : activeTab === 'discovery' ? (
         <DiscoveryTab />
+      ) : (
+        <VendorIntakeTab />
       )}
 
       <DiscoverModal isOpen={isDiscoverOpen} onClose={() => setIsDiscoverOpen(false)} />

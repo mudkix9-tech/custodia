@@ -80,6 +80,9 @@ export async function scheduleGlobalJobs() {
   // deliberately NOT dormant: it writes only into dpf_registrations, touching
   // no customer-facing queue.
   await boss.schedule('vendor-intelligence', '17 3 * * 1', wrapJobPayload('dpf-registry-import', {}));
+
+  // Sprint 3. Automated vendor governance review reminder chaser.
+  await boss.schedule('vendor-intelligence', '30 6 * * *', wrapJobPayload('vendor-review-reminder', {}));
 }
 
 

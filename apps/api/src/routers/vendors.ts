@@ -36,12 +36,22 @@ import {
   AUTO_LINK_THRESHOLD,
   type CatalogueEntry,
 } from '../lib/vendorImport.js';
-import { auditLogs } from 'db';
+import { auditLogs, vendorSubProcessorEntities, vendorFieldProvenance, dpfRegistrations } from 'db';
 import {
   describeChanges,
   changeTypeOf,
 } from '../lib/auditTrail.js';
 import { encodeCursor, decodeCursor } from '../utils/cursor.js';
+import {
+  buildArticle30RecipientCsv,
+  buildArticle28DossierMarkdown,
+  type Article30RecipientRow,
+  type Article28DossierData,
+} from '../lib/vendorAuditPack.js';
+import { generateStandardArticle28Dpa } from '../lib/vendorDpaTemplate.js';
+import { calculateNextReviewDate, evaluateReviewStatus } from '../lib/vendorGovernance.js';
+import { hasSpecialCategory } from '../constants/vendorDataCategories.js';
+import { assertOwned } from '../lib/tenancy.js';
 export { calculateVendorRisk };
 
 /**
@@ -2225,6 +2235,356 @@ export const vendorsRouter = router({
           eq(organizationVendors.organizationId, ctx.user!.orgId),
         ))
         .returning();
+      return updated;
+    }),
+
+  /**
+   * Sprint 3 — Article 30(1)(d) Recipient Register Export.
+   *
+   * Produces the official statutory GDPR record of categories of recipients
+   * to whom personal data have been or will be disclosed (CSV format).
+   */
+  exportArticle30Register: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .query(async ({ ctx }) => {
+      const orgId = ctx.user!.orgId;
+      const list = await ctx.db
+        .select({
+          orgVendor: organizationVendors,
+          vendor: vendors,
+        })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(eq(organizationVendors.organizationId, orgId))
+        .orderBy(vendors.name);
+
+      const rows: Article30RecipientRow[] = list.map(({ orgVendor, vendor }) => {
+        const dataCategories = (orgVendor.dataCategoriesShared as string[]) || [];
+        const transferMechanisms = [
+          ...((vendor.transferMechanisms as string[]) || []),
+          ...((orgVendor.transferMechanisms as string[]) || []),
+        ];
+        return {
+          vendorName: vendor.name,
+          category: vendor.category || 'Uncategorised',
+          processingRole: orgVendor.processingRole
+            ? orgVendor.processingRole.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+            : 'Processor',
+          purpose: orgVendor.purpose || 'Not specified',
+          dataCategoriesShared: dataCategories,
+          isSpecialCategory: hasSpecialCategory(dataCategories),
+          headquartersCountry: vendor.headquartersCountry || 'Unknown',
+          dataProcessingLocations: (vendor.dataProcessingLocations as string[]) || [],
+          transferMechanisms,
+          dpaStatus: orgVendor.dpaStatus || 'not_started',
+          dpaSignedAt: orgVendor.dpaSignedAt ? orgVendor.dpaSignedAt.toISOString().split('T')[0] : undefined,
+          businessOwner: orgVendor.businessOwner || undefined,
+          criticality: orgVendor.criticality || 'medium',
+          status: orgVendor.status || 'active',
+        };
+      });
+
+      const csv = buildArticle30RecipientCsv(rows);
+      return {
+        csv,
+        rowCount: rows.length,
+        filename: `ropa_article_30_recipients_${new Date().toISOString().split('T')[0]}.csv`,
+      };
+    }),
+
+  /**
+   * Sprint 3 — Article 28 Compliance Evidence Dossier Export.
+   *
+   * Produces a comprehensive evidence dossier detailing contractual terms,
+   * verified clause citations, sub-processors, and transfer safeguards.
+   */
+  exportArticle28Dossier: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .input(z.object({ vendorId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const orgId = ctx.user!.orgId;
+      const [orgVendorRow] = await ctx.db
+        .select({
+          orgVendor: organizationVendors,
+          vendor: vendors,
+        })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(
+          and(
+            eq(organizationVendors.organizationId, orgId),
+            eq(organizationVendors.vendorId, input.vendorId)
+          )
+        );
+
+      if (!orgVendorRow) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor record not found for organisation' });
+      }
+
+      const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, orgId));
+
+      const subProcessors = await ctx.db
+        .select()
+        .from(vendorSubProcessorEntities)
+        .where(eq(vendorSubProcessorEntities.parentVendorId, input.vendorId));
+
+      const [tia] = await ctx.db
+        .select()
+        .from(transferImpactAssessments)
+        .where(
+          and(
+            eq(transferImpactAssessments.organizationId, orgId),
+            eq(transferImpactAssessments.vendorId, input.vendorId)
+          )
+        );
+
+      const provenance = await ctx.db
+        .select()
+        .from(vendorFieldProvenance)
+        .where(eq(vendorFieldProvenance.vendorId, input.vendorId));
+
+      const v = orgVendorRow.vendor;
+      const ov = orgVendorRow.orgVendor;
+
+      const rawCoverage = (ov.dpaClauseCoverage as any) || {};
+      const catalogueAnalysis = v.dpaClauseAnalysis?.clauses || {};
+
+      const clauseCoverage: Record<string, { status: 'present' | 'weak' | 'missing'; excerpt?: string; citation?: string }> = {};
+      const clauseKeys = [
+        'documentedInstructions',
+        'confidentiality',
+        'securityMeasures',
+        'subProcessorRestrictions',
+        'dataSubjectRights',
+        'securityBreachDpia',
+        'deletionOnTermination',
+        'auditRights',
+      ];
+
+      for (const key of clauseKeys) {
+        if (rawCoverage[key]) {
+          const cat = catalogueAnalysis[key];
+          clauseCoverage[key] = {
+            status: cat?.status || 'present',
+            excerpt: cat?.excerpt,
+            citation: cat ? `Art. 28(3)` : undefined,
+          };
+        } else {
+          clauseCoverage[key] = { status: 'missing' };
+        }
+      }
+
+      const dossierData: Article28DossierData = {
+        organizationName: org?.name || 'Organisation',
+        generatedAt: new Date().toISOString().split('T')[0] ?? '',
+        vendor: {
+          name: v.name,
+          website: v.website || undefined,
+          category: v.category || undefined,
+          headquartersCountry: v.headquartersCountry || undefined,
+          businessOwner: ov.businessOwner || undefined,
+          contactEmail: ov.contactEmail || undefined,
+          criticality: ov.criticality || undefined,
+          processingRole: ov.processingRole || undefined,
+          dpaStatus: ov.dpaStatus || 'not_started',
+          dpaSignedAt: ov.dpaSignedAt ? ov.dpaSignedAt.toISOString().split('T')[0] : undefined,
+          dpaExpiresAt: ov.dpaExpiresAt ? ov.dpaExpiresAt.toISOString().split('T')[0] : undefined,
+          deletionCertificateRef: ov.deletionCertificateRef || undefined,
+          lastReviewedAt: ov.lastReviewedAt ? ov.lastReviewedAt.toISOString().split('T')[0] : undefined,
+          nextReviewAt: ov.nextReviewAt ? ov.nextReviewAt.toISOString().split('T')[0] : undefined,
+        },
+        clauseCoverage,
+        subProcessors: subProcessors.map((sp) => ({
+          name: sp.name,
+          service: sp.service || undefined,
+          country: sp.country || undefined,
+          website: sp.website || undefined,
+        })),
+        transfers: {
+          destinationCountry: v.headquartersCountry || undefined,
+          mechanisms: [
+            ...((v.transferMechanisms as string[]) || []),
+            ...((ov.transferMechanisms as string[]) || []),
+          ],
+          tiaStatus: tia?.status || (ov.tiaCompleted ? 'Completed' : ov.tiaRequired ? 'Required' : 'Not required'),
+          tiaConclusion: tia?.conclusion || undefined,
+        },
+        provenance: provenance.map((p) => ({
+          fieldName: p.fieldName,
+          sourceType: p.sourceType,
+          confidence: p.confidence,
+          retrievedAt: p.retrievedAt ? p.retrievedAt.toISOString().split('T')[0]! : '',
+          sourceUrl: p.sourceUrl || undefined,
+        })),
+      };
+
+      const markdown = buildArticle28DossierMarkdown(dossierData);
+      const slug = v.slug || v.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return {
+        markdown,
+        filename: `article28_dossier_${slug}_${new Date().toISOString().split('T')[0]}.md`,
+      };
+    }),
+
+  /**
+   * Sprint 3 — Standard GDPR Article 28 DPA Agreement Generator.
+   */
+  generateDpaAgreement: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .input(z.object({ vendorId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const orgId = ctx.user!.orgId;
+      const [orgVendorRow] = await ctx.db
+        .select({
+          orgVendor: organizationVendors,
+          vendor: vendors,
+        })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(
+          and(
+            eq(organizationVendors.organizationId, orgId),
+            eq(organizationVendors.vendorId, input.vendorId)
+          )
+        );
+
+      if (!orgVendorRow) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor record not found' });
+      }
+
+      const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, orgId));
+      const v = orgVendorRow.vendor;
+      const ov = orgVendorRow.orgVendor;
+
+      const subProcessors = await ctx.db
+        .select()
+        .from(vendorSubProcessorEntities)
+        .where(eq(vendorSubProcessorEntities.parentVendorId, input.vendorId));
+
+      const dpaMarkdown = generateStandardArticle28Dpa({
+        controllerName: org?.name || 'Organisation',
+        controllerContactEmail: (org?.settings as any)?.dpoEmail || undefined,
+        processorName: v.name,
+        processorContactEmail: ov.contactEmail || undefined,
+        purposeOfProcessing: ov.purpose || undefined,
+        dataCategories: (ov.dataCategoriesShared as string[]) || undefined,
+        authorizedSubProcessors: subProcessors.map((sp) => ({
+          name: sp.name,
+          country: sp.country || undefined,
+          service: sp.service || undefined,
+        })),
+      });
+
+      const slug = v.slug || v.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return {
+        dpaMarkdown,
+        filename: `dpa_agreement_${slug}.md`,
+      };
+    }),
+
+  /**
+   * Sprint 3 — Schedule vendor review cadence.
+   */
+  scheduleReview: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
+    .input(
+      z.object({
+        vendorId: z.string().uuid(),
+        cadence: z.enum(['quarterly', 'biannual', 'annual']).optional(),
+        customDate: z.string().datetime().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db
+        .select()
+        .from(organizationVendors)
+        .where(
+          and(
+            eq(organizationVendors.organizationId, ctx.user!.orgId),
+            eq(organizationVendors.vendorId, input.vendorId)
+          )
+        );
+
+      if (!existing) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
+      }
+
+      const nextReviewAt = input.customDate
+        ? new Date(input.customDate)
+        : calculateNextReviewDate(new Date(), existing.criticality, input.cadence);
+
+      const [updated] = await ctx.db
+        .update(organizationVendors)
+        .set({
+          reviewCadence: input.cadence || existing.reviewCadence || 'annual',
+          nextReviewAt,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(organizationVendors.id, existing.id),
+            eq(organizationVendors.organizationId, ctx.user!.orgId)
+          )
+        )
+        .returning();
+
+      return updated;
+    }),
+
+  /**
+   * Sprint 3 — Apply pre-analysed catalogue Article 28(3) DPA clauses to tenant record.
+   */
+  applyCatalogueDpaAnalysis: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
+    .input(z.object({ vendorId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db
+        .select({
+          orgVendor: organizationVendors,
+          vendor: vendors,
+        })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(
+          and(
+            eq(organizationVendors.organizationId, ctx.user!.orgId),
+            eq(organizationVendors.vendorId, input.vendorId)
+          )
+        );
+
+      if (!existing) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
+      }
+
+      const catAnalysis = existing.vendor.dpaClauseAnalysis;
+      if (!catAnalysis || !catAnalysis.clauses) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'No pre-analysed catalogue DPA clauses available for this vendor',
+        });
+      }
+
+      const clauseCoverage: Record<string, boolean> = {};
+      for (const [k, v] of Object.entries(catAnalysis.clauses)) {
+        clauseCoverage[k] = v.status === 'present' || v.status === 'weak';
+      }
+
+      const [updated] = await ctx.db
+        .update(organizationVendors)
+        .set({
+          dpaClauseCoverage: clauseCoverage,
+          dpaAiAnalysis: catAnalysis,
+          dpaAnalysisStatus: 'completed',
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(organizationVendors.id, existing.orgVendor.id),
+            eq(organizationVendors.organizationId, ctx.user!.orgId)
+          )
+        )
+        .returning();
+
       return updated;
     }),
 });
