@@ -1343,8 +1343,23 @@ export const vendors = pgTable('vendors', {
   subProcessorListHash: text('sub_processor_list_hash'),
   subProcessorListSnapshot: text('sub_processor_list_snapshot'),
   aliases: text('aliases').array().default(sql`ARRAY[]::text[]`),
-  
+   
   typicalDataCategories: jsonb('typical_data_categories').default([]),
+
+  // -------------------------------------------------------------------------
+  // P-9. Catalogue-level Article 28(3) clause analysis. Fetched and analysed
+  // once, server-side, against the catalogue vendor's published DPA; every
+  // customer who links the vendor inherits a pre-filled checklist to confirm
+  // rather than compile. Tri-state with excerpts -- the per-org confirmation
+  // flattens present/weak/missing to booleans, which is exactly the weakness
+  // the model found being discarded, so the catalogue copy keeps it.
+  // -------------------------------------------------------------------------
+  dpaClauseAnalysis: jsonb('dpa_clause_analysis').$type<{
+    analysedAt: string;
+    sourceUrl: string;
+    clauses: Record<string, { status: 'present' | 'weak' | 'missing'; excerpt?: string }>;
+  } | null>(),
+  dpaAnalysedAt: timestamp('dpa_analysed_at', { withTimezone: true }),
   
   riskScore: integer('risk_score'),
   riskLevel: varchar('risk_level', { length: 20 }),
@@ -1576,6 +1591,206 @@ export const vendorSubProcessorChanges = pgTable('vendor_sub_processor_changes',
   reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
   notes: text('notes'),
 });
+
+// ----------------------------------------------------------------------------
+// Sprint 2 — the pipeline spine (audit Part IV, Weeks 7–16).
+//
+// Four islands became three when Sprint 1 built an importer; the gatherer was
+// still one of them. These tables are what "connect the pipeline" means in
+// practice: a run log and a candidate staging table so enrichment output lands
+// somewhere reviewable instead of in a JSON file nothing reads, a provenance row
+// per field so a pre-filled value carries its source and confidence (P-2), the
+// DPF registry as data rather than a hardcoded array (P-5), and sub-processors
+// parsed into rows so a change diffs as entities rather than blobs (P-10).
+// ----------------------------------------------------------------------------
+
+/**
+ * One execution of the gatherer — a batch enrichment, a single reverify, or a
+ * DPF registry import. The pipeline previously had no memory: `gather-vendors.ts`
+ * appended to a JSON file and its only run statistics lived in an audit document
+ * someone had to derive by counting records (Appendix B). A row per run is also
+ * the checkpoint: a batch that dies halfway resumes after the highest completed
+ * index instead of starting over.
+ */
+export const vendorIntelligenceRuns = pgTable('vendor_intelligence_runs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  // 'enrich_batch' | 'reverify' | 'dpf_import'
+  kind: varchar('kind', { length: 30 }).notNull(),
+  // 'pending' | 'running' | 'completed' | 'failed'
+  status: varchar('status', { length: 20 }).default('pending').notNull(),
+  targets: jsonb('targets').$type<Array<{ name: string; website?: string; category?: string }>>().default([]),
+  processed: integer('processed').default(0).notNull(),
+  accepted: integer('accepted').default(0).notNull(),
+  rejected: integer('rejected').default(0).notNull(),
+  failed: integer('failed').default(0).notNull(),
+  lastError: text('last_error'),
+  /** The index to resume from — the number of targets fully handled. */
+  cursor: integer('cursor').default(0).notNull(),
+  triggeredBy: uuid('triggered_by').references(() => users.id, { onDelete: 'set null' }),
+  startedAt: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+});
+
+/**
+ * P-3. Staging between the gatherer and the catalogue. An accepted record used
+ * to be whatever survived `isHighConfidence = dpaOk && privacyOk` — an AND
+ * across two independent probes that threw away eight verified DPAs on the
+ * strength of their privacy pages. Everything now lands here with per-field
+ * evidence, and a human decides; bulk-approve above a confidence threshold is
+ * the fast path, not the only path.
+ *
+ * Keyed on the normalised domain so re-running a batch updates the same
+ * candidate instead of duplicating it. A record without a usable domain keeps
+ * `''` — empty string collides in the unique constraint, NULL does not, and a
+ * nameless no-domain record has no business being a candidate anyway.
+ */
+export const vendorCandidates = pgTable('vendor_candidates', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  runId: uuid('run_id').references(() => vendorIntelligenceRuns.id, { onDelete: 'set null' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 100 }),
+  domain: varchar('domain', { length: 255 }).notNull().default(''),
+  category: varchar('category', { length: 100 }),
+  /** The full extracted record, exactly as the model produced it. */
+  payload: jsonb('payload').notNull(),
+  /** Per-probe outcomes: { dpaUrl: {status, failureClass, resolvedUrl}, ... }. */
+  probeResults: jsonb('probe_results').default({}),
+  /** groundingMetadata captured where it was produced, not discarded (D23/P-8). */
+  grounding: jsonb('grounding'),
+  /** 0–100. Weighted mean of the per-field confidences, for bulk triage. */
+  confidence: integer('confidence').default(0).notNull(),
+  // 'pending' | 'approved' | 'rejected'
+  status: varchar('status', { length: 20 }).default('pending').notNull(),
+  rejectionReason: text('rejection_reason'),
+  reviewedBy: uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  /** Set when approval wrote the catalogue row, so re-review finds its child. */
+  createdVendorId: uuid('created_vendor_id').references(() => vendors.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  domainUnq: unique('vendor_candidates_domain_unq').on(table.domain),
+  statusIdx: index('idx_vc_status').on(table.status, table.confidence),
+}));
+
+/**
+ * P-2 — the single highest-leverage schema change available, per the audit.
+ *
+ * Trust is not "the pipeline is accurate"; trust is "the pipeline tells me which
+ * fields to check". One row per (catalogue vendor, field): what the value is,
+ * where it came from, how sure the pipeline is, and when it was looked at. A
+ * customer seeing `HQ = US · confidence 0.98 · incorporation record · verified
+ * 3 days ago` accepts it; seeing `sub-processors · 0.55 · unverified` checks it.
+ * Both behaviours are correct and the row is what tells them apart.
+ *
+ * Scoped to the shared catalogue, like the fields it describes — every tenant
+ * linking AWS inherits the same provenance rather than re-collecting it.
+ */
+export const vendorFieldProvenance = pgTable('vendor_field_provenance', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  vendorId: uuid('vendor_id').notNull().references(() => vendors.id, { onDelete: 'cascade' }),
+  fieldName: varchar('field_name', { length: 100 }).notNull(),
+  value: jsonb('value'),
+  // 'ai_grounded' | 'http_probe' | 'registry' | 'analyst' | 'customer'
+  sourceType: varchar('source_type', { length: 20 }).notNull(),
+  sourceUrl: text('source_url'),
+  /** 0–100. */
+  confidence: integer('confidence').default(0).notNull(),
+  evidenceSnippet: text('evidence_snippet'),
+  retrievedAt: timestamp('retrieved_at', { withTimezone: true }).defaultNow().notNull(),
+  verifiedBy: varchar('verified_by', { length: 255 }),
+  verifiedAt: timestamp('verified_at', { withTimezone: true }),
+}, (table) => ({
+  vendorFieldUnq: unique('vendor_field_provenance_vendor_field_unq').on(table.vendorId, table.fieldName),
+}));
+
+/**
+ * P-5. The Department of Commerce's Data Privacy Framework participant list,
+ * imported on a schedule. DPF certifications lapse annually and a lapsed
+ * certification is a Chapter V event; until this table exists the only thing
+ * standing between a customer and a dead adequacy claim is a string somebody
+ * typed into a seed file (known-concerns §18, audit D19/D5).
+ *
+ * Keyed on the folded organisation name because the registry publishes names,
+ * not domains — the domains column carries every hostname the entry publishes,
+ * which is how catalogue vendors are matched to it.
+ */
+export const dpfRegistrations = pgTable('dpf_registrations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  nameKey: varchar('name_key', { length: 255 }).notNull(),
+  organisationName: varchar('organisation_name', { length: 500 }).notNull(),
+  domains: text('domains').array().default(sql`ARRAY[]::text[]`),
+  // 'active' | 'lapsed' | 'discontinued'
+  status: varchar('status', { length: 20 }).default('active').notNull(),
+  certificationDate: date('certification_date'),
+  recertificationDate: date('recertification_date'),
+  nextRecertificationDate: date('next_recertification_date'),
+  coveredEntities: jsonb('covered_entities').default([]),
+  sourceUrl: text('source_url'),
+  fetchedAt: timestamp('fetched_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  nameUnq: unique('dpf_registrations_name_key_unq').on(table.nameKey),
+}));
+
+/**
+ * P-10. A vendor's sub-processor list as structured rows rather than a text
+ * snapshot. The Article 28(2) diff was repaired in Sprint 0 to show lines; lines
+ * still render "Added: Amazon Web Services Hosting United States" when the fact
+ * is "AWS added hosting". Name/service/country parsed per row turns the
+ * reviewer's question — who changed? — back into a query.
+ *
+ * Natural key is the folded name, which is why it is NOT NULL with a `''`
+ * default rather than nullable: Postgres treats NULLs as distinct in a unique
+ * constraint, and a nullable member would let the same sub-processor insert
+ * twice under any spelling variation of blank.
+ */
+export const vendorSubProcessorEntities = pgTable('vendor_sub_processor_entities', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  parentVendorId: uuid('parent_vendor_id').notNull().references(() => vendors.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  nameKey: varchar('name_key', { length: 255 }).notNull().default(''),
+  service: varchar('service', { length: 255 }),
+  country: char('country', { length: 2 }),
+  purpose: text('purpose'),
+  website: varchar('website', { length: 500 }),
+  firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).defaultNow().notNull(),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).defaultNow().notNull(),
+  removedAt: timestamp('removed_at', { withTimezone: true }),
+}, (table) => ({
+  parentNameUnq: unique('vendor_sub_processor_entities_parent_name_unq').on(table.parentVendorId, table.nameKey),
+}));
+
+export const vendorIntelligenceRunsRelations = relations(vendorIntelligenceRuns, ({ many }) => ({
+  candidates: many(vendorCandidates),
+}));
+
+export const vendorCandidatesRelations = relations(vendorCandidates, ({ one }) => ({
+  run: one(vendorIntelligenceRuns, {
+    fields: [vendorCandidates.runId],
+    references: [vendorIntelligenceRuns.id],
+  }),
+  createdVendor: one(vendors, {
+    fields: [vendorCandidates.createdVendorId],
+    references: [vendors.id],
+  }),
+  reviewer: one(users, {
+    fields: [vendorCandidates.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+export const vendorFieldProvenanceRelations = relations(vendorFieldProvenance, ({ one }) => ({
+  vendor: one(vendors, {
+    fields: [vendorFieldProvenance.vendorId],
+    references: [vendors.id],
+  }),
+}));
+
+export const vendorSubProcessorEntitiesRelations = relations(vendorSubProcessorEntities, ({ one }) => ({
+  parentVendor: one(vendors, {
+    fields: [vendorSubProcessorEntities.parentVendorId],
+    references: [vendors.id],
+  }),
+}));
 
 export const vendorIncidents = pgTable('vendor_incidents', {
   id: uuid('id').defaultRandom().primaryKey(),

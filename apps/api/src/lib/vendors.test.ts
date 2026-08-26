@@ -529,6 +529,209 @@ check(rendered.length === 1 && rendered[0]?.label === 'DPA status',
   'so one real change renders as one line, not as three',
   JSON.stringify(rendered.map((r) => r.label)));
 
+console.log('\nSprint 2 — vendorCertifications (P-4)\n');
+
+import {
+  VENDOR_CERTIFICATIONS,
+  normaliseCertification,
+  normaliseCertificationList,
+  hasCertification,
+} from '../constants/vendorCertifications.js';
+
+check(normaliseCertification('SOC 2 Type II') === 'soc2', 'the model spelling maps to the key');
+check(normaliseCertification('ISO/IEC 27001:2022') === 'iso27001', 'the certificate spelling maps too');
+check(normaliseCertification('PCI-DSS') === 'pci_dss', 'punctuation folds away');
+check(normaliseCertification('B Corp') === null, 'an unmatched certification stays unmatched');
+check(
+  normaliseCertification('soc2') === 'soc2',
+  'a canonical key maps to itself',
+);
+const certList = normaliseCertificationList(['SOC 2 Type II', 'unknown-thing', 'ISO 27001', 'soc2']);
+check(certList[0] === 'soc2' && certList[2] === 'iso27001', 'mapped entries come first and dedupe');
+check(certList.includes('unknown-thing'), 'an unmapped value is kept verbatim, not dropped');
+check(hasCertification(['SOC 2 Type II'], 'soc2'), 'hasCertification sees the mapped form');
+check(!hasCertification(['iso27001'], 'soc2'), 'and a recognised non-target answers false, not re-scans');
+check(VENDOR_CERTIFICATIONS.length >= 10, 'the vocabulary is worth having');
+
+console.log('\nSprint 2 — probe classification (P-6)\n');
+
+import {
+  classifyFetchError,
+  classifyResponse,
+  evaluateContentSignals,
+  isGatedUrl,
+} from './vendorProbe.js';
+
+check(classifyResponse(403, '', false) === 'blocked_bot_protection', '403 is a bot block, not bad data');
+check(classifyResponse(429, '', false) === 'blocked_bot_protection', '429 likewise');
+check(classifyResponse(404, '', false) === 'url_not_found', '404 is a missing URL');
+check(classifyResponse(200, '<html>Access Denied</html>', false) === 'blocked_bot_protection',
+  'a bot-wall body is recognised even on a 200');
+check(classifyResponse(200, '<html>real content</html>', true) === 'gated_content',
+  'a login-walled URL classifies as gated');
+check(classifyResponse(200, '<html>real content</html>', false) === 'content_mismatch',
+  'reachable but signal-less is a mismatch, the honest "we got something else"');
+check(classifyFetchError(new Error('This operation was aborted')) === 'timeout', 'an abort is a timeout');
+check(evaluateContentSignals('<h1>Data Processing Agreement</h1><p>The controller and processor agree. Signed by both parties.</p>', 'dpa') === 'verified',
+  'a real DPA verifies');
+check(evaluateContentSignals('<form>Enter your username</form> Data Processing Agreement', 'dpa') !== 'verified',
+  'a login wall never verifies, whatever words it borrows');
+check(evaluateContentSignals('Sub-processors list with location and purpose of each entity', 'subprocessors') === 'verified',
+  'a sub-processor page verifies on list + detail signals');
+check(isGatedUrl('https://vendor.com/login?next=/dpa'), 'gating is visible in the URL itself');
+
+console.log('\nSprint 2 — document domain classification (P-7)\n');
+
+import {
+  getRegistrableDomain,
+  classifyDocumentDomain,
+  VENDOR_PARENT_DOMAINS,
+} from './vendorDomains.js';
+
+check(getRegistrableDomain('https://www.example.com/legal') === 'example.com', 'scheme, www and path strip');
+check(getRegistrableDomain('sub.co.uk') === 'sub.co.uk', 'a multi-label suffix keeps three labels');
+check(getRegistrableDomain('a.b.example.com') === 'example.com', 'deep subdomains collapse to the registrable domain');
+
+check(classifyDocumentDomain('https://clickup.com/terms/dpa', 'https://www.clickup.com') === 'same_site',
+  'same registrable domain accepts');
+check(classifyDocumentDomain('https://trust.netsuite.com/dpa', 'https://www.oracle.com/health', VENDOR_PARENT_DOMAINS) === 'parent_domain',
+  'NetSuite under Oracle is an outcome, not a reject — audit D22');
+check(classifyDocumentDomain('https://www.tableau.com/legal/dpa', 'https://salesforce.com', VENDOR_PARENT_DOMAINS) === 'parent_domain',
+  'Tableau under Salesforce likewise');
+check(classifyDocumentDomain('https://random-scammer.ru/dpa', 'https://clickup.com') === 'unknown',
+  'an unrelated domain still rejects');
+check(Object.keys(VENDOR_PARENT_DOMAINS).length >= 8, 'the parent map covers the audit\'s five lost records and more');
+
+console.log('\nSprint 2 — per-field confidence (P-7)\n');
+
+import {
+  fieldConfidence,
+  assessCandidate,
+} from './vendorFieldConfidence.js';
+
+check(fieldConfidence({ value: 'x', sourceType: 'http_probe', probeStatus: 'verified_probed_success', domainOk: true }) === 90,
+  'a verified on-domain probe scores 90');
+check(fieldConfidence({ value: 'x', sourceType: 'http_probe', probeStatus: 'verified_probed_success', domainOk: false }) === 60,
+  'a verified off-domain (parent) probe scores visibly less');
+check(fieldConfidence({ value: null, sourceType: 'ai_grounded' }) === 0,
+  'an absent model fact scores nothing');
+check(fieldConfidence({ value: 'present', sourceType: 'ai_grounded' }) === 40,
+  'a model-only fact sits at the unprobed ceiling of 40');
+
+// The AND gate's exact casualty: a verified DPA with a failed privacy policy.
+// Old behaviour: rejected outright. New: accepted into review with the DPA
+// leading.
+const mixedRecord = {
+  dpaUrl: { value: 'u', sourceType: 'http_probe' as const, probeStatus: 'verified_probed_success' as const, domainOk: true, resolvedUrl: 'https://v.com/dpa' },
+  privacyPolicyUrl: { value: 'u', sourceType: 'http_probe' as const, probeStatus: 'failed_probed' as const, resolvedUrl: null },
+};
+const mixedAssessment = assessCandidate('Vendor', 'https://v.com', mixedRecord);
+check(mixedAssessment.autoAcceptable || mixedAssessment.confidence > 50,
+  'a verified DPA is no longer discarded for a failed privacy policy',
+  `confidence=${mixedAssessment.confidence}, auto=${String(mixedAssessment.autoAcceptable)}`);
+check(mixedAssessment.perField.privacyPolicyUrl?.decision !== 'accept',
+  'while the failed privacy field itself is not silently accepted');
+
+// The bulk-approve bar needs corroboration, not just one good field.
+const weakRecord = {
+  dpaUrl: { value: null, sourceType: 'ai_grounded' as const },
+  headquartersCountry: { value: 'US', sourceType: 'ai_grounded' as const },
+};
+check(assessCandidate('V', 'https://v.com', weakRecord).autoAcceptable === false,
+  'model-only facts cannot bulk-approve themselves');
+
+console.log('\nSprint 2 — sub-processor entity parsing (P-10)\n');
+
+import {
+  parseSubProcessorLine,
+  diffSubProcessorEntities,
+  subProcessorNameKey,
+} from './vendorSubProcessorEntities.js';
+
+const pipeRow = parseSubProcessorLine('Twilio Inc. | SMS delivery | US');
+check(pipeRow?.name === 'Twilio Inc.', 'a pipe-table row yields its name');
+check(pipeRow?.service === 'SMS delivery', 'and its service');
+check(pipeRow?.country === 'US', 'and its ISO country');
+
+const parenRow = parseSubProcessorLine('Stripe Payments Europe Ltd (IE)');
+check(parenRow?.name === 'Stripe Payments Europe Ltd', 'parenthesised country separates from the name');
+check(parenRow?.country === 'IE', 'as an ISO code');
+
+check(parseSubProcessorLine('Amazon Web Services')?.nameKey === subProcessorNameKey('amazon web services'),
+  'a bare name parses with a folded key');
+check(subProcessorNameKey('Twilio Inc.') === subProcessorNameKey('twilio inc'),
+  'case and punctuation do not change identity');
+check(parseSubProcessorLine('') === null && parseSubProcessorLine('   ') === null,
+  'blank lines parse to nothing');
+
+const urlOnly = parseSubProcessorLine('https://subprocessor.twilio.com/entity/acme');
+check(urlOnly !== null && !!urlOnly.website && urlOnly.name.length > 0, 'a bare link names itself after its host');
+
+const prevEntities = ['Alpha | Hosting | IE', 'Beta | SMS | US'].map((l) => parseSubProcessorLine(l)!);
+const nextEntities = ['Alpha | Hosting | IE', 'Gamma | Mail | DE'].map((l) => parseSubProcessorLine(l)!);
+const entityDiff = diffSubProcessorEntities(prevEntities, nextEntities);
+check(entityDiff.added.length === 1 && entityDiff.added[0]?.name === 'Gamma', 'one entity added');
+check(entityDiff.removed.length === 1 && entityDiff.removed[0]?.name === 'Beta', 'one entity removed');
+
+console.log('\nSprint 2 — DPF matching (P-5)\n');
+
+import { matchDpfStatus, dpfNameKey, isDpfLapsedByDate } from './vendorDpf.js';
+import type { DpfEntry } from './vendorDpf.js';
+
+const dpfEntries: DpfEntry[] = [
+  { nameKey: dpfNameKey('Microsoft Corporation'), organisationName: 'Microsoft Corporation', domains: ['microsoft.com'], status: 'active' },
+  { nameKey: dpfNameKey('GoDaddy Operating Company'), organisationName: 'GoDaddy Operating Company', domains: [], status: 'active' },
+  { nameKey: dpfNameKey('Old Vendor Ltd'), organisationName: 'Old Vendor Ltd', domains: [], status: 'lapsed' },
+];
+
+check(matchDpfStatus('Anything Inc.', 'https://azure.microsoft.com', dpfEntries).status === 'active',
+  'domain match wins regardless of name');
+// The D19 defect in miniature: bidirectional substring made "Go" match "google".
+check(matchDpfStatus('Google LLC', null, dpfEntries).status === 'not_found',
+  '"Go" does not match "Godaddy" — substring matching stays dead');
+check(matchDpfStatus('Microsoft Corporation', null, dpfEntries).status === 'active',
+  'exact folded name matches');
+check(matchDpfStatus('Old Vendor Limited', null, dpfEntries).status === 'not_found',
+  'a differently-folded name does not fuzzy-match');
+const lapsed = matchDpfStatus('Old Vendor Ltd', null, dpfEntries);
+check(lapsed.status === 'lapsed', 'a lapsed entry reports lapsed rather than hiding');
+check(isDpfLapsedByDate({ nextRecertificationDate: '2020-01-01' }) === true, 'an expired recert date reads lapsed');
+check(isDpfLapsedByDate({ nextRecertificationDate: '2999-01-01' }) === false, 'a future recert date does not');
+check(isDpfLapsedByDate({}) === false, 'no date means no lapse claim');
+
+console.log('\nSprint 2 — candidate assessment mapping\n');
+
+import { buildCatalogueWrites, diffFreshAgainstCatalogue } from './vendorIntelligenceMappers.js';
+
+const catalogueResult = buildCatalogueWrites(
+  {
+    name: 'ClickUp',
+    website: 'https://clickup.com',
+    dpaUrl: 'https://clickup.com/terms/dpa',
+    privacyPolicyUrl: null,
+    subProcessorListUrl: 'https://clickup.com/terms/dpa/subprocessors',
+    headquartersCountry: 'US',
+    transferMechanisms: [],
+    securityCertifications: ['soc2'],
+    dataProcessingLocations: [],
+  },
+  { perField: { dpaUrl: { confidence: 90, decision: 'accept' } }, confidence: 80, autoAcceptable: true, needsConfirmation: [] },
+);
+check((catalogueResult.columns.dpaUrl as string) === 'https://clickup.com/terms/dpa', 'a present URL writes its column');
+check(catalogueResult.columns.privacyPolicyUrl === undefined, 'an absent URL writes no column and no null over it');
+check(catalogueResult.provenance.some((r) => r.fieldName === 'dpaUrl' && r.sourceType === 'http_probe' && r.confidence === 90),
+  'provenance rows carry source type and confidence');
+check(catalogueResult.provenance.every((r) => r.fieldName !== 'transferMechanisms'),
+  'empty lists write nothing rather than resetting a known value to []');
+
+const reverifyDiff = diffFreshAgainstCatalogue(
+  { dpaUrl: 'https://old.com/dpa', privacyPolicyUrl: 'https://old.com/privacy', subProcessorListUrl: null, headquartersCountry: 'GB' },
+  { dpaUrl: 'https://new.com/dpa', privacyPolicyUrl: 'https://old.com/privacy', subProcessorListUrl: null, headquartersCountry: 'GB' },
+  { perField: {}, confidence: 0, autoAcceptable: false, needsConfirmation: [] },
+);
+check(reverifyDiff.length === 1 && reverifyDiff[0]?.field === 'dpaUrl',
+  'reverify reports exactly the fields that moved');
+
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {
   console.log(`${failures} FAILED.`);

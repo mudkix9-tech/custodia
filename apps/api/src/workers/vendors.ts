@@ -1,12 +1,13 @@
 import { createWorker, createQueue, Job } from '../lib/queue.js';
 import { db } from '../db.js';
-import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates } from 'db';
+import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, vendorSubProcessorEntities, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates } from 'db';
 import { eq, and, isNotNull, lte, gt, inArray, or, isNull, sql } from 'drizzle-orm';
 import { calculateVendorRisk } from '../routers/vendors.js';
 import { VENDOR_STATUSES_LIVE } from '../constants/vendorLifecycle.js';
 import { runClusterTask, scanDomainForThirdParties } from '../lib/browserPool.js';
 import { getRootDomain } from '../lib/domains.js';
 import { normaliseSubProcessorSnapshot } from '../lib/vendorSubProcessors.js';
+import { parseSubProcessorLine, diffSubProcessorEntities } from '../lib/vendorSubProcessorEntities.js';
 import { queueNotification } from '../utils/notifications.js';
 import { dispatchWebhook } from '../utils/webhookDispatcher.js';
 import crypto from 'crypto';
@@ -141,6 +142,47 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
 
             if (!changeRecord) throw new Error('Failed to insert sub-processor change record');
 
+            // P-10. The snapshot diff shows lines; entities show facts. Parse both
+            // snapshots into rows and store the parsed diff on the change record's
+            // organisation scope, upserting the shared catalogue entity table. The
+            // per-org review still reads the line-level snapshots; these rows are
+            // what "who changed" becomes queryable against.
+            const previousEntities = String(v.subProcessorListSnapshot || '')
+              .split('\n')
+              .map((line) => parseSubProcessorLine(line))
+              .filter((e): e is NonNullable<typeof e> => e !== null);
+            const nextEntities = cleanedText
+              .split('\n')
+              .map((line) => parseSubProcessorLine(line))
+              .filter((e): e is NonNullable<typeof e> => e !== null);
+            const entityDiff = diffSubProcessorEntities(previousEntities, nextEntities);
+            for (const added of entityDiff.added) {
+              await db.insert(vendorSubProcessorEntities).values({
+                parentVendorId: v.id,
+                name: added.name.slice(0, 255),
+                nameKey: added.nameKey,
+                service: added.service ?? null,
+                country: added.country && added.country.length === 2 ? added.country.toUpperCase() : null,
+                purpose: added.purpose ?? null,
+                website: added.website ?? null,
+              }).onConflictDoUpdate({
+                target: [vendorSubProcessorEntities.parentVendorId, vendorSubProcessorEntities.nameKey],
+                set: {
+                  lastSeenAt: new Date(),
+                  removedAt: null,
+                  service: added.service ?? null,
+                },
+              });
+            }
+            if (entityDiff.removed.length > 0) {
+              await db.update(vendorSubProcessorEntities)
+                .set({ removedAt: new Date() })
+                .where(and(
+                  eq(vendorSubProcessorEntities.parentVendorId, v.id),
+                  inArray(vendorSubProcessorEntities.nameKey, entityDiff.removed.map((r) => r.nameKey)),
+                ));
+            }
+
             await queueNotification({
               organizationId: orgVendor.organizationId,
               type: 'vendor.sub_processor_changed',
@@ -246,7 +288,11 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
               })
               .where(eq(organizationVendors.id, record.orgVendor.id));
               
-            await createNotification(record.orgVendor.organizationId, 'CRITICAL', `DPA with ${record.vendor.name} has expired.`);
+            await createNotification(record.orgVendor.organizationId, 'CRITICAL', `DPA with ${record.vendor.name} has expired.`, {
+              type: 'vendor.dpa_expired',
+              actionUrl: `/vendors/${record.vendor.id}`,
+              vendorName: record.vendor.name,
+            });
           } else {
             // Alert intervals: 90, 60, 30, 7 days
             await db.update(organizationVendors)
@@ -254,9 +300,14 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
               .where(eq(organizationVendors.id, record.orgVendor.id));
 
             await createNotification(
-              record.orgVendor.organizationId, 
-              currentTier === '7' ? 'HIGH' : 'MEDIUM', 
-              `DPA with ${record.vendor.name} will expire in ${days} days.`
+              record.orgVendor.organizationId,
+              currentTier === '7' ? 'HIGH' : 'MEDIUM',
+              `DPA with ${record.vendor.name} will expire in ${days} days.`,
+              {
+                type: days <= 7 ? 'vendor.dpa_expiring_7d' : 'vendor.dpa_expiring_30d',
+                actionUrl: `/vendors/${record.vendor.id}`,
+                vendorName: record.vendor.name,
+              },
             );
           }
         } else if (currentTier === null && lastTier !== null) {
@@ -294,9 +345,14 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
               .where(eq(organizationVendors.id, record.orgVendor.id));
               
             await createNotification(
-              record.orgVendor.organizationId, 
-              'HIGH', 
-              `Contract for vendor ${record.vendor.name} has reached its renewal date (${record.orgVendor.contractRenewalDate}).`
+              record.orgVendor.organizationId,
+              'HIGH',
+              `Contract for vendor ${record.vendor.name} has reached its renewal date (${record.orgVendor.contractRenewalDate}).`,
+              {
+                type: 'vendor.dpa_expired',
+                actionUrl: `/vendors/${record.vendor.id}`,
+                vendorName: record.vendor.name,
+              },
             );
           } else {
             await db.update(organizationVendors)
@@ -304,9 +360,14 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
               .where(eq(organizationVendors.id, record.orgVendor.id));
 
             await createNotification(
-              record.orgVendor.organizationId, 
-              'MEDIUM', 
-              `Contract renewal for vendor ${record.vendor.name} is in ${days} days (Date: ${record.orgVendor.contractRenewalDate}).`
+              record.orgVendor.organizationId,
+              'MEDIUM',
+              `Contract renewal for vendor ${record.vendor.name} is in ${days} days (Date: ${record.orgVendor.contractRenewalDate}).`,
+              {
+                type: days <= 7 ? 'vendor.dpa_expiring_7d' : 'vendor.dpa_expiring_30d',
+                actionUrl: `/vendors/${record.vendor.id}`,
+                vendorName: record.vendor.name,
+              },
             );
           }
         } else if (currentTier === null && lastTier !== null) {
@@ -639,11 +700,27 @@ if (vendorWorker) {
   });
 }
 
-// Helper
-async function createNotification(orgId: string, urgency: string, message: string) {
-  // Assuming a generic notifications table exists, or we log it somewhere.
-  // In a real app, this might send an email or an in-app notification.
-  console.log(`[Notification -> Org ${orgId}] [${urgency}] ${message}`);
+// D17. This was a `console.log` under the comment "Assuming a generic
+// notifications table exists" — while `queueNotification` sat two hundred lines
+// away in the same file's import list, used by the sub-processor fan-out above.
+// Every DPA-expiry and renewal alert was invisible. The urgency argument is
+// kept for log continuity; the real routing is the notification type, which
+// carries its channels (email/slack/in_app) from NOTIFICATION_TYPES.
+async function createNotification(
+  orgId: string,
+  urgency: string,
+  message: string,
+  opts?: { type?: 'vendor.dpa_expired' | 'vendor.dpa_expiring_7d' | 'vendor.dpa_expiring_30d'; actionUrl?: string; vendorName?: string },
+) {
+  const type = opts?.type ?? 'vendor.dpa_expiring_30d';
+  await queueNotification({
+    organizationId: orgId,
+    type,
+    title: message.slice(0, 120),
+    body: message,
+    actionUrl: opts?.actionUrl ?? '/vendors',
+    metadata: { vendorName: opts?.vendorName ?? null },
+  });
 }
 
 // Function to schedule recurring jobs

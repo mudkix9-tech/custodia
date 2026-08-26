@@ -103,6 +103,18 @@ const ALLOWED: Record<string, Exception> = {
   'vendors.ts::publishIncident': {
     reason: 'Platform-operator action on the global incident feed, gated on vendors:manage until a real platform-admin role exists.',
   },
+  'vendorIntelligence.ts::getCandidate': {
+    reason: 'Shared pipeline staging (vendor_candidates) — catalogue reference data awaiting review, like the vendors rows it would create. Permission-gated on vendors:view.',
+  },
+  'vendorIntelligence.ts::reverifyVendor': {
+    reason: 'Reads the shared vendor catalogue to queue a freshness re-verification; writes only a job payload and lastVerifiedAt. Same shape as vendors.getById.',
+  },
+  'vendorIntelligence.ts::approveCandidate': {
+    reason: 'Writes the shared global catalogue from reviewed staging — the write is deliberately cross-tenant because every vendor row is. Permission-gated on vendors:edit; per-org risk scores are recalculated as part of the same transaction.',
+  },
+  'vendorIntelligence.ts::rejectCandidate': {
+    reason: 'Marks a staging row rejected; vendor_candidates is shared pipeline state, not tenant data. Permission-gated on vendors:edit.',
+  },
 };
 
 type Finding = { file: string; procedure: string; line: number; tables: string[] };

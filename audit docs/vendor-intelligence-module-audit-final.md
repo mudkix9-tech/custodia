@@ -735,6 +735,179 @@ proved wrong (Postgres truncates identifiers at parse time too), so no rename is
 needed and the plain generated migration is correct. What has been applied, what
 has not, and that correction are in `vendor-intelligence-deployment-notes.md`.
 
+## 0.8 Build status — Sprint 2
+
+**Sprint 2 (Weeks 7–16 — connect the pipeline) was built on 26 August 2026.**
+This is the spine called out in Part IV of the original audit: one vendor
+intelligence service inside `apps/api` replacing both islands, a per-field
+provenance table, candidate staging with human review, a DPF registry import
+on a schedule, sub-processor entity parsing, and an evaluation harness.
+Sprint 2 also closes D17 (DPA-expiry alerts terminating in `console.log`) as
+a side-effect of the worker changes. **Not yet deployed:** migrations
+`0054_ancient_christian_walker.sql` and `0055_wonderful_proudstar.sql` are
+generated and readable; `npm run check` is green, but the migrations are NOT
+applied to Supabase. A `recalc:vendor-risk` run is not needed — Sprint 2
+adds no formula changes.
+
+- **P-1** — `apps/api/src/lib/vendorIntelligence.ts`. One service exposing
+  `enrich(name, domain)`, `enrichBatch(targets)`, and `reverify(vendorId)`.
+  Both islands' roles retired: `packages/db/src/scripts/gather-vendors.ts`
+  still exists for historical reproducibility but is no longer on the
+  critical path, and `vendor-pipeline/` is unchanged. The service keeps the
+  audit's call to keep working (refuse-to-guess, independent probes, two-bucket
+  accept/review split) and fixes the boolean AND gate, the 40/40 probe
+  ambiguity, the missing grounding capture, and the JSON-file-only output.
+  `runEnrichBatch` checkpoints per target through
+  `vendor_intelligence_runs.cursor`, so a worker killed at target 30 of 55
+  resumes at 30.
+- **P-2** — `vendor_field_provenance` (migration `0054`). One row per
+  `(vendor_id, field_name)` carrying value, source type, source URL,
+  confidence and evidence snippet. Written on candidate approval, upserted on
+  re-approval, surfaced on the catalogue row by the review console and the
+  detail page. This is the schema change the audit called
+  *"the single highest-leverage available"*.
+- **P-3** — `vendor_candidates` + `vendor_intelligence_runs` (migration `0054`).
+  Staging table keyed on the normalised domain so a re-run updates one row
+  instead of duplicating it. Candidates ship per-field evidence and a
+  weighted-mean confidence. The admin review console lives at
+  `/vendors/intelligence`: pending candidates sorted by confidence, per-field
+  decisions, bulk-approve at ≥ 70 confidence, JSON import for the legacy
+  `seed-data/vendors.json` and `pending-review.json` files (33 + 40 records
+  that the audit measured by counting JSON files).
+- **P-4** — `apps/api/src/constants/vendorCertifications.ts`. Controlled
+  vocabulary of 12 keys with a synonym table covering SOC 2 Type II,
+  ISO/IEC 27001:2022, PCI-DSS and friends. The risk engine's substring scan
+  is kept as a fallback for values the vocabulary could not place, so a
+  recognised non-target (e.g. `iso27001` asked about SOC 2) answers false
+  rather than re-scanning. Like `transferMechanisms.ts`: API constrains input
+  to the list, the label is a translation key, the boundary normalises.
+- **P-5** — `dpf_registrations` (migration `0054`) + weekly import job
+  (`dpf-registry-import`, scheduled `17 3 * * 1`). The dependency on a
+  hand-typed literal in `seed-vendors.ts` (known-concerns §18, D19/D5) is
+  replaced by a table whose entries carry covered entities, status, certification
+  and recertification dates. Matching uses domain first then exact folded
+  name — never substring, so the "Go matches google" defect is dead. Risk
+  engine awareness of lapsed certifications is recorded in `apps/api/src/lib/vendorDpf.ts`
+  (`matchDpfStatus` / `isDpfLapsedByDate`); the existing
+  `lib/vendorRisk.ts` location factor can now be wired to it in a follow-up
+  by reading `vendors.transferMechanisms` against the DPF table.
+- **P-6** — `apps/api/src/lib/vendorProbe.ts`. Probe failures carry a
+  `ProbeFailureClass` (`url_not_found`, `timeout`, `blocked_bot_protection`,
+  `gated_content`, `content_mismatch`, `too_large`). 403/429 and the
+  Cloudflare/JetPack bot-wall signatures are recognised, so the quarantine
+  is no longer indistinguishable from "bad data". The audit's sharpest
+  single observation is now an outcome on the candidate, not a `console.warn`.
+- **P-7** — `apps/api/src/lib/vendorDomains.ts` and
+  `apps/api/src/lib/vendorFieldConfidence.ts`. Registrable-domain comparison
+  via the project's multi-label suffix list. The audit's 5 lost
+  true-positives (Oracle/NetSuite, Adobe/Magento, Salesforce/Tableau,
+  Atlassian/Loom, Moodle) — plus 3 more for the SaaS mergers that
+  accumulated since the audit — now resolve as a `parent_domain` outcome
+  with the document flagged for confirmation, instead of rejection. Per-field
+  confidence scoring: a verified DPA scores 90 on-domain and 60 on a parent
+  domain, model-only facts cap at 40. The AND gate is gone — a verified DPA
+  is no longer discarded for a failed privacy policy.
+- **P-8** — groundingMetadata captured where it is produced, in
+  `extractGrounding()` and persisted on the candidate's `grounding` JSONB
+  column. `callGemini` retries once on malformed JSON. The HTTP probe now
+  identifies itself as `CustodiaVendorIntelligence/1.0` rather than a
+  spoofed Chrome UA — the audit specifically called this out as
+  *"a compliance product crawling behind a spoofed Chrome UA will eventually
+  be a support ticket from a vendor's security team"*. Honesty-by-default;
+  robots.txt respect is the batch caller's responsibility.
+- **P-9 — partial.** `vendors.dpaClauseAnalysis` and `vendors.dpaAnalysedAt`
+  are in the schema (migration `0055`); the analyser that fills them is
+  sketched in `lib/vendorIntelligence.ts` but the actual clause-by-clause
+  Article 28(3) evaluation is the next sprint's work. The schema is in
+  place so the analyser writes through to a known shape from day one.
+- **P-10** — `apps/api/src/lib/vendorSubProcessorEntities.ts` +
+  `vendor_sub_processor_entities` table (migration `0054`). Lines from
+  the sub-processor change detector are now parsed into structured rows
+  (name, service, country, purpose, website) by a heuristic that handles
+  pipe/tab/comma tables, parenthesised countries, and bare URLs. The
+  worker writes the entity diff alongside the line-level snapshot diff:
+  "Added: Twilio Inc., US, SMS delivery" rather than two blobs. Affected
+  sites in the worker (sub-processor-change-detector) are explicitly
+  flagged in the changeset.
+- **P-11** — `apps/api/src/lib/vendorEval.ts` + `npm run eval:vendors`. Gold
+  set of 3 hand-verified vendors (ClickUp, OneTrust, Okta — the three with
+  full `provenance` blocks in the legacy `seed-data/vendors.json`) with the
+  field-level truth. The harness scores an extraction against the set,
+  reporting per-field precision/recall and the overall numbers. Records
+  load with `--recorded extractions.json`. The set is small on purpose —
+  the audit's instruction was *"better a set someone actually re-verifies
+  than a large one that rots"*. Extend it as batches run.
+- **D17 closed as a side-effect.** The `console.log` `createNotification`
+  helper in `workers/vendors.ts` was replaced with `queueNotification`
+  using the existing `vendor.dpa_expiring_30d` / `7d` / `dpa_expired` types.
+  Every DPA-expiry and renewal alert now reaches a customer; the urgency
+  argument is kept for log continuity, the type carries the channels.
+- **D7** — line structure has been preserved since Sprint 0, and now
+  Sprint 2's entity parser runs on top of it, so a sub-processor change
+  shows both line-level and entity-level diffs.
+
+### Verification
+
+`npm run check` is green end to end. Specifically:
+
+- `apps/api` and `apps/web` at **0 type errors** each.
+- **`check:tenancy`** — 219 procedures, 142 update/delete statements.
+  Four new reviewed exceptions added to `ALLOWED` for the candidate/runs
+  procedures, all with reasons (shared catalogue, same shape as the
+  existing `vendors.getById`).
+- **`check:relations`** — 23 queries against 53 `relations()` blocks. All
+  `with:` keys resolve.
+- **`check:nocheck`**, **`check:params`**, **`check:sitemap`**,
+  **`check:messages`**, **`check:vendor-i18n`**, **`check:nocheck`** — all
+  green. `check:vendor-i18n` now reports 20 vendor files against 701 keys
+  (was 15/673 after Sprint 0) — five new files added by Sprint 2 are
+  fully translated.
+- **Fixtures — 185/185 assertions pass.** Sprint 0's 125 stayed green; Sprint 2
+  added 60 covering vocabulary normalisation, probe classification,
+  registrable-domain comparison, per-field confidence, sub-processor entity
+  parsing, DPF matching (including the D19 "Go matches Google" regression
+  test) and catalogue-writes mapping.
+- **Schema drift** — `drizzle-kit generate` is idempotent
+  (*"No schema changes, nothing to migrate"*). The new migrations will
+  appear in `git status` as untracked until committed; that is the
+  designed behaviour of `check:schema` and clears on commit.
+- **Migrations NOT applied.** `0054_ancient_christian_walker.sql` and
+  `0055_wonderful_proudstar.sql` are generated and read. They have not
+  been pushed to Supabase; deployment is a separate decision with its own
+  smoke-test.
+
+### Honest scope notes
+
+- **The boolean AND gate is gone** but the per-field thresholds are
+  heuristics, not measurements against the gold set. A real precision/recall
+  number will only exist after `npm run eval:vendors` is run against a live
+  extraction. The 3-record gold set is a starting point; the audit's call to
+  extend it as batches run is the standing instruction.
+- **P-9 is partial.** The catalogue-level DPA analysis schema is in
+  place; the analyser that fetches the DPA, runs the Article 28(3)
+  clause-by-clause evaluation, and stores tri-state with excerpts is not.
+  `vendors.dpaClauseAnalysis` and `dpaAnalysedAt` are reserved columns
+  waiting for it; per-org DPA analysis continues to use the
+  per-row `organization_vendors.dpaAiAnalysis` and clause checklist from
+  Sprint 0/1.
+- **DPF risk-engine awareness is recorded, not wired.** The table and the
+  importer are in place. The existing `lib/vendorRisk.ts` location factor
+  still keys off `vendors.transferMechanisms` (the controlled vocabulary
+  added in Sprint 0). Wiring the DPF table into the factor — so a lapsed
+  certification removes the DPF point it was carrying — is a small change
+  in `vendorRisk.ts` that was deliberately left out of this sprint to keep
+  the scope of the risk-formula change contained.
+- **Puppeteer fallback for bot-blocked probes is the audit's P-6 second
+  half and is not yet built.** Probe failures are now classified
+  correctly, so a future worker can read `probeResults.failureClass` and
+  route `blocked_bot_protection` to a Puppeteer pass. The probe itself
+  still uses `fetch`; the fallback is the obvious follow-up and is the
+  reason `apps/api/src/lib/vendorProbe.ts` is its own file.
+- **The gatherer script is not removed.** It still produces
+  `packages/db/src/seed-data/vendors.json` and the review console's
+  "Import JSON" form is how its output lands in the product. Removing it
+  is a separate decision and is not part of Sprint 2.
+
 ## Week 1 — stop the bleeding
 
 Every item is under a day; several are one line. This list alone closes seven P0s.

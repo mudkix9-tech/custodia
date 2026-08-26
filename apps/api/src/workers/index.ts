@@ -26,6 +26,7 @@ export * from './ropaDiscovery.js';
 export * from './ropaRetention.js';
 export * from './ropaIntakeReminders.js';
 export * from './materialChange.js';
+export * from './vendorIntelligence.js';
 import { createQueue } from '../lib/queue.js';
 
 import { getBoss, wrapJobPayload } from '../lib/queue.js';
@@ -72,6 +73,13 @@ export async function scheduleGlobalJobs() {
   await boss.schedule('ropa-discovery', '0 4 * * 1', wrapJobPayload('ropa-discovery-dispatch', {}));
   await boss.schedule('ropa-retention', '0 5 * * *', wrapJobPayload('ropa-retention-dispatch', {}));
   await boss.schedule('ropa-intake', '0 9 * * *', wrapJobPayload('ropa-intake-dispatch', {}));
+
+  // Sprint 2 (P-5). The DPF participant list refreshes weekly — certifications
+  // lapse annually and the registry publishes recertification dates, so a
+  // weekly import notices a lapse within seven days of it happening. This is
+  // deliberately NOT dormant: it writes only into dpf_registrations, touching
+  // no customer-facing queue.
+  await boss.schedule('vendor-intelligence', '17 3 * * 1', wrapJobPayload('dpf-registry-import', {}));
 }
 
 
