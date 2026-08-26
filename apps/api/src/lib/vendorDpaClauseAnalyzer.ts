@@ -96,7 +96,7 @@ export const ARTICLE_28_DEFINITIONS: Record<Article28ClauseKey, ClauseDefinition
       /implement(?:s|ing)?\s+appropriate\s+technical\s+and\s+organi[sz]ational\s+measures/i,
       /measures\s+required\s+pursuant\s+to\s+article\s+32/i,
       /encryption\s+of\s+personal\s+data.*ability\s+to\s+ensure\s+the\s+ongoing\s+confidentiality,\s+integrity/i,
-      /technical\s+and\s+organi[sz]ational\s+security\s+measures.*schedule|annex|appendix/i,
+      /technical\s+and\s+organi[sz]ational\s+security\s+measures.*?(?:schedule|annex|appendix)/i,
     ],
     weakPatterns: [
       /reasonable\s+commercial\s+security\s+measures/i,

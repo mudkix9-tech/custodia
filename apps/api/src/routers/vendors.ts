@@ -52,6 +52,7 @@ import { generateStandardArticle28Dpa } from '../lib/vendorDpaTemplate.js';
 import { calculateNextReviewDate, evaluateReviewStatus } from '../lib/vendorGovernance.js';
 import { hasSpecialCategory } from '../constants/vendorDataCategories.js';
 import { assertOwned } from '../lib/tenancy.js';
+import { ARTICLE_28_DEFINITIONS, type Article28ClauseKey } from '../lib/vendorDpaClauseAnalyzer.js';
 export { calculateVendorRisk };
 
 /**
@@ -170,7 +171,29 @@ export async function updateVendorRiskScore(dbInstance: any, orgId: string, vend
     eq(complianceGaps.source, 'dpia')
   ));
 
-  const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount, scoreModifier, dpiaGaps);
+  let dpfStatus: 'active' | 'lapsed' | 'discontinued' | undefined;
+  let dpfLapsedDate: string | undefined;
+  if (vendor.headquartersCountry === 'US') {
+    const [dpf] = await dbInstance.select().from(dpfRegistrations).where(
+      or(
+        sql`LOWER(${dpfRegistrations.organisationName}) = LOWER(${vendor.name})`,
+        sql`${dpfRegistrations.nameKey} = ${vendor.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`
+      )
+    );
+    if (dpf) {
+      dpfStatus = dpf.status as any;
+      if (dpf.recertificationDueDate && dpf.status === 'lapsed') {
+        dpfLapsedDate = dpf.recertificationDueDate.toISOString().split('T')[0];
+      }
+    }
+  }
+
+  const enrichedVendor = {
+    ...vendor,
+    ...(dpfStatus ? { dpfStatus, dpfLapsedDate } : {}),
+  };
+
+  const { score, level, factors } = calculateVendorRisk(enrichedVendor, orgVendor, subProcessorsCount, scoreModifier, dpiaGaps);
 
   await dbInstance.update(organizationVendors)
     .set({
@@ -194,6 +217,28 @@ export async function updateVendorRiskScore(dbInstance: any, orgId: string, vend
 export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId: string) {
   const [vendor] = await dbInstance.select().from(vendors).where(eq(vendors.id, vendorId));
   if (!vendor) return;
+
+  let dpfStatus: 'active' | 'lapsed' | 'discontinued' | undefined;
+  let dpfLapsedDate: string | undefined;
+  if (vendor.headquartersCountry === 'US') {
+    const [dpf] = await dbInstance.select().from(dpfRegistrations).where(
+      or(
+        sql`LOWER(${dpfRegistrations.organisationName}) = LOWER(${vendor.name})`,
+        sql`${dpfRegistrations.nameKey} = ${vendor.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`
+      )
+    );
+    if (dpf) {
+      dpfStatus = dpf.status as any;
+      if (dpf.recertificationDueDate && dpf.status === 'lapsed') {
+        dpfLapsedDate = dpf.recertificationDueDate.toISOString().split('T')[0];
+      }
+    }
+  }
+
+  const enrichedVendor = {
+    ...vendor,
+    ...(dpfStatus ? { dpfStatus, dpfLapsedDate } : {}),
+  };
 
   const orgVendors = await dbInstance.select().from(organizationVendors).where(eq(organizationVendors.vendorId, vendorId));
   
@@ -257,7 +302,7 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
       gap.entityId === orgVendor.id
     );
 
-    const { score, level, factors } = calculateVendorRisk(vendor, orgVendor, subProcessorsCount, scoreModifier, vendorGaps);
+    const { score, level, factors } = calculateVendorRisk(enrichedVendor, orgVendor, subProcessorsCount, scoreModifier, vendorGaps);
     
     updates.push({ id: orgVendor.id, score, level, factors });
 
@@ -2367,7 +2412,7 @@ export const vendorsRouter = router({
           clauseCoverage[key] = {
             status: cat?.status || 'present',
             excerpt: cat?.excerpt,
-            citation: cat ? `Art. 28(3)` : undefined,
+            citation: ARTICLE_28_DEFINITIONS[key as Article28ClauseKey]?.articleRef || 'Art. 28(3)',
           };
         } else {
           clauseCoverage[key] = { status: 'missing' };

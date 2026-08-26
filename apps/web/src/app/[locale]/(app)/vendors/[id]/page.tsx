@@ -17,8 +17,11 @@ import { DpaAnalysisModal } from '@/components/vendors/DpaAnalysisModal';
 import { TRANSFER_MECHANISMS } from '@/constants/transferMechanisms';
 import { VendorRelationshipPanel, VendorHistory, UnlinkVendor } from '@/components/vendors/VendorRelationship';
 
+import { useToast } from '@/components/ui/Toast';
+
 export default function VendorDetailsPage() {
   const t = useTranslations('vendors');
+  const toast = useToast();
   const params = useParams();
   const vendorId = params?.id as string;
 
@@ -64,8 +67,12 @@ export default function VendorDetailsPage() {
   const verifyProfileMutation = trpc.vendors.verifyVendorProfile.useMutation();
   const applyCatalogueMutation = trpc.vendors.applyCatalogueDpaAnalysis.useMutation({
     onSuccess: () => {
+      toast(t('deep_clause_analysis.applied_done'));
       utils.vendors.getOrgVendorDetails.invalidate({ vendorId });
     },
+    onError: (err) => {
+      toast(err.message, { tone: 'error' });
+    }
   });
 
   const [isExportingDossier, setIsExportingDossier] = useState(false);
@@ -84,8 +91,9 @@ export default function VendorDetailsPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch (err) {
-      console.error('Failed to export dossier:', err);
+      toast(t('export.done', { name: filename }));
+    } catch (err: any) {
+      toast(err?.message || 'Failed to export dossier', { tone: 'error' });
     } finally {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       setIsExportingDossier(false);
@@ -105,8 +113,9 @@ export default function VendorDetailsPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch (err) {
-      console.error('Failed to generate DPA:', err);
+      toast(t('export.done', { name: filename }));
+    } catch (err: any) {
+      toast(err?.message || 'Failed to generate DPA', { tone: 'error' });
     } finally {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       setIsGeneratingDpa(false);

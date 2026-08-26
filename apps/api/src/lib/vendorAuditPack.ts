@@ -155,7 +155,9 @@ export function buildArticle28DossierMarkdown(dossier: Article28DossierData): st
         : clause.status === 'weak'
         ? '⚠ Weak / Conditioned'
         : '✗ Missing';
-    const excerpt = (clause.excerpt || 'No specific excerpt recorded').replace(/\|/g, '\\|');
+    const excerpt = (clause.excerpt || 'No specific excerpt recorded')
+      .replace(/[\r\n]+/g, ' ')
+      .replace(/\|/g, '\\|');
     lines.push(`| **${label}** | ${statusBadge} | ${clause.citation || ''} | ${excerpt} |`);
   }
 

@@ -152,6 +152,7 @@ const DORMANT_JOBS = new Set<string>([
   'vendor-intelligence:dpa-page-change-detector',
   'vendor-intelligence:assessment-reminder-checker',
   'vendor-intelligence:weekly-organization-discovery-trigger',
+  'vendor-intelligence:vendor-review-reminder',
   'ropa-reviews:ropa-review-reminder-checker',
   'ropa-reviews-dispatcher:ropa-reviews-dispatcher',
   // Sprint 4. Each of these either emails somebody or fills a queue a customer then

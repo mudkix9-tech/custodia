@@ -757,6 +757,14 @@ check(parsedAnalysis.overallScore === 100, 'a fully compliant standard DPA text 
 check(parsedAnalysis.overallVerdict === 'compliant', 'verdict is compliant for full score');
 check(Object.keys(parsedAnalysis.clauses).length === 8, 'all 8 statutory Article 28(3) clauses are evaluated');
 
+// Verify that regex operator precedence does not false-positive on bare "annex" or "schedule"
+const bareAnnexText = 'Please refer to Annex A for contact details and Schedule 1 for billing terms.';
+const bareAnnexAnalysis = analyseDpaText(bareAnnexText);
+check(
+  bareAnnexAnalysis.clauses.securityMeasures?.status === 'missing',
+  'bare reference to Annex/Schedule without security measures does not match securityMeasures clause',
+);
+
 check(
   verifyClauseExcerpt(sampleDpaText, 'process personal data only on documented instructions') === true,
   'exact substring quote verifies as genuine',
@@ -964,12 +972,12 @@ check(sharedIncident.blastRadiusScore > 50, 'special category exposure escalates
 const irrelevantIncident = evaluateIncidentBlastRadius(
   {
     title: 'Customer billing leak',
-    affectedCategories: ['payment_card_data'],
+    affectedCategories: ['payment_card_data', 'ip_address'],
     severity: 'low',
   },
-  ['telemetry_data'],
+  ['telemetry_data', 'trade_union_membership'],
 );
-check(irrelevantIncident.isBlastRadiusRelevant === false, 'unrelated categories report no exposure');
+check(irrelevantIncident.isBlastRadiusRelevant === false, 'unrelated categories report no exposure and "ip_address" does not match "trade_union_membersh-ip"');
 
 console.log('\nSprint 3 — Standard Statutory Article 28 DPA Generator\n');
 

@@ -22,11 +22,15 @@ export function VendorIntakeTab() {
   const toast = useToast();
 
   const [statusFilter, setStatusFilter] = useState<
-    'all' | 'pending_review' | 'approved' | 'rejected'
+    'all' | 'pending_review' | 'more_info_requested' | 'approved' | 'rejected'
   >('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRejectId, setSelectedRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [selectedInfoId, setSelectedInfoId] = useState<string | null>(null);
+  const [infoNotes, setInfoNotes] = useState('');
+  const [selectedApproveItem, setSelectedApproveItem] = useState<{ id: string; name: string } | null>(null);
+  const [approveNotes, setApproveNotes] = useState('');
 
   const utils = trpc.useUtils();
   const listQuery = trpc.vendorIntake.list.useQuery({
@@ -36,6 +40,8 @@ export function VendorIntakeTab() {
   const approveMutation = trpc.vendorIntake.approve.useMutation({
     onSuccess: (data) => {
       toast(t('intake.toast_approved'));
+      setSelectedApproveItem(null);
+      setApproveNotes('');
       utils.vendorIntake.list.invalidate();
       utils.vendors.getOrgVendors.invalidate();
       utils.vendors.getRiskStats.invalidate();
@@ -57,8 +63,25 @@ export function VendorIntakeTab() {
     },
   });
 
-  const handleApprove = (id: string) => {
-    approveMutation.mutate({ id });
+  const requestInfoMutation = trpc.vendorIntake.requestMoreInfo.useMutation({
+    onSuccess: () => {
+      toast(t('intake.toast_more_info'));
+      setSelectedInfoId(null);
+      setInfoNotes('');
+      utils.vendorIntake.list.invalidate();
+    },
+    onError: (err) => {
+      toast(err.message, { tone: 'error' });
+    },
+  });
+
+  const handleApproveSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedApproveItem) return;
+    approveMutation.mutate({
+      id: selectedApproveItem.id,
+      reviewNotes: approveNotes.trim() || undefined,
+    });
   };
 
   const handleReject = (e: React.FormEvent) => {
@@ -67,6 +90,15 @@ export function VendorIntakeTab() {
     rejectMutation.mutate({
       id: selectedRejectId,
       rejectionReason: rejectReason.trim(),
+    });
+  };
+
+  const handleRequestInfo = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInfoId || !infoNotes.trim()) return;
+    requestInfoMutation.mutate({
+      id: selectedInfoId,
+      notes: infoNotes.trim(),
     });
   };
 
@@ -85,12 +117,12 @@ export function VendorIntakeTab() {
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           {/* Status Filter Tabs */}
-          <div className="flex items-center bg-[#08090A] border border-white/10 rounded-xl p-1 text-xs">
-            {(['all', 'pending_review', 'approved', 'rejected'] as const).map((st) => (
+          <div className="flex items-center bg-[#08090A] border border-white/10 rounded-xl p-1 text-xs overflow-x-auto">
+            {(['all', 'pending_review', 'more_info_requested', 'approved', 'rejected'] as const).map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1 rounded-lg transition-colors capitalize ${
+                className={`px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
                   statusFilter === st
                     ? 'bg-white/10 text-[#F4F5F6] font-medium'
                     : 'text-[#9BA1A6] hover:text-[#F4F5F6]'
@@ -100,6 +132,8 @@ export function VendorIntakeTab() {
                   ? t('intake.filter_all')
                   : st === 'pending_review'
                   ? t('intake.status_pending')
+                  : st === 'more_info_requested'
+                  ? t('intake.status_more_info')
                   : st === 'approved'
                   ? t('intake.status_approved')
                   : t('intake.status_rejected')}
@@ -128,7 +162,7 @@ export function VendorIntakeTab() {
       ) : (
         <div className="space-y-3">
           {items.map((req) => {
-            const isPending = req.status === 'pending_review';
+            const isActionable = req.status === 'pending_review' || req.status === 'more_info_requested';
             const categories = (req.dataCategories as string[]) || [];
 
             return (
@@ -184,15 +218,23 @@ export function VendorIntakeTab() {
                   </div>
 
                   {/* Action Buttons */}
-                  {isPending && (
+                  {isActionable && (
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleApprove(req.id)}
+                        onClick={() => setSelectedApproveItem({ id: req.id, name: req.vendorName })}
                         disabled={approveMutation.isPending}
                         className="px-3 py-1.5 text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg transition-colors flex items-center gap-1.5"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         {t('intake.approve')}
+                      </button>
+                      <button
+                        onClick={() => setSelectedInfoId(req.id)}
+                        disabled={requestInfoMutation.isPending}
+                        className="px-3 py-1.5 text-xs font-medium bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg transition-colors flex items-center gap-1.5"
+                      >
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        {t('intake.request_info')}
                       </button>
                       <button
                         onClick={() => setSelectedRejectId(req.id)}
@@ -237,6 +279,88 @@ export function VendorIntakeTab() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Approve Confirmation Modal */}
+      {selectedApproveItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-semibold text-[#F4F5F6]">{t('intake.approve_title')}</h3>
+            <p className="text-xs text-[#9BA1A6]">
+              {t('intake.approve_confirm', { name: selectedApproveItem.name })}
+            </p>
+            <form onSubmit={handleApproveSubmit} className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-[#9BA1A6] mb-1">
+                  {t('intake.review_notes')}
+                </label>
+                <textarea
+                  rows={3}
+                  value={approveNotes}
+                  onChange={(e) => setApproveNotes(e.target.value)}
+                  placeholder={t('intake.approve_notes_placeholder')}
+                  className="w-full px-3 py-2 bg-[#08090A] border border-white/10 rounded-lg text-sm text-[#F4F5F6] placeholder-[#6E747A] focus:outline-none focus:border-[#C9A227]"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedApproveItem(null)}
+                  className="px-3 py-1.5 text-xs text-[#9BA1A6] hover:text-[#F4F5F6]"
+                >
+                  {t('import.common_cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={approveMutation.isPending}
+                  className="px-3 py-1.5 text-xs font-medium bg-[#C9A227] text-black rounded-lg hover:bg-[#d6ad30] disabled:opacity-50"
+                >
+                  {approveMutation.isPending ? t('intake.submitting') : t('intake.confirm_approve')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Request More Info Modal */}
+      {selectedInfoId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-[#0D0F11] border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-semibold text-[#F4F5F6]">{t('intake.request_more_info_title')}</h3>
+            <form onSubmit={handleRequestInfo} className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-[#9BA1A6] mb-1">
+                  {t('intake.request_more_info_notes')}
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={infoNotes}
+                  onChange={(e) => setInfoNotes(e.target.value)}
+                  placeholder={t('intake.request_more_info_placeholder')}
+                  className="w-full px-3 py-2 bg-[#08090A] border border-white/10 rounded-lg text-sm text-[#F4F5F6] placeholder-[#6E747A] focus:outline-none focus:border-[#C9A227]"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedInfoId(null)}
+                  className="px-3 py-1.5 text-xs text-[#9BA1A6] hover:text-[#F4F5F6]"
+                >
+                  {t('import.common_cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={!infoNotes.trim() || requestInfoMutation.isPending}
+                  className="px-3 py-1.5 text-xs font-medium bg-amber-500 text-black rounded-lg hover:bg-amber-400 disabled:opacity-50"
+                >
+                  {t('intake.request_info')}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

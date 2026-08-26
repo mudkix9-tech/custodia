@@ -166,7 +166,7 @@ export function VendorIntakeModal({
               rows={2}
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
-              placeholder="Why does your team need this tool and what business process will it support?"
+              placeholder={t('intake.field_purpose_placeholder')}
               className={field}
             />
           </div>
@@ -179,11 +179,11 @@ export function VendorIntakeModal({
               type="text"
               value={dataCategoriesInput}
               onChange={(e) => setDataCategoriesInput(e.target.value)}
-              placeholder="Comma-separated: contact_details, customer_support, telemetry"
+              placeholder="contact_details, financial_details, telemetry"
               className={field}
             />
             <p className="text-[11px] text-[#6E747A] mt-1">
-              Separate multiple categories with commas. Special category data (Art. 9) will trigger enhanced DPO review.
+              {t('intake.field_data_categories_hint')}
             </p>
           </div>
 
@@ -197,10 +197,10 @@ export function VendorIntakeModal({
                 onChange={(e) => setCriticality(e.target.value as any)}
                 className={field}
               >
-                <option value="low">Low (Non-essential tooling)</option>
-                <option value="medium">Medium (Standard operational)</option>
-                <option value="high">High (Core business service)</option>
-                <option value="critical">Critical (Mission-critical / high volume)</option>
+                <option value="low">{t('intake.crit_low')}</option>
+                <option value="medium">{t('intake.crit_medium')}</option>
+                <option value="high">{t('intake.crit_high')}</option>
+                <option value="critical">{t('intake.crit_critical')}</option>
               </select>
             </div>
             <div>
@@ -212,10 +212,10 @@ export function VendorIntakeModal({
                 onChange={(e) => setEstimatedDataSubjects(e.target.value)}
                 className={field}
               >
-                <option value="<1K">&lt; 1,000 subjects</option>
-                <option value="1K-10K">1,000 – 10,000 subjects</option>
-                <option value="10K-100K">10,000 – 100,000 subjects</option>
-                <option value="100K+">100,000+ subjects</option>
+                <option value="<1K">{t('intake.subj_1k')}</option>
+                <option value="1K-10K">{t('intake.subj_1k_10k')}</option>
+                <option value="10K-100K">{t('intake.subj_10k_100k')}</option>
+                <option value="100K+">{t('intake.subj_100k_plus')}</option>
               </select>
             </div>
           </div>

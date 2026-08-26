@@ -8,7 +8,7 @@
  *   - Documented negative rationale generation ("Assessed, not affected").
  */
 
-import { isSpecialCategoryValue } from '../constants/vendorDataCategories.js';
+import { isSpecialCategoryValue, normaliseDataCategory } from '../constants/vendorDataCategories.js';
 
 export interface IncidentTriageResult {
   isImpacted: boolean;
@@ -29,6 +29,21 @@ export interface BlastRadiusEvaluation {
   recommendedAction: string;
 }
 
+function categoriesMatch(a: string, b: string): boolean {
+  const normA = normaliseDataCategory(a);
+  const normB = normaliseDataCategory(b);
+  if (normA === normB) return true;
+  const cleanA = a.toLowerCase().trim();
+  const cleanB = b.toLowerCase().trim();
+  if (cleanA === cleanB) return true;
+  const wordsA = cleanA.split(/[\s_,-]+/);
+  const wordsB = cleanB.split(/[\s_,-]+/);
+  if (cleanA.length >= 4 && cleanB.length >= 4) {
+    if (wordsA.includes(cleanB) || wordsB.includes(cleanA)) return true;
+  }
+  return false;
+}
+
 /**
  * Calculates the blast radius and customer impact of a security incident
  * based on the intersection of affected data categories and shared data categories.
@@ -40,9 +55,9 @@ export function evaluateIncidentImpact(
   const normAffected = affectedCategories.map((c) => c.toLowerCase().trim());
   const normShared = sharedCategories.map((c) => c.toLowerCase().trim());
 
-  // Compute category intersection
+  // Compute category intersection with robust category normalization
   const sharedAffected = normShared.filter((cat) =>
-    normAffected.some((aff) => aff.includes(cat) || cat.includes(aff))
+    normAffected.some((aff) => categoriesMatch(aff, cat))
   );
 
   const isImpacted = sharedAffected.length > 0;

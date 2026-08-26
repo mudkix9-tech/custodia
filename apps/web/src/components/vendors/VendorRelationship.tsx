@@ -279,11 +279,13 @@ export function VendorRelationshipPanel({
   const updateMutation = trpc.vendors.updateOrgVendor.useMutation({ onSettled: refresh });
   const statusMutation = trpc.vendors.setStatus.useMutation({ onSettled: refresh });
   const attestMutation = trpc.vendors.attestReview.useMutation({ onSettled: refresh });
+  const scheduleReviewMutation = trpc.vendors.scheduleReview.useMutation({ onSettled: refresh });
 
-  const pending = updateMutation.isPending || statusMutation.isPending || attestMutation.isPending;
+  const pending = updateMutation.isPending || statusMutation.isPending || attestMutation.isPending || scheduleReviewMutation.isPending;
   const error = updateMutation.error?.message
     ?? statusMutation.error?.message
     ?? attestMutation.error?.message
+    ?? scheduleReviewMutation.error?.message
     ?? null;
 
   const status = (orgVendor.status as string) || 'active';
@@ -424,6 +426,25 @@ export function VendorRelationshipPanel({
               {t('relationship.offboarded_on', { date: new Date(orgVendor.offboardedAt).toLocaleDateString() })}
             </p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-xs font-medium text-[#6E747A] uppercase tracking-wider">
+            {t('review_cadence.title')}
+          </label>
+          <Select
+            value={(orgVendor.reviewCadence as string) || 'annual'}
+            onValueChange={(val) => scheduleReviewMutation.mutate({ vendorId, cadence: val as any })}
+          >
+            <SelectTrigger className={inputClass}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="quarterly">{t('review_cadence.quarterly')}</SelectItem>
+              <SelectItem value="biannual">{t('review_cadence.biannual')}</SelectItem>
+              <SelectItem value="annual">{t('review_cadence.annual')}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">

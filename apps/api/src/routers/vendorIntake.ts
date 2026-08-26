@@ -4,8 +4,7 @@
  * All endpoints are strictly scoped to `orgId = ctx.user!.orgId`.
  * Every client-supplied id is proved via assertOwned or direct eq(organizationId).
  */
-import { router, protectedProcedure } from '../trpc.js';
-import { requirePermission } from '../trpc.js';
+import { router, protectedProcedure, requirePermission } from '../trpc.js';
 import { z } from 'zod';
 import { db } from '../db.js';
 import {
@@ -18,11 +17,14 @@ import { TRPCError } from '@trpc/server';
 import { calculateNextReviewDate } from '../lib/vendorGovernance.js';
 import { normaliseDataCategoryList } from '../constants/vendorDataCategories.js';
 import { assertOwned } from '../lib/tenancy.js';
+import { enforceLimit } from '../lib/billing.js';
+import { orgEmbeddingsQueue } from '../lib/queue.js';
+import { getRegistrableDomain } from '../lib/vendorDomains.js';
 
 export const vendorIntakeRouter = router({
   /** List intake requests for the current organisation. */
   list: protectedProcedure
-    .use(requirePermission('vendors', 'read'))
+    .use(requirePermission('vendors', 'view'))
     .input(
       z.object({
         status: z.enum(['pending_review', 'approved', 'rejected', 'more_info_requested']).optional(),
@@ -44,7 +46,7 @@ export const vendorIntakeRouter = router({
 
   /** Get single intake request by ID. */
   getById: protectedProcedure
-    .use(requirePermission('vendors', 'read'))
+    .use(requirePermission('vendors', 'view'))
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const orgId = ctx.user!.orgId;
@@ -68,9 +70,9 @@ export const vendorIntakeRouter = router({
       return req;
     }),
 
-  /** Submit a new vendor request (employee or manager). */
+  /** Submit a new vendor request (any authenticated team member with vendor view access). */
   submit: protectedProcedure
-    .use(requirePermission('vendors', 'create'))
+    .use(requirePermission('vendors', 'view'))
     .input(
       z.object({
         vendorName: z.string().min(1).max(255),
@@ -113,7 +115,7 @@ export const vendorIntakeRouter = router({
 
   /** Approve an intake request: creates or links to the register. */
   approve: protectedProcedure
-    .use(requirePermission('vendors', 'write'))
+    .use(requirePermission('vendors', 'edit'))
     .input(
       z.object({
         id: z.string().uuid(),
@@ -142,13 +144,17 @@ export const vendorIntakeRouter = router({
       let catalogueVendorId: string | null = null;
 
       if (intake.vendorWebsite) {
-        let domain = intake.vendorWebsite.replace(/^https?:\/\//i, '').split('/')[0]!.replace(/^www\./i, '');
-        const [existingByDomain] = await db
-          .select()
-          .from(vendors)
-          .where(sql`LOWER(${vendors.website}) LIKE ${`%${domain}%`}`);
-        if (existingByDomain) {
-          catalogueVendorId = existingByDomain.id;
+        const reqDomain = getRegistrableDomain(intake.vendorWebsite);
+        if (reqDomain) {
+          const candidateVendors = await db
+            .select()
+            .from(vendors)
+            .where(sql`${vendors.website} IS NOT NULL`);
+          
+          const match = candidateVendors.find(v => v.website && getRegistrableDomain(v.website) === reqDomain);
+          if (match) {
+            catalogueVendorId = match.id;
+          }
         }
       }
 
@@ -209,6 +215,8 @@ export const vendorIntakeRouter = router({
             )
           );
       } else {
+        await enforceLimit(db, orgId, 'vendors', 1);
+
         const [newLink] = await db
           .insert(organizationVendors)
           .values({
@@ -225,6 +233,15 @@ export const vendorIntakeRouter = router({
           })
           .returning();
         orgVendorId = newLink!.id;
+      }
+
+      if (orgEmbeddingsQueue) {
+        await orgEmbeddingsQueue.add('embed-vendor', {
+          orgId,
+          entityType: 'vendor',
+          entityId: orgVendorId,
+          action: 'upsert',
+        });
       }
 
       // 4. Update intake request status
@@ -256,7 +273,7 @@ export const vendorIntakeRouter = router({
 
   /** Reject an intake request. */
   reject: protectedProcedure
-    .use(requirePermission('vendors', 'write'))
+    .use(requirePermission('vendors', 'edit'))
     .input(
       z.object({
         id: z.string().uuid(),
@@ -294,7 +311,7 @@ export const vendorIntakeRouter = router({
 
   /** Request additional information on an intake request. */
   requestMoreInfo: protectedProcedure
-    .use(requirePermission('vendors', 'write'))
+    .use(requirePermission('vendors', 'edit'))
     .input(
       z.object({
         id: z.string().uuid(),
@@ -330,3 +347,4 @@ export const vendorIntakeRouter = router({
       return updated;
     }),
 });
+

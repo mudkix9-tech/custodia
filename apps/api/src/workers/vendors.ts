@@ -715,10 +715,10 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
 
         await queueNotification({
           organizationId: orgVendor.organizationId,
-          type: isOverdue ? 'vendor.dpa_expired' : 'vendor.dpa_expiring_7d',
+          type: isOverdue ? 'vendor.review_overdue' : 'vendor.review_due',
           title,
           body,
-          actionUrl: `/vendors`,
+          actionUrl: `/vendors/${vendor.id}?tab=relationship`,
           metadata: {
             vendorId: vendor.id,
             vendorName: vendor.name,
