@@ -362,8 +362,11 @@ export async function writeProvenance(vendorId: string, rows: ProvenanceWrite[])
 // ---------------------------------------------------------------------------
 
 function makeClient(): GeminiLike | null {
-  // Vertex config exactly like gather-vendors.ts — same project vars.
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   try {
+    if (apiKey) {
+      return new GoogleGenAI({ apiKey }) as unknown as GeminiLike;
+    }
     return new GoogleGenAI({
       vertexai: true,
       project: (process.env.GCP_PROJECT_ID || 'custodia') as string,
