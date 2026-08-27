@@ -5,7 +5,14 @@
 process.env.WORKER_ROLE = 'web';
 
 import * as dotenv from 'dotenv';
-dotenv.config({ path: '../../.env' });
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+dotenv.config({ path: resolve(__dirname, '../../../../.env') });
+dotenv.config();
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required');

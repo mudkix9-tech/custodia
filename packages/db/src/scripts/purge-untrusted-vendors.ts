@@ -10,6 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 dotenv.config({ path: resolve(__dirname, '../../../../.env') });
+dotenv.config();
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -21,12 +22,11 @@ const sql = postgres(connectionString);
 const db = drizzle(sql, { schema });
 
 async function purgeUntrustedVendors() {
-  console.log('🧹 Purging ALL untrusted legacy vendor catalogue rows from database...');
+  console.log('🧹 Purging ALL untrusted global vendor catalogue rows from database...');
 
   try {
-    // 1. Find all global catalogue vendors
     const globalVendors = await db
-      .select({ id: schema.vendors.id, name: schema.vendors.name })
+      .select({ id: schema.vendors.id })
       .from(schema.vendors)
       .where(or(eq(schema.vendors.isGlobal, true), isNull(schema.vendors.organizationId)));
 
@@ -39,18 +39,14 @@ async function purgeUntrustedVendors() {
 
     const vendorIds = globalVendors.map(v => v.id);
 
-    // 2. Remove referencing organization_vendors links
-    for (const id of vendorIds) {
-      await db
-        .delete(schema.organizationVendors)
-        .where(eq(schema.organizationVendors.vendorId, id));
-    }
+    // 1. Unlink referencing organization_vendors in bulk
+    await db
+      .delete(schema.organizationVendors)
+      .where(inArray(schema.organizationVendors.vendorId, vendorIds));
     console.log('✅ Unlinked referencing organization_vendors rows.');
 
-    // 3. Delete the global vendor rows
-    for (const id of vendorIds) {
-      await db.delete(schema.vendors).where(eq(schema.vendors.id, id));
-    }
+    // 2. Delete the global vendor rows in bulk
+    await db.delete(schema.vendors).where(inArray(schema.vendors.id, vendorIds));
 
     console.log(`✅ Successfully purged all ${globalVendors.length} unverified global vendor rows from Supabase.`);
     console.log('ℹ️ Custom tenant-owned vendors (isGlobal=false with organizationId) remain completely untouched.');
