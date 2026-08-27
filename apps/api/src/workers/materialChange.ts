@@ -35,8 +35,7 @@ import {
   users,
 } from 'db';
 import { and, eq, desc, inArray } from 'drizzle-orm';
-import { Anthropic } from '@anthropic-ai/sdk';
-import { WORKER_MODEL } from '../lib/anthropicModels.js';
+import { WORKER_MODEL, complete } from '../lib/llm.js';
 import { trackAiUsage } from '../lib/billing.js';
 import { queueNotification } from '../utils/notifications.js';
 import { diffSnapshots, type VersionSnapshot } from '../lib/ropaLifecycle.js';
@@ -48,7 +47,6 @@ import {
 } from '../lib/materialChange.js';
 import { emitRopaEvent } from '../lib/ropaEvents.js';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key' });
 
 export const materialChangeQueue = process.env.NODE_ENV === 'test'
   ? null as any
@@ -186,13 +184,11 @@ async function judgePurposeChange(opts: {
   try {
     await trackAiUsage(opts.organizationId, 1);
 
-    const response = await anthropic.messages.create({
+    const response = await complete({
       model: WORKER_MODEL,
-      max_tokens: 1024,
+      maxTokens: 1024,
       system: 'You are a GDPR compliance expert. Output strictly valid JSON and nothing else.',
-      messages: [{
-        role: 'user',
-        content: `The purpose description of a processing activity has been rewritten. Its lawful basis is "${opts.basis ?? 'unknown'}".
+      prompt: `The purpose description of a processing activity has been rewritten. Its lawful basis is "${opts.basis ?? 'unknown'}".
 
 Before:
 "${opts.before}"
@@ -204,11 +200,9 @@ Under Art. 5(1)(b) a purpose must be specified and explicit, and under Art. 6(4)
 
 Respond with exactly:
 { "isMaterial": boolean, "confidence": "high" | "medium" | "ambiguous", "reasoning": "one or two sentences" }`,
-      }],
     });
 
-    const first = response.content[0];
-    const text = first?.type === 'text' ? first.text : '';
+    const text = response.text;
     const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
     if (typeof parsed?.isMaterial !== 'boolean') return null;
     return {

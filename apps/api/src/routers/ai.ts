@@ -18,14 +18,13 @@ import {
 } from 'db';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { genai } from '../lib/genai.js';
-import { Anthropic } from '@anthropic-ai/sdk';
 import { TRPCError } from '@trpc/server';
 import { PDFParse } from 'pdf-parse';
 import crypto from 'crypto';
 import { calculateVendorRisk } from './vendors.js';
 import { trackAiUsage } from '../lib/billing.js';
 import { TIER_LIMITS, isNewAiWindow, aiWindowReset } from '../constants/aiQuota.js';
-import { COPILOT_MODEL } from '../lib/anthropicModels.js';
+import { COPILOT_MODEL, complete, completeStream } from '../lib/llm.js';
 import { Upload } from '@aws-sdk/lib-storage';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
@@ -52,9 +51,6 @@ function sanitiseDpaFilename(raw?: string): string {
 
 const ai = genai;
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
-});
 
 async function generateEmbedding(text: string) {
   const response = await ai.models.embedContent({
@@ -941,26 +937,22 @@ export const aiRouter = router({
 
       let responseText = '';
       try {
-        const stream = anthropic.messages.stream({
+        // `low` keeps a chat answer from stalling behind a long think, which is
+        // the same call the Anthropic version made with `effort: 'low'`.
+        const stream = completeStream({
           model: COPILOT_MODEL,
-          max_tokens: 4096,
-          // Adaptive lets the model spend more on a genuinely hard compliance
-          // question and almost nothing on a lookup; `low` keeps a chat answer
-          // from stalling behind a long think.
-          thinking: { type: 'adaptive' },
-          output_config: { effort: 'low' },
+          maxTokens: 4096,
+          thinking: 'low',
           system: systemPrompt,
           messages,
         });
 
-        for await (const event of stream) {
-          if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-            responseText += event.delta.text;
-            yield { type: 'chunk' as const, text: event.delta.text };
-          }
+        for await (const text of stream) {
+          responseText += text;
+          yield { type: 'chunk' as const, text };
         }
       } catch (err: any) {
-        console.warn('Anthropic streaming error:', err);
+        console.warn('Copilot streaming error:', err);
         yield {
           type: 'done' as const,
           answer: buildCopilotFallback(hasGroundedContext, citationsList),
@@ -1004,15 +996,14 @@ export const aiRouter = router({
         }
         messages.push({ role: 'user', content: input.question });
 
-        const msg = await anthropic.messages.create({
+        const msg = await complete({
           model: COPILOT_MODEL,
-          max_tokens: 1024,
+          maxTokens: 1024,
           system: systemPrompt,
-          messages: messages
+          messages,
         });
 
-        // The correct way to handle text blocks from Anthropic SDK
-        const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
+        const responseText = msg.text;
         
         const { answer, confidence } = finaliseCopilotAnswer(responseText, {
           citationsList, retrieved, input, org, activities, vendorCount,
@@ -1167,16 +1158,14 @@ Use this EXACT JSON schema:
   ]
 }`;
  
-        const msg = await anthropic.messages.create({
+        const msg = await complete({
           model: COPILOT_MODEL,
-          max_tokens: 4096,
+          maxTokens: 4096,
           system: systemPrompt,
-          messages: [
-            { role: 'user', content: dpaText }
-          ]
+          prompt: dpaText,
         });
  
-        const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
+        const responseText = msg.text;
         
         let jsonResponse: DpaAnalysis;
         try {
@@ -1334,16 +1323,14 @@ Data Categories Shared: ${sharedCategories.join(', ') || 'none specified'}
 Security Certifications: ${certs.join(', ') || 'none specified'}
 Existing DPA Clause Coverage: ${JSON.stringify(dpaClauseCoverage)}`;
  
-      const msg = await anthropic.messages.create({
+      const msg = await complete({
         model: COPILOT_MODEL,
-        max_tokens: 4096,
+        maxTokens: 4096,
         system: systemPrompt,
-        messages: [
-          { role: 'user', content: contextText }
-        ]
+        prompt: contextText,
       });
  
-      const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
+      const responseText = msg.text;
       
       try {
         const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
@@ -1442,16 +1429,14 @@ ${JSON.stringify(questionnaire.questions)}
 Provided answers / document text:
 ${answersText}`;
  
-      const msg = await anthropic.messages.create({
+      const msg = await complete({
         model: COPILOT_MODEL,
-        max_tokens: 4096,
+        maxTokens: 4096,
         system: systemPrompt,
-        messages: [
-          { role: 'user', content: contextText }
-        ]
+        prompt: contextText,
       });
  
-      const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
+      const responseText = msg.text;
       
       try {
         const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
@@ -1737,16 +1722,14 @@ ${contextStr}
 `;
 
       try {
-        const msg = await anthropic.messages.create({
+        const msg = await complete({
           model: COPILOT_MODEL,
-          max_tokens: 2048,
+          maxTokens: 2048,
           system: systemPrompt,
-          messages: [
-            { role: 'user', content: moduleSpecificPrompt }
-          ]
+          prompt: moduleSpecificPrompt,
         });
 
-        const responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
+        const responseText = msg.text;
         
         let jsonResponse: any;
         try {

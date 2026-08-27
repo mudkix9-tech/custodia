@@ -65,18 +65,14 @@ function getGdprArticleReference(articles: number[] | null | undefined): string 
   return Array.from(new Set(refs)).join(', ');
 }
 import { genai } from '../lib/genai.js';
-import { Anthropic } from '@anthropic-ai/sdk';
 import { sendEmail, AssessmentInvitation, AssessmentReminder } from 'emails';
 import { updateVendorRiskScore } from './vendors.js';
 import { scheduleEmailSequence } from '../workers/emails.js';
 import { trackAiUsage } from '../lib/billing.js';
-import { COPILOT_MODEL } from '../lib/anthropicModels.js';
+import { COPILOT_MODEL, complete } from '../lib/llm.js';
 
 const ai = genai;
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || 'mock-key',
-});
 
 const questionSchema = z.object({
   id: z.string(),
@@ -564,22 +560,16 @@ Only return valid JSON, nothing else.`;
       try {
         await trackAiUsage(record.organizationId, 1);
 
-        let responseText = "";
-        if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'mock-key') {
-          const msg = await anthropic.messages.create({
-            model: COPILOT_MODEL,
-            max_tokens: 500,
-            system: "You are a GDPR audit assistant. Always return raw JSON.",
-            messages: [{ role: 'user', content: prompt }]
-          });
-          responseText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
-        } else {
-          const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-          });
-          responseText = response.text || "";
-        }
+        // This used to branch on ANTHROPIC_API_KEY, falling back to Gemini when
+        // it was absent or the mock literal. Both arms are the same provider
+        // now, so the branch only chose between two spellings of one call.
+        const msg = await complete({
+          model: COPILOT_MODEL,
+          maxTokens: 500,
+          system: "You are a GDPR audit assistant. Always return raw JSON.",
+          prompt,
+        });
+        const responseText = msg.text;
 
         const jsonStart = responseText.indexOf('{');
         const jsonEnd = responseText.lastIndexOf('}');

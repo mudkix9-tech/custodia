@@ -52,7 +52,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.95.1",
     "@auth/core": "^0.41.2",
     "@aws-sdk/client-rds": "^3.1063.0",
     "@aws-sdk/client-s3": "^3.1053.0",

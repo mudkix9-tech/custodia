@@ -2,14 +2,10 @@ import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
 import { regulatoryUpdateMatches, organizations, processingActivities, vendors, dpias, documentEmbeddings } from 'db';
 import { eq, and, sql } from 'drizzle-orm';
-import { Anthropic } from '@anthropic-ai/sdk';
 import { trackAiUsage } from '../lib/billing.js';
 import { Job } from '../lib/queue.js';
-import { WORKER_MODEL } from '../lib/anthropicModels.js';
+import { WORKER_MODEL, complete } from '../lib/llm.js';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
-});
 
 export const impactAssessmentQueue = process.env.NODE_ENV === 'test'
   ? null as any
@@ -162,28 +158,30 @@ RECOMMENDED ACTIONS: <your recommended actions>`;
     try {
       await trackAiUsage(match.organizationId, 1);
 
-      const msg = await anthropic.messages.create({
+      const msg = await complete({
         model: WORKER_MODEL,
-        max_tokens: isLightweight ? 100 : 500,
-        messages: [{ role: 'user', content: prompt }]
+        maxTokens: isLightweight ? 100 : 500,
+        prompt,
       });
 
-      promptTokens = msg.usage.input_tokens;
-      completionTokens = msg.usage.output_tokens;
-      
-      const responseText = (msg.content[0] as any).text;
+      promptTokens = msg.inputTokens;
+      completionTokens = msg.outputTokens;
+
+      const responseText = msg.text;
 
       if (isLightweight) {
         explanation = responseText.trim();
       } else {
+        // The old extraction was typed `any`, so indexing this split was
+        // unchecked. A model that ignores the requested format returns one part
+        // and the second index is undefined — which used to throw inside the
+        // catch below and silently drop the assessment.
         const parts = responseText.split('RECOMMENDED ACTIONS:');
-        explanation = parts[0].replace('EXPLANATION:', '').trim();
-        if (parts.length > 1) {
-          actions = parts[1].trim();
-        }
+        explanation = (parts[0] ?? '').replace('EXPLANATION:', '').trim();
+        actions = parts.length > 1 ? (parts[1] ?? '').trim() : null;
       }
     } catch (err: any) {
-      console.error(`[Impact Assessment Worker] Anthropic API Error for match ${matchId}:`, err);
+      console.error(`[Impact Assessment Worker] LLM API error for match ${matchId}:`, err);
       // Wait for next run
       return;
     }

@@ -31,7 +31,7 @@ import {
   vendors,
 } from 'db';
 import { eq, sql } from 'drizzle-orm';
-import { GoogleGenAI } from '@google/genai';
+import { genai, genAiConfigError } from './genai.js';
 import {
   assessCandidate,
   type CandidateAssessment,
@@ -361,20 +361,18 @@ export async function writeProvenance(vendorId: string, rows: ProvenanceWrite[])
 // enrich / enrichBatch / reverify
 // ---------------------------------------------------------------------------
 
+/**
+ * The shared client, not a private one. This used to build its own with the
+ * same API-key-first ordering `genai.ts` has since been corrected for, so a
+ * Vertex deployment got one client per convention and two different answers to
+ * "which Google product are we talking to".
+ *
+ * Returns null only when nothing is configured at all, which is what the
+ * caller's "client unavailable" branch is for.
+ */
 function makeClient(): GeminiLike | null {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  try {
-    if (apiKey) {
-      return new GoogleGenAI({ apiKey }) as unknown as GeminiLike;
-    }
-    return new GoogleGenAI({
-      vertexai: true,
-      project: (process.env.GCP_PROJECT_ID || 'custodia') as string,
-      location: (process.env.GCP_LOCATION || 'us-central1') as string,
-    }) as unknown as GeminiLike;
-  } catch {
-    return null;
-  }
+  if (genAiConfigError()) return null;
+  return genai as unknown as GeminiLike;
 }
 
 /** Worker-facing client factory — the service keeps its own private one. */
@@ -455,7 +453,7 @@ async function extractAndProbe(
  */
 export async function runEnrichBatch(runId: string, targets: EnrichTarget[]): Promise<void> {
   const ai = makeClient();
-  if (!ai) throw new Error('Gemini client unavailable — check GCP_PROJECT_ID/GCP_LOCATION');
+  if (!ai) throw new Error(genAiConfigError() ?? 'Gemini client unavailable');
 
   await db.update(vendorIntelligenceRuns).set({ status: 'running' }).where(eq(vendorIntelligenceRuns.id, runId));
 

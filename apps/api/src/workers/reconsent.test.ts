@@ -14,17 +14,16 @@ vi.mock('../db.js', () => ({
   }
 }));
 
-const mockMessagesCreate = vi.fn();
+// The worker calls the shared adapter, not a provider SDK. Mocking
+// '@anthropic-ai/sdk' here went on compiling after the migration and stopped
+// intercepting anything — an inert mock that would have let this test reach the
+// real client.
+const mockComplete = vi.fn();
 
-vi.mock('@anthropic-ai/sdk', () => {
-  return {
-    Anthropic: vi.fn().mockImplementation(() => ({
-      messages: {
-        create: mockMessagesCreate
-      }
-    }))
-  };
-});
+vi.mock('../lib/llm.js', () => ({
+  WORKER_MODEL: 'test-model',
+  complete: mockComplete,
+}));
 
 describe('Reconsent Worker', () => {
   beforeEach(() => {
@@ -50,8 +49,8 @@ describe('Reconsent Worker', () => {
     expect(result).toEqual({ skipped: true, reason: 'No purpose change' });
   });
 
-  it('should flag as material when Claude returns true', async () => {
-    mockMessagesCreate.mockResolvedValueOnce({
+  it('should flag as material when the model returns true', async () => {
+    mockComplete.mockResolvedValueOnce({
       content: [{ type: 'text', text: '{"isMaterial": true, "confidence": "high", "reasoning": "Major scope change."}' }]
     });
 
@@ -76,7 +75,7 @@ describe('Reconsent Worker', () => {
   });
 
   it('should flag ambiguous cases for human review', async () => {
-    mockMessagesCreate.mockResolvedValueOnce({
+    mockComplete.mockResolvedValueOnce({
       content: [{ type: 'text', text: '{"isMaterial": false, "confidence": "ambiguous", "reasoning": "Unclear wording."}' }]
     });
 
@@ -100,8 +99,8 @@ describe('Reconsent Worker', () => {
     expect(db.insert).toHaveBeenCalled();
   });
 
-  it('should not flag when Claude returns false with high confidence', async () => {
-    mockMessagesCreate.mockResolvedValueOnce({
+  it('should not flag when the model returns false with high confidence', async () => {
+    mockComplete.mockResolvedValueOnce({
       content: [{ type: 'text', text: '{"isMaterial": false, "confidence": "high", "reasoning": "Just a typo fix."}' }]
     });
 

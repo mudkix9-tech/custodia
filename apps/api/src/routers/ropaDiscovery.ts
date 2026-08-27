@@ -27,8 +27,7 @@ import {
 import { and, eq, desc, inArray, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import DOMPurify from 'isomorphic-dompurify';
-import { Anthropic } from '@anthropic-ai/sdk';
-import { WORKER_MODEL } from '../lib/anthropicModels.js';
+import { WORKER_MODEL, complete } from '../lib/llm.js';
 import { trackAiUsage } from '../lib/billing.js';
 import { ropaDiscoveryQueue } from '../workers/index.js';
 import {
@@ -45,7 +44,6 @@ import {
 
 const sanitize = (text?: string | null) => (text ? DOMPurify.sanitize(text, { ALLOWED_TAGS: [] }) : text);
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key' });
 
 // ---------------------------------------------------------------------------
 // C34–C36 — the discovery queue
@@ -343,17 +341,13 @@ export const ropaDraftRouter = router({
 
       let parsed: unknown;
       try {
-        const response = await anthropic.messages.create({
+        const response = await complete({
           model: WORKER_MODEL,
-          max_tokens: 4096,
+          maxTokens: 4096,
           system: DRAFT_SYSTEM_PROMPT,
-          messages: [{
-            role: 'user',
-            content: `Draft an Article 30 record for this processing:\n\n"${input.prompt}"\n\nReturn JSON matching exactly this schema:\n${DRAFT_JSON_SCHEMA}`,
-          }],
+          prompt: `Draft an Article 30 record for this processing:\n\n"${input.prompt}"\n\nReturn JSON matching exactly this schema:\n${DRAFT_JSON_SCHEMA}`,
         });
-        const first = response.content[0];
-        const text = first?.type === 'text' ? first.text : '';
+        const text = response.text;
         parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
       } catch (error: any) {
         // A model failure is a failure of this feature, not of the register. The

@@ -8,13 +8,9 @@ import { privacyPolicies, policyVersions, organizations, vendors, organizationVe
 import { eq, and, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { diffWords } from 'diff';
-import { Anthropic } from '@anthropic-ai/sdk';
 import { trackAiUsage } from '../lib/billing.js';
-import { COPILOT_MODEL } from '../lib/anthropicModels.js';
+import { COPILOT_MODEL, complete } from '../lib/llm.js';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
-});
 
 const checkOrgContext = (user: any) => {
   if (!user.orgId) throw new TRPCError({ code: 'FORBIDDEN', message: 'No organization context' });
@@ -67,13 +63,13 @@ ${currentRopaState}
 
     await trackAiUsage(orgId, 1);
 
-    const msg = await anthropic.messages.create({
+    const msg = await complete({
       model: COPILOT_MODEL,
-      max_tokens: 4000,
-      messages: [{ role: 'user', content: prompt }]
+      maxTokens: 4000,
+      prompt: prompt,
     });
 
-    const aiText = msg.content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join('\n');
+    const aiText = msg.text;
     if (aiText && aiText.trim().length > 0) {
       newMarkdown = aiText.trim();
     }

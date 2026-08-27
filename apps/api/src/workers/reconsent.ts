@@ -1,6 +1,5 @@
 import { reconsentFlags, processingActivities } from 'db';
 import { db } from '../db.js';
-import { Anthropic } from '@anthropic-ai/sdk';
 import { eq, sql } from 'drizzle-orm';
 import { createQueue, createWorker } from '../lib/queue.js';
 import * as dotenv from 'dotenv';
@@ -8,15 +7,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { trackAiUsage } from '../lib/billing.js';
 import { queueNotification } from '../utils/notifications.js';
-import { WORKER_MODEL } from '../lib/anthropicModels.js';
+import { WORKER_MODEL, complete } from '../lib/llm.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
-});
 
 export const reconsentQueue = process.env.NODE_ENV === 'test'
   ? null as any
@@ -75,15 +71,14 @@ JSON format only:`;
 
       await trackAiUsage(organizationId, 1);
 
-      const response = await anthropic.messages.create({
+      const response = await complete({
         model: WORKER_MODEL,
-        max_tokens: 2048,
+        maxTokens: 2048,
         system: "You are a GDPR compliance expert. Output strictly valid JSON.",
-        messages: [{ role: 'user', content: prompt }]
+        prompt: prompt,
       });
 
-      const firstContent = response.content[0];
-      const messageContent = firstContent?.type === 'text' ? firstContent.text : '';
+      const messageContent = response.text;
       
       let parsed: { isMaterial: boolean; confidence: string; reasoning: string };
       try {

@@ -17,7 +17,7 @@ import {
   vendorQuestionnaires
 } from 'db';
 import { eq, and, desc } from 'drizzle-orm';
-import { genai, hasGenAiCredentials } from '../lib/genai.js';
+import { genai, genAiConfigError } from '../lib/genai.js';
 
 const ai = genai;
 
@@ -25,10 +25,14 @@ async function generateEmbedding(text: string) {
   // Without this the failure arrives as a google-auth stack trace about the GCE
   // metadata server, which reads like a transient network fault rather than the
   // missing configuration it is.
-  if (!hasGenAiCredentials) {
-    throw new Error(
-      'No Google GenAI credentials configured: set GEMINI_API_KEY, or GOOGLE_APPLICATION_CREDENTIALS for Vertex AI.',
-    );
+  //
+  // It used to test for an AI Studio key, so a correctly configured Vertex
+  // deployment — project and location set, no key by design — failed this guard
+  // and never reached the API at all. The check now asks whether a mode was
+  // resolved, and the message names the variable for the mode you are in.
+  const configError = genAiConfigError();
+  if (configError) {
+    throw new Error(configError);
   }
 
   const response = await ai.models.embedContent({
