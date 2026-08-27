@@ -15,13 +15,13 @@ In typical consumer SaaS, an AI model hallucinating a fact results in minor UX f
 - If Custodia asserts that a vendor provides **EU-only data residency** based on an unverified marketing claim, while their primary compute runs in `us-east-1`, the controller's Article 30 Record of Processing Activities (ROPA) is legally falsified.
 - If an auditor or regulator (CNIL, ICO, BfDI, DPC) demands the Article 28(3) contract evidence pack, fabricated URLs or synthetic company records (`AccountingService102`) destroy the legal defensibility of the customer's compliance posture.
 
-### 1.2 Current Baseline & Problem Definition
-An audit of Custodia's data layer reveals three disconnected states:
-1. **`seed-vendors.ts` (39 rows):** The only live database seed. While top rows (AWS, Google, Stripe, HubSpot) have hand-curated links, ~21 rows (Doctolib, DrChrono, Jane App, Greenhouse, Lever, Clio, Procore, FreshBooks) are bare name/country stubs with no DPA links, no certification records, and no transfer mechanisms.
-2. **`seed-data/vendors.json` & `pending-review.json` (73 rows):** Produced by an experimental gatherer script; partially unverified and using legacy schema keys (`"dpf"`, `"scc"`).
-3. **Root `vendors.json` (Purged):** Contained 180 synthetic mock records (`ServiceXXX`), now completely deleted.
+### 1.2 Current Baseline & The Clean-Slate Purge
+To establish an uncompromised foundation of trust, all unverified and legacy records have been completely purged:
+1. **`seed-vendors.ts` (Purged):** The 39 hardcoded static stubs (including incomplete rows missing DPAs and transfer mechanisms) have been removed from the seed file and deleted from the Supabase database via `purge-untrusted-vendors.ts`.
+2. **`seed-data/vendors.json` & `pending-review.json` (Purged):** The 73 legacy JSON records generated from experimental scripts have been emptied.
+3. **Root `vendors.json` & `vendor-pipeline/vendors/` (Purged):** All 180 synthetic mock records and pipeline files have been permanently deleted.
 
-**Goal:** Establish an automated, deterministic, and official-registry-backed pipeline to populate, maintain, and verify Custodia's global vendor catalogue without relying on ungrounded AI guessing.
+**Status:** The database and codebase are completely clean (0 unverified rows). The global catalogue will now be populated exclusively via verified, official government registries and audited enterprise SaaS telemetry.
 
 ---
 
