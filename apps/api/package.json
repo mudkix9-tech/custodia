@@ -28,7 +28,8 @@
     "test:ropa-intelligence": "tsx src/lib/ropaIntelligence.test.ts",
     "recalc:vendor-risk": "tsx src/scripts/recalculate-vendor-risk.ts",
     "eval:vendors": "tsx src/lib/vendorEval.ts",
-    "test:vendors": "tsx src/lib/vendors.test.ts"
+    "test:vendors": "tsx src/lib/vendors.test.ts",
+    "check:genai": "tsx src/scripts/check-genai-config.ts"
   },
   "keywords": [],
   "author": "",
