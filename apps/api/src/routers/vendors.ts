@@ -53,6 +53,12 @@ import { calculateNextReviewDate, evaluateReviewStatus } from '../lib/vendorGove
 import { hasSpecialCategory } from '../constants/vendorDataCategories.js';
 import { assertOwned } from '../lib/tenancy.js';
 import { ARTICLE_28_DEFINITIONS, type Article28ClauseKey } from '../lib/vendorDpaClauseAnalyzer.js';
+import { calculateConcentrationAnalytics } from '../lib/vendorConcentration.js';
+import { parseTrustCenterProfile } from '../lib/vendorTrustCenter.js';
+import { crossCheckVendorResponses, calculateDiscrepancyRiskPenalty } from '../lib/vendorCrossCheck.js';
+import { getVendorBenchmarkStats } from '../lib/vendorBenchmarking.js';
+import { matchRegulatoryDecisions } from '../lib/vendorEnforcementFeed.js';
+import { matchDpfStatus } from '../lib/vendorDpf.js';
 export { calculateVendorRisk };
 
 /**
@@ -193,7 +199,34 @@ export async function updateVendorRiskScore(dbInstance: any, orgId: string, vend
     ...(dpfStatus ? { dpfStatus, dpfLapsedDate } : {}),
   };
 
-  const { score, level, factors } = calculateVendorRisk(enrichedVendor, orgVendor, subProcessorsCount, scoreModifier, dpiaGaps);
+  // Evaluate discrepancy contradictions from latest completed assessment
+  let discrepancyPenalty = 0;
+  if (assessments.length > 0 && assessments[0].status === 'completed') {
+    const latest = assessments[0];
+    const [legacySubs, entitySubs] = await Promise.all([
+      dbInstance.select().from(vendorSubProcessors).where(eq(vendorSubProcessors.parentVendorId, vendorId)),
+      dbInstance.select().from(vendorSubProcessorEntities).where(eq(vendorSubProcessorEntities.parentVendorId, vendorId)),
+    ]);
+    const subProcessors = [
+      ...(legacySubs || []).map((s: any) => ({ name: s.name, country: s.country, service: s.service })),
+      ...(entitySubs || []).map((s: any) => ({ name: s.name, country: s.country, service: s.service })),
+    ];
+    const discrepancies = crossCheckVendorResponses({
+      vendorName: vendor.name,
+      vendorCountry: vendor.headquartersCountry,
+      euHostingAvailable: vendor.euHostingAvailable,
+      usingEuHosting: orgVendor.usingEuHosting,
+      securityCertifications: (orgVendor.certifications as string[]) || (vendor.securityCertifications as string[]) || [],
+      dpfStatus: dpfStatus || 'none',
+      subProcessors,
+      dpaClauseAnalysis: vendor.dpaClauseAnalysis,
+      questionsSnapshot: (latest.questionsSnapshot as any[]) || [],
+      responses: (latest.responses as Record<string, any>) || {},
+    });
+    discrepancyPenalty = calculateDiscrepancyRiskPenalty(discrepancies);
+  }
+
+  const { score, level, factors } = calculateVendorRisk(enrichedVendor, orgVendor, subProcessorsCount, scoreModifier, dpiaGaps, discrepancyPenalty);
 
   await dbInstance.update(organizationVendors)
     .set({
@@ -2632,4 +2665,299 @@ export const vendorsRouter = router({
 
       return updated;
     }),
+
+  /**
+   * Sprint 4 — Supply Chain Graph & 4th-Party Vendor Concentration Analytics.
+   */
+  getConcentrationAnalytics: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .query(async ({ ctx }) => {
+      return await calculateConcentrationAnalytics(
+        ctx.db,
+        ctx.user!.orgId,
+        { organizationVendors, vendors, vendorSubProcessors, vendorSubProcessorEntities },
+        liveVendorPredicate()
+      );
+    }),
+
+  /**
+   * Sprint 4 — Ingest Trust Centre telemetry, update security posture & provenance.
+   */
+  ingestTrustCenter: protectedProcedure
+    .use(requirePermission('vendors', 'edit'))
+    .input(
+      z.object({
+        vendorId: z.string().uuid(),
+        trustCenterUrl: z.string().url().optional(),
+        rawContent: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db
+        .select({
+          orgVendor: organizationVendors,
+          vendor: vendors,
+        })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(
+          and(
+            eq(organizationVendors.organizationId, ctx.user!.orgId),
+            eq(organizationVendors.vendorId, input.vendorId)
+          )
+        );
+
+      if (!existing) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor link not found' });
+      }
+
+      let contentToParse = input.rawContent || '';
+      const url = input.trustCenterUrl || existing.vendor.website || undefined;
+
+      if (!contentToParse.trim() && input.trustCenterUrl) {
+        try {
+          const res = await fetch(input.trustCenterUrl, {
+            headers: { 'User-Agent': 'CustodiaVendorIntelligence/1.0' },
+            signal: AbortSignal.timeout(6000),
+          });
+          if (res.ok) {
+            const html = await res.text();
+            contentToParse = html
+              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+              .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+              .replace(/<[^>]+>/g, ' ')
+              .replace(/\s+/g, ' ');
+          }
+        } catch {
+          // Fallback to URL-based parsing if network fetch is unavailable
+        }
+      }
+
+      const profile = parseTrustCenterProfile({
+        url,
+        rawContent: contentToParse,
+        vendorName: existing.vendor.name,
+      });
+
+      // Update catalogue vendor's euHostingAvailable capability if detected
+      if (profile.euHostingAvailable !== undefined) {
+        await ctx.db
+          .update(vendors)
+          .set({ euHostingAvailable: profile.euHostingAvailable })
+          .where(eq(vendors.id, existing.vendor.id));
+      }
+
+      // Merge certifications
+      const existingCerts = existing.orgVendor.certifications || existing.vendor.securityCertifications || [];
+      const combinedCerts = Array.from(new Set([...existingCerts, ...profile.certifications]));
+
+      // Preserve tenant's usingEuHosting (do not auto-overwrite tenant datacentre choice)
+      const [updatedOrgVendor] = await ctx.db
+        .update(organizationVendors)
+        .set({
+          certifications: combinedCerts,
+          dpaStatus: profile.dpaAvailable && existing.orgVendor.dpaStatus === 'not_started' ? 'requested' : existing.orgVendor.dpaStatus,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(organizationVendors.id, existing.orgVendor.id),
+            eq(organizationVendors.organizationId, ctx.user!.orgId)
+          )
+        )
+        .returning();
+
+      // Upsert field provenance rows for transparency
+      for (const [key, snippet] of Object.entries(profile.evidenceSnippets)) {
+        await ctx.db
+          .insert(vendorFieldProvenance)
+          .values({
+            vendorId: existing.vendor.id,
+            fieldName: key,
+            value: snippet,
+            sourceType: 'trust_center',
+            sourceUrl: url,
+            confidence: profile.confidence,
+            evidenceSnippet: snippet,
+            verifiedBy: ctx.user!.id || 'Trust Center Importer',
+            verifiedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: [vendorFieldProvenance.vendorId, vendorFieldProvenance.fieldName],
+            set: {
+              value: snippet,
+              sourceType: 'trust_center',
+              sourceUrl: url,
+              confidence: profile.confidence,
+              evidenceSnippet: snippet,
+              verifiedBy: ctx.user!.id || 'Trust Center Importer',
+              verifiedAt: new Date(),
+            },
+          });
+      }
+
+      await updateVendorRiskScore(ctx.db, ctx.user!.orgId, input.vendorId);
+
+      return {
+        profile,
+        orgVendor: updatedOrgVendor,
+      };
+    }),
+
+  /**
+   * Sprint 4 — Multi-factor Discrepancy & Contradiction Detection.
+   */
+  getDiscrepancies: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .input(
+      z
+        .object({
+          vendorId: z.string().uuid().optional(),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const conditions = [
+        eq(organizationVendors.organizationId, ctx.user!.orgId),
+        liveVendorPredicate(),
+      ];
+      if (input?.vendorId) {
+        conditions.push(eq(organizationVendors.vendorId, input.vendorId));
+      }
+
+      const orgVendors = await ctx.db
+        .select({
+          orgVendor: organizationVendors,
+          vendor: vendors,
+        })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(and(...conditions));
+
+      if (!orgVendors || orgVendors.length === 0) {
+        return [];
+      }
+
+      const orgVendorIds = orgVendors.map((ov: any) => ov.orgVendor.id);
+      const vendorIds = orgVendors.map((ov: any) => ov.vendor.id);
+
+      // Fetch completed assessments
+      const assessmentsList = await ctx.db
+        .select()
+        .from(vendorAssessments)
+        .where(
+          and(
+            eq(vendorAssessments.organizationId, ctx.user!.orgId),
+            inArray(vendorAssessments.vendorId, orgVendorIds)
+          )
+        );
+
+      // Fetch sub-processors
+      const [legacySubs, entitySubs] = await Promise.all([
+        ctx.db.select().from(vendorSubProcessors).where(inArray(vendorSubProcessors.parentVendorId, vendorIds)),
+        ctx.db.select().from(vendorSubProcessorEntities).where(inArray(vendorSubProcessorEntities.parentVendorId, vendorIds)),
+      ]);
+
+      const subMap = new Map<string, Array<{ name: string; country?: string | null; service?: string | null }>>();
+      for (const s of [...(legacySubs || []), ...(entitySubs || [])]) {
+        if (!s.parentVendorId || !s.name) continue;
+        let list = subMap.get(s.parentVendorId);
+        if (!list) {
+          list = [];
+          subMap.set(s.parentVendorId, list);
+        }
+        list.push({ name: s.name, country: s.country, service: s.service });
+      }
+
+      const dpfEntries = await ctx.db.select().from(dpfRegistrations);
+
+      const results: Array<{
+        vendorId: string;
+        orgVendorId: string;
+        vendorName: string;
+        discrepancies: ReturnType<typeof crossCheckVendorResponses>;
+        riskPenalty: number;
+      }> = [];
+
+      for (const ov of orgVendors) {
+        const assessment = assessmentsList.find((a: any) => a.vendorId === ov.orgVendor.id);
+        const subProcessors = subMap.get(ov.vendor.id) || [];
+
+        let dpfStatus: 'active' | 'lapsed' | 'discontinued' | 'none' = 'none';
+        if (ov.vendor.headquartersCountry === 'US') {
+          const match = matchDpfStatus(ov.vendor.name, ov.vendor.website, dpfEntries);
+          if (match.status === 'active' || match.status === 'lapsed') {
+            dpfStatus = match.status;
+          }
+        }
+
+        const responses = (assessment?.responses as Record<string, any>) || {};
+        const questionsSnapshot = (assessment?.questionsSnapshot as any[]) || [];
+
+        const discrepancies = crossCheckVendorResponses({
+          vendorName: ov.vendor.name,
+          vendorCountry: ov.vendor.headquartersCountry,
+          euHostingAvailable: ov.vendor.euHostingAvailable,
+          usingEuHosting: ov.orgVendor.usingEuHosting,
+          securityCertifications: (ov.orgVendor.certifications as string[]) || (ov.vendor.securityCertifications as string[]) || [],
+          dpfStatus,
+          subProcessors,
+          dpaClauseAnalysis: ov.vendor.dpaClauseAnalysis,
+          questionsSnapshot,
+          responses,
+        });
+
+        if (discrepancies.length > 0) {
+          results.push({
+            vendorId: ov.vendor.id,
+            orgVendorId: ov.orgVendor.id,
+            vendorName: ov.vendor.name,
+            discrepancies,
+            riskPenalty: calculateDiscrepancyRiskPenalty(discrepancies),
+          });
+        }
+      }
+
+      return results;
+    }),
+
+  /**
+   * Sprint 4 — Cross-Customer Anonymous Privacy Benchmarking (k-anonymity >= 5).
+   */
+  getAggregatedBenchmark: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .input(z.object({ vendorId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      return await getVendorBenchmarkStats(
+        ctx.db,
+        input.vendorId,
+        { organizationVendors, vendors },
+        liveVendorPredicate()
+      );
+    }),
+
+  /**
+   * Sprint 4 — European Regulatory Enforcement Decisions feed mapped to active vendors.
+   */
+  getEnforcementFeed: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .query(async ({ ctx }) => {
+      const orgVendors = await ctx.db
+        .select({
+          id: organizationVendors.id,
+          name: vendors.name,
+          website: vendors.website,
+        })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(
+          and(
+            eq(organizationVendors.organizationId, ctx.user!.orgId),
+            liveVendorPredicate()
+          )
+        );
+
+      return matchRegulatoryDecisions(orgVendors || []);
+    }),
 });
+

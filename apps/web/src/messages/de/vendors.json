@@ -14,6 +14,8 @@
                  "tracked_register":  "Verfolgtes Register ({count})",
                  "vendor_discovery":  "Dienstleister-Entdeckung \u0026 Schatten-IT",
                  "intake":  "Bedarfsanfragen",
+                 "concentration":  "Lieferkette \u0026 Konzentration",
+                 "enforcement":  "Behördenentscheidungen",
                  "relationship":  "Beziehung \u0026 Verlauf",
                  "history":  "Prüfprotokoll"
              },
@@ -982,5 +984,88 @@
                                   "status_weak":  "Eingeschränkt / Bedingt",
                                   "status_missing":  "Fehlt",
                                   "verified_excerpt":  "Verifizierter Auszug:"
-                              }
+                              },
+    "concentration":  {
+                          "loading":  "Konzentration der Unterauftragsverarbeiter-Lieferkette wird analysiert...",
+                          "empty_title":  "Keine Dienstleister-Abhängigkeiten gefunden",
+                          "empty_description":  "Fügen Sie Dienstleister zu Ihrem Register hinzu, um die Konzentration von Unterauftragsverarbeitern und Single Points of Failure zu analysieren.",
+                          "fragility_index":  "Lieferketten-Fragilitätsindex",
+                          "fragility_low":  "Widerstandsfähig",
+                          "fragility_moderate":  "Moderate Konzentration",
+                          "fragility_elevated":  "Erhöhte Exposition",
+                          "fragility_critical":  "Kritische Konzentration",
+                          "spof_count":  "Single Points of Failure",
+                          "entities":  "kritische Infrastrukturanbieter",
+                          "spof_subtext":  "Anbieter, die mehrere hochkritische Dienstleister unterstützen",
+                          "unique_subprocessors":  "Eindeutige Unterauftragsverarbeiter",
+                          "across_vendors":  "über {count} direkte Dienstleister",
+                          "total_links":  "{count} mehrstufige Abhängigkeiten insgesamt",
+                          "jurisdiction_exposure":  "Jurisdiktions-Exposition",
+                          "eu_eea":  "in EU/EWR gehostet",
+                          "spof_title":  "Systemische Single Points of Failure (SPOFs)",
+                          "spof_description":  "Gemeinsam genutzte Unterauftragsverarbeiter (4th-Party), die mehrere direkte Dienstleister in Ihrem Register unterstützen.",
+                          "no_spofs":  "Keine systemischen Single Points of Failure in Ihrer Lieferkette erkannt.",
+                          "dependent_vendors":  "direkte Dienstleister",
+                          "supports":  "Unterstützt",
+                          "art9_warning":  "Besondere Kategorien personenbezogener Daten (Art. 9) über gemeinsame Infrastruktur exponiert",
+                          "blast_radius_title":  "Systemischer Auswirkungsbereich (Blast Radius)",
+                          "blast_radius_description":  "Simulierte Auswirkungen eines Ausfalls, Sicherheitsvorfalls oder behördlichen Verbots bei kritischer 4th-Party-Infrastruktur.",
+                          "impacted_vendors":  "betroffene Dienstleister",
+                          "tier_critical":  "Kritische Auswirkung",
+                          "tier_high":  "Hohe Auswirkung",
+                          "tier_medium":  "Moderate Auswirkung",
+                          "tier_low":  "Geringe Auswirkung"
+                      },
+    "trust_center":  {
+                         "button":  "Trust Center einlesen",
+                         "modal_title":  "Sicherheits-Trust-Center einlesen",
+                         "modal_subtitle":  "Sicherheitszertifizierungen, Hosting-Regionen und AVV-Bedingungen für {name} automatisch analysieren.",
+                         "url_label":  "URL des Trust Centers oder Sicherheitsportals",
+                         "url_hint":  "Unterstützt SafeBase, Vanta, Drata, Conveyor, OneTrust, Whistic und individuelle Sicherheitsportale.",
+                         "content_label":  "Sicherheitspostur oder Text des Prüfberichts (Optional)",
+                         "content_placeholder":  "Sicherheitsübersicht, SOC 2 Management Summary oder Compliance-Zusagen einfügen...",
+                         "what_is_extracted":  "Automatische Sicherheits-Telemetrie-Extraktion:",
+                         "extract_1":  "Sicherheitszertifizierungen (ISO 27001, SOC 2 Typ II, HIPAA, PCI-DSS)",
+                         "extract_2":  "Datenverschlüsselung im Ruhezustand (AES-256) & bei Übertragung (TLS 1.2+)",
+                         "extract_3":  "EU-Datenresidenz und Verfügbarkeit dedizierter Hosting-Regionen",
+                         "extract_4":  "Art. 28 AVV-Klauseln, Unterauftragsverarbeiter-Listen & Aktualität von Penetrationstests",
+                         "ingest_button":  "Einlesen & Profil aktualisieren",
+                         "success_toast":  "Trust-Center-Telemetrie für {name} erfolgreich eingelesen",
+                         "success_detail":  "{count} Sicherheitszertifizierungen extrahiert und dem Register zugewiesen.",
+                         "error_toast":  "Trust-Center-Telemetrie konnte nicht eingelesen werden",
+                         "missing_input":  "Bitte geben Sie entweder eine Trust-Center-URL oder Text des Sicherheitsberichts an."
+                     },
+    "discrepancies":  {
+                          "no_discrepancies":  "Keine Widersprüche zwischen den Angaben von {name} und verifizierter Telemetrie festgestellt.",
+                          "section_title":  "Verifizierte Widersprüche & Diskrepanzen ({count})",
+                          "risk_penalty":  "Risiko-Strafzuschlag",
+                          "claimed_fact":  "Selbstauskunft des Dienstleisters",
+                          "verified_telemetry":  "Verifizierte Telemetrie & Registerdaten",
+                          "recommendation":  "Empfehlung für den DSB"
+                      },
+    "benchmarks":  {
+                       "loading":  "Datenschutz-Benchmarks werden geladen...",
+                       "card_title":  "Datenschutz-Benchmark im Marktvergleich",
+                       "card_subtitle":  "Aggregierte Compliance-Kennzahlen von Custodia-Kunden für {name}.",
+                       "k_anonymous_badge":  "{count} Vergleichsorganisationen (k-anonym)",
+                       "insufficient_samples":  "Unzureichende Vergleichsdaten (< 5 Organisationen)",
+                       "privacy_guarantee_title":  "K-Anonymitäts-Datenschutzgarantie",
+                       "privacy_guarantee_description":  "Zum Schutz der Vertraulichkeit werden aggregierte Benchmarks erst berechnet, wenn mindestens 5 verschiedene Organisationen diesen Dienstleister verknüpft haben.",
+                       "dpa_adoption":  "AVV-Abschlussquote",
+                       "eu_hosting_adoption":  "EU-Hosting-Quote",
+                       "of_peers":  "der Vergleichsunternehmen",
+                       "avg_risk_score":  "Durchschnittlicher Peer-Risikoscore",
+                       "transfer_safeguards":  "Häufigste Übermittlungsgarantien:",
+                       "top_shared_data_categories":  "Häufigste geteilte Datenkategorien bei Vergleichsorganisationen",
+                       "clause_adoption_peer_benchmark":  "Art. 28 Abs. 3 Klauselabdeckung (Vergleichsbenchmark)"
+                   },
+    "enforcement":  {
+                        "loading":  "Europäische Behördenentscheidungen werden geladen...",
+                        "no_enforcement_actions":  "Keine aktiven europäischen Behördenmaßnahmen für Ihren aktuellen Dienstleisterbestand gefunden.",
+                        "panel_title":  "Europäische Behördenentscheidungen & Sanktionsüberwachung",
+                        "panel_subtitle":  "{count} gesetzliche Sanktionen passend zu Ihrer aktiven Dienstleister-Lieferkette."
+                    },
+    "common":  {
+                   "cancel":  "Abbrechen"
+               }
 }

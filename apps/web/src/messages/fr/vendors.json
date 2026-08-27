@@ -1,986 +1,1071 @@
 {
-    "_review_notes":  {
-                          "title":  "REVIEW: \u0027Gestion des fournisseurs\u0027"
-                      },
-    "title":  "Intelligence des fournisseurs",
-    "subtitle":  "Suivi automatisé pour les DPA, les TIA et les risques liés aux sous-traitants.",
-    "analyze_dpa":  "Analyser le DPA",
-    "export_register":  "Exporter le registre",
-    "export_article_30":  "Exporter destinataires Art. 30",
-    "export_article_28":  "Exporter dossier Art. 28",
-    "generate_dpa":  "Générer DPA standard",
-    "discover_vendors":  "Découvrir des fournisseurs",
-    "tabs":  {
-                 "tracked_register":  "Registre suivi ({count})",
-                 "vendor_discovery":  "Découverte de fournisseurs et Shadow IT",
-                 "intake":  "Demandes d'intégration",
-                 "relationship":  "Relation & historique",
-                 "history":  "Piste d’audit"
-             },
-    "metrics":  {
-                    "total_tracked":  "Total suivi",
-                    "dpa_coverage":  "Couverture DPA",
-                    "missing_dpas":  "DPA manquants / expirÃ©s",
-                    "high_risk":  "Risque Ã©levÃ© / critique",
-                    "offboarded":  "ClÃ´turÃ©s"
-                },
-    "filter_placeholder":  "Filtrer les fournisseurs...",
-    "add_custom_vendor":  "Ajouter un fournisseur personnalisÃ©",
-    "empty_state":  "Aucun fournisseur suivi pour le moment. Cliquez sur \u0027DÃ©couvrir des fournisseurs\u0027 pour commencer Ã  construire votre registre.",
-    "load_more":  "Charger plus",
-    "loading_more":  "Chargement...",
-    "columns":  {
-                    "vendor":  "Fournisseur",
-                    "category":  "CatÃ©gorie",
-                    "dpa_status":  "Statut DPA",
-                    "risk_score":  "Score et niveau de risque",
-                    "data_locations":  "Emplacements des donnÃ©es",
-                    "processing_role":  "RÃ´le",
-                    "role_unset":  "RÃ´le non dÃ©fini"
-                },
-    "dpa_status":  {
-                       "signed":  "SignÃ©",
-                       "expired":  "ExpirÃ©",
-                       "missing":  "Manquant",
-                       "not_started":  "Non entamÃ©",
-                       "requested":  "DemandÃ©",
-                       "in_review":  "En cours dâ€™examen"
-                   },
-    "locations":  {
-                      "hq":  "SiÃ¨ge social : {country}",
-                      "unknown":  "Inconnu",
-                      "eu_hosted":  "(HÃ©bergÃ© dans l\u0027UE)"
-                  },
-    "discover_modal":  {
-                           "title":  "DÃ©couvrir des fournisseurs mondiaux",
-                           "search_placeholder":  "Recherche par nom (ex. HubSpot, AWS)...",
-                           "no_results":  "Aucun fournisseur mondial trouvÃ© correspondant Ã  \u0027{search}\u0027.",
-                           "hq":  "SiÃ¨ge social : {country}",
-                           "add_to_register":  "Ajouter au registre"
-                       },
-    "empty":  {
-                  "title":  "Aucun sous-traitant enregistrÃ©",
-                  "description":  "Chaque sous-traitant qui manipule des donnÃ©es personnelles pour votre compte requiert un contrat au titre de l\u0027article 28. Analysez votre site ou ajoutez-en un manuellement."
-              },
-    "risk_level":  {
-                       "low":  "Faible",
-                       "medium":  "Moyen",
-                       "high":  "Ã‰levÃ©",
-                       "critical":  "Critique",
-                       "unknown":  "Inconnu"
-                   },
-    "detail":  {
-                   "loading":  "Chargement des donnÃ©es fournisseur...",
-                   "not_found":  "Fournisseur introuvable ou non rattachÃ©.",
-                   "back":  "Retour au registre des fournisseurs",
-                   "auto_discovered":  {
-                                           "title":  "Fiche fournisseur dÃ©tectÃ©e automatiquement",
-                                           "description":  "Cette fiche a Ã©tÃ© crÃ©Ã©e automatiquement Ã  partir d\u0027une analyse de site web ou DNS. VÃ©rifiez et complÃ©tez le pays du siÃ¨ge, les options d\u0027hÃ©bergement dans l\u0027UE et les certifications de sÃ©curitÃ© pour que le score de risque soit correct.",
-                                           "verify":  "VÃ©rifier et verrouiller la fiche"
-                                       },
-                   "headquarters":  "SiÃ¨ge social",
-                   "certifications":  "Certifications",
-                   "none_detected":  "Aucune dÃ©tectÃ©e",
-                   "eu_residency":  "Localisation des donnÃ©es dans l\u0027UE",
-                   "available":  "Disponible",
-                   "not_available":  "Non disponible",
-                   "use_eu_datacentre":  "Nous utilisons le centre de donnÃ©es de l\u0027UE",
-                   "risk":  {
-                                "title":  "Score de risque calculÃ©",
-                                "explanation":  "Le score est calculÃ© dynamiquement Ã  partir de la juridiction ({country}), des DPA ({dpaStatus}), du niveau de sÃ©curitÃ© et des renseignements sur les menaces.",
-                                "factors":  "DÃ©tail des facteurs de risque",
-                                "points":  "+{points} / {max} pts"
-                            },
-                   "tabs":  {
-                                "dpa":  "Gestion du DPA",
-                                "tia":  "Analyse d\u0027impact du transfert",
-                                "sub_processors":  "Sous-traitants ultÃ©rieurs",
-                                "incidents":  "Incidents et violations",
-                                "questionnaire":  "Questionnaire de sÃ©curitÃ©",
-                                "relationship":  "Relation \u0026 historique",
-                                "history":  "Piste dâ€™audit"
-                            },
-                   "dpa":  {
-                               "title":  "Contrat de sous-traitance",
-                               "description":  "Suivez votre relation contractuelle. Un DPA signÃ© est strictement requis par l\u0027article 28 du RGPD.",
-                               "status":  {
-                                              "not_started":  "Non commencÃ©",
-                                              "draft":  "Brouillon",
-                                              "sent":  "EnvoyÃ©",
-                                              "signed":  "SignÃ©",
-                                              "expired":  "ExpirÃ©"
-                                          },
-                               "upload":  {
-                                              "title":  "TÃ©lÃ©verser le document signÃ©",
-                                              "description":  "Conservez votre DPA signÃ© en toute sÃ©curitÃ©. Votre score de risque sera mis Ã  jour et les alertes d\u0027expiration programmÃ©es automatiquement.",
-                                              "analysing":  "L\u0027IA analyse les clauses et recherche les formulations problÃ©matiques...",
-                                              "select_file":  "SÃ©lectionner un fichier PDF",
-                                              "error_pdf_only":  "Seuls les documents PDF sont pris en charge pour l\u0027analyse de DPA par l\u0027IA.",
-                                              "error_analyse":  "L\u0027analyse du document DPA a Ã©chouÃ©.",
-                                              "error_read":  "La lecture du fichier DPA a Ã©chouÃ©."
-                                          },
-                               "clause_review":  {
-                                                     "title":  "Revue des clauses de l\u0027article 28",
-                                                     "description":  "VÃ©rifiez que votre contrat couvre toutes les obligations du sous-traitant prÃ©vues Ã  l\u0027article 28, paragraphe 3, du RGPD.",
-                                                     "completeness":  "ComplÃ©tude",
-                                                     "count":  "{covered} / {total} clauses ({percent} %)"
-                                                 },
-                               "clauses":  {
-                                               "documented_instructions":  {
-                                                                               "label":  "Instructions documentÃ©es",
-                                                                               "description":  "Traiter les donnÃ©es uniquement sur instruction documentÃ©e du responsable de traitement."
-                                                                           },
-                                               "confidentiality":  {
-                                                                       "label":  "ConfidentialitÃ© du personnel",
-                                                                       "description":  "S\u0027assurer que les personnes autorisÃ©es Ã  traiter les donnÃ©es sont soumises Ã  une obligation de confidentialitÃ©."
-                                                                   },
-                                               "security_measures":  {
-                                                                         "label":  "Mesures de sÃ©curitÃ©",
-                                                                         "description":  "Mettre en Å“uvre des mesures techniques et organisationnelles (art. 32)."
-                                                                     },
-                                               "sub_processor_restrictions":  {
-                                                                                  "label":  "Encadrement des sous-traitants ultÃ©rieurs",
-                                                                                  "description":  "Ne recruter un sous-traitant ultÃ©rieur qu\u0027avec une autorisation prÃ©alable, spÃ©cifique ou gÃ©nÃ©rale."
-                                                                              },
-                                               "data_subject_rights":  {
-                                                                           "label":  "Aide Ã  l\u0027exercice des droits",
-                                                                           "description":  "Aider le responsable de traitement Ã  rÃ©pondre aux personnes concernÃ©es qui exercent leurs droits."
-                                                                       },
-                                               "security_breach_dpia":  {
-                                                                            "label":  "Aide en cas de violation et pour les AIPD",
-                                                                            "description":  "Aider le responsable de traitement pour les notifications de violation, les audits de sÃ©curitÃ© et les AIPD."
-                                                                        },
-                                               "deletion_on_termination":  {
-                                                                               "label":  "Suppression ou restitution des donnÃ©es",
-                                                                               "description":  "Supprimer ou restituer toutes les donnÃ©es Ã  caractÃ¨re personnel au choix du responsable de traitement Ã  la fin du traitement."
-                                                                           },
-                                               "audit_rights":  {
-                                                                    "label":  "Audits et inspections",
-                                                                    "description":  "Permettre les audits et inspections du responsable de traitement et y contribuer."
-                                                                }
-                                           },
-                               "inputs":  {
-                                              "title":  "ParamÃ¨tres d\u0027Ã©valuation du risque",
-                                              "volume":  "Nombre de personnes concernÃ©es",
-                                              "volume_options":  {
-                                                                     "lt1k":  "moins de 1 000 personnes",
-                                                                     "1k_10k":  "1 000 â€“ 10 000 personnes",
-                                                                     "10k_100k":  "10 000 â€“ 100 000 personnes",
-                                                                     "100k_plus":  "plus de 100 000 personnes"
-                                                                 },
-                                              "renewal_date":  "Date de renouvellement du contrat",
-                                              "expiry_date":  "Date d\u0027expiration du DPA",
-                                              "certifications":  "Certifications de sÃ©curitÃ©",
-                                              "transfer_mechanisms":  "Garanties de transfert sur lesquelles vous vous appuyez",
-                                              "transfer_mechanisms_hint":  "EnregistrÃ©es pour votre propre usage de ce prestataire. Si le catalogue partagÃ© mentionne dÃ©jÃ  une garantie, celle-ci s\u0027y ajoute sans la remplacer â€” une lacune au titre de l\u0027article 44 n\u0027est signalÃ©e que si aucune des deux n\u0027en mentionne.",
-                                              "mechanisms":  {
-                                                                 "standard_contractual_clauses":  "Clauses contractuelles types",
-                                                                 "binding_corporate_rules":  "RÃ¨gles d\u0027entreprise contraignantes",
-                                                                 "data_privacy_framework":  "Data Privacy Framework UEâ€“Ã‰tats-Unis",
-                                                                 "adequacy_decision":  "DÃ©cision d\u0027adÃ©quation",
-                                                                 "derogation_article_49":  "DÃ©rogation de l\u0027article 49"
-                                                             }
-                                          },
-                               "template":  {
-                                                "title":  "ModÃ¨le de DPA du fournisseur",
-                                                "provided_by":  "PubliÃ© par {name}",
-                                                "review":  "Consulter le modÃ¨le"
-                                            }
-                           }
-               },
-    "analyzer":  {
-                     "back":  "Retour aux fournisseurs",
-                     "title":  "Analyseur de DPA par IA",
-                     "subtitle":  "ContrÃ´lez automatiquement les contrats de sous-traitance au regard de l\u0027article 28.",
-                     "failed":  "Impossible d\u0027analyser le DPA",
-                     "upload_title":  "TÃ©lÃ©verser un DPA (PDF)",
-                     "upload_description":  "SÃ©lectionnez un DPA signÃ© ou un brouillon pour y rechercher des Ã©carts de conformitÃ© au RGPD.",
-                     "select_file":  "SÃ©lectionner un fichier PDF",
-                     "analysing":  "Analyse du document...",
-                     "analyze":  "Analyser le DPA",
-                     "results":  "RÃ©sultats de l\u0027analyse",
-                     "file":  "Fichier : {name}",
-                     "score_label":  "Score de conformitÃ©",
-                     "another":  "Analyser un autre document",
-                     "status":  {
-                                    "present":  "PrÃ©sente",
-                                    "weak":  "Faible",
-                                    "missing":  "Absente"
-                                },
-                     "clause":  {
-                                    "verified":  "Clause vÃ©rifiÃ©e conforme.",
-                                    "review_required":  "VÃ©rification requise.",
-                                    "notes_title":  "Notes d\u0027analyse",
-                                    "no_notes":  "Aucune note particuliÃ¨re. La clause semble conforme Ã  l\u0027article 28.",
-                                    "excerpt_title":  "Extrait relevÃ©",
-                                    "found_in":  "TrouvÃ© dans : {location}",
-                                    "no_excerpt":  "Aucun extrait pertinent relevÃ©."
-                                }
-                 },
-    "assessments":  {
-                        "title":  "Ã‰valuations fournisseurs",
-                        "subtitle":  "Suivi automatisÃ© et questionnaires de conformitÃ© structurÃ©s pour les tiers.",
-                        "send":  "Envoyer une Ã©valuation",
-                        "metrics":  {
-                                        "dispatched":  "Total envoyÃ©",
-                                        "dispatched_unit":  "demandes",
-                                        "completion_rate":  "Taux de rÃ©ponse",
-                                        "completed_count":  "{count} terminÃ©e(s)",
-                                        "pending":  "RÃ©ponse fournisseur attendue",
-                                        "pending_unit":  "en attente",
-                                        "expired":  "En retard / expirÃ©es",
-                                        "expired_unit":  "prolongation requise"
-                                    },
-                        "filters":  {
-                                        "all":  "Toutes",
-                                        "sent":  "EnvoyÃ©es",
-                                        "in_progress":  "En cours",
-                                        "completed":  "TerminÃ©es",
-                                        "expired":  "ExpirÃ©es"
-                                    },
-                        "loading":  "Chargement des journaux d\u0027Ã©valuation...",
-                        "empty":  {
-                                      "title":  "Aucune Ã©valuation trouvÃ©e",
-                                      "description":  "Envoyez une nouvelle invitation Ã  un tiers pour la voir apparaÃ®tre ici."
-                                  },
-                        "columns":  {
-                                        "vendor":  "Fournisseur et modÃ¨le",
-                                        "recipient":  "Destinataire",
-                                        "sent_at":  "EnvoyÃ©e le",
-                                        "status":  "Statut",
-                                        "score":  "Score",
-                                        "actions":  "Actions"
-                                    },
-                        "unknown_vendor":  "Fournisseur inconnu",
-                        "default_recipient":  "Responsable sÃ©curitÃ©",
-                        "never":  "Jamais",
-                        "not_available":  "N/D",
-                        "expires":  "Expire le : {date}",
-                        "adjustment":  "Ajust. : {value}",
-                        "score_pending":  "En attente",
-                        "copy_link":  "Copier le lien dans le presse-papiers",
-                        "print":  "Imprimer / exporter en PDF",
-                        "review_action":  "Revue d\u0027audit et ajustements",
-                        "errors":  {
-                                       "required":  "Veuillez renseigner tous les champs obligatoires.",
-                                       "dispatch":  "L\u0027envoi de l\u0027Ã©valuation a Ã©chouÃ©.",
-                                       "review":  "L\u0027enregistrement de la revue de conformitÃ© a Ã©chouÃ©."
-                                   },
-                        "success":  {
-                                        "sent":  "Invitation Ã  l\u0027Ã©valuation envoyÃ©e.",
-                                        "reviewed":  "Revue de l\u0027Ã©valuation mise Ã  jour."
-                                    },
-                        "dispatch_modal":  {
-                                               "title":  "Envoyer le questionnaire de sÃ©curitÃ©",
-                                               "close":  "Fermer",
-                                               "vendor":  "Fournisseur ciblÃ© *",
-                                               "vendor_placeholder":  "SÃ©lectionner un fournisseur...",
-                                               "template":  "ModÃ¨le de questionnaire *",
-                                               "template_default":  "(par dÃ©faut)",
-                                               "recipient_name":  "Nom du destinataire",
-                                               "recipient_name_placeholder":  "ex. Ã‰quipe sÃ©curitÃ©",
-                                               "recipient_email":  "E-mail du destinataire *",
-                                               "recipient_email_placeholder":  "ex. securite@fournisseur.com",
-                                               "note":  "L\u0027envoi gÃ©nÃ¨re immÃ©diatement un lien d\u0027accÃ¨s sÃ©curisÃ© Ã  usage unique et l\u0027adresse au contact partenaire. Le questionnaire expire au bout de 30 jours exactement, sauf s\u0027il est complÃ©tÃ© ou prolongÃ©.",
-                                               "cancel":  "Annuler",
-                                               "submit":  "Envoyer l\u0027e-mail",
-                                               "submitting":  "Envoi..."
-                                           },
-                        "review_modal":  {
-                                             "title":  "Revue d\u0027audit et ajustement",
-                                             "adjustment":  "Ajustement du score (-50 Ã  +50)",
-                                             "adjustment_help":  "Ajuste le score de conformitÃ© issu du questionnaire. Les valeurs nÃ©gatives le diminuent, les valeurs positives l\u0027augmentent.",
-                                             "summary":  "SynthÃ¨se / notes de l\u0027auditeur",
-                                             "summary_placeholder":  "Consignez les vÃ©rifications, observations ou motifs d\u0027ajustement...",
-                                             "cancel":  "Annuler",
-                                             "submit":  "Enregistrer la revue",
-                                             "submitting":  "Enregistrement..."
-                                         }
-                    },
-    "print":  {
-                  "loading":  "PrÃ©paration de l\u0027export d\u0027audit...",
-                  "not_found":  "Enregistrement introuvable",
-                  "not_found_description":  "L\u0027Ã©valuation demandÃ©e n\u0027a pas pu Ãªtre chargÃ©e ou n\u0027est pas accessible dans le contexte de cette organisation.",
-                  "banner":  "Enregistrement d\u0027audit â€” intÃ©rÃªt lÃ©gitime (RGPD art. 30, registre)",
-                  "print_button":  "Imprimer / enregistrer en PDF",
-                  "provenance":  "Enregistrement de provenance d\u0027audit",
-                  "title":  "Ã‰valuation sÃ©curitÃ© et vie privÃ©e RGPD",
-                  "vendor_line":  "Fournisseur : {vendor} â€¢ ModÃ¨le : {template}",
-                  "score_label":  "Score d\u0027audit",
-                  "review_details":  "DÃ©tails de la revue",
-                  "completed_at":  "TerminÃ©e le :",
-                  "pending":  "En attente",
-                  "respondent_email":  "E-mail du rÃ©pondant :",
-                  "identity":  "VÃ©rification de l\u0027identitÃ© et du score",
-                  "respondent_ip":  "Adresse IP du rÃ©pondant :",
-                  "ip_unavailable":  "N/D (session locale / de confiance)",
-                  "status":  "Statut :",
-                  "ai_summary":  "SynthÃ¨se IA et notes de conformitÃ©",
-                  "no_summary":  "Aucun commentaire de synthÃ¨se d\u0027audit disponible.",
-                  "adjustment_applied":  "Modification du score de risque appliquÃ©e par l\u0027auditeur : {points} points",
-                  "responses":  "RÃ©ponses dÃ©taillÃ©es",
-                  "question_label":  "Q{number} â€¢ {category}",
-                  "no_response":  "(Aucune rÃ©ponse fournie)"
-              },
-    "add_modal":  {
-                      "title":  "Ajouter un fournisseur",
-                      "close":  "Fermer",
-                      "name":  "Nom du fournisseur",
-                      "name_placeholder":  "ex. Northbound Analytics",
-                      "website":  "Site web",
-                      "website_placeholder":  "https://exemple.com",
-                      "category":  "CatÃ©gorie",
-                      "category_placeholder":  "Mesure d\u0027audience",
-                      "country":  "Pays du siÃ¨ge",
-                      "country_placeholder":  "FR",
-                      "cancel":  "Annuler",
-                      "submit":  "Ajouter le fournisseur",
-                      "submitting":  "Ajoutâ€¦",
-                      "added":  "{name} a Ã©tÃ© ajoutÃ© au registre",
-                      "failed":  "Impossible d\u0027ajouter le fournisseur"
-                  },
-    "alternatives":  {
-                         "title":  "Alternatives respectueuses de la vie privÃ©e",
-                         "subtitle":  "Envisagez ces prestataires alternatifs Ã  moindre risque dans la mÃªme catÃ©gorie :",
-                         "risk":  "Risque : {score}",
-                         "privacy_friendly":  "Respectueux de la vie privÃ©e",
-                         "hq":  "SiÃ¨ge : {country}"
-                     },
-    "export":  {
-                   "nothing":  "Rien Ã  exporter",
-                   "empty_register":  "Le registre des prestataires est vide.",
-                   "failed":  "Ã‰chec de l\u0027export",
-                   "failed_detail":  "Le registre n\u0027a pas pu Ãªtre exportÃ©.",
-                   "done":  "{count} prestataires exportÃ©s"
-               },
-    "sub_processors":  {
-                           "loading":  "Chargement des sous-traitants ultÃ©rieursâ€¦",
-                           "title":  "ChaÃ®ne de sous-traitants ultÃ©rieurs",
-                           "subtitle":  "Suivez les tiers auxquels ce prestataire fait appel pour traiter vos donnÃ©es.",
-                           "add":  "Ajouter un sous-traitant ultÃ©rieur",
-                           "catalogue_note":  "Ce prestataire fait partie du catalogue partagÃ© : sa liste de sous-traitants ultÃ©rieurs est tenue Ã  jour Ã  partir de la page publiÃ©e par le prestataire, et non modifiÃ©e ici.",
-                           "col_name":  "Sous-traitant ultÃ©rieur",
-                           "col_jurisdiction":  "Juridiction",
-                           "col_risk":  "Statut de risque",
-                           "col_added":  "AjoutÃ© le",
-                           "empty":  "Aucun sous-traitant ultÃ©rieur enregistrÃ©.",
-                           "linked_title":  "LiÃ© Ã  la base de donnÃ©es globale",
-                           "purpose_default":  "Traitement gÃ©nÃ©ral",
-                           "unknown_country":  "Inconnu",
-                           "database_match":  "Correspondance en base",
-                           "unlisted_vendor":  "Prestataire non rÃ©pertoriÃ©",
-                           "errors":  {
-                                          "add_failed":  "Impossible d\u0027ajouter le sous-traitant ultÃ©rieur",
-                                          "remove_failed":  "Impossible de supprimer le sous-traitant ultÃ©rieur"
-                                      },
-                           "modal":  {
-                                         "title":  "Ajouter un sous-traitant ultÃ©rieur",
-                                         "subtitle":  "Reliez un tiers qui traite des donnÃ©es pour ce service.",
-                                         "tab_search":  "Rechercher dans la base",
-                                         "tab_manual":  "Saisie manuelle",
-                                         "search_placeholder":  "Rechercher dans la base globale des prestatairesâ€¦",
-                                         "unknown_location":  "Localisation inconnue",
-                                         "manual_warning":  "N\u0027utilisez la saisie manuelle que si le prestataire n\u0027existe pas dans notre base globale. Les sous-traitants ultÃ©rieurs saisis manuellement ne reÃ§oivent pas de score de risque automatique.",
-                                         "company_name":  "Raison sociale",
-                                         "country_code":  "Code pays (par ex. US, IE)",
-                                         "cancel":  "Annuler",
-                                         "submit":  "Ajouter le sous-traitant ultÃ©rieur"
-                                     },
-                           "history":  {
-                                           "title":  "Historique des modifications de sous-traitants ultÃ©rieurs",
-                                           "subtitle":  "Suivez les modifications dÃ©tectÃ©es sur la page publique des sous-traitants ultÃ©rieurs de ce prestataire et rÃ©pondez-y.",
-                                           "empty":  "Aucune modification dÃ©tectÃ©e ou enregistrÃ©e pour ce prestataire."
-                                       },
-                           "change":  {
-                                          "detected":  "Modification dÃ©tectÃ©e",
-                                          "detected_on":  "DÃ©tectÃ©e le {when}",
-                                          "review":  "Examiner et rÃ©pondre",
-                                          "summary":  "RÃ©sumÃ© des modifications ({added} ajouts, {removed} suppressions)",
-                                          "hide":  "Masquer les modifications",
-                                          "show":  "Afficher les modifications",
-                                          "no_lines":  "Aucun ajout ni suppression de ligne dÃ©tectÃ© (mise Ã  jour de texte type).",
-                                          "reviewed_by":  "ExaminÃ© par {name} le {when}",
-                                          "status":  {
-                                                         "pending_review":  "examen en attente",
-                                                         "acknowledged":  "acceptÃ©",
-                                                         "objected":  "contestÃ©"
-                                                     }
-                                      },
-                           "review":  {
-                                          "title":  "RÃ©pondre Ã  une modification de sous-traitant ultÃ©rieur",
-                                          "subtitle":  "Examinez les diffÃ©rences dÃ©tectÃ©es sur la page et transmettez votre rÃ©ponse.",
-                                          "diff_preview":  "AperÃ§u des diffÃ©rences dÃ©tectÃ©es",
-                                          "boilerplate_only":  "Mises Ã  jour de texte type uniquement.",
-                                          "notes_label":  "Notes d\u0027examen",
-                                          "notes_placeholder":  "Consignez votre Ã©valuation, par ex. Â« RÃ©gion AWS Dublin ajoutÃ©e ; conforme aux exigences d\u0027hÃ©bergement. Â»",
-                                          "warning_title":  "Avertissement sur la clause d\u0027opposition du DPA",
-                                          "warning_body":  "S\u0027opposer Ã  une modification de sous-traitant ultÃ©rieur est un acte juridiquement significatif au titre du RGPD. Selon les termes de votre DPA, vous pouvez disposer d\u0027un droit de rÃ©siliation. VÃ©rifiez les clauses de rÃ©siliation de votre DPA.",
-                                          "cancel":  "Annuler",
-                                          "object":  "S\u0027opposer Ã  la modification",
-                                          "acknowledge":  "Accepter la modification"
-                                      }
-                       },
-    "discovery":  {
-                      "loading":  "Chargement des dÃ©tails de l\u0027analyseâ€¦",
-                      "empty":  "Aucune dÃ©couverte enregistrÃ©e dans cette vue.",
-                      "item_count":  "{count} Ã©lÃ©ments",
-                      "dismiss":  "Ã‰carter / ignorer",
-                      "add_custom":  "Ajouter un prestataire personnalisÃ©",
-                      "link_vendor":  "Lier {name}",
-                      "source":  "Source : {method}",
-                      "first_seen":  "PremiÃ¨re dÃ©tection : {when}",
-                      "needs_consent":  "NÃ©cessite le consentement Â« {category} Â»",
-                      "consent_tooltip":  "{provider} nÃ©cessite un consentement pour Â« {category} Â» avant de pouvoir s\u0027exÃ©cuter.",
-                      "scan":  {
-                                   "title":  "Lancer une analyse de dÃ©couverte du site et du DNS",
-                                   "subtitle":  "Analysez votre site public Ã  la recherche de scripts de suivi, de pixels, de CDN et d\u0027enregistrements MX/SPF afin d\u0027identifier le shadow IT non documentÃ©.",
-                                   "button":  "Analyser le site",
-                                   "queued":  "Analyse de dÃ©couverte mise en file",
-                                   "queued_detail":  "Les rÃ©sultats apparaÃ®tront dans la boÃ®te de rÃ©ception dans quelques minutes."
-                               },
-                      "tabs":  {
-                                   "inbox":  "BoÃ®te de rÃ©ception",
-                                   "archive":  "Journaux d\u0027analyse et archives"
-                               },
-                      "badges":  {
-                                     "registry_match":  "Correspondance au registre global",
-                                     "unrecognised":  "Domaine non reconnu"
-                                 },
-                      "status":  {
-                                     "undocumented":  "non documentÃ©",
-                                     "added_to_register":  "ajoutÃ© au registre",
-                                     "dismissed":  "Ã©cartÃ©",
-                                     "false_positive":  "faux positif"
-                                 },
-                      "methods":  {
-                                      "website_scan":  "analyse du site",
-                                      "dns_analysis":  "analyse DNS"
-                                  },
-                      "categories":  {
-                                         "analytics":  "Analyse d\u0027audience",
-                                         "marketing":  "Marketing",
-                                         "hosting":  "HÃ©bergement / infrastructure",
-                                         "support":  "Support client",
-                                         "hr":  "RH / paie",
-                                         "other":  "Autre"
-                                     },
-                      "errors":  {
-                                     "confirm":  "Impossible de confirmer le prestataire",
-                                     "create":  "Impossible de crÃ©er le prestataire",
-                                     "dismiss":  "Impossible d\u0027Ã©carter la dÃ©couverte"
-                                 },
-                      "modal":  {
-                                    "title":  "Ajouter le prestataire dÃ©tectÃ©",
-                                    "service_name":  "Nom du service",
-                                    "domain":  "Domaine (site web)",
-                                    "category":  "CatÃ©gorie",
-                                    "warning_title":  "Avertissement de vÃ©rification du profil",
-                                    "warning_body":  "Ce prestataire sera ajoutÃ© comme profil personnalisÃ© marquÃ© Â« dÃ©tectÃ© automatiquement Â». Il vous sera demandÃ© de complÃ©ter ses localisations de donnÃ©es et ses certifications sur sa page de dÃ©tail.",
-                                    "cancel":  "Annuler",
-                                    "submit":  "CrÃ©er et lier"
-                                }
-                  },
-    "dpa_analysis":  {
-                         "title":  "RÃ©sultats de l\u0027analyse du DPA par l\u0027IA",
-                         "subtitle":  "Revue des clauses de l\u0027article 28 du RGPD rÃ©digÃ©e par Claude.",
-                         "quality_score":  "Score de qualitÃ© du DPA",
-                         "recommendation":  "Recommandation de l\u0027IA",
-                         "recommendation_good":  "Ce DPA prÃ©sente une forte conformitÃ© aux exigences de l\u0027article 28. Les garanties essentielles sont prÃ©sentes.",
-                         "recommendation_poor":  "Attention : ce DPA omet des clauses obligatoires de l\u0027article 28 ou contient des formulations problÃ©matiques. Examinez les dÃ©tails ci-dessous.",
-                         "special_category_title":  "Avertissement contextuel sur les catÃ©gories particuliÃ¨res de donnÃ©es (indicatif)",
-                         "special_category_note":  "Remarque : la classification des catÃ©gories de donnÃ©es du prestataire n\u0027a pas Ã©tÃ© modifiÃ©e. VÃ©rifiez vos classifications dans le registre des traitements.",
-                         "checklist_title":  "Liste de contrÃ´le des clauses obligatoires de l\u0027article 28(3)",
-                         "analysis_label":  "Analyse : ",
-                         "problematic_title":  "Formulations problÃ©matiques identifiÃ©es",
-                         "clause_type":  "Type de clause : {type}",
-                         "severity":  "GravitÃ© : {severity}",
-                         "ai_assisted":  "Ã‰valuation assistÃ©e par IA",
-                         "save_draft":  "Enregistrer comme brouillon",
-                         "apply":  "Appliquer et verrouiller la liste de contrÃ´le du DPA",
-                         "clauses":  {
-                                         "documentedInstructions":  "Instructions documentÃ©es (art. 28(3)(a))",
-                                         "confidentiality":  "Engagements de confidentialitÃ© (art. 28(3)(b))",
-                                         "securityMeasures":  "Mesures de sÃ©curitÃ© (art. 28(3)(c))",
-                                         "subProcessorRestrictions":  "Restrictions relatives aux sous-traitants ultÃ©rieurs (art. 28(3)(d))",
-                                         "dataSubjectRights":  "Assistance aux droits des personnes concernÃ©es (art. 28(3)(e))",
-                                         "securityBreachDpia":  "Notification des violations et AIPD (art. 28(3)(f))",
-                                         "deletionOnTermination":  "Suppression ou restitution des donnÃ©es (art. 28(3)(g))",
-                                         "auditRights":  "Audits et inspections (art. 28(3)(h))"
-                                     },
-                         "clause_status":  {
-                                               "present":  "prÃ©sente",
-                                               "weak":  "faible",
-                                               "missing":  "absente"
-                                           }
-                     },
-    "questionnaire":  {
-                          "title":  "Historique des Ã©valuations",
-                          "subtitle":  "Suivez les questionnaires prestataires, les audits rÃ©alisÃ©s et les ajustements du risque de conformitÃ©.",
-                          "send":  "Envoyer une Ã©valuation",
-                          "review_saved":  "Revue de conformitÃ© enregistrÃ©e.",
-                          "empty_title":  "Aucune Ã©valuation trouvÃ©e",
-                          "empty_body":  "Aucune demande de revue de sÃ©curitÃ© n\u0027a encore Ã©tÃ© envoyÃ©e Ã  ce prestataire. Envoyez-en une pour lancer un audit de conformitÃ©.",
-                          "recipient":  "Destinataire : {name} ({email})",
-                          "default_recipient":  "Responsable sÃ©curitÃ©",
-                          "sent_date":  "Date d\u0027envoi",
-                          "completed_date":  "Date d\u0027achÃ¨vement",
-                          "score":  "Score",
-                          "not_available":  "N/D",
-                          "copied":  "CopiÃ©",
-                          "copy_link":  "Copier le lien du formulaire",
-                          "copy_link_title":  "Copier le lien du jeton d\u0027accÃ¨s",
-                          "print_title":  "Imprimer le rapport d\u0027examen",
-                          "audit_review":  "Revue d\u0027audit",
-                          "audit_review_title":  "Revue d\u0027audit et ajustements",
-                          "audit_assessment":  "Ã‰valuation d\u0027audit :",
-                          "errors":  {
-                                         "dispatch":  "Ã‰chec de l\u0027envoi de l\u0027Ã©valuation.",
-                                         "review":  "Ã‰chec de la mise Ã  jour de la revue."
-                                     },
-                          "status":  {
-                                         "sent":  "envoyÃ©e",
-                                         "in_progress":  "en cours",
-                                         "completed":  "terminÃ©e",
-                                         "expired":  "expirÃ©e"
-                                     },
-                          "form":  {
-                                       "title":  "Nouvelle demande de questionnaire",
-                                       "cancel":  "Annuler",
-                                       "template":  "ModÃ¨le d\u0027Ã©valuation *",
-                                       "template_placeholder":  "SÃ©lectionner un modÃ¨le",
-                                       "recipient_name":  "Nom du destinataire",
-                                       "recipient_name_placeholder":  "par ex. Responsable conformitÃ©",
-                                       "recipient_email":  "E-mail du destinataire *",
-                                       "recipient_email_placeholder":  "par ex. security@partner.com",
-                                       "sending":  "Envoi en coursâ€¦",
-                                       "submit":  "Envoyer la demande"
-                                   },
-                          "review":  {
-                                         "title":  "Revue et ajustement par l\u0027auditeur",
-                                         "adjustment":  "Ajustement du score (-50 Ã  +50)",
-                                         "notes":  "Notes de revue de l\u0027auditeur",
-                                         "notes_placeholder":  "Consignez les notes de vÃ©rification, observations ou motifs d\u0027ajustementâ€¦",
-                                         "cancel":  "Annuler",
-                                         "saving":  "Enregistrementâ€¦",
-                                         "submit":  "Enregistrer la revue"
-                                     }
-                      },
-    "tia":  {
-                "loading":  "Chargement de l\u0027AITDâ€¦",
-                "process":  "ProcÃ©dure Schrems II",
-                "completed":  "AITD terminÃ©e",
-                "approved_on":  "ApprouvÃ©e le {when}",
-                "yes":  "Oui",
-                "no":  "Non",
-                "save_draft":  "Enregistrer le brouillon",
-                "approve":  "Approuver et clÃ´turer l\u0027AITD",
-                "previous":  "â† Ã‰tape prÃ©cÃ©dente",
-                "next":  "Ã‰tape suivante â†’",
-                "steps":  {
-                              "1":  "DÃ©tails du transfert",
-                              "2":  "Ã‰valuation juridique",
-                              "3":  "Mesures supplÃ©mentaires",
-                              "4":  "Risque rÃ©siduel",
-                              "5":  "Conclusion"
-                          },
-                "mechanisms":  {
-                                   "sccs":  "Clauses contractuelles types (CCT)",
-                                   "bcrs":  "RÃ¨gles d\u0027entreprise contraignantes (BCR)",
-                                   "derogation":  "DÃ©rogation de l\u0027article 49",
-                                   "adequacy":  "DÃ©cision d\u0027adÃ©quation"
-                               },
-                "step1":  {
-                              "title":  "Ã‰tape 1 : dÃ©tails du transfert",
-                              "subtitle":  "Identifiez les paramÃ¨tres prÃ©cis du transfert international de donnÃ©es.",
-                              "destination":  "Pays de destination",
-                              "mechanism":  "MÃ©canisme de transfert",
-                              "mechanism_placeholder":  "SÃ©lectionner un mÃ©canisme de transfert",
-                              "us_context_label":  "Contexte amÃ©ricain :",
-                              "us_context":  "Depuis l\u0027invalidation du Privacy Shield, les transferts vers les Ã‰tats-Unis fondÃ©s sur les CCT nÃ©cessitent une AITD afin d\u0027Ã©valuer les risques liÃ©s au FISA 702 et Ã  l\u0027EO 12333.",
-                              "exporter":  "Exportateur de donnÃ©es",
-                              "importer":  "Importateur de donnÃ©es",
-                              "purpose":  "FinalitÃ© du transfert",
-                              "frequency":  "FrÃ©quence",
-                              "frequency_one_off":  "Ponctuel",
-                              "frequency_occasional":  "Occasionnel",
-                              "frequency_continuous":  "Continu",
-                              "onward":  "Transferts ultÃ©rieurs"
-                          },
-                "step2":  {
-                              "title":  "Ã‰tape 2 : Ã©valuation juridique",
-                              "subtitle":  "Ã‰valuez les lois et pratiques du pays tiers applicables aux donnÃ©es transfÃ©rÃ©es.",
-                              "surveillance":  "Existe-t-il des lois de surveillance imposant l\u0027accÃ¨s aux donnÃ©es ?",
-                              "remedies":  "Existe-t-il des recours juridiques effectifs et opposables pour les personnes concernÃ©es ?",
-                              "conclusion":  "Conclusion de l\u0027Ã©valuation juridique",
-                              "select_conclusion":  "SÃ©lectionner une conclusionâ€¦",
-                              "equivalent":  "Les lois offrent une protection substantiellement Ã©quivalente (aucune mesure supplÃ©mentaire nÃ©cessaire)",
-                              "not_equivalent":  "Les lois n\u0027offrent pas de protection substantiellement Ã©quivalente",
-                              "uncertain":  "Incertain / lÃ©gislation problÃ©matique existante"
-                          },
-                "step3":  {
-                              "title":  "Ã‰tape 3 : mesures supplÃ©mentaires",
-                              "subtitle":  "Identifiez les mesures supplÃ©mentaires mises en Å“uvre par l\u0027importateur de donnÃ©es pour attÃ©nuer les risques.",
-                              "not_required":  "D\u0027aprÃ¨s l\u0027Ã©tape 2, des mesures supplÃ©mentaires ne sont pas strictement requises. Vous pouvez passer Ã  la conclusion.",
-                              "technical":  "Mesures techniques",
-                              "details_placeholder":  "DÃ©tailsâ€¦",
-                              "measures":  {
-                                               "e2ee":  "Chiffrement de bout en bout",
-                                               "pseudonymisation":  "Pseudonymisation",
-                                               "data_minimisation":  "Minimisation des donnÃ©es en transit",
-                                               "access_policy":  "Politique de contrÃ´le dâ€™accÃ¨s documentÃ©e",
-                                               "transparency_reporting":  "Rapports de transparence sur les demandes des autoritÃ©s",
-                                               "staff_training":  "Personnel formÃ© au traitement des demandes des autoritÃ©s",
-                                               "onward_transfer_controls":  "ContrÃ´les des transferts ultÃ©rieurs vers les sous-traitants",
-                                               "challenge_requests":  "Engagement Ã  contester les demandes disproportionnÃ©es",
-                                               "notify_access_requests":  "Engagement Ã  informer lâ€™exportateur des demandes dâ€™accÃ¨s",
-                                               "audit_rights":  "Droits dâ€™audit sur lâ€™importateur",
-                                               "warrant_canary":  "Warrant canary ou divulgation Ã©quivalente"
-                                           },
-                              "organizational":  "Mesures organisationnelles",
-                              "contractual":  "Mesures contractuelles"
-                          },
-                "step4":  {
-                              "title":  "Ã‰tape 4 : risque rÃ©siduel",
-                              "subtitle":  "Ã‰valuez le niveau de risque aprÃ¨s application de toutes les mesures supplÃ©mentaires.",
-                              "level":  "Niveau de risque rÃ©siduel",
-                              "justification":  "Justification",
-                              "justification_placeholder":  "Expliquez pourquoi le risque rÃ©siduel est acceptable ou inacceptableâ€¦",
-                              "levels":  {
-                                             "low":  "Faible",
-                                             "medium":  "Moyen",
-                                             "high":  "Ã‰levÃ©",
-                                             "critical":  "Critique"
-                                         }
-                          },
-                "step5":  {
-                              "title":  "Ã‰tape 5 : conclusion",
-                              "decision":  "DÃ©cision finale",
-                              "proceed":  "Poursuivre le transfert",
-                              "proceed_with_conditions":  "Poursuivre sous conditions",
-                              "suspend":  "Suspendre le transfert",
-                              "conditions":  "PrÃ©ciser les conditions"
-                          },
-                "exporting":  "GÃ©nÃ©rationâ€¦",
-                "export_pdf":  "Exporter le PDF",
-                "export_failed":  "Ã‰chec de la gÃ©nÃ©ration du PDF. RÃ©essayez.",
-                "step6":  {
-                              "interval":  "Intervalle de rÃ©Ã©valuation (mois)",
-                              "interval_placeholder":  "Choisir lâ€™intervalle",
-                              "interval_unset":  "Non planifiÃ©",
-                              "triggers":  "DÃ©clencheurs de rÃ©Ã©valuation"
-                          }
-            },
-    "incidents":  {
-                      "loading":  "Chargement du flux d\u0027incidentsâ€¦",
-                      "title":  "Violations et informations rÃ©glementaires",
-                      "subtitle":  "Alertes, amendes RGPD et actualitÃ©s de violations de donnÃ©es suivies pour ce prestataire.",
-                      "empty_title":  "Aucun incident enregistrÃ©",
-                      "empty_body":  "Aucune violation de donnÃ©es, amende ou action rÃ©glementaire n\u0027a Ã©tÃ© dÃ©tectÃ©e pour ce prestataire.",
-                      "meta":  "{when} | Source : {source}",
-                      "date_unknown":  "Date inconnue",
-                      "default_source":  "Flux rÃ©glementaire",
-                      "default_reviewer":  "Administration de l\u0027espace de travail",
-                      "source":  "Source",
-                      "alert_label":  "Alerte : {status}",
-                      "penalty":  "Sanction administrative",
-                      "affected_categories":  "CatÃ©gories de donnÃ©es concernÃ©es",
-                      "art33_title":  "Action recommandÃ©e au titre de l\u0027article 33",
-                      "art33_body":  "Si cette violation concerne des donnÃ©es Ã  caractÃ¨re personnel que vous avez transmises Ã  ce prestataire, vous devrez peut-Ãªtre notifier votre autoritÃ© de contrÃ´le dans les 72 heures au titre de l\u0027article 33. Examinez les dÃ©tails ci-dessus et Ã©valuez si vos personnes concernÃ©es sont touchÃ©es.",
-                      "reviewed_by":  "ExaminÃ© par {name}",
-                      "action_required":  "Action requise : examiner l\u0027alerte d\u0027incident de sÃ©curitÃ©",
-                      "respond":  "RÃ©pondre et documenter l\u0027action",
-                      "select_action":  "SÃ©lectionner l\u0027action de rÃ©ponse",
-                      "notes_label":  "Notes et documentation interne",
-                      "notes_placeholder":  "Documentez vos notes d\u0027action, par ex. Â« ConfirmÃ© : aucune personne concernÃ©e n\u0027est affectÃ©e par la divulgation de la clÃ© d\u0027API. Â»",
-                      "cancel":  "Annuler",
-                      "submit":  "Soumettre l\u0027Ã©valuation",
-                      "severity":  {
-                                       "low":  "faible",
-                                       "medium":  "moyen",
-                                       "high":  "Ã©levÃ©",
-                                       "critical":  "critique"
-                                   },
-                      "type":  {
-                                   "breach":  "violation",
-                                   "fine":  "amende",
-                                   "investigation":  "enquÃªte"
-                               },
-                      "alert_status":  {
-                                           "unread":  "non lue",
-                                           "acknowledged":  "accusÃ©e",
-                                           "action_taken":  "action engagÃ©e",
-                                           "dismissed":  "Ã©cartÃ©e"
-                                       },
-                      "actions":  {
-                                      "acknowledged":  "Accuser rÃ©ception",
-                                      "action_taken":  "Action engagÃ©e",
-                                      "dismissed":  "Ã‰carter"
-                                  }
-                  },
-    "filter":  {
-                   "risk_all":  "Tous les niveaux de risque",
-                   "dpa_all":  "Tous les statuts DPA",
-                   "sort_newest":  "Tri : plus rÃ©cents",
-                   "sort_name_asc":  "Nom Aâ€“Z",
-                   "sort_name_desc":  "Nom Zâ€“A",
-                   "sort_risk_high":  "Risque le plus Ã©levÃ© dâ€™abord",
-                   "sort_risk_low":  "Risque le plus faible dâ€™abord",
-                   "dpa_outstanding":  "DPA en attente",
-                   "status_live":  "En cours dâ€™utilisation",
-                   "status_all":  "Tous, y compris clÃ´turÃ©s",
-                   "sort_review_oldest":  "Revus le moins rÃ©cemment"
-               },
-    "criticality":  {
-                        "low":  "Faible",
-                        "medium":  "Moyen",
-                        "high":  "Ã‰levÃ©",
-                        "critical":  "Critique"
-                    },
-    "role":  {
-                 "processor":  "Sous-traitant",
-                 "joint_controller":  "Responsable conjoint",
-                 "independent_controller":  "Responsable indÃ©pendant"
-             },
-    "status_lifecycle":  {
-                             "active":  "Actif",
-                             "paused":  "En pause",
-                             "offboarded":  "RadiÃ©"
-                         },
-    "relationship":  {
-                         "title":  "Fiche relation",
-                         "business_owner":  "Responsable mÃ©tier",
-                         "business_owner_placeholder":  "Qui pilote cette relation fournisseur",
-                         "contact_email":  "Contact fournisseur",
-                         "criticality":  "CriticitÃ©",
-                         "processing_role":  "RÃ´le de traitement",
-                         "unset":  "Non dÃ©fini",
-                         "data_categories":  "CatÃ©gories de donnÃ©es partagÃ©es",
-                         "category_placeholder":  "ex. DonnÃ©es de contact",
-                         "category_add":  "Ajouter",
-                         "category_remove":  "Retirer la catÃ©gorie",
-                         "category_too_long":  "Chaque catÃ©gorie doit faire moins de 120 caractÃ¨res.",
-                         "category_duplicate":  "Cette catÃ©gorie figure dÃ©jÃ  dans la liste.",
-                         "purpose":  "FinalitÃ© du traitement (article 30(1)(d))",
-                         "purpose_placeholder":  "Pourquoi ce fournisseur traite des donnÃ©es pour nous",
-                         "next_review":  "Prochaine rÃ©vision",
-                         "offboarded_on":  "RadiÃ© le {date}",
-                         "deletion_certificate":  "RÃ©fÃ©rence du certificat de suppression",
-                         "deletion_certificate_placeholder":  "RÃ©fÃ©rence de lâ€™engagement art. 28(3)(g)",
-                         "deletion_certificate_hint":  "La rÃ©fÃ©rence confirmant que les donnÃ©es ont Ã©tÃ© supprimÃ©es ou restituÃ©es Ã  la fin du traitement.",
-                         "status":  "Statut du cycle de vie",
-                         "saving":  "Enregistrementâ€¦",
-                         "saved":  "Toutes les modifications sont enregistrÃ©es",
-                         "contact_email_invalid":  "Saisissez une adresse e-mail valide.",
-                         "joint_controller_hint":  "Un responsable conjoint requiert un accord au titre de lâ€™article 26, et non un DPA. La liste des clauses de lâ€™article 28(3) ne sâ€™applique pas.",
-                         "category_pick":  "Ajouter depuis la liste standardâ€¦",
-                         "category_custom":  "personnalisÃ©",
-                         "category_limit":  "Un fournisseur ne peut pas dÃ©passer {max} catÃ©gories de donnÃ©es.",
-                         "category_special_note":  "Ce fournisseur reÃ§oit des catÃ©gories particuliÃ¨res de donnÃ©es (article 9). Un DPA et une condition documentÃ©e au titre de lâ€™article 9(2) sont requis.",
-                         "review_title":  "Consigner une revue",
-                         "review_last":  "DerniÃ¨re revue le {date}",
-                         "review_never":  "Cette relation nâ€™a jamais fait lâ€™objet dâ€™une revue formelle.",
-                         "review_in_months":  "Revoir dans {months} mois",
-                         "review_attest":  "Marquer comme revu",
-                         "unlink":  "Retirer du registre",
-                         "unlink_title":  "Retirer ce fournisseur de votre registre ?",
-                         "unlink_body":  "La clÃ´ture conserve la fiche comme preuve dâ€™un sous-traitant utilisÃ©. La suppression lâ€™efface.",
-                         "unlink_evidence":  "Cette relation comporte {count} enregistrements qui seraient dÃ©truits : Ã©valuations, questionnaires, changements de sous-traitants ultÃ©rieurs et analyses dâ€™impact des transferts.",
-                         "unlink_confirm":  "Supprimer la relation et ses preuves",
-                         "unlink_offboard_instead":  "ClÃ´turer plutÃ´t",
-                         "unlink_cancel":  "Annuler"
-                     },
-    "history":  {
-                    "loading":  "Chargement de lâ€™historiqueâ€¦",
-                    "empty":  "Aucun changement enregistrÃ©. Chaque modification de ce fournisseur apparaÃ®tra ici.",
-                    "description":  "Chaque modification de ce fournisseur, par qui et quand. Issu du journal dâ€™audit de lâ€™organisation.",
-                    "export":  "Exporter en CSV",
-                    "load_more":  "Charger plus"
-                },
-    "import":  {
-                   "button":  "Importer un CSV",
-                   "title":  "Importer des fournisseurs depuis un CSV",
-                   "description":  "Chargez votre tableur de fournisseurs existant. Les lignes sont rapprochÃ©es du catalogue lorsque câ€™est possible ; les autres deviennent des fournisseurs personnalisÃ©s.",
-                   "choose_file":  "Choisir un fichier CSV",
-                   "choose_file_hint":  "Avec une ligne dâ€™en-tÃªte : Nom, Site web, CatÃ©gorie, Paysâ€¦",
-                   "file_loaded":  "{chars} caractÃ¨res chargÃ©s",
-                   "columns_title":  "Colonnes reconnues",
-                   "columns_help":  "Nom / Vendor / Supplier Â· Site web / URL / Domaine Â· CatÃ©gorie Â· Pays / SiÃ¨ge Â· CatÃ©gories de donnÃ©es Â· Responsable Â· E-mail de contact Â· CriticitÃ© Â· FinalitÃ©",
-                   "preview":  "AperÃ§u de lâ€™import",
-                   "valid":  "{count} lignes prÃªtes",
-                   "errors":  "{count} lignes prÃ©sentent des problÃ¨mes",
-                   "col_name":  "Fournisseur",
-                   "col_action":  "Action",
-                   "col_confidence":  "Correspondance",
-                   "action_link":  "Lier au catalogue",
-                   "action_create":  "CrÃ©er comme fournisseur personnalisÃ©",
-                   "row_error":  "Ligne {row} :",
-                   "commit":  "Importer {count} fournisseurs",
-                   "common_back":  "Retour",
-                   "toast_done":  "{created} fournisseurs importÃ©s.",
-                   "failed":  "Ã‰chec de lâ€™import.",
-                   "common_cancel":  "Annuler",
-                   "action_existing":  "DÃ©jÃ  au registre",
-                   "net_additions":  "{count} Ã  ajouter",
-                   "ignored_columns":  "Ces colonnes nâ€™ont pas Ã©tÃ© reconnues et ont Ã©tÃ© ignorÃ©es : {columns}",
-                   "near_miss":  "Correspondance possible : {name} ({confidence} %) â€” sous le seuil automatique, cette ligne crÃ©era donc un nouveau fournisseur.",
-                   "transaction_note":  "Lâ€™import sâ€™exÃ©cute en une seule transaction : soit toutes les lignes sont Ã©crites, soit aucune.",
-                   "too_large":  "Ce fichier dÃ©passe {limit} Ko. Divisez-le et importez-le en plusieurs fois.",
-                   "read_failed":  "Ce fichier nâ€™a pas pu Ãªtre lu.",
-                   "col_country":  "Pays",
-                   "done_title":  "Import terminÃ©",
-                   "done_created":  "{count} nouveaux fournisseurs crÃ©Ã©s",
-                   "done_linked":  "{count} rattachÃ©s au catalogue",
-                   "done_skipped":  "{count} dÃ©jÃ  prÃ©sents au registre et laissÃ©s inchangÃ©s",
-                   "done_close":  "TerminÃ©",
-                   "import_another":  "Importer un autre fichier",
-                   "skipped_rows":  "{count} lignes ont Ã©tÃ© ignorÃ©es"
-               },
-    "status":  {
-                   "active":  "Actif",
-                   "paused":  "En pause",
-                   "offboarded":  "RadiÃ©"
-               },
-    "data_category":  {
-                          "contact_details":  "CoordonnÃ©es",
-                          "identity_details":  "DonnÃ©es dâ€™identitÃ©",
-                          "account_credentials":  "Identifiants de compte",
-                          "employment_details":  "DonnÃ©es professionnelles",
-                          "financial_details":  "DonnÃ©es financiÃ¨res",
-                          "payment_card_data":  "DonnÃ©es de carte de paiement",
-                          "government_identifiers":  "Identifiants officiels",
-                          "location_data":  "DonnÃ©es de localisation",
-                          "device_and_usage_data":  "DonnÃ©es dâ€™appareil et dâ€™usage",
-                          "communications_content":  "Contenu des communications",
-                          "customer_support_records":  "Dossiers dâ€™assistance",
-                          "marketing_preferences":  "PrÃ©fÃ©rences marketing",
-                          "behavioural_profiling_data":  "DonnÃ©es de profilage comportemental",
-                          "childrens_data":  "DonnÃ©es dâ€™enfants",
-                          "user_generated_content":  "Contenu gÃ©nÃ©rÃ© par lâ€™utilisateur",
-                          "health_data":  "DonnÃ©es de santÃ©",
-                          "genetic_data":  "DonnÃ©es gÃ©nÃ©tiques",
-                          "biometric_data_for_id":  "DonnÃ©es biomÃ©triques dâ€™identification",
-                          "racial_or_ethnic_origin":  "Origine raciale ou ethnique",
-                          "political_opinions":  "Opinions politiques",
-                          "religious_or_philosophical_beliefs":  "Convictions religieuses ou philosophiques",
-                          "trade_union_membership":  "Appartenance syndicale",
-                          "sex_life":  "Vie sexuelle",
-                          "sexual_orientation":  "Orientation sexuelle",
-                          "criminal_offence_data":  "DonnÃ©es relatives aux infractions pÃ©nales"
-                      },
-    "intelligence":  {
-                         "title":  "Intelligence fournisseurs",
-                         "subtitle":  "Examinez la sortie du pipeline et approuvez les candidats dans le catalogue.",
-                         "pending_title":  "Candidats en attente",
-                         "pending_count":  "{count} fiches à examiner",
-                         "empty_pending":  "Rien en attente — lancez un lot via l\u0027API ou importez un fichier JSON ci-dessous.",
-                         "runs_title":  "Exécutions récentes",
-                         "runs_loading":  "Chargement des exécutions…",
-                         "runs_empty":  "Aucune exécution pour l\u0027instant.",
-                         "runs_col_kind":  "Type",
-                         "runs_col_status":  "Statut",
-                         "runs_col_progress":  "Progression",
-                         "runs_col_started":  "Démarrée",
-                         "approve":  "Approuver",
-                         "reject":  "Rejeter",
-                         "show_detail":  "Détails",
-                         "hide_detail":  "Masquer",
-                         "confidence_tooltip":  "Confiance {value}/100 — pondérée sur les sondes par champ",
-                         "field_country":  "Pays du siège",
-                         "back_to_register":  "Retour au registre",
-                         "import_title":  "Importer JSON",
-                         "import_help":  "Déposez ici le contenu de seed-data/vendors.json ou pending-review.json. Le serveur limite le corps à 4 Mo et conserve les 500 premiers enregistrements.",
-                         "import_button":  "Importer",
-                         "importing":  "Importation…",
-                         "import_done":  "{count} candidats importés.",
-                         "approving":  "Approbation en cours…",
-                         "bulk_error":  "Échec de l\u0027approbation groupée.",
-                         "bulk_done":  "{count} candidats ajoutés au catalogue.",
-                         "bulk_approve":  "Approuver tous ≥ 70 de confiance"
-                     },
-    "intake":  {
-                   "title":  "Demandes d'intégration fournisseurs",
-                   "subtitle":  "Examinez les demandes de logiciels des collaborateurs et intégrez les fournisseurs validés au registre.",
-                   "new_request":  "Nouvelle demande fournisseur",
-                   "col_vendor":  "Fournisseur demandé",
-                   "col_requester":  "Demandé par",
-                   "col_purpose":  "Finalité métier",
-                   "col_criticality":  "Criticité",
-                   "col_status":  "Statut",
-                   "col_date":  "Date",
-                   "approve":  "Approuver & Enregistrer",
-                   "reject":  "Rejeter la demande",
-                   "request_info":  "Demander des précisions",
-                   "empty":  "Aucune demande d'intégration trouvée.",
-                   "status_pending":  "En attente d'examen",
-                   "status_approved":  "Approuvé",
-                   "status_rejected":  "Rejeté",
-                   "status_more_info":  "Précisions demandées",
-                   "modal_title":  "Soumettre une demande fournisseur",
-                   "modal_subtitle":  "Demandez un nouvel outil logiciel ou prestataire tiers pour votre service.",
-                   "field_name":  "Nom du fournisseur / service",
-                   "field_website":  "URL du site web",
-                   "field_category":  "Catégorie",
-                   "field_owner":  "Responsable métier",
-                   "field_purpose":  "Finalité & justification métier",
-                   "field_data_categories":  "Catégories de données personnelles concernées",
-                   "field_criticality":  "Criticité pour l'entreprise",
-                   "field_subjects":  "Nombre estimé de personnes concernées",
-                   "submit":  "Soumettre la demande",
-                   "submitting":  "Envoi en cours...",
-                   "approve_title":  "Approuver la demande fournisseur",
-                   "approve_confirm":  "Cela ajoutera {name} à votre registre actif des fournisseurs et déclenchera l'enrichissement automatique de conformité.",
-                   "reject_title":  "Rejeter la demande fournisseur",
-                   "reject_reason":  "Motif du rejet",
-                   "toast_submitted":  "Demande fournisseur transmise pour examen de conformité.",
-                   "toast_approved":  "Fournisseur approuvé et enregistré.",
-                   "toast_rejected":  "Demande fournisseur rejetée.",
-                   "loading":  "Chargement des demandes d'intégration...",
-                   "label_purpose":  "Finalité :",
-                   "label_data_categories":  "Catégories de données :",
-                   "label_compliance_notes":  "Notes de conformité :",
-                   "filter_all":  "Tous",
-                   "reject_placeholder":  "Expliquez le motif du rejet de cette demande...",
-                   "field_data_categories_hint":  "Séparez les catégories par des virgules. Les données sensibles (art. 9) déclenchent une revue DPO renforcée.",
-                   "field_purpose_placeholder":  "Pourquoi votre équipe a-t-elle besoin de cet outil et quel processus prendra-t-il en charge ?",
-                   "crit_low":  "Faible (Outil non essentiel)",
-                   "crit_medium":  "Moyen (Outil opérationnel standard)",
-                   "crit_high":  "Élevé (Service métier critique)",
-                   "crit_critical":  "Critique (Mission critique / volume élevé)",
-                   "subj_1k":  "< 1 000 personnes concernées",
-                   "subj_1k_10k":  "1 000 – 10 000 personnes concernées",
-                   "subj_10k_100k":  "10 000 – 100 000 personnes concernées",
-                   "subj_100k_plus":  "100 000+ personnes concernées",
-                   "request_more_info_title":  "Demander des informations complémentaires",
-                   "request_more_info_notes":  "Quels détails supplémentaires sont requis de la part du demandeur ?",
-                   "request_more_info_placeholder":  "ex. Veuillez préciser si l'hébergement UE est requis...",
-                   "toast_more_info":  "Informations complémentaires demandées au demandeur.",
-                   "review_notes":  "Notes de révision (optionnel)",
-                   "approve_notes_placeholder":  "Ajoutez des conditions de conformité ou des notes d'approbation...",
-                   "confirm_approve":  "Confirmer l'approbation"
-               },
-    "review_cadence":  {
-                           "title":  "Périodicité de revue",
-                           "quarterly":  "Trimestrielle (90 jours)",
-                           "biannual":  "Semestrielle (180 jours)",
-                           "annual":  "Annuelle (365 jours)",
-                           "overdue":  "Revue en retard",
-                           "due_soon":  "Revue imminente",
-                           "scheduled":  "Revue planifiée",
-                           "not_scheduled":  "Non planifiée",
-                           "attest_now":  "Attester la revue maintenant",
-                           "attested":  "Revue attestée"
-                       },
-    "deep_clause_analysis":  {
-                                 "title":  "Analyse approfondie des clauses Art. 28(3)",
-                                 "score":  "Score de conformité : {score}/100",
-                                 "verdict_compliant":  "Totalement conforme",
-                                 "verdict_partially_compliant":  "Partiellement conforme",
-                                 "verdict_non_compliant":  "Non conforme",
-                                 "apply_catalogue":  "Appliquer les clauses pré-analysées",
-                                 "applied_done":  "Clauses Art. 28 du catalogue appliquées au registre.",
-                                 "status_present":  "Conforme",
-                                 "status_weak":  "Faible / Conditionnelle",
-                                 "status_missing":  "Manquante",
-                                 "verified_excerpt":  "Extrait vérifié :"
-                             }
+  "_review_notes": {
+    "title": "REVIEW: 'Gestion des fournisseurs'"
+  },
+  "title": "Intelligence des fournisseurs",
+  "subtitle": "Suivi automatisé pour les DPA, les TIA et les risques liés aux sous-traitants.",
+  "analyze_dpa": "Analyser le DPA",
+  "export_register": "Exporter le registre",
+  "export_article_30": "Exporter destinataires Art. 30",
+  "export_article_28": "Exporter dossier Art. 28",
+  "generate_dpa": "Générer DPA standard",
+  "discover_vendors": "Découvrir des fournisseurs",
+  "tabs": {
+    "tracked_register": "Registre suivi ({count})",
+    "vendor_discovery": "Découverte de fournisseurs et Shadow IT",
+    "intake": "Demandes d'intégration",
+    "concentration": "Chaîne d'approvisionnement & Concentration",
+    "enforcement": "Décisions réglementaires",
+    "relationship": "Relation & historique",
+    "history": "Piste d’audit"
+  },
+  "metrics": {
+    "total_tracked": "Total suivi",
+    "dpa_coverage": "Couverture DPA",
+    "missing_dpas": "DPA manquants / expirÃ©s",
+    "high_risk": "Risque Ã©levÃ© / critique",
+    "offboarded": "ClÃ´turÃ©s"
+  },
+  "filter_placeholder": "Filtrer les fournisseurs...",
+  "add_custom_vendor": "Ajouter un fournisseur personnalisÃ©",
+  "empty_state": "Aucun fournisseur suivi pour le moment. Cliquez sur 'DÃ©couvrir des fournisseurs' pour commencer Ã  construire votre registre.",
+  "load_more": "Charger plus",
+  "loading_more": "Chargement...",
+  "columns": {
+    "vendor": "Fournisseur",
+    "category": "CatÃ©gorie",
+    "dpa_status": "Statut DPA",
+    "risk_score": "Score et niveau de risque",
+    "data_locations": "Emplacements des donnÃ©es",
+    "processing_role": "RÃ´le",
+    "role_unset": "RÃ´le non dÃ©fini"
+  },
+  "dpa_status": {
+    "signed": "SignÃ©",
+    "expired": "ExpirÃ©",
+    "missing": "Manquant",
+    "not_started": "Non entamÃ©",
+    "requested": "DemandÃ©",
+    "in_review": "En cours dâ€™examen"
+  },
+  "locations": {
+    "hq": "SiÃ¨ge social : {country}",
+    "unknown": "Inconnu",
+    "eu_hosted": "(HÃ©bergÃ© dans l'UE)"
+  },
+  "discover_modal": {
+    "title": "DÃ©couvrir des fournisseurs mondiaux",
+    "search_placeholder": "Recherche par nom (ex. HubSpot, AWS)...",
+    "no_results": "Aucun fournisseur mondial trouvÃ© correspondant Ã  '{search}'.",
+    "hq": "SiÃ¨ge social : {country}",
+    "add_to_register": "Ajouter au registre"
+  },
+  "empty": {
+    "title": "Aucun sous-traitant enregistrÃ©",
+    "description": "Chaque sous-traitant qui manipule des donnÃ©es personnelles pour votre compte requiert un contrat au titre de l'article 28. Analysez votre site ou ajoutez-en un manuellement."
+  },
+  "risk_level": {
+    "low": "Faible",
+    "medium": "Moyen",
+    "high": "Ã‰levÃ©",
+    "critical": "Critique",
+    "unknown": "Inconnu"
+  },
+  "detail": {
+    "loading": "Chargement des donnÃ©es fournisseur...",
+    "not_found": "Fournisseur introuvable ou non rattachÃ©.",
+    "back": "Retour au registre des fournisseurs",
+    "auto_discovered": {
+      "title": "Fiche fournisseur dÃ©tectÃ©e automatiquement",
+      "description": "Cette fiche a Ã©tÃ© crÃ©Ã©e automatiquement Ã  partir d'une analyse de site web ou DNS. VÃ©rifiez et complÃ©tez le pays du siÃ¨ge, les options d'hÃ©bergement dans l'UE et les certifications de sÃ©curitÃ© pour que le score de risque soit correct.",
+      "verify": "VÃ©rifier et verrouiller la fiche"
+    },
+    "headquarters": "SiÃ¨ge social",
+    "certifications": "Certifications",
+    "none_detected": "Aucune dÃ©tectÃ©e",
+    "eu_residency": "Localisation des donnÃ©es dans l'UE",
+    "available": "Disponible",
+    "not_available": "Non disponible",
+    "use_eu_datacentre": "Nous utilisons le centre de donnÃ©es de l'UE",
+    "risk": {
+      "title": "Score de risque calculÃ©",
+      "explanation": "Le score est calculÃ© dynamiquement Ã  partir de la juridiction ({country}), des DPA ({dpaStatus}), du niveau de sÃ©curitÃ© et des renseignements sur les menaces.",
+      "factors": "DÃ©tail des facteurs de risque",
+      "points": "+{points} / {max} pts"
+    },
+    "tabs": {
+      "dpa": "Gestion du DPA",
+      "tia": "Analyse d'impact du transfert",
+      "sub_processors": "Sous-traitants ultÃ©rieurs",
+      "incidents": "Incidents et violations",
+      "questionnaire": "Questionnaire de sÃ©curitÃ©",
+      "relationship": "Relation & historique",
+      "history": "Piste dâ€™audit"
+    },
+    "dpa": {
+      "title": "Contrat de sous-traitance",
+      "description": "Suivez votre relation contractuelle. Un DPA signÃ© est strictement requis par l'article 28 du RGPD.",
+      "status": {
+        "not_started": "Non commencÃ©",
+        "draft": "Brouillon",
+        "sent": "EnvoyÃ©",
+        "signed": "SignÃ©",
+        "expired": "ExpirÃ©"
+      },
+      "upload": {
+        "title": "TÃ©lÃ©verser le document signÃ©",
+        "description": "Conservez votre DPA signÃ© en toute sÃ©curitÃ©. Votre score de risque sera mis Ã  jour et les alertes d'expiration programmÃ©es automatiquement.",
+        "analysing": "L'IA analyse les clauses et recherche les formulations problÃ©matiques...",
+        "select_file": "SÃ©lectionner un fichier PDF",
+        "error_pdf_only": "Seuls les documents PDF sont pris en charge pour l'analyse de DPA par l'IA.",
+        "error_analyse": "L'analyse du document DPA a Ã©chouÃ©.",
+        "error_read": "La lecture du fichier DPA a Ã©chouÃ©."
+      },
+      "clause_review": {
+        "title": "Revue des clauses de l'article 28",
+        "description": "VÃ©rifiez que votre contrat couvre toutes les obligations du sous-traitant prÃ©vues Ã  l'article 28, paragraphe 3, du RGPD.",
+        "completeness": "ComplÃ©tude",
+        "count": "{covered} / {total} clauses ({percent} %)"
+      },
+      "clauses": {
+        "documented_instructions": {
+          "label": "Instructions documentÃ©es",
+          "description": "Traiter les donnÃ©es uniquement sur instruction documentÃ©e du responsable de traitement."
+        },
+        "confidentiality": {
+          "label": "ConfidentialitÃ© du personnel",
+          "description": "S'assurer que les personnes autorisÃ©es Ã  traiter les donnÃ©es sont soumises Ã  une obligation de confidentialitÃ©."
+        },
+        "security_measures": {
+          "label": "Mesures de sÃ©curitÃ©",
+          "description": "Mettre en Å“uvre des mesures techniques et organisationnelles (art. 32)."
+        },
+        "sub_processor_restrictions": {
+          "label": "Encadrement des sous-traitants ultÃ©rieurs",
+          "description": "Ne recruter un sous-traitant ultÃ©rieur qu'avec une autorisation prÃ©alable, spÃ©cifique ou gÃ©nÃ©rale."
+        },
+        "data_subject_rights": {
+          "label": "Aide Ã  l'exercice des droits",
+          "description": "Aider le responsable de traitement Ã  rÃ©pondre aux personnes concernÃ©es qui exercent leurs droits."
+        },
+        "security_breach_dpia": {
+          "label": "Aide en cas de violation et pour les AIPD",
+          "description": "Aider le responsable de traitement pour les notifications de violation, les audits de sÃ©curitÃ© et les AIPD."
+        },
+        "deletion_on_termination": {
+          "label": "Suppression ou restitution des donnÃ©es",
+          "description": "Supprimer ou restituer toutes les donnÃ©es Ã  caractÃ¨re personnel au choix du responsable de traitement Ã  la fin du traitement."
+        },
+        "audit_rights": {
+          "label": "Audits et inspections",
+          "description": "Permettre les audits et inspections du responsable de traitement et y contribuer."
+        }
+      },
+      "inputs": {
+        "title": "ParamÃ¨tres d'Ã©valuation du risque",
+        "volume": "Nombre de personnes concernÃ©es",
+        "volume_options": {
+          "lt1k": "moins de 1 000 personnes",
+          "1k_10k": "1 000 â€“ 10 000 personnes",
+          "10k_100k": "10 000 â€“ 100 000 personnes",
+          "100k_plus": "plus de 100 000 personnes"
+        },
+        "renewal_date": "Date de renouvellement du contrat",
+        "expiry_date": "Date d'expiration du DPA",
+        "certifications": "Certifications de sÃ©curitÃ©",
+        "transfer_mechanisms": "Garanties de transfert sur lesquelles vous vous appuyez",
+        "transfer_mechanisms_hint": "EnregistrÃ©es pour votre propre usage de ce prestataire. Si le catalogue partagÃ© mentionne dÃ©jÃ  une garantie, celle-ci s'y ajoute sans la remplacer â€” une lacune au titre de l'article 44 n'est signalÃ©e que si aucune des deux n'en mentionne.",
+        "mechanisms": {
+          "standard_contractual_clauses": "Clauses contractuelles types",
+          "binding_corporate_rules": "RÃ¨gles d'entreprise contraignantes",
+          "data_privacy_framework": "Data Privacy Framework UEâ€“Ã‰tats-Unis",
+          "adequacy_decision": "DÃ©cision d'adÃ©quation",
+          "derogation_article_49": "DÃ©rogation de l'article 49"
+        }
+      },
+      "template": {
+        "title": "ModÃ¨le de DPA du fournisseur",
+        "provided_by": "PubliÃ© par {name}",
+        "review": "Consulter le modÃ¨le"
+      }
+    }
+  },
+  "analyzer": {
+    "back": "Retour aux fournisseurs",
+    "title": "Analyseur de DPA par IA",
+    "subtitle": "ContrÃ´lez automatiquement les contrats de sous-traitance au regard de l'article 28.",
+    "failed": "Impossible d'analyser le DPA",
+    "upload_title": "TÃ©lÃ©verser un DPA (PDF)",
+    "upload_description": "SÃ©lectionnez un DPA signÃ© ou un brouillon pour y rechercher des Ã©carts de conformitÃ© au RGPD.",
+    "select_file": "SÃ©lectionner un fichier PDF",
+    "analysing": "Analyse du document...",
+    "analyze": "Analyser le DPA",
+    "results": "RÃ©sultats de l'analyse",
+    "file": "Fichier : {name}",
+    "score_label": "Score de conformitÃ©",
+    "another": "Analyser un autre document",
+    "status": {
+      "present": "PrÃ©sente",
+      "weak": "Faible",
+      "missing": "Absente"
+    },
+    "clause": {
+      "verified": "Clause vÃ©rifiÃ©e conforme.",
+      "review_required": "VÃ©rification requise.",
+      "notes_title": "Notes d'analyse",
+      "no_notes": "Aucune note particuliÃ¨re. La clause semble conforme Ã  l'article 28.",
+      "excerpt_title": "Extrait relevÃ©",
+      "found_in": "TrouvÃ© dans : {location}",
+      "no_excerpt": "Aucun extrait pertinent relevÃ©."
+    }
+  },
+  "assessments": {
+    "title": "Ã‰valuations fournisseurs",
+    "subtitle": "Suivi automatisÃ© et questionnaires de conformitÃ© structurÃ©s pour les tiers.",
+    "send": "Envoyer une Ã©valuation",
+    "metrics": {
+      "dispatched": "Total envoyÃ©",
+      "dispatched_unit": "demandes",
+      "completion_rate": "Taux de rÃ©ponse",
+      "completed_count": "{count} terminÃ©e(s)",
+      "pending": "RÃ©ponse fournisseur attendue",
+      "pending_unit": "en attente",
+      "expired": "En retard / expirÃ©es",
+      "expired_unit": "prolongation requise"
+    },
+    "filters": {
+      "all": "Toutes",
+      "sent": "EnvoyÃ©es",
+      "in_progress": "En cours",
+      "completed": "TerminÃ©es",
+      "expired": "ExpirÃ©es"
+    },
+    "loading": "Chargement des journaux d'Ã©valuation...",
+    "empty": {
+      "title": "Aucune Ã©valuation trouvÃ©e",
+      "description": "Envoyez une nouvelle invitation Ã  un tiers pour la voir apparaÃ®tre ici."
+    },
+    "columns": {
+      "vendor": "Fournisseur et modÃ¨le",
+      "recipient": "Destinataire",
+      "sent_at": "EnvoyÃ©e le",
+      "status": "Statut",
+      "score": "Score",
+      "actions": "Actions"
+    },
+    "unknown_vendor": "Fournisseur inconnu",
+    "default_recipient": "Responsable sÃ©curitÃ©",
+    "never": "Jamais",
+    "not_available": "N/D",
+    "expires": "Expire le : {date}",
+    "adjustment": "Ajust. : {value}",
+    "score_pending": "En attente",
+    "copy_link": "Copier le lien dans le presse-papiers",
+    "print": "Imprimer / exporter en PDF",
+    "review_action": "Revue d'audit et ajustements",
+    "errors": {
+      "required": "Veuillez renseigner tous les champs obligatoires.",
+      "dispatch": "L'envoi de l'Ã©valuation a Ã©chouÃ©.",
+      "review": "L'enregistrement de la revue de conformitÃ© a Ã©chouÃ©."
+    },
+    "success": {
+      "sent": "Invitation Ã  l'Ã©valuation envoyÃ©e.",
+      "reviewed": "Revue de l'Ã©valuation mise Ã  jour."
+    },
+    "dispatch_modal": {
+      "title": "Envoyer le questionnaire de sÃ©curitÃ©",
+      "close": "Fermer",
+      "vendor": "Fournisseur ciblÃ© *",
+      "vendor_placeholder": "SÃ©lectionner un fournisseur...",
+      "template": "ModÃ¨le de questionnaire *",
+      "template_default": "(par dÃ©faut)",
+      "recipient_name": "Nom du destinataire",
+      "recipient_name_placeholder": "ex. Ã‰quipe sÃ©curitÃ©",
+      "recipient_email": "E-mail du destinataire *",
+      "recipient_email_placeholder": "ex. securite@fournisseur.com",
+      "note": "L'envoi gÃ©nÃ¨re immÃ©diatement un lien d'accÃ¨s sÃ©curisÃ© Ã  usage unique et l'adresse au contact partenaire. Le questionnaire expire au bout de 30 jours exactement, sauf s'il est complÃ©tÃ© ou prolongÃ©.",
+      "cancel": "Annuler",
+      "submit": "Envoyer l'e-mail",
+      "submitting": "Envoi..."
+    },
+    "review_modal": {
+      "title": "Revue d'audit et ajustement",
+      "adjustment": "Ajustement du score (-50 Ã  +50)",
+      "adjustment_help": "Ajuste le score de conformitÃ© issu du questionnaire. Les valeurs nÃ©gatives le diminuent, les valeurs positives l'augmentent.",
+      "summary": "SynthÃ¨se / notes de l'auditeur",
+      "summary_placeholder": "Consignez les vÃ©rifications, observations ou motifs d'ajustement...",
+      "cancel": "Annuler",
+      "submit": "Enregistrer la revue",
+      "submitting": "Enregistrement..."
+    }
+  },
+  "print": {
+    "loading": "PrÃ©paration de l'export d'audit...",
+    "not_found": "Enregistrement introuvable",
+    "not_found_description": "L'Ã©valuation demandÃ©e n'a pas pu Ãªtre chargÃ©e ou n'est pas accessible dans le contexte de cette organisation.",
+    "banner": "Enregistrement d'audit â€” intÃ©rÃªt lÃ©gitime (RGPD art. 30, registre)",
+    "print_button": "Imprimer / enregistrer en PDF",
+    "provenance": "Enregistrement de provenance d'audit",
+    "title": "Ã‰valuation sÃ©curitÃ© et vie privÃ©e RGPD",
+    "vendor_line": "Fournisseur : {vendor} â€¢ ModÃ¨le : {template}",
+    "score_label": "Score d'audit",
+    "review_details": "DÃ©tails de la revue",
+    "completed_at": "TerminÃ©e le :",
+    "pending": "En attente",
+    "respondent_email": "E-mail du rÃ©pondant :",
+    "identity": "VÃ©rification de l'identitÃ© et du score",
+    "respondent_ip": "Adresse IP du rÃ©pondant :",
+    "ip_unavailable": "N/D (session locale / de confiance)",
+    "status": "Statut :",
+    "ai_summary": "SynthÃ¨se IA et notes de conformitÃ©",
+    "no_summary": "Aucun commentaire de synthÃ¨se d'audit disponible.",
+    "adjustment_applied": "Modification du score de risque appliquÃ©e par l'auditeur : {points} points",
+    "responses": "RÃ©ponses dÃ©taillÃ©es",
+    "question_label": "Q{number} â€¢ {category}",
+    "no_response": "(Aucune rÃ©ponse fournie)"
+  },
+  "add_modal": {
+    "title": "Ajouter un fournisseur",
+    "close": "Fermer",
+    "name": "Nom du fournisseur",
+    "name_placeholder": "ex. Northbound Analytics",
+    "website": "Site web",
+    "website_placeholder": "https://exemple.com",
+    "category": "CatÃ©gorie",
+    "category_placeholder": "Mesure d'audience",
+    "country": "Pays du siÃ¨ge",
+    "country_placeholder": "FR",
+    "cancel": "Annuler",
+    "submit": "Ajouter le fournisseur",
+    "submitting": "Ajoutâ€¦",
+    "added": "{name} a Ã©tÃ© ajoutÃ© au registre",
+    "failed": "Impossible d'ajouter le fournisseur"
+  },
+  "alternatives": {
+    "title": "Alternatives respectueuses de la vie privÃ©e",
+    "subtitle": "Envisagez ces prestataires alternatifs Ã  moindre risque dans la mÃªme catÃ©gorie :",
+    "risk": "Risque : {score}",
+    "privacy_friendly": "Respectueux de la vie privÃ©e",
+    "hq": "SiÃ¨ge : {country}"
+  },
+  "export": {
+    "nothing": "Rien Ã  exporter",
+    "empty_register": "Le registre des prestataires est vide.",
+    "failed": "Ã‰chec de l'export",
+    "failed_detail": "Le registre n'a pas pu Ãªtre exportÃ©.",
+    "done": "{count} prestataires exportÃ©s"
+  },
+  "sub_processors": {
+    "loading": "Chargement des sous-traitants ultÃ©rieursâ€¦",
+    "title": "ChaÃ®ne de sous-traitants ultÃ©rieurs",
+    "subtitle": "Suivez les tiers auxquels ce prestataire fait appel pour traiter vos donnÃ©es.",
+    "add": "Ajouter un sous-traitant ultÃ©rieur",
+    "catalogue_note": "Ce prestataire fait partie du catalogue partagÃ© : sa liste de sous-traitants ultÃ©rieurs est tenue Ã  jour Ã  partir de la page publiÃ©e par le prestataire, et non modifiÃ©e ici.",
+    "col_name": "Sous-traitant ultÃ©rieur",
+    "col_jurisdiction": "Juridiction",
+    "col_risk": "Statut de risque",
+    "col_added": "AjoutÃ© le",
+    "empty": "Aucun sous-traitant ultÃ©rieur enregistrÃ©.",
+    "linked_title": "LiÃ© Ã  la base de donnÃ©es globale",
+    "purpose_default": "Traitement gÃ©nÃ©ral",
+    "unknown_country": "Inconnu",
+    "database_match": "Correspondance en base",
+    "unlisted_vendor": "Prestataire non rÃ©pertoriÃ©",
+    "errors": {
+      "add_failed": "Impossible d'ajouter le sous-traitant ultÃ©rieur",
+      "remove_failed": "Impossible de supprimer le sous-traitant ultÃ©rieur"
+    },
+    "modal": {
+      "title": "Ajouter un sous-traitant ultÃ©rieur",
+      "subtitle": "Reliez un tiers qui traite des donnÃ©es pour ce service.",
+      "tab_search": "Rechercher dans la base",
+      "tab_manual": "Saisie manuelle",
+      "search_placeholder": "Rechercher dans la base globale des prestatairesâ€¦",
+      "unknown_location": "Localisation inconnue",
+      "manual_warning": "N'utilisez la saisie manuelle que si le prestataire n'existe pas dans notre base globale. Les sous-traitants ultÃ©rieurs saisis manuellement ne reÃ§oivent pas de score de risque automatique.",
+      "company_name": "Raison sociale",
+      "country_code": "Code pays (par ex. US, IE)",
+      "cancel": "Annuler",
+      "submit": "Ajouter le sous-traitant ultÃ©rieur"
+    },
+    "history": {
+      "title": "Historique des modifications de sous-traitants ultÃ©rieurs",
+      "subtitle": "Suivez les modifications dÃ©tectÃ©es sur la page publique des sous-traitants ultÃ©rieurs de ce prestataire et rÃ©pondez-y.",
+      "empty": "Aucune modification dÃ©tectÃ©e ou enregistrÃ©e pour ce prestataire."
+    },
+    "change": {
+      "detected": "Modification dÃ©tectÃ©e",
+      "detected_on": "DÃ©tectÃ©e le {when}",
+      "review": "Examiner et rÃ©pondre",
+      "summary": "RÃ©sumÃ© des modifications ({added} ajouts, {removed} suppressions)",
+      "hide": "Masquer les modifications",
+      "show": "Afficher les modifications",
+      "no_lines": "Aucun ajout ni suppression de ligne dÃ©tectÃ© (mise Ã  jour de texte type).",
+      "reviewed_by": "ExaminÃ© par {name} le {when}",
+      "status": {
+        "pending_review": "examen en attente",
+        "acknowledged": "acceptÃ©",
+        "objected": "contestÃ©"
+      }
+    },
+    "review": {
+      "title": "RÃ©pondre Ã  une modification de sous-traitant ultÃ©rieur",
+      "subtitle": "Examinez les diffÃ©rences dÃ©tectÃ©es sur la page et transmettez votre rÃ©ponse.",
+      "diff_preview": "AperÃ§u des diffÃ©rences dÃ©tectÃ©es",
+      "boilerplate_only": "Mises Ã  jour de texte type uniquement.",
+      "notes_label": "Notes d'examen",
+      "notes_placeholder": "Consignez votre Ã©valuation, par ex. Â« RÃ©gion AWS Dublin ajoutÃ©e ; conforme aux exigences d'hÃ©bergement. Â»",
+      "warning_title": "Avertissement sur la clause d'opposition du DPA",
+      "warning_body": "S'opposer Ã  une modification de sous-traitant ultÃ©rieur est un acte juridiquement significatif au titre du RGPD. Selon les termes de votre DPA, vous pouvez disposer d'un droit de rÃ©siliation. VÃ©rifiez les clauses de rÃ©siliation de votre DPA.",
+      "cancel": "Annuler",
+      "object": "S'opposer Ã  la modification",
+      "acknowledge": "Accepter la modification"
+    }
+  },
+  "discovery": {
+    "loading": "Chargement des dÃ©tails de l'analyseâ€¦",
+    "empty": "Aucune dÃ©couverte enregistrÃ©e dans cette vue.",
+    "item_count": "{count} Ã©lÃ©ments",
+    "dismiss": "Ã‰carter / ignorer",
+    "add_custom": "Ajouter un prestataire personnalisÃ©",
+    "link_vendor": "Lier {name}",
+    "source": "Source : {method}",
+    "first_seen": "PremiÃ¨re dÃ©tection : {when}",
+    "needs_consent": "NÃ©cessite le consentement Â« {category} Â»",
+    "consent_tooltip": "{provider} nÃ©cessite un consentement pour Â« {category} Â» avant de pouvoir s'exÃ©cuter.",
+    "scan": {
+      "title": "Lancer une analyse de dÃ©couverte du site et du DNS",
+      "subtitle": "Analysez votre site public Ã  la recherche de scripts de suivi, de pixels, de CDN et d'enregistrements MX/SPF afin d'identifier le shadow IT non documentÃ©.",
+      "button": "Analyser le site",
+      "queued": "Analyse de dÃ©couverte mise en file",
+      "queued_detail": "Les rÃ©sultats apparaÃ®tront dans la boÃ®te de rÃ©ception dans quelques minutes."
+    },
+    "tabs": {
+      "inbox": "BoÃ®te de rÃ©ception",
+      "archive": "Journaux d'analyse et archives"
+    },
+    "badges": {
+      "registry_match": "Correspondance au registre global",
+      "unrecognised": "Domaine non reconnu"
+    },
+    "status": {
+      "undocumented": "non documentÃ©",
+      "added_to_register": "ajoutÃ© au registre",
+      "dismissed": "Ã©cartÃ©",
+      "false_positive": "faux positif"
+    },
+    "methods": {
+      "website_scan": "analyse du site",
+      "dns_analysis": "analyse DNS"
+    },
+    "categories": {
+      "analytics": "Analyse d'audience",
+      "marketing": "Marketing",
+      "hosting": "HÃ©bergement / infrastructure",
+      "support": "Support client",
+      "hr": "RH / paie",
+      "other": "Autre"
+    },
+    "errors": {
+      "confirm": "Impossible de confirmer le prestataire",
+      "create": "Impossible de crÃ©er le prestataire",
+      "dismiss": "Impossible d'Ã©carter la dÃ©couverte"
+    },
+    "modal": {
+      "title": "Ajouter le prestataire dÃ©tectÃ©",
+      "service_name": "Nom du service",
+      "domain": "Domaine (site web)",
+      "category": "CatÃ©gorie",
+      "warning_title": "Avertissement de vÃ©rification du profil",
+      "warning_body": "Ce prestataire sera ajoutÃ© comme profil personnalisÃ© marquÃ© Â« dÃ©tectÃ© automatiquement Â». Il vous sera demandÃ© de complÃ©ter ses localisations de donnÃ©es et ses certifications sur sa page de dÃ©tail.",
+      "cancel": "Annuler",
+      "submit": "CrÃ©er et lier"
+    }
+  },
+  "dpa_analysis": {
+    "title": "RÃ©sultats de l'analyse du DPA par l'IA",
+    "subtitle": "Revue des clauses de l'article 28 du RGPD rÃ©digÃ©e par Claude.",
+    "quality_score": "Score de qualitÃ© du DPA",
+    "recommendation": "Recommandation de l'IA",
+    "recommendation_good": "Ce DPA prÃ©sente une forte conformitÃ© aux exigences de l'article 28. Les garanties essentielles sont prÃ©sentes.",
+    "recommendation_poor": "Attention : ce DPA omet des clauses obligatoires de l'article 28 ou contient des formulations problÃ©matiques. Examinez les dÃ©tails ci-dessous.",
+    "special_category_title": "Avertissement contextuel sur les catÃ©gories particuliÃ¨res de donnÃ©es (indicatif)",
+    "special_category_note": "Remarque : la classification des catÃ©gories de donnÃ©es du prestataire n'a pas Ã©tÃ© modifiÃ©e. VÃ©rifiez vos classifications dans le registre des traitements.",
+    "checklist_title": "Liste de contrÃ´le des clauses obligatoires de l'article 28(3)",
+    "analysis_label": "Analyse : ",
+    "problematic_title": "Formulations problÃ©matiques identifiÃ©es",
+    "clause_type": "Type de clause : {type}",
+    "severity": "GravitÃ© : {severity}",
+    "ai_assisted": "Ã‰valuation assistÃ©e par IA",
+    "save_draft": "Enregistrer comme brouillon",
+    "apply": "Appliquer et verrouiller la liste de contrÃ´le du DPA",
+    "clauses": {
+      "documentedInstructions": "Instructions documentÃ©es (art. 28(3)(a))",
+      "confidentiality": "Engagements de confidentialitÃ© (art. 28(3)(b))",
+      "securityMeasures": "Mesures de sÃ©curitÃ© (art. 28(3)(c))",
+      "subProcessorRestrictions": "Restrictions relatives aux sous-traitants ultÃ©rieurs (art. 28(3)(d))",
+      "dataSubjectRights": "Assistance aux droits des personnes concernÃ©es (art. 28(3)(e))",
+      "securityBreachDpia": "Notification des violations et AIPD (art. 28(3)(f))",
+      "deletionOnTermination": "Suppression ou restitution des donnÃ©es (art. 28(3)(g))",
+      "auditRights": "Audits et inspections (art. 28(3)(h))"
+    },
+    "clause_status": {
+      "present": "prÃ©sente",
+      "weak": "faible",
+      "missing": "absente"
+    }
+  },
+  "questionnaire": {
+    "title": "Historique des Ã©valuations",
+    "subtitle": "Suivez les questionnaires prestataires, les audits rÃ©alisÃ©s et les ajustements du risque de conformitÃ©.",
+    "send": "Envoyer une Ã©valuation",
+    "review_saved": "Revue de conformitÃ© enregistrÃ©e.",
+    "empty_title": "Aucune Ã©valuation trouvÃ©e",
+    "empty_body": "Aucune demande de revue de sÃ©curitÃ© n'a encore Ã©tÃ© envoyÃ©e Ã  ce prestataire. Envoyez-en une pour lancer un audit de conformitÃ©.",
+    "recipient": "Destinataire : {name} ({email})",
+    "default_recipient": "Responsable sÃ©curitÃ©",
+    "sent_date": "Date d'envoi",
+    "completed_date": "Date d'achÃ¨vement",
+    "score": "Score",
+    "not_available": "N/D",
+    "copied": "CopiÃ©",
+    "copy_link": "Copier le lien du formulaire",
+    "copy_link_title": "Copier le lien du jeton d'accÃ¨s",
+    "print_title": "Imprimer le rapport d'examen",
+    "audit_review": "Revue d'audit",
+    "audit_review_title": "Revue d'audit et ajustements",
+    "audit_assessment": "Ã‰valuation d'audit :",
+    "errors": {
+      "dispatch": "Ã‰chec de l'envoi de l'Ã©valuation.",
+      "review": "Ã‰chec de la mise Ã  jour de la revue."
+    },
+    "status": {
+      "sent": "envoyÃ©e",
+      "in_progress": "en cours",
+      "completed": "terminÃ©e",
+      "expired": "expirÃ©e"
+    },
+    "form": {
+      "title": "Nouvelle demande de questionnaire",
+      "cancel": "Annuler",
+      "template": "ModÃ¨le d'Ã©valuation *",
+      "template_placeholder": "SÃ©lectionner un modÃ¨le",
+      "recipient_name": "Nom du destinataire",
+      "recipient_name_placeholder": "par ex. Responsable conformitÃ©",
+      "recipient_email": "E-mail du destinataire *",
+      "recipient_email_placeholder": "par ex. security@partner.com",
+      "sending": "Envoi en coursâ€¦",
+      "submit": "Envoyer la demande"
+    },
+    "review": {
+      "title": "Revue et ajustement par l'auditeur",
+      "adjustment": "Ajustement du score (-50 Ã  +50)",
+      "notes": "Notes de revue de l'auditeur",
+      "notes_placeholder": "Consignez les notes de vÃ©rification, observations ou motifs d'ajustementâ€¦",
+      "cancel": "Annuler",
+      "saving": "Enregistrementâ€¦",
+      "submit": "Enregistrer la revue"
+    }
+  },
+  "tia": {
+    "loading": "Chargement de l'AITDâ€¦",
+    "process": "ProcÃ©dure Schrems II",
+    "completed": "AITD terminÃ©e",
+    "approved_on": "ApprouvÃ©e le {when}",
+    "yes": "Oui",
+    "no": "Non",
+    "save_draft": "Enregistrer le brouillon",
+    "approve": "Approuver et clÃ´turer l'AITD",
+    "previous": "â† Ã‰tape prÃ©cÃ©dente",
+    "next": "Ã‰tape suivante â†’",
+    "steps": {
+      "1": "DÃ©tails du transfert",
+      "2": "Ã‰valuation juridique",
+      "3": "Mesures supplÃ©mentaires",
+      "4": "Risque rÃ©siduel",
+      "5": "Conclusion"
+    },
+    "mechanisms": {
+      "sccs": "Clauses contractuelles types (CCT)",
+      "bcrs": "RÃ¨gles d'entreprise contraignantes (BCR)",
+      "derogation": "DÃ©rogation de l'article 49",
+      "adequacy": "DÃ©cision d'adÃ©quation"
+    },
+    "step1": {
+      "title": "Ã‰tape 1 : dÃ©tails du transfert",
+      "subtitle": "Identifiez les paramÃ¨tres prÃ©cis du transfert international de donnÃ©es.",
+      "destination": "Pays de destination",
+      "mechanism": "MÃ©canisme de transfert",
+      "mechanism_placeholder": "SÃ©lectionner un mÃ©canisme de transfert",
+      "us_context_label": "Contexte amÃ©ricain :",
+      "us_context": "Depuis l'invalidation du Privacy Shield, les transferts vers les Ã‰tats-Unis fondÃ©s sur les CCT nÃ©cessitent une AITD afin d'Ã©valuer les risques liÃ©s au FISA 702 et Ã  l'EO 12333.",
+      "exporter": "Exportateur de donnÃ©es",
+      "importer": "Importateur de donnÃ©es",
+      "purpose": "FinalitÃ© du transfert",
+      "frequency": "FrÃ©quence",
+      "frequency_one_off": "Ponctuel",
+      "frequency_occasional": "Occasionnel",
+      "frequency_continuous": "Continu",
+      "onward": "Transferts ultÃ©rieurs"
+    },
+    "step2": {
+      "title": "Ã‰tape 2 : Ã©valuation juridique",
+      "subtitle": "Ã‰valuez les lois et pratiques du pays tiers applicables aux donnÃ©es transfÃ©rÃ©es.",
+      "surveillance": "Existe-t-il des lois de surveillance imposant l'accÃ¨s aux donnÃ©es ?",
+      "remedies": "Existe-t-il des recours juridiques effectifs et opposables pour les personnes concernÃ©es ?",
+      "conclusion": "Conclusion de l'Ã©valuation juridique",
+      "select_conclusion": "SÃ©lectionner une conclusionâ€¦",
+      "equivalent": "Les lois offrent une protection substantiellement Ã©quivalente (aucune mesure supplÃ©mentaire nÃ©cessaire)",
+      "not_equivalent": "Les lois n'offrent pas de protection substantiellement Ã©quivalente",
+      "uncertain": "Incertain / lÃ©gislation problÃ©matique existante"
+    },
+    "step3": {
+      "title": "Ã‰tape 3 : mesures supplÃ©mentaires",
+      "subtitle": "Identifiez les mesures supplÃ©mentaires mises en Å“uvre par l'importateur de donnÃ©es pour attÃ©nuer les risques.",
+      "not_required": "D'aprÃ¨s l'Ã©tape 2, des mesures supplÃ©mentaires ne sont pas strictement requises. Vous pouvez passer Ã  la conclusion.",
+      "technical": "Mesures techniques",
+      "details_placeholder": "DÃ©tailsâ€¦",
+      "measures": {
+        "e2ee": "Chiffrement de bout en bout",
+        "pseudonymisation": "Pseudonymisation",
+        "data_minimisation": "Minimisation des donnÃ©es en transit",
+        "access_policy": "Politique de contrÃ´le dâ€™accÃ¨s documentÃ©e",
+        "transparency_reporting": "Rapports de transparence sur les demandes des autoritÃ©s",
+        "staff_training": "Personnel formÃ© au traitement des demandes des autoritÃ©s",
+        "onward_transfer_controls": "ContrÃ´les des transferts ultÃ©rieurs vers les sous-traitants",
+        "challenge_requests": "Engagement Ã  contester les demandes disproportionnÃ©es",
+        "notify_access_requests": "Engagement Ã  informer lâ€™exportateur des demandes dâ€™accÃ¨s",
+        "audit_rights": "Droits dâ€™audit sur lâ€™importateur",
+        "warrant_canary": "Warrant canary ou divulgation Ã©quivalente"
+      },
+      "organizational": "Mesures organisationnelles",
+      "contractual": "Mesures contractuelles"
+    },
+    "step4": {
+      "title": "Ã‰tape 4 : risque rÃ©siduel",
+      "subtitle": "Ã‰valuez le niveau de risque aprÃ¨s application de toutes les mesures supplÃ©mentaires.",
+      "level": "Niveau de risque rÃ©siduel",
+      "justification": "Justification",
+      "justification_placeholder": "Expliquez pourquoi le risque rÃ©siduel est acceptable ou inacceptableâ€¦",
+      "levels": {
+        "low": "Faible",
+        "medium": "Moyen",
+        "high": "Ã‰levÃ©",
+        "critical": "Critique"
+      }
+    },
+    "step5": {
+      "title": "Ã‰tape 5 : conclusion",
+      "decision": "DÃ©cision finale",
+      "proceed": "Poursuivre le transfert",
+      "proceed_with_conditions": "Poursuivre sous conditions",
+      "suspend": "Suspendre le transfert",
+      "conditions": "PrÃ©ciser les conditions"
+    },
+    "exporting": "GÃ©nÃ©rationâ€¦",
+    "export_pdf": "Exporter le PDF",
+    "export_failed": "Ã‰chec de la gÃ©nÃ©ration du PDF. RÃ©essayez.",
+    "step6": {
+      "interval": "Intervalle de rÃ©Ã©valuation (mois)",
+      "interval_placeholder": "Choisir lâ€™intervalle",
+      "interval_unset": "Non planifiÃ©",
+      "triggers": "DÃ©clencheurs de rÃ©Ã©valuation"
+    }
+  },
+  "incidents": {
+    "loading": "Chargement du flux d'incidentsâ€¦",
+    "title": "Violations et informations rÃ©glementaires",
+    "subtitle": "Alertes, amendes RGPD et actualitÃ©s de violations de donnÃ©es suivies pour ce prestataire.",
+    "empty_title": "Aucun incident enregistrÃ©",
+    "empty_body": "Aucune violation de donnÃ©es, amende ou action rÃ©glementaire n'a Ã©tÃ© dÃ©tectÃ©e pour ce prestataire.",
+    "meta": "{when} | Source : {source}",
+    "date_unknown": "Date inconnue",
+    "default_source": "Flux rÃ©glementaire",
+    "default_reviewer": "Administration de l'espace de travail",
+    "source": "Source",
+    "alert_label": "Alerte : {status}",
+    "penalty": "Sanction administrative",
+    "affected_categories": "CatÃ©gories de donnÃ©es concernÃ©es",
+    "art33_title": "Action recommandÃ©e au titre de l'article 33",
+    "art33_body": "Si cette violation concerne des donnÃ©es Ã  caractÃ¨re personnel que vous avez transmises Ã  ce prestataire, vous devrez peut-Ãªtre notifier votre autoritÃ© de contrÃ´le dans les 72 heures au titre de l'article 33. Examinez les dÃ©tails ci-dessus et Ã©valuez si vos personnes concernÃ©es sont touchÃ©es.",
+    "reviewed_by": "ExaminÃ© par {name}",
+    "action_required": "Action requise : examiner l'alerte d'incident de sÃ©curitÃ©",
+    "respond": "RÃ©pondre et documenter l'action",
+    "select_action": "SÃ©lectionner l'action de rÃ©ponse",
+    "notes_label": "Notes et documentation interne",
+    "notes_placeholder": "Documentez vos notes d'action, par ex. Â« ConfirmÃ© : aucune personne concernÃ©e n'est affectÃ©e par la divulgation de la clÃ© d'API. Â»",
+    "cancel": "Annuler",
+    "submit": "Soumettre l'Ã©valuation",
+    "severity": {
+      "low": "faible",
+      "medium": "moyen",
+      "high": "Ã©levÃ©",
+      "critical": "critique"
+    },
+    "type": {
+      "breach": "violation",
+      "fine": "amende",
+      "investigation": "enquÃªte"
+    },
+    "alert_status": {
+      "unread": "non lue",
+      "acknowledged": "accusÃ©e",
+      "action_taken": "action engagÃ©e",
+      "dismissed": "Ã©cartÃ©e"
+    },
+    "actions": {
+      "acknowledged": "Accuser rÃ©ception",
+      "action_taken": "Action engagÃ©e",
+      "dismissed": "Ã‰carter"
+    }
+  },
+  "filter": {
+    "risk_all": "Tous les niveaux de risque",
+    "dpa_all": "Tous les statuts DPA",
+    "sort_newest": "Tri : plus rÃ©cents",
+    "sort_name_asc": "Nom Aâ€“Z",
+    "sort_name_desc": "Nom Zâ€“A",
+    "sort_risk_high": "Risque le plus Ã©levÃ© dâ€™abord",
+    "sort_risk_low": "Risque le plus faible dâ€™abord",
+    "dpa_outstanding": "DPA en attente",
+    "status_live": "En cours dâ€™utilisation",
+    "status_all": "Tous, y compris clÃ´turÃ©s",
+    "sort_review_oldest": "Revus le moins rÃ©cemment"
+  },
+  "criticality": {
+    "low": "Faible",
+    "medium": "Moyen",
+    "high": "Ã‰levÃ©",
+    "critical": "Critique"
+  },
+  "role": {
+    "processor": "Sous-traitant",
+    "joint_controller": "Responsable conjoint",
+    "independent_controller": "Responsable indÃ©pendant"
+  },
+  "status_lifecycle": {
+    "active": "Actif",
+    "paused": "En pause",
+    "offboarded": "RadiÃ©"
+  },
+  "relationship": {
+    "title": "Fiche relation",
+    "business_owner": "Responsable mÃ©tier",
+    "business_owner_placeholder": "Qui pilote cette relation fournisseur",
+    "contact_email": "Contact fournisseur",
+    "criticality": "CriticitÃ©",
+    "processing_role": "RÃ´le de traitement",
+    "unset": "Non dÃ©fini",
+    "data_categories": "CatÃ©gories de donnÃ©es partagÃ©es",
+    "category_placeholder": "ex. DonnÃ©es de contact",
+    "category_add": "Ajouter",
+    "category_remove": "Retirer la catÃ©gorie",
+    "category_too_long": "Chaque catÃ©gorie doit faire moins de 120 caractÃ¨res.",
+    "category_duplicate": "Cette catÃ©gorie figure dÃ©jÃ  dans la liste.",
+    "purpose": "FinalitÃ© du traitement (article 30(1)(d))",
+    "purpose_placeholder": "Pourquoi ce fournisseur traite des donnÃ©es pour nous",
+    "next_review": "Prochaine rÃ©vision",
+    "offboarded_on": "RadiÃ© le {date}",
+    "deletion_certificate": "RÃ©fÃ©rence du certificat de suppression",
+    "deletion_certificate_placeholder": "RÃ©fÃ©rence de lâ€™engagement art. 28(3)(g)",
+    "deletion_certificate_hint": "La rÃ©fÃ©rence confirmant que les donnÃ©es ont Ã©tÃ© supprimÃ©es ou restituÃ©es Ã  la fin du traitement.",
+    "status": "Statut du cycle de vie",
+    "saving": "Enregistrementâ€¦",
+    "saved": "Toutes les modifications sont enregistrÃ©es",
+    "contact_email_invalid": "Saisissez une adresse e-mail valide.",
+    "joint_controller_hint": "Un responsable conjoint requiert un accord au titre de lâ€™article 26, et non un DPA. La liste des clauses de lâ€™article 28(3) ne sâ€™applique pas.",
+    "category_pick": "Ajouter depuis la liste standardâ€¦",
+    "category_custom": "personnalisÃ©",
+    "category_limit": "Un fournisseur ne peut pas dÃ©passer {max} catÃ©gories de donnÃ©es.",
+    "category_special_note": "Ce fournisseur reÃ§oit des catÃ©gories particuliÃ¨res de donnÃ©es (article 9). Un DPA et une condition documentÃ©e au titre de lâ€™article 9(2) sont requis.",
+    "review_title": "Consigner une revue",
+    "review_last": "DerniÃ¨re revue le {date}",
+    "review_never": "Cette relation nâ€™a jamais fait lâ€™objet dâ€™une revue formelle.",
+    "review_in_months": "Revoir dans {months} mois",
+    "review_attest": "Marquer comme revu",
+    "unlink": "Retirer du registre",
+    "unlink_title": "Retirer ce fournisseur de votre registre ?",
+    "unlink_body": "La clÃ´ture conserve la fiche comme preuve dâ€™un sous-traitant utilisÃ©. La suppression lâ€™efface.",
+    "unlink_evidence": "Cette relation comporte {count} enregistrements qui seraient dÃ©truits : Ã©valuations, questionnaires, changements de sous-traitants ultÃ©rieurs et analyses dâ€™impact des transferts.",
+    "unlink_confirm": "Supprimer la relation et ses preuves",
+    "unlink_offboard_instead": "ClÃ´turer plutÃ´t",
+    "unlink_cancel": "Annuler"
+  },
+  "history": {
+    "loading": "Chargement de lâ€™historiqueâ€¦",
+    "empty": "Aucun changement enregistrÃ©. Chaque modification de ce fournisseur apparaÃ®tra ici.",
+    "description": "Chaque modification de ce fournisseur, par qui et quand. Issu du journal dâ€™audit de lâ€™organisation.",
+    "export": "Exporter en CSV",
+    "load_more": "Charger plus"
+  },
+  "import": {
+    "button": "Importer un CSV",
+    "title": "Importer des fournisseurs depuis un CSV",
+    "description": "Chargez votre tableur de fournisseurs existant. Les lignes sont rapprochÃ©es du catalogue lorsque câ€™est possible ; les autres deviennent des fournisseurs personnalisÃ©s.",
+    "choose_file": "Choisir un fichier CSV",
+    "choose_file_hint": "Avec une ligne dâ€™en-tÃªte : Nom, Site web, CatÃ©gorie, Paysâ€¦",
+    "file_loaded": "{chars} caractÃ¨res chargÃ©s",
+    "columns_title": "Colonnes reconnues",
+    "columns_help": "Nom / Vendor / Supplier Â· Site web / URL / Domaine Â· CatÃ©gorie Â· Pays / SiÃ¨ge Â· CatÃ©gories de donnÃ©es Â· Responsable Â· E-mail de contact Â· CriticitÃ© Â· FinalitÃ©",
+    "preview": "AperÃ§u de lâ€™import",
+    "valid": "{count} lignes prÃªtes",
+    "errors": "{count} lignes prÃ©sentent des problÃ¨mes",
+    "col_name": "Fournisseur",
+    "col_action": "Action",
+    "col_confidence": "Correspondance",
+    "action_link": "Lier au catalogue",
+    "action_create": "CrÃ©er comme fournisseur personnalisÃ©",
+    "row_error": "Ligne {row} :",
+    "commit": "Importer {count} fournisseurs",
+    "common_back": "Retour",
+    "toast_done": "{created} fournisseurs importÃ©s.",
+    "failed": "Ã‰chec de lâ€™import.",
+    "common_cancel": "Annuler",
+    "action_existing": "DÃ©jÃ  au registre",
+    "net_additions": "{count} Ã  ajouter",
+    "ignored_columns": "Ces colonnes nâ€™ont pas Ã©tÃ© reconnues et ont Ã©tÃ© ignorÃ©es : {columns}",
+    "near_miss": "Correspondance possible : {name} ({confidence} %) â€” sous le seuil automatique, cette ligne crÃ©era donc un nouveau fournisseur.",
+    "transaction_note": "Lâ€™import sâ€™exÃ©cute en une seule transaction : soit toutes les lignes sont Ã©crites, soit aucune.",
+    "too_large": "Ce fichier dÃ©passe {limit} Ko. Divisez-le et importez-le en plusieurs fois.",
+    "read_failed": "Ce fichier nâ€™a pas pu Ãªtre lu.",
+    "col_country": "Pays",
+    "done_title": "Import terminÃ©",
+    "done_created": "{count} nouveaux fournisseurs crÃ©Ã©s",
+    "done_linked": "{count} rattachÃ©s au catalogue",
+    "done_skipped": "{count} dÃ©jÃ  prÃ©sents au registre et laissÃ©s inchangÃ©s",
+    "done_close": "TerminÃ©",
+    "import_another": "Importer un autre fichier",
+    "skipped_rows": "{count} lignes ont Ã©tÃ© ignorÃ©es"
+  },
+  "status": {
+    "active": "Actif",
+    "paused": "En pause",
+    "offboarded": "RadiÃ©"
+  },
+  "data_category": {
+    "contact_details": "CoordonnÃ©es",
+    "identity_details": "DonnÃ©es dâ€™identitÃ©",
+    "account_credentials": "Identifiants de compte",
+    "employment_details": "DonnÃ©es professionnelles",
+    "financial_details": "DonnÃ©es financiÃ¨res",
+    "payment_card_data": "DonnÃ©es de carte de paiement",
+    "government_identifiers": "Identifiants officiels",
+    "location_data": "DonnÃ©es de localisation",
+    "device_and_usage_data": "DonnÃ©es dâ€™appareil et dâ€™usage",
+    "communications_content": "Contenu des communications",
+    "customer_support_records": "Dossiers dâ€™assistance",
+    "marketing_preferences": "PrÃ©fÃ©rences marketing",
+    "behavioural_profiling_data": "DonnÃ©es de profilage comportemental",
+    "childrens_data": "DonnÃ©es dâ€™enfants",
+    "user_generated_content": "Contenu gÃ©nÃ©rÃ© par lâ€™utilisateur",
+    "health_data": "DonnÃ©es de santÃ©",
+    "genetic_data": "DonnÃ©es gÃ©nÃ©tiques",
+    "biometric_data_for_id": "DonnÃ©es biomÃ©triques dâ€™identification",
+    "racial_or_ethnic_origin": "Origine raciale ou ethnique",
+    "political_opinions": "Opinions politiques",
+    "religious_or_philosophical_beliefs": "Convictions religieuses ou philosophiques",
+    "trade_union_membership": "Appartenance syndicale",
+    "sex_life": "Vie sexuelle",
+    "sexual_orientation": "Orientation sexuelle",
+    "criminal_offence_data": "DonnÃ©es relatives aux infractions pÃ©nales"
+  },
+  "intelligence": {
+    "title": "Intelligence fournisseurs",
+    "subtitle": "Examinez la sortie du pipeline et approuvez les candidats dans le catalogue.",
+    "pending_title": "Candidats en attente",
+    "pending_count": "{count} fiches à examiner",
+    "empty_pending": "Rien en attente — lancez un lot via l'API ou importez un fichier JSON ci-dessous.",
+    "runs_title": "Exécutions récentes",
+    "runs_loading": "Chargement des exécutions…",
+    "runs_empty": "Aucune exécution pour l'instant.",
+    "runs_col_kind": "Type",
+    "runs_col_status": "Statut",
+    "runs_col_progress": "Progression",
+    "runs_col_started": "Démarrée",
+    "approve": "Approuver",
+    "reject": "Rejeter",
+    "show_detail": "Détails",
+    "hide_detail": "Masquer",
+    "confidence_tooltip": "Confiance {value}/100 — pondérée sur les sondes par champ",
+    "field_country": "Pays du siège",
+    "back_to_register": "Retour au registre",
+    "import_title": "Importer JSON",
+    "import_help": "Déposez ici le contenu de seed-data/vendors.json ou pending-review.json. Le serveur limite le corps à 4 Mo et conserve les 500 premiers enregistrements.",
+    "import_button": "Importer",
+    "importing": "Importation…",
+    "import_done": "{count} candidats importés.",
+    "approving": "Approbation en cours…",
+    "bulk_error": "Échec de l'approbation groupée.",
+    "bulk_done": "{count} candidats ajoutés au catalogue.",
+    "bulk_approve": "Approuver tous ≥ 70 de confiance"
+  },
+  "intake": {
+    "title": "Demandes d'intégration fournisseurs",
+    "subtitle": "Examinez les demandes de logiciels des collaborateurs et intégrez les fournisseurs validés au registre.",
+    "new_request": "Nouvelle demande fournisseur",
+    "col_vendor": "Fournisseur demandé",
+    "col_requester": "Demandé par",
+    "col_purpose": "Finalité métier",
+    "col_criticality": "Criticité",
+    "col_status": "Statut",
+    "col_date": "Date",
+    "approve": "Approuver & Enregistrer",
+    "reject": "Rejeter la demande",
+    "request_info": "Demander des précisions",
+    "empty": "Aucune demande d'intégration trouvée.",
+    "status_pending": "En attente d'examen",
+    "status_approved": "Approuvé",
+    "status_rejected": "Rejeté",
+    "status_more_info": "Précisions demandées",
+    "modal_title": "Soumettre une demande fournisseur",
+    "modal_subtitle": "Demandez un nouvel outil logiciel ou prestataire tiers pour votre service.",
+    "field_name": "Nom du fournisseur / service",
+    "field_website": "URL du site web",
+    "field_category": "Catégorie",
+    "field_owner": "Responsable métier",
+    "field_purpose": "Finalité & justification métier",
+    "field_data_categories": "Catégories de données personnelles concernées",
+    "field_criticality": "Criticité pour l'entreprise",
+    "field_subjects": "Nombre estimé de personnes concernées",
+    "submit": "Soumettre la demande",
+    "submitting": "Envoi en cours...",
+    "approve_title": "Approuver la demande fournisseur",
+    "approve_confirm": "Cela ajoutera {name} à votre registre actif des fournisseurs et déclenchera l'enrichissement automatique de conformité.",
+    "reject_title": "Rejeter la demande fournisseur",
+    "reject_reason": "Motif du rejet",
+    "toast_submitted": "Demande fournisseur transmise pour examen de conformité.",
+    "toast_approved": "Fournisseur approuvé et enregistré.",
+    "toast_rejected": "Demande fournisseur rejetée.",
+    "loading": "Chargement des demandes d'intégration...",
+    "label_purpose": "Finalité :",
+    "label_data_categories": "Catégories de données :",
+    "label_compliance_notes": "Notes de conformité :",
+    "filter_all": "Tous",
+    "reject_placeholder": "Expliquez le motif du rejet de cette demande...",
+    "field_data_categories_hint": "Séparez les catégories par des virgules. Les données sensibles (art. 9) déclenchent une revue DPO renforcée.",
+    "field_purpose_placeholder": "Pourquoi votre équipe a-t-elle besoin de cet outil et quel processus prendra-t-il en charge ?",
+    "crit_low": "Faible (Outil non essentiel)",
+    "crit_medium": "Moyen (Outil opérationnel standard)",
+    "crit_high": "Élevé (Service métier critique)",
+    "crit_critical": "Critique (Mission critique / volume élevé)",
+    "subj_1k": "< 1 000 personnes concernées",
+    "subj_1k_10k": "1 000 – 10 000 personnes concernées",
+    "subj_10k_100k": "10 000 – 100 000 personnes concernées",
+    "subj_100k_plus": "100 000+ personnes concernées",
+    "request_more_info_title": "Demander des informations complémentaires",
+    "request_more_info_notes": "Quels détails supplémentaires sont requis de la part du demandeur ?",
+    "request_more_info_placeholder": "ex. Veuillez préciser si l'hébergement UE est requis...",
+    "toast_more_info": "Informations complémentaires demandées au demandeur.",
+    "review_notes": "Notes de révision (optionnel)",
+    "approve_notes_placeholder": "Ajoutez des conditions de conformité ou des notes d'approbation...",
+    "confirm_approve": "Confirmer l'approbation"
+  },
+  "review_cadence": {
+    "title": "Périodicité de revue",
+    "quarterly": "Trimestrielle (90 jours)",
+    "biannual": "Semestrielle (180 jours)",
+    "annual": "Annuelle (365 jours)",
+    "overdue": "Revue en retard",
+    "due_soon": "Revue imminente",
+    "scheduled": "Revue planifiée",
+    "not_scheduled": "Non planifiée",
+    "attest_now": "Attester la revue maintenant",
+    "attested": "Revue attestée"
+  },
+  "deep_clause_analysis": {
+    "title": "Analyse approfondie des clauses Art. 28(3)",
+    "score": "Score de conformité : {score}/100",
+    "verdict_compliant": "Totalement conforme",
+    "verdict_partially_compliant": "Partiellement conforme",
+    "verdict_non_compliant": "Non conforme",
+    "apply_catalogue": "Appliquer les clauses pré-analysées",
+    "applied_done": "Clauses Art. 28 du catalogue appliquées au registre.",
+    "status_present": "Conforme",
+    "status_weak": "Faible / Conditionnelle",
+    "status_missing": "Manquante",
+    "verified_excerpt": "Extrait vérifié :"
+  },
+  "concentration": {
+    "loading": "Analyse de la concentration de la chaîne de sous-traitance...",
+    "empty_title": "Aucune dépendance fournisseur trouvée",
+    "empty_description": "Ajoutez des fournisseurs à votre registre pour analyser la concentration des sous-traitants et les points de défaillance uniques.",
+    "fragility_index": "Indice de fragilité de la chaîne",
+    "fragility_low": "Résistant",
+    "fragility_moderate": "Concentration modérée",
+    "fragility_elevated": "Exposition élevée",
+    "fragility_critical": "Concentration critique",
+    "spof_count": "Points de défaillance uniques",
+    "entities": "fournisseurs d'infrastructure clés",
+    "spof_subtext": "Entités soutenant plusieurs fournisseurs hautement critiques",
+    "unique_subprocessors": "Sous-traitants uniques",
+    "across_vendors": "sur {count} fournisseurs directs",
+    "total_links": "{count} dépendances multi-niveaux au total",
+    "jurisdiction_exposure": "Exposition géographique",
+    "eu_eea": "hébergé dans l'UE/EEE",
+    "spof_title": "Points de défaillance uniques systémiques (SPOF)",
+    "spof_description": "Sous-traitants partagés (4th-Party) soutenant plusieurs fournisseurs directs dans votre registre.",
+    "no_spofs": "Aucun point de défaillance unique systémique détecté dans votre chaîne.",
+    "dependent_vendors": "fournisseurs directs",
+    "supports": "Soutient",
+    "art9_warning": "Données sensibles (Art. 9) exposées sur une infrastructure partagée",
+    "blast_radius_title": "Rayon d'impact systémique (Blast Radius)",
+    "blast_radius_description": "Impact simulé d'une panne, d'une violation de sécurité ou d'une sanction réglementaire sur une infrastructure tierce critique.",
+    "impacted_vendors": "fournisseurs impactés",
+    "tier_critical": "Impact critique",
+    "tier_high": "Impact élevé",
+    "tier_medium": "Impact modéré",
+    "tier_low": "Faible impact"
+  },
+  "trust_center": {
+    "button": "Importer Trust Centre",
+    "modal_title": "Importer le centre de sécurité (Trust Centre)",
+    "modal_subtitle": "Analyser automatiquement les certifications, régions d'hébergement et clauses DPA pour {name}.",
+    "url_label": "URL du Trust Centre ou portail de sécurité",
+    "url_hint": "Prend en charge SafeBase, Vanta, Drata, Conveyor, OneTrust, Whistic et portails personnalisés.",
+    "content_label": "Posture de sécurité ou texte du rapport (Facultatif)",
+    "content_placeholder": "Collez le résumé de sécurité, la synthèse managériale SOC 2 ou les engagements...",
+    "what_is_extracted": "Extraction automatique de télémétrie de sécurité :",
+    "extract_1": "Certifications de sécurité (ISO 27001, SOC 2 Type II, HIPAA, PCI-DSS)",
+    "extract_2": "Chiffrement des données au repos (AES-256) et en transit (TLS 1.2+)",
+    "extract_3": "Résidence des données dans l'UE et disponibilité d'hébergements dédiés",
+    "extract_4": "Clauses DPA Art. 28, listes de sous-traitants et récence des tests d'intrusion",
+    "ingest_button": "Importer et mettre à jour le profil",
+    "success_toast": "Télémétrie Trust Centre importée pour {name}",
+    "success_detail": "Extracted and mapped {count} security certifications to compliance register.",
+    "error_toast": "Échec de l'importation de la télémétrie Trust Centre",
+    "missing_input": "Veuillez fournir une URL de Trust Centre ou le texte du rapport de sécurité."
+  },
+  "discrepancies": {
+    "no_discrepancies": "Aucune contradiction détectée entre les déclarations de {name} et la télémétrie vérifiée.",
+    "section_title": "Contradictions et divergences vérifiées ({count})",
+    "risk_penalty": "Pénalité de score de risque",
+    "claimed_fact": "Auto-déclaration du fournisseur",
+    "verified_telemetry": "Télémétrie et données vérifiées",
+    "recommendation": "Recommandation DPO"
+  },
+  "benchmarks": {
+    "loading": "Chargement des repères de confidentialité...",
+    "card_title": "Repères de confidentialité du marché",
+    "card_subtitle": "Adoption globale de la conformité parmi les pairs de Custodia pour {name}.",
+    "k_anonymous_badge": "{count} organisations paires (k-anonyme)",
+    "insufficient_samples": "Échantillons pairs insuffisants (< 5 organisations)",
+    "privacy_guarantee_title": "Garantie de confidentialité par K-Anonymat",
+    "privacy_guarantee_description": "Pour protéger la confidentialité des locataires, les repères agrégés ne sont calculés que lorsque 5 organisations distinctes ou plus ont lié ce fournisseur.",
+    "dpa_adoption": "Taux de signature DPA",
+    "eu_hosting_adoption": "Taux d'hébergement UE",
+    "of_peers": "des organisations paires",
+    "avg_risk_score": "Score de risque moyen des pairs",
+    "transfer_safeguards": "Principales garanties de transfert utilisées :",
+    "top_shared_data_categories": "Principales catégories de données partagées chez les pairs",
+    "clause_adoption_peer_benchmark": "Adoption des clauses de l'art. 28(3) (Benchmark des pairs)"
+  },
+  "enforcement": {
+    "loading": "Chargement des décisions réglementaires européennes...",
+    "no_enforcement_actions": "Aucune sanction réglementaire européenne active trouvée pour vos fournisseurs actuels.",
+    "panel_title": "Décisions réglementaires européennes et veille de sanctions",
+    "panel_subtitle": "{count} sanctions réglementaires correspondant à votre chaîne de sous-traitance active."
+  },
+  "common": {
+    "cancel": "Annuler"
+  }
 }

@@ -8,6 +8,9 @@ import {
   users, 
   organizations, 
   vendors,
+  vendorSubProcessors,
+  vendorSubProcessorEntities,
+  dpfRegistrations,
   assessmentTemplates,
   assessments,
   assessmentAnswers,
@@ -15,6 +18,9 @@ import {
   pendingSignups
 } from 'db';
 import { eq, and, or, desc, inArray, isNull } from 'drizzle-orm';
+import { crossCheckVendorResponses, calculateDiscrepancyRiskPenalty } from '../lib/vendorCrossCheck.js';
+import { parseTrustCenterProfile, mapTrustCenterToAssessmentAnswers } from '../lib/vendorTrustCenter.js';
+import { matchDpfStatus } from '../lib/vendorDpf.js';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import React from 'react';
@@ -682,5 +688,137 @@ Only return valid JSON, nothing else.`;
       }
 
       return updated;
-    })
+    }),
+
+  /**
+   * Sprint 4 — Cross-check vendor assessment responses against verified telemetry.
+   */
+  crossCheckResponses: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .input(z.object({
+      assessmentId: z.string().uuid(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const [assessment] = await db
+        .select({
+          assessment: vendorAssessments,
+          orgVendor: organizationVendors,
+          vendor: vendors,
+        })
+        .from(vendorAssessments)
+        .innerJoin(organizationVendors, eq(vendorAssessments.vendorId, organizationVendors.id))
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(
+          and(
+            eq(vendorAssessments.id, input.assessmentId),
+            eq(vendorAssessments.organizationId, ctx.user!.orgId)
+          )
+        );
+
+      if (!assessment) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Assessment not found.',
+        });
+      }
+
+      // Fetch sub-processors for this vendor
+      const [legacySubs, entitySubs] = await Promise.all([
+        db.select().from(vendorSubProcessors).where(eq(vendorSubProcessors.parentVendorId, assessment.vendor.id)),
+        db.select().from(vendorSubProcessorEntities).where(eq(vendorSubProcessorEntities.parentVendorId, assessment.vendor.id)),
+      ]);
+
+      const subProcessors = [
+        ...(legacySubs || []).map((s: any) => ({ name: s.name, country: s.country, service: s.service })),
+        ...(entitySubs || []).map((s: any) => ({ name: s.name, country: s.country, service: s.service })),
+      ];
+
+      // DPF status check if US-based
+      let dpfStatus: 'active' | 'lapsed' | 'discontinued' | 'none' = 'none';
+      if (assessment.vendor.headquartersCountry === 'US') {
+        const dpfEntries = await db.select().from(dpfRegistrations);
+        const match = matchDpfStatus(assessment.vendor.name, assessment.vendor.website, dpfEntries);
+        if (match.status === 'active' || match.status === 'lapsed') {
+          dpfStatus = match.status;
+        }
+      }
+
+      const questionsSnapshot = (assessment.assessment.questionsSnapshot as any[]) || [];
+      const responses = (assessment.assessment.responses as Record<string, any>) || {};
+
+      const discrepancies = crossCheckVendorResponses({
+        vendorName: assessment.vendor.name,
+        vendorCountry: assessment.vendor.headquartersCountry,
+        euHostingAvailable: assessment.vendor.euHostingAvailable,
+        usingEuHosting: assessment.orgVendor.usingEuHosting,
+        securityCertifications: (assessment.orgVendor.certifications as string[]) || (assessment.vendor.securityCertifications as string[]) || [],
+        dpfStatus,
+        subProcessors,
+        dpaClauseAnalysis: assessment.vendor.dpaClauseAnalysis,
+        questionsSnapshot,
+        responses,
+      });
+
+      const riskPenalty = calculateDiscrepancyRiskPenalty(discrepancies);
+
+      return {
+        assessmentId: input.assessmentId,
+        vendorName: assessment.vendor.name,
+        discrepancies,
+        discrepancyCount: discrepancies.length,
+        riskPenalty,
+      };
+    }),
+
+  /**
+   * Sprint 4 — Pre-fill assessment questions from security trust centre telemetry.
+   */
+  prefillFromTrustCenter: protectedProcedure
+    .use(requirePermission('vendors', 'view'))
+    .input(z.object({
+      assessmentId: z.string().uuid(),
+      trustCenterUrl: z.string().url().optional(),
+      rawContent: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [assessment] = await db
+        .select({
+          assessment: vendorAssessments,
+          orgVendor: organizationVendors,
+          vendor: vendors,
+        })
+        .from(vendorAssessments)
+        .innerJoin(organizationVendors, eq(vendorAssessments.vendorId, organizationVendors.id))
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(
+          and(
+            eq(vendorAssessments.id, input.assessmentId),
+            eq(vendorAssessments.organizationId, ctx.user!.orgId)
+          )
+        );
+
+      if (!assessment) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Assessment not found.',
+        });
+      }
+
+      const questionsSnapshot = (assessment.assessment.questionsSnapshot as any[]) || [];
+      const url = input.trustCenterUrl || assessment.vendor.website || undefined;
+
+      const profile = parseTrustCenterProfile({
+        url,
+        rawContent: input.rawContent,
+        vendorName: assessment.vendor.name,
+      });
+
+      const prefilledAnswers = mapTrustCenterToAssessmentAnswers(profile, questionsSnapshot);
+
+      return {
+        profile,
+        prefilledAnswers,
+      };
+    }),
 });
+

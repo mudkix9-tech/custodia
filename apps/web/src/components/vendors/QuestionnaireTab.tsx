@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { trpc } from '@/utils/trpc';
 import { 
   Sparkles, Loader2, Copy, Check, Mail, Send, HelpCircle, 
-  AlertTriangle, ShieldAlert, Award, FileText, CheckCircle2, Plus, Printer, Star 
+  AlertTriangle, ShieldAlert, Award, FileText, CheckCircle2, Plus, Printer, Star,
+  ChevronDown, ChevronUp, AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,168 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslations } from 'next-intl';
+import { AssessmentDiscrepancyViewer, DiscrepancyItem } from './AssessmentDiscrepancyViewer';
+
+function AssessmentItemCard({
+  item,
+  t,
+  copiedToken,
+  handleCopyLink,
+  handleOpenReview
+}: {
+  item: any;
+  t: any;
+  copiedToken: string | null;
+  handleCopyLink: (token: string) => void;
+  handleOpenReview: (id: string, adj: number, sum: string) => void;
+}) {
+  const { assessment, template } = item;
+  const [showDiscrepancies, setShowDiscrepancies] = useState(false);
+  const isCompleted = assessment.status === 'completed';
+
+  const { data: crossCheckData } = trpc.assessments.crossCheckResponses.useQuery(
+    { assessmentId: assessment.id },
+    { enabled: isCompleted }
+  );
+
+  const hasScore = assessment.score !== null;
+  const finalScore = hasScore 
+    ? Math.max(0, Math.min(100, (assessment.score || 0) + (assessment.scoreAdjustment || 0)))
+    : null;
+
+  const discrepancies = (crossCheckData?.discrepancies || []) as DiscrepancyItem[];
+  const hasDiscrepancies = discrepancies.length > 0;
+
+  return (
+    <div className="bg-[#0D0F11] border border-white/10 rounded-2xl p-5 shadow-panel-elevated space-y-4 hover:shadow-md transition-shadow relative overflow-hidden">
+      <div className="flex justify-between items-start flex-wrap gap-2">
+        <div>
+          <h4 className="font-bold text-[#F4F5F6] text-sm leading-snug">{template?.name}</h4>
+          <p className="text-xs text-[#6E747A] mt-0.5">{t('recipient', { name: assessment.recipientName || t('default_recipient'), email: assessment.recipientEmail })}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {hasDiscrepancies && (
+            <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border bg-amber-500/10 text-amber-400 border-amber-500/30 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              {discrepancies.length} {discrepancies.length === 1 ? 'Contradiction' : 'Contradictions'}
+            </span>
+          )}
+          <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+            assessment.status === 'completed' 
+              ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30'
+              : assessment.status === 'expired'
+              ? 'bg-red-500/10 text-red-400 border-red-900/50'
+              : assessment.status === 'in_progress'
+              ? 'bg-indigo-500/10 text-indigo-400 border-indigo-900/50'
+              : 'bg-amber-500/10 text-amber-400 border-amber-900/50'
+          }`}>
+            {t(`status.${assessment.status}`)}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-white/5 text-xs text-[#9BA1A6]">
+        <div className="flex items-center gap-6">
+          <div>
+            <span className="text-[10px] text-[#6E747A] block uppercase font-semibold">{t('sent_date')}</span>
+            <span className="font-medium text-[#E6E8EA]">{assessment.sentAt ? new Date(assessment.sentAt).toLocaleDateString() : t('not_available')}</span>
+          </div>
+          {assessment.completedAt && (
+            <div>
+              <span className="text-[10px] text-[#6E747A] block uppercase font-semibold">{t('completed_date')}</span>
+              <span className="font-medium text-[#2d573d]">{new Date(assessment.completedAt).toLocaleDateString()}</span>
+            </div>
+          )}
+          {assessment.score !== null && (
+            <div>
+              <span className="text-[10px] text-[#6E747A] block uppercase font-semibold">{t('score')}</span>
+              <span className="font-bold text-[#F4F5F6]">{finalScore}/100</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Toggle Contradiction Analysis */}
+          {isCompleted && (
+            <Button
+              variant="ghost"
+              onClick={() => setShowDiscrepancies(!showDiscrepancies)}
+              className={`text-xs font-semibold h-auto px-2.5 py-1.5 border transition-colors ${
+                hasDiscrepancies
+                  ? 'border-amber-500/30 text-amber-400 hover:bg-amber-500/10'
+                  : 'border-white/10 text-[#9BA1A6] hover:bg-white/5'
+              }`}
+            >
+              {showDiscrepancies ? <ChevronUp className="w-3.5 h-3.5 mr-1" /> : <ChevronDown className="w-3.5 h-3.5 mr-1" />}
+              <span>{hasDiscrepancies ? `View ${discrepancies.length} Contradictions` : 'Cross-Check'}</span>
+            </Button>
+          )}
+
+          {/* Copy Link */}
+          <Button
+            variant="outline"
+            onClick={() => handleCopyLink(assessment.accessToken)}
+            title={t('copy_link_title')}
+            className="inline-flex items-center gap-1 bg-[#0D0F11] border-[#C9A227]/30 text-[#C9A227] h-auto px-3 py-1.5"
+          >
+            {copiedToken === assessment.accessToken ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-[#C9A227]" />
+                <span>{t('copied')}</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span>{t('copy_link')}</span>
+              </>
+            )}
+          </Button>
+
+          {/* Print/View */}
+          <Link
+            href={`/vendors/assessments/${assessment.id}/print`}
+            target="_blank"
+            title={t('print_title')}
+            className="p-1.5 text-[#6E747A] hover:text-[#C9A227] border border-white/10 bg-[#0D0F11] rounded-lg transition-colors shadow-panel-elevated"
+          >
+            <Printer className="w-4 h-4" />
+          </Link>
+
+          {/* Auditor Review */}
+          {isCompleted && (
+            <Button
+              variant="outline"
+              onClick={() => handleOpenReview(assessment.id, assessment.scoreAdjustment || 0, assessment.aiSummary || '')}
+              title={t('audit_review_title')}
+              className="inline-flex items-center gap-1 bg-indigo-500/10 border-indigo-900/50 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 h-auto px-3 py-1.5"
+            >
+              <Star className="w-3.5 h-3.5" />
+              <span>{t('audit_review')}</span>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Cross-Check Discrepancy Viewer */}
+      {showDiscrepancies && (
+        <div className="pt-3 border-t border-white/5">
+          <AssessmentDiscrepancyViewer
+            discrepancies={discrepancies}
+            riskPenalty={crossCheckData?.riskPenalty || 0}
+            vendorName={assessment.recipientName || 'Vendor'}
+          />
+        </div>
+      )}
+
+      {/* AI / Audit Override details preview */}
+      {assessment.aiSummary && (
+        <div className="bg-[#08090A]/50 border border-white/5 rounded-xl p-3.5 text-xs text-[#E6E8EA] leading-relaxed italic">
+          <strong>{t('audit_assessment')}</strong> &ldquo;{assessment.aiSummary}&rdquo;
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function QuestionnaireTab({ orgVendorId }: { orgVendorId: string }) {
   const t = useTranslations('vendors.questionnaire');
@@ -233,107 +396,16 @@ export function QuestionnaireTab({ orgVendorId }: { orgVendorId: string }) {
         </div>
       ) : (
         <div className="space-y-4">
-          {assessments?.map(({ assessment, template }) => {
-            const hasScore = assessment.score !== null;
-            const finalScore = hasScore 
-              ? Math.max(0, Math.min(100, (assessment.score || 0) + (assessment.scoreAdjustment || 0)))
-              : null;
-
-            return (
-              <div key={assessment.id} className="bg-[#0D0F11] border border-white/10 rounded-2xl p-5 shadow-panel-elevated space-y-4 hover:shadow-md transition-shadow relative overflow-hidden">
-                <div className="flex justify-between items-start flex-wrap gap-2">
-                  <div>
-                    <h4 className="font-bold text-[#F4F5F6] text-sm leading-snug">{template?.name}</h4>
-                    <p className="text-xs text-[#6E747A] mt-0.5">{t('recipient', { name: assessment.recipientName || t('default_recipient'), email: assessment.recipientEmail })}</p>
-                  </div>
-                  <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                    assessment.status === 'completed' 
-                      ? 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30'
-                      : assessment.status === 'expired'
-                      ? 'bg-red-500/10 text-red-400 border-red-900/50'
-                      : assessment.status === 'in_progress'
-                      ? 'bg-indigo-500/10 text-indigo-400 border-indigo-900/50'
-                      : 'bg-amber-500/10 text-amber-400 border-amber-900/50'
-                  }`}>
-                    {t(`status.${assessment.status}`)}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-white/5 text-xs text-[#9BA1A6]">
-                  <div className="flex items-center gap-6">
-                    <div>
-                      <span className="text-[10px] text-[#6E747A] block uppercase font-semibold">{t('sent_date')}</span>
-                      <span className="font-medium text-[#E6E8EA]">{assessment.sentAt ? new Date(assessment.sentAt).toLocaleDateString() : t('not_available')}</span>
-                    </div>
-                    {assessment.completedAt && (
-                      <div>
-                        <span className="text-[10px] text-[#6E747A] block uppercase font-semibold">{t('completed_date')}</span>
-                        <span className="font-medium text-[#2d573d]">{new Date(assessment.completedAt).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                    {assessment.score !== null && (
-                      <div>
-                        <span className="text-[10px] text-[#6E747A] block uppercase font-semibold">{t('score')}</span>
-                        <span className="font-bold text-[#F4F5F6]">{finalScore}/100</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {/* Copy Link */}
-                    <Button
-                      variant="outline"
-                      onClick={() => handleCopyLink(assessment.accessToken)}
-                      title={t('copy_link_title')}
-                      className="inline-flex items-center gap-1 bg-[#0D0F11] border-[#C9A227]/30 text-[#C9A227] h-auto px-3 py-1.5"
-                    >
-                      {copiedToken === assessment.accessToken ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-[#C9A227]" />
-                          <span>{t('copied')}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>{t('copy_link')}</span>
-                        </>
-                      )}
-                    </Button>
-
-                    {/* Print/View */}
-                    <Link
-                      href={`/vendors/assessments/${assessment.id}/print`}
-                      target="_blank"
-                      title={t('print_title')}
-                      className="p-1.5 text-[#6E747A] hover:text-[#C9A227] border border-white/10 bg-[#0D0F11] rounded-lg transition-colors shadow-panel-elevated"
-                    >
-                      <Printer className="w-4 h-4" />
-                    </Link>
-
-                    {/* Auditor Review */}
-                    {assessment.status === 'completed' && (
-                      <Button
-                        variant="outline"
-                        onClick={() => handleOpenReview(assessment.id, assessment.scoreAdjustment, assessment.aiSummary || '')}
-                        title={t('audit_review_title')}
-                        className="inline-flex items-center gap-1 bg-indigo-500/10 border-indigo-900/50 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 h-auto px-3 py-1.5"
-                      >
-                        <Star className="w-3.5 h-3.5" />
-                        <span>{t('audit_review')}</span>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* AI / Audit Override details preview */}
-                {assessment.aiSummary && (
-                  <div className="bg-[#08090A]/50 border border-white/5 rounded-xl p-3.5 text-xs text-[#E6E8EA] leading-relaxed italic">
-                    <strong>{t('audit_assessment')}</strong> &ldquo;{assessment.aiSummary}&rdquo;
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {assessments?.map((item) => (
+            <AssessmentItemCard
+              key={item.assessment.id}
+              item={item}
+              t={t}
+              copiedToken={copiedToken}
+              handleCopyLink={handleCopyLink}
+              handleOpenReview={handleOpenReview}
+            />
+          ))}
         </div>
       )}
 

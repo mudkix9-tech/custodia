@@ -16,6 +16,8 @@ import { QuestionnaireTab } from '@/components/vendors/QuestionnaireTab';
 import { DpaAnalysisModal } from '@/components/vendors/DpaAnalysisModal';
 import { TRANSFER_MECHANISMS } from '@/constants/transferMechanisms';
 import { VendorRelationshipPanel, VendorHistory, UnlinkVendor } from '@/components/vendors/VendorRelationship';
+import { VendorBenchmarkCard } from '@/components/vendors/VendorBenchmarkCard';
+import { TrustCenterModal } from '@/components/vendors/TrustCenterModal';
 
 import { useToast } from '@/components/ui/Toast';
 
@@ -23,6 +25,7 @@ export default function VendorDetailsPage() {
   const t = useTranslations('vendors');
   const toast = useToast();
   const params = useParams();
+  const [isTrustCenterOpen, setIsTrustCenterOpen] = useState(false);
   const vendorId = params?.id as string;
 
   const { data: vendor, isLoading } = trpc.vendors.getOrgVendorDetails.useQuery({ vendorId }, { enabled: !!vendorId });
@@ -280,6 +283,7 @@ export default function VendorDetailsPage() {
           </div>
 
           <AlternativesSection vendorId={vendorId} />
+          <VendorBenchmarkCard vendorId={vendor.vendor.id} vendorName={vendor.vendor.name} />
         </div>
 
         {/* Right Column: Organization Context */}
@@ -374,6 +378,13 @@ export default function VendorDetailsPage() {
                             {t('deep_clause_analysis.apply_catalogue')}
                           </button>
                         )}
+                        <button
+                          onClick={() => setIsTrustCenterOpen(true)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          {t('trust_center.button')}
+                        </button>
                       </div>
                     </div>
 
@@ -749,6 +760,13 @@ export default function VendorDetailsPage() {
           setIsDpaModalOpen(false);
           utils.vendors.getOrgVendorDetails.invalidate({ vendorId });
         }}
+      />
+      <TrustCenterModal
+        isOpen={isTrustCenterOpen}
+        onClose={() => setIsTrustCenterOpen(false)}
+        vendorId={vendor.vendor.id}
+        vendorName={vendor.vendor.name}
+        website={vendor.vendor.website}
       />
     </div>
   );

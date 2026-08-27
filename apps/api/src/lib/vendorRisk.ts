@@ -59,6 +59,7 @@ export interface VendorRiskResult {
     safeguards: RiskFactorDetail;
     breach: RiskFactorDetail;
     dpia?: RiskFactorDetail;
+    discrepancies?: RiskFactorDetail;
   };
 }
 
@@ -67,7 +68,8 @@ export function calculateVendorRisk(
   orgVendor: OrgVendorRiskInput = {} as any,
   subProcessorsCount: number = 0,
   scoreModifier: number = 0,
-  dpiaGaps: VendorRiskGap[] = []
+  dpiaGaps: VendorRiskGap[] = [],
+  discrepancyPenalty: number = 0
 ): VendorRiskResult {
   
   // 1. Headquarters Location (20%)
@@ -284,10 +286,15 @@ export function calculateVendorRisk(
     ? `Unmitigated high/critical DPIA risks (+${dpiaModifier} pts)`
     : 'No unmitigated high/critical DPIA risks (0 pts)';
 
+  const discrepancyModifier = Math.max(0, Math.min(25, discrepancyPenalty));
+  const discrepancyDetail = discrepancyModifier > 0
+    ? `Contradictions detected between self-attestation and verified telemetry (+${discrepancyModifier} pts)`
+    : 'No self-attestation contradictions detected (0 pts)';
+
   const baseScore = locationPoints + dpaPoints + categoriesPoints + volumePoints + subProcessorPoints + certsPoints + safeguardsPoints + breachPoints;
   
-  // Combined modifier ceiling: questionnaire scoreModifier + DPIA modifier, capped between -10 and +25
-  const totalModifier = Math.max(-10, Math.min(25, scoreModifier + dpiaModifier));
+  // Combined modifier ceiling: questionnaire scoreModifier + DPIA modifier + discrepancy penalty, capped between -10 and +35
+  const totalModifier = Math.max(-10, Math.min(35, scoreModifier + dpiaModifier + discrepancyModifier));
   const score = Math.max(0, Math.min(100, baseScore + totalModifier));
   
   let level: 'low' | 'medium' | 'high' | 'critical' = 'low';
@@ -308,7 +315,8 @@ export function calculateVendorRisk(
       certifications: { points: certsPoints, maxPoints: 10, detail: certsDetail },
       safeguards: { points: safeguardsPoints, maxPoints: 10, detail: safeguardsDetail },
       breach: { points: breachPoints, maxPoints: 5, detail: breachDetail },
-      dpia: { points: dpiaModifier, maxPoints: 30, detail: dpiaDetail }
+      dpia: { points: dpiaModifier, maxPoints: 30, detail: dpiaDetail },
+      discrepancies: { points: discrepancyModifier, maxPoints: 25, detail: discrepancyDetail }
     }
   };
 }

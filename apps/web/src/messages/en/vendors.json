@@ -11,6 +11,8 @@
                  "tracked_register":  "Tracked Register ({count})",
                  "vendor_discovery":  "Vendor Discovery \u0026 Shadow IT",
                  "intake":  "Intake Requests",
+                 "concentration":  "Supply Chain \u0026 Concentration",
+                 "enforcement":  "Regulatory Intelligence",
                  "relationship":  "Relationship \u0026 History",
                  "history":  "Audit trail"
              },
@@ -979,5 +981,88 @@
                                   "status_weak":  "Weak / Conditioned",
                                   "status_missing":  "Missing",
                                   "verified_excerpt":  "Verified Excerpt:"
-                              }
+                              },
+    "concentration":  {
+                          "loading":  "Analysing 4th-party supply chain concentration...",
+                          "empty_title":  "No Vendor Dependencies Found",
+                          "empty_description":  "Add vendors to your register to analyze sub-processor concentration and Single Points of Failure.",
+                          "fragility_index":  "Supply Chain Fragility Index",
+                          "fragility_low":  "Resilient",
+                          "fragility_moderate":  "Moderate Concentration",
+                          "fragility_elevated":  "Elevated Exposure",
+                          "fragility_critical":  "Critical Concentration",
+                          "spof_count":  "Single Points of Failure",
+                          "entities":  "key infrastructure providers",
+                          "spof_subtext":  "Entities supporting multiple high-criticality vendors",
+                          "unique_subprocessors":  "Unique Sub-Processors",
+                          "across_vendors":  "across {count} direct vendors",
+                          "total_links":  "{count} total multi-hop dependencies",
+                          "jurisdiction_exposure":  "Jurisdiction Exposure",
+                          "eu_eea":  "EU/EEA hosted",
+                          "spof_title":  "Systemic Single Points of Failure (SPOFs)",
+                          "spof_description":  "Shared 4th-party sub-processors that support multiple direct vendors across your compliance register.",
+                          "no_spofs":  "No systemic Single Points of Failure detected across your vendor supply chain.",
+                          "dependent_vendors":  "direct vendors",
+                          "supports":  "Supports",
+                          "art9_warning":  "Article 9 Special Category personal data exposed across shared infrastructure",
+                          "blast_radius_title":  "Downstream Systemic Blast Radius",
+                          "blast_radius_description":  "Simulated impact of an outage, security breach, or regulatory sanction on critical 4th-party infrastructure.",
+                          "impacted_vendors":  "impacted vendors",
+                          "tier_critical":  "Critical Impact",
+                          "tier_high":  "High Impact",
+                          "tier_medium":  "Moderate Impact",
+                          "tier_low":  "Low Impact"
+                      },
+    "trust_center":  {
+                         "button":  "Ingest Trust Centre",
+                         "modal_title":  "Ingest Security Trust Centre",
+                         "modal_subtitle":  "Automatically parse security certifications, hosting regions, and DPA terms for {name}.",
+                         "url_label":  "Trust Centre or Security Portal URL",
+                         "url_hint":  "Supports SafeBase, Vanta, Drata, Conveyor, OneTrust, Whistic, and bespoke security portals.",
+                         "content_label":  "Security Posture or Trust Report Text (Optional)",
+                         "content_placeholder":  "Paste security overview, SOC 2 executive summary, or compliance commitments...",
+                         "what_is_extracted":  "Automated Security Telemetry Extraction:",
+                         "extract_1":  "Security Certifications (ISO 27001, SOC 2 Type II, HIPAA, PCI-DSS)",
+                         "extract_2":  "Data Encryption at Rest (AES-256) & in Transit (TLS 1.2+)",
+                         "extract_3":  "EU Data Residency and Dedicated Hosting Availability",
+                         "extract_4":  "Article 28 DPA Terms, Sub-processor Lists & Penetration Test Recency",
+                         "ingest_button":  "Ingest & Update Profile",
+                         "success_toast":  "Trust Centre telemetry ingested for {name}",
+                         "success_detail":  "Extracted and mapped {count} security certifications to compliance register.",
+                         "error_toast":  "Failed to ingest Trust Centre telemetry",
+                         "missing_input":  "Please provide either a Trust Centre URL or security report text."
+                     },
+    "discrepancies":  {
+                          "no_discrepancies":  "No contradictions detected between {name}\u0027s responses and verified telemetry.",
+                          "section_title":  "Verified Contradictions & Discrepancies ({count})",
+                          "risk_penalty":  "Risk Score Penalty",
+                          "claimed_fact":  "Vendor Self-Attestation",
+                          "verified_telemetry":  "Verified Intelligence & Telemetry",
+                          "recommendation":  "DPO Recommendation"
+                      },
+    "benchmarks":  {
+                       "loading":  "Loading privacy benchmarks...",
+                       "card_title":  "Market Peer Privacy Benchmarking",
+                       "card_subtitle":  "Aggregated compliance adoption across Custodia market peers for {name}.",
+                       "k_anonymous_badge":  "{count} peer organisations (k-anonymous)",
+                       "insufficient_samples":  "Insufficient Peer Samples (< 5 orgs)",
+                       "privacy_guarantee_title":  "K-Anonymity Privacy Guarantee",
+                       "privacy_guarantee_description":  "To protect tenant confidentiality and prevent data leakage, aggregate benchmarks are only calculated once 5 or more distinct organisations have linked this vendor.",
+                       "dpa_adoption":  "DPA Adoption Rate",
+                       "eu_hosting_adoption":  "EU Hosting Rate",
+                       "of_peers":  "of peer organisations",
+                       "avg_risk_score":  "Peer Average Risk Score",
+                       "transfer_safeguards":  "Top Transfer Safeguards Relied Upon:",
+                       "top_shared_data_categories":  "Top Shared Data Categories Across Peers",
+                       "clause_adoption_peer_benchmark":  "Article 28(3) Statutory Clause Adoption (Peer Benchmark)"
+                   },
+    "enforcement":  {
+                        "loading":  "Loading European regulatory enforcement decisions...",
+                        "no_enforcement_actions":  "No active European regulatory enforcement actions found for your current vendor roster.",
+                        "panel_title":  "European Regulatory Decisions & Enforcement Intelligence",
+                        "panel_subtitle":  "{count} statutory enforcement actions matching your active vendor supply chain."
+                    },
+    "common":  {
+                   "cancel":  "Cancel"
+               }
 }

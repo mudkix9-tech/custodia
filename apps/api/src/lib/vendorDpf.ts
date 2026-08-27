@@ -24,7 +24,7 @@ export function dpfNameKey(name: string): string {
 export interface DpfEntry {
   nameKey: string;
   organisationName: string;
-  domains?: readonly string[];
+  domains?: readonly string[] | null;
   status: string;
   nextRecertificationDate?: string | Date | null;
 }

@@ -11,6 +11,8 @@ import { DiscoveryTab } from '@/components/vendors/DiscoveryTab';
 import { AddCustomVendorModal } from '@/components/vendors/AddCustomVendorModal';
 import { ImportVendorsModal } from '@/components/vendors/ImportVendorsModal';
 import { VendorIntakeTab } from '@/components/vendors/VendorIntakeTab';
+import { VendorConcentrationTab } from '@/components/vendors/VendorConcentrationTab';
+import { VendorEnforcementFeed } from '@/components/vendors/VendorEnforcementFeed';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/ui/Toast';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -80,7 +82,7 @@ export default function VendorsPage() {
   const { data: riskStats } = trpc.vendors.getRiskStats.useQuery();
 
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'register' | 'discovery' | 'intake'>('register');
+  const [activeTab, setActiveTab] = useState<'register' | 'discovery' | 'intake' | 'concentration' | 'enforcement'>('register');
 
   useEffect(() => {
     const tab = searchParams?.get('tab');
@@ -88,6 +90,10 @@ export default function VendorsPage() {
       setActiveTab('discovery');
     } else if (tab === 'intake') {
       setActiveTab('intake');
+    } else if (tab === 'concentration') {
+      setActiveTab('concentration');
+    } else if (tab === 'enforcement') {
+      setActiveTab('enforcement');
     }
   }, [searchParams]);
 
@@ -311,6 +317,18 @@ export default function VendorsPage() {
         >
           {t('tabs.intake')}
         </button>
+        <button
+          onClick={() => setActiveTab('concentration')}
+          className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'concentration' ? 'border-[#C9A227] text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'}`}
+        >
+          {t('tabs.concentration')}
+        </button>
+        <button
+          onClick={() => setActiveTab('enforcement')}
+          className={`px-6 py-3.5 text-[14px] font-medium border-b-2 transition-colors ${activeTab === 'enforcement' ? 'border-[#C9A227] text-[#C9A227] font-semibold' : 'border-transparent text-[#6E747A] hover:text-[#F4F5F6]'}`}
+        >
+          {t('tabs.enforcement')}
+        </button>
       </div>
 
       {activeTab === 'register' ? (
@@ -446,8 +464,12 @@ export default function VendorsPage() {
         </>
       ) : activeTab === 'discovery' ? (
         <DiscoveryTab />
-      ) : (
+      ) : activeTab === 'intake' ? (
         <VendorIntakeTab />
+      ) : activeTab === 'concentration' ? (
+        <VendorConcentrationTab />
+      ) : (
+        <VendorEnforcementFeed />
       )}
 
       <DiscoverModal isOpen={isDiscoverOpen} onClose={() => setIsDiscoverOpen(false)} />

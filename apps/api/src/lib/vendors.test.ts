@@ -996,6 +996,204 @@ check(generatedAgreement.includes('Documented Instructions (Art. 28(3)(a))'), 'D
 check(generatedAgreement.includes('Audits and Inspections (Art. 28(3)(h))'), 'DPA includes Art. 28(3)(h)');
 check(generatedAgreement.includes('Customer identity verification and authentication'), 'DPA includes specified purpose');
 
+console.log('\nSprint 4 — Supply Chain Graph & 4th-Party Concentration Engine\n');
+
+import { evaluateConcentrationGraph, calculateConcentrationAnalytics } from './vendorConcentration.js';
+
+const concentrationInput = {
+  directVendors: [
+    { id: 'ov1', vendorId: 'v1', name: 'CRM SaaS', criticality: 'critical' as const, dataCategoriesShared: ['contact_details', 'health_data'], headquartersCountry: 'US' },
+    { id: 'ov2', vendorId: 'v2', name: 'Analytics Pro', criticality: 'critical' as const, dataCategoriesShared: ['user_behavior'], headquartersCountry: 'DE' },
+    { id: 'ov3', vendorId: 'v3', name: 'Support Chat', criticality: 'medium' as const, dataCategoriesShared: ['contact_details'], headquartersCountry: 'FR' },
+  ],
+  subProcessors: [
+    { parentVendorId: 'v1', name: 'Amazon Web Services', country: 'US', service: 'Cloud Infrastructure' },
+    { parentVendorId: 'v2', name: 'Amazon Web Services', country: 'US', service: 'Compute & Storage' },
+    { parentVendorId: 'v3', name: 'Amazon Web Services', country: 'US', service: 'Hosting' },
+    { parentVendorId: 'v1', name: 'Stripe Payments', country: 'IE', service: 'Payment Processing' },
+    { parentVendorId: 'v2', name: 'Twilio Inc.', country: 'US', service: 'SMS Gateway' },
+  ],
+};
+
+const concentrationGraph = evaluateConcentrationGraph(concentrationInput);
+
+check(concentrationGraph.singlePointsOfFailure.length >= 1, 'detects at least 1 SPOF entity');
+const awsSpof = concentrationGraph.singlePointsOfFailure.find(s => s.name === 'Amazon Web Services');
+check(awsSpof !== undefined && awsSpof.dependentVendors.length === 3, 'AWS identified as critical SPOF supporting all 3 vendors');
+check(awsSpof?.hasSpecialCategory === true, 'SPOF detects downstream Article 9 health data exposure from CRM SaaS');
+check(concentrationGraph.supplyChainFragilityScore > 30, 'fragility score reflects elevated multi-vendor dependency');
+check(concentrationGraph.jurisdictionBreakdown.usCount === 2, 'jurisdiction breakdown tracks US infrastructure dependencies');
+
+const blastRadiuses = concentrationGraph.systemicBlastRadiuses;
+const awsBlast = blastRadiuses.find(b => b.subProcessorName === 'Amazon Web Services');
+check(awsBlast !== undefined && awsBlast.criticalityTier === 'critical', 'AWS blast radius evaluated as critical tier');
+check(awsBlast?.impactedVendorCount === 3, 'AWS blast radius includes all 3 dependent vendors');
+
+console.log('\nSprint 4 — Automated Trust Centre Ingestion & Profile Parsing\n');
+
+import { parseTrustCenterProfile, mapTrustCenterToAssessmentAnswers } from './vendorTrustCenter.js';
+
+const safebaseDoc = `
+Welcome to DataCore Security & Trust Portal.
+Platform: Powered by SafeBase
+Security Posture:
+- Certified under ISO/IEC 27001:2022 and SOC 2 Type II
+- Compliant with HIPAA and PCI-DSS Level 1
+- Customer data is encrypted at rest using AES-256 and in transit via TLS 1.3
+- European data residency is available in our Frankfurt (DE) datacenter
+- Sub-processors: AWS (Hosting, US/EU), MongoDB Atlas (Database, EU), Datadog (Monitoring, US)
+- Latest third-party penetration test completed November 2025.
+`;
+
+const parsedProfile = parseTrustCenterProfile({
+  url: 'https://trust.datacore.io',
+  rawContent: safebaseDoc,
+  vendorName: 'DataCore',
+});
+
+check(parsedProfile.platform === 'safebase', 'detects SafeBase trust center platform');
+check(parsedProfile.certifications.includes('iso27001') && parsedProfile.certifications.includes('soc2'), 'extracts ISO 27001 and SOC 2 certifications');
+check(parsedProfile.certifications.includes('hipaa') && parsedProfile.certifications.includes('pci_dss'), 'extracts HIPAA and PCI-DSS compliance');
+check(parsedProfile.encryptionAtRest === true && parsedProfile.encryptionInTransit === true, 'extracts AES-256 and TLS encryption flags');
+check(parsedProfile.euHostingAvailable === true, 'extracts EU data residency in Frankfurt');
+
+const sampleQuestions = [
+  { id: 'q_encrypt', text: 'Is customer personal data encrypted at rest?', category: 'Security' },
+  { id: 'q_cert', text: 'Does the vendor hold ISO 27001 certification?', category: 'Certifications' },
+  { id: 'q_residency', text: 'Where is customer personal data stored / data residency?', category: 'Hosting' },
+];
+
+const mappedAnswers = mapTrustCenterToAssessmentAnswers(parsedProfile, sampleQuestions);
+check(mappedAnswers.some(a => a.questionId === 'q_encrypt' && typeof a.suggestedAnswer === 'string'), 'maps encryption at rest to assessment answer');
+check(mappedAnswers.some(a => a.questionId === 'q_cert' && typeof a.suggestedAnswer === 'string'), 'maps ISO 27001 certification to assessment answer');
+
+console.log('\nSprint 4 — Multi-Factor Cross-Check Contradiction Engine\n');
+
+import { crossCheckVendorResponses, calculateDiscrepancyRiskPenalty } from './vendorCrossCheck.js';
+
+const discrepancies = crossCheckVendorResponses({
+  vendorName: 'CloudCorp',
+  vendorCountry: 'US',
+  euHostingAvailable: false,
+  usingEuHosting: false,
+  dpfStatus: 'none',
+  questionsSnapshot: [
+    { id: 'q_residency', text: 'Where is customer personal data stored and hosted?' },
+    { id: 'q_dpf', text: 'Is the organisation certified under the EU-US Data Privacy Framework (DPF)?' },
+  ],
+  responses: {
+    q_residency: 'EU only - all data strictly stored in European Union',
+    q_dpf: 'Yes, actively certified under EU-US DPF',
+  },
+});
+
+check(discrepancies.length >= 2, 'detects multiple contradictions between assessment and telemetry');
+const residencyDiscrepancy = discrepancies.find(d => d.type === 'hosting_location_contradiction');
+check(residencyDiscrepancy !== undefined && (residencyDiscrepancy.severity === 'high' || residencyDiscrepancy.severity === 'critical'), 'flags claiming EU-only storage when vendor is US-hosted without EU datacentre');
+const dpfDiscrepancy = discrepancies.find(d => d.type === 'dpf_adequacy_discrepancy');
+check(dpfDiscrepancy !== undefined && dpfDiscrepancy.severity === 'critical', 'flags claiming active DPF when not registered');
+
+const riskPenalty = calculateDiscrepancyRiskPenalty(discrepancies);
+check(riskPenalty >= 20, 'calculates appropriate risk score penalty for contradictory attestations');
+
+console.log('\nSprint 4 — Cross-Customer K-Anonymity Privacy Benchmarking\n');
+
+import { evaluateVendorBenchmark, K_ANONYMITY_THRESHOLD } from './vendorBenchmarking.js';
+
+// Case 1: Insufficient sample size (< 5 distinct organisations)
+const sparseOrgData = [
+  { organizationId: 'org-1', dpaStatus: 'signed', usingEuHosting: true, riskScore: 25, transferMechanisms: ['standard_contractual_clauses'] },
+  { organizationId: 'org-2', dpaStatus: 'missing', usingEuHosting: false, riskScore: 60, transferMechanisms: [] },
+  { organizationId: 'org-3', dpaStatus: 'signed', usingEuHosting: false, riskScore: 40, transferMechanisms: ['standard_contractual_clauses'] },
+];
+
+const sparseBenchmark = evaluateVendorBenchmark('v1', 'CloudCorp', sparseOrgData);
+check(sparseBenchmark.isKAnonymous === false, 'enforces k-anonymity gate (< 5 orgs)');
+check(sparseBenchmark.sampleOrgCount === 0, 'masks sparse raw sample size to prevent private vendor enumeration');
+check(sparseBenchmark.dpaSignedRate === 0 && sparseBenchmark.euHostingAdoptionRate === 0, 'suppresses aggregate rates when k-anonymity is not met');
+
+// Case 2: Sufficient sample size (>= 5 distinct organisations)
+const richOrgData = [
+  { organizationId: 'org-1', dpaStatus: 'signed', usingEuHosting: true, riskScore: 20, transferMechanisms: ['standard_contractual_clauses', 'data_privacy_framework'] },
+  { organizationId: 'org-2', dpaStatus: 'signed', usingEuHosting: true, riskScore: 25, transferMechanisms: ['standard_contractual_clauses'] },
+  { organizationId: 'org-3', dpaStatus: 'signed', usingEuHosting: false, riskScore: 30, transferMechanisms: ['standard_contractual_clauses'] },
+  { organizationId: 'org-4', dpaStatus: 'missing', usingEuHosting: false, riskScore: 50, transferMechanisms: [] },
+  { organizationId: 'org-5', dpaStatus: 'signed', usingEuHosting: true, riskScore: 25, transferMechanisms: ['data_privacy_framework'] },
+  { organizationId: 'org-6', dpaStatus: 'signed', usingEuHosting: true, riskScore: 30, transferMechanisms: ['standard_contractual_clauses'] },
+];
+
+const richBenchmark = evaluateVendorBenchmark('v1', 'CloudCorp', richOrgData);
+check(richBenchmark.isKAnonymous === true, 'passes k-anonymity gate (6 >= 5 orgs)');
+check(richBenchmark.dpaSignedRate === 83, 'calculates correct DPA adoption rate (5/6 = 83%)');
+check(richBenchmark.euHostingAdoptionRate === 67, 'calculates correct EU hosting rate (4/6 = 67%)');
+check(richBenchmark.averageRiskScore === 30, 'calculates peer average risk score (180/6 = 30)');
+check(richBenchmark.transferMechanismDistribution.length > 0, 'ranks top transfer safeguards across peers');
+
+console.log('\nSprint 4 — European Regulatory Enforcement Feed & Sanctions Intelligence\n');
+
+import { matchRegulatoryDecisions, EUROPEAN_ENFORCEMENT_CORPUS } from './vendorEnforcementFeed.js';
+
+const enforcementMatches = matchRegulatoryDecisions([
+  { id: 'ov1', name: 'Google LLC' },
+  { id: 'ov2', name: 'Meta Platforms' },
+  { id: 'ov3', name: 'SafeCorp GmbH' },
+  { id: 'ov4', name: 'Go' },
+  { id: 'ov5', name: 'AI Startup Ltd' },
+]);
+
+check(enforcementMatches.length === 2, 'matches active vendor roster without false positives');
+check(enforcementMatches.some(d => d.orgVendorId === 'ov1'), 'Google matches Google decision');
+check(enforcementMatches.some(d => d.orgVendorId === 'ov2'), 'Meta matches Meta decision');
+check(!enforcementMatches.some(d => d.orgVendorId === 'ov4'), 'D19 fix: vendor named "Go" does NOT match Google decision');
+check(!enforcementMatches.some(d => d.orgVendorId === 'ov5'), 'D19 fix: vendor with "AI" in name does NOT match Clearview AI decision');
+
+console.log('\nSprint 4 — Remediated Cross-Check Adequacy & Discrepancy Risk Integration\n');
+
+import { foldEntityName } from './vendorConcentration.js';
+
+// 1. Check canonical aliasing
+check(foldEntityName('AWS') === foldEntityName('Amazon Web Services'), 'AWS and Amazon Web Services collapse to canonical key');
+check(foldEntityName('GCP') === foldEntityName('Google Cloud Platform'), 'GCP and Google Cloud collapse to canonical key');
+
+// 2. Check UK Adequacy in cross-check
+const ukSubDiscrepancies = crossCheckVendorResponses({
+  vendorName: 'AdequateCorp',
+  vendorCountry: 'GB',
+  euHostingAvailable: true,
+  usingEuHosting: true,
+  subProcessors: [{ name: 'Twilio UK', country: 'GB', service: 'SMS' }],
+  questionsSnapshot: [
+    { id: 'q_res', text: 'Where is data hosted / data residency?' }
+  ],
+  responses: {
+    q_res: 'EU only / adequate territory'
+  }
+});
+check(ukSubDiscrepancies.length === 0, 'UK sub-processors with Art. 45 adequacy do not trigger false transfer breach contradictions');
+
+// 3. Check Discrepancy Risk Penalty Integration
+const riskWithPenalty = calculateVendorRisk(
+  { headquartersCountry: 'FR' },
+  { dpaStatus: 'signed', dpaClauseCoverage: { documentedInstructions: true, confidentiality: true, securityMeasures: true, subProcessorRestrictions: true, dataSubjectRights: true, securityBreachDpia: true, deletionOnTermination: true, auditRights: true } },
+  0,
+  0,
+  [],
+  15 // 15 pt penalty from active contradictions
+);
+check(riskWithPenalty.score >= 15, 'discrepancy penalty increases vendor risk score');
+check(riskWithPenalty.factors.discrepancies?.points === 15, 'discrepancies factor is recorded in risk breakdown');
+
+// 4. Multilingual question pre-filling (German & French)
+const deFrQuestions = [
+  { id: 'q_de_soc', text: 'Liegt eine SOC 2 Zertifizierung vor?', category: 'Zertifizierungen' },
+  { id: 'q_fr_iso', text: 'Le fournisseur est-il certifié ISO 27001?', category: 'Certification' },
+  { id: 'q_de_enc', text: 'Werden Daten im Ruhezustand verschlüsselt?', category: 'Sicherheit' },
+];
+const deFrAnswers = mapTrustCenterToAssessmentAnswers(parsedProfile, deFrQuestions);
+check(deFrAnswers.some(a => a.questionId === 'q_de_soc'), 'pre-fills German SOC 2 question');
+check(deFrAnswers.some(a => a.questionId === 'q_fr_iso'), 'pre-fills French ISO 27001 question');
+check(deFrAnswers.some(a => a.questionId === 'q_de_enc'), 'pre-fills German encryption question');
+
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {
   console.log(`${failures} FAILED.`);
