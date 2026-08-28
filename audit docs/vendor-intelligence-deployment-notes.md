@@ -189,12 +189,17 @@ Recorded 28 August 2026, during the post-Sprint-4 verification pass. **The state
 `0054` onward was undocumented anywhere before this section**, which mattered because
 every Sprint 2, 3 and 4 vendor feature depends on tables these migrations create.
 
+**Checked against the live database on 28 August 2026**, not reasoned about. The parent
+audit recorded `0054` and `0055` as "generated but NOT applied"; that is stale — all
+three were applied, and the journal timestamp of `0056` matches the `created_at` of the
+newest row in `drizzle.__drizzle_migrations` exactly.
+
 | Migration | Adds | Applied to Supabase? |
 |---|---|---|
-| `0054_ancient_christian_walker` | `vendor_field_provenance`, `vendor_candidates`, `vendor_intelligence_runs`, `dpf_registrations`, `vendor_sub_processor_entities` | **Not recorded — verify before trusting Sprint 2** |
-| `0055_wonderful_proudstar` | `vendors.dpa_clause_analysis`, `vendors.dpa_analysed_at` | **Not recorded — verify** |
-| `0056_unusual_silver_sable` | `vendor_intake_requests`, `organization_vendors.review_cadence` | **Not recorded — verify** |
-| `0057_wealthy_anthem` | `vendor_sub_proc_acks`, `organization_vendors.trust_centre_eu_hosting`, `vendors.sub_processor_list_checked_at` | **Generated 28 Aug 2026, not applied** |
+| `0054_ancient_christian_walker` | `vendor_field_provenance`, `vendor_candidates`, `vendor_intelligence_runs`, `dpf_registrations`, `vendor_sub_processor_entities` | **Yes** — id 56, all five tables present |
+| `0055_wonderful_proudstar` | `vendors.dpa_clause_analysis`, `vendors.dpa_analysed_at` | **Yes** — id 57, columns present |
+| `0056_unusual_silver_sable` | `vendor_intake_requests`, `organization_vendors.review_cadence` | **Yes** — id 58, table and column present |
+| `0057_wealthy_anthem` | `vendor_sub_proc_acks`, `organization_vendors.trust_centre_eu_hosting`, `vendors.sub_processor_list_checked_at` | **Yes** — applied 28 Aug 2026, id 59 |
 
 The verification query, since `drizzle-kit` will not tell you and the postgres-js
 migrator chooses what to run by comparing timestamps rather than hashes:
@@ -210,17 +215,24 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public'
   );
 ```
 
-## What `0057` needs after it is applied
+## What `0057` needs now it is applied
 
-- **No `recalc:vendor-risk` run is required for the schema change itself.** But the
-  same deploy changes the *formula's inputs*: the catalogue-wide recalculation and
-  the nightly worker now include the cross-check discrepancy penalty they used to
-  drop, so `risk_score` and the `risk_factors` text beside it describe two different
-  derivations until the recalculation runs. Run it:
+- **STILL OUTSTANDING — the risk recalculation has not been run.** No
+  `recalc:vendor-risk` run is required for the schema change itself, but the same
+  deploy changes the *formula's inputs*: the catalogue-wide recalculation and the
+  nightly worker now include the cross-check discrepancy penalty they used to drop,
+  so `risk_score` and the `risk_factors` text beside it describe two different
+  derivations until it runs.
 
   ```bash
+  npm run recalc:vendor-risk --workspace=apps/api            # dry run
   npm run recalc:vendor-risk --workspace=apps/api -- --apply
   ```
+
+  The dry run on 28 August reported **2 catalogue vendors linked, covering 2
+  organisation-vendor rows**, so the blast radius today is two rows — the catalogue
+  was reset to zero in `ad293b2` and has not been repopulated. Run it again after any
+  enrichment batch lands, when it will matter considerably more.
 
 - **`vendor_sub_proc_acks` starts empty, and that is correct.** The old
   `vendor_sub_processors.notified_at` column held one tenant's acknowledgement for

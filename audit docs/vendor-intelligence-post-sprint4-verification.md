@@ -4,7 +4,7 @@
 stands.** Confirms what the four sprints actually closed, and records what is still wrong,
 newly wrong, or overstated.
 
-**Date:** 28 August 2026. **Branch:** `main`, working tree carrying ten uncommitted files
+**Date:** 28 August 2026. **Branch:** `main`. The working tree also carried ten uncommitted files
 from the GenAI provider-unification work (`llm.ts`, `ai.ts`, `assessments.ts`, and seven
 others).
 
@@ -60,7 +60,7 @@ once §3 was applied.
 | `check:vendor-i18n` | 27 files / 858 keys | 27 files / 859 keys |
 | `test:vendors` | 261/261 | **298/298** |
 | all fixture suites | 854 assertions | 942 assertions |
-| `check:schema` | passed standalone; **not in the `check` chain** | in the chain; reports drift until `0057` is committed |
+| `check:schema` | passed standalone; **not in the `check` chain** | in the chain, passing |
 
 The scorecard in Appendix D of the parent document reports the "as audited" column
 accurately. The only drift is 3,818 keys against its 3,816, which is noise.
@@ -383,10 +383,11 @@ reviewed exceptions, and `test:vendors` is at **298 assertions**, up from 261.
   CLAUDE.md, and hand-editing migration state is exactly the operation most likely to
   make disaster recovery worse rather than better. It needs a deliberate reconciliation
   against `drizzle.__drizzle_migrations` in production, not a guess from here.
-- **`check:schema` reports drift until `0057` is committed.** That is the check working
-  as designed — it asks git, so a generated-but-uncommitted migration is drift. Commit
-  `0057_wealthy_anthem.sql`, `meta/0057_snapshot.json` and `meta/_journal.json`
-  together.
+- **The risk recalculation has not been run.** All four migrations are applied and
+  `npm run check` exits 0 end to end, but `recalc:vendor-risk --apply` is still
+  outstanding — the discrepancy penalty now reaches the bulk path and every stored
+  `risk_score` predates that. The dry run reports two affected rows, because the
+  catalogue is empty; it matters considerably more once one exists.
 - **The fabricated pipeline data still exists on disk.** `vendor-pipeline/vendors.json`
   and the repo-root `vendors.json` still hold 200 records, 180 of them synthetic, all
   200 stamped `analystVerifiedAt`. The hazard is documented in
@@ -400,10 +401,10 @@ reviewed exceptions, and `test:vendors` is at **298 assertions**, up from 261.
 The original recommendation had eight items; all but the last three are done — see §3.
 What remains:
 
-1. **Apply `0054`–`0057`** and confirm the earlier three really are applied; the
-   deployment notes now carry the query. Then run
-   `npm run recalc:vendor-risk --workspace=apps/api -- --apply`, because the discrepancy
-   penalty now reaches the bulk path and every denormalised `risk_score` predates that.
+1. **Run `npm run recalc:vendor-risk --workspace=apps/api -- --apply`.** All four
+   migrations are applied, but the discrepancy penalty now reaches the bulk path and
+   every denormalised `risk_score` predates that. Two rows today; re-run after any
+   enrichment batch.
 2. **Run a real enrichment batch** and populate the catalogue, then re-score Sprint 4
    against data. Until then benchmarking, concentration and the enforcement feed are
    untestable in the only way that counts.
