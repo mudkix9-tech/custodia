@@ -242,7 +242,16 @@ const COUNTRY_NAMES: Readonly<Record<string, string>> = {
   'new zealand': 'NZ',
 };
 
-function normaliseCountry(raw: string): string | null {
+/**
+ * Prose or ISO alpha-2 to an ISO alpha-2 code, or null where we do not recognise it.
+ *
+ * Exported because the Add Custom Vendor form needs exactly this: it took free text
+ * straight into `char(2)`, so a user typing "Germany" got a raw Postgres
+ * `value too long for type character(2)` and a shorter unrecognised word landed as
+ * whatever two characters it happened to be (D42). One normaliser, used by both the
+ * CSV import and the form, rather than two that disagree.
+ */
+export function normaliseCountry(raw: string): string | null {
   const key = raw.trim().toLowerCase();
   if (!key) return null;
   if (/^[a-z]{2}$/.test(key)) return key.toUpperCase();

@@ -98,7 +98,7 @@ const ALLOWED: Record<string, Exception> = {
     reason: 'Sub-processor records describe a vendor, not a tenant. Permission-gated read of shared reference data.',
   },
   'vendors.ts::markNotified': {
-    reason: 'notifiedAt lives on the shared row — a data-model bug tracked in known-concerns.md. Permission-gated; scoping it to org-owned vendors would break change notifications for global vendors.',
+    reason: 'Reads the shared vendor_sub_processors row only to confirm the id exists — sub-processors describe a vendor, not a tenant, same as ::list. The acknowledgement it writes is org-scoped (vendor_sub_proc_acks, keyed on the caller orgId), which is the D46 fix: notifiedAt used to live on the shared row so one tenant acknowledging cleared it for all.',
   },
   'vendors.ts::publishIncident': {
     reason: 'Platform-operator action on the global incident feed, gated on vendors:manage until a real platform-admin role exists.',
@@ -231,9 +231,6 @@ const ALLOWED_WRITES: Record<string, Exception> = {
   },
   'regulatory.ts::adminPublishUpdate::regulatoryUpdates': {
     reason: 'Global regulatory catalogue, gated on requirePlatformAdmin(). Publishing deliberately fans out to every organisation.',
-  },
-  'vendors.ts::markNotified::vendorSubProcessors': {
-    reason: 'notifiedAt lives on the shared row — a data-model bug tracked in known-concerns.md. Scoping it to org-owned vendors would break change notifications for global vendors.',
   },
   'vendors.ts::publishIncident::vendorIncidents': {
     reason: 'Platform-operator action on the global incident feed, gated on vendors:manage until a real platform-admin role exists.',

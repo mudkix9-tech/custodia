@@ -290,3 +290,38 @@ export function isEuEeaOrAdequateCountry(code?: string | null): boolean {
   const c = code.toUpperCase();
   return isEuEeaCountry(c) || ADEQUATE_THIRD_COUNTRIES.has(c);
 }
+
+/**
+ * The cross-check penalty for one relationship, given sub-processors the caller has
+ * already loaded.
+ *
+ * Split out so that every path scoring a vendor derives this the same way. The
+ * catalogue-wide recalculation used to omit it entirely — so `recalc:vendor-risk`,
+ * which the deployment runbook makes mandatory after a formula change, quietly
+ * forgave every contradiction the cross-check had found. A shared function is what
+ * stops the bulk path and the per-row path drifting apart again.
+ */
+export function discrepancyPenaltyFor(args: {
+  vendor: any;
+  orgVendor: any;
+  latestAssessment: any | undefined | null;
+  subProcessors: Array<{ name: string; country: string | null; service: string | null }>;
+  dpfStatus?: string;
+}): number {
+  const { vendor, orgVendor, latestAssessment, subProcessors, dpfStatus } = args;
+  if (!latestAssessment || latestAssessment.status !== 'completed') return 0;
+  const discrepancies = crossCheckVendorResponses({
+    vendorName: vendor.name,
+    vendorCountry: vendor.headquartersCountry,
+    euHostingAvailable: vendor.euHostingAvailable,
+    usingEuHosting: orgVendor.usingEuHosting,
+    securityCertifications:
+      (orgVendor.certifications as string[]) || (vendor.securityCertifications as string[]) || [],
+    dpfStatus: (dpfStatus as any) || 'none',
+    subProcessors,
+    dpaClauseAnalysis: vendor.dpaClauseAnalysis,
+    questionsSnapshot: (latestAssessment.questionsSnapshot as any[]) || [],
+    responses: (latestAssessment.responses as Record<string, any>) || {},
+  });
+  return calculateDiscrepancyRiskPenalty(discrepancies);
+}

@@ -4,6 +4,7 @@ import { PassThrough } from 'stream';
 import { format as csvFormat } from 'fast-csv';
 import { Upload } from '@aws-sdk/lib-storage';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { mergeTransferMechanisms } from '../constants/transferMechanisms.js';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getS3BucketForOrg, getS3ClientForRegion } from '../lib/s3.js';
 import { renderPdf } from '../lib/pdfClient.js';
@@ -174,7 +175,17 @@ export async function generateAuditFile(
     riskLevel: ov.riskLevel,
     riskScore: ov.riskScore,
     securityCertifications: (ov.vendor.securityCertifications as string[]) || [],
-    transferMechanism: null,
+    /*
+     * D12. This was `null`, hardcoded — so the one column a supervisory authority
+     * cares about for Chapter V was blank by construction in the auditor-facing
+     * pack. It was written before `organization_vendors.transfer_mechanisms`
+     * existed; that column arrived in Sprint 0 and nothing came back to connect it.
+     *
+     * The union is the same one `lib/vendorRisk.ts` and the third-country gap rule
+     * apply: the organisation's own record first, because an org may have signed
+     * SCCs the shared catalogue does not know about, then the catalogue's.
+     */
+    transferMechanism: mergeTransferMechanisms(ov.transferMechanisms, ov.vendor.transferMechanisms),
     lastReviewedAt: ov.lastReviewedAt,
   }));
 
@@ -204,6 +215,8 @@ export async function generateAuditFile(
     risk_level: v.riskLevel,
     risk_score: v.riskScore,
     certifications: v.securityCertifications.join('; '),
+    transfer_mechanism: v.transferMechanism.join('; '),
+    last_reviewed: v.lastReviewedAt?.toISOString() || '',
   })));
   archive.append(vendorCsv, { name: 'vendors/vendor-register.csv' });
 

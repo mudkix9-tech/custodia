@@ -4,12 +4,12 @@ import { orgEmbeddingsQueue } from '../lib/queue.js';
 import { vendorJobsQueue } from '../workers/vendors.js';
 import { db } from '../db.js';
 import { vendors, organizationVendors, users, vendorSubProcessors, vendorSubProcessorChanges, vendorIncidents, organizationVendorIncidentAlerts, vendorQuestionnaires, vendorDiscoveries, organizations, vendorAssessments, complianceGaps, transferImpactAssessments } from 'db';
-import { eq, and, isNull, inArray, or, sql, desc, asc, gte, lte, ilike, lt, gt, ne, count } from 'drizzle-orm';
+import { eq, and, isNull, inArray, or, sql, desc, asc, gte, lte, ilike, lt, gt, ne, count, notInArray } from 'drizzle-orm';
 import { router, publicProcedure, protectedProcedure, requirePermission } from '../trpc.js';
 import { TRPCError } from '@trpc/server';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
 
-import { calculateVendorRisk } from '../lib/vendorRisk.js';
+import { calculateVendorRisk, NEW_LINK_RISK_INPUTS, questionnaireScoreModifier, mergeSubProcessorRows } from '../lib/vendorRisk.js';
 import { enforceLimit } from '../lib/billing.js';
 import { DPA_STATUS_SIGNED, DPA_STATUS_MISSING, DPA_STATUSES } from '../constants/dpaStatus.js';
 import {
@@ -35,8 +35,9 @@ import {
   matchCatalogue,
   AUTO_LINK_THRESHOLD,
   type CatalogueEntry,
+  normaliseCountry,
 } from '../lib/vendorImport.js';
-import { auditLogs, vendorSubProcessorEntities, vendorFieldProvenance, dpfRegistrations } from 'db';
+import { auditLogs, vendorSubProcessorEntities, vendorFieldProvenance, dpfRegistrations, vendorSubProcessorAcknowledgements } from 'db';
 import {
   describeChanges,
   changeTypeOf,
@@ -55,11 +56,12 @@ import { assertOwned } from '../lib/tenancy.js';
 import { ARTICLE_28_DEFINITIONS, type Article28ClauseKey } from '../lib/vendorDpaClauseAnalyzer.js';
 import { calculateConcentrationAnalytics } from '../lib/vendorConcentration.js';
 import { parseTrustCenterProfile } from '../lib/vendorTrustCenter.js';
-import { crossCheckVendorResponses, calculateDiscrepancyRiskPenalty } from '../lib/vendorCrossCheck.js';
+import { crossCheckVendorResponses, calculateDiscrepancyRiskPenalty, discrepancyPenaltyFor } from '../lib/vendorCrossCheck.js';
+import { safeFetch, BlockedRequestError } from '../lib/safeFetch.js';
 import { getVendorBenchmarkStats } from '../lib/vendorBenchmarking.js';
 import { matchRegulatoryDecisions } from '../lib/vendorEnforcementFeed.js';
 import { matchDpfStatus } from '../lib/vendorDpf.js';
-export { calculateVendorRisk };
+export { calculateVendorRisk, NEW_LINK_RISK_INPUTS };
 
 /**
  * What hangs off one `organization_vendors` row.
@@ -121,6 +123,27 @@ async function vendorEvidenceCounts(dbInstance: any, orgVendorId: string) {
   return { assessments, questionnaires, subProcessorChanges, incidentAlerts, tias };
 }
 
+/**
+ * DPF status for a US vendor, matched on folded name — never substring, which is
+ * how "Go" used to match "google".
+ */
+export async function resolveDpfStatus(dbInstance: any, vendor: any): Promise<{ dpfStatus?: 'active' | 'lapsed' | 'discontinued'; dpfLapsedDate?: string }> {
+  if (vendor.headquartersCountry !== 'US') return {};
+  const [dpf] = await dbInstance.select().from(dpfRegistrations).where(
+    or(
+      sql`LOWER(${dpfRegistrations.organisationName}) = LOWER(${vendor.name})`,
+      sql`${dpfRegistrations.nameKey} = ${vendor.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`
+    )
+  );
+  if (!dpf) return {};
+  return {
+    dpfStatus: dpf.status as any,
+    dpfLapsedDate: dpf.recertificationDueDate && dpf.status === 'lapsed'
+      ? dpf.recertificationDueDate.toISOString().split('T')[0]
+      : undefined,
+  };
+}
+
 export async function updateVendorRiskScore(dbInstance: any, orgId: string, vendorId: string) {
   const [vendor] = await dbInstance.select().from(vendors).where(eq(vendors.id, vendorId));
   if (!vendor) return;
@@ -145,29 +168,7 @@ export async function updateVendorRiskScore(dbInstance: any, orgId: string, vend
     ))
     .orderBy(desc(vendorAssessments.completedAt), desc(vendorAssessments.expiresAt));
 
-  let scoreModifier = 0;
-  if (assessments.length > 0) {
-    const latest = assessments[0];
-    // D6. A completed questionnaire moves the register only once a human has
-    // reviewed it (`reviewedAt` set by assessments.reviewAssessment). Without
-    // this gate the vendor's own favourable answers lowered their risk rating
-    // the moment they hit submit -- self-attestation grading itself. An
-    // *expired* invitation still carries +25: silence is not a favourable
-    // answer, and it punishes rather than rewards.
-    if (latest.status === 'completed' && latest.reviewedAt) {
-      const baseVal = latest.score || 0;
-      const aiAdj = latest.scoreAdjustment || 0;
-      const finalQScore = Math.max(0, Math.min(100, baseVal + aiAdj));
-
-      if (finalQScore >= 50) {
-        scoreModifier = Math.round(-10 * ((finalQScore - 50) / 50));
-      } else {
-        scoreModifier = Math.round(25 * ((50 - finalQScore) / 50));
-      }
-    } else if (latest.status === 'expired') {
-      scoreModifier = 25;
-    }
-  }
+  const scoreModifier = questionnaireScoreModifier(assessments[0]);
 
   // Retrieve DPIA compliance gaps for this vendor
   const dpiaGaps = await dbInstance.select().from(complianceGaps).where(and(
@@ -177,56 +178,29 @@ export async function updateVendorRiskScore(dbInstance: any, orgId: string, vend
     eq(complianceGaps.source, 'dpia')
   ));
 
-  let dpfStatus: 'active' | 'lapsed' | 'discontinued' | undefined;
-  let dpfLapsedDate: string | undefined;
-  if (vendor.headquartersCountry === 'US') {
-    const [dpf] = await dbInstance.select().from(dpfRegistrations).where(
-      or(
-        sql`LOWER(${dpfRegistrations.organisationName}) = LOWER(${vendor.name})`,
-        sql`${dpfRegistrations.nameKey} = ${vendor.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`
-      )
-    );
-    if (dpf) {
-      dpfStatus = dpf.status as any;
-      if (dpf.recertificationDueDate && dpf.status === 'lapsed') {
-        dpfLapsedDate = dpf.recertificationDueDate.toISOString().split('T')[0];
-      }
-    }
-  }
+  const { dpfStatus, dpfLapsedDate } = await resolveDpfStatus(dbInstance, vendor);
 
   const enrichedVendor = {
     ...vendor,
     ...(dpfStatus ? { dpfStatus, dpfLapsedDate } : {}),
   };
 
-  // Evaluate discrepancy contradictions from latest completed assessment
-  let discrepancyPenalty = 0;
-  if (assessments.length > 0 && assessments[0].status === 'completed') {
-    const latest = assessments[0];
-    const [legacySubs, entitySubs] = await Promise.all([
-      dbInstance.select().from(vendorSubProcessors).where(eq(vendorSubProcessors.parentVendorId, vendorId)),
-      dbInstance.select().from(vendorSubProcessorEntities).where(eq(vendorSubProcessorEntities.parentVendorId, vendorId)),
-    ]);
-    const subProcessors = [
-      ...(legacySubs || []).map((s: any) => ({ name: s.name, country: s.country, service: s.service })),
-      ...(entitySubs || []).map((s: any) => ({ name: s.name, country: s.country, service: s.service })),
-    ];
-    const discrepancies = crossCheckVendorResponses({
-      vendorName: vendor.name,
-      vendorCountry: vendor.headquartersCountry,
-      euHostingAvailable: vendor.euHostingAvailable,
-      usingEuHosting: orgVendor.usingEuHosting,
-      securityCertifications: (orgVendor.certifications as string[]) || (vendor.securityCertifications as string[]) || [],
-      dpfStatus: dpfStatus || 'none',
-      subProcessors,
-      dpaClauseAnalysis: vendor.dpaClauseAnalysis,
-      questionsSnapshot: (latest.questionsSnapshot as any[]) || [],
-      responses: (latest.responses as Record<string, any>) || {},
-    });
-    discrepancyPenalty = calculateDiscrepancyRiskPenalty(discrepancies);
-  }
+  const entitySubs = await dbInstance.select().from(vendorSubProcessorEntities)
+    .where(eq(vendorSubProcessorEntities.parentVendorId, vendorId));
+  const discrepancyPenalty = discrepancyPenaltyFor({
+    vendor,
+    orgVendor,
+    latestAssessment: assessments[0],
+    subProcessors: mergeSubProcessorRows(subs, entitySubs),
+    dpfStatus,
+  });
 
-  const { score, level, factors } = calculateVendorRisk(enrichedVendor, orgVendor, subProcessorsCount, scoreModifier, dpiaGaps, discrepancyPenalty);
+  const { score, level, factors } = calculateVendorRisk(enrichedVendor, orgVendor, {
+    subProcessorsCount,
+    scoreModifier,
+    dpiaGaps,
+    discrepancyPenalty,
+  });
 
   await dbInstance.update(organizationVendors)
     .set({
@@ -251,22 +225,7 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
   const [vendor] = await dbInstance.select().from(vendors).where(eq(vendors.id, vendorId));
   if (!vendor) return;
 
-  let dpfStatus: 'active' | 'lapsed' | 'discontinued' | undefined;
-  let dpfLapsedDate: string | undefined;
-  if (vendor.headquartersCountry === 'US') {
-    const [dpf] = await dbInstance.select().from(dpfRegistrations).where(
-      or(
-        sql`LOWER(${dpfRegistrations.organisationName}) = LOWER(${vendor.name})`,
-        sql`${dpfRegistrations.nameKey} = ${vendor.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`
-      )
-    );
-    if (dpf) {
-      dpfStatus = dpf.status as any;
-      if (dpf.recertificationDueDate && dpf.status === 'lapsed') {
-        dpfLapsedDate = dpf.recertificationDueDate.toISOString().split('T')[0];
-      }
-    }
-  }
+  const { dpfStatus, dpfLapsedDate } = await resolveDpfStatus(dbInstance, vendor);
 
   const enrichedVendor = {
     ...vendor,
@@ -274,11 +233,18 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
   };
 
   const orgVendors = await dbInstance.select().from(organizationVendors).where(eq(organizationVendors.vendorId, vendorId));
-  
+
   const subs = await dbInstance.select()
     .from(vendorSubProcessors)
     .where(eq(vendorSubProcessors.parentVendorId, vendorId));
   const subProcessorsCount = subs.length;
+
+  // Fetched once for the whole catalogue row rather than per organisation: the
+  // sub-processor list belongs to the vendor, and the cross-check needs it for
+  // every tenant linked to it.
+  const entitySubs = await dbInstance.select().from(vendorSubProcessorEntities)
+    .where(eq(vendorSubProcessorEntities.parentVendorId, vendorId));
+  const mergedSubs = mergeSubProcessorRows(subs, entitySubs);
 
   // Retrieve DPIA compliance gaps for all matched organization vendors at once to avoid N+1 queries
   const orgIds: string[] = Array.from(new Set(orgVendors.map((ov: any) => ov.organizationId as string)));
@@ -310,33 +276,33 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
   for (const orgVendor of orgVendors) {
     const assessments = allAssessments.filter((a: any) => a.organizationId === orgVendor.organizationId && a.vendorId === orgVendor.id);
 
-    let scoreModifier = 0;
-    if (assessments.length > 0) {
-      const latest = assessments[0];
-      // D6 again -- same review gate as updateVendorRiskScore, or the two paths
-      // would disagree about whether a questionnaire has been seen by a human.
-      if (latest.status === 'completed' && latest.reviewedAt) {
-        const baseVal = latest.score || 0;
-        const aiAdj = latest.scoreAdjustment || 0;
-        const finalQScore = Math.max(0, Math.min(100, baseVal + aiAdj));
+    // Same helper as updateVendorRiskScore, so the two paths cannot disagree about
+    // whether a questionnaire has been seen by a human.
+    const scoreModifier = questionnaireScoreModifier(assessments[0]);
 
-        if (finalQScore >= 50) {
-          scoreModifier = Math.round(-10 * ((finalQScore - 50) / 50));
-        } else {
-          scoreModifier = Math.round(25 * ((50 - finalQScore) / 50));
-        }
-      } else if (latest.status === 'expired') {
-        scoreModifier = 25;
-      }
-    }
-
-    const vendorGaps = allDpiaGaps.filter((gap: any) => 
-      gap.organizationId === orgVendor.organizationId && 
+    const vendorGaps = allDpiaGaps.filter((gap: any) =>
+      gap.organizationId === orgVendor.organizationId &&
       gap.entityId === orgVendor.id
     );
 
-    const { score, level, factors } = calculateVendorRisk(enrichedVendor, orgVendor, subProcessorsCount, scoreModifier, vendorGaps);
-    
+    // This path used to omit the discrepancy penalty entirely, so the documented
+    // post-deploy recalculation forgave every contradiction the cross-check had
+    // found. It is now the same derivation as the per-row path.
+    const discrepancyPenalty = discrepancyPenaltyFor({
+      vendor,
+      orgVendor,
+      latestAssessment: assessments[0],
+      subProcessors: mergedSubs,
+      dpfStatus,
+    });
+
+    const { score, level, factors } = calculateVendorRisk(enrichedVendor, orgVendor, {
+      subProcessorsCount,
+      scoreModifier,
+      dpiaGaps: vendorGaps,
+      discrepancyPenalty,
+    });
+
     updates.push({ id: orgVendor.id, score, level, factors });
 
     if (orgEmbeddingsQueue) {
@@ -401,12 +367,53 @@ export const vendorsRouter = router({
       return result[0];
     }),
 
+  /**
+   * Catalogue vendors this organisation has not linked yet.
+   *
+   * D48. This returned the first five catalogue rows regardless of what the
+   * organisation already had — so it suggested vendors already in the register, in
+   * an order nobody chose, under a comment admitting it was a mock. Excluding what
+   * is already linked is the whole job; ordering by how many other organisations
+   * use a vendor makes the suggestion mean something, and falls back gracefully to
+   * alphabetical while the catalogue is thin.
+   *
+   * Only global rows are eligible: another tenant's custom vendor is theirs.
+   */
   suggestGlobal: protectedProcedure
     .use(requirePermission('vendors', 'view'))
-    .query(async ({ ctx }) => {
-    // Mock suggestion for now. Can be enhanced to look at what's missing.
-    return await ctx.db.select().from(vendors).where(eq(vendors.isGlobal, true)).limit(5);
-  }),
+    .input(z.object({ limit: z.number().min(1).max(20).default(5) }).optional())
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 5;
+      const linked = ctx.db
+        .select({ id: organizationVendors.vendorId })
+        .from(organizationVendors)
+        .where(eq(organizationVendors.organizationId, ctx.user!.orgId));
+
+      return await ctx.db
+        .select({
+          id: vendors.id,
+          name: vendors.name,
+          website: vendors.website,
+          category: vendors.category,
+          logoUrl: vendors.logoUrl,
+          headquartersCountry: vendors.headquartersCountry,
+          adoptionCount: sql<number>`(
+            SELECT COUNT(*) FROM ${organizationVendors}
+            WHERE ${organizationVendors.vendorId} = ${vendors.id}
+          )`,
+        })
+        .from(vendors)
+        .where(and(
+          eq(vendors.isGlobal, true),
+          isNull(vendors.organizationId),
+          notInArray(vendors.id, linked),
+        ))
+        .orderBy(sql`(
+          SELECT COUNT(*) FROM ${organizationVendors}
+          WHERE ${organizationVendors.vendorId} = ${vendors.id}
+        ) DESC`, vendors.name)
+        .limit(limit);
+    }),
 
   // ORG
   /**
@@ -607,7 +614,7 @@ export const vendorsRouter = router({
       const { score, level, factors } = calculateVendorRisk(
         vendor,
         { dpaStatus: 'not_started', dataCategoriesShared: [], dataSubjectVolume: '<1K' },
-        subProcessorsCount
+        { ...NEW_LINK_RISK_INPUTS, subProcessorsCount }
       );
 
       const [newLink] = await ctx.db.insert(organizationVendors).values({
@@ -766,7 +773,22 @@ export const vendorsRouter = router({
     .input(z.object({
       name: z.string(),
       website: z.string().optional(),
-      headquartersCountry: z.string().optional(),
+      /*
+       * D42. This was a bare `z.string()` into `char('headquarters_country', 2)`,
+       * fed by a free-text input, so "Germany" surfaced a raw
+       * `value too long for type character(2)` and a shorter unrecognised word was
+       * stored as whatever two characters it happened to be — silently, and then
+       * read by the adequacy logic as a different country. Accepting prose and
+       * normalising it is the behaviour the CSV import already had; refusing what
+       * we cannot place is better than truncating it.
+       */
+      headquartersCountry: z
+        .string()
+        .optional()
+        .transform((value) => (value && value.trim() ? normaliseCountry(value) : undefined))
+        .refine((value) => value !== null, {
+          message: 'Country not recognised. Use an ISO 3166-1 alpha-2 code (for example DE) or an English country name.',
+        }),
       category: z.string().optional(),
       description: z.string().optional(),
       euHostingAvailable: z.boolean().optional(),
@@ -799,7 +821,7 @@ export const vendorsRouter = router({
         contractRenewalDate: input.contractRenewalDate || null
       };
 
-      const { score, level, factors } = calculateVendorRisk(newVendor, initialOrgVendor, 0);
+      const { score, level, factors } = calculateVendorRisk(newVendor, initialOrgVendor, NEW_LINK_RISK_INPUTS);
 
       const [newLink] = await ctx.db.insert(organizationVendors).values({
         organizationId: ctx.user!.orgId,
@@ -934,21 +956,38 @@ export const vendorsRouter = router({
         return removed;
       }),
       
-    // NOTE: `notifiedAt` lives on the shared row, so one organisation acknowledging
-    // a sub-processor change marks it acknowledged for every organisation. That is a
-    // data-model bug (the flag belongs on a per-org join), not something an
-    // organisation filter here can fix -- scoping this to org-owned vendors would
-    // instead break the change-notification flow, which exists for global vendors.
-    // Gated on permission for now and recorded in known-concerns.md.
+    /*
+     * D46. This used to set `notifiedAt` on the shared `vendor_sub_processors` row,
+     * so one organisation acknowledging a sub-processor cleared it for every other
+     * organisation — an Article 28(2) record that recorded whoever clicked last.
+     * The acknowledgement is now its own per-organisation row, which is what makes
+     * it a tenant's own answer; the unique key makes acknowledging twice a no-op
+     * rather than a duplicate.
+     */
     markNotified: protectedProcedure
       .use(requirePermission('vendors', 'edit'))
       .input(z.object({ id: z.string().uuid() }))
       .mutation(async ({ ctx, input }) => {
-        const [updated] = await ctx.db.update(vendorSubProcessors)
-          .set({ notifiedAt: new Date() })
-          .where(eq(vendorSubProcessors.id, input.id))
+        const [subProcessor] = await ctx.db.select()
+          .from(vendorSubProcessors)
+          .where(eq(vendorSubProcessors.id, input.id));
+        if (!subProcessor) throw new TRPCError({ code: 'NOT_FOUND', message: 'Sub-processor not found' });
+
+        const [ack] = await ctx.db.insert(vendorSubProcessorAcknowledgements)
+          .values({
+            organizationId: ctx.user!.orgId,
+            subProcessorId: input.id,
+            acknowledgedBy: ctx.user!.id,
+          })
+          .onConflictDoUpdate({
+            target: [
+              vendorSubProcessorAcknowledgements.organizationId,
+              vendorSubProcessorAcknowledgements.subProcessorId,
+            ],
+            set: { acknowledgedAt: new Date(), acknowledgedBy: ctx.user!.id },
+          })
           .returning();
-        return updated;
+        return ack;
       })
   }),
 
@@ -1246,15 +1285,50 @@ export const vendorsRouter = router({
       if (!vendor) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor not found' });
       if (!vendor.category) return [];
 
-      // Fetch global vendors in the same category, sorted by risk score ascending
-      const alternatives = await ctx.db.select()
+      /*
+       * D29. This sorted on `vendors.risk_score`, which the risk engine never writes
+       * — the score is per relationship and lives on `organization_vendors`. So the
+       * COALESCE fell through to 100 for every row, the ordering was arbitrary, and
+       * a panel headed "consider these lower-risk alternatives" listed the whole
+       * category with nothing lower-risk about it.
+       *
+       * Ranked on the mean score other organisations actually carry for each
+       * candidate, which is a real signal and the only risk number that exists.
+       * Vendors nobody has linked yet have no score to average; they sort last
+       * rather than first, because "unknown" is not "safe" — the previous behaviour
+       * badged exactly those rows as low risk.
+       */
+      const alternatives = await ctx.db.select({
+        id: vendors.id,
+        name: vendors.name,
+        website: vendors.website,
+        category: vendors.category,
+        logoUrl: vendors.logoUrl,
+        headquartersCountry: vendors.headquartersCountry,
+        euHostingAvailable: vendors.euHostingAvailable,
+        transferMechanisms: vendors.transferMechanisms,
+        securityCertifications: vendors.securityCertifications,
+        peerRiskScore: sql<number | null>`(
+          SELECT AVG(${organizationVendors.riskScore})::int
+          FROM ${organizationVendors}
+          WHERE ${organizationVendors.vendorId} = ${vendors.id}
+        )`,
+        peerOrgCount: sql<number>`(
+          SELECT COUNT(*)::int FROM ${organizationVendors}
+          WHERE ${organizationVendors.vendorId} = ${vendors.id}
+        )`,
+      })
         .from(vendors)
         .where(and(
           eq(vendors.category, vendor.category),
           eq(vendors.isGlobal, true),
           sql`${vendors.id} != ${input.vendorId}`
         ))
-        .orderBy(sql`COALESCE(${vendors.riskScore}, 100) ASC`);
+        .orderBy(sql`(
+          SELECT AVG(${organizationVendors.riskScore})
+          FROM ${organizationVendors}
+          WHERE ${organizationVendors.vendorId} = ${vendors.id}
+        ) ASC NULLS LAST`, vendors.name);
 
       return alternatives;
     }),
@@ -1614,7 +1688,7 @@ export const vendorsRouter = router({
         const { score, level, factors } = calculateVendorRisk(
           vendor,
           { dpaStatus: 'not_started', dataCategoriesShared: [], dataSubjectVolume: '<1K' },
-          0
+          NEW_LINK_RISK_INPUTS
         );
 
         const [newLink] = await ctx.db.insert(organizationVendors).values({
@@ -2219,7 +2293,7 @@ export const vendorsRouter = router({
                 dataCategoriesShared: row.dataCategoriesShared,
                 dataSubjectVolume: '<1K',
               },
-              subCounts.get(targetVendorId) ?? 0,
+              { ...NEW_LINK_RISK_INPUTS, subProcessorsCount: subCounts.get(targetVendorId) ?? 0 },
             );
 
             return {
@@ -2716,20 +2790,30 @@ export const vendorsRouter = router({
 
       if (!contentToParse.trim() && input.trustCenterUrl) {
         try {
-          const res = await fetch(input.trustCenterUrl, {
+          // Through `safeFetch`, not bare `fetch`: this is a URL the caller chose
+          // and the backend is being asked to open. The API process also hosts every
+          // worker, so an unchecked fetch here reaches the cloud metadata endpoint
+          // and anything else bound inside the container.
+          const res = await safeFetch(input.trustCenterUrl, {
             headers: { 'User-Agent': 'CustodiaVendorIntelligence/1.0' },
-            signal: AbortSignal.timeout(6000),
+            timeoutMs: 6000,
           });
           if (res.ok) {
-            const html = await res.text();
-            contentToParse = html
+            contentToParse = res.body
               .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
               .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
               .replace(/<[^>]+>/g, ' ')
               .replace(/\s+/g, ' ');
           }
-        } catch {
-          // Fallback to URL-based parsing if network fetch is unavailable
+        } catch (err) {
+          // A refused destination is the caller's mistake and worth saying so; any
+          // other failure falls back to URL-based parsing as before.
+          if (err instanceof BlockedRequestError) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: `That trust-centre URL could not be fetched: ${err.message}`,
+            });
+          }
         }
       }
 
@@ -2739,12 +2823,29 @@ export const vendorsRouter = router({
         vendorName: existing.vendor.name,
       });
 
-      // Update catalogue vendor's euHostingAvailable capability if detected
+      /*
+       * This used to write `profile.euHostingAvailable` straight onto the shared
+       * `vendors` row. The content it is derived from is whatever this tenant
+       * supplied — `rawContent` is free text they pasted and nothing verifies it —
+       * so one organisation could flip a catalogue flag for every other tenant. That
+       * matters beyond display: `vendorCrossCheck` reads `euHostingAvailable` when
+       * it decides whether a US vendor is contradicting its own EU-hosting claim, so
+       * poisoning it suppressed a contradiction, and therefore lowered a risk score,
+       * in registers belonging to other customers.
+       *
+       * The tenancy guard cannot catch this and is not at fault: the vendor id was
+       * pinned by an org-scoped read, which is exactly the proof pass 2 accepts. The
+       * guard establishes "you have this vendor linked", never "this row is yours".
+       *
+       * A trust-centre reading is now evidence for *this* relationship. Promoting it
+       * to the catalogue is what `vendor_candidates` and the review console exist
+       * for, and it belongs behind that human step.
+       */
       if (profile.euHostingAvailable !== undefined) {
         await ctx.db
-          .update(vendors)
-          .set({ euHostingAvailable: profile.euHostingAvailable })
-          .where(eq(vendors.id, existing.vendor.id));
+          .update(organizationVendors)
+          .set({ trustCentreEuHosting: profile.euHostingAvailable })
+          .where(eq(organizationVendors.id, existing.orgVendor.id));
       }
 
       // Merge certifications

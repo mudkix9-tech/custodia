@@ -27,7 +27,7 @@ import {
 import { and, eq, desc, inArray, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import DOMPurify from 'isomorphic-dompurify';
-import { WORKER_MODEL, complete } from '../lib/llm.js';
+import { REASONING_MODEL, completeJson } from '../lib/llm.js';
 import { trackAiUsage } from '../lib/billing.js';
 import { ropaDiscoveryQueue } from '../workers/index.js';
 import {
@@ -341,14 +341,16 @@ export const ropaDraftRouter = router({
 
       let parsed: unknown;
       try {
-        const response = await complete({
-          model: WORKER_MODEL,
-          maxTokens: 4096,
+        const parsedDraft = await completeJson<unknown>({
+          model: REASONING_MODEL,
+          // A thinking model spends part of this budget before emitting a token of
+          // JSON, so a draft that fitted comfortably under Anthropic's 4096 could
+          // truncate mid-string here. D-VD: "Unterminated string in JSON at 1739".
+          maxTokens: 16384,
           system: DRAFT_SYSTEM_PROMPT,
           prompt: `Draft an Article 30 record for this processing:\n\n"${input.prompt}"\n\nReturn JSON matching exactly this schema:\n${DRAFT_JSON_SCHEMA}`,
         });
-        const text = response.text;
-        parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
+        parsed = parsedDraft;
       } catch (error: any) {
         // A model failure is a failure of this feature, not of the register. The
         // message says which, because "something went wrong" on a panel that just
@@ -369,7 +371,7 @@ export const ropaDraftRouter = router({
         processingActivityId: input.processingActivityId ?? null,
         discoverySignalId: input.discoverySignalId ?? null,
         prompt: sanitize(input.prompt)!,
-        model: WORKER_MODEL,
+        model: REASONING_MODEL,
         proposal: proposal as any,
         decisions: {},
         status: 'proposed',

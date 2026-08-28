@@ -186,6 +186,23 @@ export function isJobEnabled(
 }
 
 /**
+ * Is this job on the dormant list, ignoring any `WORKERS_ENABLED_JOBS` allowlist?
+ *
+ * `isJobEnabled` answers "should this run right now", which is the dispatch
+ * question and is allowlist-dependent. This answers the *policy* question — "is
+ * this job dormant by design" — regardless of what any particular environment has
+ * switched on. `scheduleGlobalJobs` uses it to report, at startup, which of the
+ * crons it just registered will be skipped: scheduling a dormant job is the house
+ * convention rather than a mistake, but the pair of facts lives in two files and
+ * nothing else puts them together.
+ */
+export function isJobDormant(queueName: string, jobName: string): boolean {
+  return DORMANT_JOBS.has(`${queueName}:${jobName}`);
+}
+
+/**
+
+/**
  * The web entrypoint imports workers/index.js for scheduleGlobalJobs, which pulls
  * in every worker module and registers all of them in the web process. Setting
  * WORKER_ROLE=web makes createWorker a no-op there so long-running jobs — the

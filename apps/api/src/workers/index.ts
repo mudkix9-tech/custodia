@@ -29,7 +29,7 @@ export * from './materialChange.js';
 export * from './vendorIntelligence.js';
 import { createQueue } from '../lib/queue.js';
 
-import { getBoss, wrapJobPayload } from '../lib/queue.js';
+import { getBoss, wrapJobPayload, isJobDormant } from '../lib/queue.js';
 
 export const gapScannerQueue = createQueue('gap-scanner');
 export const complianceScoreQueue = createQueue('compliance-score');
@@ -81,8 +81,56 @@ export async function scheduleGlobalJobs() {
   // no customer-facing queue.
   await boss.schedule('vendor-intelligence', '17 3 * * 1', wrapJobPayload('dpf-registry-import', {}));
 
-  // Sprint 3. Automated vendor governance review reminder chaser.
+  /*
+   * Scheduled *and* in `DORMANT_JOBS`, which is the house convention rather than a
+   * contradiction: the cron is wired up here once, and `DORMANT_JOBS` is the switch
+   * that decides whether the dispatcher actually runs it. Six other jobs sit in the
+   * same state (`impact-assessment`, `dpia-dispatcher`, `ropa-reviews-dispatcher`
+   * and the three Sprint 4 ROPA dispatchers). The reminder chases customers about
+   * overdue vendor reviews, so it stays dormant until an organisation turns the
+   * feature on — see `logDormantSchedules` below, which prints the ones that are
+   * wired but switched off, because that state is otherwise invisible until someone
+   * greps two files.
+   */
   await boss.schedule('vendor-intelligence', '30 6 * * *', wrapJobPayload('vendor-review-reminder', {}));
+
+  logDormantSchedules([
+    ['gap-scanner', 'daily-scan'],
+    ['compliance-score', 'daily-calculation'],
+    ['consent-rollup', 'daily-rollup'],
+    ['consent-rollup-drift-check', 'weekly-drift-check'],
+    ['impact-assessment', 'impact-assessment-dispatcher'],
+    ['trial-expiry', 'daily-trial-expiry'],
+    ['maintenance-jobs', 'rate-limit-cleanup'],
+    ['dpia-dispatcher', 'dpia-dispatcher'],
+    ['consent-scan', 'weekly-reconcile-dispatch'],
+    ['ropa-reviews-dispatcher', 'ropa-reviews-dispatcher'],
+    ['ropa-discovery', 'ropa-discovery-dispatch'],
+    ['ropa-retention', 'ropa-retention-dispatch'],
+    ['ropa-intake', 'ropa-intake-dispatch'],
+    ['vendor-intelligence', 'dpf-registry-import'],
+    ['vendor-intelligence', 'vendor-review-reminder'],
+  ]);
+}
+
+/**
+ * Print, once at startup, which of the crons we just registered will be skipped.
+ *
+ * A cron line and a `DORMANT_JOBS` entry live in different files, so "this feature
+ * is scheduled" and "this feature runs" are two different facts and nothing put
+ * them side by side. That is how the vendor module came to advertise monitoring it
+ * does not perform: the scheduling code reads as working, the dormant list reads as
+ * a deliberate decision, and only the pair tells you the truth. This is a log line
+ * rather than a failure because the combination is intentional.
+ */
+function logDormantSchedules(scheduled: Array<[string, string]>) {
+  const dormant = scheduled.filter(([q, j]) => isJobDormant(q, j));
+  if (dormant.length === 0) return;
+  console.log(
+    `[queue] ${dormant.length} scheduled job(s) are in DORMANT_JOBS and will be skipped: ` +
+    dormant.map(([q, j]) => `${q}:${j}`).join(', ') +
+    '. Remove from DORMANT_JOBS (or set WORKERS_ENABLED_JOBS) to enable.'
+  );
 }
 
 

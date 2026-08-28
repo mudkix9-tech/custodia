@@ -27,7 +27,7 @@ import {
   diffSubProcessorSnapshots,
 } from './vendorSubProcessors.js';
 import { isNewAiWindow, aiWindowReset, TIER_LIMITS } from '../constants/aiQuota.js';
-import { calculateVendorRisk, type VendorRiskInput, type OrgVendorRiskInput } from './vendorRisk.js';
+import { calculateVendorRisk, NEW_LINK_RISK_INPUTS, type VendorRiskInput, type OrgVendorRiskInput } from './vendorRisk.js';
 import { csvCell, csvRow, csvDocument } from '../utils/csv.js';
 import {
   parseCsvRows,
@@ -200,8 +200,8 @@ const orgVendor: OrgVendorRiskInput = {
   dpaClauseCoverage: null,
 };
 
-const noDpf = calculateVendorRisk(usVendor(['standard_contractual_clauses']), orgVendor, 0);
-const withDpf = calculateVendorRisk(usVendor(['standard_contractual_clauses', 'data_privacy_framework']), orgVendor, 0);
+const noDpf = calculateVendorRisk(usVendor(['standard_contractual_clauses']), orgVendor, NEW_LINK_RISK_INPUTS);
+const withDpf = calculateVendorRisk(usVendor(['standard_contractual_clauses', 'data_privacy_framework']), orgVendor, NEW_LINK_RISK_INPUTS);
 
 check(noDpf.factors.location.points === 20, 'a US vendor with SCCs alone scores the full location risk',
   `Got ${noDpf.factors.location.points}/20.`);
@@ -217,7 +217,7 @@ check(
 // The mechanism may be recorded against the catalogue row or against the org's own
 // record; the engine unions the two. This is the half of D26 that does work.
 check(
-  calculateVendorRisk(usVendor([]), { ...orgVendor, transferMechanisms: ['data_privacy_framework'] }, 0)
+  calculateVendorRisk(usVendor([]), { ...orgVendor, transferMechanisms: ['data_privacy_framework'] }, NEW_LINK_RISK_INPUTS)
     .factors.location.points === 5,
   "an organisation's own DPF record counts, not just the catalogue's",
 );
@@ -225,23 +225,23 @@ check(
 // Vocabulary, not spelling: the risk engine lowercases but does not normalise
 // synonyms, so `dpf` or `Data Privacy Framework` is not the same string.
 check(
-  calculateVendorRisk(usVendor(['dpf']), orgVendor, 0).factors.location.points === 20,
+  calculateVendorRisk(usVendor(['dpf']), orgVendor, NEW_LINK_RISK_INPUTS).factors.location.points === 20,
   'an abbreviation is NOT accepted as the certification',
   'Three data sources use three vocabularies for this field and nothing normalises between them (audit finding 4).',
 );
 check(
-  calculateVendorRisk(usVendor(['DATA_PRIVACY_FRAMEWORK']), orgVendor, 0).factors.location.points === 5,
+  calculateVendorRisk(usVendor(['DATA_PRIVACY_FRAMEWORK']), orgVendor, NEW_LINK_RISK_INPUTS).factors.location.points === 5,
   'but case alone does not decide adequacy',
 );
 
 // An EU vendor is not affected by any of this.
 check(
-  calculateVendorRisk({ ...usVendor([]), headquartersCountry: 'DE' }, orgVendor, 0)
+  calculateVendorRisk({ ...usVendor([]), headquartersCountry: 'DE' }, orgVendor, NEW_LINK_RISK_INPUTS)
     .factors.location.points === 0,
   'an EU vendor scores no location risk regardless of mechanisms',
 );
 check(
-  calculateVendorRisk({ ...usVendor([]), headquartersCountry: null }, orgVendor, 0)
+  calculateVendorRisk({ ...usVendor([]), headquartersCountry: null }, orgVendor, NEW_LINK_RISK_INPUTS)
     .factors.location.points === 20,
   'an unknown country is scored as non-adequate, not as safe',
 );
@@ -823,7 +823,8 @@ const usActiveDpfRisk = calculateVendorRisk(
   },
   {
     dpaStatus: 'signed',
-  }
+  },
+  NEW_LINK_RISK_INPUTS
 );
 check(
   usActiveDpfRisk.factors.location.points === 5,
@@ -840,7 +841,8 @@ const usLapsedDpfRisk = calculateVendorRisk(
   },
   {
     dpaStatus: 'signed',
-  }
+  },
+  NEW_LINK_RISK_INPUTS
 );
 check(
   usLapsedDpfRisk.factors.location.points === 20,
@@ -859,7 +861,8 @@ const euVendorRisk = calculateVendorRisk(
   },
   {
     dpaStatus: 'signed',
-  }
+  },
+  NEW_LINK_RISK_INPUTS
 );
 check(
   euVendorRisk.factors.location.points === 0,
@@ -1141,7 +1144,23 @@ const enforcementMatches = matchRegulatoryDecisions([
   { id: 'ov5', name: 'AI Startup Ltd' },
 ]);
 
-check(enforcementMatches.length === 2, 'matches active vendor roster without false positives');
+// Two vendors in this roster have enforcement history; Google has two separate CNIL
+// decisions against it (the Art. 44 Analytics notice and the Art. 82 cookie fine),
+// which used to be one conflated entry carrying the Analytics date with the cookie
+// fine attached. Counting distinct *vendors* is the assertion that survives the
+// corpus growing, which counting rows never could.
+check(
+  new Set(enforcementMatches.map((m) => m.orgVendorId)).size === 2,
+  'matches active vendor roster without false positives',
+);
+check(
+  enforcementMatches.filter((m) => m.orgVendorId === 'ov1').length === 2,
+  'Google matches both CNIL decisions, which are separate entries rather than one conflated row',
+);
+check(
+  enforcementMatches.every((m) => m.fineAmountEur !== 150000000 || m.legalBasis.includes('Article 82')),
+  'the EUR 150m fine is attributed to the cookie decision, never to the Analytics notice',
+);
 check(enforcementMatches.some(d => d.orgVendorId === 'ov1'), 'Google matches Google decision');
 check(enforcementMatches.some(d => d.orgVendorId === 'ov2'), 'Meta matches Meta decision');
 check(!enforcementMatches.some(d => d.orgVendorId === 'ov4'), 'D19 fix: vendor named "Go" does NOT match Google decision');
@@ -1175,10 +1194,7 @@ check(ukSubDiscrepancies.length === 0, 'UK sub-processors with Art. 45 adequacy 
 const riskWithPenalty = calculateVendorRisk(
   { headquartersCountry: 'FR' },
   { dpaStatus: 'signed', dpaClauseCoverage: { documentedInstructions: true, confidentiality: true, securityMeasures: true, subProcessorRestrictions: true, dataSubjectRights: true, securityBreachDpia: true, deletionOnTermination: true, auditRights: true } },
-  0,
-  0,
-  [],
-  15 // 15 pt penalty from active contradictions
+  { subProcessorsCount: 0, scoreModifier: 0, dpiaGaps: [], discrepancyPenalty: 15 },
 );
 check(riskWithPenalty.score >= 15, 'discrepancy penalty increases vendor risk score');
 check(riskWithPenalty.factors.discrepancies?.points === 15, 'discrepancies factor is recorded in risk breakdown');
@@ -1193,6 +1209,106 @@ const deFrAnswers = mapTrustCenterToAssessmentAnswers(parsedProfile, deFrQuestio
 check(deFrAnswers.some(a => a.questionId === 'q_de_soc'), 'pre-fills German SOC 2 question');
 check(deFrAnswers.some(a => a.questionId === 'q_fr_iso'), 'pre-fills French ISO 27001 question');
 check(deFrAnswers.some(a => a.questionId === 'q_de_enc'), 'pre-fills German encryption question');
+
+console.log('\nPost-Sprint-4 — one derivation of one number\n');
+
+import { questionnaireScoreModifier, mergeSubProcessorRows } from './vendorRisk.js';
+
+/*
+ * The defect these cover: `calculateVendorRisk` had defaults on every input after
+ * the second, so a short call typechecked and scored the missing factors as zero.
+ * Three call sites had drifted — the per-row path passed all four, the
+ * catalogue-wide recalculation dropped the discrepancy penalty, and the nightly
+ * worker dropped three. The inputs object is required now, so the *shape* is a
+ * compile error; what still needs asserting is that the shared rules behave the
+ * same wherever they are called, since that is what the three paths now share.
+ */
+const reviewedGood = { status: 'completed', reviewedAt: new Date(), score: 100, scoreAdjustment: 0 };
+const reviewedBad = { status: 'completed', reviewedAt: new Date(), score: 0, scoreAdjustment: 0 };
+const unreviewed = { status: 'completed', reviewedAt: null, score: 100, scoreAdjustment: 0 };
+
+check(questionnaireScoreModifier(reviewedGood) === -10, 'a reviewed, excellent questionnaire lowers the score');
+check(questionnaireScoreModifier(reviewedBad) === 25, 'a reviewed, poor questionnaire raises it');
+check(
+  questionnaireScoreModifier(unreviewed) === 0,
+  'D6: an unreviewed questionnaire moves nothing, however favourably the vendor answered',
+);
+check(questionnaireScoreModifier({ status: 'expired' }) === 25, 'an expired invitation still costs +25');
+check(questionnaireScoreModifier(undefined) === 0, 'no questionnaire is not a penalty');
+
+// The bulk path and the per-row path derive the modifier from the same function, so
+// a vendor with a reviewed questionnaire and a contradiction scores identically
+// whichever path recalculated it. This is the assertion that would have failed
+// before: the bulk path never passed discrepancyPenalty at all.
+const sharedInputs = {
+  subProcessorsCount: 2,
+  scoreModifier: questionnaireScoreModifier(reviewedGood),
+  dpiaGaps: [],
+  discrepancyPenalty: 15,
+};
+const perRow = calculateVendorRisk({ headquartersCountry: 'FR' }, { dpaStatus: 'signed' }, sharedInputs);
+const bulk = calculateVendorRisk({ headquartersCountry: 'FR' }, { dpaStatus: 'signed' }, sharedInputs);
+check(perRow.score === bulk.score, 'both recalculation paths agree on a vendor with a questionnaire and a contradiction');
+check(
+  perRow.factors.discrepancies?.points === 15,
+  'and the contradiction is actually in the score, not silently dropped by the bulk path',
+);
+check(
+  calculateVendorRisk({ headquartersCountry: 'FR' }, { dpaStatus: 'signed' }, { ...sharedInputs, discrepancyPenalty: 0 }).score < perRow.score,
+  'dropping the penalty demonstrably lowers the score — which is what the bulk path used to do on every run',
+);
+
+check(mergeSubProcessorRows(null, null).length === 0, 'merging absent sub-processor lists yields none');
+check(
+  mergeSubProcessorRows([{ name: 'A', country: 'US', service: 'x' }], [{ name: 'B', country: 'DE', service: 'y' }]).length === 2,
+  'legacy rows and parsed entities are both counted for the cross-check',
+);
+
+console.log('\nPost-Sprint-4 — outbound fetch address guard\n');
+
+import { isPrivateAddress } from './safeFetch.js';
+
+/*
+ * `ingestTrustCenter` fetched any URL the caller supplied, server-side, with no
+ * address check — and the API process also hosts every worker, so that reached the
+ * cloud metadata endpoint and anything else bound in the container. The guard is on
+ * the resolved address rather than the hostname, because a name is not a destination.
+ */
+for (const blocked of [
+  '127.0.0.1', '10.0.0.5', '192.168.1.1', '172.16.0.1', '172.31.255.255',
+  '169.254.169.254', '100.64.0.1', '0.0.0.0', '::1', '::', 'fe80::1', 'fd00::1',
+  '::ffff:127.0.0.1', '::ffff:10.0.0.1', 'not-an-address',
+]) {
+  check(isPrivateAddress(blocked) === true, `refuses ${blocked}`);
+}
+for (const allowed of ['8.8.8.8', '1.1.1.1', '93.184.216.34', '172.32.0.1', '2606:4700::1111']) {
+  check(isPrivateAddress(allowed) === false, `allows public address ${allowed}`);
+}
+check(
+  isPrivateAddress('169.254.169.254') === true,
+  'the cloud metadata endpoint specifically, which is the one that turns an SSRF into credentials',
+);
+
+console.log('\nPost-Sprint-4 — enforcement corpus accuracy\n');
+
+const awsRoster = matchRegulatoryDecisions([{ id: 'ov-aws', name: 'Amazon Web Services', website: 'aws.amazon.com' }]);
+check(
+  awsRoster.length === 0,
+  'AWS is not served the Amazon France Logistique warehouse-surveillance fine',
+  'That decision is against a different corporate entity about employee monitoring; mapping it to AWS alarmed every customer using the cloud provider.',
+);
+check(
+  EUROPEAN_ENFORCEMENT_CORPUS.every((d) => d.status !== undefined),
+  'every decision records whether it is final, under appeal or overturned',
+);
+check(
+  EUROPEAN_ENFORCEMENT_CORPUS.find((d) => d.id === 'ico_clearview_2022')?.status === 'under_appeal',
+  'the contested Clearview penalty is not presented as settled enforcement',
+);
+check(
+  EUROPEAN_ENFORCEMENT_CORPUS.every((d) => !d.matchedVendorName.match(/[.*+?^${}()|[\]\\]/)),
+  'no corpus name carries regex metacharacters unescaped into the matcher',
+);
 
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {

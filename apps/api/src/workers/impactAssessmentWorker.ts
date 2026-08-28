@@ -4,7 +4,7 @@ import { regulatoryUpdateMatches, organizations, processingActivities, vendors, 
 import { eq, and, sql } from 'drizzle-orm';
 import { trackAiUsage } from '../lib/billing.js';
 import { Job } from '../lib/queue.js';
-import { WORKER_MODEL, complete } from '../lib/llm.js';
+import { EXTRACTION_MODEL, complete } from '../lib/llm.js';
 
 
 export const impactAssessmentQueue = process.env.NODE_ENV === 'test'
@@ -159,7 +159,8 @@ RECOMMENDED ACTIONS: <your recommended actions>`;
       await trackAiUsage(match.organizationId, 1);
 
       const msg = await complete({
-        model: WORKER_MODEL,
+        model: EXTRACTION_MODEL,
+        thinking: 'minimal',
         maxTokens: isLightweight ? 100 : 500,
         prompt,
       });

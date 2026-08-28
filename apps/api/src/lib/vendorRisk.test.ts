@@ -1,4 +1,4 @@
-import { calculateVendorRisk } from './vendorRisk.js';
+import { calculateVendorRisk, NEW_LINK_RISK_INPUTS } from './vendorRisk.js';
 
 function runTests() {
   console.log('Starting calculateVendorRisk unit tests...');
@@ -29,7 +29,7 @@ function runTests() {
         auditRights: true
       }
     },
-    0 // 0 sub-processors
+    NEW_LINK_RISK_INPUTS
   );
 
   console.log('Test Case 1 (Low Risk) score:', result1.score);
@@ -57,7 +57,7 @@ function runTests() {
       certifications: [],
       transferMechanisms: []
     },
-    5 // 5 sub-processors
+    { ...NEW_LINK_RISK_INPUTS, subProcessorsCount: 5 } // 5 sub-processors
   );
 
   console.log('Test Case 2 (Critical Risk) score:', result2.score);
@@ -105,7 +105,7 @@ function runTests() {
         auditRights: true
       }
     },
-    2 // 2 sub-processors
+    { ...NEW_LINK_RISK_INPUTS, subProcessorsCount: 2 } // 2 sub-processors
   );
 
   console.log('Test Case 3 (Medium Risk) score:', result3.score);
@@ -151,7 +151,7 @@ function runTests() {
         auditRights: false
       }
     },
-    0
+    NEW_LINK_RISK_INPUTS
   );
 
   console.log('Test Case 4 (Incomplete DPA) score:', result4.score);
@@ -185,8 +185,7 @@ function runTests() {
         auditRights: true
       }
     },
-    0,
-    -10 // excellent answers modifier
+    { ...NEW_LINK_RISK_INPUTS, scoreModifier: -10 } // excellent answers modifier
   );
   console.log('Test Case 5a (Excellent modifier -10) score:', result5a.score);
   if (result5a.score !== 0) { // Base was 0, should stay 0 (clamped)
@@ -217,8 +216,7 @@ function runTests() {
         auditRights: false
       }
     },
-    0,
-    15 // severe gaps modifier
+    { ...NEW_LINK_RISK_INPUTS, scoreModifier: 15 } // severe gaps modifier
   );
   // Base: DE (0) + signed DPA 1/8 (15) + standard categories (0) + <1K (0) + 0 subs (0) + no certs (10) + no safeguards (0) + no breach (0) = 25 pts.
   // Base (25) + Modifier (15) = 40 pts
@@ -256,8 +254,7 @@ function runTests() {
         auditRights: true
       }
     },
-    0,
-    -20 // underflow modifier
+    { ...NEW_LINK_RISK_INPUTS, scoreModifier: -20 } // underflow modifier
   );
   console.log('Test Case 6a (Underflow clamp) score:', result6a.score);
   if (result6a.score !== 0) {
@@ -280,8 +277,7 @@ function runTests() {
       certifications: [],
       transferMechanisms: []
     },
-    5,
-    25 // overflow modifier
+    { ...NEW_LINK_RISK_INPUTS, subProcessorsCount: 5, scoreModifier: 25 } // overflow modifier
   );
   // Base 100 + 25 = 125, should clamp at 100
   console.log('Test Case 6b (Overflow clamp) score:', result6b.score);

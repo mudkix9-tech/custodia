@@ -37,6 +37,7 @@ import {
   type CandidateAssessment,
   type FieldEvidence,
 } from './vendorFieldConfidence.js';
+import { assertPublicHost } from './safeFetch.js';
 import { classifyDocumentDomain, VENDOR_PARENT_DOMAINS } from './vendorDomains.js';
 import {
   classifyFetchError,
@@ -178,6 +179,18 @@ export async function probeUrl(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15_000);
   try {
+    // The URL here came from a model or from an unreviewed candidate, so it is
+    // outside input even though no customer typed it. Refuse private address space
+    // before the request is made; a hallucinated `http://localhost/dpa` is a fact
+    // about the extraction, not about the vendor, and it should not be a way to
+    // make the backend probe its own container.
+    try {
+      await assertPublicHost(new URL(url).hostname);
+    } catch {
+      clearTimeout(timer);
+      return { status: 'failed', failureClass: 'blocked_private_address', resolvedUrl: url };
+    }
+
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8' },

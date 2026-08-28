@@ -9,7 +9,7 @@ import { eq, and, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { diffWords } from 'diff';
 import { trackAiUsage } from '../lib/billing.js';
-import { COPILOT_MODEL, complete } from '../lib/llm.js';
+import { REASONING_MODEL, complete } from '../lib/llm.js';
 
 
 const checkOrgContext = (user: any) => {
@@ -64,7 +64,7 @@ ${currentRopaState}
     await trackAiUsage(orgId, 1);
 
     const msg = await complete({
-      model: COPILOT_MODEL,
+      model: REASONING_MODEL,
       maxTokens: 4000,
       prompt: prompt,
     });

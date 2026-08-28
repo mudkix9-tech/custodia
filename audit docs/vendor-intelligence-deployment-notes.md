@@ -180,3 +180,66 @@ remediation recorded in §0.7 of the main audit and has been left as found. Its
 first item — the `dpa-expiry-checker` terminating in `console.log` rather than
 `queueNotification` — is still open and is **not** covered by the Sprint 1
 remediation.
+
+---
+
+# Migrations 0054–0057 — application state
+
+Recorded 28 August 2026, during the post-Sprint-4 verification pass. **The state of
+`0054` onward was undocumented anywhere before this section**, which mattered because
+every Sprint 2, 3 and 4 vendor feature depends on tables these migrations create.
+
+| Migration | Adds | Applied to Supabase? |
+|---|---|---|
+| `0054_ancient_christian_walker` | `vendor_field_provenance`, `vendor_candidates`, `vendor_intelligence_runs`, `dpf_registrations`, `vendor_sub_processor_entities` | **Not recorded — verify before trusting Sprint 2** |
+| `0055_wonderful_proudstar` | `vendors.dpa_clause_analysis`, `vendors.dpa_analysed_at` | **Not recorded — verify** |
+| `0056_unusual_silver_sable` | `vendor_intake_requests`, `organization_vendors.review_cadence` | **Not recorded — verify** |
+| `0057_wealthy_anthem` | `vendor_sub_proc_acks`, `organization_vendors.trust_centre_eu_hosting`, `vendors.sub_processor_list_checked_at` | **Generated 28 Aug 2026, not applied** |
+
+The verification query, since `drizzle-kit` will not tell you and the postgres-js
+migrator chooses what to run by comparing timestamps rather than hashes:
+
+```sql
+SELECT id, hash, created_at FROM drizzle.__drizzle_migrations ORDER BY id DESC LIMIT 10;
+-- and, for the tables themselves:
+SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+  AND tablename IN (
+    'vendor_field_provenance', 'vendor_candidates', 'vendor_intelligence_runs',
+    'dpf_registrations', 'vendor_sub_processor_entities', 'vendor_intake_requests',
+    'vendor_sub_proc_acks'
+  );
+```
+
+## What `0057` needs after it is applied
+
+- **No `recalc:vendor-risk` run is required for the schema change itself.** But the
+  same deploy changes the *formula's inputs*: the catalogue-wide recalculation and
+  the nightly worker now include the cross-check discrepancy penalty they used to
+  drop, so `risk_score` and the `risk_factors` text beside it describe two different
+  derivations until the recalculation runs. Run it:
+
+  ```bash
+  npm run recalc:vendor-risk --workspace=apps/api -- --apply
+  ```
+
+- **`vendor_sub_proc_acks` starts empty, and that is correct.** The old
+  `vendor_sub_processors.notified_at` column held one tenant's acknowledgement for
+  every tenant (D46), so there is no per-organisation truth in it to migrate. The
+  column is left in place, marked deprecated, and read by nothing. Any organisation
+  that had acknowledged a sub-processor will be asked once more, which is the honest
+  outcome of never having recorded who actually acknowledged.
+
+- **Assessment access tokens are now stored hashed (D38).** In-flight invitations
+  keep working: lookup accepts the SHA-256 hash and, for rows written before this
+  deploy, the legacy plaintext. The plaintext arm in `assessments.tokenLookup` can be
+  deleted once 30 days — the longest assessment expiry — have passed since the
+  deploy. Note that the reminder worker now **rotates** the token, so a reminder
+  invalidates the link in the original invitation and carries a fresh one.
+
+## One constraint name is truncated, as usual
+
+`vendor_sub_proc_acks_sub_processor_id_vendor_sub_processors_id_fk` is 65 characters
+and Postgres truncates it to 63. No collision — the other two constraints on the table
+are 56 and 48 characters. The table was deliberately named `vendor_sub_proc_acks`
+rather than `vendor_sub_processor_acknowledgements` for this reason: the longer name
+put all three foreign keys over the limit.

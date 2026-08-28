@@ -74,9 +74,16 @@ function transferIsPermitted(conclusion?: string | null): boolean {
   return !!conclusion && (CONCLUSIONS_PERMITTING_TRANSFER as readonly string[]).includes(conclusion);
 }
 
+/*
+ * D58. These two were `requireRole("admin")`, which is org administration rather
+ * than data protection: the DPO and Privacy Manager roles both carry
+ * `vendors: { view: true, edit: true }` and neither is an org admin, so the person
+ * whose job a transfer impact assessment actually is could not open one. Gated on
+ * the vendor permission the rest of the module uses — read to view, edit to save.
+ */
 export const tiaRouter = router({
   getForVendor: protectedProcedure
-    .use(requireRole("admin"))
+    .use(requirePermission('vendors', 'view'))
     .input(z.object({ vendorId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const [tia] = await ctx.db.select()
@@ -92,7 +99,7 @@ export const tiaRouter = router({
     }),
 
   save: protectedProcedure
-    .use(requireRole("admin"))
+    .use(requirePermission('vendors', 'edit'))
     .input(z.object({
       id: z.string().uuid().optional(),
       vendorId: z.string().uuid(),

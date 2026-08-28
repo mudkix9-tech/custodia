@@ -113,6 +113,37 @@ const namespaces = fs
   .map((f) => f.replace(/\.json$/, ''))
   .sort();
 
+/**
+ * Catch text that was UTF-8, decoded as Windows-1252, and re-encoded as UTF-8 —
+ * so "privée" is stored as "privÃ©e" and every apostrophe as "â€™".
+ *
+ * All three vendor catalogues were in this state, 1,213 occurrences between them,
+ * rendering mojibake to every German and French reader. Neither existing check
+ * could see it: this script compares the catalogues against each other and all
+ * three were equally corrupt, while check-module-i18n looks for hardcoded English
+ * and missing keys, and mojibake is neither. Nothing was comparing a catalogue
+ * against what a human would read.
+ *
+ * The signature is a Latin-1 range character immediately followed by a character
+ * in the range a UTF-8 continuation byte lands in once misdecoded. Matching the
+ * pair rather than a bare "Ã" keeps legitimate text — German "Ärzte", French "À" —
+ * from tripping it.
+ */
+const MOJIBAKE_PATTERNS = [
+  [/[ÃÂ][-¿–—‘’“”€… ]/u, 'Ã/Â followed by a continuation byte'],
+  [/â€[“”™œž¦‚‘’–—"˜š›]/u, 'â€ sequence'],
+  [/â€$/u, 'truncated â€ sequence'],
+  [/Ã[]/u, 'doubly re-encoded Ã'],
+];
+
+function findMojibake(value) {
+  if (typeof value !== 'string') return null;
+  for (const [pattern, label] of MOJIBAKE_PATTERNS) {
+    if (pattern.test(value)) return label;
+  }
+  return null;
+}
+
 const catalogues = {};
 for (const locale of LOCALES) {
   catalogues[locale] = {};
@@ -124,6 +155,15 @@ for (const locale of LOCALES) {
     }
     try {
       catalogues[locale][ns] = flatten(JSON.parse(fs.readFileSync(file, 'utf8')));
+      for (const [key, value] of catalogues[locale][ns]) {
+        const mojibake = findMojibake(value);
+        if (mojibake) {
+          errors.push(
+            `${locale}/${ns}.json: ${key} contains double-encoded UTF-8 (${mojibake}) — ` +
+            `"${String(value).slice(0, 60)}"`,
+          );
+        }
+      }
     } catch (err) {
       errors.push(`${locale}/${ns}.json is not valid JSON: ${err.message}`);
     }

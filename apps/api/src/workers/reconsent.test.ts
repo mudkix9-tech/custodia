@@ -14,15 +14,16 @@ vi.mock('../db.js', () => ({
   }
 }));
 
-// The worker calls the shared adapter, not a provider SDK. Mocking
-// '@anthropic-ai/sdk' here went on compiling after the migration and stopped
-// intercepting anything — an inert mock that would have let this test reach the
-// real client.
-const mockComplete = vi.fn();
+// The worker calls the shared adapter, not a provider SDK. This used to mock
+// '@anthropic-ai/sdk', which went on compiling after the migration while
+// intercepting nothing — an inert mock that would have let the test reach the
+// real client. `completeJson` resolves the PARSED object, so these fixtures are
+// plain values rather than a provider's response envelope.
+const mockCompleteJson = vi.fn();
 
 vi.mock('../lib/llm.js', () => ({
-  WORKER_MODEL: 'test-model',
-  complete: mockComplete,
+  EXTRACTION_MODEL: 'test-model',
+  completeJson: mockCompleteJson,
 }));
 
 describe('Reconsent Worker', () => {
@@ -50,9 +51,7 @@ describe('Reconsent Worker', () => {
   });
 
   it('should flag as material when the model returns true', async () => {
-    mockComplete.mockResolvedValueOnce({
-      content: [{ type: 'text', text: '{"isMaterial": true, "confidence": "high", "reasoning": "Major scope change."}' }]
-    });
+    mockCompleteJson.mockResolvedValueOnce({"isMaterial": true, "confidence": "high", "reasoning": "Major scope change."});
 
     const job = {
       data: {
@@ -75,9 +74,7 @@ describe('Reconsent Worker', () => {
   });
 
   it('should flag ambiguous cases for human review', async () => {
-    mockComplete.mockResolvedValueOnce({
-      content: [{ type: 'text', text: '{"isMaterial": false, "confidence": "ambiguous", "reasoning": "Unclear wording."}' }]
-    });
+    mockCompleteJson.mockResolvedValueOnce({"isMaterial": false, "confidence": "ambiguous", "reasoning": "Unclear wording."});
 
     const job = {
       data: {
@@ -100,9 +97,7 @@ describe('Reconsent Worker', () => {
   });
 
   it('should not flag when the model returns false with high confidence', async () => {
-    mockComplete.mockResolvedValueOnce({
-      content: [{ type: 'text', text: '{"isMaterial": false, "confidence": "high", "reasoning": "Just a typo fix."}' }]
-    });
+    mockCompleteJson.mockResolvedValueOnce({"isMaterial": false, "confidence": "high", "reasoning": "Just a typo fix."});
 
     const job = {
       data: {

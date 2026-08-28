@@ -63,15 +63,86 @@ export interface VendorRiskResult {
   };
 }
 
+/**
+ * The four derived inputs to the score, gathered into one required object.
+ *
+ * These used to be optional positional parameters with `= 0` / `= []` defaults,
+ * which meant a caller that passed fewer arguments still typechecked and silently
+ * scored the missing factors as zero. Three call sites had drifted apart that way:
+ * the per-row path passed all four, the catalogue-wide recalculation dropped the
+ * discrepancy penalty, and the nightly worker dropped three of them — so running
+ * the documented post-deploy recalculation quietly forgave every contradiction the
+ * cross-check had found. Making the object required is what makes that a type
+ * error instead of a silent regression; use `assembleVendorRiskInputs` rather than
+ * building it by hand wherever a real relationship is being scored.
+ */
+export interface VendorRiskInputs {
+  subProcessorsCount: number;
+  scoreModifier: number;
+  dpiaGaps: VendorRiskGap[];
+  discrepancyPenalty: number;
+}
+
+/**
+ * The inputs for a relationship that does not exist yet — a vendor being linked or
+ * created. There is no questionnaire, no DPIA gap and no attestation to contradict,
+ * so every derived input is genuinely zero rather than merely unknown. Named so the
+ * distinction between "nothing to add" and "forgot to pass it" is visible at the
+ * call site.
+ */
+export const NEW_LINK_RISK_INPUTS: VendorRiskInputs = {
+  subProcessorsCount: 0,
+  scoreModifier: 0,
+  dpiaGaps: [],
+  discrepancyPenalty: 0,
+};
+
+/**
+ * The questionnaire modifier, as one function rather than as the same twenty lines
+ * copied into every path that scores a vendor. D6 lives here: a completed
+ * questionnaire only moves the register once a human has reviewed it
+ * (`reviewedAt`, set by `assessments.reviewAssessment`), because otherwise a
+ * vendor's own favourable answers lowered their risk rating the moment they hit
+ * submit. An *expired* invitation still carries +25 — silence is not a favourable
+ * answer, and it should cost rather than pay.
+ *
+ * It lives in this file rather than beside its callers in `routers/vendors.ts`
+ * for the same reason `utils/auditClassification.ts` is split from
+ * `auditLogger.ts`: the router imports `db.js`, which throws on import without
+ * `DATABASE_URL`, and that would put this rule out of reach of the fixtures.
+ */
+export function questionnaireScoreModifier(
+  latest: { status?: string | null; reviewedAt?: Date | null; score?: number | null; scoreAdjustment?: number | null } | undefined | null
+): number {
+  if (!latest) return 0;
+  if (latest.status === 'completed' && latest.reviewedAt) {
+    const finalQScore = Math.max(0, Math.min(100, (latest.score || 0) + (latest.scoreAdjustment || 0)));
+    return finalQScore >= 50
+      ? Math.round(-10 * ((finalQScore - 50) / 50))
+      : Math.round(25 * ((50 - finalQScore) / 50));
+  }
+  if (latest.status === 'expired') return 25;
+  return 0;
+}
+
+/** Sub-processors from both the legacy list and the parsed-entity table, flattened. */
+export function mergeSubProcessorRows(
+  legacySubs: any[] | null | undefined,
+  entitySubs: any[] | null | undefined
+): Array<{ name: string; country: string | null; service: string | null }> {
+  return [
+    ...(legacySubs || []).map((s: any) => ({ name: s.name, country: s.country, service: s.service })),
+    ...(entitySubs || []).map((s: any) => ({ name: s.name, country: s.country, service: s.service })),
+  ];
+}
+
 export function calculateVendorRisk(
   vendor: VendorRiskInput,
-  orgVendor: OrgVendorRiskInput = {} as any,
-  subProcessorsCount: number = 0,
-  scoreModifier: number = 0,
-  dpiaGaps: VendorRiskGap[] = [],
-  discrepancyPenalty: number = 0
+  orgVendor: OrgVendorRiskInput,
+  inputs: VendorRiskInputs
 ): VendorRiskResult {
-  
+  const { subProcessorsCount, scoreModifier, dpiaGaps, discrepancyPenalty } = inputs;
+
   // 1. Headquarters Location (20%)
   let locationPoints = 20; // Default non-adequate
   let locationDetail = 'Non-adequate country (20/20 pts)';

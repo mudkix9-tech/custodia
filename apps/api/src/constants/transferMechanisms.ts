@@ -35,3 +35,27 @@ export const SAFEGUARDING_MECHANISMS: readonly TransferMechanism[] = [
   'data_privacy_framework',
   'adequacy_decision',
 ];
+
+/**
+ * The mechanisms in force for a relationship: the organisation's own record unioned
+ * with the shared catalogue's, de-duplicated and in vocabulary order.
+ *
+ * Both halves matter and neither is authoritative alone. An organisation may have
+ * signed its own SCCs, or know of a DPF certification the catalogue has not caught
+ * up with; equally the catalogue may carry a mechanism the customer never recorded.
+ * `lib/vendorRisk.ts` and the third-country gap rule have unioned the two since they
+ * were written, and the audit export was the one consumer that did not — it
+ * hardcoded `null`, which is why the Chapter V column in the auditor pack was always
+ * blank (D12).
+ */
+export function mergeTransferMechanisms(
+  orgMechanisms?: string[] | null,
+  catalogueMechanisms?: string[] | null,
+): TransferMechanism[] {
+  const seen = new Set(
+    [...(orgMechanisms || []), ...(catalogueMechanisms || [])]
+      .filter((m): m is string => typeof m === 'string')
+      .map((m) => m.trim().toLowerCase()),
+  );
+  return TRANSFER_MECHANISMS.filter((m) => seen.has(m));
+}

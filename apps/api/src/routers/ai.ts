@@ -21,10 +21,10 @@ import { genai } from '../lib/genai.js';
 import { TRPCError } from '@trpc/server';
 import { PDFParse } from 'pdf-parse';
 import crypto from 'crypto';
-import { calculateVendorRisk } from './vendors.js';
+import { calculateVendorRisk, NEW_LINK_RISK_INPUTS } from './vendors.js';
 import { trackAiUsage } from '../lib/billing.js';
 import { TIER_LIMITS, isNewAiWindow, aiWindowReset } from '../constants/aiQuota.js';
-import { COPILOT_MODEL, complete, completeStream } from '../lib/llm.js';
+import { EXTRACTION_MODEL, REASONING_MODEL, complete, completeJson, completeStream } from '../lib/llm.js';
 import { Upload } from '@aws-sdk/lib-storage';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getS3ClientForRegion, getS3BucketForOrg } from '../lib/s3.js';
@@ -940,7 +940,7 @@ export const aiRouter = router({
         // `low` keeps a chat answer from stalling behind a long think, which is
         // the same call the Anthropic version made with `effort: 'low'`.
         const stream = completeStream({
-          model: COPILOT_MODEL,
+          model: REASONING_MODEL,
           maxTokens: 4096,
           thinking: 'low',
           system: systemPrompt,
@@ -997,7 +997,7 @@ export const aiRouter = router({
         messages.push({ role: 'user', content: input.question });
 
         const msg = await complete({
-          model: COPILOT_MODEL,
+          model: REASONING_MODEL,
           maxTokens: 1024,
           system: systemPrompt,
           messages,
@@ -1093,8 +1093,21 @@ export const aiRouter = router({
         const buffer = Buffer.from(input.fileBase64, 'base64');
         const parser = new PDFParse({ data: buffer });
         const pdfData = await parser.getText();
-        const dpaText = pdfData.text || '';
+        const extractedText = pdfData.text || '';
         await parser.destroy().catch(() => {});
+
+        // The whole PDF used to go to the model uncapped, and it is the one
+        // input a customer controls directly — a 200-page agreement is ~150k
+        // tokens of billed input on a quota that counts it as one analysis.
+        //
+        // Art. 28(3) terms sit in the body of a DPA, not its schedules, so the
+        // leading portion is where the clauses are. Truncation is reported to
+        // the caller rather than silently applied: "we found no sub-processor
+        // clause" and "we did not read the half of the document containing it"
+        // are different answers and only one of them is honest.
+        const DPA_TEXT_LIMIT = 120_000;
+        const dpaTruncated = extractedText.length > DPA_TEXT_LIMIT;
+        const dpaText = dpaTruncated ? extractedText.slice(0, DPA_TEXT_LIMIT) : extractedText;
  
         const systemPrompt = `You are a GDPR expert AI. Analyze the provided Data Processing Agreement (DPA) against Article 28 requirements.
  
@@ -1158,21 +1171,20 @@ Use this EXACT JSON schema:
   ]
 }`;
  
-        const msg = await complete({
-          model: COPILOT_MODEL,
-          maxTokens: 4096,
-          system: systemPrompt,
-          prompt: dpaText,
-        });
- 
-        const responseText = msg.text;
-        
         let jsonResponse: DpaAnalysis;
         try {
-          const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-          jsonResponse = JSON.parse(cleanedText) as DpaAnalysis;
+          jsonResponse = await completeJson<DpaAnalysis>({
+            model: EXTRACTION_MODEL,
+            thinking: 'minimal',
+            maxTokens: 16384,
+            system: systemPrompt,
+            prompt: dpaText,
+          });
         } catch (e) {
-          throw new Error('Failed to parse AI response as JSON');
+          // Carry the reason. "Failed to parse AI response as JSON" was the same
+          // sentence whether the budget ran out or the model refused, and the
+          // two need different fixes.
+          throw new Error(`The DPA analysis could not be read: ${(e as Error).message}`);
         }
  
         if (input.orgVendorId && existingLink) {
@@ -1260,7 +1272,12 @@ Use this EXACT JSON schema:
             .where(eq(organizations.id, orgId));
         }
 
-        return jsonResponse;
+        // The reviewer has to know the analysis did not cover the whole
+        // document — an Art. 28(3) checklist built from the first 120k
+        // characters of a longer agreement is evidence about that portion only.
+        return dpaTruncated
+          ? { ...jsonResponse, truncatedInput: true, analysedCharacters: DPA_TEXT_LIMIT }
+          : jsonResponse;
       } catch (err: any) {
         console.error('DPA Analysis Error:', err);
         throw new TRPCError({
@@ -1323,22 +1340,18 @@ Data Categories Shared: ${sharedCategories.join(', ') || 'none specified'}
 Security Certifications: ${certs.join(', ') || 'none specified'}
 Existing DPA Clause Coverage: ${JSON.stringify(dpaClauseCoverage)}`;
  
-      const msg = await complete({
-        model: COPILOT_MODEL,
-        maxTokens: 4096,
-        system: systemPrompt,
-        prompt: contextText,
-      });
- 
-      const responseText = msg.text;
-      
       try {
-        const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        return JSON.parse(cleanedText) as GeneratedQuestion[];
+        return await completeJson<GeneratedQuestion[]>({
+          model: EXTRACTION_MODEL,
+          thinking: 'minimal',
+          maxTokens: 16384,
+          system: systemPrompt,
+          prompt: contextText,
+        });
       } catch (e) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to generate questionnaire JSON',
+          message: `Failed to generate questionnaire JSON: ${(e as Error).message}`,
         });
       }
     }),
@@ -1429,18 +1442,14 @@ ${JSON.stringify(questionnaire.questions)}
 Provided answers / document text:
 ${answersText}`;
  
-      const msg = await complete({
-        model: COPILOT_MODEL,
-        maxTokens: 4096,
-        system: systemPrompt,
-        prompt: contextText,
-      });
- 
-      const responseText = msg.text;
-      
       try {
-        const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        const jsonResponse = JSON.parse(cleanedText) as ParsedVendorAnswers;
+        const jsonResponse = await completeJson<ParsedVendorAnswers>({
+          model: EXTRACTION_MODEL,
+          thinking: 'minimal',
+          maxTokens: 16384,
+          system: systemPrompt,
+          prompt: contextText,
+        });
  
         // Save raw parsed data into draft state
         await ctx.db.update(vendorQuestionnaires)
@@ -1534,7 +1543,21 @@ Selected Tools: ${ropaInput.selectedTools ? ropaInput.selectedTools.join(', ') :
         
         const finalVendor = vendorObj?.vendor || vData;
         const finalOrgVendor = vendorObj?.orgVendor || vData;
-        const riskVal = calculateVendorRisk(finalVendor, finalOrgVendor);
+
+        /*
+         * Where the relationship exists, quote the score the register actually
+         * holds rather than recomputing one here. This call used to pass two
+         * arguments to a six-input function, so the model was briefed on a number
+         * that omitted the reviewed questionnaire, the DPIA gaps and the
+         * cross-check penalty — and then asked for advice about it. The stored
+         * column is written by the single full derivation; for an unlinked draft
+         * there is no relationship yet, so a baseline is the honest answer and is
+         * labelled as one.
+         */
+        const storedScore = vendorObj?.orgVendor?.riskScore;
+        const riskVal = typeof storedScore === 'number'
+          ? { score: storedScore, level: vendorObj?.orgVendor?.riskLevel || 'unknown', indicative: false }
+          : { ...calculateVendorRisk(finalVendor, finalOrgVendor, NEW_LINK_RISK_INPUTS), indicative: true };
 
         entityName = finalVendor.name || 'New Vendor';
         contextDataString = `Vendor: "${finalVendor.name || 'Unnamed'}"
@@ -1543,7 +1566,7 @@ EU Hosting Available: ${finalVendor.euHostingAvailable ? 'Yes' : 'No'}
 Security Certifications: ${(finalVendor.securityCertifications || []).join(', ')}
 Transfer Mechanisms: ${(finalVendor.transferMechanisms || []).join(', ')}
 DPA Status: ${finalOrgVendor.dpaStatus || 'not_signed'}
-Calculated Risk: Score ${riskVal.score}/100, Level: ${riskVal.level}`;
+Calculated Risk: Score ${riskVal.score}/100, Level: ${riskVal.level}${riskVal.indicative ? ' (indicative baseline — this vendor is not yet linked, so no questionnaire, DPIA or cross-check input exists)' : ''}`;
       } else if (module === 'breaches') {
         RAGQuery = 'EDPB guidelines personal data breach notification Article 33 Article 34 risk assessment';
         const breachInput = formData || (entityId ? await ctx.db.query.breaches.findFirst({ where: eq(breaches.id, entityId) }) : null);
@@ -1722,21 +1745,17 @@ ${contextStr}
 `;
 
       try {
-        const msg = await complete({
-          model: COPILOT_MODEL,
-          maxTokens: 2048,
-          system: systemPrompt,
-          prompt: moduleSpecificPrompt,
-        });
-
-        const responseText = msg.text;
-        
         let jsonResponse: any;
         try {
-          const cleanedText = responseText.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
-          jsonResponse = JSON.parse(cleanedText);
+          jsonResponse = await completeJson<any>({
+            model: EXTRACTION_MODEL,
+            thinking: 'minimal',
+            maxTokens: 8192,
+            system: systemPrompt,
+            prompt: moduleSpecificPrompt,
+          });
         } catch (e) {
-          throw new Error('Failed to parse AI response as JSON: ' + responseText);
+          throw new Error(`Failed to read the AI insights response: ${(e as Error).message}`);
         }
 
         // Post-processing additions

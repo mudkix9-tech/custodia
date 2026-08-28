@@ -7,7 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { trackAiUsage } from '../lib/billing.js';
 import { queueNotification } from '../utils/notifications.js';
-import { WORKER_MODEL, complete } from '../lib/llm.js';
+import { EXTRACTION_MODEL, completeJson } from '../lib/llm.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,22 +71,14 @@ JSON format only:`;
 
       await trackAiUsage(organizationId, 1);
 
-      const response = await complete({
-        model: WORKER_MODEL,
-        maxTokens: 2048,
+      const parsed = await completeJson<{ isMaterial: boolean; confidence: string; reasoning: string }>({
+        model: EXTRACTION_MODEL,
+        thinking: 'minimal',
+        // Thinking tokens share this budget with the answer (see lib/llm.ts).
+        maxTokens: 4096,
         system: "You are a GDPR compliance expert. Output strictly valid JSON.",
         prompt: prompt,
       });
-
-      const messageContent = response.text;
-      
-      let parsed: { isMaterial: boolean; confidence: string; reasoning: string };
-      try {
-        const jsonStr = messageContent.replace(/```json/g, '').replace(/```/g, '').trim();
-        parsed = JSON.parse(jsonStr);
-      } catch (err) {
-        throw new Error('Failed to parse Claude response as JSON: ' + messageContent);
-      }
 
       if (parsed.isMaterial || parsed.confidence === 'ambiguous') {
         await db.insert(reconsentFlags).values({

@@ -15,15 +15,16 @@
 import 'dotenv/config';
 import { GoogleGenAI } from '@google/genai';
 import { genAiMode, genAiEndpoint, genAiConfigError } from '../lib/genai.js';
+import { REASONING_MODEL, EXTRACTION_MODEL } from '../lib/llm.js';
 
-const MODEL = process.env.GENAI_PROBE_MODEL || 'gemini-3.5-flash';
+const MODELS = [REASONING_MODEL, EXTRACTION_MODEL];
 
 function mask(value: string | undefined): string {
   if (!value) return '(unset)';
   return value.length <= 8 ? '(set)' : `${value.slice(0, 4)}…${value.slice(-4)}`;
 }
 
-async function probe(label: string, build: () => GoogleGenAI): Promise<void> {
+async function probe(label: string, build: () => GoogleGenAI, model: string): Promise<void> {
   let client: GoogleGenAI;
   try {
     client = build();
@@ -33,7 +34,7 @@ async function probe(label: string, build: () => GoogleGenAI): Promise<void> {
   }
   try {
     const response = await client.models.generateContent({
-      model: MODEL,
+      model,
       contents: 'Reply with the single word: ok',
       config: { maxOutputTokens: 8 },
     });
@@ -61,33 +62,42 @@ async function main() {
   console.log(`  endpoint  ${genAiEndpoint}`);
   console.log(`  error     ${genAiConfigError() ?? '(none)'}`);
 
-  console.log(`\nProbing Vertex AI with model "${MODEL}"`);
+  for (const model of MODELS) {
+    console.log(`\nProbing Vertex AI with model "${model}"`);
 
-  if (apiKey) {
-    await probe('API key → Vertex express', () => new GoogleGenAI({ vertexai: true, apiKey }));
-  } else {
-    console.log('  (no API key set — skipping the express probe)');
-  }
+    if (apiKey) {
+      await probe(
+        'API key → Vertex express',
+        () => new GoogleGenAI({ vertexai: true, apiKey }),
+        model,
+      );
+    } else {
+      console.log('  (no API key set — skipping the express probe)');
+    }
 
-  if (project) {
-    await probe(
-      'ADC → Vertex (project)',
-      () =>
-        new GoogleGenAI({
-          vertexai: true,
-          project,
-          location: process.env.GCP_LOCATION || 'us-central1',
-        }),
-    );
-  } else {
-    console.log('  (no GCP_PROJECT_ID — skipping the Cloud-principal probe)');
+    if (project) {
+      await probe(
+        'ADC → Vertex (project)',
+        () =>
+          new GoogleGenAI({
+            vertexai: true,
+            project,
+            location: process.env.GCP_LOCATION || 'us-central1',
+          }),
+        model,
+      );
+    } else {
+      console.log('  (no GCP_PROJECT_ID — skipping the Cloud-principal probe)');
+    }
   }
 
   console.log(
-    '\nWhichever line says WORKS is the platform that key belongs to.\n' +
-      'If "Vertex express" works, set GOOGLE_GENAI_USE_VERTEXAI=true.\n' +
-      'If only "AI Studio" works, the key is a Generative Language key and the\n' +
-      'current configuration is already correct for it.\n',
+    '\nBoth models must say WORKS — the product routes reasoning work to the\n' +
+      'first and extraction to the second. A 404 on either means that model id\n' +
+      'is not available to this project or key.\n' +
+      '\nIf nothing works, the key is most likely a Generative Language (AI Studio)\n' +
+      'key. This product is Vertex-only, so the fix is a Vertex AI API key or a\n' +
+      'service account — not a fallback.\n',
   );
 }
 

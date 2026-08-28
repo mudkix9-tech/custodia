@@ -1342,6 +1342,11 @@ export const vendors = pgTable('vendors', {
   subProcessorNotification: varchar('sub_processor_notification', { length: 100 }),
   subProcessorListHash: text('sub_processor_list_hash'),
   subProcessorListSnapshot: text('sub_processor_list_snapshot'),
+  // When the change detector last looked at this vendor's list. The detector takes
+  // a fixed batch per run, so without a checked-at stamp to order by it scraped the
+  // same arbitrary fifty rows every night and never reached the rest (D45). NULL
+  // sorts first: a vendor nobody has ever checked outranks one checked last week.
+  subProcessorListCheckedAt: timestamp('sub_processor_list_checked_at', { withTimezone: true }),
   aliases: text('aliases').array().default(sql`ARRAY[]::text[]`),
    
   typicalDataCategories: jsonb('typical_data_categories').default([]),
@@ -1399,6 +1404,13 @@ export const organizationVendors = pgTable('organization_vendors', {
   processingActivities: jsonb('processing_activities').default([]),
   purpose: text('purpose'),
   usingEuHosting: boolean('using_eu_hosting').default(false),
+  // What this organisation's trust-centre reading reported about EU hosting, kept
+  // apart from `vendors.eu_hosting_available` on purpose. The reading is derived
+  // from content the tenant supplied -- a URL they chose, or text they pasted --
+  // so writing it to the shared catalogue let one customer move a flag that
+  // `lib/vendorCrossCheck.ts` reads when scoring every other customer. Promotion
+  // to the catalogue goes through `vendor_candidates` and a human, not through here.
+  trustCentreEuHosting: boolean('trust_centre_eu_hosting'),
   // The safeguard THIS organisation relies on, which is not always the one the
   // shared catalogue records: an org may have signed its own SCCs, or know of a
   // DPF certification the catalogue has not caught up with. `lib/vendorRisk.ts`
@@ -1573,10 +1585,38 @@ export const vendorSubProcessors = pgTable('vendor_sub_processors', {
   
   addedAt: timestamp('added_at', { withTimezone: true }).defaultNow(),
   removedAt: timestamp('removed_at', { withTimezone: true }),
+  /**
+   * @deprecated Acknowledgement is per organisation — see
+   * `vendor_sub_processor_acknowledgements`. This column sits on the shared
+   * catalogue row, so one tenant acknowledging a sub-processor marked it
+   * acknowledged for every other tenant, which is the opposite of what an
+   * Article 28(2) objection record is for (D46). Kept so existing rows are not
+   * lost; nothing reads it.
+   */
   notifiedAt: timestamp('notified_at', { withTimezone: true }),
-  
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+/**
+ * One organisation's acknowledgement of one sub-processor.
+ *
+ * `vendor_sub_processors` is a shared catalogue table keyed on the *vendor*, so a
+ * `notified_at` column on it could only ever hold one tenant's answer — whoever
+ * clicked last. Article 28(2) gives each controller its own right to be informed
+ * and to object, so the acknowledgement is per (organisation, sub-processor) and
+ * the unique constraint is what makes acknowledging idempotent.
+ */
+export const vendorSubProcessorAcknowledgements = pgTable('vendor_sub_proc_acks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  subProcessorId: uuid('sub_processor_id').notNull().references(() => vendorSubProcessors.id, { onDelete: 'cascade' }),
+  acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }).defaultNow().notNull(),
+  acknowledgedBy: uuid('acknowledged_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  uniqueOrgSubProcessor: unique('vendor_sub_proc_acks_org_sub_unique').on(table.organizationId, table.subProcessorId),
+}));
 
 export const vendorSubProcessorChanges = pgTable('vendor_sub_processor_changes', {
   id: uuid('id').defaultRandom().primaryKey(),

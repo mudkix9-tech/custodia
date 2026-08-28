@@ -23,6 +23,14 @@ export const PROBE_FAILURE_CLASSES = [
   'content_mismatch',
   /** Response exceeded the size cap. */
   'too_large',
+  /**
+   * The URL resolved to a loopback, link-local or RFC 1918 address and was refused
+   * before any request was made. Distinct from `url_not_found` because it says
+   * nothing about the vendor and everything about the URL we were handed — a model
+   * that hallucinates `http://localhost/dpa` should show up as this, not as a
+   * missing document.
+   */
+  'blocked_private_address',
 ] as const;
 
 export type ProbeFailureClass = (typeof PROBE_FAILURE_CLASSES)[number];

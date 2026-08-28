@@ -35,7 +35,7 @@ import {
   users,
 } from 'db';
 import { and, eq, desc, inArray } from 'drizzle-orm';
-import { WORKER_MODEL, complete } from '../lib/llm.js';
+import { EXTRACTION_MODEL, completeJson } from '../lib/llm.js';
 import { trackAiUsage } from '../lib/billing.js';
 import { queueNotification } from '../utils/notifications.js';
 import { diffSnapshots, type VersionSnapshot } from '../lib/ropaLifecycle.js';
@@ -184,9 +184,11 @@ async function judgePurposeChange(opts: {
   try {
     await trackAiUsage(opts.organizationId, 1);
 
-    const response = await complete({
-      model: WORKER_MODEL,
-      maxTokens: 1024,
+    const parsed = await completeJson<any>({
+      model: EXTRACTION_MODEL,
+      thinking: 'minimal',
+      // Thinking tokens share this budget with the answer (see lib/llm.ts).
+      maxTokens: 4096,
       system: 'You are a GDPR compliance expert. Output strictly valid JSON and nothing else.',
       prompt: `The purpose description of a processing activity has been rewritten. Its lawful basis is "${opts.basis ?? 'unknown'}".
 
@@ -201,9 +203,6 @@ Under Art. 5(1)(b) a purpose must be specified and explicit, and under Art. 6(4)
 Respond with exactly:
 { "isMaterial": boolean, "confidence": "high" | "medium" | "ambiguous", "reasoning": "one or two sentences" }`,
     });
-
-    const text = response.text;
-    const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
     if (typeof parsed?.isMaterial !== 'boolean') return null;
     return {
       isMaterial: parsed.isMaterial,

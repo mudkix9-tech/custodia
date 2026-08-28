@@ -2,7 +2,7 @@ import { createWorker, createQueue, Job } from '../lib/queue.js';
 import { db } from '../db.js';
 import { vendors, organizationVendors, vendorSubProcessors, vendorSubProcessorChanges, vendorSubProcessorEntities, organizations, vendorDiscoveries, vendorAssessments, vendorAssessmentTemplates } from 'db';
 import { eq, and, isNotNull, lte, gt, inArray, or, isNull, sql } from 'drizzle-orm';
-import { calculateVendorRisk } from '../routers/vendors.js';
+import { updateVendorRiskScore } from '../routers/vendors.js';
 import { VENDOR_STATUSES_LIVE } from '../constants/vendorLifecycle.js';
 import { runClusterTask, scanDomainForThirdParties } from '../lib/browserPool.js';
 import { getRootDomain } from '../lib/domains.js';
@@ -14,6 +14,7 @@ import crypto from 'crypto';
 import dns from 'dns/promises';
 import React from 'react';
 import { sendEmail, AssessmentReminder } from 'emails';
+import { generateAccessToken } from '../lib/assessmentTokens.js';
 
 /**
  * "Relationships this organisation is still in."
@@ -44,10 +45,24 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
   switch (job.name) {
     case 'sub-processor-change-detector':
       console.log('Running sub-processor change detector...');
+      /*
+       * D45. This was a bare `.limit(50)` over the whole catalogue, ordered by
+       * nothing — so once more than fifty vendors published a sub-processor list,
+       * the same arbitrary fifty were scraped every night and the rest were never
+       * checked again. Article 28(2) says the controller must be informed of
+       * intended changes; a detector that silently covers a fixed subset does not
+       * deliver that, and nothing on screen said which vendors it had given up on.
+       *
+       * Ordered oldest-checked-first and stamped as we go, so the cap becomes a
+       * per-run batch size rather than a permanent horizon: every vendor comes round
+       * eventually, and the ones nobody has looked at longest come round first.
+       */
+      const SCAN_BATCH = Number(process.env.SUBPROCESSOR_SCAN_BATCH || 50);
       const targetVendors = await db.select()
         .from(vendors)
         .where(isNotNull(vendors.subProcessorListUrl))
-        .limit(50);
+        .orderBy(sql`${vendors.subProcessorListCheckedAt} ASC NULLS FIRST`)
+        .limit(SCAN_BATCH);
 
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -107,6 +122,12 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
         const cleanedText = normaliseSubProcessorSnapshot(textContent);
 
         const currentHash = crypto.createHash('sha256').update(cleanedText).digest('hex');
+
+        // Stamped on every examined vendor, whatever the outcome, so the batch
+        // ordering advances and the next run picks up where this one stopped.
+        await db.update(vendors)
+          .set({ subProcessorListCheckedAt: new Date() })
+          .where(eq(vendors.id, v.id));
 
         if (!v.subProcessorListHash) {
           console.log(`[Sub-processor Scraper] Setting baseline hash for ${v.name}`);
@@ -220,10 +241,24 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
       }
       break;
 
+    /*
+     * D18. `breach-alert-monitor` and `dpa-page-change-detector` were
+     * `console.log('Simulating…')` bodies behind job names the module advertises as
+     * monitoring capabilities. A stub that logs and returns success is worse than an
+     * absent feature: the queue records a completed run, so the only evidence a
+     * customer or an operator has says the check happened.
+     *
+     * They now fail loudly instead of pretending. Breach monitoring against a real
+     * feed is the `vendor-incidents-ingest` work, and DPA page change detection is
+     * the same scrape-and-hash the sub-processor detector already does — both are
+     * real jobs and neither is these. Throwing keeps the job name reserved and
+     * makes enabling it a decision someone has to finish.
+     */
     case 'breach-alert-monitor':
-      // In a real app, this would query HaveIBeenPwned or similar feeds
-      console.log('Simulating breach alert monitor...');
-      break;
+      throw new Error(
+        'breach-alert-monitor is not implemented. It was a console.log stub reporting success; ' +
+        'vendor breach intelligence belongs in the vendor-incidents-ingest job against a real feed.'
+      );
 
     case 'dpa-expiry-checker':
       console.log('Running DPA Expiry & Contract Renewal Checker...');
@@ -273,20 +308,12 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
               })
               .where(eq(organizationVendors.id, record.orgVendor.id));
               
-            // Recalculate risk immediately
-            const { score, level, factors } = calculateVendorRisk(
-              record.vendor as any, 
-              { ...record.orgVendor, dpaStatus: 'expired' } as any, 
-              subProcessorsCount
-            );
-            await db.update(organizationVendors)
-              .set({ 
-                riskScore: score, 
-                riskLevel: level, 
-                riskFactors: factors, 
-                lastRiskAssessment: new Date() 
-              })
-              .where(eq(organizationVendors.id, record.orgVendor.id));
+            // Recalculate risk immediately. This is an existing relationship, so it
+            // goes through the full derivation rather than a three-argument call
+            // that would drop the questionnaire modifier, the DPIA gaps and the
+            // discrepancy penalty; the dpaStatus write above is already committed,
+            // so the recalculation reads 'expired' from the row.
+            await updateVendorRiskScore(db, record.orgVendor.organizationId, record.vendor.id);
               
             await createNotification(record.orgVendor.organizationId, 'CRITICAL', `DPA with ${record.vendor.name} has expired.`, {
               type: 'vendor.dpa_expired',
@@ -380,8 +407,10 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
       break;
 
     case 'dpa-page-change-detector':
-      console.log('Simulating DPA page change detector...');
-      break;
+      throw new Error(
+        'dpa-page-change-detector is not implemented. It was a console.log stub reporting success; ' +
+        'implement it as the same scrape-and-hash the sub-processor change detector uses, over vendors.dpaUrl.'
+      );
 
     case 'vendor-risk-recalculation': {
       console.log('Running daily vendor risk recalculation...');
@@ -397,53 +426,24 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
 
       if (recentlyChanged.length === 0) break;
 
-      const vendorIds = Array.from(new Set(recentlyChanged.map(r => r.vendor.id)));
-
-      // Fetch sub-processor counts in bulk
-      const subProcessorCounts = await db.execute(sql`
-        SELECT parent_vendor_id, COUNT(*) as count 
-        FROM vendor_sub_processors 
-        WHERE parent_vendor_id IN (${sql.join(vendorIds.map(id => sql`${id}`), sql`, `)})
-        GROUP BY parent_vendor_id
-      `);
-
-      const countMap = new Map();
-      for (const row of subProcessorCounts.rows) {
-        countMap.set(row.parent_vendor_id, Number(row.count));
-      }
-
-      const updates = [];
-
+      /*
+       * This used to assemble its own score and write it with a hand-rolled CASE
+       * expression, and both halves were wrong. The call passed three arguments to
+       * a six-input function, so it silently dropped the reviewed-questionnaire
+       * modifier (D6), the DPIA gaps and the cross-check discrepancy penalty —
+       * meaning one nightly pass would have reverted every one of them across the
+       * estate. And every branch of the CASE was a bound parameter with nothing for
+       * Postgres to infer a type from, so it resolved as `text` and the write threw
+       * `column "risk_score" is of type integer but expression is of type text` —
+       * the same defect `recalculateVendorRiskForAllOrgs` carries a cast to avoid.
+       *
+       * Delegating to `updateVendorRiskScore` is one query set per changed row
+       * rather than one for the batch, which is the right trade for a nightly job
+       * over a 24-hour window: it is the single derivation of the number, so this
+       * path cannot drift from the others again.
+       */
       for (const record of recentlyChanged) {
-        const subProcessorsCount = countMap.get(record.vendor.id) || 0;
-        const { score, level, factors } = calculateVendorRisk(record.vendor as any, record.orgVendor as any, subProcessorsCount);
-        
-        if (score !== record.orgVendor.riskScore) {
-          updates.push({ id: record.orgVendor.id, score, level, factors });
-        }
-      }
-
-      if (updates.length > 0) {
-        await db.update(organizationVendors)
-          .set({
-            riskScore: sql`
-              CASE id 
-              ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${u.score}`), sql` `)}
-              END
-            `,
-            riskLevel: sql`
-              CASE id 
-              ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${u.level}`), sql` `)}
-              END
-            `,
-            riskFactors: sql`
-              CASE id 
-              ${sql.join(updates.map(u => sql`WHEN ${u.id} THEN ${JSON.stringify(u.factors)}::jsonb`), sql` `)}
-              END
-            `,
-            lastRiskAssessment: new Date()
-          })
-          .where(inArray(organizationVendors.id, updates.map(u => u.id)));
+        await updateVendorRiskScore(db, record.orgVendor.organizationId, record.vendor.id);
       }
       break;
     }
@@ -513,8 +513,22 @@ export const vendorWorker = createWorker('vendor-intelligence', async (job: Job)
             ? Math.max(0, Math.ceil((new Date(assessment.expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
             : 0;
 
+          /*
+           * The stored value is a SHA-256 hash (D38), so the plaintext that went in
+           * the original invitation cannot be recovered to rebuild this link. The
+           * reminder therefore issues a fresh token and stores its hash — standard
+           * magic-link rotation, and a smaller exposure window than reusing one
+           * token for the life of the assessment. The consequence to know about is
+           * that the original link stops working once a reminder goes out, which is
+           * why the reminder email carries the new link rather than a bare nudge.
+           */
+          const { token: freshToken, tokenHash: freshHash } = generateAccessToken();
+          await db.update(vendorAssessments)
+            .set({ accessToken: freshHash })
+            .where(eq(vendorAssessments.id, assessment.id));
+
           const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-          const linkUrl = `${frontendUrl}/public/assessments/${assessment.accessToken}`;
+          const linkUrl = `${frontendUrl}/public/assessments/${freshToken}`;
 
           console.log(`Sending reminder ${nextReminderCount} to ${assessment.recipientEmail} for vendor ${vendor.name} (${daysRemaining} days remaining).`);
 

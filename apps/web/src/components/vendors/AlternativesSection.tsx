@@ -34,9 +34,26 @@ export function AlternativesSection({ vendorId }: { vendorId: string }) {
 
       <div className="space-y-3">
         {alternatives.map((alt: any) => {
-          let riskColor = 'text-[#C9A227] bg-[#C9A227]/10 border-[#C9A227]/30';
-          if (alt.riskLevel === 'medium') riskColor = 'text-amber-400 bg-amber-500/10 border-amber-900/50';
-          if (alt.riskLevel === 'high' || alt.riskLevel === 'critical') riskColor = 'text-rose-300 bg-rose-500/10 border-rose-500/25';
+          /*
+           * The badge used to read `alt.riskScore` / `alt.riskLevel` off the shared
+           * catalogue row, which the risk engine never writes — so every alternative
+           * rendered with the gold "low risk" style regardless of what it was (D29).
+           * The score that exists is per relationship, so what is shown here is the
+           * mean other organisations carry, with the number of them behind it.
+           *
+           * A vendor nobody has linked has no score, and says so rather than
+           * borrowing the low-risk colour: unknown is not safe, and that conflation
+           * was the whole defect.
+           */
+          const peerScore: number | null = alt.peerRiskScore ?? null;
+          const peerCount: number = alt.peerOrgCount ?? 0;
+
+          let riskColor = 'text-[#9BA1A6] bg-white/5 border-white/10';
+          if (peerScore !== null) {
+            if (peerScore < 40) riskColor = 'text-[#C9A227] bg-[#C9A227]/10 border-[#C9A227]/30';
+            else if (peerScore < 70) riskColor = 'text-amber-400 bg-amber-500/10 border-amber-900/50';
+            else riskColor = 'text-rose-300 bg-rose-500/10 border-rose-500/25';
+          }
 
           return (
             <div
@@ -56,15 +73,15 @@ export function AlternativesSection({ vendorId }: { vendorId: string }) {
                   </a>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${riskColor}`}>
-                  {t('risk', { score: alt.riskScore || 0 })}
+                  {peerScore === null ? t('risk_unrated') : t('risk', { score: peerScore })}
                 </span>
               </div>
 
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {alt.isPrivacyFriendly && (
-                  <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center gap-1">
+                {peerScore !== null && (
+                  <span className="bg-ink-900/5 text-[#9BA1A6] text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                     <ShieldCheck className="w-2.5 h-2.5 shrink-0" />
-                    {t('privacy_friendly')}
+                    {t('peer_basis', { count: peerCount })}
                   </span>
                 )}
                 {alt.headquartersCountry && (

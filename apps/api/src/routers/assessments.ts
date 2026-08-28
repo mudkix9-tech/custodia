@@ -24,6 +24,7 @@ import { matchDpfStatus } from '../lib/vendorDpf.js';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import React from 'react';
+import { generateAccessToken, hashAccessToken } from '../lib/assessmentTokens.js';
 
 function computeCategoryScores(
   entries: Array<{ questionId: string; score: number; category?: string | null }>,
@@ -69,7 +70,7 @@ import { sendEmail, AssessmentInvitation, AssessmentReminder } from 'emails';
 import { updateVendorRiskScore } from './vendors.js';
 import { scheduleEmailSequence } from '../workers/emails.js';
 import { trackAiUsage } from '../lib/billing.js';
-import { COPILOT_MODEL, complete } from '../lib/llm.js';
+import { EXTRACTION_MODEL, completeJson } from '../lib/llm.js';
 
 const ai = genai;
 
@@ -84,6 +85,21 @@ const questionSchema = z.object({
     score: z.number()
   }))
 });
+
+/**
+ * Look an assessment up by the token from the link.
+ *
+ * Matches the stored SHA-256 hash, and also the raw value for rows written before
+ * hashing — those invitations are already in vendors' inboxes and invalidating them
+ * would strand every in-flight assessment. The plaintext arm can be deleted once the
+ * longest expiry (30 days from send) has passed since deployment.
+ */
+function tokenLookup(token: string) {
+  return or(
+    eq(vendorAssessments.accessToken, hashAccessToken(token)),
+    eq(vendorAssessments.accessToken, token),
+  );
+}
 
 export const assessmentsRouter = router({
   // ============================================================================
@@ -412,7 +428,8 @@ export const assessmentsRouter = router({
       .from(organizations)
       .where(eq(organizations.id, ctx.user.orgId));
 
-      const accessToken = crypto.randomUUID();
+      // D38. The plaintext goes in the link; only the hash is stored.
+      const { token: accessToken, tokenHash } = generateAccessToken();
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
 
@@ -426,7 +443,7 @@ export const assessmentsRouter = router({
           expiresAt,
           recipientEmail: input.recipientEmail,
           recipientName: input.recipientName || null,
-          accessToken,
+          accessToken: tokenHash,
           questionsSnapshot: template.questions,
           responses: {},
           score: null,
@@ -475,7 +492,7 @@ export const assessmentsRouter = router({
       .innerJoin(organizations, eq(vendorAssessments.organizationId, organizations.id))
       .innerJoin(organizationVendors, eq(vendorAssessments.vendorId, organizationVendors.id))
       .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
-      .where(eq(vendorAssessments.accessToken, input.token));
+      .where(tokenLookup(input.token));
 
       if (!record) {
         throw new TRPCError({
@@ -487,17 +504,24 @@ export const assessmentsRouter = router({
       return record;
     }),
 
+  /*
+   * D36. `respondentIp` used to be an optional field on the request body, so the
+   * address recorded as evidence of who submitted a vendor's self-attestation was
+   * whatever the submitter chose to put there. An audit trail the audited party
+   * writes is not an audit trail. It is taken from the connection now; the input
+   * field is gone rather than ignored, so an old client sending it fails loudly
+   * instead of believing it was recorded.
+   */
   submitAssessmentResponses: publicProcedure
     .input(z.object({
       token: z.string(),
       responses: z.record(z.string()),
       respondentEmail: z.string().email(),
-      respondentIp: z.string().optional()
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const [record] = await db.select()
         .from(vendorAssessments)
-        .where(eq(vendorAssessments.accessToken, input.token));
+        .where(tokenLookup(input.token));
 
       if (!record) {
         throw new TRPCError({
@@ -563,19 +587,15 @@ Only return valid JSON, nothing else.`;
         // This used to branch on ANTHROPIC_API_KEY, falling back to Gemini when
         // it was absent or the mock literal. Both arms are the same provider
         // now, so the branch only chose between two spellings of one call.
-        const msg = await complete({
-          model: COPILOT_MODEL,
-          maxTokens: 500,
+        const parsed = await completeJson<any>({
+          model: EXTRACTION_MODEL,
+          thinking: 'minimal',
+          maxTokens: 4096,
           system: "You are a GDPR audit assistant. Always return raw JSON.",
           prompt,
         });
-        const responseText = msg.text;
 
-        const jsonStart = responseText.indexOf('{');
-        const jsonEnd = responseText.lastIndexOf('}');
-        if (jsonStart !== -1 && jsonEnd !== -1) {
-          const jsonStr = responseText.substring(jsonStart, jsonEnd + 1);
-          const parsed = JSON.parse(jsonStr);
+        {
           if (typeof parsed.scoreAdjustment === 'number') {
             scoreAdjustment = Math.max(-20, Math.min(0, Math.round(parsed.scoreAdjustment)));
           }
@@ -604,7 +624,7 @@ Only return valid JSON, nothing else.`;
           aiSummary,
           scoreAdjustment,
           respondentEmail: input.respondentEmail,
-          respondentIp: input.respondentIp || null,
+          respondentIp: (ctx.req.ip as string) || null,
           submissionLocked: true
         })
         .where(eq(vendorAssessments.id, record.id))
