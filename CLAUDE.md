@@ -10,6 +10,42 @@ are in `known-concerns.md`; read it before adding a tRPC procedure.
 
 ---
 
+## Talking to the owner
+
+**Everything below this section is reference material for you. It is not a model for
+how to explain things.** Write to the owner in plain English — the kind you would use
+with a colleague who owns the product but is not going to open the file you are
+talking about.
+
+The failure to avoid: answering "why are we doing this?" by naming the thing instead
+of explaining it. *"The discrepancy penalty now reaches the bulk path, so the
+denormalised `risk_score` predates the current formula"* is four pieces of jargon and
+zero information to someone who wants to know whether they need to act. The same fact
+in plain terms — *"the risk score is saved once rather than worked out each time you
+look at it, I changed how it's worked out, and nothing goes back and updates the saved
+ones"* — is longer and actually answers the question.
+
+So:
+
+- **Lead with what happened and what it means for them**, not with the identifier.
+  Names of files, functions, columns and jobs are for when they ask, or when you are
+  pointing at the exact place something needs changing. They are not the explanation.
+- **Say whether it matters and what to do.** "You can skip this" is a complete and
+  useful answer when it is true. Do not describe work that does not need doing without
+  saying so.
+- **Explain the mechanism only when it changes their decision.** If it does, explain it
+  in words rather than by naming the parts.
+- **Do not narrate the tooling.** Which command you ran, which guard passed, which file
+  you opened — none of that is the answer unless they asked for it. Report the outcome.
+- **British spelling, and no filler.** No apologising, no restating the question back,
+  no "great question".
+
+The exception is code and comments, and documents written for whoever maintains this
+next. Those are for a reader who *is* looking at the file, and there the precise names
+are the point — see **Style** at the end.
+
+---
+
 ## Verification — what actually gates anything
 
 Run everything with:
@@ -576,3 +612,8 @@ Match the file you are in. Comments explain *why* a non-obvious choice was made,
 the line does; the existing code is fairly heavily commented in that register and thin,
 uncommented additions read as foreign. British spelling in prose and comments
 ("organisation", "normalise", "behaviour").
+
+This is the register for code, comments and documents left for whoever maintains this
+next — a reader who has the file open, and for whom the exact name of a column or a job
+*is* the useful part. It is the opposite of how to answer a question put to you in chat;
+see **Talking to the owner** at the top.
