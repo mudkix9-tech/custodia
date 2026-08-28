@@ -606,17 +606,43 @@ console.log('\nSprint 2 — per-field confidence (P-7)\n');
 
 import {
   fieldConfidence,
+  fieldDecision,
   assessCandidate,
+  VENDOR_SOURCE_TYPES,
 } from './vendorFieldConfidence.js';
 
 check(fieldConfidence({ value: 'x', sourceType: 'http_probe', probeStatus: 'verified_probed_success', domainOk: true }) === 90,
   'a verified on-domain probe scores 90');
 check(fieldConfidence({ value: 'x', sourceType: 'http_probe', probeStatus: 'verified_probed_success', domainOk: false }) === 60,
   'a verified off-domain (parent) probe scores visibly less');
-check(fieldConfidence({ value: null, sourceType: 'ai_grounded' }) === 0,
-  'an absent model fact scores nothing');
-check(fieldConfidence({ value: 'present', sourceType: 'ai_grounded' }) === 40,
-  'a model-only fact sits at the unprobed ceiling of 40');
+
+console.log('\nSprint 5 — the provenance vocabulary (VD-1, VD-2)\n');
+
+// The zero-model policy is enforced by the type system, not by prose: there is
+// no member of this union a model-asserted value could be stored under. The
+// superseded plan banned hallucination in a bullet point while the code wrote
+// `ai_grounded` rows for the five Chapter V fields.
+check(!(VENDOR_SOURCE_TYPES as readonly string[]).includes('ai_grounded'),
+  'ai_grounded has left the provenance vocabulary');
+check((VENDOR_SOURCE_TYPES as readonly string[]).includes('trust_centre'),
+  'and trust_centre has entered it, so Channel 3 has somewhere to store its output');
+
+// A portal badge is HTML. What a SafeBase page proves is that SafeBase renders
+// a badge, so Tier 3 must land in review rather than accept — that is the whole
+// difference between it and a probe of the vendor's own domain.
+check(fieldConfidence({ value: 'x', sourceType: 'trust_centre', probeStatus: 'verified_probed_success' }) === 75,
+  'a verified trust-centre page scores below a probe of the vendor\'s own site');
+check(fieldDecision({ value: 'x', sourceType: 'trust_centre', probeStatus: 'verified_probed_success' }) === 'review',
+  'and lands in review, never auto-accept');
+check(fieldConfidence({ value: 'x', sourceType: 'trust_centre', probeStatus: 'partially_probed' }) === 35,
+  'a partially matched portal page scores lower still');
+
+check(fieldConfidence({ value: 'US', sourceType: 'registry' }) === 95,
+  'a registry row scores highest — an official publisher, dated');
+check(fieldConfidence({ value: 'US', sourceType: 'analyst' }) === 90,
+  'a named human with an excerpt scores alongside an on-domain probe');
+check(fieldConfidence({ value: 'US', sourceType: 'customer' }) === 95,
+  'a tenant\'s own executed contract is authoritative for that tenant');
 
 // The AND gate's exact casualty: a verified DPA with a failed privacy policy.
 // Old behaviour: rejected outright. New: accepted into review with the DPA
@@ -632,13 +658,39 @@ check(mixedAssessment.autoAcceptable || mixedAssessment.confidence > 50,
 check(mixedAssessment.perField.privacyPolicyUrl?.decision !== 'accept',
   'while the failed privacy field itself is not silently accepted');
 
-// The bulk-approve bar needs corroboration, not just one good field.
-const weakRecord = {
-  dpaUrl: { value: null, sourceType: 'ai_grounded' as const },
-  headquartersCountry: { value: 'US', sourceType: 'ai_grounded' as const },
+// The bulk-approve bar needs corroboration, not just one good field. Before
+// Sprint 5 the five model-asserted fields at 40 dragged the weighted mean under
+// the bar, which is what made a one-field record unapprovable; with those gone,
+// `autoAcceptable` has to say so itself, so the DPA no longer counts as its own
+// corroboration.
+const soloDpa = {
+  dpaUrl: {
+    value: 'u',
+    sourceType: 'http_probe' as const,
+    probeStatus: 'verified_probed_success' as const,
+    domainOk: true,
+    resolvedUrl: 'https://v.com/dpa',
+  },
 };
-check(assessCandidate('V', 'https://v.com', weakRecord).autoAcceptable === false,
-  'model-only facts cannot bulk-approve themselves');
+const soloAssessment = assessCandidate('V', 'https://v.com', soloDpa);
+check(soloAssessment.confidence === 90,
+  'a record asserting one verified field is 90% sure of that field',
+  `confidence=${soloAssessment.confidence}`);
+check(soloAssessment.autoAcceptable === false,
+  'but a verified DPA does not corroborate itself into a bulk approval');
+
+const corroborated = {
+  ...soloDpa,
+  subProcessorListUrl: {
+    value: 'u',
+    sourceType: 'http_probe' as const,
+    probeStatus: 'verified_probed_success' as const,
+    domainOk: true,
+    resolvedUrl: 'https://v.com/subprocessors',
+  },
+};
+check(assessCandidate('V', 'https://v.com', corroborated).autoAcceptable === true,
+  'a second verified probe is what clears the bulk-approve bar');
 
 console.log('\nSprint 2 — sub-processor entity parsing (P-10)\n');
 
@@ -1309,6 +1361,345 @@ check(
   EUROPEAN_ENFORCEMENT_CORPUS.every((d) => !d.matchedVendorName.match(/[.*+?^${}()|[\]\\]/)),
   'no corpus name carries regex metacharacters unescaped into the matcher',
 );
+
+console.log('\nSprint 5 — deterministic candidate URLs (VD-1)\n');
+
+import {
+  enumerateCandidateUrls,
+  extractLinkCandidates,
+  indexPageUrls,
+  isTrustCentreUrl,
+  MAX_LINK_CANDIDATES,
+} from './vendorUrlCandidates.js';
+
+const candidates = enumerateCandidateUrls({ name: 'ClickUp', website: 'https://www.clickup.com' });
+
+check(candidates[0]?.url === 'https://clickup.com/legal/dpa' && candidates[0]?.type === 'dpa',
+  'the DPA is asked for first — it carries three times the weight and the per-type search stops on a hit',
+  `first=${candidates[0]?.url ?? 'none'}`);
+check(new Set(candidates.map((c) => c.url)).size === candidates.length,
+  'no URL is enumerated twice, so no host is asked the same question twice');
+check(candidates.some((c) => c.url === 'https://clickup.com/legal/subprocessors' && c.type === 'subprocessors'),
+  'sub-processor paths are enumerated under their own document type');
+check(candidates.every((c) => c.origin !== 'path' || /^https:\/\/(trust\.)?clickup\.com\//.test(c.url)),
+  'every path candidate stays on the vendor\'s own registrable domain');
+
+// `trust.clickup.com` is ClickUp's own site. A badge ClickUp renders about
+// itself on its own domain is Tier 2; a badge SafeBase renders about ClickUp is
+// Tier 3, and that difference is the entire point of the new vocabulary value.
+const ownTrustCentre = candidates.find((c) => c.url === 'https://trust.clickup.com/');
+check(ownTrustCentre?.origin === 'path' && !isTrustCentreUrl(ownTrustCentre.url),
+  'the vendor\'s own trust subdomain is Tier 2 evidence, not a third-party portal');
+const portal = candidates.find((c) => c.origin === 'trust_centre');
+check(!!portal && isTrustCentreUrl(portal.url),
+  'and the third-party portals are enumerated as trust_centre',
+  `portal=${portal?.url ?? 'none'}`);
+check(isTrustCentreUrl('https://trust.vanta.com/acme') && !isTrustCentreUrl('https://trust.stripe.com/'),
+  'isTrustCentreUrl separates the portals from a vendor-hosted trust page');
+
+check(enumerateCandidateUrls({ name: 'No Site', website: null }).length === 0,
+  'a target with no usable website enumerates nothing rather than probing the world');
+check(indexPageUrls('https://www.clickup.com').includes('https://clickup.com/legal'),
+  'the legal index is fetched for link extraction, never probed as a document');
+
+// The long tail. A vendor who publishes a DPA at a path nobody guesses links to
+// it from its own legal index, and the module ships in three languages: an
+// English-only anchor matcher reports "no DPA published" with total confidence.
+const legalIndex = [
+  '<a href="/legal/dpa-2024-final">Data Processing Addendum</a>',
+  '<a href="/rechtliches/avv">Auftragsverarbeitungsvertrag</a>',
+  '<a href="/legal/liste">Sous-traitants ultérieurs</a>',
+  '<a href="/datenschutz">Datenschutzerklärung</a>',
+  '<a href="https://lawfirm.example/template">Data Processing Agreement</a>',
+  '<a href="/about">About us</a>',
+  '<a href="mailto:legal@vendor.com">Contact legal</a>',
+].join('\n');
+const links = extractLinkCandidates(legalIndex, 'https://vendor.com/legal', 'https://vendor.com');
+
+check(links.some((c) => c.url === 'https://vendor.com/legal/dpa-2024-final' && c.type === 'dpa'),
+  'an English DPA link is found at a path no permutation would have guessed');
+check(links.some((c) => c.url === 'https://vendor.com/rechtliches/avv' && c.type === 'dpa'),
+  'a German Auftragsverarbeitungsvertrag is found too');
+check(links.some((c) => c.url === 'https://vendor.com/legal/liste' && c.type === 'subprocessors'),
+  'and a French sous-traitants list classifies as sub-processors, not as a DPA');
+check(links.some((c) => c.url === 'https://vendor.com/datenschutz' && c.type === 'privacy'),
+  'a German privacy notice classifies as privacy');
+check(!links.some((c) => c.url.includes('lawfirm.example')),
+  'an outbound link to a law firm\'s template is not evidence about this vendor');
+check(!links.some((c) => c.url.includes('/about') || c.url.startsWith('mailto')),
+  'links with no document token, and mailto links, are ignored');
+check(links.every((c) => c.origin === 'link'), 'extracted links carry their origin into the reject log');
+
+const flood = Array.from({ length: 40 }, (_, i) => `<a href="/legal/dpa-${i}">Data Processing Addendum</a>`).join('');
+check(extractLinkCandidates(flood, 'https://vendor.com/legal', 'https://vendor.com').length === MAX_LINK_CANDIDATES,
+  'a legal index with two hundred links does not become two hundred probes');
+
+console.log('\nSprint 5 — absent is a tier (VD-2)\n');
+
+const probedFields = {
+  dpaUrl: {
+    value: 'https://vendor.com/legal/dpa',
+    sourceType: 'http_probe' as const,
+    probeStatus: 'verified_probed_success' as const,
+    domainOk: true,
+    resolvedUrl: 'https://vendor.com/legal/dpa',
+  },
+};
+const probedWrites = buildCatalogueWrites(
+  {
+    name: 'Vendor',
+    website: 'https://vendor.com',
+    dpaUrl: 'https://vendor.com/legal/dpa',
+    privacyPolicyUrl: null,
+    // What the model used to assert, arriving here with nothing behind it.
+    headquartersCountry: 'US',
+    transferMechanisms: ['SCC'],
+    securityCertifications: ['SOC 2'],
+    dataProcessingLocations: ['US'],
+  },
+  assessCandidate('Vendor', 'https://vendor.com', probedFields),
+);
+
+check(probedWrites.columns.dpaUrl === 'https://vendor.com/legal/dpa',
+  'a probe-verified DPA writes its column');
+check(probedWrites.provenance.length === 1 && probedWrites.provenance[0]?.sourceType === 'http_probe',
+  'with exactly one provenance row, on the vendor\'s own domain',
+  `rows=${probedWrites.provenance.map((r) => `${r.fieldName}:${r.sourceType}`).join(', ') || 'none'}`);
+check(probedWrites.provenance.every((r) => r.confidence > 0),
+  'and no row is written at confidence 0 — that still renders as a field we have an opinion about');
+
+// The gate Sprint 9 will enforce over the seeded catalogue, asserted here over
+// the mapper that produces it: no column may exist without a row explaining it.
+check(Object.keys(probedWrites.columns).every((c) => probedWrites.provenance.some((r) => r.fieldName === c)),
+  'every column written has a provenance row behind it');
+check(probedWrites.columns.headquartersCountry === undefined &&
+  probedWrites.columns.transferMechanisms === undefined &&
+  probedWrites.columns.securityCertifications === undefined &&
+  probedWrites.columns.dataProcessingLocations === undefined,
+  'the Chapter V fields write nothing while nothing sources them — a gap is an acceptable output');
+check(!probedWrites.provenance.some((r) => r.fieldName === 'privacyPolicyUrl'),
+  'an absent field yields no provenance row at all, rather than a row at zero');
+
+const portalWrites = buildCatalogueWrites(
+  { name: 'Vendor', website: 'https://vendor.com', dpaUrl: 'https://trust.safebase.io/vendor' },
+  assessCandidate('Vendor', 'https://vendor.com', {}),
+);
+check(portalWrites.provenance[0]?.sourceType === 'trust_centre',
+  'a DPA found on a compliance portal is recorded as trust_centre, not as the vendor\'s own document');
+
+console.log('\nSprint 6 — probe hardening (VD-3, VD-4, VD-5, VD-6)\n');
+
+import {
+  PROBE_FAILURE_CLASSES,
+  detectSoftNotFound,
+  downgradeForSoftNotFound,
+  statusFromOutcome,
+  USER_AGENT,
+  USER_AGENT_TOKEN,
+} from './vendorProbe.js';
+import {
+  parseRobotsTxt,
+  isPathAllowed,
+  robotsPath,
+  RobotsCache,
+  ROBOTS_ALLOW_ALL,
+} from './robotsTxt.js';
+
+// --- VD-4: three branches that all returned 'timeout' ----------------------------
+//
+// A domain that does not resolve is a catalogue data error — somebody typed the
+// wrong website and a human has to fix it. A host that times out is a retry.
+// They read identically until Sprint 6, so the review queue could not tell
+// "this vendor moved" from "the network was slow".
+
+/** Node's fetch wraps the real error: the code is on `cause`, not on the message. */
+function fetchFailure(code: string, message: string): Error {
+  const cause = Object.assign(new Error(message), { code });
+  return Object.assign(new TypeError('fetch failed'), { cause });
+}
+
+check(classifyFetchError(fetchFailure('ENOTFOUND', 'getaddrinfo ENOTFOUND nope.example.com')) === 'dns_failure',
+  'NXDOMAIN classifies as dns_failure, not as a slow host');
+check(classifyFetchError(fetchFailure('EAI_AGAIN', 'getaddrinfo EAI_AGAIN vendor.com')) === 'dns_failure',
+  'a temporary resolver failure is still a resolver failure, whatever its text reads like');
+check(classifyFetchError(fetchFailure('ECONNREFUSED', 'connect ECONNREFUSED 93.184.216.34:443')) === 'connection_refused',
+  'a refused connection is its own finding — the host is up and the port is not');
+check(classifyFetchError(fetchFailure('ECONNRESET', 'read ECONNRESET')) === 'connection_refused',
+  'and so is a reset mid-response');
+// The shape undici actually produces for a multi-address host: one entry per
+// address it tried. A cause-only walk sees "fetch failed" and nothing else.
+check(
+  classifyFetchError(
+    Object.assign(new TypeError('fetch failed'), {
+      cause: Object.assign(new AggregateError([
+        Object.assign(new Error('connect ECONNREFUSED 93.184.216.34:443'), { code: 'ECONNREFUSED' }),
+      ]), { code: 'ECONNREFUSED' }),
+    }),
+  ) === 'connection_refused',
+  'an AggregateError of per-address failures is read through, not collapsed into the default',
+);
+check(classifyFetchError(new Error('This operation was aborted')) === 'timeout',
+  'an abort is still a timeout — the case that already worked keeps working');
+check(classifyFetchError({ not: 'an error' }) === 'timeout',
+  'an unclassifiable throw is transient, never evidence that the DPA is missing');
+check(
+  (['dns_failure', 'connection_refused', 'blocked_by_robots', 'soft_404'] as const)
+    .every((c) => (PROBE_FAILURE_CLASSES as readonly string[]).includes(c)),
+  'every new outcome is in the failure-class vocabulary, not a loose string',
+);
+
+// --- VD-5: an English-only keyword scan in a three-language product --------------
+//
+// The same defect as the Art. 9 vocabulary fix. A German DPA scored `partial`
+// (45) rather than `verified` (90) — reachable, real, and filed as "we got
+// something else" for every German and French vendor in the catalogue.
+
+const germanDpa =
+  'Auftragsverarbeitungsvertrag gemäß Art. 28 DSGVO. Der Verantwortliche und der ' +
+  'Auftragsverarbeiter haben diesen Vertrag abgeschlossen; die Vertragsparteien bestätigen ' +
+  'die Unterzeichnung.';
+const frenchDpa =
+  'Accord de sous-traitance au sens de l’article 28 du RGPD. Le responsable du traitement et ' +
+  'le sous-traitant ont conclu le présent accord, signature des parties en annexe.';
+const englishDpa =
+  '<h1>Data Processing Agreement</h1><p>The controller and processor agree. Signed by both parties.</p>';
+
+check(evaluateContentSignals(germanDpa, 'dpa') === 'verified',
+  'a German Auftragsverarbeitungsvertrag verifies');
+check(evaluateContentSignals(frenchDpa, 'dpa') === 'verified',
+  'a French accord de sous-traitance verifies');
+check(evaluateContentSignals(englishDpa, 'dpa') === 'verified',
+  'and the English case that already passed still does');
+check(evaluateContentSignals('Willkommen bei unserem Unternehmen. Kontaktieren Sie uns.', 'dpa') !== 'verified',
+  'a German marketing page does not verify just because the scan learned German');
+check(evaluateContentSignals('Unterauftragsverarbeiter: Name, Standort und Zweck je Unternehmen', 'subprocessors') === 'verified',
+  'a German sub-processor list verifies on list + detail signals');
+check(evaluateContentSignals('Sous-traitants ultérieurs : entité, lieu et finalité', 'subprocessors') === 'verified',
+  'and a French one likewise');
+check(evaluateContentSignals('Datenschutzerklärung nach Art. 13 DSGVO', 'privacy') === 'verified',
+  'a German privacy notice verifies');
+check(evaluateContentSignals('Politique de confidentialité', 'privacy') === 'verified',
+  'and a French one');
+check(evaluateContentSignals('<form>Passwort eingeben und anmelden</form> Auftragsverarbeitungsvertrag', 'dpa') === 'gated',
+  'a German login wall never verifies, whatever words it borrows');
+
+// --- VD-6: the soft-404 negative control ----------------------------------------
+//
+// A host that answers 2xx for every path hands back its homepage for all nine
+// enumerated DPA URLs. The first whose boilerplate mentions a controller and a
+// signature verifies at 90, and the catalogue then publishes a marketing page
+// as a vendor's Article 28 contract. One request per host is what separates
+// that from a vendor who really does publish at /legal/dpa.
+
+check(detectSoftNotFound({ ok: true, httpStatus: 200, body: '<html>Welcome to Vendor</html>' }) === true,
+  'a 2xx with a body for a path that cannot exist means the host soft-404s');
+check(detectSoftNotFound({ ok: false, httpStatus: 404, body: '' }) === false,
+  'an honest 404 is the control passing, not failing');
+check(detectSoftNotFound({ ok: true, httpStatus: 200, body: '   ' }) === false,
+  'an empty 2xx is a broken 404 handler, not a page that can be mistaken for a DPA');
+
+check(downgradeForSoftNotFound('verified', true) === 'partial',
+  'on a soft-404 host every 2xx is downgraded to partial regardless of tokens');
+check(downgradeForSoftNotFound('verified', false) === 'verified',
+  'and an ordinary host is untouched');
+check(downgradeForSoftNotFound('gated', true) === 'gated',
+  'a gated verdict survives the downgrade — it is about what we could see, not about what exists');
+
+check(statusFromOutcome({ status: 'failed', failureClass: 'soft_404' }) === 'partially_probed',
+  'a downgraded probe scores as partial, the same as any signal-less page');
+check(fieldConfidence({
+  value: 'u',
+  sourceType: 'http_probe',
+  probeStatus: statusFromOutcome({ status: 'failed', failureClass: 'soft_404' }),
+  domainOk: true,
+}) === 45,
+  'which is 45 — reviewable, and nowhere near the 90 the tokens would have bought');
+check(statusFromOutcome({ status: 'failed', failureClass: 'blocked_by_robots' }) === 'failed_probed',
+  'a robots-blocked URL never becomes a field, so its mapping is the floor');
+
+// --- VD-3: robots.txt, which nothing fetched -------------------------------------
+//
+// The comment this replaces claimed the control was "handled at the batch
+// level". Nothing in the repo fetched /robots.txt, so a crawler that names
+// itself in its User-Agent was ignoring the one file a host uses to answer it.
+
+check(USER_AGENT.includes(USER_AGENT_TOKEN),
+  'the token robots.txt is matched on is the token we actually send',
+  `ua=${USER_AGENT}`);
+
+const robotsForUs = parseRobotsTxt(
+  [
+    'User-agent: *',
+    'Disallow: /',
+    '',
+    `User-agent: ${USER_AGENT_TOKEN}`,
+    'Disallow: /legal/private',
+    'Allow: /legal',
+  ].join('\n'),
+);
+check(isPathAllowed(robotsForUs, '/legal/dpa') === true,
+  'a host that writes a group for us has said what it wants — the wildcard group is then not ours to obey');
+check(isPathAllowed(robotsForUs, '/legal/private') === false,
+  'and the rule it did write for us is honoured');
+
+const wildcardOnly = parseRobotsTxt('User-agent: *\nDisallow: /legal/\nAllow: /legal/privacy');
+check(isPathAllowed(wildcardOnly, '/legal/dpa') === false,
+  'a Disallow matches by prefix, which is what a host writing it is relying on');
+check(isPathAllowed(wildcardOnly, '/legal/privacy') === true,
+  'a longer Allow beats a shorter Disallow — the narrower permission is the one they meant');
+check(isPathAllowed(wildcardOnly, '/subprocessors') === true,
+  'an unmatched path is allowed');
+
+check(isPathAllowed(parseRobotsTxt('User-agent: *\nDisallow:'), '/legal/dpa') === true,
+  'an empty Disallow is the documented way to permit everything, not a rule matching every path');
+check(isPathAllowed(parseRobotsTxt('# nothing but a comment'), '/legal/dpa') === true,
+  'comments are not rules');
+check(isPathAllowed(parseRobotsTxt('User-agent: Googlebot\nDisallow: /'), '/legal/dpa') === true,
+  'a group addressed to another crawler is not ours');
+check(isPathAllowed(parseRobotsTxt('User-agent: *\nDisallow: /*.pdf$'), '/legal/dpa.pdf') === false,
+  'wildcards and the end-anchor are honoured, because hosts write them');
+check(isPathAllowed(parseRobotsTxt('User-agent: *\nDisallow: /*.pdf$'), '/legal/dpa.pdf?v=2') === true,
+  'and the anchor means what it says');
+check(isPathAllowed(ROBOTS_ALLOW_ALL, '/anything') === true,
+  'no robots.txt is no restriction');
+check(robotsPath('https://vendor.com/legal/dpa?lang=de') === '/legal/dpa?lang=de',
+  'rules are matched against the path and query, which is what the patterns are written against');
+
+// One robots.txt per host for the life of a run — the alternative is fetching it
+// again for each of the ~30 candidates a single vendor now enumerates, which
+// would make the politeness control the noisiest thing we do to the host.
+let robotsFetches = 0;
+const robotsCache = new RobotsCache(async (url) => {
+  robotsFetches += 1;
+  return url.startsWith('https://vendor.com')
+    ? { status: 200, body: 'User-agent: *\nDisallow: /legal/' }
+    : { status: 404, body: '' };
+});
+
+const robotsVerdicts = {
+  blockedDpa: await robotsCache.allows('https://vendor.com/legal/dpa'),
+  allowedSubs: await robotsCache.allows('https://vendor.com/subprocessors'),
+  otherHost: await robotsCache.allows('https://trust.safebase.io/vendor'),
+  repeat: await robotsCache.allows('https://vendor.com/legal/privacy'),
+};
+check(robotsVerdicts.blockedDpa === false, 'a Disallow’d path is refused before any request is made');
+check(robotsVerdicts.allowedSubs === true, 'while the rest of the host stays probeable');
+check(robotsVerdicts.otherHost === true, 'a 404 robots.txt on another host restricts nothing');
+check(robotsVerdicts.repeat === false, 'and a second blocked path on the same host is still blocked');
+check(robotsFetches === 2 && robotsCache.size === 2,
+  'while robots.txt is fetched once per host, not once per candidate',
+  `fetches=${robotsFetches}, hosts=${robotsCache.size}`);
+
+// The consequence that matters: a blocked path produces no evidence, so the
+// field stays absent. `blocked_by_robots` says the host asked us not to look,
+// which is silent on whether the DPA exists — a provenance row at any
+// confidence would be the catalogue asserting something it never saw.
+const robotsBlockedWrites = buildCatalogueWrites(
+  { name: 'Vendor', website: 'https://vendor.com', dpaUrl: null, privacyPolicyUrl: null, subProcessorListUrl: null },
+  assessCandidate('Vendor', 'https://vendor.com', {}),
+);
+check(robotsBlockedWrites.provenance.length === 0 && Object.keys(robotsBlockedWrites.columns).length === 0,
+  'a robots-blocked candidate writes no provenance row and no column — absent is a tier');
 
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {

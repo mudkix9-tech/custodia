@@ -2,7 +2,7 @@
  * The vendor intelligence review console — audit P-3's admin surface.
  *
  * The pending-review JSON and the SQLite queue were sketching this: a staging
- * area where generated records wait for a human. This is its in-product form:
+ * area where sourced records wait for a human. This is its in-product form:
  * candidates listed by confidence, side-by-side with the catalogue row they
  * would create, per-field evidence, and bulk-approve above a threshold for the
  * records the probes already vouch for.
@@ -48,8 +48,8 @@ export const vendorIntelligenceRouter = router({
 
   /**
    * Start an enrichment batch. Creates the run row and enqueues the job; the
-   * worker does the model calls, so this returns immediately with the run id
-   * the console polls.
+   * worker does the enumeration and the probes, so this returns immediately
+   * with the run id the console polls.
    */
   startBatch: protectedProcedure
     .use(requirePermission('vendors', 'edit'))
@@ -76,7 +76,11 @@ export const vendorIntelligenceRouter = router({
       return run;
     }),
 
-  /** One candidate with its payload, probe results and grounding sources. */
+  /**
+   * One candidate with its payload, its probe results, and the enumerated URLs
+   * that were rejected — which is what the `grounding` column holds since
+   * Sprint 5, and the reviewer's answer to "why is this field empty".
+   */
   getCandidate: protectedProcedure
     .use(requirePermission('vendors', 'view'))
     .input(z.object({ id: z.string().uuid() }))
@@ -88,7 +92,7 @@ export const vendorIntelligenceRouter = router({
 
   /**
    * Queue a freshness re-verification of a catalogue vendor. Runs through the
-   * worker (model + probes are minutes, not milliseconds) and stamps
+   * worker (a paced probe sweep is minutes, not milliseconds) and stamps
    * `lastVerifiedAt` when done; the diff itself lands in the candidate queue
    * only if something changed enough to become one.
    */

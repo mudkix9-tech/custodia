@@ -4,11 +4,15 @@
  * "You cannot improve a pipeline you cannot measure, and the 7% figure in this
  * document had to be derived by counting JSON files."
  *
- * A gold set of hand-verified vendor records; `evaluateExtraction` scores an
- * extraction against it, per field, as precision/recall over the *values* the
- * model returned. Run it against the live model with
- * `npm run eval:vendors --workspace=apps/api` (needs Vertex credentials), or
- * against recorded outputs with `--recorded <file.json>`.
+ * A gold set of hand-verified vendor records; `evaluateExtraction` scores a
+ * pipeline run against it, per field, as precision/recall over the *values* the
+ * enumerate-and-probe pass returned:
+ * `npm run eval:vendors --workspace=apps/api -- --recorded <file.json>`.
+ *
+ * Sprint 5 removed the model from the pipeline, so what is being measured is
+ * now the candidate enumeration and the probes rather than an extraction. The
+ * scoring is unchanged, and so is the point of it: recall against this set is
+ * how you tell "the vendor publishes no DPA" from "we did not find it".
  */
 import fs from 'fs';
 import type { ExtractedRecord } from './vendorIntelligence.js';
@@ -200,12 +204,12 @@ if (isMain) {
     process.exit(0);
   }
 
-  console.log('No --recorded file given; scoring requires live model output.');
+  console.log('No --recorded file given; scoring needs a recorded pipeline run.');
   console.log('Usage:');
   console.log('  npm run eval:vendors --workspace=apps/api -- --recorded extractions.json');
   console.log('');
   console.log('extractions.json shape:');
-  console.log('  [{ "website": "https://www.clickup.com", "record": { ...extracted... } }]');
+  console.log('  [{ "website": "https://www.clickup.com", "record": { ...sourced... } }]');
   process.exit(0);
 }
 

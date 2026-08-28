@@ -1647,7 +1647,7 @@ export const vendorSubProcessorChanges = pgTable('vendor_sub_processor_changes',
 
 /**
  * One execution of the gatherer — a batch enrichment, a single reverify, or a
- * DPF registry import. The pipeline previously had no memory: `gather-vendors.ts`
+ * DPF registry import. The pipeline previously had no memory: the gatherer
  * appended to a JSON file and its only run statistics lived in an audit document
  * someone had to derive by counting records (Appendix B). A row per run is also
  * the checkpoint: a batch that dies halfway resumes after the highest completed
@@ -1692,11 +1692,20 @@ export const vendorCandidates = pgTable('vendor_candidates', {
   slug: varchar('slug', { length: 100 }),
   domain: varchar('domain', { length: 255 }).notNull().default(''),
   category: varchar('category', { length: 100 }),
-  /** The full extracted record, exactly as the model produced it. */
+  /** The sourced record: the target's own details plus every probe-verified URL. */
   payload: jsonb('payload').notNull(),
   /** Per-probe outcomes: { dpaUrl: {status, failureClass, resolvedUrl}, ... }. */
   probeResults: jsonb('probe_results').default({}),
-  /** groundingMetadata captured where it was produced, not discarded (D23/P-8). */
+  /**
+   * Every candidate URL that was enumerated and did not verify, with its probe
+   * failure class — the audit trail for why a field came back absent.
+   *
+   * The column previously held Gemini's `groundingMetadata`, which names the
+   * pages a search tool retrieved while the model wrote a sentence rather than
+   * the page the asserted fact came from. Sprint 5 kept the column and reversed
+   * what it is for: this one records what was checked, which is the question a
+   * reviewer looking at an empty field actually has.
+   */
   grounding: jsonb('grounding'),
   /** 0–100. Weighted mean of the per-field confidences, for bulk triage. */
   confidence: integer('confidence').default(0).notNull(),
@@ -1731,7 +1740,16 @@ export const vendorFieldProvenance = pgTable('vendor_field_provenance', {
   vendorId: uuid('vendor_id').notNull().references(() => vendors.id, { onDelete: 'cascade' }),
   fieldName: varchar('field_name', { length: 100 }).notNull(),
   value: jsonb('value'),
-  // 'ai_grounded' | 'http_probe' | 'registry' | 'analyst' | 'customer'
+  /**
+   * 'registry' | 'http_probe' | 'trust_centre' | 'analyst' | 'customer'.
+   *
+   * `ai_grounded` left this vocabulary in Sprint 5 and `trust_centre` entered
+   * it, in one change because they are one change: the zero-model policy is
+   * enforced by a model-sourced value having nowhere to be stored, and the
+   * trust-centre channel previously had no value to be stored under. The
+   * canonical list is `VENDOR_SOURCE_TYPES` in
+   * `apps/api/src/lib/vendorFieldConfidence.ts`.
+   */
   sourceType: varchar('source_type', { length: 20 }).notNull(),
   sourceUrl: text('source_url'),
   /** 0–100. */

@@ -29,17 +29,51 @@ export const FIELD_WEIGHTS: Readonly<Record<string, number>> = {
   description: 0.5,
 };
 
+/**
+ * The provenance vocabulary — the whole of it, Sprint 5 (VD-2).
+ *
+ * `ai_grounded` left and `trust_centre` entered in one change because they are
+ * one change: the superseded plan specified a trust-centre channel and a
+ * vocabulary with nowhere to record its output, while the code it was written
+ * against stored five Chapter V fields under a value that meant "a model said
+ * so". The zero-model policy is enforced here rather than in prose — a
+ * model-sourced value now has no member of this union to be stored under.
+ *
+ * Ordered as the sourcing programme's pyramid orders it: official publisher,
+ * the vendor's own domain, a compliance portal, a named human, the tenant's own
+ * contract. Absent is the sixth tier and is represented by no row at all.
+ */
+export const VENDOR_SOURCE_TYPES = [
+  'registry',
+  'http_probe',
+  'trust_centre',
+  'analyst',
+  'customer',
+] as const;
+
+export type VendorSourceType = (typeof VENDOR_SOURCE_TYPES)[number];
+
 export interface FieldEvidence {
-  /** What the model/probe concluded for this field. */
+  /** What the registry, probe or reviewer concluded for this field. */
   value: unknown;
-  /** Probe outcome for URL fields; 'ai_grounded' for model-only facts. */
-  sourceType: 'ai_grounded' | 'http_probe' | 'registry';
+  /** Which tier of the pyramid this value came off. */
+  sourceType: VendorSourceType;
   probeStatus?: 'verified_probed_success' | 'partially_probed' | 'failed_gated' | 'failed_probed';
   domainOk?: boolean;
   resolvedUrl?: string | null;
 }
 
-/** Map a probe status + domain check to a 0–100 confidence for one field. */
+/**
+ * Map a source tier plus its probe outcome to a 0–100 confidence for one field.
+ *
+ * There is no "asserted but unprobed" tier any more (Sprint 5, VD-1). The old
+ * `evidence.value ? 40 : 0` line scored a model sentence at 40, which
+ * `fieldDecision` routed to `review` — a number that reads like measurement
+ * sitting the same colour on `ConfidenceBar` as a half-confirmed probe. A field
+ * is now registry-sourced, probe-sourced, portal-sourced, human-sourced, or
+ * absent, and absent means no evidence object and no provenance row rather than
+ * a row at zero.
+ */
 export function fieldConfidence(evidence: FieldEvidence): number {
   if (evidence.sourceType === 'http_probe') {
     if (evidence.probeStatus === 'verified_probed_success') {
@@ -53,10 +87,25 @@ export function fieldConfidence(evidence: FieldEvidence): number {
     // failed_gated / failed_probed
     return evidence.probeStatus === 'failed_gated' ? 15 : 5;
   }
+  if (evidence.sourceType === 'trust_centre') {
+    // Tier 3 tops out below the accept bar on purpose. A SafeBase or Vanta page
+    // is HTML with a badge on it: there is no signature and nothing to verify,
+    // so what it proves is that the portal renders a badge, not that the SOC 2
+    // report behind it says what the badge says. That is a claim a human should
+    // read before it reaches a customer's register.
+    if (evidence.probeStatus === 'verified_probed_success') return 75;
+    if (evidence.probeStatus === 'partially_probed') return 35;
+    return evidence.probeStatus === 'failed_gated' ? 15 : 5;
+  }
+  // An official publisher's dated row.
   if (evidence.sourceType === 'registry') return 95;
-  // Model-asserted without a probe: never above half. This is the ceiling that
-  // stops an unprobed DPA URL from bulk-approving itself.
-  return evidence.value ? 40 : 0;
+  // A named human read the document and recorded a finding, with an excerpt.
+  // Whether an analyst row *supersedes* a registry or probe row for its field is
+  // a precedence question, not a confidence one — see VD-20.
+  if (evidence.sourceType === 'analyst') return 90;
+  // The tenant's own executed contract. Authoritative about that tenant and
+  // never written back to the shared catalogue.
+  return 95;
 }
 
 /**
@@ -98,7 +147,7 @@ export function assessCandidate(
   let weightSum = 0;
   let weightedTotal = 0;
   let hasVerifiedDpa = false;
-  let anyProbeVerified = false;
+  let corroboratingProbe = false;
 
   for (const [fieldName, evidence] of Object.entries(fields)) {
     const weight = FIELD_WEIGHTS[fieldName] ?? 0.5;
@@ -116,14 +165,27 @@ export function assessCandidate(
     if (fieldName === 'dpaUrl' && evidence.probeStatus === 'verified_probed_success') {
       hasVerifiedDpa = true;
     }
-    if (evidence.probeStatus === 'verified_probed_success' && evidence.domainOk !== false) {
-      anyProbeVerified = true;
+    // Corroboration means a *second* verified field. The DPA vouching for
+    // itself was always vacuous, and it stopped being harmless when Sprint 5
+    // removed the five model-asserted fields that used to drag the weighted
+    // mean below the bulk-approve bar on a one-field record.
+    if (
+      fieldName !== 'dpaUrl' &&
+      evidence.probeStatus === 'verified_probed_success' &&
+      evidence.domainOk !== false
+    ) {
+      corroboratingProbe = true;
     }
     if (domainOutcome === 'parent_domain') {
       needsConfirmation.push(`${fieldName}: hosted on parent-company domain`);
     }
   }
 
+  // The mean is over the fields the record actually asserts, not over
+  // FIELD_WEIGHTS in full: it answers "how sure are we of what we are saying",
+  // and a vendor whose DPA verified and whose sub-processor list does not exist
+  // is not less certain, only less complete. Completeness is a separate axis
+  // and absent fields carry no evidence object to average in.
   const confidence = weightSum > 0 ? Math.round(weightedTotal / weightSum) : 0;
 
   return {
@@ -132,7 +194,7 @@ export function assessCandidate(
     // probe — the audit's complaint was not that the bar was high but that it
     // was the wrong shape. A verified DPA alone puts the candidate at the front
     // of the queue rather than in the bin.
-    autoAcceptable: hasVerifiedDpa && anyProbeVerified && confidence >= 70,
+    autoAcceptable: hasVerifiedDpa && corroboratingProbe && confidence >= 70,
     needsConfirmation,
     perField,
   };

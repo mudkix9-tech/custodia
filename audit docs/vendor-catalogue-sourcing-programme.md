@@ -326,6 +326,45 @@ not include `check:schema` (VD-17).
 **Gate:** `npm run check` green. `grep -rn "ai_grounded\|@google/genai" apps/api/src` returns
 nothing outside `lib/genai.ts` and the corpus scrapers.
 
+**Shipped, 28 August 2026.** Gate met: `npm run check` exits 0 (which since this document
+was written *does* include `check:schema` — VD-17 is already closed, so Sprint 9 task 1 is
+a no-op), `test:vendors` is at 330 assertions, and the only surviving `ai_grounded` strings
+are comments plus the fixture asserting the value is gone. `@google/genai` survives in
+`lib/genai.ts`, `lib/llm.ts`, `scripts/check-genai-config.ts` and the five corpus scrapers —
+all shared-client or regulatory-corpus, none in the catalogue path. `routers/ai.ts` is
+untouched, per §1.2 and open question 1.
+
+Three things were done differently from the list above, each deliberate:
+
+1. **Per-host pacing arrived a sprint early.** Enumeration turns three model-supplied URLs
+   into roughly thirty candidates, and shipping that against the existing 3-concurrent,
+   no-delay loop would have made Sprint 5 a regression in exactly the way VD-6 describes.
+   `extractAndProbe` is now one request at a time, one per second, with a 24-request budget
+   per target and a stop on the first verified hit per document type. Sprint 6 still owns
+   the rest of VD-6 — the soft-404 negative control — plus VD-3, VD-4 and VD-5.
+2. **The anchor-text matcher is en/de/fr from the first line.** `extractLinkCandidates` is
+   new code; writing it English-only and widening it in Sprint 6 would have been VD-5 with
+   the ink still wet. `evaluateContentSignals` is untouched and remains Sprint 6's job.
+3. **`assessCandidate`'s corroboration test now excludes the DPA itself.** `anyProbeVerified`
+   was satisfied by `dpaUrl`, so "the DPA verified AND at least one more corroborating probe"
+   was one condition wearing two hats. Harmless while five model-asserted fields at 40 held
+   the weighted mean under the bar; not harmless once Sprint 5 removed them, because a
+   record asserting one verified field now scores 90. Fixtures cover both halves.
+
+Two consequences worth carrying forward rather than fixing here:
+
+- **`bulkApprove` gates on the candidate's raw `confidence`, not on `autoAcceptable`,** which
+  the candidate row has no column for. That number now means "how sure of what we assert",
+  not "how much we know", so a one-verified-field record reads 90 where it used to read
+  ~55. The record it writes is honest — one column, one provenance row — but the threshold
+  is measuring a different thing than it was. A completeness axis alongside the confidence
+  axis is the real answer, and it belongs with Sprint 10's provenance surface.
+- **`fetchDocument` is split out of `probeUrl`** so the link-extraction pass can read a
+  legal index without pretending it is a DPA. While restructuring it, the `isGatedUrl` result
+  that had been computed and discarded was wired into `classifyResponse`, so a login wall
+  that does not also say "password" in its body now classifies as `gated_content` rather
+  than `content_mismatch` — "we could not see it" rather than "it is not there".
+
 ### Sprint 6 — Probe hardening
 
 *Closes VD-3, VD-4, VD-5, VD-6. The probe is now the only Tier 2 source; it carries weight it
@@ -356,6 +395,57 @@ was not carrying when a model backstopped it.*
    writes no provenance row.
 
 **Gate:** `npm run check` green, `test:vendors` covers all five.
+
+**Shipped, 29 August 2026.** Gate met: `npm run check` exits 0 and `test:vendors` is at
+375 assertions, with all five listed fixtures plus the vocabulary and cache assertions
+behind them. New file: `lib/robotsTxt.ts`. No migration.
+
+Four things were done differently from the list above, each deliberate:
+
+1. **`soft_404` is its own failure class rather than a re-used `content_mismatch`.**
+   The list says a soft-404 host's 2xx is "downgraded to `partial`", and it is —
+   `statusFromOutcome` maps `soft_404` to `partially_probed`, which is 45, exactly what
+   the spec asks for. But the *reject log* is the only record of why a field came back
+   absent, and `content_mismatch` there would claim we saw the page and it was something
+   else. What actually happened is that the host answers 200 for everything, which sends
+   a reviewer somewhere different.
+2. **All three signal families went to en/de/fr, not just the DPA's.** VD-5 names the
+   `dpa` families. Widening those and leaving `subprocessors` and `privacy` English-only
+   would have been the same defect one door down, in a module that ships in three
+   languages — and the sub-processor list is what the Art. 28(2) diff is built on. The
+   execution family (`unterzeichn`, `vertragsparteien`, `conclu`, …) had to widen too or
+   the German fixture cannot verify: `evaluateContentSignals` needs all three families,
+   so a German name plus German roles plus English-only execution still scores 45.
+3. **`USER_AGENT` moved from `vendorIntelligence.ts` to `vendorProbe.ts`,** beside the
+   new `USER_AGENT_TOKEN` that `robotsTxt.ts` matches groups on. If the two ever drift we
+   honour a robots.txt group nobody writes while ignoring the one they do, and that
+   failure is silent and total; a fixture now asserts the token is a substring of the UA,
+   which needs both of them somewhere a fixture can import. `statusFromOutcome` moved the
+   same way and for the same reason — it now sits next to the failure classes it maps, so
+   adding a class and deciding what it is worth are one edit in one file.
+4. **An unreadable robots.txt permits rather than blocks.** RFC 9309 allows treating a
+   5xx or a network failure as a complete disallow. We do not: a flaky endpoint would
+   erase a whole vendor's record and the reviewer would read `blocked_by_robots` against a
+   host that never disallowed anything. Only an actual `Disallow` blocks; a 4xx means no
+   robots.txt exists, which is no restriction. Absence of a rule is not a rule.
+
+Three consequences worth carrying forward:
+
+- **The two controls are charged to `MAX_PROBES_PER_TARGET`.** Robots and the negative
+  control are two requests per host, and the budget is about what the host is asked, not
+  about what we hoped to learn — a ceiling that counted only the interesting requests
+  would be measuring our intentions rather than its load. The effective document budget
+  is therefore smaller than 24; the candidate list is ordered most-likely-first, so what
+  that cuts is its tail.
+- **The negative control is not itself robots-checked**, and that is the one deliberate
+  fail-open. It only runs once robots has already permitted a real document request to
+  that host, and skipping it would mean *not* downgrading — which is the exact outcome
+  VD-6 exists to prevent.
+- **`classifyFetchError` reads `AggregateError.errors`, not just the `cause` chain.**
+  Undici reports a refused connection as `TypeError: fetch failed` whose cause is an
+  aggregate with one entry per address the host resolved to. A cause-only walk finds the
+  word "failed" and nothing else, so every refusal would have fallen through to the
+  default — VD-4's collapse reproduced one level down, in the fix for it.
 
 ### Sprint 7 — DPF registry ingestion
 

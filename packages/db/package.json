@@ -11,7 +11,6 @@
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
     "migrate": "tsx src/migrate.ts",
-    "gather:vendors": "tsx src/scripts/gather-vendors.ts",
     "seed:trackers": "tsx src/seed-trackers.ts",
     "check:schema": "node scripts/check-schema.mjs",
     "seed:vendors": "tsx src/seed-vendors.ts",

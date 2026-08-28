@@ -24,7 +24,7 @@ import {
   dpfRegistrations,
 } from 'db';
 import { eq, and, gt, isNull, or, sql } from 'drizzle-orm';
-import { runEnrichBatch, reverifyVendor, makeGeminiClient, type EnrichTarget } from '../lib/vendorIntelligence.js';
+import { runEnrichBatch, reverifyVendor, type EnrichTarget } from '../lib/vendorIntelligence.js';
 import { matchDpfStatus, dpfNameKey } from '../lib/vendorDpf.js';
 import { recalculateVendorRiskForAllOrgs } from '../routers/vendors.js';
 
@@ -111,13 +111,10 @@ export const vendorIntelligenceWorker = createWorker(
         const [vendor] = await db.select().from(vendors).where(eq(vendors.id, vendorId));
         if (!vendor) break;
 
-        const ai = makeGeminiClient();
-        if (!ai) throw new Error('Gemini client unavailable');
-        const outcome = await reverifyVendor(ai, { id: vendor.id, name: vendor.name, website: vendor.website });
+        const outcome = await reverifyVendor({ id: vendor.id, name: vendor.name, website: vendor.website });
 
         // Stamp freshness regardless of outcome; the diff lands wherever the
-        // caller asked for it (the router returns it synchronously when the
-        // model is reachable inline).
+        // caller asked for it.
         await db
           .update(vendors)
           .set({ lastVerifiedAt: new Date(), verifiedBy: 'pipeline:reverify' })
