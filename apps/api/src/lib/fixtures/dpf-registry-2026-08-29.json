@@ -1,0 +1,266 @@
+{
+  "retrievedAt": "2026-08-29",
+  "listAsOf": "Friday, August 28, 2026 6:00 AM EST",
+  "source": {
+    "bulkExport": "POST https://dpfapi.azurewebsites.net/api/downloadFile {FileName:\"DataPrivacyFrameworkParticipantsList.xlsx\",...} -> 200 application/octet-stream, 1454632 bytes",
+    "detail": "GET https://dpfapi.azurewebsites.net/api/participants/9645 -> 200 application/json, 8510 bytes",
+    "frameworks": "GET https://dpfapi.azurewebsites.net/api/Framework -> 200 [{Id:1,EU-U.S.},{Id:2,Swiss-U.S.},{Id:3,UK-U.S.}]",
+    "deadEndpoint": "https://dataframework-api.trade.gov/api/v1/participants -> NXDOMAIN (the URL this repo has called since Sprint 2)"
+  },
+  "totals": {
+    "rows": 16534,
+    "organisations": 7563,
+    "byFramework": {
+      "eu_us": 7557,
+      "uk_extension": 3584,
+      "swiss_us": 5393
+    },
+    "byStatus": {
+      "Active": 8169,
+      "Active - Re-certification under Review": 1646,
+      "Inactive - Lapse": 4746,
+      "Inactive - Withdrawal": 1973
+    }
+  },
+  "exportRows": [
+    {
+      "Public Display Name": "Google LLC",
+      "Legal Name": "Google LLC",
+      "Install Date": "9/14/2023",
+      "Usage End Date": "9/13/2026",
+      "Inactive Start Date": null,
+      "Framework": "UK Extension to the EU-U.S. Data Privacy Framework",
+      "Status": "Active",
+      "HR Data": "Yes",
+      "Non-HR Data": "Yes",
+      "Street": "1600 Amphitheatre Pkwy",
+      "City": "Mountain View",
+      "State": "CA",
+      "Postal Code": "94043",
+      "Covered Entities": "See Purposes of Data Collection section for details on scope of cert",
+      "Industries": "Information and Communications Technology - Information Technology Services",
+      "Privacy Policies": "Google Registry Privacy Policy - 9/1/2023,SecOps Privacy Notice - 4/18/2024,Fitbit Privacy Policy - 9/16/2024,BreezoMeter - 10/1/2023,Google Cloud Privacy Notice - 2/6/2025,Privacy Policy for Nest Websites - 9/1/2023,Privacy Statement for Nest's Products and Services - 9/1/2023,Actifio Privacy Policy - 9/1/2023,Qwiklabs Privacy Policy - 12/8/2023,Extended Workforce Privacy Notice - 3/25/2025,Google Employee Privacy Policy - 9/1/2023,Google Privacy Policy - 7/1/2025,Kaggle Privacy Policy - 2/5/2024,Google Careers Privacy Policy - 2/18/2025",
+      "Public Link": "https://www.dataprivacyframework.gov/participant/5780"
+    },
+    {
+      "Public Display Name": "Google LLC",
+      "Legal Name": "Google LLC",
+      "Install Date": "9/22/2016",
+      "Usage End Date": "9/13/2026",
+      "Inactive Start Date": null,
+      "Framework": "EU-U.S. Data Privacy Framework",
+      "Status": "Active",
+      "HR Data": "Yes",
+      "Non-HR Data": "Yes",
+      "Street": "1600 Amphitheatre Pkwy",
+      "City": "Mountain View",
+      "State": "CA",
+      "Postal Code": "94043",
+      "Covered Entities": "See Purposes of Data Collection section for details on scope of cert",
+      "Industries": "Information and Communications Technology - Information Technology Services",
+      "Privacy Policies": "Google Registry Privacy Policy - 9/1/2023,SecOps Privacy Notice - 4/18/2024,Fitbit Privacy Policy - 9/16/2024,BreezoMeter - 10/1/2023,Google Cloud Privacy Notice - 2/6/2025,Privacy Policy for Nest Websites - 9/1/2023,Privacy Statement for Nest's Products and Services - 9/1/2023,Actifio Privacy Policy - 9/1/2023,Qwiklabs Privacy Policy - 12/8/2023,Extended Workforce Privacy Notice - 3/25/2025,Google Employee Privacy Policy - 9/1/2023,Google Privacy Policy - 7/1/2025,Kaggle Privacy Policy - 2/5/2024,Google Careers Privacy Policy - 2/18/2025",
+      "Public Link": "https://www.dataprivacyframework.gov/participant/5780"
+    },
+    {
+      "Public Display Name": "Google LLC",
+      "Legal Name": "Google LLC",
+      "Install Date": "4/18/2017",
+      "Usage End Date": "9/13/2026",
+      "Inactive Start Date": null,
+      "Framework": "Swiss-U.S. Data Privacy Framework",
+      "Status": "Active",
+      "HR Data": "Yes",
+      "Non-HR Data": "Yes",
+      "Street": "1600 Amphitheatre Pkwy",
+      "City": "Mountain View",
+      "State": "CA",
+      "Postal Code": "94043",
+      "Covered Entities": "See Purposes of Data Collection section for details on scope of cert",
+      "Industries": "Information and Communications Technology - Information Technology Services",
+      "Privacy Policies": "Google Registry Privacy Policy - 9/1/2023,SecOps Privacy Notice - 4/18/2024,Fitbit Privacy Policy - 9/16/2024,BreezoMeter - 10/1/2023,Google Cloud Privacy Notice - 2/6/2025,Privacy Policy for Nest Websites - 9/1/2023,Privacy Statement for Nest's Products and Services - 9/1/2023,Actifio Privacy Policy - 9/1/2023,Qwiklabs Privacy Policy - 12/8/2023,Extended Workforce Privacy Notice - 3/25/2025,Google Employee Privacy Policy - 9/1/2023,Google Privacy Policy - 7/1/2025,Kaggle Privacy Policy - 2/5/2024,Google Careers Privacy Policy - 2/18/2025",
+      "Public Link": "https://www.dataprivacyframework.gov/participant/5780"
+    },
+    {
+      "Public Display Name": "Zwift, Inc",
+      "Legal Name": "Zwift, Inc",
+      "Install Date": "1/7/2021",
+      "Usage End Date": null,
+      "Inactive Start Date": "2/6/2022",
+      "Framework": "Swiss-U.S. Data Privacy Framework",
+      "Status": "Inactive - Lapse",
+      "HR Data": "No",
+      "Non-HR Data": "Yes",
+      "Street": "111 W. Ocean Blvd. Suite 1800",
+      "City": "Long beach",
+      "State": "CA",
+      "Postal Code": "90802",
+      "Covered Entities": null,
+      "Industries": "Media and Entertainment - Sports",
+      "Privacy Policies": "Zwift Privacy Policy - 12/18/2020",
+      "Public Link": "https://www.dataprivacyframework.gov/participant/1210"
+    },
+    {
+      "Public Display Name": "Zwift, Inc",
+      "Legal Name": "Zwift, Inc",
+      "Install Date": "1/7/2021",
+      "Usage End Date": null,
+      "Inactive Start Date": "2/6/2022",
+      "Framework": "EU-U.S. Data Privacy Framework",
+      "Status": "Inactive - Lapse",
+      "HR Data": "No",
+      "Non-HR Data": "Yes",
+      "Street": "111 W. Ocean Blvd. Suite 1800",
+      "City": "Long beach",
+      "State": "CA",
+      "Postal Code": "90802",
+      "Covered Entities": null,
+      "Industries": "Media and Entertainment - Sports",
+      "Privacy Policies": "Zwift Privacy Policy - 12/18/2020",
+      "Public Link": "https://www.dataprivacyframework.gov/participant/1210"
+    },
+    {
+      "Public Display Name": "Zyper Inc",
+      "Legal Name": "Zyper Inc",
+      "Install Date": "9/23/2019",
+      "Usage End Date": null,
+      "Inactive Start Date": "10/22/2020",
+      "Framework": "EU-U.S. Data Privacy Framework",
+      "Status": "Inactive - Withdrawal",
+      "HR Data": "Yes",
+      "Non-HR Data": "Yes",
+      "Street": "580 Howard Street, Suite 101",
+      "City": "San Francisco",
+      "State": "CA",
+      "Postal Code": "94105",
+      "Covered Entities": "Zyper Inc",
+      "Industries": "Media and Entertainment - Advertising Services - Internet Advertising,Information and Communications Technology - Software - Application Software",
+      "Privacy Policies": "Zyper HR Privacy Policy - 9/10/2019,Zyper Privacy Policy - 9/10/2019",
+      "Public Link": "https://www.dataprivacyframework.gov/participant/4171"
+    },
+    {
+      "Public Display Name": "ZL Technologies, Inc.",
+      "Legal Name": "ZL Technologies, Inc.",
+      "Install Date": "1/5/2018",
+      "Usage End Date": "10/18/2025",
+      "Inactive Start Date": null,
+      "Framework": "EU-U.S. Data Privacy Framework",
+      "Status": "Active - Re-certification under Review",
+      "HR Data": "Yes",
+      "Non-HR Data": "Yes",
+      "Street": "860 N McCarthy Blvd Ste 100",
+      "City": "Milpitas",
+      "State": "CA",
+      "Postal Code": "95035",
+      "Covered Entities": null,
+      "Industries": "Information and Communications Technology - Software",
+      "Privacy Policies": "ZLTI Data Privacy Policy_Rev8_11-13-2023 - 11/13/2023",
+      "Public Link": "https://www.dataprivacyframework.gov/participant/6076"
+    },
+    {
+      "Public Display Name": "Yum Brands, Inc.",
+      "Legal Name": "Yum Brands, Inc.",
+      "Install Date": "1/27/2017",
+      "Usage End Date": null,
+      "Inactive Start Date": "10/2/2020",
+      "Framework": "EU-U.S. Data Privacy Framework",
+      "Status": "Inactive - Withdrawal",
+      "HR Data": "Yes",
+      "Non-HR Data": "No",
+      "Street": "1441 Gardiner Lane",
+      "City": "Louisville",
+      "State": "KY",
+      "Postal Code": "40213",
+      "Covered Entities": "Taco Bell of America, LLC,Taco Bell Corp,KFC Corporation,Pizza Hut Holdings, LLC,Yum Brands, Inc. and Yum Restaurant Services Group, LLC",
+      "Industries": "Food and Beverage",
+      "Privacy Policies": "Yum Global HR Web Sites Privacy Policy - 9/15/2018",
+      "Public Link": "https://www.dataprivacyframework.gov/participant/3409"
+    }
+  ],
+  "detailRecord": {
+    "PublicDisplayName": " DevRev, Inc.",
+    "PrivacyPolicies": [
+      {
+        "Name": "Privacy policy",
+        "Description": "We are appending our certification application with our privacy policy in the link below (https://devrev.ai/legal/privacy-policy).\r\n\r\nOur adherence to the Data Transfer Framework Principles (DPF) is provided under point \"1.3. Our adherence to the Data Transfer Framework Principles (DPF)\".\r\n\r\nThe HR Policy is attached in the next step.",
+        "PolicyCurrent": true,
+        "Type": "HR and Non-HR",
+        "EffectiveDate": "2026-05-21T12:00:00+00:00",
+        "ExternalUrl": "https://devrev.ai/legal/privacy-policy",
+        "Document": []
+      }
+    ],
+    "Certifications": [
+      {
+        "FrameworkId": 1,
+        "Name": "EU-US Certification",
+        "PublicStatus": "Active",
+        "HRData": true,
+        "NonHRData": true,
+        "InstallDate": "2025-07-17T12:00:00+00:00",
+        "UsageEndDate": "2027-05-22T12:00:00+00:00",
+        "RecourseMechanisms": [
+          {
+            "Name": "EU Data Protection Authorities (DPAs)",
+            "NonHR": true,
+            "HR": false,
+            "Website": "https://edpb.europa.eu/about-edpb/board/members_en",
+            "Type": "Dispute Resolution Provider"
+          },
+          {
+            "Name": "EU Data Protection Authorities (DPAs)",
+            "NonHR": false,
+            "HR": true,
+            "Website": "https://edpb.europa.eu/about-edpb/board/members_en",
+            "Type": "Dispute Resolution Provider"
+          },
+          {
+            "Name": "Federal Trade Commission",
+            "NonHR": false,
+            "HR": false,
+            "Website": "https://www.ftc.gov",
+            "Type": "U.S. Statutory Body"
+          }
+        ],
+        "InactivePeriods": []
+      },
+      {
+        "FrameworkId": 3,
+        "Name": "UK Extension Certification",
+        "PublicStatus": "Active",
+        "HRData": true,
+        "NonHRData": true,
+        "InstallDate": "2025-07-17T12:00:00+00:00",
+        "UsageEndDate": "2027-05-22T12:00:00+00:00",
+        "RecourseMechanisms": [
+          {
+            "Name": "UK Information Commissioner’s Office (ICO)",
+            "NonHR": true,
+            "HR": false,
+            "Website": "https://ico.org.uk/make-a-complaint/uk-extension-to-the-eu-us-data-privacy-framework-complaints-tool/",
+            "Type": "Dispute Resolution Provider"
+          },
+          {
+            "Name": "Federal Trade Commission",
+            "NonHR": false,
+            "HR": false,
+            "Website": "https://www.ftc.gov",
+            "Type": "U.S. Statutory Body"
+          },
+          {
+            "Name": "UK Information Commissioner’s Office (ICO)",
+            "NonHR": false,
+            "HR": true,
+            "Website": "https://ico.org.uk/make-a-complaint/uk-extension-to-the-eu-us-data-privacy-framework-complaints-tool/",
+            "Type": "Dispute Resolution Provider"
+          }
+        ],
+        "InactivePeriods": []
+      }
+    ],
+    "CoveredEntities": [
+      {
+        "Name": "DevRev UV Cloud, Inc.; 1731 Embarcadero Rd, Ste 100, Palo Alto, CA 94303"
+      }
+    ]
+  }
+}

@@ -17,7 +17,9 @@ export interface VendorRiskInput {
   securityCertifications?: string[] | null;
   transferMechanisms?: string[] | null;
   knownIncidents?: Array<{ date: string | Date; description?: string }> | null;
-  dpfStatus?: 'active' | 'lapsed' | 'discontinued' | 'none' | null;
+  // The registry's own vocabulary (Sprint 7): a lapse is a missed renewal and a
+  // withdrawal is a decision. Both cost the same points and read differently.
+  dpfStatus?: 'active' | 'lapsed' | 'withdrawn' | 'none' | null;
   dpfLapsedDate?: string | null;
 }
 
@@ -156,8 +158,8 @@ export function calculateVendorRisk(
   ].map(m => m.toLowerCase());
   
   const hasDpfMechanism = mechanisms.includes('data_privacy_framework');
-  const isDpfActive = vendor.dpfStatus === 'active' || (hasDpfMechanism && vendor.dpfStatus !== 'lapsed' && vendor.dpfStatus !== 'discontinued');
-  const isDpfLapsed = vendor.dpfStatus === 'lapsed' || vendor.dpfStatus === 'discontinued';
+  const isDpfLapsed = vendor.dpfStatus === 'lapsed' || vendor.dpfStatus === 'withdrawn';
+  const isDpfActive = vendor.dpfStatus === 'active' || (hasDpfMechanism && !isDpfLapsed);
   const isAdequate = country && isAdequateDestination(country) && (country !== 'US' || isDpfActive);
 
   if (isEu) {
@@ -170,7 +172,9 @@ export function calculateVendorRisk(
     locationDetail = 'Unknown country (20/20 pts)';
   } else if (country === 'US' && isDpfLapsed) {
     locationPoints = 20;
-    locationDetail = `United States (DPF certification lapsed${vendor.dpfLapsedDate ? ` on ${vendor.dpfLapsedDate}` : ''}) (20/20 pts)`;
+    locationDetail = vendor.dpfStatus === 'withdrawn'
+      ? `United States (withdrawn from the DPF${vendor.dpfLapsedDate ? ` on ${vendor.dpfLapsedDate}` : ''}) (20/20 pts)`
+      : `United States (DPF certification lapsed${vendor.dpfLapsedDate ? ` on ${vendor.dpfLapsedDate}` : ''}) (20/20 pts)`;
   } else {
     locationPoints = 20;
     locationDetail = `${country === 'US' ? 'United States (conditional adequacy, no DPF certified)' : 'Non-adequate country (' + country + ')'} (20/20 pts)`;

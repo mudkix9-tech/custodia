@@ -1,7 +1,7 @@
 /**
  * Sprint 2 worker — the pipeline's recurring work (audit P-1, P-5).
  *
- * Two jobs on the vendor-intelligence queue, plus the DPF import schedule:
+ * Two jobs on the vendor-intelligence queue:
  *
  *   vendor-intelligence-enrich  — runs a batch enrichment. Created by the
  *     intelligence router with the target list and run id in its payload;
@@ -9,11 +9,11 @@
  *     `vendor_intelligence_runs.cursor` rather than paying for completed
  *     targets again.
  *
- *   dpf-registry-import — refreshes `dpf_registrations` from the Department of
- *     Commerce participant list. A lapsed DPF certification is a Chapter V
- *     event; until this table is fed, the only thing standing between a
- *     customer and a dead adequacy claim was a string somebody typed into a
- *     seed literal (known-concerns §18, audit D19/D5).
+ *   reverify-vendor — re-probes one catalogue row and stamps its freshness.
+ *
+ * The DPF registry import used to be a third branch here. It moved to
+ * `workers/dpfRegistry.ts` in Sprint 7, on its own queue, because pg-boss keys
+ * schedules by queue name and this queue already had one — see that file.
  */
 import { createWorker, createQueue } from '../lib/queue.js';
 import { db } from '../db.js';
@@ -21,55 +21,12 @@ import {
   vendors,
   organizationVendors,
   vendorIntelligenceRuns,
-  dpfRegistrations,
 } from 'db';
 import { eq, and, gt, isNull, or, sql } from 'drizzle-orm';
 import { runEnrichBatch, reverifyVendor, type EnrichTarget } from '../lib/vendorIntelligence.js';
-import { matchDpfStatus, dpfNameKey } from '../lib/vendorDpf.js';
 import { recalculateVendorRiskForAllOrgs } from '../routers/vendors.js';
 
 export const vendorIntelligenceQueue = createQueue('vendor-intelligence');
-
-/**
- * The DPF participant list lives at dataframework.dpf.gov.myamerican.site… — no.
- * The real endpoint is the DoC's public search API; it publishes JSON without
- * auth. Overridable by env so tests point at a fixture server.
- */
-const DPF_LIST_URL =
-  process.env.DPF_REGISTRY_URL ||
-  'https://dataframework-api.trade.gov/api/v1/participants';
-
-interface DpfRegistryEntry {
-  name: string;
-  status?: string;
-  certification_date?: string | null;
-  recertification_date?: string | null;
-  next_recertification_date?: string | null;
-  websites?: Array<{ website?: string; url?: string }> | string[];
-  covered_entities?: unknown[];
-}
-
-function entryDomains(entry: DpfRegistryEntry): string[] {
-  const raw = Array.isArray(entry.websites) ? entry.websites : [];
-  return raw
-    .map((w) => (typeof w === 'string' ? w : (w?.website || w?.url || '')))
-    .map((s) => s.trim().toLowerCase().replace(/^[a-z][a-z0-9+.-]*:\/\//, '').replace(/^www\./, '').split('/')[0])
-    .filter((d): d is string => Boolean(d));
-}
-
-async function fetchDpfEntries(): Promise<DpfRegistryEntry[]> {
-  const response = await fetch(DPF_LIST_URL, {
-    headers: { Accept: 'application/json', 'User-Agent': 'CustodiaCompliance/1.0' },
-    signal: AbortSignal.timeout(60_000),
-  });
-  if (!response.ok) throw new Error(`DPF registry responded ${response.status}`);
-  const body = await response.json();
-  // The endpoint has shipped both a bare array and an envelope; accept either.
-  if (Array.isArray(body)) return body as DpfRegistryEntry[];
-  if (Array.isArray(body?.participants)) return body.participants;
-  if (Array.isArray(body?.results)) return body.results;
-  throw new Error('Unrecognised DPF registry payload shape');
-}
 
 export const vendorIntelligenceWorker = createWorker(
   'vendor-intelligence',
@@ -121,58 +78,6 @@ export const vendorIntelligenceWorker = createWorker(
           .where(eq(vendors.id, vendor.id));
 
         void outcome;
-        break;
-      }
-
-      case 'dpf-registry-import': {
-        try {
-          const entries = await fetchDpfEntries();
-
-          let importedCount = 0;
-          for (const entry of entries) {
-            if (!entry?.name) continue;
-            const key = dpfNameKey(entry.name).slice(0, 255);
-            if (!key) continue;
-
-            await db
-              .insert(dpfRegistrations)
-              .values({
-                nameKey: key,
-                organisationName: entry.name.slice(0, 500),
-                domains: entryDomains(entry),
-                status: String(entry.status || 'active').toLowerCase() === 'lapsed'
-                  ? 'lapsed'
-                  : String(entry.status || 'active').toLowerCase() === 'discontinued'
-                    ? 'discontinued'
-                    : 'active',
-                certificationDate: entry.certification_date ?? null,
-                recertificationDate: entry.recertification_date ?? null,
-                nextRecertificationDate: entry.next_recertification_date ?? null,
-                coveredEntities: (entry.covered_entities ?? []) as unknown as Record<string, unknown>,
-                sourceUrl: DPF_LIST_URL,
-                fetchedAt: new Date(),
-              })
-              .onConflictDoUpdate({
-                target: dpfRegistrations.nameKey,
-                set: {
-                  organisationName: entry.name.slice(0, 500),
-                  domains: entryDomains(entry),
-                  status: sql`excluded.status`,
-                  certificationDate: sql`excluded.certification_date`,
-                  recertificationDate: sql`excluded.recertification_date`,
-                  nextRecertificationDate: sql`excluded.next_recertification_date`,
-                  coveredEntities: sql`excluded.covered_entities`,
-                  fetchedAt: new Date(),
-                },
-              });
-            importedCount += 1;
-          }
-
-          console.log(`[Vendor Intelligence] DPF registry import complete: ${importedCount} entries`);
-        } catch (err) {
-          console.error('[Vendor Intelligence] DPF registry import failed:', err instanceof Error ? err.message : String(err));
-          throw err;
-        }
         break;
       }
 

@@ -10,7 +10,6 @@ import {
   vendors,
   vendorSubProcessors,
   vendorSubProcessorEntities,
-  dpfRegistrations,
   assessmentTemplates,
   assessments,
   assessmentAnswers,
@@ -20,7 +19,8 @@ import {
 import { eq, and, or, desc, inArray, isNull } from 'drizzle-orm';
 import { crossCheckVendorResponses, calculateDiscrepancyRiskPenalty } from '../lib/vendorCrossCheck.js';
 import { parseTrustCenterProfile, mapTrustCenterToAssessmentAnswers } from '../lib/vendorTrustCenter.js';
-import { matchDpfStatus } from '../lib/vendorDpf.js';
+import { matchDpfStatus, type DpfMatchStatus } from '../lib/vendorDpf.js';
+import { loadDpfEntriesFor } from '../lib/vendorDpfLookup.js';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 import React from 'react';
@@ -743,14 +743,15 @@ Only return valid JSON, nothing else.`;
         ...(entitySubs || []).map((s: any) => ({ name: s.name, country: s.country, service: s.service })),
       ];
 
-      // DPF status check if US-based
-      let dpfStatus: 'active' | 'lapsed' | 'discontinued' | 'none' = 'none';
+      // DPF status check if US-based. VD-8: the registrations this vendor could
+      // match, not all 16,534 of them.
+      let dpfStatus: DpfMatchStatus | 'none' = 'none';
       if (assessment.vendor.headquartersCountry === 'US') {
-        const dpfEntries = await db.select().from(dpfRegistrations);
+        const dpfEntries = await loadDpfEntriesFor(db, [
+          { name: assessment.vendor.name, website: assessment.vendor.website },
+        ]);
         const match = matchDpfStatus(assessment.vendor.name, assessment.vendor.website, dpfEntries);
-        if (match.status === 'active' || match.status === 'lapsed') {
-          dpfStatus = match.status;
-        }
+        if (match.status !== 'not_found') dpfStatus = match.status;
       }
 
       const questionsSnapshot = (assessment.assessment.questionsSnapshot as any[]) || [];

@@ -5,6 +5,7 @@
  * against verified intelligence facts (DPA clause analyses, DPF registry statuses,
  * sub-processor entity lists, hosting regions, and encryption controls).
  */
+import { dpfLapseFinding } from './vendorDpf.js';
 
 export interface VendorDiscrepancy {
   id: string;
@@ -30,7 +31,7 @@ export interface CrossCheckInput {
   euHostingAvailable?: boolean | null;
   usingEuHosting?: boolean | null;
   securityCertifications?: string[];
-  dpfStatus?: 'active' | 'lapsed' | 'discontinued' | 'none' | null;
+  dpfStatus?: 'active' | 'lapsed' | 'withdrawn' | 'none' | null;
   subProcessors?: Array<{ name: string; country?: string | null; service?: string | null }>;
   dpaClauseAnalysis?: {
     clauses?: Record<string, { status: 'present' | 'weak' | 'missing'; excerpt?: string }>;
@@ -170,7 +171,18 @@ export function crossCheckVendorResponses(input: CrossCheckInput): VendorDiscrep
     // 3. Data Privacy Framework (DPF) Cross-Check
     if (/data\s+privacy\s+framework|dpf|privacy\s+shield|us\s+adequacy/i.test(qText)) {
       const claimsDpf = valLower === 'yes' || valLower.includes('active') || valLower.includes('certified');
-      if (claimsDpf && (dpfStatus === 'lapsed' || dpfStatus === 'discontinued' || dpfStatus === 'none')) {
+      if (claimsDpf && (dpfStatus === 'lapsed' || dpfStatus === 'withdrawn' || dpfStatus === 'none')) {
+        // VD-22. The copy comes from `dpfLapseFinding` rather than being written
+        // here, because the same three facts have to be said the same way
+        // wherever a lapse surfaces — and the thing being guarded against is
+        // one of those places calling it a breach. It is not: Articles 33 and 34
+        // are a security incident on a 72-hour clock, and a certification that
+        // was not renewed is a transfer that has stopped evidencing a Chapter V
+        // safeguard. Different obligation, different clock, different procedure.
+        const finding = dpfLapseFinding(
+          dpfStatus === 'none' ? 'not_found' : dpfStatus,
+          vendorName,
+        )!;
         discrepancies.push({
           id: `disc_dpf_${qId}`,
           type: 'dpf_adequacy_discrepancy',
@@ -179,15 +191,13 @@ export function crossCheckVendorResponses(input: CrossCheckInput): VendorDiscrep
           claimedFact: `Claims active EU–U.S. Data Privacy Framework certification: "${valStr}"`,
           verifiedFact:
             dpfStatus === 'lapsed'
-              ? 'Department of Commerce DPF Registry records certification status as LAPSED.'
-              : dpfStatus === 'discontinued'
-              ? 'Department of Commerce DPF Registry records certification status as DISCONTINUED.'
-              : 'Entity not found in official Department of Commerce DPF Registry.',
-          explanation:
-            'The vendor relies on the EU–U.S. DPF for Chapter V transfer adequacy, but the statutory registry indicates the certification is no longer in good standing.',
+              ? 'Department of Commerce DPF participant list records this certification as lapsed.'
+              : dpfStatus === 'withdrawn'
+              ? 'Department of Commerce DPF participant list records this organisation as withdrawn from the framework.'
+              : 'Entity not found on the Department of Commerce DPF participant list.',
+          explanation: finding.detail,
           gdprArticle: 'Article 45 & Article 46',
-          recommendation:
-            'Execute standard European Commission SCCs (Module 2/3) immediately or suspend transfers until recertification.',
+          recommendation: finding.action,
         });
       }
     }

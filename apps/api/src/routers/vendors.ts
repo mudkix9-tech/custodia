@@ -37,7 +37,7 @@ import {
   type CatalogueEntry,
   normaliseCountry,
 } from '../lib/vendorImport.js';
-import { auditLogs, vendorSubProcessorEntities, vendorFieldProvenance, dpfRegistrations, vendorSubProcessorAcknowledgements } from 'db';
+import { auditLogs, vendorSubProcessorEntities, vendorFieldProvenance, vendorSubProcessorAcknowledgements } from 'db';
 import {
   describeChanges,
   changeTypeOf,
@@ -60,7 +60,8 @@ import { crossCheckVendorResponses, calculateDiscrepancyRiskPenalty, discrepancy
 import { safeFetch, BlockedRequestError } from '../lib/safeFetch.js';
 import { getVendorBenchmarkStats } from '../lib/vendorBenchmarking.js';
 import { matchRegulatoryDecisions } from '../lib/vendorEnforcementFeed.js';
-import { matchDpfStatus } from '../lib/vendorDpf.js';
+import { matchDpfStatus, type DpfMatchStatus } from '../lib/vendorDpf.js';
+import { loadDpfEntriesFor } from '../lib/vendorDpfLookup.js';
 export { calculateVendorRisk, NEW_LINK_RISK_INPUTS };
 
 /**
@@ -124,22 +125,34 @@ async function vendorEvidenceCounts(dbInstance: any, orgVendorId: string) {
 }
 
 /**
- * DPF status for a US vendor, matched on folded name — never substring, which is
- * how "Go" used to match "google".
+ * DPF status for a US vendor — VD-7, VD-8.
+ *
+ * This used to inline its own fold: `LOWER(organisation_name) = LOWER(name)` OR
+ * a hand-written `[^a-z0-9]` strip, with no NFD normalisation and no domain
+ * check at all. `matchDpfStatus` is the matcher with fixtures behind it, and it
+ * was being bypassed by both of the call sites that actually ask the question —
+ * so a registrant published as "Société Générale" never matched, and no vendor
+ * was ever matched by its domain. It also read `dpf.recertificationDueDate`, a
+ * column that does not exist on the table; `dbInstance` is `any`, so `tsc` had
+ * nothing to disagree with and `dpfLapsedDate` has always been undefined. The
+ * risk factor that renders "DPF certification lapsed on {date}" has therefore
+ * never printed a date.
  */
-export async function resolveDpfStatus(dbInstance: any, vendor: any): Promise<{ dpfStatus?: 'active' | 'lapsed' | 'discontinued'; dpfLapsedDate?: string }> {
+export async function resolveDpfStatus(dbInstance: any, vendor: any): Promise<{ dpfStatus?: DpfMatchStatus; dpfLapsedDate?: string }> {
   if (vendor.headquartersCountry !== 'US') return {};
-  const [dpf] = await dbInstance.select().from(dpfRegistrations).where(
-    or(
-      sql`LOWER(${dpfRegistrations.organisationName}) = LOWER(${vendor.name})`,
-      sql`${dpfRegistrations.nameKey} = ${vendor.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`
-    )
-  );
-  if (!dpf) return {};
+
+  const entries = await loadDpfEntriesFor(dbInstance, [{ name: vendor.name, website: vendor.website }]);
+  const { status, entry } = matchDpfStatus(vendor.name, vendor.website, entries);
+  if (status === 'not_found' || !entry) return {};
+
+  // The registry publishes the date the certification stopped being current, so
+  // that is the date a reviewer is shown — not the recertification deadline it
+  // missed, which is a different day and is null on every inactive row anyway.
+  const lapsedOn = entry.inactiveStartDate;
   return {
-    dpfStatus: dpf.status as any,
-    dpfLapsedDate: dpf.recertificationDueDate && dpf.status === 'lapsed'
-      ? dpf.recertificationDueDate.toISOString().split('T')[0]
+    dpfStatus: status,
+    dpfLapsedDate: status !== 'active' && lapsedOn
+      ? new Date(lapsedOn).toISOString().slice(0, 10)
       : undefined,
   };
 }
@@ -2970,7 +2983,13 @@ export const vendorsRouter = router({
         list.push({ name: s.name, country: s.country, service: s.service });
       }
 
-      const dpfEntries = await ctx.db.select().from(dpfRegistrations);
+      // VD-8. Only the registrations these vendors could match, not the
+      // whole registry — this is a per-request query on a table that is now
+      // 16,534 rows.
+      const dpfEntries = await loadDpfEntriesFor(
+        ctx.db,
+        orgVendors.map((ov: any) => ({ name: ov.vendor.name, website: ov.vendor.website })),
+      );
 
       const results: Array<{
         vendorId: string;
@@ -2984,12 +3003,10 @@ export const vendorsRouter = router({
         const assessment = assessmentsList.find((a: any) => a.vendorId === ov.orgVendor.id);
         const subProcessors = subMap.get(ov.vendor.id) || [];
 
-        let dpfStatus: 'active' | 'lapsed' | 'discontinued' | 'none' = 'none';
+        let dpfStatus: DpfMatchStatus | 'none' = 'none';
         if (ov.vendor.headquartersCountry === 'US') {
           const match = matchDpfStatus(ov.vendor.name, ov.vendor.website, dpfEntries);
-          if (match.status === 'active' || match.status === 'lapsed') {
-            dpfStatus = match.status;
-          }
+          if (match.status !== 'not_found') dpfStatus = match.status;
         }
 
         const responses = (assessment?.responses as Record<string, any>) || {};

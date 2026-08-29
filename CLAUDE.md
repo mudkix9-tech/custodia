@@ -113,6 +113,15 @@ counters on it — `ai_queries_used` and `ai_dpas_analyzed` — so whichever pat
 month has rolled over must clear both (`aiWindowReset()` in `constants/aiQuota.ts`);
 clearing one turns the other back into a lifetime counter, silently.
 
+**Sprint 7 added the DPF registry parsers to `test:vendors`**, against a dated sample of
+what the endpoints actually returned (`lib/fixtures/dpf-registry-2026-08-29.json`) rather
+than a hand-written approximation. Two of those fixtures guard things that look like
+detail and are not: the export's dates are US-locale `M/D/YYYY`, so `new Date('1/7/2021')`
+is 7 January or 1 July depending on the runtime and a certification date out by six months
+reads exactly like a correct one; and fourteen organisations appear twice under one
+framework — an old listing and a current one — where taking the later row hands two of
+them a withdrawn certification they do not have.
+
 **The audit middleware only diffs paths it recognises, and it recognises them by
 name.** `classifyActionType()` in `utils/auditClassification.ts` decides whether a
 mutation is a create/update/delete; without a match it returns `'other'` and
@@ -156,6 +165,29 @@ the D6 gate (a completed questionnaire only moves the score once a human has
 reviewed it) and the Art. 9 factor moving off an English keyword scan onto the
 controlled vocabulary. Between the deploy and the recalculation, `risk_score`
 and the `risk_factors` text beside it describe two different formulas.
+
+**`dpf_registrations` is one row per (organisation, framework), and the feed is not
+where any document says it is.** The Department of Commerce publishes three separate
+certifications — EU-U.S., the UK Extension, Swiss-U.S. — which an organisation holds in
+any subset and which lapse independently, so the unique key is `(name_key, framework)`
+and `matchDpfStatus` takes a framework (defaulting to `eu_us`, which is what a GDPR
+transfer needs). The source is the participant list's own SPA API at
+`dpfapi.azurewebsites.net/api`: `POST /api/downloadFile` for the bulk XLSX,
+`GET /api/participants/{id}` for the dispute body and privacy policy URL, which the bulk
+export does not carry. `dataframework-api.trade.gov` — in this repo from Sprint 2 to
+Sprint 7 — does not resolve, and `www.dataprivacyframework.gov` returns the same SPA shell
+for every path, so probing it for an export path finds a 200 every time.
+
+Status vocabulary is the registry's own four: `active`, `under_review` ("Active -
+Re-certification under Review", which is *not* a lapse), `lapsed`, `withdrawn` — the last
+two kept apart because a missed renewal and a decision send someone to ask different
+things. **A lapse is not a breach**: it is a transfer that has stopped evidencing a
+Chapter V safeguard, with no Art. 33/34 clock and no retroactive effect on data already
+transferred. `dpfLapseFinding()` in `lib/vendorDpf.ts` is the copy; use it rather than
+writing the sentence again.
+
+Reads go through `loadDpfEntriesFor()` — the table is 16,500 rows and every call site used
+to `select()` all of it per request.
 
 **`data_categories_shared` is a controlled vocabulary, not free text.**
 `constants/vendorDataCategories.ts` owns the keys; the web workspace mirrors them
@@ -300,6 +332,15 @@ only reason multiplexed workers route correctly.
 `startAfter` (s), `attempts` → `retryLimit` (minus one), `backoff` → `retryDelay` /
 `retryBackoff`. Pass pg-boss names (`singletonKey`, `startAfter`, `retryLimit`) directly
 and they go through untouched.
+
+**A queue gets one schedule, and a second one silently replaces it.** pg-boss's
+`schedule` table is `name text primary key` where `name` is the *queue*, upserted `ON
+CONFLICT (name) DO UPDATE`. So two `boss.schedule()` calls naming one queue are not two
+crons — the later rewrites the earlier one's cron and payload, and nothing logs it.
+`vendor-intelligence` carried both `dpf-registry-import` and `vendor-review-reminder`
+that way, so the DPF registry sync was scheduled in code, absent from `DORMANT_JOBS`,
+reported by no warning, and never once registered. A recurring job needs its own queue;
+`scheduleGlobalJobs` now throws at startup if one is asked for twice.
 
 **One service in production, though the code still supports a split.** `WORKER_ROLE=web`
 makes `createWorker()` a no-op, which is how an API-only process would avoid running

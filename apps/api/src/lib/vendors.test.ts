@@ -751,6 +751,199 @@ check(isDpfLapsedByDate({ nextRecertificationDate: '2020-01-01' }) === true, 'an
 check(isDpfLapsedByDate({ nextRecertificationDate: '2999-01-01' }) === false, 'a future recert date does not');
 check(isDpfLapsedByDate({}) === false, 'no date means no lapse claim');
 
+console.log('\nSprint 7 — DPF registry ingestion (VD-7, VD-9, VD-22)\n');
+
+import {
+  dpfFrameworkFromId,
+  dpfFrameworkFromLabel,
+  dpfRejectRatioExceeded,
+  dpfStatusFromLabel,
+  domainFromUrl,
+  extractDpfDetail,
+  normaliseDpfExportRow,
+  parseDpfBoolean,
+  parseDpfDate,
+  parseParticipantId,
+  preferDpfRegistration,
+} from './vendorDpfRegistry.js';
+import { dpfLapseFinding } from './vendorDpf.js';
+import { createRequire } from 'node:module';
+
+// The dated sample is a slice of what the endpoints actually returned on
+// 29 August 2026, not a hand-written approximation of them. That is the whole
+// point of Sprint 7 task 0: a parser written against a response nobody has
+// received is the defect the superseded strategy shipped.
+const dpfSample = createRequire(import.meta.url)('./fixtures/dpf-registry-2026-08-29.json') as {
+  exportRows: Array<Record<string, unknown>>;
+  detailRecord: Record<string, unknown>;
+};
+
+// --- the framework discriminator, which is the whole of VD-9 -----------------
+
+check(dpfFrameworkFromLabel('EU-U.S. Data Privacy Framework') === 'eu_us',
+  'the EU-U.S. label resolves');
+// The label a substring fold would break on: it *contains* the EU-U.S. label.
+check(dpfFrameworkFromLabel('UK Extension to the EU-U.S. Data Privacy Framework') === 'uk_extension',
+  'the UK Extension is not filed as EU-U.S. — its label contains the EU-U.S. one');
+check(dpfFrameworkFromLabel('Swiss-U.S. Data Privacy Framework') === 'swiss_us', 'Swiss-U.S. resolves');
+check(dpfFrameworkFromLabel('EU-US Data Privacy Framework') === null,
+  'a label the Department did not publish is rejected, not guessed at');
+// The detail endpoint numbers the frameworks in a different order from the list.
+check(dpfFrameworkFromId(2) === 'swiss_us' && dpfFrameworkFromId(3) === 'uk_extension',
+  'detail framework ids map to the same three, in the API’s own order');
+
+check(dpfStatusFromLabel('Active - Re-certification under Review') === 'under_review',
+  'a renewal in progress is its own status, neither active nor a lapse');
+check(dpfStatusFromLabel('Inactive - Lapse') === 'lapsed' && dpfStatusFromLabel('Inactive - Withdrawal') === 'withdrawn',
+  'lapse and withdrawal stay apart — one is a missed deadline, the other a decision');
+check(dpfStatusFromLabel('Suspended') === null, 'an unknown status is rejected');
+
+// --- the M/D/YYYY trap -------------------------------------------------------
+
+check(parseDpfDate('9/13/2026') === '2026-09-13', 'a US-locale date parses month-first');
+check(parseDpfDate('1/7/2021') === '2021-01-07',
+  'and an ambiguous one resolves the same way in every locale — 7 January, never 1 July');
+check(parseDpfDate('') === null && parseDpfDate(null) === null, 'a blank date is absent, not the epoch');
+check(parseDpfDate('13/1/2021') === null, 'an impossible month is rejected rather than rolled over');
+
+check(parseDpfBoolean('Yes') === true && parseDpfBoolean('No') === false, 'Yes/No parse');
+check(parseDpfBoolean(null) === null && parseDpfBoolean('') === null,
+  'and nothing said is null — "we were not told" is not "no"');
+
+check(parseParticipantId('https://www.dataprivacyframework.gov/participant/5780') === 5780,
+  'the participant id comes out of the public link');
+
+check(domainFromUrl('https://www.devrev.ai/legal/privacy-policy?x=1') === 'devrev.ai',
+  'a policy URL yields its bare host');
+check(domainFromUrl('mailto:privacy@example.com') === null && domainFromUrl('not a url') === null,
+  'and anything that is not a hostname yields nothing');
+
+// --- one real export row per shape ------------------------------------------
+
+const dpfByKey = new Map<string, any>();
+let dpfRejectedRows = 0;
+for (const row of dpfSample.exportRows) {
+  const out = normaliseDpfExportRow(row as any);
+  if ('rejected' in out) { dpfRejectedRows += 1; continue; }
+  dpfByKey.set(`${out.nameKey}::${out.framework}`, out);
+}
+check(dpfRejectedRows === 0, 'every row in the dated sample normalises');
+
+const googleEu = dpfByKey.get('googlellc::eu_us');
+const googleUk = dpfByKey.get('googlellc::uk_extension');
+const googleCh = dpfByKey.get('googlellc::swiss_us');
+check(!!googleEu && !!googleUk && !!googleCh,
+  'one organisation produces three rows, one per certification — the key VD-9 asks for');
+check(googleEu.certificationDate === '2016-09-22' && googleUk.certificationDate === '2023-09-14',
+  'and they carry different certification dates, because they are different certifications');
+check(googleEu.participantId === 5780 && googleEu.sourceUrl === 'https://www.dataprivacyframework.gov/participant/5780',
+  'the provenance URL is the row’s own public page, not the endpoint we happened to call');
+
+const zwiftEu = dpfByKey.get('zwiftinc::eu_us');
+check(zwiftEu.status === 'lapsed' && zwiftEu.inactiveStartDate === '2022-02-06' && zwiftEu.nextRecertificationDate === null,
+  'a lapsed row carries the date it stopped being current and no renewal date');
+
+const yumEu = dpfByKey.get('yumbrandsinc::eu_us');
+check(yumEu.hrDataCovered === true && yumEu.nonHrDataCovered === false,
+  'HR-only coverage survives — which one boolean could not have said');
+
+const zlEu = dpfByKey.get('zltechnologiesinc::eu_us');
+check(zlEu.status === 'under_review', 'a re-certification under review keeps its own status');
+
+// --- matching is per framework ----------------------------------------------
+
+const threeFrameworks: DpfEntry[] = [
+  { nameKey: dpfNameKey('Acme Inc'), organisationName: 'Acme Inc', framework: 'eu_us', domains: ['acme.com'], status: 'active' },
+  { nameKey: dpfNameKey('Acme Inc'), organisationName: 'Acme Inc', framework: 'uk_extension', domains: ['acme.com'], status: 'lapsed' },
+  { nameKey: dpfNameKey('Acme Inc'), organisationName: 'Acme Inc', framework: 'swiss_us', domains: ['acme.com'], status: 'withdrawn' },
+];
+check(matchDpfStatus('Acme Inc', null, threeFrameworks).status === 'active',
+  'the default framework is EU-U.S., which is the one a GDPR transfer needs');
+check(matchDpfStatus('Acme Inc', null, threeFrameworks, 'uk_extension').status === 'lapsed',
+  'and a British customer gets the UK Extension answer, which is a different one');
+check(matchDpfStatus('Acme Inc', null, threeFrameworks, 'swiss_us').status === 'withdrawn',
+  'a withdrawal reports as a withdrawal, not as a lapse');
+// The failure this prevents: with three rows per organisation and no framework
+// filter, a domain hit returns whichever row the array happened to hold first.
+check(matchDpfStatus('Anything', 'https://acme.com', threeFrameworks, 'uk_extension').status === 'lapsed',
+  'the domain pass is scoped too — it cannot answer a UK question with the EU-U.S. row');
+// The same assertion read the other way: a certification found by domain reports
+// what it actually says. It used to match live entries only, so a vendor whose
+// certification had lapsed came back `not_found` — "never certified" in place of
+// "certification lapsed on 6 February", which is VD-22's distinction lost inside
+// the matcher rather than in the copy.
+check(matchDpfStatus('Anything', 'https://acme.com', threeFrameworks, 'swiss_us').entry?.organisationName === 'Acme Inc',
+  'and it returns the entry, so a lapse date has somewhere to come from');
+
+check(matchDpfStatus('Acme Inc', null, [
+  { nameKey: dpfNameKey('Acme Inc'), organisationName: 'Acme Inc', framework: 'eu_us', domains: [], status: 'under_review' },
+]).status === 'active',
+  'under_review folds to active for the Chapter V question — the Department still lists it');
+
+// A row written before the framework column existed answers only for the
+// framework it was written under, rather than for whatever was asked.
+const legacyDpf: DpfEntry[] = [{ nameKey: dpfNameKey('Acme Inc'), organisationName: 'Acme Inc', domains: [], status: 'active' }];
+check(matchDpfStatus('Acme Inc', null, legacyDpf).status === 'active'
+  && matchDpfStatus('Acme Inc', null, legacyDpf, 'uk_extension').status === 'not_found',
+  'a frameworkless legacy row answers for EU-U.S. and stays silent on the others');
+
+// --- detail enrichment -------------------------------------------------------
+
+const dpfDetail = extractDpfDetail(dpfSample.detailRecord as any);
+check(dpfDetail.privacyPolicyUrl === 'https://devrev.ai/legal/privacy-policy' && dpfDetail.domains.includes('devrev.ai'),
+  'the detail record yields the privacy policy URL and a domain to match on');
+check(dpfDetail.disputeResolutionBodyByFramework.eu_us === 'EU Data Protection Authorities (DPAs)'
+  && (dpfDetail.disputeResolutionBodyByFramework.uk_extension ?? '').includes('Information Commissioner'),
+  'and a different dispute body per framework — a DPA panel for the EU, the ICO for the UK');
+check(!Object.values(dpfDetail.disputeResolutionBodyByFramework).includes('Federal Trade Commission'),
+  'the FTC is the statutory body, not the dispute provider, and is not recorded as one');
+
+// --- two listings for one organisation ---------------------------------------
+
+// Fourteen organisations in the August 2026 export hold an old participant
+// listing and a current one under the same framework. The export is sorted by
+// name, so "whichever row arrived last" is decided by nothing — and for US Cloud
+// and Personify the dead listing is the later one, so it would report a
+// currently certified organisation as withdrawn.
+const liveListing = { status: 'active', certificationDate: '2024-01-01' } as any;
+const deadListing = { status: 'withdrawn', certificationDate: '2016-01-01' } as any;
+check(preferDpfRegistration(liveListing, deadListing) === liveListing
+  && preferDpfRegistration(deadListing, liveListing) === liveListing,
+  'a live listing wins over a dead one whichever order the export supplied them in');
+check(preferDpfRegistration(
+  { status: 'lapsed', certificationDate: '2016-01-01' } as any,
+  { status: 'lapsed', certificationDate: '2020-01-01' } as any,
+).certificationDate === '2020-01-01',
+  'and between two of the same kind, the later certification is the current record');
+
+// --- the abort threshold -----------------------------------------------------
+
+check(dpfRejectRatioExceeded(16534, 100) === false, 'a handful of odd rows is ordinary');
+check(dpfRejectRatioExceeded(16534, 5000) === true,
+  'a vocabulary change aborts the run rather than lapsing thousands of live certifications');
+check(dpfRejectRatioExceeded(0, 0) === true,
+  'and an empty response aborts too — otherwise the resolve pass lapses the whole table');
+
+// --- VD-22: what a lapse is called ------------------------------------------
+
+const dpfLapseCopy = dpfLapseFinding('lapsed', 'Acme Inc', '2026-02-06')!;
+// The word appears once, in the sentence that denies it. What must never happen
+// is the finding *asserting* a breach — a title or an instruction that sends a
+// controller to their Art. 33 procedure on a 72-hour clock they do not have.
+check(!/breach/i.test(dpfLapseCopy.title) && !/breach/i.test(dpfLapseCopy.action),
+  'neither the finding nor its instruction calls a lapsed certification a breach');
+check(/not a personal data breach/i.test(dpfLapseCopy.detail),
+  'the explanation says so outright, because the instinct it corrects is a strong one');
+check(/Articles 33/.test(dpfLapseCopy.detail) && /Chapter V/.test(dpfLapseCopy.detail),
+  'and names both — the obligation that does not apply and the one that does');
+check(/standard contractual clauses/i.test(dpfLapseCopy.action),
+  'and it names the safeguard to put in place, which is the actual obligation');
+check(dpfLapseCopy.detail.includes('2026-02-06') && /not act retroactively/.test(dpfLapseCopy.detail),
+  'it dates the lapse and says it does not reach back over transfers already made');
+check(dpfLapseFinding('withdrawn', 'Acme Inc')!.detail.includes('withdrew'),
+  'a withdrawal is described as a decision, not as a missed renewal');
+check(dpfLapseFinding('active', 'Acme Inc') === null, 'and an active certification raises nothing');
+
 console.log('\nSprint 2 — candidate assessment mapping\n');
 
 import { buildCatalogueWrites, diffFreshAgainstCatalogue } from './vendorIntelligenceMappers.js';

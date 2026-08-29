@@ -477,6 +477,110 @@ Three consequences worth carrying forward:
 **Gate:** `npm run check` and `npm run check:schema --workspace=packages/db` both green;
 migration `.sql`, `meta/NNNN_snapshot.json` and `meta/_journal.json` committed together.
 
+**Shipped, 29 August 2026.** Gate met: both typechecks at 0, all nine guards green, all
+eleven fixture suites green with `test:vendors` at 421 assertions, and `check:schema`
+green once `0058_grey_kronos.sql` and its snapshot are committed — the guard asks git, so
+an uncommitted migration reads as drift.
+
+**Task 0 answered open question 2, and the answer was worse than "no feed".** The
+endpoint this repo has called since Sprint 2 —
+`https://dataframework-api.trade.gov/api/v1/participants` — **does not resolve**. Nor is
+there anything at the URL the superseded document named:
+`www.dataprivacyframework.gov` is a Vite SPA that returns the same 2,116-byte shell for
+every path, which is a soft-404 host in exactly the sense VD-6 describes. What does exist
+is the SPA's own unauthenticated API at `dpfapi.azurewebsites.net/api`, verified by
+fetching it:
+
+| | |
+|---|---|
+| `GET /api/Framework` | the three frameworks and their ids |
+| `POST /api/downloadFile` | the whole participant list as XLSX, 1.45MB |
+| `GET /api/participants/{id}` | one participant in full |
+
+So Tier 1 for DPF is a real machine-readable feed, not the dated committed export the
+fallback anticipated. A dated sample of both response shapes is committed at
+`apps/api/src/lib/fixtures/dpf-registry-2026-08-29.json` and the fixtures parse it, so a
+change to the feed shows up as a diff against a response somebody actually received.
+
+**The export's shape is the one VD-9 predicted before anyone had looked.** 16,534 rows,
+one per (organisation, framework): 7,557 EU-U.S., 3,584 UK Extension, 5,393 Swiss-U.S.
+across 7,563 organisations. A vendor certified under one framework and not another is the
+ordinary case, not an edge, and the single-row table could not represent it.
+
+Six things were done differently from the list above, each deliberate:
+
+1. **The status vocabulary is four values, not three.** The registry publishes `Active`,
+   `Active - Re-certification under Review`, `Inactive - Lapse` and `Inactive -
+   Withdrawal`. `under_review` is stored rather than folded into `active` because the
+   Department still lists those 1,646 certifications as active participations, so it is
+   not a lapse — but a reviewer looking at a renewal in progress wants to know that is
+   what they are looking at. `matchDpfStatus` folds it back to active for the Chapter V
+   question. `discontinued` became `withdrawn` throughout, which is the registry's own
+   word, and lapse stays separate from withdrawal for VD-22's reason: one is a missed
+   deadline, the other is a decision, and they send someone to ask different questions.
+
+2. **HR coverage is two columns.** VD-9 names `hr_data_covered`. The feed publishes
+   `HR Data` *and* `Non-HR Data` independently, and 445 rows are HR-only against 10,782
+   non-HR-only — so one boolean cannot say which of "HR too" and "HR instead" it means,
+   and an HR transfer to an importer certified for non-HR data alone has no mechanism.
+   Three more columns arrived with them and are not padding: `inactive_start_date`,
+   because `vendorRisk` renders "DPF certification lapsed on {date}" and the code filling
+   it read a column that does not exist, so that date has never once printed;
+   `participant_id`, because without it a row already imported can never be matched to its
+   own detail record; and `detail_fetched_at`, because the two detail-only columns are
+   null on every bulk-imported row and "we have not asked" is not "none published" —
+   leaving that out would have reintroduced VD-13 in the sprint that fixes the pattern.
+
+3. **The sync is in `apps/api/src/scripts`, not `packages/db/src/scripts`.** It needs
+   `dpfNameKey` and the row normaliser, both of which live in `apps/api/src/lib` where
+   `test:vendors` can reach them. Moving the script would have meant either duplicating
+   the name fold into `packages/db` or having `packages/db` import from `apps/api`, and
+   the first of those is VD-7 exactly — a second copy of a matching rule, somewhere the
+   fixtures cannot see it.
+
+4. **`dpf-registry-sync` is on its own queue, and that is why it now runs at all.**
+   pg-boss keys its schedule table on the *queue* name — `name text primary key`, upserted
+   `ON CONFLICT (name) DO UPDATE` — so `boss.schedule()` twice on one queue is one cron
+   written twice. `workers/index.ts` scheduled `dpf-registry-import` and then
+   `vendor-review-reminder`, both on `vendor-intelligence`, so the second silently took the
+   first's row: the DPF import had never been registered, and would have failed at DNS if
+   it had been. Two independent silent failures on the job standing between a customer and
+   a dead adequacy claim. `scheduleGlobalJobs` now throws at startup on a second schedule
+   for a queue, so the next one is a failed deploy rather than a year of nothing.
+
+5. **`matchDpfStatus` reports what a domain match actually says.** The domain pass matched
+   `status === 'active'` entries only, so a vendor found by domain whose certification had
+   lapsed fell through to the name pass and came back `not_found` — "the registry has never
+   heard of them" in place of "their certification lapsed on 6 February". That is VD-22's
+   own distinction, lost inside the matcher rather than in the copy, and it matters more
+   now than it did: 6,719 of the 16,534 rows are inactive.
+
+6. **Two listings for one organisation resolve by status, not by row order.** Fourteen
+   organisations hold both an old participant record and a current one under the same
+   framework, under different participant ids. They must collapse before the insert —
+   Postgres refuses a statement whose `ON CONFLICT DO UPDATE` would touch one row twice —
+   and the obvious "last one wins" is decided by the export's alphabetical sort, which for
+   `US Cloud` and `Personify` keeps the withdrawn listing over the active one. A Chapter V
+   mechanism deleted by a sort order. `preferDpfRegistration` takes the live listing, then
+   the later certification.
+
+Two consequences worth carrying forward:
+
+- **The sync refuses to write past 5% unrecognised rows.** The resolve pass downgrades
+  anything a completed run did not touch, so a parser that silently stopped recognising a
+  renamed framework or status would lapse thousands of live certifications at once, on a
+  shared catalogue, arriving in every tenant as a risk-score move nobody asked for. A
+  vocabulary change at the Department should be an alert, not a mass downgrade. Against
+  the live feed today the figure is 0 of 16,534.
+
+- **The detail pass is scoped to the catalogue, so it does nothing yet.** Dispute
+  resolution body and privacy policy URL are per-participant, and fetching 7,563 of them at
+  the one-request-per-second budget is two hours of somebody else's server for facts about
+  vendors nobody has linked. It fetches only participants a catalogue vendor matches, which
+  is currently none, and widens by itself as Sprint 9 seeds. The domains those records
+  supply are the only domain signal the feed has — the bulk export has no domains column at
+  all — so until a vendor is seeded, DPF matching is by folded name alone.
+
 ### Sprint 8 — Adequacy and the tri-state semantics
 
 *Closes VD-10, VD-11, VD-12, VD-13, VD-14.*
@@ -599,8 +703,11 @@ Sprint 5.
    counter and the `dpaAnalyses` plan allowance — with billing consequences. **Needs a
    decision before Sprint 9**, because the seed either populates `dpa_clause_analysis` or the
    column goes.
-2. **Does a DPF feed exist?** Sprint 7 task 0. If not, Tier 1 for DPF becomes a dated
-   committed export and the sync worker becomes a staleness check.
+2. ~~**Does a DPF feed exist?**~~ **Answered, 29 August 2026.** Yes — an
+   unauthenticated bulk XLSX export and a per-participant JSON record at
+   `dpfapi.azurewebsites.net/api`, verified by fetching both. The endpoint this repo had
+   been calling does not resolve, and the one the superseded document named is a UI route
+   on a soft-404 host. See Sprint 7 above.
 3. **Trust-centre portals and terms of service.** Sprint 6 handles robots.txt; SafeBase, Vanta
    and Drata each have ToS that may address automated access. Reading them is a pre-Sprint-6
    task, and the answer may remove Tier 3 for some portals.

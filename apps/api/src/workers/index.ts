@@ -27,6 +27,7 @@ export * from './ropaRetention.js';
 export * from './ropaIntakeReminders.js';
 export * from './materialChange.js';
 export * from './vendorIntelligence.js';
+export * from './dpfRegistry.js';
 import { createQueue } from '../lib/queue.js';
 
 import { getBoss, wrapJobPayload, isJobDormant } from '../lib/queue.js';
@@ -39,28 +40,31 @@ export const trialExpiryQueue = createQueue('trial-expiry');
 
 export async function scheduleGlobalJobs() {
   const boss = await getBoss();
+  const scheduledQueues = new Set<string>();
+  const scheduleOnce = (b: any, queue: string, cron: string, payload: unknown) =>
+    scheduleQueue(scheduledQueues, b, queue, cron, payload);
 
-  await boss.schedule('gap-scanner', '0 2 * * *', wrapJobPayload('daily-scan', {}));
-  await boss.schedule('compliance-score', '0 3 * * *', wrapJobPayload('daily-calculation', {}));
-  await boss.schedule('consent-rollup', '0 1 * * *', wrapJobPayload('daily-rollup', {}));
-  await boss.schedule('consent-rollup-drift-check', '0 4 * * 0', wrapJobPayload('weekly-drift-check', {}));
-  await boss.schedule('impact-assessment', '*/15 * * * *', wrapJobPayload('impact-assessment-dispatcher', {}));
-  await boss.schedule('trial-expiry', '0 8 * * *', wrapJobPayload('daily-trial-expiry', {}));
+  await scheduleOnce(boss, 'gap-scanner', '0 2 * * *', wrapJobPayload('daily-scan', {}));
+  await scheduleOnce(boss, 'compliance-score', '0 3 * * *', wrapJobPayload('daily-calculation', {}));
+  await scheduleOnce(boss, 'consent-rollup', '0 1 * * *', wrapJobPayload('daily-rollup', {}));
+  await scheduleOnce(boss, 'consent-rollup-drift-check', '0 4 * * 0', wrapJobPayload('weekly-drift-check', {}));
+  await scheduleOnce(boss, 'impact-assessment', '*/15 * * * *', wrapJobPayload('impact-assessment-dispatcher', {}));
+  await scheduleOnce(boss, 'trial-expiry', '0 8 * * *', wrapJobPayload('daily-trial-expiry', {}));
 
   // Rate limit cleanup every hour
-  await boss.schedule('maintenance-jobs', '0 * * * *', wrapJobPayload('rate-limit-cleanup', {}));
+  await scheduleOnce(boss, 'maintenance-jobs', '0 * * * *', wrapJobPayload('rate-limit-cleanup', {}));
 
   // Fans out per-org DPIA mitigation reminder checks. Previously registered on the
   // 'dpia-reminders' queue alongside the checker and never scheduled at all.
-  await boss.schedule('dpia-dispatcher', '0 7 * * *', wrapJobPayload('dpia-dispatcher', {}));
+  await scheduleOnce(boss, 'dpia-dispatcher', '0 7 * * *', wrapJobPayload('dpia-dispatcher', {}));
 
   // Weekly consent/tracker reconciliation dispatch.
-  await boss.schedule('consent-scan', '0 5 * * 1', wrapJobPayload('weekly-reconcile-dispatch', {}));
+  await scheduleOnce(boss, 'consent-scan', '0 5 * * 1', wrapJobPayload('weekly-reconcile-dispatch', {}));
 
   // B19. Fans out per-org review-reminder checks. Both its jobs email customers, so
   // both sit in DORMANT_JOBS until an organisation opts in — see CLAUDE.md's
   // recurring-job checklist.
-  await boss.schedule('ropa-reviews-dispatcher', '0 6 * * *', wrapJobPayload('ropa-reviews-dispatcher', {}));
+  await scheduleOnce(boss, 'ropa-reviews-dispatcher', '0 6 * * *', wrapJobPayload('ropa-reviews-dispatcher', {}));
 
   // Sprint 4. Three dispatchers, all fanning out one job per organisation, all in
   // DORMANT_JOBS because each of them writes into a queue a customer then has to
@@ -70,16 +74,25 @@ export async function scheduleGlobalJobs() {
   //
   // Staggered by an hour each rather than sharing 02:00 with the gap scanner: they
   // all sweep the same register on the same 512MB box that also runs Chromium.
-  await boss.schedule('ropa-discovery', '0 4 * * 1', wrapJobPayload('ropa-discovery-dispatch', {}));
-  await boss.schedule('ropa-retention', '0 5 * * *', wrapJobPayload('ropa-retention-dispatch', {}));
-  await boss.schedule('ropa-intake', '0 9 * * *', wrapJobPayload('ropa-intake-dispatch', {}));
+  await scheduleOnce(boss, 'ropa-discovery', '0 4 * * 1', wrapJobPayload('ropa-discovery-dispatch', {}));
+  await scheduleOnce(boss, 'ropa-retention', '0 5 * * *', wrapJobPayload('ropa-retention-dispatch', {}));
+  await scheduleOnce(boss, 'ropa-intake', '0 9 * * *', wrapJobPayload('ropa-intake-dispatch', {}));
 
-  // Sprint 2 (P-5). The DPF participant list refreshes weekly — certifications
-  // lapse annually and the registry publishes recertification dates, so a
-  // weekly import notices a lapse within seven days of it happening. This is
-  // deliberately NOT dormant: it writes only into dpf_registrations, touching
-  // no customer-facing queue.
-  await boss.schedule('vendor-intelligence', '17 3 * * 1', wrapJobPayload('dpf-registry-import', {}));
+  /*
+   * Sprint 2 (P-5), rehomed in Sprint 7. The DPF participant list refreshes
+   * daily and certifications lapse annually, so a weekly sync notices a lapse
+   * within seven days of it happening. Deliberately NOT dormant: it writes only
+   * into dpf_registrations, touching no customer-facing queue.
+   *
+   * On its own `dpf-registry` queue, which is the whole reason it now runs.
+   * pg-boss's schedule table is keyed on the queue name — `ON CONFLICT (name) DO
+   * UPDATE` — so this line and the vendor-review-reminder line below both named
+   * `vendor-intelligence` and the second overwrote the first. The DPF sync was
+   * never registered, and the log line at the bottom of this function reported
+   * nothing wrong because a schedule that was silently replaced is not a
+   * schedule that is dormant. **Two schedules on one queue is one schedule.**
+   */
+  await scheduleOnce(boss, 'dpf-registry', '17 3 * * 1', wrapJobPayload('dpf-registry-sync', {}));
 
   /*
    * Scheduled *and* in `DORMANT_JOBS`, which is the house convention rather than a
@@ -92,7 +105,7 @@ export async function scheduleGlobalJobs() {
    * wired but switched off, because that state is otherwise invisible until someone
    * greps two files.
    */
-  await boss.schedule('vendor-intelligence', '30 6 * * *', wrapJobPayload('vendor-review-reminder', {}));
+  await scheduleOnce(boss, 'vendor-intelligence', '30 6 * * *', wrapJobPayload('vendor-review-reminder', {}));
 
   logDormantSchedules([
     ['gap-scanner', 'daily-scan'],
@@ -108,9 +121,40 @@ export async function scheduleGlobalJobs() {
     ['ropa-discovery', 'ropa-discovery-dispatch'],
     ['ropa-retention', 'ropa-retention-dispatch'],
     ['ropa-intake', 'ropa-intake-dispatch'],
-    ['vendor-intelligence', 'dpf-registry-import'],
+    ['dpf-registry', 'dpf-registry-sync'],
     ['vendor-intelligence', 'vendor-review-reminder'],
   ]);
+}
+
+/**
+ * `boss.schedule()` with the collision made loud.
+ *
+ * pg-boss's schedule table is `name text primary key` and its upsert is `ON
+ * CONFLICT (name) DO UPDATE`, where `name` is the *queue*. So two schedules on
+ * one queue are not two crons — the later call rewrites the earlier one's cron
+ * and payload, and nothing anywhere says so. That is how `dpf-registry-import`
+ * came to be scheduled in code, absent from `DORMANT_JOBS`, reported by no
+ * warning, and never once registered: `vendor-review-reminder` was scheduled on
+ * the same queue four lines later and took its row.
+ *
+ * A recurring job therefore needs its own queue, and asking for a second one is
+ * a mistake to fail on at startup rather than to discover a year later.
+ */
+function scheduleQueue(
+  seen: Set<string>,
+  boss: any,
+  queue: string,
+  cron: string,
+  payload: unknown,
+): Promise<unknown> {
+  if (seen.has(queue)) {
+    throw new Error(
+      `[queue] ${queue} already has a schedule. pg-boss keys schedules by queue name, ` +
+      'so this would silently replace it — give the job its own queue.'
+    );
+  }
+  seen.add(queue);
+  return boss.schedule(queue, cron, payload);
 }
 
 /**

@@ -1772,22 +1772,71 @@ export const vendorFieldProvenance = pgTable('vendor_field_provenance', {
  * Keyed on the folded organisation name because the registry publishes names,
  * not domains — the domains column carries every hostname the entry publishes,
  * which is how catalogue vendors are matched to it.
+ *
+ * **One row per (organisation, framework)** — VD-9. The Department publishes
+ * three separate certifications (EU-U.S., the UK Extension, Swiss-U.S.), an
+ * organisation may hold any subset of them, and they lapse independently: of
+ * the 16,534 rows in the August 2026 export, 7,557 are EU-U.S. and 3,584 are
+ * UK Extension, so a vendor certified for one and not the other is the ordinary
+ * case rather than an edge. A single row per organisation cannot represent that,
+ * and the answer it gives a British customer is the one computed for a German
+ * one. Hence the unique key is `(name_key, framework)`.
  */
 export const dpfRegistrations = pgTable('dpf_registrations', {
   id: uuid('id').defaultRandom().primaryKey(),
   nameKey: varchar('name_key', { length: 255 }).notNull(),
   organisationName: varchar('organisation_name', { length: 500 }).notNull(),
+  // 'eu_us' | 'uk_extension' | 'swiss_us'. The default exists for the migration
+  // rather than for the writers: `normaliseDpfExportRow` rejects a row whose
+  // framework it does not recognise, so nothing the sync inserts ever falls back
+  // to it. It is 'eu_us' because that is what `matchDpfStatus` already reads a
+  // frameworkless row as — anything imported before this column existed was
+  // written under the EU-U.S. assumption, and the two places that decide what
+  // such a row means must not disagree.
+  framework: varchar('framework', { length: 20 }).default('eu_us').notNull(),
   domains: text('domains').array().default(sql`ARRAY[]::text[]`),
-  // 'active' | 'lapsed' | 'discontinued'
+  // 'active' | 'under_review' | 'lapsed' | 'withdrawn' — the registry's own four
+  // states, folded to lower snake case. `under_review` is "Active -
+  // Re-certification under Review": the Department still lists the organisation
+  // as an active participant, so it is not a lapse, and collapsing it into
+  // `active` would lose the one thing a reviewer wants to know about it.
+  // `lapsed` and `withdrawn` are deliberately distinct (VD-22) — a lapse is a
+  // missed renewal, a withdrawal is a decision, and they send someone to ask
+  // different questions.
   status: varchar('status', { length: 20 }).default('active').notNull(),
   certificationDate: date('certification_date'),
   recertificationDate: date('recertification_date'),
   nextRecertificationDate: date('next_recertification_date'),
+  // When the certification stopped being current. The feed publishes it for
+  // every inactive row and for none of the active ones, which is also why
+  // `next_recertification_date` is null on exactly those 6,717 rows.
+  inactiveStartDate: date('inactive_start_date'),
+  // The DPF covers only the scope certified for, so an HR-data transfer to an
+  // importer certified for non-HR data alone has no mechanism. Two columns
+  // rather than one: 445 rows in the August 2026 export are HR-only and 10,782
+  // are non-HR-only, so a single `hr_data_covered` boolean cannot say which of
+  // "HR too" and "HR instead" it means.
+  hrDataCovered: boolean('hr_data_covered'),
+  nonHrDataCovered: boolean('non_hr_data_covered'),
+  // Where a data subject complains. Published per certification, not per
+  // organisation — the EU-U.S. row names a DPA panel, the UK Extension row
+  // names the ICO.
+  disputeResolutionBody: varchar('dispute_resolution_body', { length: 500 }),
+  privacyPolicyUrl: text('privacy_policy_url'),
   coveredEntities: jsonb('covered_entities').default([]),
+  // The Department's numeric participant id, from the row's own public link. It
+  // is the address of the detail record, so without it the two detail-sourced
+  // columns above can never be filled for a row already imported.
+  participantId: integer('participant_id'),
   sourceUrl: text('source_url'),
   fetchedAt: timestamp('fetched_at', { withTimezone: true }).defaultNow().notNull(),
+  // NULL means the bulk export supplied this row and the detail record was never
+  // read — so a null `dispute_resolution_body` means "not fetched", not "none
+  // published". That is VD-13's distinction, and leaving it out here would
+  // reintroduce the defect in the sprint that fixes the pattern.
+  detailFetchedAt: timestamp('detail_fetched_at', { withTimezone: true }),
 }, (table) => ({
-  nameUnq: unique('dpf_registrations_name_key_unq').on(table.nameKey),
+  nameUnq: unique('dpf_registrations_name_key_framework_unq').on(table.nameKey, table.framework),
 }));
 
 /**
