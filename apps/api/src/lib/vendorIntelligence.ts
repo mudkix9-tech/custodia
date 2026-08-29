@@ -346,10 +346,16 @@ export async function writeProvenance(vendorId: string, rows: ProvenanceWrite[])
       })),
     )
     .onConflictDoUpdate({
-      target: [vendorFieldProvenance.vendorId, vendorFieldProvenance.fieldName],
+      // (vendor, field, tier) since Sprint 10. A probe re-run replaces the
+      // previous probe of that field and leaves the registry row and any analyst
+      // correction standing, which is what makes precedence representable at all.
+      target: [
+        vendorFieldProvenance.vendorId,
+        vendorFieldProvenance.fieldName,
+        vendorFieldProvenance.sourceType,
+      ],
       set: {
         value: sql`excluded.value`,
-        sourceType: sql`excluded.source_type`,
         sourceUrl: sql`excluded.source_url`,
         confidence: sql`excluded.confidence`,
         evidenceSnippet: sql`excluded.evidence_snippet`,

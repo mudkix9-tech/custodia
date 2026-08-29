@@ -1794,8 +1794,36 @@ export const vendorFieldProvenance = pgTable('vendor_field_provenance', {
   retrievedAt: timestamp('retrieved_at', { withTimezone: true }).defaultNow().notNull(),
   verifiedBy: varchar('verified_by', { length: 255 }),
   verifiedAt: timestamp('verified_at', { withTimezone: true }),
+  /**
+   * Analyst rows only: when this finding must be read again — Sprint 10, VD-20.
+   *
+   * The other tiers decay on a curve from `retrieved_at`, because a document can
+   * change under a URL nobody re-fetched. A person does not decay that way: what
+   * they read was true when they read it, and what expires is the *undertaking*
+   * to check again. `provenanceAge()` therefore ages an analyst row in one step
+   * on this date rather than continuously, and refuses to age one that has no
+   * date at all — writing the date is part of writing the finding, and a surface
+   * that quietly aged an undated row would let the omission pass as a decision.
+   */
+  reviewBy: timestamp('review_by', { withTimezone: true }),
 }, (table) => ({
-  vendorFieldUnq: unique('vendor_field_provenance_vendor_field_unq').on(table.vendorId, table.fieldName),
+  /**
+   * One row per (vendor, field, **tier**) — widened in Sprint 10 for VD-20.
+   *
+   * It was (vendor, field), which made the pyramid unrepresentable: an analyst
+   * correction could not *supersede* a registry row because storing it deleted
+   * the registry row, and a trust-centre badge silently destroyed the probe that
+   * outranked it. Precedence needs the losers to still exist —
+   * `selectAuthoritativeProvenance` returns them so a surface can show what was
+   * overridden, and an override nobody can inspect is not a correction anybody
+   * should trust.
+   *
+   * Safe to widen: every existing row is `registry`, so no (vendor, field) pair
+   * can collide when source type joins the key.
+   */
+  vendorFieldUnq: unique('vendor_field_provenance_vendor_field_unq').on(
+    table.vendorId, table.fieldName, table.sourceType,
+  ),
 }));
 
 /**

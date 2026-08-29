@@ -23,6 +23,8 @@ import {
 } from 'db';
 
 export const ACTION_DESCRIPTIONS: Record<string, (input: any) => string> = {
+  'vendors.submitFieldCorrection': (input) =>
+    `Corrected "${input.fieldName}" on the vendor catalogue, citing ${input.sourceUrl}`,
   'ropa.create': (input) => `Created processing activity "${input.name}"`,
   'ropa.update': (input) => `Updated processing activity`,
   'ropa.delete': (input) => `Deleted processing activity`,
@@ -140,6 +142,9 @@ export const RESOURCE_TABLE_MAP: Record<string, { table: any; idField: string }>
   'vendors.confirmDpaAnalysis': { table: organizationVendors, idField: 'vendorId' },
   'vendors.saveDpaAnalysisDraft': { table: organizationVendors, idField: 'vendorId' },
   'vendors.verifyVendorProfile': { table: vendors, idField: 'id' },
+  // Keyed on the catalogue row, not the provenance row: the correction is about
+  // the vendor, and that is the History tab a reviewer will be looking at.
+  'vendors.submitFieldCorrection': { table: vendors, idField: 'id' },
   'dsar': { table: dsarRequests, idField: 'id' },
   'breaches': { table: breaches, idField: 'id' },
   'policies': { table: privacyPolicies, idField: 'id' },
@@ -170,6 +175,11 @@ const ACTION_TYPE_OVERRIDES: Readonly<Record<string, 'create' | 'update' | 'dele
   'vendors.createQuestionnaire': 'create',
   'vendors.confirmQuestionnaire': 'update',
   'vendors.publishIncident': 'create',
+  // Sprint 10, VD-20. A correction is an assertion about a named third party
+  // published to every tenant, so "who changed this, when, and to what" is the
+  // whole point of it being auditable — without an entry here `trpc.ts` computes
+  // no diff at all and the History tab renders a raw procedure name.
+  'vendors.submitFieldCorrection': 'update',
   'dsar.updateStatus': 'update',
   'breaches.updateStatus': 'update',
   'users.updateRole': 'update',

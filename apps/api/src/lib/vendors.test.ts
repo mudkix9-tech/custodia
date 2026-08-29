@@ -1329,6 +1329,153 @@ check(
   'the host is lower-cased, de-www-ed and stripped of its path first',
 );
 
+console.log('\nSprint 10 - provenance freshness and precedence (VD-19, VD-20)\n');
+
+import {
+  provenanceAge, PROVENANCE_DECAY, PROVENANCE_PRECEDENCE,
+  selectAuthoritativeProvenance, validateAnalystCorrection, isAnalystWritable,
+} from './vendorProvenance.js';
+
+const NOW = new Date('2026-08-29T00:00:00Z');
+const daysAgo = (n: number) => new Date(NOW.getTime() - n * 86400_000);
+const probe = (ageDays: number, confidence = 90) => ({
+  fieldName: 'dpaUrl', sourceType: 'http_probe', confidence, retrievedAt: daysAgo(ageDays),
+});
+
+// --- VD-19: the number is a measurement with a date on it -------------------
+
+check(provenanceAge(probe(0), NOW).confidence === 90,
+  'a probe verified today is worth what it was worth');
+// Halving the *distance to the floor*, not the value: 90 with a floor of 30 is
+// 60 after one half-life. Decaying through the floor would make an aged probe
+// indistinguishable from a field nobody ever looked at.
+check(provenanceAge(probe(180), NOW).confidence === 60,
+  'and half the distance to its floor after 180 days',
+  `Got ${provenanceAge(probe(180), NOW).confidence}, expected 60.`);
+check(provenanceAge(probe(360), NOW).confidence === 45, 'and half again after another 180');
+check(provenanceAge(probe(3650), NOW).confidence === PROVENANCE_DECAY.http_probe.floor,
+  'a decade-old probe sits on its floor and never below it');
+check(provenanceAge(probe(0), NOW).stale === false && provenanceAge(probe(3650), NOW).stale === true,
+  'and only then does the surface have to show the date instead of the value');
+check(provenanceAge(probe(180), NOW).originalConfidence === 90,
+  'the stored number is carried through untouched - decay is computed, never written back',
+  'Overwriting it would destroy the only value a re-probe can be compared against.');
+
+// The rates differ because the evidence differs, and the ordering is the
+// testable part of that.
+const at1Year = (t: string) => provenanceAge(
+  { fieldName: 'f', sourceType: t, confidence: 90, retrievedAt: daysAgo(365) }, NOW,
+).confidence;
+check(at1Year('registry') > at1Year('http_probe'),
+  'a registry row a year old outlives a probe a year old - the feed re-confirms it weekly');
+check(at1Year('http_probe') > at1Year('trust_centre'),
+  'and a probe of the vendor’s own domain outlives a portal badge');
+
+// An analyst decays on a date, not a curve.
+const analystRow = (reviewBy: Date | null) => ({
+  fieldName: 'headquartersCountry', sourceType: 'analyst', confidence: 90,
+  retrievedAt: daysAgo(400), reviewBy,
+});
+check(provenanceAge(analystRow(daysAgo(-30)), NOW).confidence === 90,
+  'an analyst finding inside its review window is worth full value however old it is');
+check(provenanceAge(analystRow(daysAgo(1)), NOW).reviewOverdue === true
+  && provenanceAge(analystRow(daysAgo(1)), NOW).confidence === PROVENANCE_DECAY.analyst.floor,
+  'and drops to its floor in one step the day it falls due',
+  'Needing to be re-read three months ago is not a gradual condition.');
+check(provenanceAge(analystRow(null), NOW).stale === false,
+  'an analyst row with no review date never ages on its own',
+  'VD-20 requires the date at write time; ageing it quietly would let the omission pass as a decision.');
+
+// A tenant's own contract does not get less true with time.
+check(
+  provenanceAge({ fieldName: 'dpaUrl', sourceType: 'customer', confidence: 95, retrievedAt: daysAgo(2000) }, NOW).stale === false,
+  'a customer contract does not decay - its expiry is a date on the contract, not a curve',
+);
+
+// Absent evidence of when, we cannot claim currency.
+check(provenanceAge({ fieldName: 'f', sourceType: 'http_probe', confidence: 90, retrievedAt: 'not a date' }, NOW).stale === true,
+  'an unparseable retrieval date is as stale as a very old one');
+// The vocabulary is closed; anything outside it is not a reason for confidence.
+const unknownTier = provenanceAge({ fieldName: 'f', sourceType: 'ai_grounded', confidence: 90, retrievedAt: daysAgo(365) }, NOW);
+check(unknownTier.confidence === at1Year('trust_centre') && unknownTier.confidence < at1Year('registry'),
+  'a source type outside the vocabulary ages on the weakest curve, not the strongest',
+  'ai_grounded left the union in Sprint 5. A row still carrying it is not evidence, and ' +
+  'the only way one reaches this function is from outside the closed vocabulary.');
+check(unknownTier.sourceType === 'trust_centre',
+  'and it reports the tier it was actually scored as, rather than echoing the unknown value back');
+
+// --- VD-20: precedence, which is not the confidence ordering ----------------
+
+check(PROVENANCE_PRECEDENCE.analyst > PROVENANCE_PRECEDENCE.registry,
+  'an analyst row supersedes a registry row, though it scores lower',
+  'Otherwise a catalogue error sourced from an official feed is uncorrectable by anything the product offers.');
+check(PROVENANCE_PRECEDENCE.registry > PROVENANCE_PRECEDENCE.http_probe
+  && PROVENANCE_PRECEDENCE.http_probe > PROVENANCE_PRECEDENCE.trust_centre,
+  'and the rest of the pyramid ranks as the pyramid does');
+
+const provRows = [
+  { fieldName: 'headquartersCountry', sourceType: 'registry', confidence: 95, retrievedAt: daysAgo(1), value: 'US' },
+  { fieldName: 'headquartersCountry', sourceType: 'analyst', confidence: 90, retrievedAt: daysAgo(10), value: 'IE', reviewBy: daysAgo(-90) },
+  { fieldName: 'dpaUrl', sourceType: 'http_probe', confidence: 90, retrievedAt: daysAgo(5), value: 'https://x/dpa' },
+  { fieldName: 'dpaUrl', sourceType: 'customer', confidence: 95, retrievedAt: daysAgo(2), value: 'https://our-signed-dpa' },
+];
+const catalogueView = selectAuthoritativeProvenance(provRows, { scope: 'catalogue', now: NOW });
+const hqField = catalogueView.find((f) => f.fieldName === 'headquartersCountry')!;
+check(hqField.row.sourceType === 'analyst' && hqField.row.value === 'IE',
+  'the human correction wins the field it corrects');
+check(hqField.superseded.length === 1 && hqField.superseded[0]!.sourceType === 'registry',
+  'and what it superseded is kept, so a surface can show what was overridden');
+
+const dpaField = catalogueView.find((f) => f.fieldName === 'dpaUrl')!;
+check(dpaField.row.sourceType === 'http_probe',
+  'a tenant contract never answers for the shared catalogue',
+  'VD-20: a private contract is evidence about a different thing, not strong evidence about the vendor.');
+check(
+  selectAuthoritativeProvenance(provRows, { scope: 'tenant', now: NOW })
+    .find((f) => f.fieldName === 'dpaUrl')!.row.sourceType === 'customer',
+  'but it does answer for the tenant that holds it',
+);
+// Dropped rather than ranked last: losing on precedence would leave it one
+// deletion away from winning the catalogue.
+check(
+  catalogueView.every((f) => f.superseded.every((r) => r.sourceType !== 'customer')),
+  'and it is excluded from the catalogue resolution entirely, not merely outranked',
+);
+
+const twoProbes = selectAuthoritativeProvenance([
+  { fieldName: 'dpaUrl', sourceType: 'http_probe', confidence: 90, retrievedAt: daysAgo(200), value: 'old' },
+  { fieldName: 'dpaUrl', sourceType: 'http_probe', confidence: 90, retrievedAt: daysAgo(2), value: 'new' },
+], { now: NOW });
+check(twoProbes[0]!.row.value === 'new', 'within a tier the newer reading is the current one');
+
+// --- VD-20: what a correction must carry ------------------------------------
+
+check(isAnalystWritable('analyst') && !isAnalystWritable('registry') && !isAnalystWritable('http_probe'),
+  'analyst is the only tier a human may write');
+check(validateAnalystCorrection({
+  fieldName: 'headquartersCountry', value: 'IE', verifiedBy: 'a.reviewer@example.com',
+  evidenceSnippet: 'Registered office: 1 Grand Canal Square, Dublin 2, Ireland.',
+  sourceUrl: 'https://example.com/legal', reviewBy: '2027-08-29',
+}).length === 0, 'a complete correction validates');
+check(validateAnalystCorrection({ fieldName: 'x', value: 'y' }).length >= 4,
+  'and an assertion with no author, excerpt, URL or review date does not',
+  'A correction with no evidence is the unsourced value this whole programme keeps out.');
+check(
+  validateAnalystCorrection({
+    fieldName: 'x', value: 'y', verifiedBy: 'me', sourceUrl: 'https://x',
+    evidenceSnippet: 'too short', reviewBy: '2027-01-01',
+  }).some((p) => /excerpt/.test(p)),
+  'a nine-character excerpt is not an excerpt',
+);
+check(
+  validateAnalystCorrection({
+    fieldName: 'x', value: 'y', verifiedBy: 'me', sourceUrl: 'https://x',
+    evidenceSnippet: 'a long enough sentence from the document itself', reviewBy: null,
+  }).some((p) => /review_by/.test(p)),
+  'and a finding that never falls due is refused at write time',
+);
+
+
 console.log('\nSprint 2 — candidate assessment mapping\n');
 
 import { buildCatalogueWrites, diffFreshAgainstCatalogue } from './vendorIntelligenceMappers.js';

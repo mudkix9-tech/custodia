@@ -61,6 +61,8 @@ import { safeFetch, BlockedRequestError } from '../lib/safeFetch.js';
 import { getVendorBenchmarkStats } from '../lib/vendorBenchmarking.js';
 import { matchRegulatoryDecisions } from '../lib/vendorEnforcementFeed.js';
 import { matchDpfStatus, dpfLookupName, type DpfMatchStatus } from '../lib/vendorDpf.js';
+import { provenanceAge, selectAuthoritativeProvenance, validateAnalystCorrection } from '../lib/vendorProvenance.js';
+import { fieldConfidence } from '../lib/vendorFieldConfidence.js';
 import { loadDpfEntriesFor } from '../lib/vendorDpfLookup.js';
 export { calculateVendorRisk, NEW_LINK_RISK_INPUTS };
 
@@ -1306,6 +1308,116 @@ export const vendorsRouter = router({
       return updated;
     }),
 
+  /**
+   * Correct a catalogue field about a named third party — Sprint 10, VD-20.
+   *
+   * Until now the catalogue had no correction path at all. Custodia publishes
+   * assertions about real companies — where they are established, what transfer
+   * mechanism they offer, whether their DPF certification is current — sourced
+   * from a register and a crawler, and there was no procedure for "your record
+   * of us is wrong" and no rule for what should win if somebody recorded an
+   * answer by hand. A registry row that is wrong about a company was, literally,
+   * uncorrectable by anything the product offered.
+   *
+   * Three properties, each of which is the point rather than a detail:
+   *
+   * **`analyst` is the only tier a human may write.** The other four are what a
+   * machine observed — a register row, a probe, a portal, a tenant's own
+   * contract — and letting a person write one of those would put an unsourced
+   * assertion behind a label that says a machine measured it. The tier is
+   * hardcoded here, not taken from the input.
+   *
+   * **It supersedes registry and probe rows for its field** (see
+   * `PROVENANCE_PRECEDENCE`), which is why the evidence requirements are strict:
+   * the row that beats an official register has to carry a named author, the URL
+   * they read, the sentence they read, and a date by which somebody must read it
+   * again. `validateAnalystCorrection` refuses anything short of that, so the
+   * override cannot be quieter than what it overrides.
+   *
+   * **It writes to the shared catalogue,** so it is gated on `vendors:manage`
+   * and is in the tenancy guard's `ALLOWED_WRITES` with that reason. A tenant
+   * who disagrees about a vendor is a different feature — a `customer` row,
+   * org-scoped, which `selectAuthoritativeProvenance` already excludes from the
+   * catalogue resolution so it can never propagate to anyone else.
+   *
+   * Nothing here writes the vendor column itself. The provenance row is the
+   * record of what somebody established; folding it into `vendors` is a
+   * separate, reversible step, and doing both at once would make an override
+   * indistinguishable from the thing it overrode.
+   */
+  submitFieldCorrection: protectedProcedure
+    .use(requirePermission('vendors', 'manage'))
+    .input(z.object({
+      vendorId: z.string().uuid(),
+      fieldName: z.string().min(1).max(100),
+      value: z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]),
+      sourceUrl: z.string().url().max(2000),
+      evidenceSnippet: z.string().min(20).max(2000),
+      reviewBy: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+      note: z.string().max(2000).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
+      if (!vendor) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor not found' });
+
+      // The author is taken from the session, never from the input: a
+      // correction is attributable or it is not a correction, and an
+      // attribution the caller supplies is an attribution the caller can forge.
+      // `ctx.user` carries no email, so the id is the attribution. It resolves
+      // to a person through `users`, which is what an auditor asking "who
+      // decided this?" needs; a display name here would go stale the moment
+      // somebody changed theirs.
+      const verifiedBy = ctx.user?.id ?? null;
+
+      const problems = validateAnalystCorrection({
+        fieldName: input.fieldName,
+        value: input.value,
+        verifiedBy,
+        evidenceSnippet: input.evidenceSnippet,
+        sourceUrl: input.sourceUrl,
+        reviewBy: input.reviewBy,
+      });
+      if (problems.length > 0) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: problems.join('; ') });
+      }
+
+      const now = new Date();
+      const [row] = await ctx.db
+        .insert(vendorFieldProvenance)
+        .values({
+          vendorId: input.vendorId,
+          fieldName: input.fieldName,
+          value: input.value,
+          sourceType: 'analyst',
+          sourceUrl: input.sourceUrl,
+          confidence: fieldConfidence({ value: input.value, sourceType: 'analyst' }),
+          evidenceSnippet: input.evidenceSnippet,
+          retrievedAt: now,
+          verifiedBy,
+          verifiedAt: now,
+          reviewBy: new Date(input.reviewBy),
+        })
+        .onConflictDoUpdate({
+          // One standing analyst finding per (vendor, field): a correction
+          // replaces the previous correction rather than stacking, so "what does
+          // a person say about this field" has one answer. The registry and
+          // probe rows it supersedes are untouched and still readable.
+          target: [vendorFieldProvenance.vendorId, vendorFieldProvenance.fieldName, vendorFieldProvenance.sourceType],
+          set: {
+            value: input.value,
+            sourceUrl: input.sourceUrl,
+            evidenceSnippet: input.evidenceSnippet,
+            retrievedAt: now,
+            verifiedBy,
+            verifiedAt: now,
+            reviewBy: new Date(input.reviewBy),
+          },
+        })
+        .returning();
+
+      return { provenance: row, supersedes: 'registry, http_probe and trust_centre rows for this field' };
+    }),
+
   getPrivacyAlternatives: protectedProcedure
     .use(requirePermission('vendors', 'view'))
     .input(z.object({ vendorId: z.string().uuid() }))
@@ -2519,10 +2631,28 @@ export const vendorsRouter = router({
           )
         );
 
-      const provenance = await ctx.db
+      const provenanceRows = await ctx.db
         .select()
         .from(vendorFieldProvenance)
         .where(eq(vendorFieldProvenance.vendorId, input.vendorId));
+
+      /**
+       * Sprint 10. The rows are still returned as they are stored, because a
+       * surface showing "what did we override" needs the losers too — but each
+       * one now carries what it is worth *today* rather than what it was worth
+       * when it was gathered (VD-19), and `authoritative` says which row answers
+       * for each field (VD-20).
+       *
+       * Both are computed here at read time and neither is written back: decay
+       * is a function of `retrieved_at`, and a background pass that re-scored a
+       * shared catalogue row on a timer is the mistake the ROPA register already
+       * made once with `updated_at`.
+       */
+      const provenance = provenanceRows.map((row: any) => ({
+        ...row,
+        age: provenanceAge(row),
+      }));
+      const authoritative = selectAuthoritativeProvenance(provenanceRows, { scope: 'catalogue' });
 
       const v = orgVendorRow.vendor;
       const ov = orgVendorRow.orgVendor;
@@ -2590,10 +2720,13 @@ export const vendorsRouter = router({
           tiaStatus: tia?.status || (ov.tiaCompleted ? 'Completed' : ov.tiaRequired ? 'Required' : 'Not required'),
           tiaConclusion: tia?.conclusion || undefined,
         },
-        provenance: provenance.map((p) => ({
+        provenance: provenance.map((p: any) => ({
           fieldName: p.fieldName,
           sourceType: p.sourceType,
-          confidence: p.confidence,
+          confidence: p.age.confidence,
+          confidenceWhenGathered: p.age.originalConfidence,
+          stale: p.age.stale,
+          authoritative: authoritative.some((f) => f.row === p || (f.fieldName === p.fieldName && f.row.retrievedAt === p.retrievedAt && f.row.sourceType === p.sourceType)),
           retrievedAt: p.retrievedAt ? p.retrievedAt.toISOString().split('T')[0]! : '',
           sourceUrl: p.sourceUrl || undefined,
         })),
@@ -2905,7 +3038,7 @@ export const vendorsRouter = router({
             vendorId: existing.vendor.id,
             fieldName: key,
             value: snippet,
-            sourceType: 'trust_center',
+            sourceType: 'trust_centre',
             sourceUrl: url,
             confidence: profile.confidence,
             evidenceSnippet: snippet,
@@ -2913,10 +3046,14 @@ export const vendorsRouter = router({
             verifiedAt: new Date(),
           })
           .onConflictDoUpdate({
-            target: [vendorFieldProvenance.vendorId, vendorFieldProvenance.fieldName],
+            target: [
+              vendorFieldProvenance.vendorId,
+              vendorFieldProvenance.fieldName,
+              vendorFieldProvenance.sourceType,
+            ],
             set: {
               value: snippet,
-              sourceType: 'trust_center',
+              sourceType: 'trust_centre',
               sourceUrl: url,
               confidence: profile.confidence,
               evidenceSnippet: snippet,

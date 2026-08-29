@@ -1065,5 +1065,23 @@
   },
   "common": {
     "cancel": "Cancel"
+  },
+  "provenance": {
+    "registry": "Official register",
+    "http_probe": "Verified on their site",
+    "trust_centre": "Trust portal",
+    "analyst": "Reviewed by a person",
+    "customer": "Your own contract",
+    "tier_label": "Source",
+    "verified_on": "Verified {date}",
+    "last_verified": "Last verified {date}",
+    "stale_hint": "Not re-checked since {date}. Treat the value as indicative until it is confirmed again.",
+    "review_overdue": "Review was due {date}",
+    "superseded_by": "Overrides {count} earlier source",
+    "superseded_by_plural": "Overrides {count} earlier sources",
+    "absent": "Not yet verified",
+    "absent_hint": "Nobody has established this yet. It is not a finding about the vendor.",
+    "confidence_today": "{value}% confidence today",
+    "confidence_decayed": "{value}% today, {original}% when it was gathered"
   }
 }

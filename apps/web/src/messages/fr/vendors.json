@@ -1068,5 +1068,23 @@
   },
   "common": {
     "cancel": "Annuler"
+  },
+  "provenance": {
+    "registry": "Registre officiel",
+    "http_probe": "Vérifié sur leur site",
+    "trust_centre": "Portail de confiance",
+    "analyst": "Vérifié par une personne",
+    "customer": "Votre propre contrat",
+    "tier_label": "Source",
+    "verified_on": "Vérifié le {date}",
+    "last_verified": "Vérifié pour la dernière fois le {date}",
+    "stale_hint": "Non revérifié depuis le {date}. Considérez la valeur comme indicative jusqu'à sa prochaine confirmation.",
+    "review_overdue": "La revue était due le {date}",
+    "superseded_by": "Remplace {count} source antérieure",
+    "superseded_by_plural": "Remplace {count} sources antérieures",
+    "absent": "Pas encore vérifié",
+    "absent_hint": "Personne ne l'a encore établi. Ce n'est pas un constat concernant le fournisseur.",
+    "confidence_today": "{value}% de confiance aujourd’hui",
+    "confidence_decayed": "{value}% aujourd'hui, {original}% lors du relevé"
   }
 }

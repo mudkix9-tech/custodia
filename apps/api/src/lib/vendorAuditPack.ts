@@ -54,7 +54,23 @@ export interface Article28DossierData {
     tiaStatus?: string;
     tiaConclusion?: string;
   };
-  provenance: Array<{ fieldName: string; sourceType: string; confidence: number; retrievedAt: string; sourceUrl?: string }>;
+  /**
+   * `confidence` is what the evidence is worth *today* (VD-19), not what it was
+   * worth when it was gathered — this table is what a customer hands an
+   * auditor, and a probe verified in March printing 90% in December is the
+   * defect in its most consequential form. `confidenceWhenGathered` is kept
+   * beside it so the reader can see the decay rather than just its result.
+   */
+  provenance: Array<{
+    fieldName: string;
+    sourceType: string;
+    confidence: number;
+    confidenceWhenGathered?: number;
+    stale?: boolean;
+    authoritative?: boolean;
+    retrievedAt: string;
+    sourceUrl?: string;
+  }>;
 }
 
 export const ARTICLE_30_RECIPIENT_CSV_HEADERS = [
@@ -190,12 +206,19 @@ export function buildArticle28DossierMarkdown(dossier: Article28DossierData): st
     dossier.provenance.length === 0
       ? '*No field-level provenance metadata recorded.*'
       : [
-          '| Field | Source Type | Confidence | Retrieved At | Source URL |',
-          '|---|---|---|---|---|',
-          ...dossier.provenance.map(
-            (p) =>
-              `| ${p.fieldName} | \`${p.sourceType}\` | ${p.confidence}% | ${p.retrievedAt} | ${p.sourceUrl || 'N/A'} |`
-          ),
+          '| Field | Source Type | Confidence today | When gathered | Retrieved At | Source URL |',
+          '|---|---|---|---|---|---|',
+          ...dossier.provenance.map((p) => {
+            // A field at its floor is reported by its date rather than its
+            // number: "we last confirmed this on 3 March" is the honest claim,
+            // and a percentage is not.
+            const today = p.stale ? `${p.confidence}% (stale)` : `${p.confidence}%`;
+            const gathered = p.confidenceWhenGathered === undefined || p.confidenceWhenGathered === p.confidence
+              ? '—'
+              : `${p.confidenceWhenGathered}%`;
+            const field = p.authoritative === false ? `${p.fieldName} (superseded)` : p.fieldName;
+            return `| ${field} | \`${p.sourceType}\` | ${today} | ${gathered} | ${p.retrievedAt} | ${p.sourceUrl || 'N/A'} |`;
+          }),
         ].join('\n'),
     ''
   );

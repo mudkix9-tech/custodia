@@ -1068,5 +1068,23 @@
   },
   "common": {
     "cancel": "Abbrechen"
+  },
+  "provenance": {
+    "registry": "Amtliches Register",
+    "http_probe": "Auf der Anbieterseite bestätigt",
+    "trust_centre": "Trust-Portal",
+    "analyst": "Von einer Person geprüft",
+    "customer": "Ihr eigener Vertrag",
+    "tier_label": "Quelle",
+    "verified_on": "Bestätigt am {date}",
+    "last_verified": "Zuletzt bestätigt am {date}",
+    "stale_hint": "Seit {date} nicht erneut geprüft. Der Wert ist bis zur nächsten Bestätigung nur ein Anhaltspunkt.",
+    "review_overdue": "Prüfung war am {date} fällig",
+    "superseded_by": "Überschreibt {count} frühere Quelle",
+    "superseded_by_plural": "Überschreibt {count} frühere Quellen",
+    "absent": "Noch nicht bestätigt",
+    "absent_hint": "Dies wurde noch von niemandem festgestellt. Es ist keine Feststellung über den Anbieter.",
+    "confidence_today": "Heute {value}% Konfidenz",
+    "confidence_decayed": "Heute {value}%, bei Erhebung {original}%"
   }
 }

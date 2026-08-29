@@ -100,6 +100,13 @@ const ALLOWED: Record<string, Exception> = {
   'vendors.ts::markNotified': {
     reason: 'Reads the shared vendor_sub_processors row only to confirm the id exists — sub-processors describe a vendor, not a tenant, same as ::list. The acknowledgement it writes is org-scoped (vendor_sub_proc_acks, keyed on the caller orgId), which is the D46 fix: notifiedAt used to live on the shared row so one tenant acknowledging cleared it for all.',
   },
+  'vendors.ts::submitFieldCorrection': {
+    reason:
+      'Shared vendor catalogue. Writes an `analyst` provenance row about a named third party, ' +
+      'gated on vendors:manage — the same platform-operator rationale as publishIncident below. ' +
+      'A tenant who disagrees about a vendor gets a `customer` row instead, which ' +
+      'selectAuthoritativeProvenance excludes from the catalogue resolution so it cannot propagate.',
+  },
   'vendors.ts::publishIncident': {
     reason: 'Platform-operator action on the global incident feed, gated on vendors:manage until a real platform-admin role exists.',
   },
