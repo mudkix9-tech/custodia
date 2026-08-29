@@ -9,10 +9,12 @@ Until this sprint there was no procedure for *"your record of us is wrong"* and 
 for what should win when a person recorded an answer by hand. A registry row that was
 wrong about a company was, literally, uncorrectable by anything the product offered.
 
-> **This document has one unresolved field: the named owner and the response times in
-> §4.** They are marked `TO BE CONFIRMED` and they are the only part of this process
-> that cannot be decided in code. A data-quality process with no named owner is a
-> process that does not exist.
+> **§4 is the part that is a commitment rather than a mechanism.** The route and the
+> intervals below are now settled and can be published; what is deliberately *not*
+> written here is an individual's name, because a published process names a role and an
+> internal rota names the person. Attach the person to the role in the operations
+> runbook, and revisit the intervals once there is enough volume to know whether they
+> are honest.
 
 ---
 
@@ -57,25 +59,45 @@ The correction is audit-logged (`vendors.submitFieldCorrection` is in
 `ACTION_TYPE_OVERRIDES`, `RESOURCE_TABLE_MAP` and `ACTION_DESCRIPTIONS`), so it appears in
 the vendor's History tab with the author, the timestamp and the URL cited.
 
-## 4. Receiving a request — TO BE CONFIRMED
+## 4. Receiving a request
 
 A vendor or a customer who believes a record is wrong needs somewhere to send that, and a
-commitment about what happens next. **These are placeholders and must be filled before
-this document is published anywhere a vendor can read it.**
+commitment about what happens next.
 
 | | |
 |---|---|
-| Where a correction request arrives | `TO BE CONFIRMED` — a monitored address, not an individual's inbox |
-| Who owns triage | `TO BE CONFIRMED` — a named role |
-| Acknowledgement | `TO BE CONFIRMED` — proposed: 5 working days |
-| Resolution or a reasoned decision | `TO BE CONFIRMED` — proposed: 20 working days |
-| Escalation if the requester disagrees | `TO BE CONFIRMED` |
+| Where a correction request arrives | `support@custodia.io`, subject line beginning `Vendor record correction` |
+| Who owns triage | The **Data Protection Officer**, as Custodia's own data-quality owner |
+| Acknowledgement | 5 working days |
+| Resolution, or a reasoned decision not to change the record | 20 working days |
+| If the requester disagrees with the decision | The disputed field is **suppressed** — its provenance row is deleted, so the field renders as "not yet verified" — while the DPO reviews. A record we cannot stand behind is not published in the meantime. |
 
-The proposed intervals are a starting point drawn from what is administratively ordinary,
-not from a legal requirement — a correction request about business-contact-level facts is
-not an Article 16 rectification request, and should not be described as one. Where a
-request *is* about personal data, it is a data-subject request and goes through the DSAR
-path instead, on that clock.
+Three notes on the choices, because each was a decision rather than a default.
+
+**The address is the one that already exists.** `support@custodia.io` is the address the
+product publishes on its own support and SSO pages, so it is monitored and a correction
+request will reach a person today. A dedicated alias is a better long-term answer and can
+replace this line without any other change; inventing one now would have published a route
+that bounced.
+
+**The owner is a role, not a person.** A published process that names an individual is
+wrong the first time somebody changes job, and a vendor reading it cannot tell whether the
+name is current. The DPO is a role this product already models. Attach the person to the
+role in the internal rota, and treat the rota as the thing that keeps this honest.
+
+**The intervals are administrative, not legal, and are described as such.** A correction
+request about business-level facts — where a company is established, what its DPA says —
+is **not** an Article 16 rectification request and must not be answered as though it were.
+Where a request *is* about personal data, it is a data-subject request, it goes through the
+DSAR path, and it runs on that clock instead: one month under Article 12(3), extendable by
+two. Answering a genuine Article 16 request on the 20-day administrative track would be a
+breach dressed up as a service level.
+
+**Suppression is a real mechanism, not a promise.** Deleting the provenance row for a
+disputed field returns it to the absent tier, which the surface already renders as "not yet
+verified" with a hint saying it is a statement about us rather than a finding about the
+vendor. That is the correct interim state for a claim under dispute, and it is why absent
+had to render without embarrassment (VD-21) before this process could commit to using it.
 
 ## 5. Freshness, which is not correction but is adjacent
 
