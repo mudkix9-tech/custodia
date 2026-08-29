@@ -1327,7 +1327,19 @@ export const vendors = pgTable('vendors', {
   headquartersCountry: char('headquarters_country', { length: 2 }),
   dataProcessingLocations: jsonb('data_processing_locations').default([]),
   dpaUrl: varchar('dpa_url', { length: 500 }),
-  dpaAvailable: boolean('dpa_available').default(false),
+  // 'available' | 'unavailable' | 'unindexed' — VD-13. This was
+  // `boolean.default(false)`, which gave "we have not looked yet" and "this
+  // vendor publishes no DPA" the same value, on a column whose whole job is to
+  // say what the catalogue knows. Every `false` in the table was therefore a
+  // default nobody set, and the migration backfills them to `unindexed` for
+  // exactly that reason rather than to `unavailable`.
+  //
+  // It is a *catalogue* fact and it is not the tenant's contract: whether this
+  // customer has signed a DPA is `organization_vendors.dpa_status`, and Art.
+  // 28(3) is raised off that (VD-11, VD-12). Custodia not having indexed a
+  // vendor's published template can never excuse a controller who has signed
+  // nothing, so nothing here may ever suppress that finding.
+  dpaAvailable: varchar('dpa_available', { length: 20 }).default('unindexed'),
   privacyPolicyUrl: varchar('privacy_policy_url', { length: 500 }),
   
   transferMechanisms: jsonb('transfer_mechanisms').$type<string[]>().default([]),

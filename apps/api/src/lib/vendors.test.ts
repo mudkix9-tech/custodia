@@ -27,7 +27,7 @@ import {
   diffSubProcessorSnapshots,
 } from './vendorSubProcessors.js';
 import { isNewAiWindow, aiWindowReset, TIER_LIMITS } from '../constants/aiQuota.js';
-import { calculateVendorRisk, NEW_LINK_RISK_INPUTS, type VendorRiskInput, type OrgVendorRiskInput } from './vendorRisk.js';
+import { calculateVendorRisk, NEW_LINK_RISK_INPUTS, LOCATION_STATES, type VendorRiskInput, type OrgVendorRiskInput } from './vendorRisk.js';
 import { csvCell, csvRow, csvDocument } from '../utils/csv.js';
 import {
   parseCsvRows,
@@ -40,7 +40,10 @@ import {
   AUTO_LINK_THRESHOLD,
   type CatalogueEntry,
 } from './vendorImport.js';
-import { DPA_STATUS_SIGNED, DPA_STATUS_MISSING, DPA_STATUSES } from '../constants/dpaStatus.js';
+import {
+  DPA_STATUS_SIGNED, DPA_STATUS_MISSING, DPA_STATUSES,
+  DPA_AVAILABILITIES, DPA_AVAILABILITY_UNINDEXED, isDpaAvailabilityIndexed, toDpaAvailability,
+} from '../constants/dpaStatus.js';
 import {
   hasSpecialCategory,
   normaliseDataCategory,
@@ -240,10 +243,72 @@ check(
     .factors.location.points === 0,
   'an EU vendor scores no location risk regardless of mechanisms',
 );
+// VD-14 changed this. It asserted 20/20 — "scored as non-adequate, not as
+// safe" — which fixed one half of the problem by causing the other: an empty
+// column read as a confirmed transfer to a country with no adequacy decision.
+// The ordering below is what the rule actually is, and the exact number is not.
+const unverifiedLocation = calculateVendorRisk(
+  { ...usVendor([]), headquartersCountry: null }, orgVendor, NEW_LINK_RISK_INPUTS,
+).factors.location;
+const adequateLocation = calculateVendorRisk(
+  { ...usVendor([]), headquartersCountry: 'JP' }, orgVendor, NEW_LINK_RISK_INPUTS,
+).factors.location;
+const euLocation = calculateVendorRisk(
+  { ...usVendor([]), headquartersCountry: 'DE' }, orgVendor, NEW_LINK_RISK_INPUTS,
+).factors.location;
+const nonAdequateLocation = calculateVendorRisk(
+  { ...usVendor([]), headquartersCountry: 'BR' }, orgVendor, NEW_LINK_RISK_INPUTS,
+).factors.location;
+
+// The one that matters most: if not filling a field in scored as well as
+// verifying it, the cheapest way to improve a register would be to empty it.
 check(
-  calculateVendorRisk({ ...usVendor([]), headquartersCountry: null }, orgVendor, NEW_LINK_RISK_INPUTS)
-    .factors.location.points === 20,
-  'an unknown country is scored as non-adequate, not as safe',
+  unverifiedLocation.points > adequateLocation.points,
+  'an unverified vendor never outscores one verified as adequate',
+  `unverified ${unverifiedLocation.points}, adequate ${adequateLocation.points}. ` +
+  'Equal or lower and the scoring rewards not looking.',
+);
+check(
+  unverifiedLocation.points > euLocation.points,
+  'nor one inside the EEA',
+);
+check(
+  unverifiedLocation.points < nonAdequateLocation.points,
+  'but an empty column is not a Chapter V finding either',
+  `unverified ${unverifiedLocation.points}, non-adequate ${nonAdequateLocation.points}. ` +
+  'Equal, and VD-14 is back: a field nobody filled in reads as a transfer to a non-adequate country.',
+);
+check(
+  unverifiedLocation.state === 'unverified' && nonAdequateLocation.state === 'non_adequate',
+  'and the two are separable without parsing the English',
+  'The register filters on `state`; `detail` is a sentence with a score interpolated into it.',
+);
+check(
+  euLocation.state === 'eu_eea' && adequateLocation.state === 'adequate',
+  'every location branch reports which one it took',
+);
+check(
+  calculateVendorRisk(usVendor(['data_privacy_framework']), orgVendor, NEW_LINK_RISK_INPUTS)
+    .factors.location.state === 'dpf_certified',
+  'a US vendor covered by the DPF is its own state, not a generic adequate one',
+);
+check(
+  calculateVendorRisk({ ...usVendor([]), dpfStatus: 'withdrawn' }, orgVendor, NEW_LINK_RISK_INPUTS)
+    .factors.location.state === 'dpf_withdrawn'
+  && calculateVendorRisk({ ...usVendor([]), dpfStatus: 'lapsed' }, orgVendor, NEW_LINK_RISK_INPUTS)
+    .factors.location.state === 'dpf_lapsed',
+  'a withdrawal and a lapse stay apart in the score as they do in the copy (VD-22)',
+);
+// The wording has to send someone to do something, not deliver a verdict.
+check(
+  /verify/i.test(unverifiedLocation.detail) && !/non-adequate/i.test(unverifiedLocation.detail),
+  'the copy reads as "go and find out" rather than as a finding',
+  `Got: ${unverifiedLocation.detail}`,
+);
+check(
+  LOCATION_STATES.includes(unverifiedLocation.state as never)
+  && LOCATION_STATES.includes(nonAdequateLocation.state as never),
+  'and every state the scorer emits is in the declared vocabulary',
 );
 
 console.log('\ndpaStatus vocabulary\n');
@@ -259,6 +324,53 @@ check(
 check(
   new Set(DPA_STATUSES).size === DPA_STATUSES.length,
   'the vocabulary has no duplicates',
+);
+
+// --- VD-11: the tenant vocabulary is unchanged, and that is the point --------
+
+// The superseded document proposed `dpaStatus: 'unknown' | 'missing'`, neither
+// of which exists, and zeroed the Art. 28(3) penalty for the first. This checks
+// the values it named stayed out: a controller who has signed nothing is in
+// breach whatever Custodia has indexed, so there is no tenant status meaning
+// "we have not looked" for a finding to hide behind.
+check(
+  !(DPA_STATUSES as readonly string[]).includes('unknown')
+  && !(DPA_STATUSES as readonly string[]).includes('missing'),
+  'the tenant vocabulary gains no catalogue-ignorance state',
+  'VD-11/VD-12. `gapRules.ts` raises Art. 28(3) on anything but `signed`; a status meaning ' +
+  '"Custodia has not indexed this vendor" would suppress a real finding behind an internal one.',
+);
+
+// --- VD-13: the catalogue's own three states --------------------------------
+
+check(DPA_AVAILABILITIES.length === 3 && DPA_AVAILABILITY_UNINDEXED === 'unindexed',
+  'the catalogue field has three states, not two');
+// The whole defect in one line: these were both `false`.
+check(
+  isDpaAvailabilityIndexed('unavailable') && !isDpaAvailabilityIndexed('unindexed'),
+  '"we looked and there is none" is separable from "nobody looked"',
+  'They were the same value while the column was `boolean DEFAULT false`.',
+);
+check(
+  toDpaAvailability(undefined) === 'unindexed' && toDpaAvailability(null) === 'unindexed',
+  'an absent value reads as unindexed, never as an assertion about the vendor',
+);
+check(toDpaAvailability(true) === 'available', 'a scan that found a DPA says so');
+check(
+  toDpaAvailability(false) === 'unavailable',
+  'and a scan that found none says that — the observation really is two-valued',
+  'The third state belongs to the column before any scan ran, not to the scan.',
+);
+check(
+  toDpaAvailability('nonsense') === 'unindexed',
+  'anything outside the vocabulary falls back to unindexed rather than through',
+  'Falling back to `unavailable` would publish an assertion about a named third party from a typo.',
+);
+// The two vocabularies must not overlap: a value that reads as valid in both
+// columns is how VD-12 gets made a second time.
+check(
+  DPA_AVAILABILITIES.every((a) => !(DPA_STATUSES as readonly string[]).includes(a)),
+  'no value is legal in both the catalogue column and the tenant column',
 );
 
 console.log('\ncsv\n');

@@ -37,7 +37,48 @@ export interface RiskFactorDetail {
   points: number;
   maxPoints: number;
   detail: string;
+  /**
+   * Machine-readable discriminator for the factor, where the English `detail`
+   * is not something to filter or count on — VD-14. `detail` is a sentence
+   * built for a reviewer to read, with a score interpolated into it; the
+   * register needs to ask "which of these are unverified rather than bad"
+   * without pattern-matching prose that is one copy edit from breaking.
+   *
+   * Only the location factor sets it today. Optional so the other seven are
+   * untouched until each has a reason to discriminate.
+   */
+  state?: string;
 }
+
+/**
+ * The states the headquarters-location factor reports.
+ *
+ * `unverified` is the one this exists for. It used to score 20/20 — the same as
+ * a confirmed transfer to a non-adequate country — so an unresearched field and
+ * a genuine Chapter V problem were one number and one sentence, and the register
+ * could not tell "go and find out" from "you have a problem". That is the same
+ * conflation as VD-12 and the same distinction `computeDisposalDate` draws
+ * between `no_period` and `no_anchor`: two findings that send someone to do
+ * different work.
+ */
+export const LOCATION_STATES = [
+  'eu_eea', 'adequate', 'dpf_certified', 'unverified', 'dpf_lapsed', 'dpf_withdrawn', 'non_adequate',
+] as const;
+export type LocationState = (typeof LOCATION_STATES)[number];
+
+/**
+ * What an unrecorded headquarters country costs.
+ *
+ * It has to sit strictly between the adequate score (5) and the non-adequate
+ * one (20), and both bounds are load-bearing. Score it at or below 5 and the
+ * register rewards not looking — an unresearched vendor would outrank one
+ * somebody verified as adequate, and the cheapest way to improve a score would
+ * be to delete a field. Score it at 20 and it is VD-14 again, an assertion of
+ * risk drawn from an empty column. 10 is the midpoint of that open interval and
+ * carries no more meaning than that; what is tested is the ordering, not the
+ * number.
+ */
+export const UNVERIFIED_LOCATION_POINTS = 10;
 
 export interface VendorRiskGap {
   id: string;
@@ -148,7 +189,8 @@ export function calculateVendorRisk(
   // 1. Headquarters Location (20%)
   let locationPoints = 20; // Default non-adequate
   let locationDetail = 'Non-adequate country (20/20 pts)';
-  
+  let locationState: LocationState = 'non_adequate';
+
   const country = vendor.headquartersCountry?.toUpperCase();
   const isEu = country ? EU_EEA_COUNTRIES.includes(country) : false;
   
@@ -165,19 +207,29 @@ export function calculateVendorRisk(
   if (isEu) {
     locationPoints = 0;
     locationDetail = `EU/EEA country (${country}) (0/20 pts)`;
+    locationState = 'eu_eea';
   } else if (isAdequate) {
     locationPoints = 5;
     locationDetail = country === 'US' ? 'United States (DPF certified) (5/20 pts)' : `Adequate country (${country}) (5/20 pts)`;
+    locationState = country === 'US' ? 'dpf_certified' : 'adequate';
   } else if (!country) {
-    locationDetail = 'Unknown country (20/20 pts)';
+    // VD-14. Not 20/20 — an empty column is not evidence of anything, and
+    // scoring it as though it were made "nobody filled this in" indistinguishable
+    // from "this data goes somewhere without an adequacy decision". The wording
+    // is an instruction rather than a verdict for the same reason.
+    locationPoints = UNVERIFIED_LOCATION_POINTS;
+    locationDetail = `Headquarters country not recorded — verify before relying on this score (${UNVERIFIED_LOCATION_POINTS}/20 pts)`;
+    locationState = 'unverified';
   } else if (country === 'US' && isDpfLapsed) {
     locationPoints = 20;
     locationDetail = vendor.dpfStatus === 'withdrawn'
       ? `United States (withdrawn from the DPF${vendor.dpfLapsedDate ? ` on ${vendor.dpfLapsedDate}` : ''}) (20/20 pts)`
       : `United States (DPF certification lapsed${vendor.dpfLapsedDate ? ` on ${vendor.dpfLapsedDate}` : ''}) (20/20 pts)`;
+    locationState = vendor.dpfStatus === 'withdrawn' ? 'dpf_withdrawn' : 'dpf_lapsed';
   } else {
     locationPoints = 20;
     locationDetail = `${country === 'US' ? 'United States (conditional adequacy, no DPF certified)' : 'Non-adequate country (' + country + ')'} (20/20 pts)`;
+    locationState = 'non_adequate';
   }
 
   // 2. DPA Status (20%)
@@ -382,7 +434,7 @@ export function calculateVendorRisk(
     score,
     level,
     factors: {
-      location: { points: locationPoints, maxPoints: 20, detail: locationDetail },
+      location: { points: locationPoints, maxPoints: 20, detail: locationDetail, state: locationState },
       dpa: { points: dpaPoints, maxPoints: 20, detail: dpaDetail },
       categories: { points: categoriesPoints, maxPoints: 15, detail: categoriesDetail },
       volume: { points: volumePoints, maxPoints: 10, detail: volumeDetail },

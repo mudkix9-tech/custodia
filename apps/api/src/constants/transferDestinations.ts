@@ -6,6 +6,51 @@ export const EU_EEA_COUNTRIES = [
   'IS', 'LI', 'NO',
 ];
 
+/**
+ * When a human last checked this list against the Commission's own page — VD-10.
+ *
+ * The list below is hand-maintained and there is no feed behind it, which is
+ * fine: adequacy decisions are rare, deliberate and announced. What is not fine
+ * is a hand-maintained list with no way to tell whether anybody has looked
+ * lately, because an adequacy decision that has been *withdrawn* leaves this
+ * file asserting a Chapter V safeguard that no longer exists, and it does so
+ * silently and identically to a correct entry.
+ *
+ * So the staleness is the tested thing rather than the contents:
+ * `test:transfers` fails once this date is twelve months old, which turns a
+ * quiet drift into a red build. The review is a five-minute job — open
+ * `https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/adequacy-decisions_en`,
+ * compare, and move this date whether or not anything changed. Moving it
+ * without looking is the one thing that defeats the whole mechanism.
+ *
+ * Checked against the Commission's list on the date below: fifteen decisions,
+ * Canada still commercial-only, the US still DPF-scoped, and the two 2025
+ * reviews (Japan, UK) both continued.
+ */
+export const ADEQUACY_REVIEWED_ON = '2026-08-29';
+
+/** How long a review stands before `test:transfers` calls the list unverified. */
+export const ADEQUACY_REVIEW_INTERVAL_MONTHS = 12;
+
+/**
+ * Whether the adequacy list is overdue a review, as of `now`.
+ *
+ * Exported so the fixture and any future surface ask the same question rather
+ * than each doing their own date arithmetic — and calendar-aware for the same
+ * reason `computeDisposalDate` is: adding twelve months to 29 February is
+ * 28 February, not 1 March.
+ */
+export function isAdequacyReviewOverdue(now: Date = new Date()): boolean {
+  const reviewed = new Date(`${ADEQUACY_REVIEWED_ON}T00:00:00Z`);
+  const due = new Date(reviewed);
+  due.setUTCMonth(due.getUTCMonth() + ADEQUACY_REVIEW_INTERVAL_MONTHS);
+  // setUTCMonth rolls a day that the target month does not have into the next
+  // month (31 January + 1 month reads as 3 March in a leap year), so clamp back
+  // to the last day of the intended month.
+  if (due.getUTCDate() !== reviewed.getUTCDate()) due.setUTCDate(0);
+  return now.getTime() >= due.getTime();
+}
+
 export const ADEQUACY_DECISIONS: Record<string, { date: string; scope: string }> = {
   'AD': { date: '2010-12-01', scope: 'full' },         // Andorra
   'AR': { date: '2003-07-01', scope: 'full' },         // Argentina

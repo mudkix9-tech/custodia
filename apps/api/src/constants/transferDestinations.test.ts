@@ -16,6 +16,9 @@
 import {
   EU_EEA_COUNTRIES,
   ADEQUACY_DECISIONS,
+  ADEQUACY_REVIEWED_ON,
+  ADEQUACY_REVIEW_INTERVAL_MONTHS,
+  isAdequacyReviewOverdue,
   isAdequateDestination,
   getDestinationContext,
 } from './transferDestinations.js';
@@ -94,6 +97,44 @@ check(
 check(!isAdequateDestination(''), 'an empty country code is not adequate');
 check(!isAdequateDestination('de'), 'the test is case-sensitive on ISO-3166 alpha-2',
   'Callers pass headquartersCountry straight through, so lowercase must not silently pass.');
+
+// --- VD-10: the list is hand-maintained, so its age is the tested thing --------
+
+// This check is designed to fail on its own one day. An adequacy decision can be
+// withdrawn — the Commission has opened reviews before — and a withdrawn one
+// leaves the table above asserting a Chapter V safeguard that no longer exists,
+// reading exactly like a correct entry. Nothing in this file can detect that;
+// only a person comparing against the Commission's page can. So what is enforced
+// is that somebody has looked recently, and the build going red is how the ask
+// arrives. When it does: re-check the list, *then* move ADEQUACY_REVIEWED_ON.
+// Moving the date without looking defeats the mechanism entirely and leaves it
+// looking green.
+check(
+  /^\d{4}-\d{2}-\d{2}$/.test(ADEQUACY_REVIEWED_ON) && !Number.isNaN(Date.parse(ADEQUACY_REVIEWED_ON)),
+  'the adequacy list records a real review date',
+);
+check(
+  !isAdequacyReviewOverdue(),
+  `the adequacy list has been reviewed within ${ADEQUACY_REVIEW_INTERVAL_MONTHS} months`,
+  `Last reviewed ${ADEQUACY_REVIEWED_ON}. Compare ADEQUACY_DECISIONS against the Commission's ` +
+  'adequacy-decisions page, correct any drift, then move ADEQUACY_REVIEWED_ON.',
+);
+
+// The mechanism itself, so a broken clock cannot make the check above pass for
+// ever — which is the failure mode of every staleness test that is only ever
+// observed green.
+const reviewedOn = new Date(`${ADEQUACY_REVIEWED_ON}T00:00:00Z`);
+const dayBeforeDue = new Date(reviewedOn);
+dayBeforeDue.setUTCMonth(dayBeforeDue.getUTCMonth() + ADEQUACY_REVIEW_INTERVAL_MONTHS);
+dayBeforeDue.setUTCDate(dayBeforeDue.getUTCDate() - 1);
+check(!isAdequacyReviewOverdue(dayBeforeDue), 'a review one day short of the interval still stands');
+const dayAfterDue = new Date(dayBeforeDue);
+dayAfterDue.setUTCDate(dayAfterDue.getUTCDate() + 2);
+check(isAdequacyReviewOverdue(dayAfterDue), 'and one day past it is overdue');
+check(
+  isAdequacyReviewOverdue(new Date('2100-01-01T00:00:00Z')),
+  'a review from years ago is overdue however the months are counted',
+);
 
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {

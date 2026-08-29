@@ -75,6 +75,56 @@ async function main() {
   console.log(`US vendors carrying data_privacy_framework:            ${usDpf}/${usTotal}`);
 
   if (!apply) {
+    // Sprint 8's gate: the delta, per row, before anything is written.
+    //
+    // A change to `vendorRisk.ts` is inert until this script runs with --apply,
+    // so between a deploy and that run the stored score and the formula beside
+    // it describe two different rules. Until now the only way to find out how
+    // far apart they were was to close the gap and look afterwards — on a column
+    // every tenant sees, in bulk. VD-14 is exactly such a change.
+    let moved = 0;
+    let unchanged = 0;
+    let netPoints = 0;
+    const rows: Array<{ vendor: string; from: number | null; to: number; level: string }> = [];
+
+    for (const v of targets) {
+      const computed = await recalculateVendorRiskForAllOrgs(db, v.id, { dryRun: true });
+      if (computed.length === 0) continue;
+
+      const stored = await db
+        .select({ id: organizationVendors.id, score: organizationVendors.riskScore })
+        .from(organizationVendors)
+        .where(eq(organizationVendors.vendorId, v.id));
+      const storedById = new Map<string, number | null>(
+        stored.map((r: any) => [r.id as string, r.score as number | null]),
+      );
+
+      for (const u of computed) {
+        const was = storedById.get(u.id) ?? null;
+        if (was === u.score) { unchanged += 1; continue; }
+        moved += 1;
+        netPoints += u.score - (was ?? 0);
+        rows.push({ vendor: v.name, from: was, to: u.score, level: u.level });
+      }
+    }
+
+    console.log(`\nRegister rows that would change: ${moved}; unchanged: ${unchanged}`);
+    if (rows.length > 0) {
+      // Biggest movers first. A long tail of one-point drift is noise; a single
+      // row moving thirty points is the thing somebody needs to look at.
+      rows.sort((a, b) => Math.abs(b.to - (b.from ?? 0)) - Math.abs(a.to - (a.from ?? 0)));
+      console.log('\n  vendor                         stored     new   delta  level');
+      for (const r of rows.slice(0, 40)) {
+        const delta = r.to - (r.from ?? 0);
+        console.log(
+          `  ${r.vendor.slice(0, 29).padEnd(29)} ${String(r.from ?? '-').padStart(6)}  ${String(r.to).padStart(6)} ` +
+          `${(delta > 0 ? '+' : '') + delta}`.padStart(7) + `  ${r.level}`,
+        );
+      }
+      if (rows.length > 40) console.log(`  ... and ${rows.length - 40} more`);
+      console.log(`\n  net movement across changed rows: ${netPoints > 0 ? '+' : ''}${netPoints} points`);
+    }
+
     console.log('\nDry run — no rows changed. Re-run with --apply to recompute.');
     return;
   }

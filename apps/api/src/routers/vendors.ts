@@ -234,9 +234,21 @@ export async function updateVendorRiskScore(dbInstance: any, orgId: string, vend
   }
 }
 
-export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId: string) {
+/**
+ * `dryRun` computes every score and writes nothing — it exists so a formula
+ * change can be seen before it lands. The score is denormalised, so applying
+ * one is a bulk rewrite of a column customers see, and "how far does this move
+ * things" has until now been answerable only by doing it. It also skips the
+ * embedding enqueue, because a dry run that fills a queue is not one.
+ */
+export async function recalculateVendorRiskForAllOrgs(
+  dbInstance: any,
+  vendorId: string,
+  options: { dryRun?: boolean } = {},
+): Promise<Array<{ id: string; score: number; level: string; factors: any }>> {
+  const dryRun = options.dryRun === true;
   const [vendor] = await dbInstance.select().from(vendors).where(eq(vendors.id, vendorId));
-  if (!vendor) return;
+  if (!vendor) return [];
 
   const { dpfStatus, dpfLapsedDate } = await resolveDpfStatus(dbInstance, vendor);
 
@@ -318,7 +330,7 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
 
     updates.push({ id: orgVendor.id, score, level, factors });
 
-    if (orgEmbeddingsQueue) {
+    if (orgEmbeddingsQueue && !dryRun) {
       await orgEmbeddingsQueue.add('embed-vendor', {
         orgId: orgVendor.organizationId,
         entityType: 'vendor',
@@ -328,7 +340,7 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
     }
   }
 
-  if (updates.length > 0) {
+  if (updates.length > 0 && !dryRun) {
     // Every branch of these CASE expressions is a bound parameter, so Postgres has
     // nothing to infer a type from and resolves the whole expression as `text` --
     // which it then refuses to assign to an integer column:
@@ -357,6 +369,8 @@ export async function recalculateVendorRiskForAllOrgs(dbInstance: any, vendorId:
       })
       .where(inArray(organizationVendors.id, updates.map(u => u.id)));
   }
+
+  return updates;
 }
 
 const paginationInput = z.object({
