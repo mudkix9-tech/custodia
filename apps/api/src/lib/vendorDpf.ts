@@ -98,6 +98,28 @@ export function dpfBaseNameKey(name: string): string {
 }
 
 /**
+ * Which of a catalogue row's two names the registry should be asked about —
+ * VD-15.
+ *
+ * The Department certifies companies and the catalogue lists products, so
+ * "Google Analytics" is a question the participant list cannot answer and
+ * "Google LLC" is one it can. Where a row records its legal entity, that is the
+ * name to match on; where it does not, the product name is the only name there
+ * is and the base-name fold above is what gives it a chance.
+ *
+ * A function rather than `vendor.legalEntityName ?? vendor.name` at each call
+ * site because there are three of them, and the last time this module had a
+ * rule written out three times (VD-7) two of the copies were wrong for a year.
+ */
+export function dpfLookupName(
+  vendor: { name?: string | null; legalEntityName?: string | null } | null | undefined,
+): string {
+  const legal = vendor?.legalEntityName?.trim();
+  if (legal) return legal;
+  return vendor?.name?.trim() ?? '';
+}
+
+/**
  * The three certifications the Department of Commerce publishes, and the other
  * half of the unique key. An organisation may hold any subset and they lapse
  * independently, which is the whole of VD-9: a vendor certified EU-U.S. but not
@@ -123,6 +145,13 @@ export interface DpfEntry {
   status: string;
   nextRecertificationDate?: string | Date | null;
   inactiveStartDate?: string | Date | null;
+  /**
+   * The registrant's own page on the register. Carried on the entry so a caller
+   * writing provenance cites the participant record it actually matched, rather
+   * than the index page every row would share — a source URL that is the same
+   * for 16,520 rows is not evidence of anything.
+   */
+  sourceUrl?: string | null;
 }
 
 /**

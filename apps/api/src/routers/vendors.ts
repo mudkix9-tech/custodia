@@ -60,7 +60,7 @@ import { crossCheckVendorResponses, calculateDiscrepancyRiskPenalty, discrepancy
 import { safeFetch, BlockedRequestError } from '../lib/safeFetch.js';
 import { getVendorBenchmarkStats } from '../lib/vendorBenchmarking.js';
 import { matchRegulatoryDecisions } from '../lib/vendorEnforcementFeed.js';
-import { matchDpfStatus, type DpfMatchStatus } from '../lib/vendorDpf.js';
+import { matchDpfStatus, dpfLookupName, type DpfMatchStatus } from '../lib/vendorDpf.js';
 import { loadDpfEntriesFor } from '../lib/vendorDpfLookup.js';
 export { calculateVendorRisk, NEW_LINK_RISK_INPUTS };
 
@@ -141,8 +141,10 @@ async function vendorEvidenceCounts(dbInstance: any, orgVendorId: string) {
 export async function resolveDpfStatus(dbInstance: any, vendor: any): Promise<{ dpfStatus?: DpfMatchStatus; dpfLapsedDate?: string }> {
   if (vendor.headquartersCountry !== 'US') return {};
 
-  const entries = await loadDpfEntriesFor(dbInstance, [{ name: vendor.name, website: vendor.website }]);
-  const { status, entry } = matchDpfStatus(vendor.name, vendor.website, entries);
+  // VD-15: the registry certifies the legal entity, not the product.
+  const lookupName = dpfLookupName(vendor);
+  const entries = await loadDpfEntriesFor(dbInstance, [{ name: lookupName, website: vendor.website }]);
+  const { status, entry } = matchDpfStatus(lookupName, vendor.website, entries);
   if (status === 'not_found' || !entry) return {};
 
   // The registry publishes the date the certification stopped being current, so
@@ -3002,7 +3004,7 @@ export const vendorsRouter = router({
       // 16,534 rows.
       const dpfEntries = await loadDpfEntriesFor(
         ctx.db,
-        orgVendors.map((ov: any) => ({ name: ov.vendor.name, website: ov.vendor.website })),
+        orgVendors.map((ov: any) => ({ name: dpfLookupName(ov.vendor), website: ov.vendor.website })),
       );
 
       const results: Array<{
@@ -3019,7 +3021,7 @@ export const vendorsRouter = router({
 
         let dpfStatus: DpfMatchStatus | 'none' = 'none';
         if (ov.vendor.headquartersCountry === 'US') {
-          const match = matchDpfStatus(ov.vendor.name, ov.vendor.website, dpfEntries);
+          const match = matchDpfStatus(dpfLookupName(ov.vendor), ov.vendor.website, dpfEntries);
           if (match.status !== 'not_found') dpfStatus = match.status;
         }
 

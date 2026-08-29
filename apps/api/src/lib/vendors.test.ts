@@ -1181,6 +1181,154 @@ const formOnly = normaliseDpfExportRow({
 check('rejected' in formOnly ? false : formOnly.nameBaseKey === 'limited',
   'and a name that is nothing but a legal form keeps its full key rather than folding away');
 
+console.log('\nSprint 9 - the curated core (VD-15, VD-18)\n');
+
+import { CATALOGUE_SEED, catalogueEntityCount, validateCatalogueSeed } from '../constants/vendorEntityMap.js';
+import { dpfLookupName } from './vendorDpf.js';
+
+// The table is data, and every way it can be wrong is quiet: a typo'd parent
+// seeds an orphan whose registry lookup silently falls back to the product
+// name, and a duplicate slug makes the upsert overwrite one product with
+// another. So the validator runs here rather than being trusted to review.
+check(validateCatalogueSeed().length === 0, 'the curated core validates',
+  validateCatalogueSeed().join('; '));
+
+// VD-15's whole point, as a number. These were reported as one figure in the
+// superseded plan, which is how a target set double-counts Twilio three times.
+check(
+  catalogueEntityCount() < CATALOGUE_SEED.length,
+  'there are fewer legal entities than products, and the two are counted apart',
+  `${CATALOGUE_SEED.length} products, ${catalogueEntityCount()} entities.`,
+);
+
+// The collapses the programme names by hand. If one regressed, DPF matching
+// would ask the participant list about a product it has never heard of.
+const parentOf = (slug: string) => CATALOGUE_SEED.find((e) => e.slug === slug)?.entity ?? null;
+check(parentOf('slack') === 'salesforce' && parentOf('tableau') === 'salesforce',
+  'Slack and Tableau are contracted with Salesforce');
+check(parentOf('github') === 'microsoft' && parentOf('microsoft-azure') === 'microsoft',
+  'GitHub and Azure are contracted with Microsoft');
+check(parentOf('google-analytics') === 'google' && parentOf('google-workspace') === 'google',
+  'the Google products are one registrant');
+check(parentOf('mailchimp') === 'intuit', 'Mailchimp is contracted with Intuit');
+check(parentOf('loom') === 'atlassian', 'Loom is contracted with Atlassian');
+check(parentOf('netsuite') === 'oracle' && parentOf('cerner') === 'oracle',
+  'NetSuite and Cerner are contracted with Oracle');
+check(parentOf('adobe-sign') === 'adobe' && parentOf('magento') === 'adobe',
+  'Adobe Sign and Magento are contracted with Adobe');
+// A vendor that is its own entity must not carry a parent, or the lookup would
+// ask about the wrong company entirely.
+check(parentOf('stripe') === null && parentOf('dropbox') === null,
+  'a company that is its own entity has no parent');
+
+// Every parent is itself a seeded row. An entity named but not seeded would
+// leave `parent_entity_id` unset and the product looking like its own company.
+const seedSlugs = new Set(CATALOGUE_SEED.map((e) => e.slug));
+check(
+  CATALOGUE_SEED.every((e) => !e.entity || seedSlugs.has(e.entity)),
+  'every parent named is a row in the same table',
+);
+
+// --- which name the registry is asked about ---------------------------------
+
+check(dpfLookupName({ name: 'Google Analytics', legalEntityName: 'Google LLC' }) === 'Google LLC',
+  'a row that knows its legal entity is looked up by that name');
+check(dpfLookupName({ name: 'Dropbox', legalEntityName: null }) === 'Dropbox',
+  'and one that does not falls back to the product name, where the legal-form fold gives it a chance');
+check(dpfLookupName({ name: 'Acme', legalEntityName: '   ' }) === 'Acme',
+  'a blank legal name is not a legal name');
+check(dpfLookupName(null) === '' && dpfLookupName({}) === '',
+  'and nothing at all resolves to nothing rather than to undefined');
+
+// --- VD-18: the seed writes no sub-processor edges --------------------------
+
+// A property of the seed table rather than a query. There is no field here that
+// could carry an edge, and that is deliberate: a pre-seeded edge hangs off the
+// *shared* catalogue, so wrong once is wrong for every tenant, and the first
+// real snapshot would render as a mass Article 28(2) change against a baseline
+// nobody sourced.
+check(
+  CATALOGUE_SEED.every((e) => !('subProcessors' in e) && !('subProcessorListUrl' in e)),
+  'the curated core carries no sub-processor edges and no probed URLs',
+  'VD-18. Those come from a probed list or not at all.',
+);
+// The same rule for every field a score reads: identity and ownership only.
+const SEED_KEYS = new Set(['name', 'slug', 'domain', 'category', 'entity']);
+check(
+  CATALOGUE_SEED.every((e) => Object.keys(e).every((k) => SEED_KEYS.has(k))),
+  'and no scored field is asserted by the seed table at all',
+  'headquartersCountry, transferMechanisms and certifications come from a source or stay absent.',
+);
+
+console.log('\nSprint 9 - the DPF lookup that threw on every vendor with a website\n');
+
+import { dpfDomainCandidates, dpfDomainPredicate, dpfLookupSqlShape } from './vendorDpfLookup.js';
+
+// A runtime 500 that `tsc` could never see, in the shape CLAUDE.md already warns
+// about for `paginatedQuery`: a SQL template that compiles, passes every guard,
+// and dies on first contact with a database. It survived Sprint 7 because the
+// only two catalogue rows had no website, so the branch never ran in production.
+//
+// The rendered SQL is the tested thing. Asserting on results would need a
+// database; asserting on the *shape* needs only drizzle's dialect, and the shape
+// is exactly where the defect lived.
+const oneDomain = dpfLookupSqlShape(['stripe.com']);
+const twoDomains = dpfLookupSqlShape(['stripe.com', 'api.stripe.com']);
+
+// The defect in one assertion. The old form rendered `domains && ($1, $2)` — a
+// row constructor, one placeholder per candidate — and Postgres answered
+// `invalid input syntax for type text[]: must start with "{"`. An array
+// comparison takes exactly one parameter however many members it has.
+check(
+  (twoDomains.sql.match(/\$\d+/g) ?? []).length === 1,
+  'the domain predicate binds one parameter, not one per candidate',
+  `Rendered: ${twoDomains.sql}. Two placeholders means a row constructor, which is the 500.`,
+);
+check(
+  (oneDomain.sql.match(/\$\d+/g) ?? []).length === 1,
+  'and a single candidate renders the same way, so the bug cannot hide at n=1',
+);
+check(
+  twoDomains.params.length === 1 && typeof twoDomains.params[0] === 'string'
+  && (twoDomains.params[0] as string).startsWith('{'),
+  'and the parameter is a Postgres array literal',
+  `Got: ${JSON.stringify(twoDomains.params)}. Postgres parses this column as text[]; ` +
+  'anything not starting with { is the error verbatim.',
+);
+check(
+  (twoDomains.params[0] as string).includes('stripe.com') && (twoDomains.params[0] as string).includes('api.stripe.com'),
+  'carrying every candidate',
+);
+check(/&&/.test(twoDomains.sql), 'using the overlap operator, which is what an array-of-domains column needs');
+check(dpfDomainPredicate(['a.com']) !== undefined, 'and the predicate the loader uses is the one rendered here');
+
+// --- the candidate enumeration the predicate is fed --------------------------
+
+// The comment above it claims `azure.microsoft.com` must find the entry that
+// publishes `microsoft.com`. Nothing checked that either.
+check(
+  dpfDomainCandidates([{ name: 'x', website: 'https://azure.microsoft.com' }]).includes('microsoft.com'),
+  'a subdomain enumerates its parent, which is how a registry entry is found at all',
+);
+check(
+  dpfDomainCandidates([{ name: 'x', website: 'https://azure.microsoft.com' }]).includes('azure.microsoft.com'),
+  'and keeps the host itself',
+);
+check(
+  !dpfDomainCandidates([{ name: 'x', website: 'https://a.b.co.uk' }]).includes('co.uk'),
+  'but stops before a public suffix, or co.uk would match every British registrant',
+);
+check(
+  dpfDomainCandidates([{ name: 'x', website: null }]).length === 0
+  && dpfDomainCandidates([{ name: 'x', website: '' }]).length === 0,
+  'a vendor with no website contributes no domain predicate at all',
+  'That is what kept this defect invisible: the only rows in the catalogue had none.',
+);
+check(
+  dpfDomainCandidates([{ name: 'x', website: 'https://WWW.Stripe.com/gb/legal' }]).includes('stripe.com'),
+  'the host is lower-cased, de-www-ed and stripped of its path first',
+);
+
 console.log('\nSprint 2 — candidate assessment mapping\n');
 
 import { buildCatalogueWrites, diffFreshAgainstCatalogue } from './vendorIntelligenceMappers.js';

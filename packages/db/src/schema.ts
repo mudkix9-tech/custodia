@@ -1317,6 +1317,30 @@ export const vendors = pgTable('vendors', {
   
   name: varchar('name', { length: 255 }).notNull(),
   slug: varchar('slug', { length: 100 }),
+  /**
+   * The legal entity behind this product — VD-15.
+   *
+   * A catalogue lists what a customer recognises; a contract, a DPF
+   * certification and a set of SCCs all belong to a company. Those are not the
+   * same unit: Google Cloud, Google Workspace and Google Analytics are three
+   * entries a customer would look for and one registrant, one DPA, one set of
+   * clauses. Matching the *product* name against the Department of Commerce's
+   * list returns `not_found` for two of every three, which reads as "never
+   * certified" for a company that plainly is.
+   *
+   * Two columns rather than one, because they answer different questions.
+   * `parentEntityId` points at the catalogue row that *is* the entity where one
+   * exists — Google Cloud -> Google LLC — and drives grouping, concentration
+   * and "who do we actually contract with". `legalEntityName` is the registered
+   * name to match on, and is set even on a row with no parent, because
+   * "Dropbox" and "Dropbox, Inc." are one entry and two names.
+   *
+   * Both are nullable and both are allowed to stay that way: a vendor whose
+   * entity nobody has resolved is `absent`, which is a tier, and guessing at a
+   * corporate structure is exactly the sourcing this programme exists to stop.
+   */
+  parentEntityId: uuid('parent_entity_id').references((): any => vendors.id, { onDelete: 'set null' }),
+  legalEntityName: varchar('legal_entity_name', { length: 255 }),
   website: varchar('website', { length: 500 }),
   logoUrl: varchar('logo_url', { length: 500 }),
   description: text('description'),

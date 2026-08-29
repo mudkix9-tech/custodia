@@ -28,6 +28,7 @@
     "test:ropa-intelligence": "tsx src/lib/ropaIntelligence.test.ts",
     "recalc:vendor-risk": "tsx src/scripts/recalculate-vendor-risk.ts",
     "sync:dpf": "tsx src/scripts/sync-dpf-registry.ts",
+    "seed:catalogue": "tsx src/scripts/seed-catalogue.ts",
     "eval:vendors": "tsx src/lib/vendorEval.ts",
     "test:vendors": "tsx src/lib/vendors.test.ts",
     "check:genai": "tsx src/scripts/check-genai-config.ts"

@@ -238,14 +238,19 @@ export async function syncDpfRegistry(options: DpfSyncOptions): Promise<DpfSyncR
  * asked" — the distinction VD-13 is about.
  */
 async function enrichFromDetail(db: any, log: (line: string) => void): Promise<number> {
-  const catalogue = await db.query.vendors.findMany({ columns: { name: true } });
+  const catalogue = await db.query.vendors.findMany({ columns: { name: true, legalEntityName: true } });
   if (catalogue.length === 0) {
     log('[dpf] catalogue is empty — no detail records to fetch');
     return 0;
   }
 
-  const { dpfNameKey } = await import('./vendorDpf.js');
-  const wanted = [...new Set(catalogue.map((v: any) => dpfNameKey(v.name).slice(0, 255)).filter(Boolean))] as string[];
+  const { dpfNameKey, dpfBaseNameKey, dpfLookupName } = await import('./vendorDpf.js');
+  // Both keys, because the detail pass has to reach the same rows the lookup
+  // does: a catalogue saying "Dropbox" matches `dropboxinc` on the base key.
+  const wanted = [...new Set(catalogue.flatMap((v: any) => {
+    const name = dpfLookupName(v);
+    return [dpfNameKey(name).slice(0, 255), dpfBaseNameKey(name).slice(0, 255)];
+  }).filter(Boolean))] as string[];
 
   const targets = await db
     .select({

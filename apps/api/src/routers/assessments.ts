@@ -19,7 +19,7 @@ import {
 import { eq, and, or, desc, inArray, isNull } from 'drizzle-orm';
 import { crossCheckVendorResponses, calculateDiscrepancyRiskPenalty } from '../lib/vendorCrossCheck.js';
 import { parseTrustCenterProfile, mapTrustCenterToAssessmentAnswers } from '../lib/vendorTrustCenter.js';
-import { matchDpfStatus, type DpfMatchStatus } from '../lib/vendorDpf.js';
+import { matchDpfStatus, dpfLookupName, type DpfMatchStatus } from '../lib/vendorDpf.js';
 import { loadDpfEntriesFor } from '../lib/vendorDpfLookup.js';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
@@ -747,10 +747,12 @@ Only return valid JSON, nothing else.`;
       // match, not all 16,534 of them.
       let dpfStatus: DpfMatchStatus | 'none' = 'none';
       if (assessment.vendor.headquartersCountry === 'US') {
+        // VD-15: the legal entity is what the participant list names.
+        const dpfName = dpfLookupName(assessment.vendor);
         const dpfEntries = await loadDpfEntriesFor(db, [
-          { name: assessment.vendor.name, website: assessment.vendor.website },
+          { name: dpfName, website: assessment.vendor.website },
         ]);
-        const match = matchDpfStatus(assessment.vendor.name, assessment.vendor.website, dpfEntries);
+        const match = matchDpfStatus(dpfName, assessment.vendor.website, dpfEntries);
         if (match.status !== 'not_found') dpfStatus = match.status;
       }
 
