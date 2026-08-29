@@ -1,0 +1,2 @@
+ALTER TABLE "dpf_registrations" ADD COLUMN "name_base_key" varchar(255);--> statement-breakpoint
+CREATE INDEX "dpf_registrations_name_base_key_idx" ON "dpf_registrations" USING btree ("name_base_key");

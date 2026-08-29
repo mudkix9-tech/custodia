@@ -28,6 +28,76 @@ export function dpfNameKey(name: string): string {
 }
 
 /**
+ * Legal-form tokens the register carries and a catalogue name does not.
+ *
+ * The Department publishes legal entities — "Dropbox, Inc." — and a vendor
+ * catalogue names products, so exact `dpfNameKey` equality misses most of the
+ * register: 4,462 of the 7,547 EU-U.S. rows in the August 2026 export fold to a
+ * key ending in one of these. Dropbox holds all three certifications, all
+ * active, and was reported `not_found`.
+ *
+ * Derived by counting the trailing token of every EU-U.S. registrant rather
+ * than by listing the forms somebody remembered, which is also what keeps the
+ * list honest in the other direction: `group`, `solutions`, `systems`,
+ * `technologies` and `software` all occur more often than `ltd` and are part of
+ * the name, so none of them is here.
+ */
+const DPF_LEGAL_SUFFIXES: ReadonlySet<string> = new Set([
+  // Anglophone forms, in descending order of how often the export uses them.
+  'inc', 'incorporated', 'llc', 'lc', 'corporation', 'corp', 'company', 'co',
+  'ltd', 'limited', 'llp', 'lllp', 'lp', 'plc', 'pc', 'pllc', 'pbc',
+  // Registrants incorporated outside the US, which the export carries because
+  // the certifying entity is sometimes the parent rather than the US arm.
+  'gmbh', 'mbh', 'ag', 'kg', 'sa', 'sas', 'sarl', 'srl', 'spa', 'bv', 'nv',
+  'ab', 'as', 'asa', 'oy', 'oyj', 'aps', 'pty', 'pte', 'kk', 'kft', 'zrt',
+  'doo', 'sro', 'ltda',
+]);
+
+/**
+ * How many trailing legal forms to strip. "Acme Pty Ltd" is two, and an export
+ * row reading "Acme, Inc., LLC" is three. Bounded rather than looped to
+ * exhaustion so a name which is *entirely* legal forms cannot fold away.
+ */
+const MAX_SUFFIXES_STRIPPED = 3;
+
+/**
+ * Shortest base key worth matching on. Below this the fold has stopped
+ * identifying an organisation, and the point of this matcher is that "Go" must
+ * not find Google (audit D19).
+ */
+const MIN_BASE_KEY_LENGTH = 3;
+
+/**
+ * The folded name with any trailing legal form removed — the key that matches a
+ * catalogue's "Dropbox" against the register's "Dropbox, Inc.".
+ *
+ * **Stripping happens before folding, on whitespace-separated tokens, and that
+ * ordering is the whole of its safety.** `co` is a legal form, and `dpfNameKey`
+ * has already destroyed the word boundary by the time it runs — so stripping a
+ * suffix off the folded key would turn Cisco into `cis`, Tesco into `tes` and
+ * Costco into `cost`. Working on the raw tokens means only a standalone "Co" is
+ * ever read as a legal form, which is what the register means when it writes
+ * one.
+ */
+export function dpfBaseNameKey(name: string): string {
+  let tokens = name.trim().split(/\s+/).filter(Boolean);
+
+  for (let stripped = 0; stripped < MAX_SUFFIXES_STRIPPED && tokens.length > 1; stripped += 1) {
+    const last = dpfNameKey(tokens[tokens.length - 1] ?? '');
+    if (!DPF_LEGAL_SUFFIXES.has(last)) break;
+
+    const rest = tokens.slice(0, -1);
+    // Refuse a strip that would leave too little to identify anybody. An
+    // organisation genuinely called "AI Inc" keeps its full key rather than
+    // matching on `ai`.
+    if (dpfNameKey(rest.join(' ')).length < MIN_BASE_KEY_LENGTH) break;
+    tokens = rest;
+  }
+
+  return dpfNameKey(tokens.join(' '));
+}
+
+/**
  * The three certifications the Department of Commerce publishes, and the other
  * half of the unique key. An organisation may hold any subset and they lapse
  * independently, which is the whole of VD-9: a vendor certified EU-U.S. but not
@@ -71,8 +141,16 @@ const LIVE_REGISTRY_STATUSES = new Set(['active', 'under_review']);
  *
  * Match order: domain first (the strongest signal — a registry entry that
  * publishes this hostname's registrable domain is unambiguous), then exact
- * folded name. Never substring: "Go" must not match "Google", which is the
- * exact defect D19 records.
+ * folded name, then folded name with the trailing legal form removed from both
+ * sides and only where exactly one registrant answers. Never substring: "Go"
+ * must not match "Google", which is the exact defect D19 records — the third
+ * pass is still whole-key equality, on a key both sides were reduced to by the
+ * same rule, and never a prefix test.
+ *
+ * The order is deliberate rather than incidental. Domain beats name because a
+ * published hostname identifies an organisation and a name does not; exact name
+ * beats base name because "Blackboard" and "Blackboard Inc." are both in the
+ * register and a vendor called the first should get the first.
  *
  * `framework` narrows to one certification before either pass runs. Without it
  * the domain pass returns whichever of an organisation's three rows the array
@@ -117,10 +195,31 @@ export function matchDpfStatus(
 
   const key = dpfNameKey(vendorName);
   const byName = scoped.find((entry) => entry.nameKey === key);
-  if (!byName) return { status: 'not_found', entry: null };
   // A non-active entry matches by name but reports its real state — that is
   // the lapse signal, not a reason to keep hunting for an older active row.
-  return { status: registryStatusToMatch(byName.status), entry: byName };
+  if (byName) return { status: registryStatusToMatch(byName.status), entry: byName };
+
+  // Third pass: the same names with any trailing legal form removed from both
+  // sides, which is what finds the register's "Dropbox, Inc." from a catalogue
+  // that says "Dropbox". It runs even when the vendor's own name carries no
+  // suffix, because the row that needs stripping is usually the register's.
+  //
+  // **A base key that matches more than one registrant matches none.** Two
+  // legal entities can share a base — "Engaged MD, Inc." and "Engaged MD, LLC"
+  // are separate certifications with separate statuses — and there is nothing
+  // in a name to say which one a vendor is. Answering the Chapter V question
+  // from a coin toss is the false confidence this whole file is arranged
+  // against, so ambiguity reports `not_found`, the same as absence. It costs
+  // 22 of the 7,525 distinct EU-U.S. bases in the August 2026 export.
+  const base = dpfBaseNameKey(vendorName);
+  if (base.length >= MIN_BASE_KEY_LENGTH) {
+    const byBase = scoped.filter((entry) => dpfBaseNameKey(entry.organisationName) === base);
+    if (byBase.length === 1) {
+      return { status: registryStatusToMatch(byBase[0]!.status), entry: byBase[0]! };
+    }
+  }
+
+  return { status: 'not_found', entry: null };
 }
 
 function registryStatusToMatch(status: string): DpfMatchStatus {

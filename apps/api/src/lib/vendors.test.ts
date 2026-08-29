@@ -743,8 +743,16 @@ check(matchDpfStatus('Google LLC', null, dpfEntries).status === 'not_found',
   '"Go" does not match "Godaddy" — substring matching stays dead');
 check(matchDpfStatus('Microsoft Corporation', null, dpfEntries).status === 'active',
   'exact folded name matches');
-check(matchDpfStatus('Old Vendor Limited', null, dpfEntries).status === 'not_found',
-  'a differently-folded name does not fuzzy-match');
+// This asserted `not_found` until the legal-form fold below, and the change is
+// deliberate rather than a relaxation: "Ltd" and "Limited" are two spellings of
+// one legal form, so "Old Vendor Limited" and "Old Vendor Ltd" are one
+// organisation, and reporting the second as unregistered was the false negative
+// the fold exists to remove. What must stay dead is fuzzy matching — the case
+// below it is the guard.
+check(matchDpfStatus('Old Vendor Limited', null, dpfEntries).status === 'lapsed',
+  'one legal form spelled two ways is one organisation');
+check(matchDpfStatus('Old Vendor Holdings', null, dpfEntries).status === 'not_found',
+  'but a genuinely different name still misses — only the legal form is negotiable');
 const lapsed = matchDpfStatus('Old Vendor Ltd', null, dpfEntries);
 check(lapsed.status === 'lapsed', 'a lapsed entry reports lapsed rather than hiding');
 check(isDpfLapsedByDate({ nextRecertificationDate: '2020-01-01' }) === true, 'an expired recert date reads lapsed');
@@ -943,6 +951,123 @@ check(dpfLapseCopy.detail.includes('2026-02-06') && /not act retroactively/.test
 check(dpfLapseFinding('withdrawn', 'Acme Inc')!.detail.includes('withdrew'),
   'a withdrawal is described as a decision, not as a missed renewal');
 check(dpfLapseFinding('active', 'Acme Inc') === null, 'and an active certification raises nothing');
+
+console.log('\nSprint 7 follow-up — the legal-form fold\n');
+
+// The register names legal entities and a catalogue names products, so exact
+// key equality found almost nobody: of ten well-known processors checked against
+// the August 2026 export, only Salesforce and Zoom matched, and Dropbox — which
+// holds all three certifications, all active — came back `not_found`. That is
+// the input to a *critical* cross-check finding telling a customer their
+// processor is not on the participant list, so the miss is not a quiet one.
+
+import { dpfBaseNameKey } from './vendorDpf.js';
+
+// --- the fold itself, where the safety lives ---------------------------------
+
+check(dpfBaseNameKey('Dropbox, Inc.') === 'dropbox', 'a trailing legal form comes off');
+check(dpfBaseNameKey('Dropbox') === 'dropbox', 'and a name without one is unchanged');
+check(dpfBaseNameKey('Stripe, LLC') === 'stripe' && dpfBaseNameKey('Twilio Inc.') === 'twilio',
+  'punctuation around the form is irrelevant, spelled either way');
+// Stripping runs on whitespace tokens *before* the fold, which is the only
+// reason `co` is safe to carry: after folding there is no word boundary left
+// and Cisco would key as `cis`.
+check(dpfBaseNameKey('Cisco') === 'cisco', 'Cisco does not lose a legal form it never had');
+check(dpfBaseNameKey('Tesco') === 'tesco' && dpfBaseNameKey('Costco') === 'costco',
+  'nor does anything else that merely ends in those letters');
+check(dpfBaseNameKey('Acme Trading Co.') === 'acmetrading', 'a standalone Co. is one, though');
+check(dpfBaseNameKey('Acme Pty Ltd') === 'acme', 'two stacked forms both come off');
+check(dpfBaseNameKey('Acme Group') === 'acmegroup' && dpfBaseNameKey('Acme Solutions') === 'acmesolutions',
+  'and words that are part of the name stay — `group` and `solutions` outnumber `ltd` in the export');
+check(dpfBaseNameKey('AI Inc') === 'aiinc',
+  'a strip that would leave too little to identify anybody is refused');
+
+// --- the pass that uses it ---------------------------------------------------
+
+const legalForms: DpfEntry[] = [
+  { nameKey: dpfNameKey('Dropbox, Inc.'), organisationName: 'Dropbox, Inc.', framework: 'eu_us', domains: [], status: 'active' },
+  { nameKey: dpfNameKey('ZoomInfo'), organisationName: 'ZoomInfo', framework: 'eu_us', domains: [], status: 'active' },
+  { nameKey: dpfNameKey('ZoomRx Inc.'), organisationName: 'ZoomRx Inc.', framework: 'eu_us', domains: [], status: 'lapsed' },
+  { nameKey: dpfNameKey('Old Vendor Ltd'), organisationName: 'Old Vendor Ltd', framework: 'eu_us', domains: [], status: 'lapsed' },
+];
+
+check(matchDpfStatus('Dropbox', null, legalForms).status === 'active',
+  'the worked example: a catalogue saying "Dropbox" finds "Dropbox, Inc."');
+check(matchDpfStatus('Dropbox', null, legalForms).entry?.organisationName === 'Dropbox, Inc.',
+  'and hands back the registrant, so the finding names the legal entity');
+// The vendor carries the form and the register does not — the fold runs on both
+// sides, so this direction has to work too.
+check(matchDpfStatus('Old Vendor Limited', null, legalForms).status === 'lapsed',
+  'the fold is applied to the vendor name as well as the registrant');
+// D19, restated against the new pass. `zoom` equals `zoom` and nothing else:
+// the third pass is whole-key equality on a reduced key, never a prefix test.
+check(matchDpfStatus('Zoom', null, legalForms).status === 'not_found',
+  '"Zoom" does not reach ZoomInfo or ZoomRx — the base pass is equality, not prefix');
+check(matchDpfStatus('Drop', null, legalForms).status === 'not_found',
+  'and a shorter name is not a match for a longer one');
+
+// --- exact beats base --------------------------------------------------------
+
+const bothListed: DpfEntry[] = [
+  { nameKey: dpfNameKey('Blackboard'), organisationName: 'Blackboard', framework: 'eu_us', domains: [], status: 'lapsed' },
+  { nameKey: dpfNameKey('Blackboard Inc.'), organisationName: 'Blackboard Inc.', framework: 'eu_us', domains: [], status: 'active' },
+];
+// Both are really in the export, as separate certifications with separate
+// statuses. A vendor recorded as "Blackboard" is the first of them, and the
+// pass order is what says so — if the base pass ran first it would find two,
+// call it ambiguous, and lose an exact answer that was sitting there.
+check(matchDpfStatus('Blackboard', null, bothListed).status === 'lapsed',
+  'an exact name match is not overridden by a base match that would be ambiguous');
+check(matchDpfStatus('Blackboard Inc.', null, bothListed).status === 'active',
+  'and the entity that spells out its form gets its own row');
+
+// --- ambiguity refuses -------------------------------------------------------
+
+const ambiguous: DpfEntry[] = [
+  { nameKey: dpfNameKey('Engaged MD, Inc.'), organisationName: 'Engaged MD, Inc.', framework: 'eu_us', domains: [], status: 'active' },
+  { nameKey: dpfNameKey('Engaged MD, LLC'), organisationName: 'Engaged MD, LLC', framework: 'eu_us', domains: [], status: 'lapsed' },
+];
+// Two legal entities, one base, two different Chapter V answers. Nothing in the
+// name says which one the vendor is, and picking either is a coin toss on a
+// transfer safeguard — so this reports absence, the same as never having been
+// listed. 22 of the export's 7,525 distinct EU-U.S. bases are in this state.
+check(matchDpfStatus('Engaged MD', null, ambiguous).status === 'not_found',
+  'a base matching two registrants matches neither');
+check(matchDpfStatus('Engaged MD, Inc.', null, ambiguous).status === 'active',
+  'while the exact name still resolves, because it is not ambiguous at all');
+
+// --- the base pass inherits the rest of the matcher's rules ------------------
+
+const baseAcrossFrameworks: DpfEntry[] = [
+  { nameKey: dpfNameKey('Acme Holdings Inc.'), organisationName: 'Acme Holdings Inc.', framework: 'eu_us', domains: [], status: 'active' },
+  { nameKey: dpfNameKey('Acme Holdings Inc.'), organisationName: 'Acme Holdings Inc.', framework: 'uk_extension', domains: [], status: 'withdrawn' },
+];
+check(matchDpfStatus('Acme Holdings', null, baseAcrossFrameworks).status === 'active',
+  'a base match answers for the framework asked about');
+check(matchDpfStatus('Acme Holdings', null, baseAcrossFrameworks, 'uk_extension').status === 'withdrawn',
+  'and gives the other framework its own answer rather than the EU-U.S. one');
+check(matchDpfStatus('Acme Holdings', null, baseAcrossFrameworks, 'swiss_us').status === 'not_found',
+  'a framework the organisation does not hold is still not found');
+
+// --- the stored key the lookup narrows on -----------------------------------
+
+const dropboxRow = normaliseDpfExportRow({
+  'Public Display Name': 'Dropbox, Inc.',
+  Framework: 'EU-U.S. Data Privacy Framework',
+  Status: 'Active',
+  'Public Link': 'https://www.dataprivacyframework.gov/participant/1234',
+});
+check('rejected' in dropboxRow ? false : dropboxRow.nameBaseKey === 'dropbox',
+  'the import stores the base key, which is how the lookup reaches a row a catalogue name has no exact key for');
+// A registrant whose whole name is a legal form must still be addressable, so
+// the column falls back to the full key rather than to empty.
+const formOnly = normaliseDpfExportRow({
+  'Public Display Name': 'Limited',
+  Framework: 'EU-U.S. Data Privacy Framework',
+  Status: 'Active',
+});
+check('rejected' in formOnly ? false : formOnly.nameBaseKey === 'limited',
+  'and a name that is nothing but a legal form keeps its full key rather than folding away');
 
 console.log('\nSprint 2 — candidate assessment mapping\n');
 

@@ -165,6 +165,7 @@ export async function syncDpfRegistry(options: DpfSyncOptions): Promise<DpfSyncR
       .insert(dpfRegistrations)
       .values(chunk.map((row) => ({
         nameKey: row.nameKey,
+        nameBaseKey: row.nameBaseKey,
         organisationName: row.organisationName,
         framework: row.framework,
         status: row.status,
@@ -181,6 +182,7 @@ export async function syncDpfRegistry(options: DpfSyncOptions): Promise<DpfSyncR
       .onConflictDoUpdate({
         target: [dpfRegistrations.nameKey, dpfRegistrations.framework],
         set: {
+          nameBaseKey: sql`excluded.name_base_key`,
           organisationName: sql`excluded.organisation_name`,
           status: sql`excluded.status`,
           certificationDate: sql`excluded.certification_date`,

@@ -39,7 +39,7 @@
  *
  * Everything here is pure. The fetching lives in `scripts/sync-dpf-registry.ts`.
  */
-import { dpfNameKey, DPF_FRAMEWORKS, type DpfFramework } from './vendorDpf.js';
+import { dpfNameKey, dpfBaseNameKey, DPF_FRAMEWORKS, type DpfFramework } from './vendorDpf.js';
 
 export const DPF_API_BASE = 'https://dpfapi.azurewebsites.net/api';
 
@@ -200,6 +200,7 @@ export interface DpfExportRow {
 /** A `dpf_registrations` row, ready to upsert. */
 export interface DpfRegistrationRow {
   nameKey: string;
+  nameBaseKey: string;
   organisationName: string;
   framework: DpfFramework;
   status: string;
@@ -230,6 +231,11 @@ export function normaliseDpfExportRow(row: DpfExportRow): DpfRegistrationRow | {
   const nameKey = dpfNameKey(name).slice(0, 255);
   if (!nameKey) return { rejected: `name folds to nothing: ${name}` };
 
+  // Stored so the lookup can narrow to it. Falls back to the full key rather
+  // than to empty for a name that is nothing but a legal form, which keeps the
+  // column addressable by every row.
+  const nameBaseKey = (dpfBaseNameKey(name) || nameKey).slice(0, 255);
+
   const framework = dpfFrameworkFromLabel(String(row.Framework ?? ''));
   if (!framework) return { rejected: `unknown framework: ${String(row.Framework ?? '')}` };
 
@@ -250,6 +256,7 @@ export function normaliseDpfExportRow(row: DpfExportRow): DpfRegistrationRow | {
 
   return {
     nameKey,
+    nameBaseKey,
     organisationName: name.slice(0, 500),
     framework,
     status,

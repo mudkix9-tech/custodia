@@ -1785,6 +1785,16 @@ export const vendorFieldProvenance = pgTable('vendor_field_provenance', {
 export const dpfRegistrations = pgTable('dpf_registrations', {
   id: uuid('id').defaultRandom().primaryKey(),
   nameKey: varchar('name_key', { length: 255 }).notNull(),
+  // The same fold with any trailing legal form removed — "Dropbox, Inc." keys as
+  // `dropboxinc` above and `dropbox` here. It exists so `loadDpfEntriesFor` can
+  // *narrow* to the rows a catalogue name could reach; `matchDpfStatus` still
+  // recomputes the key from `organisation_name` before deciding, so this column
+  // never becomes a second copy of the matching rule (VD-7). The consequence is
+  // the ordinary denormalisation one: change `dpfBaseNameKey` and this column
+  // describes the old rule until `npm run sync:dpf` runs again, and until then
+  // the effect is a vendor that fails to match rather than one that matches
+  // wrongly.
+  nameBaseKey: varchar('name_base_key', { length: 255 }),
   organisationName: varchar('organisation_name', { length: 500 }).notNull(),
   // 'eu_us' | 'uk_extension' | 'swiss_us'. The default exists for the migration
   // rather than for the writers: `normaliseDpfExportRow` rejects a row whose
@@ -1837,6 +1847,9 @@ export const dpfRegistrations = pgTable('dpf_registrations', {
   detailFetchedAt: timestamp('detail_fetched_at', { withTimezone: true }),
 }, (table) => ({
   nameUnq: unique('dpf_registrations_name_key_framework_unq').on(table.nameKey, table.framework),
+  // Not unique — a base key is shared by every legal entity that folds to it,
+  // and the matcher's ambiguity rule depends on being able to see all of them.
+  baseKeyIdx: index('dpf_registrations_name_base_key_idx').on(table.nameBaseKey),
 }));
 
 /**

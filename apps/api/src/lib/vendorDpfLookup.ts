@@ -8,13 +8,14 @@
  * 16,534 rows now — one per (organisation, framework) — pulled on every vendor
  * detail view, every risk recalculation and every cross-check batch.
  *
- * The predicate is the folded name plus the vendor's own host, because those are
- * the two things `matchDpfStatus` matches on. Anything it cannot match on is not
- * worth loading.
+ * The predicate is the folded name, the folded name without its trailing legal
+ * form, and the vendor's own host, because those are the three things
+ * `matchDpfStatus` matches on. Anything it cannot match on is not worth
+ * loading.
  */
 import { or, inArray, sql } from 'drizzle-orm';
 import { dpfRegistrations } from 'db';
-import { dpfNameKey, type DpfEntry } from './vendorDpf.js';
+import { dpfNameKey, dpfBaseNameKey, type DpfEntry } from './vendorDpf.js';
 
 export interface DpfLookupTarget {
   name: string;
@@ -36,8 +37,19 @@ function hostOf(website: string | null | undefined): string | null {
 /**
  * Load the registrations that could match any of these vendors.
  *
- * Two predicates OR'd: the folded name against `name_key`, and the vendor's host
- * against the `domains` array. The domain half has to cover subdomains —
+ * Three predicates OR'd: the folded name against `name_key`, the same name with
+ * any trailing legal form removed against `name_base_key`, and the vendor's host
+ * against the `domains` array.
+ *
+ * The base-key half is what makes `matchDpfStatus`'s third pass reachable at
+ * all: a catalogue that says "Dropbox" has no `name_key` in the register to
+ * load, so without it the rows that pass would have matched were never in
+ * memory to be matched. It deliberately loads *every* registrant sharing the
+ * base, including the ones that make it ambiguous — the matcher decides to
+ * refuse by counting them, so a narrower query would turn a refusal into a
+ * wrong answer.
+ *
+ * The domain half has to cover subdomains —
  * `azure.microsoft.com` must find the entry that publishes `microsoft.com` —
  * which an array containment test cannot express, so the host's parent suffixes
  * are enumerated and matched by overlap. Two labels deep is where it stops:
@@ -62,8 +74,13 @@ export async function loadDpfEntriesFor(
     }
   }
 
+  const baseKeys = [...new Set(
+    targets.map((t) => dpfBaseNameKey(t.name ?? '').slice(0, 255)).filter(Boolean),
+  )];
+
   const predicates = [];
   if (nameKeys.length > 0) predicates.push(inArray(dpfRegistrations.nameKey, nameKeys));
+  if (baseKeys.length > 0) predicates.push(inArray(dpfRegistrations.nameBaseKey, baseKeys));
   if (domainCandidates.size > 0) {
     predicates.push(sql`${dpfRegistrations.domains} && ${[...domainCandidates]}`);
   }

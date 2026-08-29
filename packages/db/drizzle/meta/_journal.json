@@ -337,6 +337,13 @@
       "when": 1787981372096,
       "tag": "0058_grey_kronos",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1787988166610,
+      "tag": "0059_cold_johnny_blaze",
+      "breakpoints": true
     }
   ]
 }
