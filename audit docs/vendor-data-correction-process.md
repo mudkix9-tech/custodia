@@ -10,11 +10,13 @@ for what should win when a person recorded an answer by hand. A registry row tha
 wrong about a company was, literally, uncorrectable by anything the product offered.
 
 > **§4 is the part that is a commitment rather than a mechanism.** The route and the
-> intervals below are now settled and can be published; what is deliberately *not*
-> written here is an individual's name, because a published process names a role and an
-> internal rota names the person. Attach the person to the role in the operations
-> runbook, and revisit the intervals once there is enough volume to know whether they
-> are honest.
+> intervals below are settled and can be published. What is deliberately *not* written
+> here is an individual's name: a document a third party reads goes stale the first time
+> somebody changes job, and the reader has no way to tell. The person behind the role is
+> in [`vendor-data-correction-rota.md`](./vendor-data-correction-rota.md), which is
+> internal, cannot be empty — it defaults to the product owner until a row says otherwise
+> — and carries the handover rules that keep an open correction from being dropped when
+> the role moves.
 
 ---
 
@@ -67,7 +69,7 @@ commitment about what happens next.
 | | |
 |---|---|
 | Where a correction request arrives | `support@custodia.io`, subject line beginning `Vendor record correction` |
-| Who owns triage | The **Data Protection Officer**, as Custodia's own data-quality owner |
+| Who owns triage | The **Data Protection Officer**, as Custodia's own data-quality owner. The current holder is named in the internal rota, never here. |
 | Acknowledgement | 5 working days |
 | Resolution, or a reasoned decision not to change the record | 20 working days |
 | If the requester disagrees with the decision | The disputed field is **suppressed** — its provenance row is deleted, so the field renders as "not yet verified" — while the DPO reviews. A record we cannot stand behind is not published in the meantime. |
@@ -82,8 +84,11 @@ that bounced.
 
 **The owner is a role, not a person.** A published process that names an individual is
 wrong the first time somebody changes job, and a vendor reading it cannot tell whether the
-name is current. The DPO is a role this product already models. Attach the person to the
-role in the internal rota, and treat the rota as the thing that keeps this honest.
+name is current. The DPO is a role this product already models. The person holding it is
+recorded in [`vendor-data-correction-rota.md`](./vendor-data-correction-rota.md), together
+with what the holder is answerable for and what has to be handed over when the role moves
+— including which fields are currently suppressed, which is work that is invisible in the
+product by design and would otherwise be lost at a handover.
 
 **The intervals are administrative, not legal, and are described as such.** A correction
 request about business-level facts — where a company is established, what its DPA says —
