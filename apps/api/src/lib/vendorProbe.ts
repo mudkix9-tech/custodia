@@ -262,10 +262,32 @@ export function downgradeForSoftNotFound(
   return 'partial';
 }
 
-export function evaluateContentSignals(text: string, type: ProbeDocType): 'verified' | 'partial' | 'gated' {
+export function evaluateContentSignals(
+  text: string,
+  type: ProbeDocType,
+  /**
+   * Words this *one site* uses for this document type, taught by a reviewer.
+   *
+   * Per host and never global: a vendor calling their sub-processor list a
+   * "Sub-processor Register" is a fact about that vendor, and folding it into
+   * the shared families would loosen matching for every other vendor in the
+   * catalogue. That is how a token list stops being evidence and becomes a
+   * rubber stamp — each addition is individually reasonable and the set ends up
+   * matching any legal page at all.
+   *
+   * A taught word satisfies the *name* family only. The role and execution
+   * families still have to match on their own, because what makes a page a DPA
+   * is that it names the parties and is executed, not that it is titled one.
+   */
+  siteTokens: readonly string[] = [],
+): 'verified' | 'partial' | 'gated' {
   const body = text.replace(/\s+/g, ' ').toLowerCase();
 
   if (GATED_BODY_SIGNATURE.test(body)) return 'gated';
+
+  const taughtName = siteTokens.some(
+    (token) => token.trim().length >= 3 && body.includes(token.trim().toLowerCase()),
+  );
 
   if (type === 'dpa') {
     const names =
@@ -274,18 +296,21 @@ export function evaluateContentSignals(text: string, type: ProbeDocType): 'verif
       /controller|processor|standard[\s\-_]contractual[\s\-_]clauses|\bscc\b|verantwortlicher|auftragsverarbeiter|standardvertragsklauseln|responsable[\s\-_]d[ue][\s\-_]traitement|sous[\s\-_]traitant|clauses[\s\-_]contractuelles[\s\-_]types/i;
     const execution =
       /sign|execute|parties|signature|execution|duly[\s\-_]authorised|unterzeichn|unterschrift|vertragsparteien|abgeschlossen|conclu|paraphe/i;
-    return names.test(body) && roles.test(body) && execution.test(body) ? 'verified' : 'partial';
+    return (names.test(body) || taughtName) && roles.test(body) && execution.test(body)
+      ? 'verified'
+      : 'partial';
   }
   if (type === 'subprocessors') {
     const list =
       /subprocessor|sub[\s\-_]processor|third[\s\-_]party[\s\-_]list|unterauftragsverarbeiter|unter[\s\-_]?auftragnehmer|sous[\s\-_]traitants?[\s\-_]ult[ée]rieurs?/i;
     const detail =
       /location|purpose|entity|hosting|standort|zweck|unternehmen|sitz|lieu|finalit[ée]|entit[ée]|h[ée]bergement/i;
-    return list.test(body) && detail.test(body) ? 'verified' : 'partial';
+    return (list.test(body) || taughtName) && detail.test(body) ? 'verified' : 'partial';
   }
-  return /privacy[\s\-_](policy|statement|notice)|datenschutz(erkl[äa]rung|erklaerung|hinweise|richtlinie)|politique[\s\-_]de[\s\-_]confidentialit[ée]|d[ée]claration[\s\-_]de[\s\-_]confidentialit[ée]/i.test(
-    body,
-  )
+  return taughtName ||
+    /privacy[\s\-_](policy|statement|notice)|datenschutz(erkl[äa]rung|erklaerung|hinweise|richtlinie)|politique[\s\-_]de[\s\-_]confidentialit[ée]|d[ée]claration[\s\-_]de[\s\-_]confidentialit[ée]/i.test(
+      body,
+    )
     ? 'verified'
     : 'partial';
 }

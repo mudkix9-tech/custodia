@@ -18,6 +18,7 @@ import { TRANSFER_MECHANISMS } from '@/constants/transferMechanisms';
 import { VendorRelationshipPanel, VendorHistory, UnlinkVendor } from '@/components/vendors/VendorRelationship';
 import { VendorBenchmarkCard } from '@/components/vendors/VendorBenchmarkCard';
 import { TrustCenterModal } from '@/components/vendors/TrustCenterModal';
+import { ProvenanceBadge, type ProvenanceView } from '@/components/vendors/ProvenanceBadge';
 
 import { useToast } from '@/components/ui/Toast';
 
@@ -27,6 +28,19 @@ export default function VendorDetailsPage() {
   const params = useParams();
   const [isTrustCenterOpen, setIsTrustCenterOpen] = useState(false);
   const vendorId = params?.id as string;
+
+  /**
+   * Where each catalogue field came from, resolved by the API.
+   *
+   * Sprint 10 built `ProvenanceBadge` and never gave it a call site that passes
+   * data, so every screen in the product showed a value with no source while
+   * the component that says the source sat one import away. Reading it through
+   * a helper rather than inline keeps the absent tier honest: a field with no
+   * row renders the "not yet verified" badge deliberately, because most fields
+   * have no row and that is a statement about us rather than about the vendor.
+   */
+  const provenanceFor = (field: string): ProvenanceView | null =>
+    ((vendor as any)?.provenance?.[field] as ProvenanceView | undefined) ?? null;
 
   const { data: vendor, isLoading } = trpc.vendors.getOrgVendorDetails.useQuery({ vendorId }, { enabled: !!vendorId });
   const { setContext } = useAiGuidanceStore();
@@ -197,7 +211,8 @@ export default function VendorDetailsPage() {
                 <Globe className="w-5 h-5 text-[#6E747A] shrink-0" />
                 <div>
                   <div className="text-[13px] font-medium text-[#F4F5F6]">{t('detail.headquarters')}</div>
-                  <div className="text-[14px] text-[#9BA1A6]">{vendor.vendor.headquartersCountry}</div>
+                  <div className="text-[14px] text-[#9BA1A6]">{vendor.vendor.headquartersCountry || t('detail.none_detected')}</div>
+                  <div className="mt-1.5"><ProvenanceBadge provenance={provenanceFor('headquartersCountry')} /></div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -211,6 +226,7 @@ export default function VendorDetailsPage() {
                       </span>
                     )) || <span className="text-[13px] text-[#6E747A]">{t('detail.none_detected')}</span>}
                   </div>
+                  <div className="mt-1.5"><ProvenanceBadge provenance={provenanceFor('securityCertifications')} /></div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -685,6 +701,7 @@ export default function VendorDetailsPage() {
                         <div>
                           <div className="font-medium text-[#F4F5F6] text-[14px]">{t('detail.dpa.template.title')}</div>
                           <div className="text-[12px] text-[#6E747A]">{t('detail.dpa.template.provided_by', { name: vendor.vendor.name })}</div>
+                          <div className="mt-1.5"><ProvenanceBadge provenance={provenanceFor('dpaUrl')} /></div>
                         </div>
                       </div>
                       <a href={vendor.vendor.dpaUrl} target="_blank" className="text-[13px] font-medium text-[#C9A227] hover:text-[#E5C463]">{t('detail.dpa.template.review')}</a>

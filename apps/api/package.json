@@ -13,6 +13,7 @@
     "check:tenancy": "tsx src/scripts/check-tenant-scoping.ts",
     "check:relations": "tsx src/scripts/check-relations.ts",
     "check:nocheck": "tsx src/scripts/check-ts-nocheck.ts",
+    "check:vendor-provenance": "tsx src/scripts/check-vendor-provenance.ts",
     "probe": "tsx src/scripts/probe-procedures.ts",
     "mint-token": "tsx src/scripts/mint-probe-token.ts",
     "test:fixtures": "tsx src/lib/consentEvaluator.fixtures.test.ts",
@@ -29,6 +30,7 @@
     "recalc:vendor-risk": "tsx src/scripts/recalculate-vendor-risk.ts",
     "sync:dpf": "tsx src/scripts/sync-dpf-registry.ts",
     "seed:catalogue": "tsx src/scripts/seed-catalogue.ts",
+    "console": "tsx src/scripts/console.ts",
     "eval:vendors": "tsx src/lib/vendorEval.ts",
     "test:vendors": "tsx src/lib/vendors.test.ts",
     "check:genai": "tsx src/scripts/check-genai-config.ts"

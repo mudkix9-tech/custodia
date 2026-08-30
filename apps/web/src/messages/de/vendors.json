@@ -1,6 +1,6 @@
 {
   "_review_notes": {
-    "title": "REVIEW: 'Anbieter-Intelligenz' or 'Dienstleister-Verwaltung'"
+    "title": "SETTLED (30 Aug 2026): 'Dienstleister-Verwaltung'. 'Anbieter-Intelligenz' calques the English product name, and 'Intelligenz' does not carry the gathered-information sense in German. The title says what the module does, and matches the French."
   },
   "title": "Dienstleister-Verwaltung",
   "subtitle": "Automatisierte Verfolgung von AVVs, TIAs und Unterauftragsverarbeiter-Risiken.",
@@ -869,36 +869,6 @@
     "sex_life": "Sexualleben",
     "sexual_orientation": "Sexuelle Orientierung",
     "criminal_offence_data": "Strafrechtliche Daten"
-  },
-  "intelligence": {
-    "title": "Vendor Intelligence",
-    "subtitle": "Pipeline-Ausgaben prüfen und Kandidaten in den Katalog freigeben.",
-    "pending_title": "Ausstehende Kandidaten",
-    "pending_count": "{count} Datensätze zur Prüfung",
-    "empty_pending": "Nichts ausstehend — starten Sie einen Batch über die API oder importieren Sie unten eine JSON-Datei.",
-    "runs_title": "Letzte Läufe",
-    "runs_loading": "Läufe werden geladen…",
-    "runs_empty": "Noch keine Läufe.",
-    "runs_col_kind": "Art",
-    "runs_col_status": "Status",
-    "runs_col_progress": "Fortschritt",
-    "runs_col_started": "Gestartet",
-    "approve": "Freigeben",
-    "reject": "Ablehnen",
-    "show_detail": "Details",
-    "hide_detail": "Ausblenden",
-    "confidence_tooltip": "Konfidenz {value}/100 — gewichtet über die Pro-Feld-Prüfungen",
-    "field_country": "HQ-Land",
-    "back_to_register": "Zurück zum Register",
-    "import_title": "JSON importieren",
-    "import_help": "Inhalt von seed-data/vendors.json oder pending-review.json hier ablegen. Der Server begrenzt den Body auf 4 MB und nimmt die ersten 500 Datensätze.",
-    "import_button": "Importieren",
-    "importing": "Importiere…",
-    "import_done": "{count} Kandidaten importiert.",
-    "approving": "Freigabe läuft…",
-    "bulk_error": "Massenfreigabe fehlgeschlagen.",
-    "bulk_done": "{count} Kandidaten in den Katalog übernommen.",
-    "bulk_approve": "Alle mit Konfidenz ≥ 70 freigeben"
   },
   "intake": {
     "title": "Dienstleister-Bedarfsanfragen",

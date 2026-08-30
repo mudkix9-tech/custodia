@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vendor catalogue console</title>
+<!--
+  The operator console's one page. Vanilla, no build step, no dependencies —
+  it is served by `src/scripts/console.ts` off loopback and never deployed.
+
+  Two rules it is built around:
+
+  1. A decision should cost one keystroke. Verifying 82 catalogue rows by hand is
+     the actual work, and a UI that costs three clicks a field turns an hour into
+     an afternoon and the afternoon into "I'll do it later".
+  2. Evidence sits next to the claim, always. The pipeline records why a field
+     came back absent — every URL it tried and the failure class — and the
+     in-product console never showed any of it. A reviewer who cannot see what
+     was checked is being asked to rubber-stamp a number.
+-->
+<style>
+  :root {
+    --panel: #0D0F11;
+    --recessed: #08090A;
+    --text: #F4F5F6;
+    --dim: #9BA1A6;
+    --faint: #6E747A;
+    --accent: #C9A227;
+    --line: rgba(255,255,255,.10);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--recessed); color: var(--text);
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header {
+    position: sticky; top: 0; z-index: 5; background: var(--panel);
+    border-bottom: 1px solid var(--line); padding: 12px 20px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  h1 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: .01em; }
+  nav { display: flex; gap: 4px; margin-left: auto; }
+  nav button {
+    background: none; border: 1px solid transparent; color: var(--dim);
+    padding: 5px 12px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 13px;
+  }
+  nav button.on { background: rgba(255,255,255,.06); color: var(--text); border-color: var(--line); }
+  nav button:hover { color: var(--text); }
+  .who { font-size: 12px; color: var(--faint); }
+  main { padding: 20px; max-width: 1100px; margin: 0 auto; }
+  .empty { color: var(--faint); text-align: center; padding: 60px 0; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    padding: 18px; margin-bottom: 14px;
+  }
+  .card.cur { border-color: rgba(201,162,39,.55); }
+  .card h2 { margin: 0; font-size: 15px; font-weight: 600; }
+  .card .sub { color: var(--faint); font-size: 12px; margin-top: 2px; }
+  .card .top { display: flex; align-items: baseline; gap: 12px; }
+  .count { margin-left: auto; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  td { padding: 7px 8px; vertical-align: top; border-top: 1px solid rgba(255,255,255,.05); }
+  tr.field.cur td { background: rgba(201,162,39,.07); }
+  tr.field.done td { opacity: .45; }
+  .fname { color: var(--dim); width: 190px; font-size: 13px; }
+  .val { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
+  .val a { color: var(--accent); }
+  .was { color: var(--faint); text-decoration: line-through; }
+  .tier { width: 150px; font-size: 11px; color: var(--faint); text-align: right; white-space: nowrap; }
+  .mark { width: 26px; text-align: center; font-size: 13px; }
+  .ok { color: var(--accent); } .no { color: #C46A6A; }
+
+  .pill {
+    display: inline-block; padding: 1px 7px; border-radius: 999px;
+    border: 1px solid var(--line); font-size: 10px; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--faint);
+  }
+  .pill.new { border-color: rgba(201,162,39,.4); color: var(--accent); }
+  .pill.changed { border-color: rgba(196,106,106,.5); color: #C46A6A; }
+  .pill.absent { opacity: .7; }
+
+  .ev { color: var(--faint); font-size: 11px; margin-top: 3px; }
+  .ev button {
+    background: none; border: none; color: var(--dim); cursor: pointer;
+    font: inherit; font-size: 11px; text-decoration: underline; padding: 0;
+  }
+  .rejects { margin-top: 5px; padding-left: 12px; border-left: 1px solid var(--line); }
+  .rejects div { font-family: ui-monospace, monospace; font-size: 11px; color: var(--faint); }
+
+  footer {
+    position: sticky; bottom: 0; background: var(--panel);
+    border-top: 1px solid var(--line); padding: 9px 20px;
+    font-size: 12px; color: var(--faint); display: flex; gap: 16px; flex-wrap: wrap;
+  }
+  kbd {
+    background: var(--recessed); border: 1px solid var(--line); border-radius: 4px;
+    padding: 1px 5px; font-family: ui-monospace, monospace; font-size: 11px; color: var(--dim);
+  }
+  /* The evidence panel: the page as the scraper read it. */
+  .ev-panel {
+    margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px;
+  }
+  .ev-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .ev-tabs button {
+    background: var(--recessed); border: 1px solid var(--line); color: var(--dim);
+    border-radius: 8px; padding: 3px 9px; font: inherit; font-size: 11px; cursor: pointer;
+  }
+  .ev-tabs button.on { border-color: var(--accent); color: var(--accent); }
+  .ev-body {
+    background: var(--recessed); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px; max-height: 340px; overflow: auto;
+    font-size: 12px; line-height: 1.7; white-space: pre-wrap; word-break: break-word;
+    user-select: text; cursor: text;
+  }
+  .ev-meta { color: var(--faint); font-size: 11px; margin-bottom: 6px; }
+  .ev-meta a { color: var(--accent); }
+  .rules { margin-top: 12px; }
+  .rule {
+    display: flex; gap: 10px; align-items: baseline; padding: 5px 0;
+    border-top: 1px solid rgba(255,255,255,.05); font-size: 12px;
+  }
+  .rule .k {
+    font-family: ui-monospace, monospace; font-size: 10px; color: var(--faint);
+    text-transform: uppercase; letter-spacing: .05em; width: 100px;
+  }
+  .rule.broken .k { color: #C46A6A; }
+  .rule .w { flex: 1; color: var(--dim); word-break: break-all; }
+  .rule button {
+    background: none; border: none; color: var(--faint); cursor: pointer;
+    font: inherit; font-size: 11px; text-decoration: underline;
+  }
+  .toast {
+    position: fixed; bottom: 54px; left: 50%; transform: translateX(-50%);
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 9px 16px; font-size: 13px; max-width: 70ch;
+  }
+  .toast.bad { border-color: #C46A6A; color: #E9A0A0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Vendor catalogue console</h1>
+  <span class="who" id="who"></span>
+  <nav>
+    <button data-tab="candidates" class="on">Candidates</button>
+    <button data-tab="catalogue">Catalogue</button>
+    <button data-tab="signals">Signals</button>
+  </nav>
+</header>
+
+<main id="main"><p class="empty">Loading…</p></main>
+
+<footer id="keys"></footer>
+<script>
+'use strict';
+
+const state = {
+  tab: 'candidates',
+  data: { candidates: [], catalogue: [], signals: [] },
+  row: 0,      // which record
+  field: 0,    // which field within it
+  marks: {},   // candidateId -> { field: 'accept' | 'reject' }
+  open: {},    // "candidateId:field" -> rejects expanded
+  evidence: null,   // { documents, rules } for the current record
+  evDoc: 0,         // which stored page is showing
+  evFor: null,      // the record key the evidence belongs to
+};
+
+const api = async (path, body) => {
+  const res = await fetch(path, body
+    ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
+    : undefined);
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || res.statusText);
+  return json;
+};
+
+function toast(message, bad) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (bad ? ' bad' : '');
+  el.textContent = message;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), bad ? 6000 : 2600);
+}
+
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function show(value) {
+  if (value === null || value === undefined || value === '') return '<span class="pill absent">absent</span>';
+  if (Array.isArray(value)) return value.length ? esc(value.join(', ')) : '<span class="pill absent">absent</span>';
+  const s = String(value);
+  return /^https?:\/\//.test(s)
+    ? `<a href="${esc(s)}" target="_blank" rel="noreferrer">${esc(s)}</a>`
+    : esc(s);
+}
+
+// --- rendering ------------------------------------------------------------
+
+function renderCandidates() {
+  const list = state.data.candidates;
+  if (!list.length) return '<p class="empty">Nothing pending. Queue a run with <kbd>e</kbd>.</p>';
+
+  return list.map((c, i) => {
+    const marks = state.marks[c.id] || {};
+    const rows = c.fields.map((f, j) => {
+      const cur = i === state.row && j === state.field;
+      const mark = marks[f.field];
+      const key = c.id + ':' + f.field;
+
+      // The evidence line. This is the part the in-product console never had:
+      // a field that came back empty says how many URLs were tried and why each
+      // was refused, so "absent" is a finding rather than a shrug.
+      let ev = '';
+      if (f.confidence !== null) {
+        ev = `probe · ${f.decision ?? 'checked'} · ${f.confidence}%`;
+        if (f.failureClass) ev += ` · ${esc(f.failureClass)}`;
+      } else if (f.state === 'absent' && f.rejected.length) {
+        ev = `${f.rejected.length} URL${f.rejected.length === 1 ? '' : 's'} tried, none verified`;
+      }
+
+      const expanded = state.open[key] && f.rejected.length
+        ? `<div class="rejects">${f.rejected.map((r) =>
+            `<div>${esc(r.failureClass || '?')}${r.httpStatus ? ' ' + r.httpStatus : ''} · ${esc(r.url)}</div>`
+          ).join('')}</div>`
+        : '';
+
+      return `<tr class="field ${cur ? 'cur' : ''} ${mark ? 'done' : ''}">
+        <td class="mark ${mark === 'accept' ? 'ok' : mark === 'reject' ? 'no' : ''}">${
+          mark === 'accept' ? '✓' : mark === 'reject' ? '✕' : ''}</td>
+        <td class="fname">${esc(f.field)}
+          ${f.state === 'changed' ? '<span class="pill changed">changes</span>' : ''}
+          ${f.state === 'new' ? '<span class="pill new">new</span>' : ''}</td>
+        <td class="val">
+          ${f.state === 'changed' ? `<div class="was">${show(f.current)}</div>` : ''}
+          ${show(f.proposed)}
+          ${ev ? `<div class="ev">${ev}${f.rejected.length
+            ? ` · <button onclick="toggle('${esc(key)}')">${state.open[key] ? 'hide' : 'show'} ${f.rejected.length}</button>`
+            : ''}</div>` : ''}
+          ${expanded}
+        </td>
+      </tr>`;
+    }).join('');
+
+    return `<div class="card ${i === state.row ? 'cur' : ''}">
+      <div class="top">
+        <div>
+          <h2>${esc(c.name)}</h2>
+          <div class="sub">${esc(c.domain)}${c.category ? ' · ' + esc(c.category) : ''} ·
+            ${c.existingVendorId ? 'updates an existing catalogue row' : 'new catalogue row'}</div>
+        </div>
+        <span class="count">${c.confidence}% · ${i + 1} of ${list.length}</span>
+      </div>
+      <table>${rows}</table>
+      ${i === state.row ? renderEvidence() : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderCatalogue() {
+  const list = state.data.catalogue;
+  if (!list.length) return '<p class="empty">The catalogue is empty.</p>';
+
+  return list.map((v, i) => {
+    const rows = v.fields.map((f, j) => {
+      const cur = i === state.row && j === state.field;
+      let tier;
+      if (f.absent) tier = '<span class="pill absent">not verified</span>';
+      else if (f.reviewOverdue) tier = `<span class="no">${esc(f.sourceType)} · review due</span>`;
+      else if (f.stale) tier = `${esc(f.sourceType)} · stale, ${f.confidence}%`;
+      else tier = `${esc(f.sourceType)} · ${f.confidence}%`;
+
+      return `<tr class="field ${cur ? 'cur' : ''}">
+        <td class="mark"></td>
+        <td class="fname">${esc(f.field)}</td>
+        <td class="val">${show(f.value)}
+          ${f.sourceUrl ? `<div class="ev"><a href="${esc(f.sourceUrl)}" target="_blank" rel="noreferrer">source</a>${
+            f.retrievedAt ? ' · ' + esc(f.retrievedAt.slice(0, 10)) : ''}${
+            f.supersededCount ? ` · overrides ${f.supersededCount}` : ''}</div>` : ''}</td>
+        <td class="tier">${tier}</td>
+      </tr>`;
+    }).join('');
+
+    return `<div class="card ${i === state.row ? 'cur' : ''}">
+      <div class="top">
+        <div>
+          <h2>${esc(v.name)}</h2>
+          <div class="sub">${esc(v.website || 'no website')}${
+            v.legalEntityName ? ' · ' + esc(v.legalEntityName) : ' · no legal entity resolved'}</div>
+        </div>
+        <span class="count">${v.unresolvedCount} unresolved · ${i + 1} of ${list.length}</span>
+      </div>
+      <table>${rows}</table>
+      ${i === state.row ? renderEvidence() : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderSignals() {
+  const list = state.data.signals;
+  if (!list.length) return '<p class="empty">Nothing is asking for attention.</p>';
+  return list.map((s, i) => `<div class="card ${i === state.row ? 'cur' : ''}">
+    <div class="top">
+      <div><h2>${esc(s.title)}</h2>
+        <div class="sub">${esc(s.vendorName)}${s.field ? ' · ' + esc(s.field) : ''}${
+          s.date ? ' · ' + esc(s.date) : ''}</div></div>
+      <span class="count">${esc(s.kind.replace(/_/g, ' '))}</span>
+    </div>
+    <p style="margin:12px 0 0;color:var(--dim);font-size:13px">${esc(s.detail)}</p>
+    ${s.action ? `<p style="margin:8px 0 0;color:var(--accent);font-size:13px">${esc(s.action)}</p>` : ''}
+  </div>`).join('');
+}
+
+const KEYS = {
+  candidates: '<span><kbd>j</kbd><kbd>k</kbd> field</span><span><kbd>J</kbd><kbd>K</kbd> record</span>' +
+    '<span><kbd>a</kbd> accept</span><span><kbd>x</kbd> reject field</span>' +
+    '<span><kbd>A</kbd> accept all</span><span><kbd>Enter</kbd> approve</span>' +
+    '<span><kbd>X</kbd> reject record</span><span><kbd>v</kbd> tried URLs</span>' +
+    '<span><kbd>t</kbd> teach</span><span><kbd>u</kbd> pin</span><span><kbd>d</kbd> deny</span>' +
+    '<span><kbd>e</kbd> queue run</span>',
+  catalogue: '<span><kbd>j</kbd><kbd>k</kbd> field</span><span><kbd>J</kbd><kbd>K</kbd> vendor</span>' +
+    '<span><kbd>c</kbd> correct</span><span><kbd>p</kbd> apply to catalogue</span>' +
+    '<span><kbd>r</kbd> re-probe</span><span><kbd>t</kbd> teach selection</span>' +
+    '<span><kbd>u</kbd> pin page</span><span><kbd>d</kbd> deny page</span>',
+  signals: '<span><kbd>j</kbd><kbd>k</kbd> move</span>',
+};
+
+function render() {
+  // Never leave a stale panel under a different vendor's name.
+  if (recordKey(current()) !== state.evFor) void loadEvidence();
+  document.getElementById('main').innerHTML =
+    state.tab === 'candidates' ? renderCandidates()
+    : state.tab === 'catalogue' ? renderCatalogue()
+    : renderSignals();
+  document.getElementById('keys').innerHTML = KEYS[state.tab];
+  document.querySelectorAll('nav button').forEach((b) =>
+    b.classList.toggle('on', b.dataset.tab === state.tab));
+  const cur = document.querySelector('.card.cur');
+  if (cur) cur.scrollIntoView({ block: 'nearest' });
+}
+
+window.toggle = (key) => { state.open[key] = !state.open[key]; render(); };
+
+// --- evidence -------------------------------------------------------------
+
+function recordKey(rec) {
+  if (!rec) return null;
+  return state.tab === 'catalogue' ? 'v:' + rec.vendorId : 'c:' + rec.id;
+}
+
+/**
+ * Load the pages the scraper stored for whatever is selected.
+ *
+ * Keyed on the record so moving between rows refetches, and so the panel never
+ * shows one vendor's pages under another's name — which would be a quietly
+ * catastrophic thing for a tool whose whole job is deciding what is true about a
+ * named company.
+ */
+async function loadEvidence() {
+  const rec = current();
+  const key = recordKey(rec);
+  if (!rec || key === state.evFor) return;
+
+  state.evFor = key;
+  state.evidence = null;
+  state.evDoc = 0;
+  try {
+    state.evidence = await api('/api/evidence', state.tab === 'catalogue'
+      ? { vendorId: rec.vendorId }
+      : { candidateId: rec.id, vendorId: rec.existingVendorId ?? undefined });
+  } catch (err) {
+    toast(err.message, true);
+  }
+  render();
+}
+
+function renderEvidence() {
+  const ev = state.evidence;
+  if (!ev) return '<div class="ev-panel"><div class="ev-meta">Loading what was read…</div></div>';
+
+  const docs = ev.documents ?? [];
+  const rules = ev.rules ?? [];
+
+  const rulesHtml = rules.length
+    ? `<div class="rules">${rules.map((r) => `
+        <div class="rule ${r.status === 'broken' ? 'broken' : ''}">
+          <span class="k">${esc(r.kind)}${r.status === 'broken' ? ' · broken' : ''}</span>
+          <span class="w">${esc(r.fieldName || r.docType || '')}${r.url ? ' · ' + esc(r.url) : ''}
+            ${r.note ? `<div style="color:var(--faint)">${esc(r.note)}</div>` : ''}</span>
+          <button onclick="forgetRule('${esc(r.id)}')">forget</button>
+        </div>`).join('')}</div>`
+    : '<div class="ev-meta">Nothing taught for this vendor yet.</div>';
+
+  if (docs.length === 0) {
+    return `<div class="ev-panel">
+      <div class="ev-meta">No stored pages. Re-probe with <kbd>r</kbd> to fetch and keep them.</div>
+      ${rulesHtml}</div>`;
+  }
+
+  const i = Math.min(state.evDoc, docs.length - 1);
+  const doc = docs[i];
+
+  return `<div class="ev-panel">
+    <div class="ev-tabs">${docs.map((d, j) => `
+      <button class="${j === i ? 'on' : ''}" onclick="showDoc(${j})">
+        ${esc(d.docType)} · ${esc(d.outcome || '?')}${d.httpStatus ? ' · ' + d.httpStatus : ''}
+      </button>`).join('')}</div>
+    <div class="ev-meta">
+      <a href="${esc(doc.url)}" target="_blank" rel="noreferrer">${esc(doc.url)}</a>
+      · read ${esc((doc.fetchedAt || '').slice(0, 10))}
+      ${doc.isPdf ? ' · PDF, not parsed' : ''}
+      — select the value and press <kbd>t</kbd> to teach it
+    </div>
+    <div class="ev-body" id="evbody">${esc(doc.text || '(empty)')}</div>
+    ${rulesHtml}
+  </div>`;
+}
+
+window.showDoc = (i) => { state.evDoc = i; render(); };
+
+window.forgetRule = async (ruleId) => {
+  const rec = current();
+  const vendorId = state.tab === 'catalogue' ? rec?.vendorId : rec?.existingVendorId;
+  if (!vendorId) return;
+  try {
+    await api('/api/rules/delete', { vendorId, ruleId });
+    toast('Rule forgotten');
+    state.evFor = null;
+    await loadEvidence();
+  } catch (err) { toast(err.message, true); }
+};
+
+/**
+ * Teach a field from the current selection in the evidence panel.
+ *
+ * The derive step runs before anything is saved and shows what the locator reads
+ * back, so a bad selection is caught while the reviewer is still looking at the
+ * page rather than three weeks later with nothing to compare against.
+ */
+async function teachSelection() {
+  const rec = current();
+  const vendorId = state.tab === 'catalogue' ? rec?.vendorId : rec?.existingVendorId;
+  if (!vendorId) {
+    toast('Teach against a catalogue vendor — a candidate has no row to hang a rule on yet.', true);
+    return;
+  }
+  const body = document.getElementById('evbody');
+  const sel = window.getSelection();
+  if (!body || !sel || sel.isCollapsed || !body.contains(sel.anchorNode)) {
+    toast('Select the value in the page above first.', true);
+    return;
+  }
+
+  const text = body.textContent || '';
+  const range = sel.getRangeAt(0);
+  const pre = range.cloneRange();
+  pre.selectNodeContents(body);
+  pre.setEnd(range.startContainer, range.startOffset);
+  const start = pre.toString().length;
+  const end = start + sel.toString().length;
+
+  const field = prompt(`Which field is "${sel.toString().slice(0, 60)}"?\n\n${(state.fields || []).join(', ')}`);
+  if (!field) return;
+  const split = prompt('Split into a list on which separator? Leave blank for a single value.', '');
+
+  let derived;
+  try {
+    derived = await api('/api/derive', { text, start, end, split: split || null });
+  } catch (err) { toast(err.message, true); return; }
+
+  if (!derived.locator) { toast(derived.problem || 'No locator could be derived.', true); return; }
+
+  const preview = Array.isArray(derived.preview) ? derived.preview.join(' | ') : derived.preview;
+  const note = prompt(
+    `Anchor: after "${derived.locator.before}", up to "${derived.locator.after}"\n` +
+    `Reads back: ${preview}\n\nWhy this rule? (recorded with it)`,
+  );
+  if (!note) return;
+
+  const doc = (state.evidence?.documents ?? [])[Math.min(state.evDoc, (state.evidence?.documents ?? []).length - 1)];
+  try {
+    await api('/api/rules', {
+      vendorId, kind: 'field_extract', fieldName: field,
+      url: doc.url, locator: derived.locator, note,
+    });
+    toast(`Taught ${field}. Re-probe with r to apply it.`);
+    state.evFor = null;
+    await loadEvidence();
+  } catch (err) { toast(err.message, true); }
+}
+
+/** Pin or deny the page currently open in the evidence panel. */
+async function teachUrlRule(kind) {
+  const rec = current();
+  const vendorId = state.tab === 'catalogue' ? rec?.vendorId : rec?.existingVendorId;
+  if (!vendorId) { toast('Teach against a catalogue vendor.', true); return; }
+  const docs = state.evidence?.documents ?? [];
+  const doc = docs[Math.min(state.evDoc, docs.length - 1)];
+  if (!doc) { toast('No page open.', true); return; }
+
+  const note = prompt(
+    kind === 'pin_url'
+      ? `Always use ${doc.url} for ${doc.docType}. Why?`
+      : `Never accept ${doc.url}. Why? (what does it actually look like?)`,
+  );
+  if (!note) return;
+  try {
+    await api('/api/rules', { vendorId, kind, docType: doc.docType, url: doc.url, note });
+    toast(kind === 'pin_url' ? 'Pinned' : 'Denied');
+    state.evFor = null;
+    await loadEvidence();
+  } catch (err) { toast(err.message, true); }
+}
+
+// --- data -----------------------------------------------------------------
+
+async function load(tab) {
+  const path = { candidates: '/api/candidates', catalogue: '/api/catalogue', signals: '/api/signals' }[tab];
+  try {
+    state.data[tab] = await api(path);
+  } catch (err) {
+    toast(err.message, true);
+  }
+  render();
+}
+
+function current() {
+  const list = state.data[state.tab];
+  return list[state.row] || null;
+}
+
+// --- actions --------------------------------------------------------------
+
+/**
+ * Approve, sending only the fields marked accepted.
+ *
+ * A field marked reject is sent as null rather than omitted: omitting it would
+ * let the sourced payload through unchanged, which is the opposite of what the
+ * reviewer just said. `approveCandidate` merges overrides over the payload, so
+ * null is how you say "not this".
+ */
+async function approve() {
+  const c = current();
+  if (!c) return;
+  const marks = state.marks[c.id] || {};
+  const overrides = {};
+  for (const f of c.fields) {
+    if (marks[f.field] === 'reject') overrides[f.field] = null;
+  }
+  try {
+    await api('/api/approve', { id: c.id, overrides });
+    toast(`Approved ${c.name}`);
+    delete state.marks[c.id];
+    state.field = 0;
+    await load('candidates');
+    if (state.row >= state.data.candidates.length) state.row = Math.max(0, state.data.candidates.length - 1);
+    render();
+  } catch (err) { toast(err.message, true); }
+}
+
+async function rejectRecord() {
+  const c = current();
+  if (!c) return;
+  const reason = prompt(`Reject ${c.name}. Why? (recorded on the row)`);
+  if (reason === null) return;
+  try {
+    await api('/api/reject', { id: c.id, reason });
+    toast(`Rejected ${c.name}`);
+    await load('candidates');
+    if (state.row >= state.data.candidates.length) state.row = Math.max(0, state.data.candidates.length - 1);
+    render();
+  } catch (err) { toast(err.message, true); }
+}
+
+/**
+ * Record a correction on a catalogue field.
+ *
+ * Asks for all four things `validateAnalystCorrection` requires rather than
+ * letting the server refuse afterwards — an analyst row outranks the Department
+ * of Commerce, so it has to be at least as inspectable as the thing it beats.
+ */
+async function correct() {
+  const v = current();
+  if (!v) return;
+  const f = v.fields[state.field];
+  if (!f) return;
+
+  const raw = prompt(`${v.name} — ${f.field}\nCorrect value:`, f.value ?? '');
+  if (raw === null) return;
+  const sourceUrl = prompt('Source URL (the page you read):');
+  if (sourceUrl === null) return;
+  const evidenceSnippet = prompt('Quote at least 20 characters of what it says:');
+  if (evidenceSnippet === null) return;
+  const reviewBy = prompt('Re-read this by (YYYY-MM-DD):', oneYearOut());
+  if (reviewBy === null) return;
+
+  const arrayField = ['transferMechanisms', 'securityCertifications', 'dataProcessingLocations'].includes(f.field);
+  const value = arrayField ? raw.split(',').map((s) => s.trim()).filter(Boolean) : raw;
+
+  try {
+    await api('/api/correct', { vendorId: v.vendorId, fieldName: f.field, value, sourceUrl, evidenceSnippet, reviewBy });
+    toast(`Recorded. Press p to apply it to the catalogue.`);
+    await load('catalogue');
+  } catch (err) { toast(err.message, true); }
+}
+
+async function applyCorrection() {
+  const v = current();
+  if (!v) return;
+  const f = v.fields[state.field];
+  if (!f) return;
+  try {
+    const res = await api('/api/apply', { vendorId: v.vendorId, fieldName: f.field });
+    toast(`${f.field} written to the catalogue · ${res.rescored} score(s) recalculated`);
+    await load('catalogue');
+  } catch (err) { toast(err.message, true); }
+}
+
+async function queueRun() {
+  const raw = prompt('Queue a probe run. Vendors as "Name, domain.com" — one per line:');
+  if (!raw) return;
+  const targets = raw.split('\n').map((line) => {
+    const [name, website] = line.split(',').map((s) => s.trim());
+    return name ? { name, website: website ? `https://${website.replace(/^https?:\/\//, '')}` : undefined } : null;
+  }).filter(Boolean);
+  if (!targets.length) return;
+  try {
+    const res = await api('/api/enrich', { targets });
+    toast(`Queued ${res.queued}. The worker probes them; refresh in a few minutes.`);
+  } catch (err) { toast(err.message, true); }
+}
+
+async function reverify() {
+  const v = current();
+  if (!v) return;
+  try {
+    await api('/api/reverify', { vendorId: v.vendorId });
+    toast(`Re-probe queued for ${v.name}`);
+  } catch (err) { toast(err.message, true); }
+}
+
+const oneYearOut = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().slice(0, 10);
+};
+
+// --- keys -----------------------------------------------------------------
+
+function markField(decision) {
+  const c = current();
+  if (!c || state.tab !== 'candidates') return;
+  const f = c.fields[state.field];
+  if (!f) return;
+  state.marks[c.id] = state.marks[c.id] || {};
+  state.marks[c.id][f.field] = decision;
+  if (state.field < c.fields.length - 1) state.field += 1;
+  render();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const list = state.data[state.tab];
+  const rec = current();
+  const fieldCount = rec && rec.fields ? rec.fields.length : 0;
+
+  switch (e.key) {
+    case 'j': state.field = Math.min(state.field + 1, Math.max(0, fieldCount - 1)); break;
+    case 'k': state.field = Math.max(state.field - 1, 0); break;
+    case 'J': state.row = Math.min(state.row + 1, Math.max(0, list.length - 1)); state.field = 0; break;
+    case 'K': state.row = Math.max(state.row - 1, 0); state.field = 0; break;
+    case 'a': if (state.tab === 'candidates') markField('accept'); return;
+    case 'x': if (state.tab === 'candidates') markField('reject'); return;
+    case 'A':
+      if (state.tab === 'candidates' && rec) {
+        state.marks[rec.id] = {};
+        rec.fields.forEach((f) => { state.marks[rec.id][f.field] = 'accept'; });
+      }
+      break;
+    case 'Enter': if (state.tab === 'candidates') approve(); return;
+    case 'X': if (state.tab === 'candidates') rejectRecord(); return;
+    case 'v': {
+      if (state.tab !== 'candidates' || !rec) return;
+      const f = rec.fields[state.field];
+      if (f) window.toggle(rec.id + ':' + f.field);
+      return;
+    }
+    case 't': teachSelection(); return;
+    case 'u': teachUrlRule('pin_url'); return;
+    case 'd': teachUrlRule('deny_url'); return;
+    case 'c': if (state.tab === 'catalogue') correct(); return;
+    case 'p': if (state.tab === 'catalogue') applyCorrection(); return;
+    case 'r': if (state.tab === 'catalogue') reverify(); return;
+    case 'e': if (state.tab === 'candidates') queueRun(); return;
+    case '1': state.tab = 'candidates'; state.row = 0; state.field = 0; load('candidates'); return;
+    case '2': state.tab = 'catalogue'; state.row = 0; state.field = 0; load('catalogue'); return;
+    case '3': state.tab = 'signals'; state.row = 0; state.field = 0; load('signals'); return;
+    default: return;
+  }
+  e.preventDefault();
+  render();
+});
+
+document.querySelectorAll('nav button').forEach((b) => {
+  b.addEventListener('click', () => {
+    state.tab = b.dataset.tab;
+    state.row = 0; state.field = 0;
+    load(state.tab);
+  });
+});
+
+// --- boot -----------------------------------------------------------------
+
+api('/api/meta')
+  .then((meta) => {
+    document.getElementById('who').textContent = meta.operator;
+    state.fields = meta.fields || [];
+  })
+  .catch(() => {});
+load('candidates');
+</script>
+</body>
+</html>

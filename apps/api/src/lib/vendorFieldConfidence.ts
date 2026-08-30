@@ -53,6 +53,29 @@ export const VENDOR_SOURCE_TYPES = [
 
 export type VendorSourceType = (typeof VENDOR_SOURCE_TYPES)[number];
 
+/**
+ * What each tier is called in a document a person reads.
+ *
+ * The web catalogues carry translations of these under `provenance.*`, but the
+ * Article 28 dossier is rendered server-side and printed `\`registry\`` — the
+ * machine vocabulary, in backticks, in the evidence pack a customer hands a
+ * regulator. The slug is kept beside the label rather than dropped, because an
+ * auditor tracing a value back to `vendor_field_provenance` needs the word the
+ * column actually holds.
+ */
+export const VENDOR_SOURCE_TYPE_LABELS: Readonly<Record<VendorSourceType, string>> = {
+  registry: 'Official register',
+  http_probe: 'Verified on the vendor’s own site',
+  trust_centre: 'Trust portal',
+  analyst: 'Reviewed by a named person',
+  customer: 'Your own executed contract',
+};
+
+/** The label for a stored value, tolerating one written before its tier existed. */
+export function vendorSourceTypeLabel(sourceType: string): string {
+  return (VENDOR_SOURCE_TYPE_LABELS as Record<string, string>)[sourceType] ?? 'Unrecognised source';
+}
+
 export interface FieldEvidence {
   /** What the registry, probe or reviewer concluded for this field. */
   value: unknown;
@@ -69,7 +92,7 @@ export interface FieldEvidence {
  * There is no "asserted but unprobed" tier any more (Sprint 5, VD-1). The old
  * `evidence.value ? 40 : 0` line scored a model sentence at 40, which
  * `fieldDecision` routed to `review` — a number that reads like measurement
- * sitting the same colour on `ConfidenceBar` as a half-confirmed probe. A field
+ * rendering the same as a half-confirmed probe in the review queue. A field
  * is now registry-sourced, probe-sourced, portal-sourced, human-sourced, or
  * absent, and absent means no evidence object and no provenance row rather than
  * a row at zero.

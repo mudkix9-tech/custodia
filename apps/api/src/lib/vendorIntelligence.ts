@@ -46,11 +46,13 @@ import {
   vendorIntelligenceRuns,
   vendorCandidates,
   vendorFieldProvenance,
+  vendorProbeDocuments,
   vendors,
 } from 'db';
 import { eq, sql } from 'drizzle-orm';
 import {
   assessCandidate,
+  fieldConfidence,
   type CandidateAssessment,
   type FieldEvidence,
 } from './vendorFieldConfidence.js';
@@ -68,6 +70,16 @@ import {
   type ProbeDocType,
 } from './vendorProbe.js';
 import { RobotsCache, type RobotsFetchResult } from './robotsTxt.js';
+import { htmlToStoredText } from './htmlText.js';
+import {
+  loadRulesFor,
+  urlRulesFor,
+  vocabularyFor,
+  applyFieldRules,
+  markRuleOutcome,
+  type ExtractionRule,
+  type FieldExtractionOutcome,
+} from './vendorExtractionRules.js';
 import {
   DOC_TYPE_ORDER,
   enumerateCandidateUrls,
@@ -113,6 +125,27 @@ interface ProbeResult {
   httpStatus?: number | null;
   signals?: 'verified' | 'partial' | 'gated';
   bodySnippet?: string;
+  /**
+   * What the probe actually read, flattened and bounded.
+   *
+   * Carried on every outcome and not only the verified ones, because the page a
+   * reviewer most needs to see is the one that was rejected: "this looked like a
+   * DPA and is a marketing summary" cannot be said about a page nobody kept.
+   * Absent for a fetch that never got a body.
+   */
+  text?: string;
+  isPdf?: boolean;
+}
+
+/** One page a run read, on its way to `vendor_probe_documents`. */
+export interface ProbeDocumentRecord {
+  url: string;
+  docType: ProbeDocType;
+  httpStatus: number | null;
+  /** The verdict, so the panel can show why a page was not accepted. */
+  outcome: string;
+  text: string;
+  isPdf: boolean;
 }
 
 interface FetchedDocument {
@@ -221,7 +254,7 @@ export async function fetchDocument(url: string): Promise<FetchOutcome> {
 export async function probeUrl(
   url: string,
   type: ProbeDocType,
-  options: { hostSoftNotFound?: boolean } = {},
+  options: { hostSoftNotFound?: boolean; siteTokens?: readonly string[] } = {},
 ): Promise<ProbeResult> {
   const fetched = await fetchDocument(url);
   if (!fetched.ok) {
@@ -233,12 +266,24 @@ export async function probeUrl(
     };
   }
 
-  const raw = evaluateContentSignals(fetched.body, type);
+  // Flattened once, here, and reused: the signal scan, the reject log and the
+  // stored copy are all looking at the same characters. Evaluating raw HTML and
+  // storing stripped text would let the two disagree about what the page said.
+  const text = htmlToStoredText(fetched.body);
+
+  const raw = evaluateContentSignals(fetched.body, type, options.siteTokens ?? []);
   // VD-6: on a host that answers 2xx for a path that cannot exist, a token
   // match is a fact about the host's 404 handler and not about this URL.
   const signals = downgradeForSoftNotFound(raw, options.hostSoftNotFound === true);
   if (signals === 'gated') {
-    return { status: 'failed', failureClass: 'gated_content', httpStatus: fetched.httpStatus, resolvedUrl: fetched.resolvedUrl };
+    return {
+      status: 'failed',
+      failureClass: 'gated_content',
+      httpStatus: fetched.httpStatus,
+      resolvedUrl: fetched.resolvedUrl,
+      text,
+      isPdf: fetched.isPdf,
+    };
   }
   if (signals === 'verified') {
     return {
@@ -246,7 +291,9 @@ export async function probeUrl(
       httpStatus: fetched.httpStatus,
       resolvedUrl: fetched.resolvedUrl,
       signals,
-      bodySnippet: fetched.body.slice(0, 400),
+      bodySnippet: text.slice(0, 400),
+      text,
+      isPdf: fetched.isPdf,
     };
   }
   return {
@@ -264,6 +311,8 @@ export async function probeUrl(
     httpStatus: fetched.httpStatus,
     resolvedUrl: fetched.resolvedUrl,
     signals,
+    text,
+    isPdf: fetched.isPdf,
   };
 }
 
@@ -292,6 +341,7 @@ export { statusFromOutcome };
 export function buildFieldEvidence(
   record: ExtractedRecord,
   cache?: ProbeCache,
+  fieldOutcomes: readonly FieldExtractionOutcome[] = [],
 ): Record<string, FieldEvidence> {
   const fields: Record<string, FieldEvidence> = {};
 
@@ -316,6 +366,33 @@ export function buildFieldEvidence(
   urlField('privacyPolicyUrl');
   urlField('subProcessorListUrl');
 
+  /**
+   * The five Chapter V fields, when a taught rule filled one.
+   *
+   * These have had no source since Sprint 5 removed the model, and this is the
+   * first thing that gives them one. The tier is `http_probe` and not a sixth
+   * tier of its own: the evidence really is "we fetched the vendor's own page
+   * and read this text". What a person vouched for is the *locator*, and the
+   * value behind it is re-extracted mechanically on every run — so it decays on
+   * the probe's curve and re-verifies like a probe, which is what it is.
+   *
+   * `verified_probed_success` rather than the unprobed ceiling because the page
+   * was fetched on this run and the anchor matched in it. A rule that stopped
+   * matching never reaches here: it produces no evidence, and therefore no
+   * column and no provenance row.
+   */
+  for (const outcome of fieldOutcomes) {
+    if (!outcome.matched || outcome.value === null) continue;
+    if (fields[outcome.fieldName]) continue;
+    fields[outcome.fieldName] = {
+      value: outcome.value,
+      sourceType: 'http_probe',
+      probeStatus: 'verified_probed_success',
+      domainOk: true,
+      resolvedUrl: outcome.url,
+    };
+  }
+
   return fields;
 }
 
@@ -323,16 +400,37 @@ export function buildFieldEvidence(
 // Persistence
 // ---------------------------------------------------------------------------
 
+/** A pool handle or a transaction handle — both accept `.insert()`. */
+export type ProvenanceWriteHandle = {
+  insert: (typeof db)['insert'];
+};
+
 /**
  * P-2's write path. Approval is the moment provenance exists — a row per
  * accepted field carrying its source type, URL and confidence, so the register
  * can show "DPA · 90 · probed on stripe.com · today" next to a field that says
- * "not yet verified". Upsert on (vendor_id, field_name): re-approval after a
- * reverify refreshes the rows rather than stacking them.
+ * "not yet verified". Upsert on (vendor, field, tier): re-approval after a
+ * reverify refreshes those rows rather than stacking them.
+ *
+ * **Takes the handle, so there is exactly one of these.** The approve path runs
+ * inside a transaction and used to carry its own copy, `writeProvenanceInTx` in
+ * `routers/vendorIntelligence.ts` — identical but for the handle, which is the
+ * VD-7 shape and cost what VD-7 always costs. When Sprint 10 widened the unique
+ * key to include `source_type`, this copy was retargeted and the other was not,
+ * so the transactional one went on naming a constraint that no longer existed.
+ * Postgres answers that with `there is no unique or exclusion constraint
+ * matching the ON CONFLICT specification`, which means **every candidate
+ * approval threw** from Sprint 10 until this was merged. `tsc` sees a valid
+ * column list either way, and the only surface that calls it is a review console
+ * nobody had used yet.
  */
-export async function writeProvenance(vendorId: string, rows: ProvenanceWrite[]): Promise<void> {
+export async function writeProvenance(
+  vendorId: string,
+  rows: ProvenanceWrite[],
+  handle: ProvenanceWriteHandle = db,
+): Promise<void> {
   if (rows.length === 0) return;
-  await db
+  await handle
     .insert(vendorFieldProvenance)
     .values(
       rows.map((row) => ({
@@ -375,11 +473,28 @@ export async function writeProvenance(vendorId: string, rows: ProvenanceWrite[])
  */
 export async function enrichOne(target: EnrichTarget): Promise<EnrichResult> {
   try {
-    const extracted = await extractAndProbe(target);
+    // Rules belong to a catalogue row, so a target with no vendor id has none —
+    // which is the ordinary case for a brand-new candidate nobody has reviewed.
+    const rules = target.vendorId
+      ? ((await loadRulesFor(db, [target.vendorId])).get(target.vendorId) ?? [])
+      : [];
+
+    const extracted = await extractAndProbe(target, rules);
+
+    // A taught value is a value the record now has. `buildCatalogueWrites` gives
+    // it `http_probe` provenance like any other page read: a human vouched for
+    // the *locator*, not for the value, and the value is re-extracted from the
+    // vendor's own page on every run. The rule id travels in the evidence so the
+    // console can show which fields were taught.
+    for (const outcome of extracted.fieldOutcomes) {
+      if (!outcome.matched || outcome.value === null) continue;
+      (extracted.record as Record<string, unknown>)[outcome.fieldName] = outcome.value;
+    }
 
     const fields = buildFieldEvidence(
       { ...extracted.record, website: extracted.record.website || target.website || '' },
       extracted.cache,
+      extracted.fieldOutcomes,
     );
 
     const website = extracted.record.website || target.website || '';
@@ -396,6 +511,8 @@ export async function enrichOne(target: EnrichTarget): Promise<EnrichResult> {
       extracted: extracted.record,
       assessment,
       rejectedUrls: extracted.rejectedUrls,
+      documents: extracted.documents,
+      fieldOutcomes: extracted.fieldOutcomes,
     };
   } catch (err) {
     return {
@@ -463,10 +580,15 @@ function negativeControlUrl(origin: string): string {
   return `${origin}/${random}`;
 }
 
-async function extractAndProbe(target: EnrichTarget): Promise<{
+async function extractAndProbe(
+  target: EnrichTarget,
+  rules: readonly ExtractionRule[] = [],
+): Promise<{
   record: ExtractedRecord;
   rejectedUrls: RejectedCandidateUrl[];
   cache: ProbeCache;
+  documents: ProbeDocumentRecord[];
+  fieldOutcomes: FieldExtractionOutcome[];
 }> {
   const website = target.website || '';
   const record: ExtractedRecord = {
@@ -491,6 +613,21 @@ async function extractAndProbe(target: EnrichTarget): Promise<{
 
   const cache: ProbeCache = new Map();
   const rejectedUrls: RejectedCandidateUrl[] = [];
+  /**
+   * Every page this run read, kept for the review console.
+   *
+   * Accumulated here rather than derived from `cache` afterwards because the
+   * cache is keyed on URL alone and carries no document type: the same page can
+   * be reached as a DPA candidate and as a privacy candidate, and a reviewer
+   * asking "why was this rejected" needs to know which question was being asked
+   * of it.
+   */
+  const documents: ProbeDocumentRecord[] = [];
+  /** What the taught field rules produced, matched or not. */
+  const fieldOutcomes: FieldExtractionOutcome[] = [];
+
+  const { pinned, denied } = urlRulesFor(rules);
+  const vocabulary = vocabularyFor(rules);
   const resolved: Partial<Record<ProbeDocType, string>> = {};
   let budget = MAX_PROBES_PER_TARGET;
   let lastRequestAt = 0;
@@ -571,8 +708,33 @@ async function extractAndProbe(target: EnrichTarget): Promise<{
 
     budget -= 1;
     await pace();
-    const outcome = await probeUrl(candidate.url, candidate.type, { hostSoftNotFound: soft });
+    const outcome = await probeUrl(candidate.url, candidate.type, {
+      hostSoftNotFound: soft,
+      siteTokens: vocabulary[candidate.type] ?? [],
+    });
     cache.set(candidate.url, outcome);
+
+    // Taught field rules run against whatever this page turned out to be, not
+    // only against pages that verified: a reviewer who pinned a regions table
+    // wants it read even though a regions table is not a DPA and never verifies
+    // as one.
+    if (outcome.text !== undefined) {
+      fieldOutcomes.push(...applyFieldRules(rules, candidate.url, outcome.text));
+    }
+
+    // Stored whatever the verdict, which is the point: the page a reviewer most
+    // needs to open is the one that was rejected.
+    if (outcome.text !== undefined) {
+      documents.push({
+        url: outcome.resolvedUrl ?? candidate.url,
+        docType: candidate.type,
+        httpStatus: outcome.httpStatus ?? null,
+        outcome: outcome.status === 'verified' ? 'verified' : (outcome.failureClass ?? 'failed'),
+        text: outcome.text,
+        isPdf: outcome.isPdf === true,
+      });
+    }
+
     if (outcome.status === 'verified') {
       resolved[candidate.type] = candidate.url;
       return;
@@ -588,7 +750,7 @@ async function extractAndProbe(target: EnrichTarget): Promise<{
     });
   };
 
-  for (const candidate of enumerateCandidateUrls(target)) {
+  for (const candidate of enumerateCandidateUrls(target, { pinned, denied })) {
     await tryCandidate(candidate);
   }
 
@@ -613,7 +775,7 @@ async function extractAndProbe(target: EnrichTarget): Promise<{
   record.subProcessorListUrl = resolved.subprocessors ?? null;
   record.privacyPolicyUrl = resolved.privacy ?? null;
 
-  return { record, rejectedUrls, cache };
+  return { record, rejectedUrls, cache, documents, fieldOutcomes };
 }
 
 /**
@@ -637,13 +799,52 @@ export async function runEnrichBatch(runId: string, targets: EnrichTarget[]): Pr
       if (!result.ok || !result.extracted || !result.assessment) {
         failed += 1;
       } else {
-        const probeResults: Record<string, { status: string; failureClass?: string; resolvedUrl?: string | null }> = {};
+        // The per-field confidence travels with the decision, and used not to.
+        // `approveCandidate` selects the entries carrying a number and hands the
+        // rest to `buildCatalogueWrites`' unprobed fallback — so dropping it
+        // here meant *every* approved field was written at the
+        // `partially_probed` ceiling of 45, including ones a probe had verified
+        // at 90. The staging row was quietly worth less than the run that
+        // produced it, and the reviewer had no per-field number to read either.
+        const probeResults: Record<
+          string,
+          {
+            status: string;
+            confidence: number;
+            failureClass?: string;
+            resolvedUrl?: string | null;
+            /** Set when a taught rule produced this field, naming the page. */
+            taughtFrom?: string;
+            ruleId?: string;
+          }
+        > = {};
         for (const [field, per] of Object.entries(result.assessment.perField)) {
           probeResults[field] = {
             status: String(per.decision),
+            confidence: per.confidence,
             failureClass: per.domainOutcome,
           };
         }
+        // A taught field rides in `probe_results` alongside the probe outcomes,
+        // carrying the page it was read from. It has to survive from the run to
+        // the approval, because that is where `buildCatalogueWrites` decides
+        // whether the field has a source at all — a rule that ran, matched, and
+        // was then forgotten at the last step would write nothing, which looks
+        // exactly like a rule that never matched.
+        for (const outcome of result.fieldOutcomes ?? []) {
+          if (!outcome.matched || outcome.value === null) continue;
+          probeResults[outcome.fieldName] = {
+            status: 'taught',
+            confidence: fieldConfidence({
+              value: outcome.value,
+              sourceType: 'http_probe',
+              probeStatus: 'verified_probed_success',
+            }),
+            taughtFrom: outcome.url,
+            ruleId: outcome.ruleId,
+          };
+        }
+
         await upsertCandidate({
           runId,
           target,
@@ -651,7 +852,10 @@ export async function runEnrichBatch(runId: string, targets: EnrichTarget[]): Pr
           assessment: result.assessment,
           rejectedUrls: result.rejectedUrls ?? [],
           probeResults,
+          documents: (result.documents ?? []) as ProbeDocumentRecord[],
         });
+
+        await recordRuleOutcomes(result.fieldOutcomes ?? []);
       }
 
       processed += 1;
@@ -696,7 +900,18 @@ export async function upsertCandidate(input: {
   record: ExtractedRecord;
   assessment: CandidateAssessment;
   rejectedUrls: RejectedCandidateUrl[];
-  probeResults: Record<string, { status: string; failureClass?: string; resolvedUrl?: string | null }>;
+  probeResults: Record<
+    string,
+    {
+      status: string;
+      confidence?: number;
+      failureClass?: string;
+      resolvedUrl?: string | null;
+      taughtFrom?: string;
+      ruleId?: string;
+    }
+  >;
+  documents?: ProbeDocumentRecord[];
 }): Promise<'inserted' | 'updated'> {
   const domain = normaliseCandidateDomain(input.record.website || input.target.website || '');
   const values = {
@@ -741,7 +956,92 @@ export async function upsertCandidate(input: {
       },
     })
     .returning({ id: vendorCandidates.id, createdAt: vendorCandidates.createdAt });
-    return row && row.createdAt && new Date(row.createdAt).getTime() > Date.now() - 5_000 ? 'inserted' : 'updated';
+
+  if (row && input.documents && input.documents.length > 0) {
+    await storeProbeDocuments({ candidateId: row.id }, input.documents);
+  }
+
+  return row && row.createdAt && new Date(row.createdAt).getTime() > Date.now() - 5_000 ? 'inserted' : 'updated';
+}
+
+/**
+ * Stamp every taught rule that ran with whether it did what it promised.
+ *
+ * This is what makes drift visible. `last_applied_at` moves whenever a rule was
+ * consulted and `last_matched_at` only when it matched, so the two diverging is
+ * the whole signal: a rule applied last night and last matched in March has been
+ * failing since March, and the console reads that without opening the page.
+ *
+ * A failing rule also flips to `broken`, and a broken `field_extract` produces
+ * no evidence — so no column and no provenance row. That is the point of the
+ * design: falling back to generic enumeration would leave the field populated by
+ * a guess, at a confidence the reviewer believed they had vouched for.
+ */
+async function recordRuleOutcomes(
+  outcomes: readonly { ruleId: string; matched: boolean }[],
+): Promise<void> {
+  for (const outcome of outcomes) {
+    await markRuleOutcome(db, outcome.ruleId, outcome.matched);
+  }
+}
+
+/**
+ * Keep what a run read, so a reviewer can see it and a rule can be taught from it.
+ *
+ * Upsert on (parent, url) rather than insert, so a re-probe refreshes the copy in
+ * place: the reviewer should be looking at what the *last* run saw, and a table
+ * that accumulated one row per run per page would answer "what does this page
+ * say" with a history nobody asked for.
+ *
+ * Owned by exactly one parent. A run building a candidate writes against the
+ * candidate; a re-verification of a catalogue row writes against the vendor.
+ * Both partial unique indexes exist because Postgres treats NULLs in a unique
+ * constraint as distinct, so a single composite key would let every re-run
+ * insert a duplicate rather than update.
+ */
+export async function storeProbeDocuments(
+  parent: { candidateId: string } | { vendorId: string },
+  documents: readonly ProbeDocumentRecord[],
+): Promise<void> {
+  if (documents.length === 0) return;
+
+  const byCandidate = 'candidateId' in parent;
+  const rows = documents.map((doc) => ({
+    candidateId: byCandidate ? parent.candidateId : null,
+    vendorId: byCandidate ? null : parent.vendorId,
+    url: doc.url,
+    docType: doc.docType,
+    httpStatus: doc.httpStatus,
+    outcome: doc.outcome,
+    text: doc.text,
+    isPdf: doc.isPdf,
+    fetchedAt: new Date(),
+  }));
+
+  await db
+    .insert(vendorProbeDocuments)
+    .values(rows)
+    .onConflictDoUpdate({
+      target: byCandidate
+        ? [vendorProbeDocuments.candidateId, vendorProbeDocuments.url]
+        : [vendorProbeDocuments.vendorId, vendorProbeDocuments.url],
+      // The index is partial, so its predicate has to be repeated here or
+      // Postgres cannot work out which index the conflict is against and refuses
+      // the statement outright (`infer_arbiter_indexes`). Naming the columns is
+      // not enough on its own — a fact no fixture can reach, because it is the
+      // planner's objection rather than the query builder's.
+      targetWhere: byCandidate
+        ? sql`candidate_id is not null`
+        : sql`vendor_id is not null`,
+      set: {
+        docType: sql`excluded.doc_type`,
+        httpStatus: sql`excluded.http_status`,
+        outcome: sql`excluded.outcome`,
+        text: sql`excluded.text`,
+        isPdf: sql`excluded.is_pdf`,
+        fetchedAt: sql`excluded.fetched_at`,
+      },
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -777,6 +1077,18 @@ export async function reverifyVendor(
   const changes = storedRow
     ? diffFreshAgainstCatalogue(storedRow, result.extracted, result.assessment)
     : [];
+
+  // Against the vendor rather than a candidate: a re-verification is asking about
+  // a row that already exists, so this is where the console reads the current
+  // pages from when a reviewer is teaching a rule for a seeded vendor. Without
+  // it the whole catalogue queue would have nothing to show but the 82 rows'
+  // stored values, which is the state that made teaching impossible.
+  await storeProbeDocuments(
+    { vendorId: vendor.id },
+    (result.documents ?? []) as ProbeDocumentRecord[],
+  );
+
+  await recordRuleOutcomes(result.fieldOutcomes ?? []);
 
   return {
     vendorId: vendor.id,

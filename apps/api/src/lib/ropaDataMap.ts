@@ -12,7 +12,14 @@
  * Pure. The callers do the querying; these functions turn rows into a graph.
  */
 
-import { isAdequateDestination, EU_EEA_COUNTRIES } from '../constants/transferDestinations.js';
+import {
+  isAdequateDestination,
+  adequacyState,
+  isRecipientConditional,
+  conditionMetByMechanism,
+  EU_EEA_COUNTRIES,
+  type AdequacyState,
+} from '../constants/transferDestinations.js';
 import { normaliseTransferMechanism } from '../constants/ropaVocabularies.js';
 
 // ---------------------------------------------------------------------------
@@ -179,7 +186,12 @@ export function buildActivityFlow(input: {
     const id = `transfer:${t.id}`;
     const country = (t.destinationCountry ?? '').toUpperCase();
     const mechanism = normaliseTransferMechanism(t.transferMechanism);
-    const adequate = isAdequateDestination(country) || EU_EEA_COUNTRIES.includes(country);
+    // VD-23. The US decision covers certified recipients, so the mechanism the
+    // controller recorded is what decides whether this particular transfer is
+    // inside it. Without that, a US node drew as low-emphasis whatever it said.
+    const adequate = isAdequateDestination(country, {
+      conditionMet: conditionMetByMechanism(country, [t.transferMechanism, mechanism]),
+    }) || EU_EEA_COUNTRIES.includes(country);
     nodes.push({
       id,
       kind: 'transfer',
@@ -300,6 +312,10 @@ export function buildDataMap(rows: DataMapRow[], filters: DataMapFilters = {}): 
       subjectCategories,
       countries: countryTally.map((c) => ({
         ...c,
+        // A facet is a country-level statement across many transfers with no one
+        // mechanism behind it, so a conditional decision reads false here (VD-23):
+        // the register's filter must not tell someone the US is settled. The
+        // per-transfer rows above carry the answer that depends on the recipient.
         adequate: isAdequateDestination(c.value) || EU_EEA_COUNTRIES.includes(c.value.toUpperCase()),
       })),
       recipients: [...recipientTally.entries()]
@@ -316,6 +332,14 @@ export function buildDataMap(rows: DataMapRow[], filters: DataMapFilters = {}): 
 export type TransferMapEntry = {
   country: string;
   adequate: boolean;
+  /**
+   * VD-23. `adequate` is a boolean and the US is not a boolean question: the
+   * decision covers certified recipients, so a country whose transfers do not
+   * all evidence the certification is `conditional` rather than either answer.
+   * Kept beside `adequate` rather than replacing it so existing readers of the
+   * boolean keep working — they now get the safe side of the question.
+   */
+  adequacyState: AdequacyState;
   adequacyScope: string | null;
   transferCount: number;
   activityCount: number;
@@ -344,7 +368,7 @@ export function buildTransferMap(
   transfers: (TransferRow & { processingActivityId?: string | null; volumeBands?: string[] })[],
   adequacyScopes: Record<string, string> = {},
 ): TransferMapEntry[] {
-  const byCountry = new Map<string, TransferMapEntry & { _activities: Set<string>; _mech: Map<string, number>; _bands: Set<string>; _entities: Set<string> }>();
+  const byCountry = new Map<string, TransferMapEntry & { _activities: Set<string>; _mech: Map<string, number>; _bands: Set<string>; _entities: Set<string>; _conditionEvidenced: number }>();
 
   for (const t of transfers) {
     const country = (t.destinationCountry ?? '').toUpperCase();
@@ -354,7 +378,10 @@ export function buildTransferMap(
     if (!entry) {
       entry = {
         country,
-        adequate: isAdequateDestination(country) || EU_EEA_COUNTRIES.includes(country),
+        // Both are recomputed at the end of the fold, once it is known how many
+        // of this country's transfers evidence the condition (VD-23).
+        adequate: false,
+        adequacyState: 'third_country',
         adequacyScope: adequacyScopes[country] ?? null,
         transferCount: 0,
         activityCount: 0,
@@ -368,6 +395,7 @@ export function buildTransferMap(
         _mech: new Map<string, number>(),
         _bands: new Set<string>(),
         _entities: new Set<string>(),
+        _conditionEvidenced: 0,
       };
       byCountry.set(country, entry);
     }
@@ -378,6 +406,9 @@ export function buildTransferMap(
     for (const band of t.volumeBands ?? []) entry._bands.add(band);
 
     const mechanism = normaliseTransferMechanism(t.transferMechanism);
+    if (conditionMetByMechanism(country, [t.transferMechanism, mechanism])) {
+      entry._conditionEvidenced += 1;
+    }
     const key = mechanism ?? 'not_recorded';
     entry._mech.set(key, (entry._mech.get(key) ?? 0) + 1);
     if (!mechanism || mechanism === 'pending_assessment') entry.unsafeguardedCount += 1;
@@ -387,9 +418,18 @@ export function buildTransferMap(
   }
 
   return [...byCountry.values()]
-    .map((e) => ({
+    .map((e) => {
+      // Every transfer to a conditional destination has to evidence the
+      // condition before the country reads adequate. One SCC-only transfer to
+      // an uncertified US processor is enough to make the country's summary
+      // "conditional", which is the honest word for a mixed picture.
+      const conditionMet =
+        isRecipientConditional(e.country) && e._conditionEvidenced === e.transferCount;
+      const state = adequacyState(e.country, { conditionMet });
+      return {
       country: e.country,
-      adequate: e.adequate,
+      adequate: state === 'adequate' || state === 'eu_eea',
+      adequacyState: state,
       adequacyScope: e.adequacyScope,
       transferCount: e.transferCount,
       activityCount: e._activities.size,
@@ -401,7 +441,8 @@ export function buildTransferMap(
       tiaCompleted: e.tiaCompleted,
       volumeBands: [...e._bands],
       entities: [...e._entities].slice(0, 12),
-    }))
+      };
+    })
     // Unsafeguarded first, then non-adequate, then by volume. The map is read for
     // what is wrong with it, so what is wrong sorts to the top.
     .sort((a, b) =>

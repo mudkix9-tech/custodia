@@ -202,7 +202,11 @@ export function calculateVendorRisk(
   const hasDpfMechanism = mechanisms.includes('data_privacy_framework');
   const isDpfLapsed = vendor.dpfStatus === 'lapsed' || vendor.dpfStatus === 'withdrawn';
   const isDpfActive = vendor.dpfStatus === 'active' || (hasDpfMechanism && !isDpfLapsed);
-  const isAdequate = country && isAdequateDestination(country) && (country !== 'US' || isDpfActive);
+  // VD-23. This used to read `isAdequateDestination(country) && (country !== 'US'
+  // || isDpfActive)` — the right answer, computed inline where nothing else could
+  // reuse it, which is why the other thirteen call sites went on treating every
+  // US vendor as adequate. The condition now travels with the helper.
+  const isAdequate = !!country && isAdequateDestination(country, { conditionMet: isDpfActive });
 
   if (isEu) {
     locationPoints = 0;

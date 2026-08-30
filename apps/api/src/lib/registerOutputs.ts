@@ -15,7 +15,8 @@
  * Art. 13 section from a plausible one.
  */
 
-import { isAdequateDestination, EU_EEA_COUNTRIES } from '../constants/transferDestinations.js';
+import { isAdequateDestination, conditionMetByMechanism, EU_EEA_COUNTRIES } from '../constants/transferDestinations.js';
+import { htmlToText } from './htmlText.js';
 import { normaliseTransferMechanism } from '../constants/ropaVocabularies.js';
 import { retentionAnswer, formatTrigger, type ScheduleInput } from './retention.js';
 
@@ -179,7 +180,12 @@ export function buildNoticeSections(bundles: NoticeBundle[]): NoticeDraft {
       const country = (t.destinationCountry ?? '').toUpperCase();
       if (!country) continue;
       const mechanism = normaliseTransferMechanism(t.transferMechanism);
-      const adequate = isAdequateDestination(country) || EU_EEA_COUNTRIES.includes(country);
+      // VD-23. A privacy notice that calls a US transfer adequate without the
+      // importer holding a current DPF certification is an Art. 13(1)(f)
+      // misstatement, not a formatting choice.
+      const adequate = isAdequateDestination(country, {
+        conditionMet: conditionMetByMechanism(country, [t.transferMechanism, mechanism]),
+      }) || EU_EEA_COUNTRIES.includes(country);
       if (!mechanism || mechanism === 'pending_assessment') {
         // Art. 13(1)(f) requires the safeguard *and* how to obtain a copy of it. A
         // notice that names a transfer with no mechanism publishes a Chapter V gap.
@@ -562,7 +568,9 @@ function dedupe(values: string[]): string[] {
 }
 
 function normaliseForSearch(text: string): string {
-  return text.toLowerCase().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  // Through the shared stripper: this one used to leave script and style bodies
+  // behind, so a page's inlined JSON counted as searchable prose.
+  return htmlToText(text).toLowerCase();
 }
 
 function basisPhrase(basis?: string | null): string | null {

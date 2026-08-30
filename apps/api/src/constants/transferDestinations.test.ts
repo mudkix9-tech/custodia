@@ -20,6 +20,9 @@ import {
   ADEQUACY_REVIEW_INTERVAL_MONTHS,
   isAdequacyReviewOverdue,
   isAdequateDestination,
+  adequacyState,
+  isRecipientConditional,
+  conditionMetByMechanism,
   getDestinationContext,
 } from './transferDestinations.js';
 
@@ -86,10 +89,80 @@ check(
   'the US is recorded as DPF-scoped',
   'Adequacy covers certified entities only, so isAdequateDestination is not the whole answer for US transfers.',
 );
+// --- VD-23: the US decision is a fact about the recipient, not about the US ----
+//
+// This block replaces a single assertion that read `isAdequateDestination('US')`
+// is true, annotated "callers still have to check DPF certification". Thirteen of
+// the fourteen callers did not, and had no way to: the condition lived inline in
+// `calculateVendorRisk` where nothing else could reach it. So the Art. 44 gap
+// rule excused every US vendor, the Article 30 export printed them adequate, and
+// the TIA queue said they needed no assessment — including the ones whose
+// certification had lapsed, which is 6,719 of the register's 16,534 rows.
+
 check(
-  isAdequateDestination('US'),
-  'the US is adequate by the coarse test',
-  'Callers still have to check DPF certification — see H77.',
+  !isAdequateDestination('US'),
+  'the US is not adequate to a caller that has not evidenced certification',
+  'Unknown is not yes. This is the same direction VD-14 settled for an unrecorded country.',
+);
+check(
+  isAdequateDestination('US', { conditionMet: true }),
+  'and it is adequate to one that has',
+);
+check(
+  adequacyState('US') === 'conditional',
+  'an unevidenced US transfer is conditional rather than either answer',
+  'The fourth state is the point: "go and find out" reads differently from "you have a Chapter V problem".',
+);
+check(
+  adequacyState('US', { conditionMet: true }) === 'adequate',
+  'and evidenced it is plainly adequate',
+);
+check(isRecipientConditional('US'), 'the US decision depends on the recipient');
+
+// Canada is the deliberate non-case. Its scope narrows by *sector*, and nothing
+// in this product records a recipient's sector, so treating CA as unevidenced
+// would fail every Canadian transfer on a distinction nobody can act on. A scope
+// nothing can check is documentation; a scope something can check is a gate.
+check(
+  !isRecipientConditional('CA'),
+  'Canada is scoped but not conditional, because nothing here can evidence the condition',
+);
+check(isAdequateDestination('CA'), 'so Canada stays adequate with no evidence required');
+check(adequacyState('CA') === 'adequate', 'and reports as adequate rather than conditional');
+
+// Neither an EEA state nor a full-scope decision is affected by the new argument,
+// which is what makes this change safe to make everywhere at once.
+check(isAdequateDestination('DE', { conditionMet: false }), 'an EEA state ignores the condition');
+check(isAdequateDestination('JP', { conditionMet: false }), 'and so does a full-scope decision');
+check(
+  !isAdequateDestination('CN', { conditionMet: true }),
+  'and a third country cannot be talked into adequacy by asserting a condition it does not have',
+);
+
+// The mechanism reading, which is what every ROPA caller passes.
+check(
+  conditionMetByMechanism('US', ['data_privacy_framework']),
+  'a recorded DPF mechanism evidences the US condition',
+);
+check(
+  conditionMetByMechanism('US', ['Data_Privacy_Framework']),
+  'case-insensitively, because the column holds display strings and slugs both (D43)',
+);
+check(
+  !conditionMetByMechanism('US', ['scc', null, undefined]),
+  'SCCs do not evidence it — they are the other answer to the same question',
+);
+check(
+  !conditionMetByMechanism('CA', ['data_privacy_framework']),
+  'and the DPF says nothing about a non-conditional country',
+);
+
+// The gap this exists to stop, stated as the ordering rather than as a number.
+check(
+  !isAdequateDestination('US', { conditionMet: false })
+    && isAdequateDestination('US', { conditionMet: true }),
+  'an uncertified US importer never reads as well as a certified one',
+  'If these ever agree, the register is back to rewarding not looking.',
 );
 
 // --- input hygiene -------------------------------------------------------------

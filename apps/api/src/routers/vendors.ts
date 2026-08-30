@@ -61,9 +61,35 @@ import { safeFetch, BlockedRequestError } from '../lib/safeFetch.js';
 import { getVendorBenchmarkStats } from '../lib/vendorBenchmarking.js';
 import { matchRegulatoryDecisions } from '../lib/vendorEnforcementFeed.js';
 import { matchDpfStatus, dpfLookupName, type DpfMatchStatus } from '../lib/vendorDpf.js';
-import { provenanceAge, selectAuthoritativeProvenance, validateAnalystCorrection } from '../lib/vendorProvenance.js';
-import { fieldConfidence } from '../lib/vendorFieldConfidence.js';
+import { provenanceAge, selectAuthoritativeProvenance } from '../lib/vendorProvenance.js';
+import {
+  submitFieldCorrection as submitCorrection,
+  applyCorrectionToColumn,
+  CorrectionError,
+} from '../lib/vendorCorrections.js';
+
+/**
+ * Run an extracted correction function and map its error to a tRPC one.
+ *
+ * The logic lives in `lib/vendorCorrections.ts` so the local operator console
+ * calls the same code path. tRPC status codes are a transport concern and stay
+ * here rather than travelling into a module a plain script also imports.
+ */
+async function runCorrection<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err instanceof CorrectionError) {
+      throw new TRPCError({
+        code: err.kind === 'not_found' ? 'NOT_FOUND' : 'BAD_REQUEST',
+        message: err.message,
+      });
+    }
+    throw err;
+  }
+}
 import { loadDpfEntriesFor } from '../lib/vendorDpfLookup.js';
+import { htmlToText } from '../lib/htmlText.js';
 export { calculateVendorRisk, NEW_LINK_RISK_INPUTS };
 
 /**
@@ -624,7 +650,55 @@ export const vendorsRouter = router({
         eq(organizationVendors.organizationId, ctx.user!.orgId),
         eq(organizationVendors.vendorId, input.vendorId)
       ));
-      return records[0];
+      if (!records[0]) return records[0];
+
+      /**
+       * Sprint 10 built the provenance surface and wired it to nothing.
+       * `ProvenanceBadge` was reached only through a wrapper that returned
+       * early when handed no provenance, and the one call site passed a number
+       * and nothing else. So the tier labels, the staleness hint, the
+       * absent-tier copy and 16 keys in each of three catalogues were
+       * unreachable from every screen in the product, and the only place a
+       * source was ever shown was the Article 28 dossier, as a raw `sourceType`
+       * slug.
+       *
+       * Resolved here rather than in the page because precedence and decay are
+       * the API's answer to give: which row wins is `PROVENANCE_PRECEDENCE`, and
+       * what it is worth today is a function of `retrieved_at` that must not be
+       * recomputed in two places (VD-7's lesson, one level up).
+       */
+      const provenanceRows = await ctx.db
+        .select()
+        .from(vendorFieldProvenance)
+        .where(eq(vendorFieldProvenance.vendorId, input.vendorId));
+
+      const resolved = selectAuthoritativeProvenance(provenanceRows, { scope: 'catalogue' });
+      const provenance: Record<string, {
+        sourceType: string;
+        confidence: number;
+        confidenceWhenGathered: number;
+        stale: boolean;
+        reviewOverdue: boolean;
+        retrievedAt: string | null;
+        sourceUrl: string | null;
+        supersededCount: number;
+      }> = {};
+
+      for (const field of resolved) {
+        const retrieved = field.row.retrievedAt;
+        provenance[field.fieldName] = {
+          sourceType: field.row.sourceType,
+          confidence: field.age.confidence,
+          confidenceWhenGathered: field.age.originalConfidence,
+          stale: field.age.stale,
+          reviewOverdue: field.age.reviewOverdue,
+          retrievedAt: retrieved ? new Date(retrieved).toISOString() : null,
+          sourceUrl: field.row.sourceUrl ?? null,
+          supersededCount: field.superseded.length,
+        };
+      }
+
+      return { ...records[0], provenance };
     }),
 
   linkVendor: protectedProcedure
@@ -1357,9 +1431,6 @@ export const vendorsRouter = router({
       note: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.id, input.vendorId));
-      if (!vendor) throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor not found' });
-
       // The author is taken from the session, never from the input: a
       // correction is attributable or it is not a correction, and an
       // attribution the caller supplies is an attribution the caller can forge.
@@ -1367,55 +1438,49 @@ export const vendorsRouter = router({
       // to a person through `users`, which is what an auditor asking "who
       // decided this?" needs; a display name here would go stale the moment
       // somebody changed theirs.
-      const verifiedBy = ctx.user?.id ?? null;
-
-      const problems = validateAnalystCorrection({
-        fieldName: input.fieldName,
-        value: input.value,
-        verifiedBy,
-        evidenceSnippet: input.evidenceSnippet,
-        sourceUrl: input.sourceUrl,
-        reviewBy: input.reviewBy,
-      });
-      if (problems.length > 0) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: problems.join('; ') });
-      }
-
-      const now = new Date();
-      const [row] = await ctx.db
-        .insert(vendorFieldProvenance)
-        .values({
+      return runCorrection(() =>
+        submitCorrection({
+          db: ctx.db,
           vendorId: input.vendorId,
           fieldName: input.fieldName,
           value: input.value,
-          sourceType: 'analyst',
           sourceUrl: input.sourceUrl,
-          confidence: fieldConfidence({ value: input.value, sourceType: 'analyst' }),
           evidenceSnippet: input.evidenceSnippet,
-          retrievedAt: now,
-          verifiedBy,
-          verifiedAt: now,
-          reviewBy: new Date(input.reviewBy),
-        })
-        .onConflictDoUpdate({
-          // One standing analyst finding per (vendor, field): a correction
-          // replaces the previous correction rather than stacking, so "what does
-          // a person say about this field" has one answer. The registry and
-          // probe rows it supersedes are untouched and still readable.
-          target: [vendorFieldProvenance.vendorId, vendorFieldProvenance.fieldName, vendorFieldProvenance.sourceType],
-          set: {
-            value: input.value,
-            sourceUrl: input.sourceUrl,
-            evidenceSnippet: input.evidenceSnippet,
-            retrievedAt: now,
-            verifiedBy,
-            verifiedAt: now,
-            reviewBy: new Date(input.reviewBy),
-          },
-        })
-        .returning();
+          reviewBy: input.reviewBy,
+          verifiedBy: ctx.user?.id ?? null,
+        }),
+      );
+    }),
 
-      return { provenance: row, supersedes: 'registry, http_probe and trust_centre rows for this field' };
+  /**
+   * Fold a standing analyst correction into the catalogue column it corrects.
+   *
+   * The deliberate second half of `submitFieldCorrection` (known-concerns §20).
+   * Recording a correction says what a person found; this is what makes the
+   * product act on it — without it a corrected headquarters country was visible
+   * to anything reading provenance and invisible to everything reading the
+   * column, including the risk score.
+   *
+   * Separate on purpose rather than folded into the write above: doing both at
+   * once makes an override indistinguishable from the thing it overrode, which
+   * is what the widened provenance key exists to prevent. It takes no value —
+   * only a vendor and a field — so the column can only be set to something that
+   * already passed `validateAnalystCorrection`.
+   */
+  applyFieldCorrection: protectedProcedure
+    .use(requirePermission('vendors', 'manage'))
+    .input(z.object({
+      vendorId: z.string().uuid(),
+      fieldName: z.string().min(1).max(100),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return runCorrection(() =>
+        applyCorrectionToColumn({
+          db: ctx.db,
+          vendorId: input.vendorId,
+          fieldName: input.fieldName,
+        }),
+      );
     }),
 
   getPrivacyAlternatives: protectedProcedure
@@ -2961,11 +3026,9 @@ export const vendorsRouter = router({
             timeoutMs: 6000,
           });
           if (res.ok) {
-            contentToParse = res.body
-              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-              .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-              .replace(/<[^>]+>/g, ' ')
-              .replace(/\s+/g, ' ');
+            // This was the only one of the three copies that removed script and
+            // style bodies as well as tags, so it is the shape `htmlToText` took.
+            contentToParse = htmlToText(res.body);
           }
         } catch (err) {
           // A refused destination is the caller's mistake and worth saying so; any

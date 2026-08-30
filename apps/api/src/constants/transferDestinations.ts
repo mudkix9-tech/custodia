@@ -69,21 +69,111 @@ export const ADEQUACY_DECISIONS: Record<string, { date: string; scope: string }>
   'US': { date: '2023-07-10', scope: 'data_privacy_framework' }, // US (DPF only, certified orgs)
 };
 
-export function isAdequateDestination(countryCode: string): boolean {
-  return EU_EEA_COUNTRIES.includes(countryCode) || countryCode in ADEQUACY_DECISIONS;
+/**
+ * How a destination stands under Chapter V once the caller's own evidence is in.
+ *
+ * `conditional` is the state VD-23 exists to make representable. An adequacy
+ * decision is not always a statement about a *country*: the US decision covers
+ * only organisations holding a current Data Privacy Framework certification,
+ * which is a property of the recipient, is published per entity, and lapses
+ * without the decision itself changing. A caller that cannot evidence the
+ * condition has not established adequacy — and "we did not check" is not "yes",
+ * which is the distinction VD-14 drew for an unrecorded country and VD-13 for
+ * `dpa_available`. The scope discriminator was carried here from the start and
+ * read by nothing for a year, so every surface but the vendor risk score
+ * reported an uncertified US importer as adequate.
+ */
+export type AdequacyState = 'eu_eea' | 'adequate' | 'conditional' | 'third_country';
+
+/** The transfer-mechanism vocabulary value that evidences the US condition. */
+export const DPF_MECHANISM = 'data_privacy_framework';
+
+/**
+ * Decisions whose condition attaches to the recipient *and* which this product
+ * can actually evidence.
+ *
+ * Only the DPF is in here, and Canada's `commercial` scope deliberately is not.
+ * The difference is whether anything in Custodia can answer the question. DPF
+ * certification is per-entity, published by the Department of Commerce, synced
+ * weekly into `dpf_registrations`, and lapses — so a caller either has the
+ * answer or is admitting it did not look. Canada's decision narrows by *sector*
+ * (PIPEDA covers commercial organisations, not federal public bodies) and the
+ * product models no sector for a recipient, so treating CA as unevidenced would
+ * fail every Canadian transfer on a distinction nobody using this can act on.
+ * A scope nothing can check is documentation; a scope something can check is a
+ * gate, and only the second belongs here.
+ */
+const RECIPIENT_CONDITIONAL_SCOPES: ReadonlySet<string> = new Set([
+  'data_privacy_framework',
+]);
+
+/** Does this country's decision depend on a fact about the recipient? */
+export function isRecipientConditional(countryCode: string): boolean {
+  const scope = ADEQUACY_DECISIONS[countryCode]?.scope;
+  return scope !== undefined && RECIPIENT_CONDITIONAL_SCOPES.has(scope);
 }
 
-export function getDestinationContext(countryCode: string) {
-  if (EU_EEA_COUNTRIES.includes(countryCode)) {
-    return { status: 'eu_eea', requiresTransferMechanism: false };
+/**
+ * Whether a recorded set of transfer mechanisms evidences the condition on this
+ * country's decision.
+ *
+ * One place rather than an `includes('data_privacy_framework')` at each call
+ * site, for VD-7's reason: a second copy of a matching rule drifts from the
+ * first and the drift is invisible. Note this is the *controller's assertion*,
+ * which the registry can contradict — `resolveDpfStatus` is the stronger
+ * evidence and callers holding a vendor should prefer it.
+ */
+export function conditionMetByMechanism(
+  countryCode: string,
+  mechanisms: readonly (string | null | undefined)[],
+): boolean {
+  if (!isRecipientConditional(countryCode)) return false;
+  return mechanisms.some((m) => (m ?? '').toLowerCase().includes(DPF_MECHANISM));
+}
+
+export function adequacyState(
+  countryCode: string,
+  evidence?: { conditionMet?: boolean },
+): AdequacyState {
+  if (EU_EEA_COUNTRIES.includes(countryCode)) return 'eu_eea';
+  if (!(countryCode in ADEQUACY_DECISIONS)) return 'third_country';
+  if (!isRecipientConditional(countryCode)) return 'adequate';
+  return evidence?.conditionMet === true ? 'adequate' : 'conditional';
+}
+
+/**
+ * Adequate, taking the caller's evidence into account.
+ *
+ * Called with no evidence a conditional destination reads **false**, which is
+ * the safe direction and a behaviour change: it used to read true for the US
+ * whatever the recipient's certification said.
+ */
+export function isAdequateDestination(
+  countryCode: string,
+  evidence?: { conditionMet?: boolean },
+): boolean {
+  const state = adequacyState(countryCode, evidence);
+  return state === 'eu_eea' || state === 'adequate';
+}
+
+export function getDestinationContext(
+  countryCode: string,
+  evidence?: { conditionMet?: boolean },
+) {
+  const state = adequacyState(countryCode, evidence);
+  if (state === 'eu_eea') {
+    return { status: 'eu_eea', adequacyState: state, requiresTransferMechanism: false };
   }
-  if (countryCode in ADEQUACY_DECISIONS) {
-    return {
-      status: 'adequate',
-      requiresTransferMechanism: false,
-      adequacyDate: ADEQUACY_DECISIONS[countryCode]?.date,
-      adequacyScope: ADEQUACY_DECISIONS[countryCode]?.scope,
-    };
+  if (state === 'third_country') {
+    return { status: 'third_country', adequacyState: state, requiresTransferMechanism: true };
   }
-  return { status: 'third_country', requiresTransferMechanism: true };
+  return {
+    // `status` keeps its three original values so existing readers are
+    // unaffected; `adequacyState` is where the fourth one lives.
+    status: state === 'adequate' ? 'adequate' : 'third_country',
+    adequacyState: state,
+    requiresTransferMechanism: state !== 'adequate',
+    adequacyDate: ADEQUACY_DECISIONS[countryCode]?.date,
+    adequacyScope: ADEQUACY_DECISIONS[countryCode]?.scope,
+  };
 }

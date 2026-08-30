@@ -29,6 +29,10 @@ import {
 import { isNewAiWindow, aiWindowReset, TIER_LIMITS } from '../constants/aiQuota.js';
 import { calculateVendorRisk, NEW_LINK_RISK_INPUTS, LOCATION_STATES, type VendorRiskInput, type OrgVendorRiskInput } from './vendorRisk.js';
 import { csvCell, csvRow, csvDocument } from '../utils/csv.js';
+import { dpfConditionMet, vendorAdequacyState, dpfLapseNotices } from './vendorAdequacy.js';
+import { shapeCandidateReview, shapeCatalogueReview } from './vendorReviewQueues.js';
+import { deriveLocator, applyLocator, MAX_EXTRACTED_CHARS } from './vendorLocator.js';
+import { validateRule, validateTaughtValue, applyFieldRules, urlRulesFor } from './vendorExtractionRules.js';
 import {
   parseCsvRows,
   detectDelimiter,
@@ -2425,6 +2429,538 @@ const robotsBlockedWrites = buildCatalogueWrites(
 );
 check(robotsBlockedWrites.provenance.length === 0 && Object.keys(robotsBlockedWrites.columns).length === 0,
   'a robots-blocked candidate writes no provenance row and no column — absent is a tier');
+
+// ---------------------------------------------------------------------------
+// VD-23 — adequacy is a fact about the recipient, and the register knows it
+// ---------------------------------------------------------------------------
+//
+// Two halves, and the second is the one that had been missing for three sprints.
+// `dpfConditionMet` decides whether a US vendor is inside the adequacy decision,
+// preferring the register's verdict over the controller's own checkbox.
+// `dpfLapseNotices` turns an inactive listing into the words a customer reads —
+// `dpfLapseFinding` shipped in Sprint 7 with fixtures and exactly one caller, the
+// questionnaire cross-check, so the weekly sync that actually discovers a lapse
+// had no way to say anything at all.
+
+const vd23Vendor = {
+  id: 'v1',
+  name: 'Acme Inc',
+  website: 'https://acme.com',
+  headquartersCountry: 'US',
+  transferMechanisms: [] as string[],
+};
+
+check(dpfConditionMet(vd23Vendor, 'active'), 'an active registration evidences the US condition');
+check(!dpfConditionMet(vd23Vendor, 'lapsed'), 'a lapsed one does not');
+check(!dpfConditionMet(vd23Vendor, 'withdrawn'), 'nor does a withdrawal');
+
+// The register outranks the checkbox, and only in the direction that matters.
+// A controller who ticked "Data Privacy Framework" in 2024 is not evidence
+// against an inactive listing published last week — that is the whole reason the
+// weekly sync exists. The reverse is not true: a `not_found` is as likely to be
+// a legal-entity name we got wrong (VD-15) as an uncertified vendor, and
+// charging a customer for our own matching problem is the wrong way round.
+check(
+  !dpfConditionMet({ ...vd23Vendor, transferMechanisms: ['data_privacy_framework'] }, 'lapsed'),
+  'an inactive listing beats a recorded mechanism',
+);
+check(
+  dpfConditionMet({ ...vd23Vendor, transferMechanisms: ['data_privacy_framework'] }, 'not_found'),
+  'but a vendor the register cannot find falls back to what the controller recorded',
+);
+check(
+  dpfConditionMet(vd23Vendor, undefined, ['data_privacy_framework']),
+  'and the org-level mechanism counts too — it is the same assertion one table over',
+);
+check(
+  !dpfConditionMet({ ...vd23Vendor, headquartersCountry: 'DE' }, 'lapsed'),
+  'a German vendor has no DPF condition to fail, whatever the register says',
+);
+
+check(
+  vendorAdequacyState(vd23Vendor, 'lapsed') === 'third_country',
+  'a lapsed US vendor is a third-country transfer',
+);
+check(
+  vendorAdequacyState(vd23Vendor, undefined) === 'conditional',
+  'and an unchecked one is conditional — "go and find out", not "you have a problem"',
+);
+
+// The notices. `not_found` deliberately raises nothing: a finding a customer
+// cannot act on is the queue-poisoning VD-14 describes, one table over.
+const vd23Lapsed = new Map([[vd23Vendor, {
+  status: 'lapsed' as const,
+  entry: {
+    nameKey: 'acme',
+    organisationName: 'Acme Inc',
+    status: 'lapsed',
+    inactiveStartDate: '2026-02-06',
+  } as any,
+}]]);
+const vd23Notices = dpfLapseNotices([vd23Vendor], vd23Lapsed);
+check(vd23Notices.length === 1, 'a lapsed linked vendor produces one notice');
+check(vd23Notices[0]!.effectiveDate === '2026-02-06', 'dated from the register, not from the run');
+check(
+  vd23Notices[0]!.finding.detail.includes('not a personal data breach'),
+  'and it says what it is not — VD-22, in the path that finally reaches a customer',
+);
+check(
+  !vd23Notices[0]!.finding.detail.includes('Articles 33 or 34') === false,
+  'the finding names the articles it is not engaging rather than leaving it implied',
+);
+
+check(
+  dpfLapseNotices([vd23Vendor], new Map([[vd23Vendor, { status: 'active' as const, entry: null }]])).length === 0,
+  'an active certification raises nothing',
+);
+check(
+  dpfLapseNotices([vd23Vendor], new Map([[vd23Vendor, { status: 'not_found' as const, entry: null }]])).length === 0,
+  'and neither does a vendor the register has never heard of',
+);
+
+// The scoring consequence, pinned as an ordering rather than as a number so the
+// weights can move without the guarantee moving.
+const vd23Certified = calculateVendorRisk(
+  { ...usVendor([]), dpfStatus: 'active' }, orgVendor, NEW_LINK_RISK_INPUTS,
+);
+const vd23LapsedScore = calculateVendorRisk(
+  { ...usVendor([]), dpfStatus: 'lapsed' }, orgVendor, NEW_LINK_RISK_INPUTS,
+);
+const vd23NoCountry = calculateVendorRisk(
+  { ...usVendor([]), headquartersCountry: null }, orgVendor, NEW_LINK_RISK_INPUTS,
+);
+check(
+  vd23LapsedScore.score > vd23Certified.score,
+  'a lapsed US vendor scores worse than a certified one',
+);
+check(
+  vd23NoCountry.score > vd23Certified.score && vd23NoCountry.score < vd23LapsedScore.score,
+  'and an unrecorded country sits between them — VD-14 and VD-23 are one ordering',
+  'At or below the certified score the register rewards not looking; at the lapsed score the finding is wrong.',
+);
+
+// ---------------------------------------------------------------------------
+// The operator console's queues
+// ---------------------------------------------------------------------------
+//
+// Shaping only, which is why it is split from the querying. Every one of these
+// returns a plausible answer when it is wrong: a field shown as absent because
+// nobody looked reads identically to one blocked by robots.txt, and a candidate
+// that would overwrite an accepted value looks like one filling an empty field.
+// The console exists so a reviewer can tell those apart, so the distinction is
+// the thing worth pinning.
+
+const candidateRow = {
+  id: 'c1',
+  name: 'Acme Inc',
+  domain: 'acme.com',
+  category: 'analytics',
+  confidence: 90,
+  payload: {
+    name: 'Acme Inc',
+    dpaUrl: 'https://acme.com/legal/dpa',
+    privacyPolicyUrl: 'https://acme.com/privacy',
+    subProcessorListUrl: null,
+    headquartersCountry: 'US',
+  },
+  probeResults: {
+    dpaUrl: { status: 'accept', confidence: 90, failureClass: 'own_domain' },
+    privacyPolicyUrl: { status: 'review', confidence: 45 },
+  },
+  grounding: [
+    { url: 'https://acme.com/subprocessors', type: 'subprocessors', failureClass: 'not_found', httpStatus: 404 },
+    { url: 'https://acme.com/legal/subprocessors', type: 'subprocessors', failureClass: 'blocked_by_robots', httpStatus: null },
+  ],
+};
+
+const freshReview = shapeCandidateReview(candidateRow, null);
+const byField = Object.fromEntries(freshReview.fields.map((f) => [f.field, f]));
+
+check(freshReview.existingVendorId === null, 'a candidate with no catalogue row is a new vendor');
+check(byField.dpaUrl!.state === 'new', 'a probed URL against an empty catalogue is new');
+check(byField.dpaUrl!.confidence === 90, 'and it carries the per-field confidence the probe computed');
+check(
+  byField.subProcessorListUrl!.state === 'absent',
+  'a field nothing verified is absent rather than empty',
+);
+
+// The evidence half. This is what the in-product console never showed, and it
+// is the whole answer to "did you even look".
+check(
+  byField.subProcessorListUrl!.rejected.length === 2,
+  'and it carries every URL that was tried for it',
+);
+check(
+  byField.subProcessorListUrl!.rejected.some((r) => r.failureClass === 'blocked_by_robots'),
+  'including the one refused before the request was made',
+  'A path we declined to fetch is a different finding from one that 404d, and collapsing them is VD-4 in the review surface.',
+);
+check(
+  byField.dpaUrl!.rejected.length === 0,
+  'rejects are grouped by the field they belong to, not pooled across the record',
+);
+
+// Against an existing catalogue row the same candidate asks a different
+// question: overwriting a value somebody already accepted is not the same
+// decision as filling a blank one.
+const existingRow = {
+  id: 'v1',
+  dpaUrl: 'https://acme.com/old-dpa',
+  privacyPolicyUrl: 'https://acme.com/privacy',
+  headquartersCountry: 'US',
+};
+const againstExisting = shapeCandidateReview(candidateRow, existingRow);
+const exField = Object.fromEntries(againstExisting.fields.map((f) => [f.field, f]));
+
+check(againstExisting.existingVendorId === 'v1', 'a matched slug reports the row it would update');
+check(exField.dpaUrl!.state === 'changed', 'a different value against an existing one is a change');
+check(exField.dpaUrl!.current === 'https://acme.com/old-dpa', 'and the reviewer is shown what it replaces');
+check(exField.privacyPolicyUrl!.state === 'same', 'an identical value is not a change');
+check(
+  exField.headquartersCountry!.state === 'same',
+  'and neither is one the probe re-confirmed',
+);
+
+// --- the catalogue queue ---------------------------------------------------
+
+const DAY = 24 * 60 * 60 * 1000;
+const consoleNow = new Date('2026-08-30T00:00:00Z');
+const daysBefore = (n: number) => new Date(consoleNow.getTime() - n * DAY).toISOString();
+
+const catalogueVendor = {
+  id: 'v9',
+  name: 'Globex',
+  website: 'https://globex.com',
+  legalEntityName: 'Globex Corporation',
+  headquartersCountry: 'US',
+  dpaUrl: 'https://globex.com/dpa',
+  subProcessorListUrl: null,
+};
+
+const catalogueProvenance = [
+  {
+    fieldName: 'headquartersCountry',
+    sourceType: 'registry',
+    confidence: 95,
+    retrievedAt: daysBefore(10),
+    sourceUrl: 'https://dpf/participant/1',
+  },
+  {
+    fieldName: 'dpaUrl',
+    sourceType: 'http_probe',
+    confidence: 90,
+    retrievedAt: daysBefore(900),
+    sourceUrl: 'https://globex.com/dpa',
+  },
+] as any[];
+
+const consoleCatalogueView = shapeCatalogueReview(catalogueVendor, catalogueProvenance, consoleNow);
+const cField = Object.fromEntries(consoleCatalogueView.fields.map((f) => [f.field, f]));
+
+check(cField.headquartersCountry!.absent === false, 'a field with a provenance row is not absent');
+check(cField.headquartersCountry!.sourceType === 'registry', 'and it reports the tier that answers for it');
+check(
+  cField.dpaUrl!.confidence! < cField.dpaUrl!.confidenceWhenGathered!,
+  'a probe from 900 days ago is worth less today than when it was gathered',
+  'VD-19: the console is where "verified" stops meaning "verified once, in March".',
+);
+// Decayed and *at the floor* are different states and the console shows them
+// differently — one is "worth less", the other is "we can no longer say this is
+// current". 900 days of a 180-day half-life lands just above the floor, which is
+// exactly the case that would read as stale if the boundary were sloppy.
+check(
+  cField.dpaUrl!.stale === false,
+  'and 900 days is not yet at the floor, so it is not reported as stale',
+);
+const flooredView = shapeCatalogueReview(
+  catalogueVendor,
+  [{ fieldName: 'dpaUrl', sourceType: 'http_probe', confidence: 90, retrievedAt: daysBefore(3000) }] as any[],
+  consoleNow,
+);
+check(
+  flooredView.fields.find((f) => f.field === 'dpaUrl')!.stale === true,
+  'a probe old enough to reach its floor is',
+);
+check(
+  cField.subProcessorListUrl!.absent === true,
+  'a field with no provenance row at all is the absent tier',
+);
+check(
+  cField.legalEntityName!.absent === true && cField.legalEntityName!.value === 'Globex Corporation',
+  'a value with no provenance behind it is still absent — a different problem from an empty one',
+  'An imported or hand-edited value has something to show and nothing to cite. That is what to go and source.',
+);
+check(
+  consoleCatalogueView.unresolvedCount === consoleCatalogueView.fields.filter(
+    (f) => f.absent && (f.value === null || f.value === undefined || f.value === ''),
+  ).length,
+  'the unresolved count is the fields with neither a value nor a source',
+);
+
+// ---------------------------------------------------------------------------
+// Teaching the scraper: locators, rules, and refusing to guess
+// ---------------------------------------------------------------------------
+//
+// The failure these guard against is the one the whole design exists to prevent:
+// a rule that quietly stops working while the field it filled stays populated.
+// That reads exactly like a rule that still works, at a confidence the reviewer
+// believed they had vouched for, which is worse than never having taught it.
+
+const teachPage =
+  'AWS Compliance. Our infrastructure operates regions in Ireland (eu-west-1), ' +
+  'Frankfurt (eu-central-1) and Stockholm (eu-north-1). ' +
+  'Customer data is stored at rest in the selected region.';
+
+const teachValue = 'Ireland (eu-west-1), Frankfurt (eu-central-1) and Stockholm (eu-north-1)';
+const teachStart = teachPage.indexOf(teachValue);
+
+const derived = deriveLocator(teachPage, teachStart, teachStart + teachValue.length);
+check(derived.locator !== null, 'a selection with a unique prefix yields a locator',
+  derived.problem ?? '');
+check(derived.locator!.before === 'regions in',
+  'and the anchor is the shortest unique run of words before it',
+  `Got "${derived.locator!.before}". Growing further than necessary makes a locator ` +
+  'more brittle, not less: every extra word is another thing a redesign can move.');
+
+// Casing survives. A locator that answered "ireland (eu-west-1)" would be
+// damaging the value on its way into a column a customer reads.
+check(applyLocator(teachPage, derived.locator!) === teachValue,
+  'applying it returns exactly what was selected, capitalisation included');
+
+// The anchor is what is stable, not the value. This is the case the whole
+// approach is betting on: marketing rewrites the sentence around the fact.
+const reworded = teachPage.replace('Our infrastructure operates regions in', 'We operate regions in');
+check(applyLocator(reworded, derived.locator!) === teachValue,
+  'a reworded prefix still matches, because the anchor survived it');
+
+const edited = teachPage.replace('Frankfurt (eu-central-1)', 'Paris (eu-west-3)');
+check(
+  applyLocator(edited, derived.locator!) === 'Ireland (eu-west-1), Paris (eu-west-3) and Stockholm (eu-north-1)',
+  'and a changed value is read as changed rather than as the old one',
+);
+
+// --- refusing to guess -----------------------------------------------------
+
+const teachAmbiguous = 'regions in Ireland. Also regions in Germany.';
+const teachAmbiguousAt = teachAmbiguous.indexOf('Ireland');
+check(
+  deriveLocator(teachAmbiguous, teachAmbiguousAt, teachAmbiguousAt + 7).locator === null,
+  'an anchor that appears twice is refused at authoring time',
+  'A locator matching in two places is a coin flip that reads correctly the day it is taught.',
+);
+
+check(
+  applyLocator(teachPage + ' We operate regions in Tokyo.', derived.locator!) === null,
+  'and a page that grows a second copy of the anchor stops matching, rather than picking one',
+  'This is the drift case. Guessing the first match would silently change what the field means.',
+);
+
+check(
+  applyLocator('An unrelated page about nothing in particular.', derived.locator!) === null,
+  'a page the anchor is absent from returns null, not a best effort',
+);
+
+const bigSelection = 'x'.repeat(MAX_EXTRACTED_CHARS + 1);
+check(
+  deriveLocator(`prefix words ${bigSelection}.`, 13, 13 + bigSelection.length).locator === null,
+  'a selection larger than a field value is refused — a section is not a value',
+);
+
+// --- list fields -----------------------------------------------------------
+
+const listLocator = deriveLocator(teachPage, teachStart, teachStart + teachValue.length, { split: ',' });
+const listValue = applyLocator(teachPage, listLocator.locator!);
+check(Array.isArray(listValue) && listValue.length === 2,
+  'a split locator returns a list',
+  `Got ${JSON.stringify(listValue)}.`);
+check(Array.isArray(listValue) && listValue[0] === 'Ireland (eu-west-1)',
+  'and its parts keep their own capitalisation too');
+
+// Two of these came from running the thing against a real page, and neither was
+// reachable from a hand-written fixture until it had happened once.
+
+// A value that ends mid-sentence has to be teachable. The terminator used to be
+// a hardcoded ".", so selecting a name out of "...added X (STC) as an affiliate."
+// derived an anchor reading to the end of the sentence, failed its own authoring
+// check, and told the reviewer to select differently when there was no different
+// selection available.
+const midSentence = 'On 3 January 2026 added Stripe Technology Company Limited (STC) as an affiliate.';
+const entity = 'Stripe Technology Company Limited';
+const entityAt = midSentence.indexOf(entity);
+const midLocator = deriveLocator(midSentence, entityAt, entityAt + entity.length);
+check(midLocator.locator !== null,
+  'a value ending mid-sentence is teachable',
+  midLocator.problem ?? '');
+check(applyLocator(midSentence, midLocator.locator!) === entity,
+  'and reads back exactly the selection, with no trailing bracket',
+  'The fold records a collapsed space against the *following* character, so ending the ' +
+  'slice one past the last kept character ran one character too far — a stray "(" on ' +
+  'every value taught before a bracket.');
+
+// The same off-by-one, isolated: a value ending at a space rather than at
+// punctuation is where it showed up.
+const spaced = 'the registered office of Acme Holdings BV is in Amsterdam.';
+const nameAt = spaced.indexOf('Acme Holdings BV');
+const spacedLocator = deriveLocator(spaced, nameAt, nameAt + 'Acme Holdings BV'.length);
+check(applyLocator(spaced, spacedLocator.locator!) === 'Acme Holdings BV',
+  'a value ending at a space keeps its own last character and nothing more');
+
+// --- rules: what enumeration does with them --------------------------------
+
+const ruleVendor = { name: 'Acme', website: 'https://acme.com' };
+const plainUrls = enumerateCandidateUrls(ruleVendor).map((c) => c.url);
+
+const pinnedUrls = enumerateCandidateUrls(ruleVendor, {
+  pinned: [{ url: 'https://acme.com/legal/dpa-2026', docType: 'dpa' }],
+}).map((c) => c.url);
+check(pinnedUrls[0] === 'https://acme.com/legal/dpa-2026',
+  'a pinned URL is probed before anything enumerated',
+  'The per-target budget is finite, so ordering is not cosmetic: a pin behind twelve guesses can be cut off.');
+
+const decoy = plainUrls[0]!;
+const deniedUrls = enumerateCandidateUrls(ruleVendor, { denied: [decoy] }).map((c) => c.url);
+check(!deniedUrls.includes(decoy),
+  'a denied URL is absent from the candidate list entirely',
+  'Filtering it from the *results* would still have spent the fetch the reviewer said was pointless.');
+check(deniedUrls.length === plainUrls.length - 1,
+  'and only that one is removed');
+
+check(
+  enumerateCandidateUrls(ruleVendor, { denied: [decoy.toUpperCase()] }).map((c) => c.url).includes(decoy) === false,
+  'denial is case-insensitive, because a URL a reviewer pasted may not match our casing',
+);
+
+// --- rules: vocabulary is per site -----------------------------------------
+
+// "Engaged Entities Register" is deliberately a phrase none of the built-in
+// families match — not `subprocessor`, not `sub-processor`, not the German or
+// French equivalents. A page titled "Sub-processor Register" would verify with
+// no teaching at all, which is the vocabulary working as designed and tells us
+// nothing about whether teaching works.
+const registerPage =
+  'Engaged Entities Register. The companies below are engaged by us, their location ' +
+  'and purpose set out for each.';
+check(evaluateContentSignals(registerPage, 'subprocessors') === 'partial',
+  'a site-specific word does not verify on its own');
+check(evaluateContentSignals(registerPage, 'subprocessors', ['Engaged Entities Register']) === 'verified',
+  'and verifies once that site has been taught it');
+check(evaluateContentSignals(registerPage, 'subprocessors', ['Verzeichnis der Dienstleister']) === 'partial',
+  'another site’s taught word does nothing here',
+  'Vocabulary is per host on purpose. Folding taught words into the shared families is how a token list stops being evidence.');
+
+// A taught word satisfies the name family only — the rest still has to hold.
+check(
+  evaluateContentSignals('Engaged Entities Register. Nothing else at all.', 'subprocessors', ['Engaged Entities Register']) === 'partial',
+  'a taught name alone is not enough: the supporting signals still have to match',
+  'Otherwise teaching a title would let any page carrying it verify.',
+);
+
+// --- rules: validation refuses the unreviewable ----------------------------
+
+check(
+  validateRule({ kind: 'pin_url', url: 'https://acme.com/dpa', docType: 'dpa', note: 'Found it by hand' }).length === 0,
+  'a complete pin rule validates',
+);
+check(
+  validateRule({ kind: 'pin_url', url: 'https://acme.com/dpa', docType: 'dpa', note: 'x' }).length > 0,
+  'a rule with no real reason is refused',
+  'Same standard as validateAnalystCorrection: a rule nobody can review later is not a rule.',
+);
+check(
+  validateRule({ kind: 'field_extract', url: 'https://acme.com/x', fieldName: 'dataProcessingLocations', note: 'Regions table', locator: null }).length > 0,
+  'a field rule with no locator is refused',
+);
+check(
+  validateRule({ kind: 'nonsense', note: 'whatever it is' }).length > 0,
+  'an unknown kind is refused before anything else is checked',
+);
+
+// --- rules: a taught value the product cannot read -------------------------
+//
+// The near-miss this guard exists for: a reviewer selects a perfectly true
+// sentence about SCCs, teaches it as `transferMechanisms`, and the Article 44
+// gap rule goes on reporting "no documented safeguards" — because that rule
+// matches the token `standard_contractual_clauses` and prose is not a token.
+// Everything the reviewer did was right and the product is still wrong.
+
+check(
+  validateTaughtValue('transferMechanisms', 'EU Standard Contractual Clauses approved by the Commission').length > 0,
+  'a true sentence is refused for a controlled-vocabulary field',
+  'A value the gap rules cannot read looks answered and behaves unanswered.',
+);
+check(validateTaughtValue('transferMechanisms', 'scc').length === 0,
+  'and the vocabulary term itself is accepted');
+check(validateTaughtValue('headquartersCountry', 'United States').length > 0,
+  'a country name is refused where an ISO-3166 code is read',
+  'isAdequateDestination is case-sensitive on the two-letter form; "United States" reads as a third country.');
+check(validateTaughtValue('headquartersCountry', 'US').length === 0, 'and the code is accepted');
+check(validateTaughtValue('legalEntityName', 'Stripe Technology Company Limited').length === 0,
+  'a free-text field accepts what it is given',
+  'Only fields something downstream parses are constrained. Constraining the rest would be ceremony.');
+
+// --- rules: applying them, and the failure that matters --------------------
+
+const activeRule = {
+  id: 'r1',
+  vendorId: 'v1',
+  kind: 'field_extract',
+  docType: null,
+  fieldName: 'dataProcessingLocations',
+  url: 'https://acme.com/regions',
+  locator: derived.locator,
+  note: 'The regions sentence',
+  status: 'active',
+};
+
+const applied = applyFieldRules([activeRule], 'https://acme.com/regions', teachPage);
+check(applied.length === 1 && applied[0]!.matched === true,
+  'a field rule applied to its own page matches');
+check(applied[0]!.value === teachValue, 'and yields the value');
+
+check(applyFieldRules([activeRule], 'https://acme.com/other', teachPage).length === 0,
+  'a field rule does not run against a page it was not taught on');
+
+// The assertion this whole feature turns on.
+const broken = applyFieldRules([activeRule], 'https://acme.com/regions', 'The page was rewritten entirely.');
+check(broken.length === 1 && broken[0]!.matched === false && broken[0]!.value === null,
+  'a rule whose page changed reports a miss and produces no value',
+  'Not the old value, not a guess. The caller turns this into no column and no provenance row.',
+);
+
+// And the miss has to reach `buildCatalogueWrites` as an absence.
+const noTaught = buildCatalogueWrites(
+  { name: 'Acme', website: 'https://acme.com', dataProcessingLocations: ['ie'] } as never,
+  { perField: {} } as never,
+);
+check(
+  !('dataProcessingLocations' in noTaught.columns) &&
+    !noTaught.provenance.some((r) => r.fieldName === 'dataProcessingLocations'),
+  'an untaught Chapter V field writes neither a column nor a provenance row',
+  'This is the Sprint 5 position and still the default: a value with no evidence is worse than a gap.',
+);
+
+const withTaught = buildCatalogueWrites(
+  { name: 'Acme', website: 'https://acme.com', dataProcessingLocations: ['ie', 'de'] } as never,
+  { perField: {} } as never,
+  { dataProcessingLocations: { url: 'https://acme.com/regions' } },
+);
+check(
+  Array.isArray(withTaught.columns.dataProcessingLocations) &&
+    withTaught.provenance.some((r) => r.fieldName === 'dataProcessingLocations' && r.sourceType === 'http_probe'),
+  'and a taught one writes both, sourced as the page probe it is',
+  'The tier is http_probe because a person vouched for the locator, not the value: the value is re-read every run.',
+);
+
+// --- url rules: broken pins stop, broken denials do not --------------------
+
+const brokenPin = { ...activeRule, id: 'r2', kind: 'pin_url', docType: 'dpa', url: 'https://acme.com/gone', status: 'broken' };
+const brokenDeny = { ...activeRule, id: 'r3', kind: 'deny_url', docType: 'dpa', url: 'https://acme.com/decoy', status: 'broken' };
+const resolvedRules = urlRulesFor([brokenPin, brokenDeny]);
+check(resolvedRules.pinned.length === 0,
+  'a broken pin stops sending the probe at a dead URL');
+check(resolvedRules.denied.includes('https://acme.com/decoy'),
+  'a deny still holds even when marked broken',
+  'A deny is a statement about a page that does not become untrue — the marketing summary is still a marketing summary.');
 
 console.log(`\n${checks - failures}/${checks} assertions passed.`);
 if (failures > 0) {

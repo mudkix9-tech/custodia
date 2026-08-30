@@ -29,7 +29,6 @@ import { onboardingRouter } from './routers/onboarding.js';
 import { groupRouter } from './routers/group.js';
 import { customRolesRouter } from './routers/customRoles.js';
 import { analyticsRouter } from './routers/analytics.js';
-import { vendorIntelligenceRouter } from './routers/vendorIntelligence.js';
 import { vendorIntakeRouter } from './routers/vendorIntake.js';
 
 export const appRouter = router({
@@ -66,7 +65,13 @@ export const appRouter = router({
   data: dataRouter,
   group: groupRouter,
   analytics: analyticsRouter,
-  vendorIntelligence: vendorIntelligenceRouter,
+  // `vendorIntelligence` was removed with the in-product review console. Its
+  // procedures wrote the *shared* catalogue — one row every tenant reads — and
+  // were gated on `vendors:edit`, which `member` carries, so any member of any
+  // organisation could approve a candidate into global reference data. Deleting
+  // the page alone would not have closed that: a route is not a boundary.
+  // Catalogue review is now `npm run console --workspace=apps/api`, which binds
+  // loopback and calls `lib/vendorCandidateReview.ts` directly.
   vendorIntake: vendorIntakeRouter,
 });
 

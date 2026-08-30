@@ -22,6 +22,7 @@ import {
 import { cmpJobsQueue } from '../workers/cmp.js';
 import { vendorJobsQueue } from '../workers/vendors.js';
 import { isAdequateDestination } from '../constants/transferDestinations.js';
+import { dpfConditionMet, resolveDpfStatusBatch } from '../lib/vendorAdequacy.js';
 
 export const AGNOSTIC_TEMPLATES = [
   {
@@ -1015,9 +1016,16 @@ export const onboardingRouter = router({
             vendorId: vendor.id,
           });
 
-          // Check if non-EU transfer needs to be created
+          // Check if non-EU transfer needs to be created.
+          // VD-23: a US vendor is adequate only while it holds a current DPF
+          // certification, so onboarding asks the register rather than the
+          // country. Getting this wrong writes the org's opening register with a
+          // third-country transfer missing from it.
           const hq = vendor.headquartersCountry;
-          const isEuHq = hq && isAdequateDestination(hq);
+          const onboardDpf = await resolveDpfStatusBatch(ctx.db, [vendor]);
+          const isEuHq = hq && isAdequateDestination(hq.toUpperCase(), {
+            conditionMet: dpfConditionMet(vendor, onboardDpf.get(vendor)?.status),
+          });
           const hasEuHosting = vendor.usingEuHosting;
 
           if (!isEuHq && !hasEuHosting && hq) {

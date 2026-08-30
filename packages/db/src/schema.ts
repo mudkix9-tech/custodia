@@ -1827,6 +1827,140 @@ export const vendorFieldProvenance = pgTable('vendor_field_provenance', {
 }));
 
 /**
+ * What a probe actually read, kept so a reviewer can see it.
+ *
+ * `extractAndProbe` fetched every candidate page, evaluated its text and threw
+ * the body away: only a URL, an HTTP status and a verdict survived. That is
+ * enough to *report* a decision and not enough to *audit* one, and it makes the
+ * obvious next question — "fine, but what did the page say?" — unanswerable. It
+ * also makes teaching impossible: a rule authored against a page nobody can look
+ * at is a guess with extra steps.
+ *
+ * Text rather than HTML, because everything downstream of a fetch in this module
+ * already works in flattened text — `evaluateContentSignals` is regex over
+ * lowercased prose, and extraction locators anchor to words. Storing markup
+ * would mean every reader stripping it again.
+ *
+ * Bounded on purpose. A legal page is a few tens of kilobytes of prose and a
+ * megabyte of navigation; `PROBE_TEXT_LIMIT` keeps the useful part, so a
+ * catalogue of eighty vendors costs megabytes rather than gigabytes.
+ *
+ * Rejected pages are stored too, and that is the point rather than an oversight:
+ * the page worth looking at hardest is the one that looked like a DPA and was
+ * not.
+ */
+export const vendorProbeDocuments = pgTable('vendor_probe_documents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  /**
+   * One of these is set. A probe run writes against the candidate it is
+   * building; a re-verification of a row already in the catalogue writes against
+   * the vendor. Neither is required, because a document outlives the candidate
+   * it was fetched for — `vendor_candidates` is upserted on domain and reset on
+   * every re-run.
+   */
+  candidateId: uuid('candidate_id').references(() => vendorCandidates.id, { onDelete: 'cascade' }),
+  vendorId: uuid('vendor_id').references(() => vendors.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(),
+  /** 'dpa' | 'privacy' | 'subprocessors' — which question this fetch was asking. */
+  docType: varchar('doc_type', { length: 30 }).notNull(),
+  httpStatus: integer('http_status'),
+  /** The probe's verdict, so the panel can show why a page was not accepted. */
+  outcome: varchar('outcome', { length: 40 }),
+  /** Flattened, tag-stripped text, truncated to PROBE_TEXT_LIMIT. */
+  text: text('text').notNull().default(''),
+  /** True when the body was a PDF, which this module never parses. */
+  isPdf: boolean('is_pdf').default(false).notNull(),
+  fetchedAt: timestamp('fetched_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  /**
+   * A re-run refreshes in place rather than stacking — the upsert-and-resolve
+   * shape `consent_findings` uses. Two partial uniques rather than one composite
+   * because exactly one parent is set on any row, and Postgres treats NULLs in a
+   * unique constraint as distinct: a single (candidate, vendor, url) key would
+   * let every re-run insert a duplicate.
+   */
+  candidateUrlUnq: uniqueIndex('vendor_probe_documents_candidate_url_unq')
+    .on(table.candidateId, table.url)
+    .where(sql`candidate_id IS NOT NULL`),
+  vendorUrlUnq: uniqueIndex('vendor_probe_documents_vendor_url_unq')
+    .on(table.vendorId, table.url)
+    .where(sql`vendor_id IS NOT NULL`),
+}));
+
+/**
+ * What a reviewer taught the scraper about one vendor's site.
+ *
+ * The pipeline guesses well in general and badly in particular: every site is
+ * laid out differently, and a path list plus a token scan cannot know that this
+ * vendor's DPA sits behind an unguessable slug, or that the page tripping every
+ * DPA signal is a marketing summary. Correcting the *value* fixes one row and
+ * teaches nothing — the next run repeats the mistake. A rule is the correction
+ * that survives.
+ *
+ * Four kinds, deliberately small:
+ *
+ *   `pin_url`       this doc type is at this URL, go straight there
+ *   `deny_url`      never accept this URL, whatever its text says
+ *   `field_extract` read this field out of this page, using `locator`
+ *   `vocabulary`    this site's own word for a document type
+ *
+ * Keyed on `vendor_id`, though a rule is really about a *site*. That is the
+ * right trade while a vendor has one domain and `parent_entity_id` models the
+ * shared-entity case. It diverges the day a vendor changes domain, and the fix
+ * then is to re-teach rather than to re-key: a rule authored against the old
+ * site was never evidence about the new one.
+ *
+ * `status` flips to `broken` when a rule applies and stops matching. The field
+ * then writes nothing at all — no column, no provenance row — and the vendor
+ * surfaces in the console's signal queue. Falling back to generic enumeration
+ * would be worse than never having taught it, because a taught pipeline would
+ * decay into an untaught one with nobody noticing.
+ */
+export const vendorExtractionRules = pgTable('vendor_extraction_rules', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  vendorId: uuid('vendor_id').notNull().references(() => vendors.id, { onDelete: 'cascade' }),
+  kind: varchar('kind', { length: 20 }).notNull(),
+  /** 'dpa' | 'privacy' | 'subprocessors'. Null for a field rule. */
+  docType: varchar('doc_type', { length: 30 }),
+  /** The catalogue column a `field_extract` rule fills. Null otherwise. */
+  fieldName: varchar('field_name', { length: 100 }),
+  /** The page a pin, deny or field rule is about. Null for `vocabulary`. */
+  url: text('url'),
+  /**
+   * How to read the value — an anchored-text locator for `field_extract`, a
+   * token for `vocabulary`. The shape lives in `lib/vendorLocator.ts`; jsonb so
+   * a second locator kind does not need a migration.
+   */
+  locator: jsonb('locator'),
+  /**
+   * Why. Required by `lib/vendorExtractionRules.ts` rather than by the column,
+   * because the check belongs where the message can be useful — the same reason
+   * `validateAnalystCorrection` asks for an excerpt. A rule with no reason is
+   * one nobody can review, including whoever wrote it.
+   */
+  note: text('note'),
+  authoredBy: uuid('authored_by').references(() => users.id, { onDelete: 'set null' }),
+  authoredAt: timestamp('authored_at', { withTimezone: true }).defaultNow().notNull(),
+  /** Stamped every run the rule was consulted, matched or not. */
+  lastAppliedAt: timestamp('last_applied_at', { withTimezone: true }),
+  /** Stamped only when it produced what it promised. The two diverging is the drift. */
+  lastMatchedAt: timestamp('last_matched_at', { withTimezone: true }),
+  /** 'active' | 'broken'. */
+  status: varchar('status', { length: 20 }).default('active').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  /**
+   * One standing rule per (vendor, kind, doc type, field, url). Re-teaching
+   * replaces rather than stacks, so "what did I tell it about this page" has one
+   * answer — the same reason an analyst correction upserts.
+   */
+  ruleUnq: unique('vendor_extraction_rules_unq').on(
+    table.vendorId, table.kind, table.docType, table.fieldName, table.url,
+  ),
+  vendorIdx: index('idx_ver_vendor').on(table.vendorId, table.status),
+}));
+
+/**
  * P-5. The Department of Commerce's Data Privacy Framework participant list,
  * imported on a schedule. DPF certifications lapse annually and a lapsed
  * certification is a Chapter V event; until this table exists the only thing

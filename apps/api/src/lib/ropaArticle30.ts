@@ -50,7 +50,7 @@ import {
   legitimateInterestAssessments,
   dpias,
 } from 'db';
-import { isAdequateDestination } from '../constants/transferDestinations.js';
+import { isAdequateDestination, conditionMetByMechanism } from '../constants/transferDestinations.js';
 
 // ---------------------------------------------------------------------------
 // The wire shape.
@@ -330,7 +330,13 @@ function buildActivity(
     transfers: children.transfers.map((t) => ({
       destinationCountry: t.destinationCountry,
       destinationEntity: t.destinationEntity ?? null,
-      isAdequate: isAdequateDestination(t.destinationCountry),
+      // VD-23. The Article 30 record is the document a regulator reads, and it
+      // printed every US transfer as adequate regardless of whether the importer
+      // was DPF-certified. The decision covers certified organisations, so the
+      // mechanism the controller recorded is what puts a transfer inside it.
+      isAdequate: isAdequateDestination(t.destinationCountry, {
+        conditionMet: conditionMetByMechanism(t.destinationCountry, [t.transferMechanism]),
+      }),
       mechanism: t.transferMechanism,
       mechanismDetail: t.mechanismDetail ?? null,
       safeguardEvidence: safeguardEvidence(t),

@@ -1,8 +1,8 @@
 {
   "_review_notes": {
-    "title": "REVIEW: 'Gestion des fournisseurs'"
+    "title": "SETTLED (30 Aug 2026): 'Gestion des fournisseurs'. 'Intelligence des fournisseurs' was a calque — in French 'intelligence' reads as cleverness, not gathered information ('renseignement' would be the other sense). Matches the German choice."
   },
-  "title": "Intelligence des fournisseurs",
+  "title": "Gestion des fournisseurs",
   "subtitle": "Suivi automatisé pour les DPA, les TIA et les risques liés aux sous-traitants.",
   "analyze_dpa": "Analyser le DPA",
   "export_register": "Exporter le registre",
@@ -869,36 +869,6 @@
     "sex_life": "Vie sexuelle",
     "sexual_orientation": "Orientation sexuelle",
     "criminal_offence_data": "Données relatives aux infractions pénales"
-  },
-  "intelligence": {
-    "title": "Intelligence fournisseurs",
-    "subtitle": "Examinez la sortie du pipeline et approuvez les candidats dans le catalogue.",
-    "pending_title": "Candidats en attente",
-    "pending_count": "{count} fiches à examiner",
-    "empty_pending": "Rien en attente — lancez un lot via l'API ou importez un fichier JSON ci-dessous.",
-    "runs_title": "Exécutions récentes",
-    "runs_loading": "Chargement des exécutions…",
-    "runs_empty": "Aucune exécution pour l'instant.",
-    "runs_col_kind": "Type",
-    "runs_col_status": "Statut",
-    "runs_col_progress": "Progression",
-    "runs_col_started": "Démarrée",
-    "approve": "Approuver",
-    "reject": "Rejeter",
-    "show_detail": "Détails",
-    "hide_detail": "Masquer",
-    "confidence_tooltip": "Confiance {value}/100 — pondérée sur les sondes par champ",
-    "field_country": "Pays du siège",
-    "back_to_register": "Retour au registre",
-    "import_title": "Importer JSON",
-    "import_help": "Déposez ici le contenu de seed-data/vendors.json ou pending-review.json. Le serveur limite le corps à 4 Mo et conserve les 500 premiers enregistrements.",
-    "import_button": "Importer",
-    "importing": "Importation…",
-    "import_done": "{count} candidats importés.",
-    "approving": "Approbation en cours…",
-    "bulk_error": "Échec de l'approbation groupée.",
-    "bulk_done": "{count} candidats ajoutés au catalogue.",
-    "bulk_approve": "Approuver tous ≥ 70 de confiance"
   },
   "intake": {
     "title": "Demandes d'intégration fournisseurs",

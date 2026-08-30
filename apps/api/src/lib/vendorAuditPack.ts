@@ -8,6 +8,7 @@
  *      contractual terms, verified clause citations, sub-processors, and transfer safeguards.
  */
 
+import { vendorSourceTypeLabel } from './vendorFieldConfidence.js';
 import { csvDocument } from '../utils/csv.js';
 
 export interface Article30RecipientRow {
@@ -217,7 +218,12 @@ export function buildArticle28DossierMarkdown(dossier: Article28DossierData): st
               ? '—'
               : `${p.confidenceWhenGathered}%`;
             const field = p.authoritative === false ? `${p.fieldName} (superseded)` : p.fieldName;
-            return `| ${field} | \`${p.sourceType}\` | ${today} | ${gathered} | ${p.retrievedAt} | ${p.sourceUrl || 'N/A'} |`;
+            // The label rather than the bare slug: this table is read by someone
+            // who has never seen `VENDOR_SOURCE_TYPES` and is being asked to
+            // accept the row as evidence. The slug stays beside it so a value
+            // can still be traced back to the column it came out of.
+            const source = `${vendorSourceTypeLabel(p.sourceType)} (\`${p.sourceType}\`)`;
+            return `| ${field} | ${source} | ${today} | ${gathered} | ${p.retrievedAt} | ${p.sourceUrl || 'N/A'} |`;
           }),
         ].join('\n'),
     ''

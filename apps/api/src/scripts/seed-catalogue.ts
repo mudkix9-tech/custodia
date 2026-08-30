@@ -52,6 +52,8 @@ if (!process.env.DATABASE_URL) {
 const { db } = await import('../db.js');
 const { vendors, vendorFieldProvenance, vendorSubProcessors } = await import('db');
 const { and, eq, inArray, sql } = await import('drizzle-orm');
+const fs = await import('node:fs/promises');
+const { EOL } = await import('node:os');
 const { CATALOGUE_SEED, catalogueEntityCount, validateCatalogueSeed } =
   await import('../constants/vendorEntityMap.js');
 const { matchDpfStatus, DEFAULT_DPF_FRAMEWORK } = await import('../lib/vendorDpf.js');
@@ -283,7 +285,58 @@ async function main() {
   console.log('\nThen, to fill the probed fields (Tier 2/3) for these rows:');
   console.log('  the vendor-intelligence enrichment path — nothing here probes anything.');
 
+  await writeSeedSummary(outcomes, breaches);
+
   if (breaches > 0) process.exit(1);
+}
+
+/**
+ * Commit what the run actually produced, dated, beside the fixtures.
+ *
+ * The programme document quotes five numbers from the seed — 82 rows, 52 with a
+ * resolved legal entity, 49 certified, 29 resolved to nothing, 101 provenance
+ * rows — across five sections, and they are the whole evidence base for its open
+ * question about what coverage the product can promise. None of them had an
+ * artefact anywhere: they were read off a console once and retyped. That is the
+ * standard the same document sets for the DPF feed and meets there, by
+ * committing `dpf-registry-2026-08-29.json` so a change shows up as a diff
+ * against a response somebody actually received.
+ *
+ * So the run writes its own summary and the summary is committed. A later seed
+ * that resolves forty rows instead of twenty-nine is then a diff rather than a
+ * number nobody can check.
+ */
+async function writeSeedSummary(
+  outcomes: Array<{ slug: string; legalEntityName: string | null; dpfStatus: string }>,
+  breaches: number,
+): Promise<void> {
+  const provenanceRows = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(vendorFieldProvenance);
+  const edgeRows = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(vendorSubProcessors);
+
+  const summary = {
+    generatedAt: new Date().toISOString().slice(0, 10),
+    catalogueRows: outcomes.length,
+    resolvedToLegalEntity: outcomes.filter((o) => o.legalEntityName).length,
+    currentEuUsCertification: outcomes.filter((o) => o.dpfStatus === 'active').length,
+    resolvedToNothing: outcomes.filter((o) => !o.legalEntityName).length,
+    productsLinkedToParent: CATALOGUE_SEED.filter((e: any) => e.entity).length,
+    legalEntities: catalogueEntityCount(),
+    provenanceRows: provenanceRows[0]?.n ?? 0,
+    // VD-18: edges arrive only from a probed list, never from a seed. Recorded
+    // rather than asserted, so "the graph is empty" stays a checkable claim.
+    subProcessorEdges: edgeRows[0]?.n ?? 0,
+    provenanceGateBreaches: breaches,
+    unresolved: outcomes.filter((o) => !o.legalEntityName).map((o) => o.slug).sort(),
+  };
+
+  const target = new URL('../lib/fixtures/catalogue-seed-summary.json', import.meta.url);
+  await fs.writeFile(target, JSON.stringify(summary, null, 2) + EOL, 'utf8');
+  console.log('');
+  console.log('Summary written to lib/fixtures/catalogue-seed-summary.json — commit it.');
 }
 
 main()

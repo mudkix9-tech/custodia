@@ -26,6 +26,7 @@
  */
 import { classifyDocumentDomain, getRegistrableDomain } from './vendorDomains.js';
 import type { ProbeDocType } from './vendorProbe.js';
+import { htmlToText } from './htmlText.js';
 
 export type CandidateOrigin = 'path' | 'trust_centre' | 'link';
 
@@ -136,21 +137,44 @@ function vendorDomain(website: string): string | null {
  * document type that claims it, because `evaluateContentSignals` is what
  * decides whether it really is that document.
  */
+export interface CandidateUrlRules {
+  /** Taught URLs, probed before anything enumerated. */
+  pinned?: ReadonlyArray<{ url: string; docType: string }>;
+  /** Taught decoys, lower-cased, never emitted at all. */
+  denied?: readonly string[];
+}
+
 export function enumerateCandidateUrls(
   target: { name: string; website?: string | null },
+  rules: CandidateUrlRules = {},
 ): CandidateUrl[] {
   const domain = vendorDomain(target.website || '');
   if (!domain) return [];
   const base = `https://${domain}`;
+
+  const denied = new Set((rules.denied ?? []).map((u) => u.toLowerCase()));
 
   const out: CandidateUrl[] = [];
   const seen = new Set<string>();
   const push = (url: string, type: ProbeDocType, origin: CandidateOrigin) => {
     const key = url.toLowerCase();
     if (seen.has(key)) return;
+    // Denied before the list is built rather than filtered from the results, so
+    // a taught decoy costs no request and no budget. Filtering afterwards would
+    // still have spent the fetch that the reviewer told us was pointless.
+    if (denied.has(key)) return;
     seen.add(key);
     out.push({ url, type, origin });
   };
+
+  // Pinned first, in the order taught. A reviewer who has read the site knows
+  // where the document is, and making them wait behind twelve guesses is both
+  // slower and — with the per-target budget — sometimes fatal to the answer.
+  for (const pin of rules.pinned ?? []) {
+    if ((DOC_TYPE_ORDER as readonly string[]).includes(pin.docType)) {
+      push(pin.url, pin.docType as ProbeDocType, 'path');
+    }
+  }
 
   for (const type of DOC_TYPE_ORDER) {
     for (const path of DOC_PATHS[type]) push(`${base}${path}`, type, 'path');
@@ -207,7 +231,7 @@ const ANCHOR_RE = /<a\b[^>]*?href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]{0,400}?)<\
 
 /** Strip tags and collapse whitespace out of anchor inner HTML. */
 function anchorText(inner: string): string {
-  return inner.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return htmlToText(inner);
 }
 
 /**

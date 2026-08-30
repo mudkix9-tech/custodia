@@ -100,29 +100,50 @@ const ALLOWED: Record<string, Exception> = {
   'vendors.ts::markNotified': {
     reason: 'Reads the shared vendor_sub_processors row only to confirm the id exists — sub-processors describe a vendor, not a tenant, same as ::list. The acknowledgement it writes is org-scoped (vendor_sub_proc_acks, keyed on the caller orgId), which is the D46 fix: notifiedAt used to live on the shared row so one tenant acknowledging cleared it for all.',
   },
-  'vendors.ts::submitFieldCorrection': {
-    reason:
-      'Shared vendor catalogue. Writes an `analyst` provenance row about a named third party, ' +
-      'gated on vendors:manage — the same platform-operator rationale as publishIncident below. ' +
-      'A tenant who disagrees about a vendor gets a `customer` row instead, which ' +
-      'selectAuthoritativeProvenance excludes from the catalogue resolution so it cannot propagate.',
-  },
   'vendors.ts::publishIncident': {
     reason: 'Platform-operator action on the global incident feed, gated on vendors:manage until a real platform-admin role exists.',
   },
-  'vendorIntelligence.ts::getCandidate': {
-    reason: 'Shared pipeline staging (vendor_candidates) — catalogue reference data awaiting review, like the vendors rows it would create. Permission-gated on vendors:view.',
-  },
-  'vendorIntelligence.ts::reverifyVendor': {
-    reason: 'Reads the shared vendor catalogue to queue a freshness re-verification; writes only a job payload and lastVerifiedAt. Same shape as vendors.getById.',
-  },
-  'vendorIntelligence.ts::approveCandidate': {
-    reason: 'Writes the shared global catalogue from reviewed staging — the write is deliberately cross-tenant because every vendor row is. Permission-gated on vendors:edit; per-org risk scores are recalculated as part of the same transaction.',
-  },
-  'vendorIntelligence.ts::rejectCandidate': {
-    reason: 'Marks a staging row rejected; vendor_candidates is shared pipeline state, not tenant data. Permission-gated on vendors:edit.',
-  },
 };
+
+/**
+ * Two catalogue write paths left this guard's sight, and a third left the codebase.
+ * The reasoning that used to sit in ALLOWED above is recorded here because it did
+ * not stop being true.
+ *
+ * **Extracted.** `vendors.submitFieldCorrection` and its new sibling
+ * `vendors.applyFieldCorrection` are thin wrappers over
+ * `lib/vendorCorrections.ts`. The logic moved so the local operator console can
+ * call exactly the same code rather than carrying a second copy of a
+ * shared-catalogue write — which is the failure VD-7 records one level down, and
+ * which had already cost two live defects (known-concerns §21).
+ *
+ * **Deleted.** The `vendorIntelligence` router is gone entirely. Its
+ * candidate-review procedures wrote `vendors` — one row read by every tenant —
+ * gated on `vendors:edit`, which `member` carries, so any member of any
+ * organisation could approve a candidate into global reference data. It is
+ * replaced by `npm run console --workspace=apps/api`, which binds loopback and
+ * calls `lib/vendorCandidateReview.ts` directly.
+ *
+ * This guard is procedure-shaped: it finds `x: protectedProcedure` blocks in
+ * `src/routers` and reads their bodies, so a plain function in `src/lib` is not
+ * something it can check, and extending it to `src/lib` would mean scanning
+ * hundreds of pure functions that never touch a tenant. **What that costs is real
+ * and small**: the two correction bodies are no longer re-read on every run.
+ *
+ * What has not changed is why they are exempt. They write *shared catalogue*
+ * tables — `vendors`, `vendor_field_provenance` — which are cross-tenant
+ * reference data by design, so there is no org column to scope to and scoping to
+ * one would be the bug. The extracted functions take an explicit `db` handle and
+ * no org id at all, which makes that structural rather than a matter of
+ * remembering. The permission gate stayed on the procedures where it belongs
+ * (`vendors:manage`, which no built-in role grants), and `applyCorrectionToColumn`
+ * takes no value from the caller — only a vendor and a field — so it can promote
+ * a row that already passed `validateAnalystCorrection` and nothing else.
+ *
+ * A tenant who disagrees about a vendor still gets a `customer` provenance row,
+ * which `selectAuthoritativeProvenance` drops from catalogue resolution so it
+ * cannot propagate.
+ */
 
 type Finding = { file: string; procedure: string; line: number; tables: string[] };
 

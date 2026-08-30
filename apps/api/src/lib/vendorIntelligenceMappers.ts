@@ -14,6 +14,14 @@ export interface EnrichTarget {
   name: string;
   website?: string | null;
   category?: string | null;
+  /**
+   * The catalogue row this target is, when it is one.
+   *
+   * Absent for a brand-new candidate, which is the ordinary case: rules belong
+   * to a vendor, and a vendor nobody has reviewed has nothing taught about it.
+   * Present on a re-verification, which is where taught rules actually apply.
+   */
+  vendorId?: string | null;
 }
 
 export interface ExtractedRecord {
@@ -54,6 +62,15 @@ export interface RejectedCandidateUrl {
   httpStatus?: number | null;
 }
 
+/** What a taught `field_extract` rule produced on this run. */
+export interface FieldRuleOutcome {
+  ruleId: string;
+  fieldName: string;
+  url: string;
+  value: string | string[] | null;
+  matched: boolean;
+}
+
 export interface EnrichResult {
   target: EnrichTarget;
   ok: boolean;
@@ -61,6 +78,29 @@ export interface EnrichResult {
   assessment?: CandidateAssessment;
   /** Stored in the `grounding` column — see `RejectedCandidateUrl`. */
   rejectedUrls?: RejectedCandidateUrl[];
+  /**
+   * Every page the run read, bound for `vendor_probe_documents`.
+   *
+   * Typed loosely here rather than importing `ProbeDocumentRecord` from
+   * `vendorIntelligence.ts`: this module is the one the fixtures import, and it
+   * deliberately does not depend on the service that imports it.
+   */
+  documents?: Array<{
+    url: string;
+    docType: string;
+    httpStatus: number | null;
+    outcome: string;
+    text: string;
+    isPdf: boolean;
+  }>;
+  /**
+   * Taught field rules and whether each did what it promised.
+   *
+   * Carried out of the run rather than resolved inside it because a rule that
+   * failed has to be *recorded* as failed — that is what turns a silent
+   * regression into a signal a reviewer sees.
+   */
+  fieldOutcomes?: FieldRuleOutcome[];
   failureClass?: string;
   error?: string;
 }
@@ -134,6 +174,15 @@ function probedSource(url: string | null | undefined): FieldSource {
 export function buildCatalogueWrites(
   record: ExtractedRecord,
   assessment: CandidateAssessment,
+  /**
+   * Taught field rules that matched on this run, keyed by field.
+   *
+   * This is the only thing that unlocks the five Chapter V fields below. Without
+   * a rule they stay sourceless and therefore unwritten, which is the Sprint 5
+   * position and still the right default: a value with no evidence rendered
+   * against a named company is worse than a gap.
+   */
+  taught: Readonly<Record<string, { url: string }>> = {},
 ): {
   columns: Partial<Record<string, unknown>>;
   provenance: ProvenanceWrite[];
@@ -169,17 +218,27 @@ export function buildCatalogueWrites(
   push('dpaUrl', 'dpaUrl', record.dpaUrl, probedSource(record.dpaUrl));
   push('privacyPolicyUrl', 'privacyPolicyUrl', record.privacyPolicyUrl, probedSource(record.privacyPolicyUrl));
   push('subProcessorListUrl', 'subProcessorListUrl', record.subProcessorListUrl, probedSource(record.subProcessorListUrl));
-  // headquartersCountry, transferMechanisms, securityCertifications and
-  // dataProcessingLocations: the five Chapter V fields the model used to write
-  // as `ai_grounded`. Nothing sources them in Sprint 5, so nothing writes them.
-  push('headquartersCountry', 'headquartersCountry', record.headquartersCountry, null);
+  /**
+   * The five Chapter V fields the model used to write as `ai_grounded`.
+   *
+   * Sprint 5 removed the model and left them with no source, so nothing wrote
+   * them and they have been absent ever since — correctly, because absent is a
+   * tier and a guess is not. A taught `field_extract` rule is the first thing
+   * to give them one: a page on the vendor's own domain, an anchor a named
+   * person selected, re-read on every run. `taughtSource` returns null for any
+   * field nobody has taught, so the default is unchanged.
+   */
+  const taughtSource = (field: string): FieldSource =>
+    taught[field] ? probedSource(taught[field]!.url) : null;
+
+  push('headquartersCountry', 'headquartersCountry', record.headquartersCountry, taughtSource('headquartersCountry'));
   push(
     'transferMechanisms',
     'transferMechanisms',
     Array.isArray(record.transferMechanisms) && record.transferMechanisms.length > 0
       ? record.transferMechanisms
       : null,
-    null,
+    taughtSource('transferMechanisms'),
   );
   push(
     'securityCertifications',
@@ -187,7 +246,7 @@ export function buildCatalogueWrites(
     Array.isArray(record.securityCertifications) && record.securityCertifications.length > 0
       ? record.securityCertifications
       : null,
-    null,
+    taughtSource('securityCertifications'),
   );
   push(
     'dataProcessingLocations',
@@ -195,7 +254,7 @@ export function buildCatalogueWrites(
     Array.isArray(record.dataProcessingLocations) && record.dataProcessingLocations.length > 0
       ? record.dataProcessingLocations
       : null,
-    null,
+    taughtSource('dataProcessingLocations'),
   );
   // `description` is prose for a card, not a compliance assertion, and it comes
   // off the target rather than off a claim about the outside world.

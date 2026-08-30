@@ -2,6 +2,7 @@ import { db } from '../db.js';
 import { organizationVendors, vendors, complianceGaps, processingActivities, privacyPolicies, dsarRequests, breaches, trainingModules, trainingCompletions, clientProcessingActivities } from 'db';
 import { and, eq, notInArray, isNull, lt, not, exists, sql } from 'drizzle-orm';
 import { EU_EEA_COUNTRIES, isAdequateDestination } from './transferDestinations.js';
+import { dpfConditionMet, resolveDpfStatusBatch } from '../lib/vendorAdequacy.js';
 
 export const DETECTION_RULES = [
   // Vendor gaps
@@ -217,29 +218,46 @@ export const DETECTION_RULES = [
         where: eq(organizationVendors.organizationId, orgId),
         with: { vendor: true }
       });
-      return records.filter((r: any) => {
-        if (!r.vendor?.headquartersCountry) return false;
+      const withCountry = records.filter((r: any) => r.vendor?.headquartersCountry);
+
+      // VD-23. One query for the whole org rather than one per vendor: this rule
+      // runs over every linked vendor in the nightly scan, and a per-row lookup
+      // would put VD-8's full-table scan back one level up.
+      const registry = await resolveDpfStatusBatch(db, withCountry.map((r: any) => r.vendor));
+
+      return withCountry.filter((r: any) => {
         const country = r.vendor.headquartersCountry.toUpperCase();
-        const isEu = EU_EEA_COUNTRIES.includes(country);
-        const isAdequate = isAdequateDestination(country);
-        if (isEu || isAdequate) return false;
+        if (EU_EEA_COUNTRIES.includes(country)) return false;
 
         // Both halves are real as of migration 0050. The org half was a phantom
         // read for as long as this rule existed -- `organization_vendors` had no
         // such column -- so an organisation that had signed its own SCCs still
         // saw the Art. 44 gap reported against it (audit D26).
+        const orgMechanisms = (r.transferMechanisms || []) as string[];
+
+        // VD-23. Adequacy for a US importer is a fact about that importer, so it
+        // is asked with the register's verdict in hand rather than assumed from
+        // the country. A vendor whose certification has lapsed is no longer
+        // adequate and falls through to the safeguard test below.
+        const conditionMet = dpfConditionMet(r.vendor, registry.get(r.vendor)?.status, orgMechanisms);
+        if (isAdequateDestination(country, { conditionMet })) return false;
+
         const mechanisms = [
           ...(r.vendor.transferMechanisms || []),
-          ...(r.transferMechanisms || [])
+          ...orgMechanisms
         ].map((m: string) => m.toLowerCase());
 
+        // `data_privacy_framework` is deliberately *not* in this list any more.
+        // Whether the DPF covers this transfer is the adequacy question above,
+        // and the register has already answered it; leaving the token here as
+        // well would let a checkbox somebody ticked in 2024 outrank an inactive
+        // listing published by the Department of Commerce last week.
         const hasSafeguard = mechanisms.some(m => 
           m.includes('scc') || 
           m.includes('standard_contractual_clauses') || 
           m.includes('bcr') || 
           m.includes('binding_corporate_rules') ||
-          m.includes('adequacy_decision') ||
-          m.includes('data_privacy_framework')
+          m.includes('adequacy_decision')
         );
 
         return !hasSafeguard;
@@ -250,7 +268,9 @@ export const DETECTION_RULES = [
       entityId: record.id,
       gapType: 'third_country_transfer_no_safeguards',
       title: `Unsecured Third-Country Transfer: ${record.vendor?.name || 'Vendor'}`,
-      description: `Vendor ${record.vendor?.name || 'Vendor'} is located in a non-adequate third country (${record.vendor?.headquartersCountry}) and has no documented safeguards (e.g. SCCs or BCRs).`,
+      description: record.vendor?.headquartersCountry === 'US'
+        ? `Vendor ${record.vendor?.name || 'Vendor'} is in the United States and does not hold a current Data Privacy Framework certification, so the adequacy decision does not cover this transfer. No SCCs or BCRs are recorded either.`
+        : `Vendor ${record.vendor?.name || 'Vendor'} is located in a non-adequate third country (${record.vendor?.headquartersCountry}) and has no documented safeguards (e.g. SCCs or BCRs).`,
       severity: 'high',
       resolutionUrl: `/vendors/${record.vendorId}`,
     }),

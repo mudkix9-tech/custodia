@@ -12,7 +12,8 @@ import DOMPurify from 'isomorphic-dompurify';
 import { queueNotification } from '../utils/notifications.js';
 import { reconsentQueue } from '../workers/index.js';
 import { enforceLimit } from '../lib/billing.js';
-import { isAdequateDestination, EU_EEA_COUNTRIES, ADEQUACY_DECISIONS } from '../constants/transferDestinations.js';
+import { isAdequateDestination, conditionMetByMechanism, EU_EEA_COUNTRIES, ADEQUACY_DECISIONS } from '../constants/transferDestinations.js';
+import { dpfConditionMet, resolveDpfStatusBatch } from '../lib/vendorAdequacy.js';
 import {
   SPECIAL_CATEGORY_TYPES,
   ARTICLE_9_CONDITIONS,
@@ -4453,8 +4454,20 @@ export const ropaRouter = router({
           // the adequacy list as third countries, and fabricated a Chapter V transfer
           // requiring SCCs for each. isAdequateDestination covers the EEA plus every
           // adequacy decision, and onboarding.ts was already using it.
+          // VD-23. A US vendor was treated as adequate whatever its DPF standing,
+          // so linking an uncertified US processor created no transfer record at
+          // all and the Article 30 register simply omitted the transfer — an
+          // Art. 30(1)(e) hole rather than a scoring quibble. The register's own
+          // verdict decides it, falling back to the recorded mechanism.
           const hq = vendor?.headquartersCountry;
-          const isAdequateHq = !!hq && isAdequateDestination(hq);
+          const dpfRegistry = vendor ? await resolveDpfStatusBatch(ctx.db, [vendor]) : null;
+          const isAdequateHq = !!hq && isAdequateDestination(hq.toUpperCase(), {
+            conditionMet: !!vendor && dpfConditionMet(
+              vendor,
+              dpfRegistry?.get(vendor)?.status,
+              (orgVendor?.transferMechanisms ?? []) as string[],
+            ),
+          });
           const hasEuHosting = orgVendor?.usingEuHosting;
 
           if (!isAdequateHq && !hasEuHosting && hq) {
@@ -4668,7 +4681,12 @@ export const ropaRouter = router({
             .orderBy(desc(transferImpactAssessments.createdAt))
             .limit(1);
 
-          const isAdequate = isAdequateDestination(transfer.destinationCountry);
+          // VD-23. An adequate destination needs no TIA; a US importer without a
+          // current DPF certification is not one, and telling a reviewer the
+          // assessment is unnecessary is the expensive direction to be wrong in.
+          const isAdequate = isAdequateDestination(transfer.destinationCountry, {
+            conditionMet: conditionMetByMechanism(transfer.destinationCountry, [transfer.transferMechanism]),
+          });
           return {
             transfer,
             assessment: tia ?? null,
@@ -4748,7 +4766,11 @@ export const ropaRouter = router({
 
           return {
             assessment: row,
-            evaluation: evaluateTia(row, { isAdequate: isAdequateDestination(transfer.destinationCountry) }),
+            evaluation: evaluateTia(row, {
+              isAdequate: isAdequateDestination(transfer.destinationCountry, {
+                conditionMet: conditionMetByMechanism(transfer.destinationCountry, [transfer.transferMechanism]),
+              }),
+            }),
           };
         }),
 
@@ -4782,7 +4804,9 @@ export const ropaRouter = router({
             });
           }
 
-          const isAdequate = isAdequateDestination(existing.destinationCountry);
+          const isAdequate = isAdequateDestination(existing.destinationCountry, {
+            conditionMet: conditionMetByMechanism(existing.destinationCountry, [existing.transferMechanism]),
+          });
           const evaluation = evaluateTia(existing, { isAdequate });
           if (!evaluation.canComplete) {
             throw new TRPCError({
@@ -4887,7 +4911,11 @@ export const ropaRouter = router({
             ...row,
             // An adequate destination needs no TIA at all, and listing one as
             // "assessment missing" is how a queue trains people to ignore it.
-            isAdequate: isAdequateDestination(row.destinationCountry),
+            // VD-23: the US is adequate only for a certified importer, so the
+            // queue asks with the recorded mechanism in hand.
+            isAdequate: isAdequateDestination(row.destinationCountry, {
+              conditionMet: conditionMetByMechanism(row.destinationCountry, [row.transferMechanism]),
+            }),
           }));
         }),
     }),
