@@ -471,7 +471,10 @@ export async function writeProvenance(
  * candidate. Never throws for a data-quality reason; returns ok:false with a
  * failure class instead, because one bad target must not kill a batch.
  */
-export async function enrichOne(target: EnrichTarget): Promise<EnrichResult> {
+export async function enrichOne(
+  target: EnrichTarget,
+  log: ProbeLogger = () => {},
+): Promise<EnrichResult> {
   try {
     // Rules belong to a catalogue row, so a target with no vendor id has none —
     // which is the ordinary case for a brand-new candidate nobody has reviewed.
@@ -479,7 +482,7 @@ export async function enrichOne(target: EnrichTarget): Promise<EnrichResult> {
       ? ((await loadRulesFor(db, [target.vendorId])).get(target.vendorId) ?? [])
       : [];
 
-    const extracted = await extractAndProbe(target, rules);
+    const extracted = await extractAndProbe(target, rules, log);
 
     // A taught value is a value the record now has. `buildCatalogueWrites` gives
     // it `http_probe` provenance like any other page read: a human vouched for
@@ -580,9 +583,21 @@ function negativeControlUrl(origin: string): string {
   return `${origin}/${random}`;
 }
 
+/**
+ * Where a run says what it is doing.
+ *
+ * A probe is thirty-odd paced requests over a couple of minutes. Without this it
+ * is a process that appears to hang and then produces a verdict, which is
+ * unusable for the one operator watching it and was the actual complaint: the
+ * console's re-probe button reported "queued" and then nothing observable ever
+ * happened again.
+ */
+export type ProbeLogger = (line: string) => void;
+
 async function extractAndProbe(
   target: EnrichTarget,
   rules: readonly ExtractionRule[] = [],
+  log: ProbeLogger = () => {},
 ): Promise<{
   record: ExtractedRecord;
   rejectedUrls: RejectedCandidateUrl[];
@@ -628,6 +643,13 @@ async function extractAndProbe(
 
   const { pinned, denied } = urlRulesFor(rules);
   const vocabulary = vocabularyFor(rules);
+
+  if (rules.length > 0) {
+    log(
+      `${rules.length} taught rule(s): ${pinned.length} pinned, ${denied.length} denied, ` +
+      `${Object.values(vocabulary).flat().length} vocabulary token(s)`,
+    );
+  }
   const resolved: Partial<Record<ProbeDocType, string>> = {};
   let budget = MAX_PROBES_PER_TARGET;
   let lastRequestAt = 0;
@@ -686,6 +708,7 @@ async function extractAndProbe(
     // probe outcome into the cache — there is no evidence to score, and an
     // absent field is a tier.
     if (!(await robots.allows(candidate.url))) {
+      log(`  robots  ${candidate.url}`);
       skipped.add(candidate.url);
       rejectedUrls.push({
         url: candidate.url,
@@ -714,12 +737,28 @@ async function extractAndProbe(
     });
     cache.set(candidate.url, outcome);
 
+    const verdict = outcome.status === 'verified'
+      ? 'VERIFIED'
+      : (outcome.failureClass ?? 'failed');
+    log(
+      `  ${String(outcome.httpStatus ?? '---').padEnd(3)} ${verdict.padEnd(20)} ` +
+      `${String(outcome.text?.length ?? 0).padStart(7)}c  ${candidate.url}`,
+    );
+
     // Taught field rules run against whatever this page turned out to be, not
     // only against pages that verified: a reviewer who pinned a regions table
     // wants it read even though a regions table is not a DPA and never verifies
     // as one.
     if (outcome.text !== undefined) {
-      fieldOutcomes.push(...applyFieldRules(rules, candidate.url, outcome.text));
+      const applied = applyFieldRules(rules, candidate.url, outcome.text);
+      for (const a of applied) {
+        log(
+          a.matched
+            ? `  taught  ${a.fieldName} = ${JSON.stringify(a.value)?.slice(0, 90)}`
+            : `  TAUGHT RULE NO LONGER MATCHES: ${a.fieldName} — writing nothing`,
+        );
+      }
+      fieldOutcomes.push(...applied);
     }
 
     // Stored whatever the verdict, which is the point: the page a reviewer most
@@ -757,6 +796,7 @@ async function extractAndProbe(
   // The long tail: a vendor who publishes a DPA at a path nobody guesses still
   // links to it from a legal index page. Only run it for types still open.
   if (budget > 0 && DOC_TYPE_ORDER.some((type) => !resolved[type])) {
+    log(`following links from the legal index for: ${DOC_TYPE_ORDER.filter((t) => !resolved[t]).join(', ')}`);
     for (const indexUrl of indexPageUrls(website)) {
       if (budget <= 0 || DOC_TYPE_ORDER.every((type) => resolved[type])) break;
       if (!(await robots.allows(indexUrl))) continue;
@@ -774,6 +814,12 @@ async function extractAndProbe(
   record.dpaUrl = resolved.dpa ?? null;
   record.subProcessorListUrl = resolved.subprocessors ?? null;
   record.privacyPolicyUrl = resolved.privacy ?? null;
+
+  const found = DOC_TYPE_ORDER.filter((t) => resolved[t]);
+  log(
+    `done: ${found.length ? found.join(', ') + ' found' : 'nothing verified'}` +
+    `, ${documents.length} page(s) stored, ${rejectedUrls.length} rejected`,
+  );
 
   return { record, rejectedUrls, cache, documents, fieldOutcomes };
 }
@@ -1056,12 +1102,21 @@ export async function storeProbeDocuments(
  */
 export async function reverifyVendor(
   vendor: { id: string; name: string; website: string | null },
+  log: ProbeLogger = () => {},
 ): Promise<ReverifyOutcome> {
   if (!vendor.website) {
+    log(`${vendor.name} has no website — nothing to probe`);
     return { vendorId: vendor.id, ok: false, changes: [] };
   }
-  const result = await enrichOne({ name: vendor.name, website: vendor.website });
+  log(`probing ${vendor.name} (${vendor.website})`);
+  // The vendor id is what makes taught rules apply: rules belong to a catalogue
+  // row, and a target without one is treated as a vendor nobody has reviewed.
+  const result = await enrichOne(
+    { name: vendor.name, website: vendor.website, vendorId: vendor.id },
+    log,
+  );
   if (!result.ok || !result.extracted || !result.assessment) {
+    log(`probe failed: ${result.failureClass ?? 'unknown'} ${result.error ?? ''}`);
     return { vendorId: vendor.id, ok: false, changes: [] };
   }
   const [storedRow] = await db
@@ -1089,6 +1144,10 @@ export async function reverifyVendor(
   );
 
   await recordRuleOutcomes(result.fieldOutcomes ?? []);
+
+  log(changes.length
+    ? `${changes.length} change(s) against the catalogue: ${changes.map((c: any) => c.field).join(', ')}`
+    : 'no changes against the catalogue');
 
   return {
     vendorId: vendor.id,

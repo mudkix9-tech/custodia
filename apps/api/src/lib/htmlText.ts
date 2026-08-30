@@ -19,13 +19,35 @@
 /**
  * How much of a page is kept when one is stored for review.
  *
- * A legal page is a few tens of kilobytes of prose wrapped in a few hundred of
- * navigation and inlined JSON. Past this the marginal byte is menu, and eighty
- * vendors times three documents makes the difference between megabytes and
- * gigabytes. Truncation is silent by design: the reviewer is being shown what
- * the probe read, and the probe read this much.
+ * This was 64,000 on the theory that a legal page is a few tens of kilobytes of
+ * prose and the rest is navigation. That was wrong, and measurably so: Stripe's
+ * privacy notice is **162,077 characters of text** after stripping, so the first
+ * version of this stored 39% of it and silently discarded the rest. Every value
+ * past the cut was unteachable — not hard to teach, impossible, because the
+ * reviewer could not see it and no locator could anchor to it.
+ *
+ * A cap is still worth having, as a bound on the pathological rather than as a
+ * storage optimisation: the fetch itself already stops at `MAX_BYTES` (10MB of
+ * HTML), which at the 41% text ratio Stripe's page shows could still be four
+ * megabytes of prose in one row and one browser div. A megabyte is six times the
+ * largest real page measured and comfortably renders.
+ *
+ * Storage was never the constraint it was written as. Eighty vendors times three
+ * documents at Stripe's size is about forty megabytes.
  */
-export const PROBE_TEXT_LIMIT = 64_000;
+export const PROBE_TEXT_LIMIT = 1_000_000;
+
+/**
+ * What is appended when a page did not fit.
+ *
+ * Truncation used to be silent, which is the wrong failure for this table: the
+ * reviewer is being shown "what the probe read" and would have had no way to
+ * tell that it read more. Worse, a locator taught near the boundary would look
+ * fine and then behave differently on a run where the page grew. The marker is
+ * inside the text so it appears in the panel, in the extraction, and in anything
+ * else that reads the column.
+ */
+export const TRUNCATION_MARKER = '\n\n[… page truncated: it is longer than this store keeps …]';
 
 /**
  * Strip markup and collapse whitespace, preserving case.
@@ -55,8 +77,9 @@ export function htmlToText(html: string): string {
     .trim();
 }
 
-/** `htmlToText`, truncated to what is worth storing. */
+/** `htmlToText`, bounded, and saying so when the bound was reached. */
 export function htmlToStoredText(html: string, limit: number = PROBE_TEXT_LIMIT): string {
   const text = htmlToText(html);
-  return text.length <= limit ? text : text.slice(0, limit);
+  if (text.length <= limit) return text;
+  return text.slice(0, limit) + TRUNCATION_MARKER;
 }

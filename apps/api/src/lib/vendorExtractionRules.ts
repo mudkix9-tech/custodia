@@ -35,9 +35,10 @@ export interface ExtractionRule {
   id: string;
   vendorId: string;
   kind: RuleKind | string;
-  docType: string | null;
-  fieldName: string | null;
-  url: string | null;
+  /** `''` where the kind does not use it — never null; see the schema comment. */
+  docType: string;
+  fieldName: string;
+  url: string;
   locator: unknown;
   note: string | null;
   status: string;
@@ -325,9 +326,12 @@ export async function saveRule(input: SaveRuleInput) {
     .values({
       vendorId: input.vendorId,
       kind: input.kind,
-      docType: input.docType ?? null,
-      fieldName: input.fieldName ?? null,
-      url: input.url ?? null,
+      // `''` and not null: these are in the unique key, and a null in a unique
+      // key is distinct from every other null, so the upsert below would never
+      // match and every re-teach would stack a duplicate.
+      docType: input.docType ?? '',
+      fieldName: input.fieldName ?? '',
+      url: input.url ?? '',
       locator: (input.locator ?? null) as Record<string, unknown> | null,
       note: (input.note ?? '').trim(),
       authoredBy: input.authoredBy,

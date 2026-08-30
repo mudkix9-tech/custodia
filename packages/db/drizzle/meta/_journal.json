@@ -372,6 +372,13 @@
       "when": 1788109285220,
       "tag": "0063_chunky_bug",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1788113308530,
+      "tag": "0064_spotty_doctor_faustus",
+      "breakpoints": true
     }
   ]
 }

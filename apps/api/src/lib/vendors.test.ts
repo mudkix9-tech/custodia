@@ -2904,7 +2904,10 @@ const activeRule = {
   id: 'r1',
   vendorId: 'v1',
   kind: 'field_extract',
-  docType: null,
+  // `''` rather than null: these three are in the unique key, and a null in a
+  // unique key is distinct from every other null, so nullable discriminators
+  // meant re-teaching stacked duplicates instead of replacing.
+  docType: '',
   fieldName: 'dataProcessingLocations',
   url: 'https://acme.com/regions',
   locator: derived.locator,

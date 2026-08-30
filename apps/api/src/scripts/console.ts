@@ -92,7 +92,7 @@ if (!OPERATOR_REF) {
 }
 
 const { db } = await import('../db.js');
-const { users } = await import('db');
+const { users, vendors } = await import('db');
 const { eq } = await import('drizzle-orm');
 
 const looksLikeUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -125,6 +125,23 @@ const { deriveLocator, applyLocator } = await import('../lib/vendorLocator.js');
 const { saveRule, deleteRule, RuleError } = await import('../lib/vendorExtractionRules.js');
 const { vendorIntelligenceRuns } = await import('db');
 const { vendorIntelligenceQueue } = await import('../workers/vendorIntelligence.js');
+const { reverifyVendor } = await import('../lib/vendorIntelligence.js');
+
+// ---------------------------------------------------------------------------
+// logging
+// ---------------------------------------------------------------------------
+
+/**
+ * Everything this console does, said out loud in the terminal that started it.
+ *
+ * Not decoration. The console is one person driving a pipeline that takes
+ * minutes per vendor and talks to somebody else's servers; a button that reports
+ * "queued" and then shows nothing is indistinguishable from a button that does
+ * nothing, which is exactly how the re-probe key read before this.
+ */
+const stamp = () => new Date().toTimeString().slice(0, 8);
+const log = (line: string) => console.log(`  ${stamp()}  ${line}`);
+const warn = (line: string) => console.warn(`  ${stamp()}  ${line}`);
 
 // ---------------------------------------------------------------------------
 // routes
@@ -198,10 +215,44 @@ const routes: Record<string, Handler> = {
     return { runId: run!.id, queued: targets.length };
   },
 
-  /** Re-probe one catalogue vendor for freshness. */
+  /**
+   * Re-probe one catalogue vendor, here, now, watching it happen.
+   *
+   * This used to enqueue a pg-boss job and return `{ queued: true }`. That was
+   * the wrong shape for a button a person presses and waits on: the job went to
+   * a queue whose worker is not running locally and, judging by the 1,342
+   * `impact-assessment` jobs sitting in `created`, not reliably running anywhere
+   * — so the honest description of the old behaviour is that pressing `r` did
+   * nothing observable, for ever.
+   *
+   * Probing in-process is a change of position from "probing stays server-side",
+   * and it is the right one for *this* path. That argument was about a
+   * self-identifying crawler's traffic being defensible, and it still is: one
+   * vendor at a time, on demand, robots.txt honoured, one request per second,
+   * capped at `MAX_PROBES_PER_TARGET`. What it is not is a bulk sweep — that is
+   * still `/api/enrich`, which still queues, because volume is the thing worth
+   * keeping off a laptop.
+   */
   'POST /api/reverify': async (body) => {
-    await vendorIntelligenceQueue.add('reverify-vendor', { vendorId: String(body.vendorId) });
-    return { queued: true };
+    const vendorId = String(body.vendorId);
+    const [vendor] = await db
+      .select({ id: vendors.id, name: vendors.name, website: vendors.website })
+      .from(vendors)
+      .where(eq(vendors.id, vendorId));
+    if (!vendor) throw new Error('No such vendor');
+
+    const lines: string[] = [];
+    const started = Date.now();
+    const capture = (line: string) => {
+      lines.push(line);
+      log(line);
+    };
+
+    const outcome = await reverifyVendor(vendor as any, capture);
+    const seconds = ((Date.now() - started) / 1000).toFixed(0);
+    log(`re-probe of ${vendor.name} finished in ${seconds}s`);
+
+    return { ok: outcome.ok, changes: outcome.changes, seconds: Number(seconds), log: lines };
   },
 
   /**
@@ -295,14 +346,24 @@ const server = http.createServer(async (req, res) => {
 
   const handler = routes[key];
   if (!handler) {
+    warn(`404 ${key}`);
     res.writeHead(404, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ error: `No route for ${key}` }));
     return;
   }
 
+  const started = Date.now();
   try {
     const body = req.method === 'POST' ? await readBody(req) : {};
+    if (req.method === 'POST') log(`${url}  ${describe(url, body)}`);
+
     const result = await handler(body);
+
+    // Reads are logged with their size, writes with what they did: a queue that
+    // came back empty and a queue that failed to load look the same in a browser.
+    const ms = Date.now() - started;
+    log(`${url}  ${summarise(url, result)}  (${ms}ms)`);
+
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify(result ?? null));
   } catch (err) {
@@ -314,10 +375,28 @@ const server = http.createServer(async (req, res) => {
       err instanceof CorrectionError ||
       err instanceof RuleError;
     const message = err instanceof Error ? err.message : String(err);
-    if (!known) console.error(`[console] ${key} failed:`, err);
+    // A refusal is the tool working and reads as such; anything else gets the
+    // stack, because the operator is the only person who will ever see it.
+    if (known) warn(`${url}  refused: ${message}`);
+    else console.error(`  ${stamp()}  ${url} FAILED:`, err);
     res.writeHead(known ? 400 : 500, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ error: message }));
   }
+});
+
+/**
+ * A port already in use is nearly always the last console still running, and a
+ * raw `EADDRINUSE` stack is the least useful way to say so.
+ */
+server.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EADDRINUSE') {
+    refuse(
+      `port ${PORT} is already in use.`,
+      'Another console is almost certainly still running. Close it, or start this ' +
+        'one on a different port with CONSOLE_PORT=7332.',
+    );
+  }
+  throw err;
 });
 
 server.listen(PORT, HOST, () => {
@@ -327,8 +406,54 @@ server.listen(PORT, HOST, () => {
   console.log(`  Database                   ${maskDbUrl(process.env.DATABASE_URL!)}`);
   console.log('');
   console.log('  Bound to loopback only. Approving writes the shared catalogue.');
+  console.log('  Everything you do appears below.');
   console.log('');
 });
+
+/** What a request was asking for, in one line. */
+function describe(url: string, body: any): string {
+  switch (url) {
+    case '/api/approve': {
+      const rejected = Object.entries(body.overrides ?? {})
+        .filter(([, v]) => v === null)
+        .map(([k]) => k);
+      return `candidate ${short(body.id)}${rejected.length ? ` (rejecting ${rejected.join(', ')})` : ''}`;
+    }
+    case '/api/reject': return `candidate ${short(body.id)} — "${body.reason ?? 'no reason'}"`;
+    case '/api/correct': return `${body.fieldName} on vendor ${short(body.vendorId)}`;
+    case '/api/apply': return `${body.fieldName} -> catalogue column, vendor ${short(body.vendorId)}`;
+    case '/api/rules': return `teach ${body.kind} ${body.fieldName ?? body.docType ?? ''} ${body.url ?? ''}`.trim();
+    case '/api/rules/delete': return `forget rule ${short(body.ruleId)}`;
+    case '/api/reverify': return `re-probe vendor ${short(body.vendorId)}`;
+    case '/api/enrich': return `queue ${(body.targets ?? []).length} target(s) for the worker`;
+    case '/api/derive': return `derive locator from ${Number(body.end) - Number(body.start)} selected chars`;
+    default: return '';
+  }
+}
+
+/** What came back, so an empty answer is distinguishable from a failed one. */
+function summarise(url: string, result: any): string {
+  if (Array.isArray(result)) return `-> ${result.length} row(s)`;
+  switch (url) {
+    case '/api/evidence':
+      return `-> ${result?.documents?.length ?? 0} stored page(s), ${result?.rules?.length ?? 0} rule(s)`;
+    case '/api/approve': return `-> approved, now ${result?.status ?? '?'}`;
+    case '/api/reject': return `-> rejected`;
+    case '/api/apply': return `-> wrote ${result?.column}, ${result?.rescored ?? 0} score(s) recalculated`;
+    case '/api/correct': return `-> analyst provenance written`;
+    case '/api/rules': return `-> rule ${short(result?.id)} saved`;
+    case '/api/rules/delete': return `-> forgotten`;
+    case '/api/derive':
+      return result?.locator
+        ? `-> anchored after "${result.locator.before}"`
+        : `-> refused: ${result?.problem ?? 'no locator'}`;
+    case '/api/reverify':
+      return `-> ${result?.ok ? 'ok' : 'failed'}, ${result?.changes?.length ?? 0} change(s)`;
+    default: return '-> ok';
+  }
+}
+
+const short = (id: unknown) => String(id ?? '').slice(0, 8);
 
 /** Enough to tell staging from production apart, without printing a password. */
 function maskDbUrl(raw: string): string {

@@ -1920,12 +1920,26 @@ export const vendorExtractionRules = pgTable('vendor_extraction_rules', {
   id: uuid('id').defaultRandom().primaryKey(),
   vendorId: uuid('vendor_id').notNull().references(() => vendors.id, { onDelete: 'cascade' }),
   kind: varchar('kind', { length: 20 }).notNull(),
-  /** 'dpa' | 'privacy' | 'subprocessors'. Null for a field rule. */
-  docType: varchar('doc_type', { length: 30 }),
-  /** The catalogue column a `field_extract` rule fills. Null otherwise. */
-  fieldName: varchar('field_name', { length: 100 }),
-  /** The page a pin, deny or field rule is about. Null for `vocabulary`. */
-  url: text('url'),
+  /**
+   * The three discriminators, and all three are `''` rather than NULL when they
+   * do not apply — `'dpa' | 'privacy' | 'subprocessors'` for a URL or vocabulary
+   * rule, the catalogue column for a field rule, the page for anything but
+   * vocabulary.
+   *
+   * **Empty string and not null, because they are part of the unique key.**
+   * Postgres treats NULLs in a unique constraint as distinct, so with these
+   * nullable the key below never fired for any rule that left one unset — which
+   * is every rule. Re-teaching a pin stacked a second identical row instead of
+   * replacing it, and "what did I tell it about this page" stopped having one
+   * answer. Found by teaching the same pin twice and getting two rows back.
+   *
+   * This is the same trap `consent_findings` documents and solves the same way
+   * (`observed_host` defaulting to `''`). Reading code treats `''` as absent,
+   * which is what falsy already meant.
+   */
+  docType: varchar('doc_type', { length: 30 }).notNull().default(''),
+  fieldName: varchar('field_name', { length: 100 }).notNull().default(''),
+  url: text('url').notNull().default(''),
   /**
    * How to read the value — an anchored-text locator for `field_extract`, a
    * token for `vocabulary`. The shape lives in `lib/vendorLocator.ts`; jsonb so

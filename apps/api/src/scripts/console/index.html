@@ -131,6 +131,30 @@
     background: none; border: none; color: var(--faint); cursor: pointer;
     font: inherit; font-size: 11px; text-decoration: underline;
   }
+  /* A long job needs to look like a long job, not like a dead page. */
+  .busy {
+    position: fixed; inset: 0; background: rgba(8,9,10,.72); z-index: 20;
+    display: flex; align-items: center; justify-content: center; padding: 30px;
+  }
+  .busy-inner {
+    background: var(--panel); border: 1px solid var(--accent); border-radius: 16px;
+    padding: 20px 24px; max-width: 760px; width: 100%;
+  }
+  .busy-inner h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .busy-inner p { margin: 0 0 12px; color: var(--faint); font-size: 12px; }
+  .busy-log {
+    background: var(--recessed); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px; max-height: 300px; overflow: auto;
+    font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.6;
+    color: var(--dim); white-space: pre-wrap;
+  }
+  .spin {
+    display: inline-block; width: 9px; height: 9px; margin-right: 7px;
+    border: 2px solid var(--accent); border-right-color: transparent; border-radius: 50%;
+    animation: sp .8s linear infinite; vertical-align: middle;
+  }
+  @keyframes sp { to { transform: rotate(360deg); } }
+
   .toast {
     position: fixed; bottom: 54px; left: 50%; transform: translateX(-50%);
     background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
@@ -166,6 +190,8 @@ const state = {
   evidence: null,   // { documents, rules } for the current record
   evDoc: 0,         // which stored page is showing
   evFor: null,      // the record key the evidence belongs to
+  probing: false,   // a probe is in flight; refuse to start a second
+  fields: [],
 };
 
 const api = async (path, body) => {
@@ -176,6 +202,41 @@ const api = async (path, body) => {
   if (!res.ok) throw new Error(json.error || res.statusText);
   return json;
 };
+
+/**
+ * Hold the screen while something slow runs, and say what it is.
+ *
+ * A re-probe is thirty paced requests over a couple of minutes. Without this the
+ * page looks broken and the natural response is to press the key again, which
+ * starts a second probe of the same host — the one thing a politely paced
+ * crawler must not do.
+ */
+function busy(title, note) {
+  document.querySelector('.busy')?.remove();
+  const el = document.createElement('div');
+  el.className = 'busy';
+  el.innerHTML = `<div class="busy-inner">
+    <h3><span class="spin"></span>${esc(title)}</h3>
+    <p>${esc(note || '')}</p>
+    <div class="busy-log" id="busylog">starting…</div>
+  </div>`;
+  document.body.appendChild(el);
+  return {
+    done(lines) {
+      const box = document.getElementById('busylog');
+      if (box && lines) { box.textContent = lines.join('\n'); box.scrollTop = box.scrollHeight; }
+      const inner = el.querySelector('.busy-inner h3');
+      if (inner) inner.innerHTML = esc(title) + ' — finished. Press Escape or click to close.';
+      el.addEventListener('click', () => el.remove());
+    },
+    fail(message) {
+      el.querySelector('.busy-inner h3').innerHTML = esc(title) + ' — failed';
+      const box = document.getElementById('busylog');
+      if (box) box.textContent = message;
+      el.addEventListener('click', () => el.remove());
+    },
+  };
+}
 
 function toast(message, bad) {
   const el = document.createElement('div');
@@ -628,17 +689,44 @@ async function queueRun() {
   if (!targets.length) return;
   try {
     const res = await api('/api/enrich', { targets });
-    toast(`Queued ${res.queued}. The worker probes them; refresh in a few minutes.`);
+    toast(
+      `Queued ${res.queued} for the background worker. If nothing appears, the worker is not ` +
+      `running — re-probe a single vendor with r instead, which runs here.`,
+    );
   } catch (err) { toast(err.message, true); }
 }
 
+/**
+ * Re-probe the selected vendor and watch it happen.
+ *
+ * This used to fire and forget into a queue whose worker was not running, so it
+ * showed "queued" and then nothing ever changed. It now runs on the server this
+ * page is served by, which takes a minute or two, so the screen is held for the
+ * duration and the log comes back with the result.
+ */
 async function reverify() {
   const v = current();
   if (!v) return;
+  if (state.probing) { toast('A probe is already running. One host at a time.', true); return; }
+
+  state.probing = true;
+  const ui = busy(
+    `Probing ${v.name}`,
+    'One request per second, robots.txt honoured. The terminal running the console has the live log.',
+  );
   try {
-    await api('/api/reverify', { vendorId: v.vendorId });
-    toast(`Re-probe queued for ${v.name}`);
-  } catch (err) { toast(err.message, true); }
+    const res = await api('/api/reverify', { vendorId: v.vendorId });
+    ui.done(res.log ?? []);
+    toast(`${v.name}: ${res.ok ? 'probed' : 'probe failed'} in ${res.seconds}s · ${(res.changes || []).length} change(s)`);
+    state.evFor = null;
+    await load(state.tab);
+    await loadEvidence();
+  } catch (err) {
+    ui.fail(err.message);
+    toast(err.message, true);
+  } finally {
+    state.probing = false;
+  }
 }
 
 const oneYearOut = () => {
@@ -662,6 +750,15 @@ function markField(decision) {
 
 document.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  const overlay = document.querySelector('.busy');
+  if (overlay) {
+    // While something slow is running the keys do nothing except dismiss a
+    // finished overlay — pressing `r` twice must not start a second probe of the
+    // same host.
+    if (e.key === 'Escape') overlay.remove();
+    return;
+  }
   const list = state.data[state.tab];
   const rec = current();
   const fieldCount = rec && rec.fields ? rec.fields.length : 0;
