@@ -1,3 +1,27 @@
+> **SUPERSEDED — 27 August 2026. Do not implement anything below.**
+>
+> Replaced by [`vendor-catalogue-sourcing-programme.md`](./vendor-catalogue-sourcing-programme.md),
+> which shipped as Sprints 5–10 and is the description of the system as built.
+>
+> This file is kept as the record of what was planned, not as a plan. It was
+> written against an imagined codebase and the specific things in it that are
+> **wrong** are:
+>
+> - The DPF feed URL. `www.dataprivacyframework.gov/s/participant-search` is a
+>   Salesforce UI route, and the host returns the same SPA shell for every path,
+>   so probing it for an export finds a 200 every time. The real feed is
+>   `dpfapi.azurewebsites.net/api`.
+> - "300+ authoritative profiles" in the header. What shipped is 82 catalogue
+>   rows, 29 of which resolved to nothing. Coverage was never the promise the
+>   programme could keep; provenance was.
+> - "Cryptographically verifiable compliance badges" for trust centres. They are
+>   HTML. There is no signature and nothing to verify.
+> - Two `dpaStatus` values that do not exist, an Article 45 list missing
+>   Argentina, and a §4 sub-processor table that is itself model-generated with
+>   no source URL — the exact artefact this document argues is a liability.
+>
+> Anything you need from here is restated, corrected, in the replacement.
+
 # Custodia — Vendor Intelligence Data Strategy & Verification Blueprint
 
 **Authoritative Architecture & Execution Plan**  

@@ -85,6 +85,16 @@ English, and a stale entry there fails too. Its key check only sees single-quote
 a dynamic `t(`status.${row.status}`)` is **not** verified: add those keys by hand and
 check them yourself.
 
+**`check:vendor-provenance` (apps/api) fails on a sourced catalogue column written with no
+provenance row in scope.** The sourced set is `legalEntityName`, `headquartersCountry`,
+`transferMechanisms`, `securityCertifications`, `dataProcessingLocations`, `dpaUrl`,
+`privacyPolicyUrl`, `subProcessorListUrl` — identity (name, slug, website, category) is
+excluded because the seed asserts it. A tenant's own private vendor (`isGlobal: false` with
+an `organizationId`) is exempted structurally rather than by allowlist. It is a text scan
+and it carries a **floor**: it fails if it parses zero writes, because its first version had
+a word boundary that JavaScript read as a backspace character and reported a clean codebase
+in a repo with four unguarded writes. Any guard whose evidence is an absence wants that.
+
 **Two more fixture suites arrived with Sprint 3.** `test:assessments` covers the DPIA
 screening verdict, LIA completeness, the TIA's six steps and its self-contradiction
 checks, the risk matrix, the content hash and the audit-diff renderer.
@@ -154,9 +164,62 @@ change — backfilling `data_privacy_framework`, say, which is what stops every 
 scoring the full location risk — is inert until the derived rows are recomputed:
 
 ```bash
-npm run seed:vendors     --workspace=packages/db
-npm run recalc:vendor-risk --workspace=apps/api -- --apply   # dry run without --apply
+npm run seed:catalogue     --workspace=apps/api               # --dry-run, --verify
+npm run recalc:vendor-risk --workspace=apps/api -- --apply    # dry run without --apply
 ```
+
+The seed moved out of `packages/db` in Sprint 9: it resolves each vendor's legal entity
+against the DPF register, and `dpfNameKey` / `dpfBaseNameKey` / `matchDpfStatus` live in
+`apps/api/src/lib` where `test:vendors` can reach them. `seed:vendors --workspace=packages/db`
+still exists, prints both commands and exits — it is in older runbooks, and a seed command
+that silently does nothing is worse than one that has moved.
+
+**Verifying the catalogue by hand is a local console, not a page in the product.**
+
+```bash
+npm run console --workspace=apps/api      # http://127.0.0.1:7331
+```
+
+Pending candidates with their evidence, the catalogue rows and where each field came from,
+and a signals queue. It binds loopback only, refuses to start under `NODE_ENV=production`,
+and needs `PLATFORM_OPERATOR_USER_ID` set so corrections carry an author — a `users.id`,
+or an email it resolves to one (the id is what gets stored; an email can change). It shares the write paths — `lib/vendorCandidateReview.ts` and
+`lib/vendorCorrections.ts` — with the tRPC router rather than reimplementing them, which is
+the whole point: the two defects in known-concerns §21 were both a second copy of a write
+getting fixed once.
+
+**There is no in-product equivalent, deliberately.** `/vendors/intelligence` and the whole
+`vendorIntelligence` tRPC router were removed: they wrote the shared catalogue gated on
+`vendors:edit`, which `member` carries, so any member of any organisation could approve a
+candidate into global reference data. Do not add a catalogue-writing surface back to
+`apps/web` — the reason it is a local tool is that approving is a cross-tenant write.
+
+**The scraper can be taught, per site.** `vendor_extraction_rules` holds four kinds of
+rule — pin a URL, deny a decoy, extract a field by an anchored locator, or teach a site's
+own word for a document type — all authored from the console against a page the run stored
+in `vendor_probe_documents`. `enumerateCandidateUrls(target, rules)` puts pinned URLs first
+and drops denied ones before the budget is touched; `evaluateContentSignals(text, type,
+siteTokens)` widens the name family for one host only.
+
+Three things about it that are load-bearing:
+
+- **A `field_extract` rule is the only source the five Chapter V fields have.** They have
+  been sourceless since Sprint 5 removed the model. `buildCatalogueWrites` takes a `taught`
+  map and writes a column plus provenance only for fields it names; everything else stays
+  absent, which is the unchanged default.
+- **A rule that stops matching writes nothing** and raises a `rule_broken` signal. Never a
+  fallback to generic enumeration — that would leave a guess sitting at a confidence
+  somebody thought they had vouched for.
+- **`validateTaughtValue` refuses prose for a controlled-vocabulary field.** A true
+  sentence about SCCs taught into `transferMechanisms` does not match the token
+  `standard_contractual_clauses` that `gapRules` reads, so the reviewer would be right and
+  the product still wrong.
+
+**A correction is two steps.** `submitFieldCorrection` records what a person found;
+`applyCorrectionToColumn` writes it to the `vendors` column and recalculates every linked
+tenant's score. Separate on purpose — folding them would make an override
+indistinguishable from the thing it overrode — so a correction that has not been applied
+moves nothing.
 
 **And neither does changing the formula.** The same denormalisation means a
 change to `lib/vendorRisk.ts` — or to anything it reads — is inert on every
@@ -188,6 +251,31 @@ writing the sentence again.
 
 Reads go through `loadDpfEntriesFor()` — the table is 16,500 rows and every call site used
 to `select()` all of it per request.
+
+**Adequacy is not a property of a country, and `isAdequateDestination` takes evidence.**
+The US decision covers organisations holding a *current* DPF certification — a fact about
+the recipient, published per entity, which lapses without the decision changing. So the
+helper's second argument is the caller's evidence: `isAdequateDestination(country, {
+conditionMet })`, and a caller with no evidence gets `false`, deliberately. It returned
+`true` for every US destination for a year and thirteen of its fourteen call sites believed
+it, so an uncertified processor scored 20/20 on the vendor risk factor while the Art. 44
+gap rule excused it, the Article 30 export printed it adequate, and the TIA queue said no
+assessment was needed. Anything holding a *vendor* should resolve the condition from the
+register through `lib/vendorAdequacy.ts` (`dpfConditionMet` /
+`resolveDpfStatusBatch`, batched — a per-row lookup puts the full-table scan back) rather
+than from the recorded mechanism, which is a controller's assertion and may be a year old.
+`adequacyState()` returns a fourth value, `conditional`, for a decision nobody has
+evidenced; a *known* lapse is `third_country`, because "we did not check" and "we checked
+and the answer is no" are different findings. Canada's `commercial` scope is deliberately
+**not** conditional: nothing in the product models a recipient's sector, so treating it as
+unevidenced would fail every Canadian transfer on a distinction nobody can act on.
+
+**The weekly DPF sync re-scores what it changed.** `dpf-registry-sync` calls
+`reconcileDpfDependentVendors()` after writing, which re-resolves every *linked* vendor in
+a conditional-adequacy country, recomputes the denormalised `organization_vendors.risk_score`
+and logs `dpfLapseFinding()` for any certification that is no longer current. Without that
+step a lapse moved nothing until somebody ran `recalc:vendor-risk -- --apply` by hand,
+which is the same denormalisation trap as editing the catalogue.
 
 **`data_categories_shared` is a controlled vocabulary, not free text.**
 `constants/vendorDataCategories.ts` owns the keys; the web workspace mirrors them

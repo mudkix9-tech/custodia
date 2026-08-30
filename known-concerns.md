@@ -501,7 +501,16 @@ a per-organisation one (audit D47).
 
 ---
 
-## 18. DPF certification is asserted by hand in the seed
+## 18. DPF certification is asserted by hand in the seed — FIXED (Sprint 7/9)
+
+> Closed by the sourcing programme. The register is now synced weekly from the
+> Department of Commerce's own feed into `dpf_registrations`, the seed resolves each
+> vendor's legal entity against it, and `resolveDpfStatus` answers from the register
+> rather than from a literal. The weekly sync also re-scores every linked vendor whose
+> adequacy depends on it, so a lapse reaches a customer's register without anyone running
+> a script. What follows is the original entry, kept for the reasoning.
+
+
 
 `lib/vendorRisk.ts` gates US adequacy on the exact string `data_privacy_framework`, worth
 15 points of the location factor and the difference between "adequate" and "no DPF
@@ -565,6 +574,218 @@ Framework patterns (`authjs.*`, `next-auth.*`, `PHPSESSID`, `JSESSIONID`, `csrft
 
 I did not change this: what the feature reports to every customer is a product decision,
 not a bug fix. But it should be decided before anyone sees a report.
+
+---
+
+## 20. Vendor catalogue sourcing — what Sprints 5–10 left open
+
+The programme is closed and its twenty-three defects are fixed; the items below were
+recorded in its sprint write-ups as *consequences* rather than defects, and lived only in
+[`audit docs/vendor-catalogue-sourcing-programme.md`](audit%20docs/vendor-catalogue-sourcing-programme.md) §8.
+That document's own §8 opens by saying that collecting them "is the difference between a
+note somebody wrote and a thing somebody will find" — and then left them in an audit file
+nothing points at. This is the register the rest of the repo is told to read, so they
+belong here. The programme document now points here rather than restating them.
+
+**`bulkApprove` measures the wrong quantity.** It gates on `vendor_candidates.confidence`
+(default 70) rather than on `assessCandidate`'s `autoAcceptable`, which the candidate row
+has no column for. Sprint 5 removed the five model-asserted fields that used to hold the
+weighted mean down, so that number now means "how sure of what we assert" and no longer
+approximates "how much we know" — a record asserting one verified field reads 90 where it
+used to read about 55. The record it writes is honest, one column and one provenance row;
+the threshold is measuring something else than it was tuned for. `autoAcceptable` already
+exists and is already fixture-covered, so giving the candidate row a column for it is the
+smaller half of the fix. A completeness axis alongside the confidence axis is the rest.
+
+**A correction changes the provenance row and not the vendor column — FIXED.**
+`submitFieldCorrection` deliberately does not fold a corrected value into `vendors`; that
+is a separate, reversible step, and doing both at once would make an override
+indistinguishable from the thing it overrode. The second step did not exist, so a
+correction was visible to anything reading provenance and invisible to everything reading
+the column — including `calculateVendorRisk`, so an analyst who corrected a headquarters
+country moved no score.
+
+> `applyCorrectionToColumn` in `lib/vendorCorrections.ts` is that step, exposed as
+> `vendors.applyFieldCorrection` and as `p` in the operator console. It stays a separate
+> action on purpose. It takes no value from the caller — only a vendor and a field — so it
+> can only promote a row that already passed `validateAnalystCorrection`, and it
+> recalculates every linked tenant's score because `risk_score` is denormalised. It does
+> not restamp `retrieved_at`: the evidence was read when it was read, and restarting the
+> decay clock on a promotion would age nothing while looking like it had.
+
+**The concentration graph is empty and the Article 28(2) diff has nothing to diff.**
+VD-18 working as specified: sub-processor edges arrive only from a probed
+`sub_processor_list_url`, never from a seed, so the first snapshot is a real baseline. It
+is still a customer-visible state, and it will stay this way until probing fills it.
+
+**The DPF detail pass now has work, and did not when it was written.** Dispute resolution
+body and privacy policy URL are per-participant, and fetching 7,563 of them at one request
+per second is two hours of somebody else's server for facts about vendors nobody has
+linked — so the pass is scoped to participants a catalogue vendor matches. That was none
+at Sprint 7 and is up to 52 resolved entities now. Its budget and its failure modes have
+started to matter.
+
+**Semantic changes to the catalogue are no longer free.** The programme was sequenced on
+an empty catalogue, where every vocabulary change cost nothing. With 82 catalogue rows and
+101 provenance rows, changing one now costs a migration, a backfill, and
+`recalc:vendor-risk -- --apply` before it reaches a customer's score.
+
+**Two probe controls are charged to the budget and one deliberately fails open.**
+robots.txt and the soft-404 negative control are two requests per host against
+`MAX_PROBES_PER_TARGET`, because the ceiling is about what the host is asked and not about
+what we hoped to learn — so the effective document budget is smaller than 24, and what
+that trims is the tail of a most-likely-first candidate list. The negative control is not
+itself robots-checked: it only runs once robots has already permitted a real document
+request to that host, and skipping it would mean *not* downgrading, which is the outcome
+VD-6 exists to prevent.
+
+**The DPF sync refuses to write past 5% unrecognised rows.** The resolve pass downgrades
+anything a completed run did not touch, so a parser that silently stopped recognising a
+renamed framework or status would lapse thousands of live certifications at once on a
+shared catalogue, arriving in every tenant as a risk-score move nobody asked for. Against
+the live feed at Sprint 7 the figure was 0 of 16,534. If it ever trips, the sync stopping
+is correct and the thing to fix is upstream of it.
+
+**Three questions are open and none of them is code.** Whether the Article 28(3) clause
+analysis in `routers/ai.ts` stays (it is the last model in the product, it is metered, and
+Sprint 9 went past the decision rather than making it); whether anyone has read the
+SafeBase, Vanta, Drata and Conveyor terms of service that Tier 3 depends on; and what the
+catalogue's coverage promise is, now that there is a real number — 82 rows, 52 with a
+resolved legal entity, 29 resolved to nothing — to answer it with.
+
+---
+
+## 21. The catalogue review path had never been run
+
+The operator console (`npm run console --workspace=apps/api`, §22) was the first thing to
+exercise candidate approval end to end, and it found two defects that had been sitting in
+the write path unnoticed. Both are fixed; both are worth knowing because of *why* they were
+invisible.
+
+**Every approval threw.** Sprint 10 widened `vendor_field_provenance`'s unique key from
+(vendor, field) to (vendor, field, source_type) and retargeted the upsert in
+`lib/vendorIntelligence.ts` — but there was a second, near-identical writer,
+`writeProvenanceInTx`, private to `routers/vendorIntelligence.ts`, and it was not
+retargeted. Postgres answers an `ON CONFLICT` naming a constraint that does not exist with
+`there is no unique or exclusion constraint matching the ON CONFLICT specification`, so
+both `approveCandidate` and `bulkApprove` failed on every call from Sprint 10 onward.
+`tsc` sees a valid column list either way, and no fixture could reach a transaction. The
+two writers are now one function that takes the handle.
+
+**Every approved field was written at the unprobed floor.** `runEnrichBatch` persisted each
+field's `status` and `failureClass` into `vendor_candidates.probe_results` and dropped the
+`confidence` the assessment had just computed. `approveCandidate` selects the entries
+carrying a number and hands the rest to `buildCatalogueWrites`' documented fallback — the
+`partially_probed` ceiling of 45 — so a DPA a probe had verified at 90 was written as 45.
+The staging row was quietly worth less than the run that produced it, and the reviewer had
+no per-field number to read either.
+
+The shared lesson is the one VD-7 already records: **a second copy of a write path is not
+dangerous on the day it is written, it is dangerous on the day one copy gets fixed.** Both
+of these are why the console calls `lib/vendorCandidateReview.ts` and
+`lib/vendorCorrections.ts` rather than carrying its own.
+
+---
+
+## 22. The operator console is local-only, and deliberately so
+
+```bash
+npm run console --workspace=apps/api      # http://127.0.0.1:7331
+```
+
+A single-operator workbench for verifying the shared catalogue by hand: pending candidates
+with their evidence, the catalogue rows and what each field's source is, and a signals
+queue (DPF lapses, decayed fields, analyst rows past `review_by`). Keyboard-driven, because
+the actual work is 80-odd rows and a UI costing three clicks a field turns an hour into an
+afternoon.
+
+**It is not in `apps/web` on purpose.** Approving writes `vendors` — one row read by every
+tenant — and the in-product console at `/vendors/intelligence` is gated on `vendors:edit`,
+which every customer admin has. Rather than add power to that surface, this one binds
+`127.0.0.1` only, refuses to start when `NODE_ENV=production`, and requires
+`PLATFORM_OPERATOR_USER_ID` to resolve to a real `users` row so corrections carry an
+author. There is no public endpoint to attack because there is no public endpoint.
+Verified rather than assumed: the listener is `127.0.0.1:7331`, and a connection to the
+machine's LAN address is refused.
+
+Probing stays server-side. Run triggers enqueue through pg-boss against the shared
+`DATABASE_URL` and the deployed worker does the fetching — probing from a laptop would put
+a home IP behind a self-identifying compliance crawler, and the robots.txt and pacing rules
+exist to be defensible.
+
+**`/vendors/intelligence` and the `vendorIntelligence` router are gone.** They were the
+weaker of two surfaces doing the same job, and the weaker one was the dangerous one: its
+procedures wrote `vendors` gated on `vendors:edit`, which `member` carries, so any member
+of any customer organisation could approve a candidate into global reference data. The
+page had no link anywhere in the product — you had to know the URL — which made it easy to
+forget and no less reachable over the API.
+
+Deleting the page alone would have been theatre: a route is not a security boundary, and
+the procedures were callable directly. So the router went with it, along with
+`CandidateRow`, `RunLog`, `ImportJsonForm`, `ConfidenceBar` and 28 message keys in each of
+three catalogues. Nothing was lost that the console does not do — `importJson` already had
+a script equivalent in `scripts/import-legacy-json.ts`.
+
+---
+
+## 23. Teaching the scraper, per site
+
+The console reviews what the pipeline produced. That fixes one row and teaches nothing:
+the next run repeats the mistake and the reviewer corrects it again. `vendor_extraction_rules`
+is the correction that survives — four kinds, all taught from the console against a page
+the run actually stored.
+
+```
+pin_url        this doc type is at this URL, go straight there
+deny_url       never accept this URL, whatever its text says
+field_extract  read this field out of this page, using an anchored locator
+vocabulary     this site's own word for a document type
+```
+
+**`vendor_probe_documents` is the prerequisite and is useful on its own.** Runs used to
+fetch a page, evaluate it and throw the body away, so a verdict could be reported and never
+audited — and a rule authored against a page nobody can look at is a guess with extra
+steps. Every fetch now keeps its flattened text, capped at `PROBE_TEXT_LIMIT` (64KB).
+Rejected pages are kept too, deliberately: the page worth reading hardest is the one that
+looked like a DPA and was not.
+
+**A rule that stops matching writes nothing.** `markRuleOutcome` flips it to `broken` the
+first run it applies and fails, the field returns to absent, and it surfaces as a
+`rule_broken` signal ranked above stale fields. The alternative — falling back to generic
+enumeration — would leave the field populated by a guess at a confidence the reviewer
+believed they had vouched for, and a taught pipeline would decay into an untaught one with
+nobody noticing.
+
+**Locators are anchored text, not selectors.** Nothing in the workspace parses HTML, and a
+text anchor survives the thing that actually happens to these pages: a redesign that keeps
+the sentence and moves the markup. `deriveLocator` grows the prefix until it is unique,
+refuses ambiguity at authoring *and* read time, and will not save a locator that cannot
+reproduce the selection it was derived from.
+
+**Taught values for controlled-vocabulary fields are refused.** A reviewer can select a
+perfectly true sentence — "EU Standard Contractual Clauses approved by the European
+Commission" — teach it as `transferMechanisms`, and watch the Article 44 gap rule go on
+reporting "no documented safeguards", because that rule matches the token
+`standard_contractual_clauses` and prose is not a token. `validateTaughtValue` refuses at
+teach time, while the reviewer is still looking at the page and can select the term
+instead. `transferMechanisms` and `headquartersCountry` are constrained; free-text fields
+are not.
+
+**This is the first source the five Chapter V fields have ever had.**
+`dataProcessingLocations`, `transferMechanisms`, `securityCertifications` and
+`euHostingAvailable` have been sourceless since Sprint 5 removed the model, so
+`buildCatalogueWrites` wrote neither a column nor a provenance row for them. A taught rule
+gives them one — `http_probe`, because the evidence is "we fetched the vendor's own page
+and read this text". A person vouched for the *locator*, not the value, and the value is
+re-extracted every run, so it decays and re-verifies like the probe it is. Untaught, the
+default is unchanged and they stay absent.
+
+Two defects came out of running it against Stripe's live pages, and neither was reachable
+from a hand-written fixture until it had happened once: a partial unique index needs its
+predicate repeated in `ON CONFLICT` or Postgres refuses to infer the arbiter; and the
+whitespace fold records a collapsed space against the *following* character, so slicing
+"one past the last kept character" put a stray bracket on the end of every value taught
+before one. Both are pinned by fixtures now.
 
 ---
 
