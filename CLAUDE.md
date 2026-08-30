@@ -194,6 +194,17 @@ getting fixed once.
 candidate into global reference data. Do not add a catalogue-writing surface back to
 `apps/web` — the reason it is a local tool is that approving is a cross-tenant write.
 
+**`r` in the console probes in-process; `e` queues.** A re-probe of one vendor runs in the
+console's own process and prints every request as it goes, because the queue path was
+indistinguishable from a no-op — `impact-assessment` has over a thousand jobs sitting in
+`created`, so a worker is not reliably draining anything. Bulk enrichment still queues.
+Every console request logs what it was asked and what came back, in the terminal that
+started it.
+
+**Stored pages are capped at 1MB, not 64KB.** The original cap discarded 61% of Stripe's
+privacy notice (162,077 characters of text) and made everything past the cut unteachable.
+Truncation now appends a visible marker rather than happening quietly.
+
 **The scraper can be taught, per site.** `vendor_extraction_rules` holds four kinds of
 rule — pin a URL, deny a decoy, extract a field by an anchored locator, or teach a site's
 own word for a document type — all authored from the console against a page the run stored

@@ -780,7 +780,16 @@ and read this text". A person vouched for the *locator*, not the value, and the 
 re-extracted every run, so it decays and re-verifies like the probe it is. Untaught, the
 default is unchanged and they stay absent.
 
-Two defects came out of running it against Stripe's live pages, and neither was reachable
+**Three defects came out of using it, and none was reachable from a fixture.** The re-probe
+key enqueued a job for a worker that is not draining — `impact-assessment` has 1,342 jobs
+in `created` — so it reported "queued" and nothing observable ever followed; it now runs
+in-process with a live log. Pages were capped at 64,000 characters, which stored 39% of
+Stripe's privacy notice and made the rest unteachable; the bound is 1MB and truncation is
+now visible. And `vendor_extraction_rules` had three nullable columns in its unique key, so
+the key never fired and re-teaching stacked duplicates rather than replacing — the NULL
+trap this file already documents for `consent_findings`, committed one table over.
+
+Two more came out of running it against Stripe's live pages, and neither was reachable
 from a hand-written fixture until it had happened once: a partial unique index needs its
 predicate repeated in `ON CONFLICT` or Postgres refuses to infer the arbiter; and the
 whitespace fold records a collapsed space against the *following* character, so slicing
