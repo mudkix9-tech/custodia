@@ -201,6 +201,22 @@ indistinguishable from a no-op — `impact-assessment` has over a thousand jobs 
 Every console request logs what it was asked and what came back, in the terminal that
 started it.
 
+**A blocked probe has three meanings and they are three classes.** `403` (or a bot-wall
+body signature) is `blocked_bot_protection` — a policy decision, retrying changes nothing
+and an allowlist request might. `429` is `rate_limited` — the host is willing and we asked
+too fast, so `extractAndProbe` honours `Retry-After` once within a 30s bound, charges the
+retry to the budget, and slows the whole run against that host for the rest of the sweep.
+`401` is `gated_content`, a fact about the page rather than about us. All three score as
+`failed_gated` (15) rather than `failed_probed` (5), because all three mean "we could not
+see it" and the reviewer's next move is to go and look. Do not fold them back together —
+that was VD-4's collapse committed a second time.
+
+**The user agent is honest and stays honest.** A compliance crawler behind a spoofed
+browser UA is a support ticket from a vendor's security team (audit P-8), and the evidence
+pack's value rests on being able to say the document was fetched openly. When a host
+genuinely refuses, the answers are an allowlist request, the questionnaire, the trust
+portal, or a human reading it — never a disguise.
+
 **Stored pages are capped at 1MB, not 64KB.** The original cap discarded 61% of Stripe's
 privacy notice (162,077 characters of text) and made everything past the cut unteachable.
 Truncation now appends a visible marker rather than happening quietly.

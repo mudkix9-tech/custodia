@@ -29,8 +29,24 @@ export const PROBE_FAILURE_CLASSES = [
   'dns_failure',
   /** The host resolved and refused or dropped the connection. */
   'connection_refused',
-  /** 403/429 or a bot-wall signature in the body. */
+  /**
+   * 403, or a bot-wall signature in the body. The site declined to serve a
+   * crawler, and that is a policy decision rather than a transient condition —
+   * retrying it changes nothing and asking to be allowlisted might.
+   */
   'blocked_bot_protection',
+  /**
+   * 429. The site is willing, and we asked too quickly.
+   *
+   * Split from `blocked_bot_protection` because they are opposite findings that
+   * used to share an answer: one means "not you", the other means "not yet", and
+   * filing a rate limit as a refusal writes off a vendor who would have answered
+   * thirty seconds later. That is VD-4's collapse — three branches, one class —
+   * committed a second time in the same file.
+   *
+   * `Retry-After` says when, and the probe honours it within a bound.
+   */
+  'rate_limited',
   /** Login wall / sales gate on an otherwise reachable page. */
   'gated_content',
   /** Content fetched but the expected signals were absent. */
@@ -84,6 +100,25 @@ export const USER_AGENT_TOKEN = 'CustodiaVendorIntelligence';
 
 export const USER_AGENT =
   `${USER_AGENT_TOKEN}/1.0 (+https://custodia.com/bot; compliance-document-verification)`;
+
+/**
+ * How long a 429 asked us to wait, in milliseconds.
+ *
+ * `Retry-After` is either a delay in seconds or an HTTP date, and both forms
+ * appear in the wild. Anything unparseable returns null and the caller falls
+ * back to its own bound rather than guessing — a wrong wait is worse than no
+ * wait, because it either hammers a host that asked for room or stalls a run for
+ * an hour on a malformed header.
+ */
+export function parseRetryAfter(header: string | null | undefined, now: Date = new Date()): number | null {
+  if (!header) return null;
+  const raw = header.trim();
+  if (/^\d+$/.test(raw)) return Number(raw) * 1000;
+  const when = Date.parse(raw);
+  if (Number.isNaN(when)) return null;
+  const delta = when - now.getTime();
+  return delta > 0 ? delta : 0;
+}
 
 const BOT_WALL_SIGNATURES: readonly RegExp[] = [
   /access denied/i,
@@ -159,9 +194,13 @@ export function classifyResponse(
   bodyText: string,
   gatedUrlPatternHit: boolean,
 ): ProbeFailureClass {
-  if (httpStatus === 401 || httpStatus === 403 || httpStatus === 429) {
-    return 'blocked_bot_protection';
-  }
+  // 401 is an authentication wall, which is a fact about the page rather than
+  // about us: `gated_content` already means "we could not see it", and calling
+  // it bot protection sends the reviewer to ask for an allowlist that would not
+  // help.
+  if (httpStatus === 401) return 'gated_content';
+  if (httpStatus === 429) return 'rate_limited';
+  if (httpStatus === 403) return 'blocked_bot_protection';
   if (httpStatus >= 400) return 'url_not_found';
   if (gatedUrlPatternHit) return 'gated_content';
   // Only the first 20 KB — a bot wall is served small, and scanning megabytes
@@ -188,7 +227,19 @@ export function statusFromOutcome(
   // A soft-404 host's 2xx is worth exactly what a signal-less page is worth:
   // something came back, and it is not evidence.
   if (outcome.failureClass === 'soft_404') return 'partially_probed';
-  if (outcome.failureClass === 'gated_content') return 'failed_gated';
+  // All three of these mean "we could not see it", which is a different finding
+  // from "it is not there" and worth more: `failed_gated` scores 15 where
+  // `failed_probed` scores 5. A login wall, a bot wall and a rate limit are each
+  // a fact about our access rather than about whether the vendor publishes the
+  // document — and the reviewer's next action for all three is to go and look,
+  // not to record that nothing exists.
+  if (
+    outcome.failureClass === 'gated_content' ||
+    outcome.failureClass === 'blocked_bot_protection' ||
+    outcome.failureClass === 'rate_limited'
+  ) {
+    return 'failed_gated';
+  }
   return 'failed_probed';
 }
 

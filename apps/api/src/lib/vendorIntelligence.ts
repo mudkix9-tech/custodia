@@ -65,6 +65,7 @@ import {
   downgradeForSoftNotFound,
   evaluateContentSignals,
   isGatedUrl,
+  parseRetryAfter,
   statusFromOutcome,
   USER_AGENT,
   type ProbeDocType,
@@ -135,6 +136,8 @@ interface ProbeResult {
    */
   text?: string;
   isPdf?: boolean;
+  /** Set on a 429: what the host asked us to wait, in ms. */
+  retryAfterMs?: number | null;
 }
 
 /** One page a run read, on its way to `vendor_probe_documents`. */
@@ -164,6 +167,8 @@ interface FetchFailure {
   failureClass: string;
   httpStatus?: number | null;
   resolvedUrl: string;
+  /** What a 429 asked us to wait, in ms. Null when it did not say. */
+  retryAfterMs?: number | null;
 }
 
 export type FetchOutcome = FetchedDocument | FetchFailure;
@@ -206,6 +211,7 @@ export async function fetchDocument(url: string): Promise<FetchOutcome> {
         failureClass: classifyResponse(response.status, '', false),
         httpStatus: response.status,
         resolvedUrl: response.url || url,
+        retryAfterMs: parseRetryAfter(response.headers.get('retry-after')),
       };
     }
 
@@ -263,6 +269,7 @@ export async function probeUrl(
       failureClass: fetched.failureClass,
       httpStatus: fetched.httpStatus ?? null,
       resolvedUrl: fetched.resolvedUrl,
+      retryAfterMs: fetched.retryAfterMs ?? null,
     };
   }
 
@@ -541,6 +548,21 @@ export async function enrichOne(
 const MAX_PROBES_PER_TARGET = 24;
 
 /**
+ * The longest a run will sit waiting on a `Retry-After`.
+ *
+ * A host may legitimately ask for an hour, and a probe run is not the place to
+ * honour that: the operator is watching, and thirty-odd URLs each potentially
+ * sleeping for minutes turns a two-minute job into an afternoon. Past this the
+ * candidate is recorded as `rate_limited`, which is an honest and *actionable*
+ * finding — "this host asked for more room than a run can give, come back" —
+ * rather than a lie in either direction.
+ */
+const MAX_RETRY_AFTER_WAIT_MS = 30_000;
+
+/** How much the whole run slows down against a host that has rate-limited us once. */
+const RATE_LIMIT_BACKOFF_MS = 3_000;
+
+/**
  * One request per second, one at a time, across everything a target touches.
  *
  * Stricter than the "one in-flight per host" the sourcing programme asks for,
@@ -654,8 +676,23 @@ async function extractAndProbe(
   let budget = MAX_PROBES_PER_TARGET;
   let lastRequestAt = 0;
 
-  const pace = async () => {
-    const wait = PER_HOST_DELAY_MS - (Date.now() - lastRequestAt);
+  /**
+   * Extra delay owed to hosts that have already said we are going too fast.
+   *
+   * A 429 is information about the whole host, not about the one URL that
+   * happened to receive it. Retrying that single URL and then carrying on at the
+   * old rate is how a run collects a 429 on every remaining candidate; slowing
+   * the run down is both more likely to succeed and the behaviour the header is
+   * asking for.
+   */
+  const hostBackoff = new Map<string, number>();
+  const hostOf = (url: string) => {
+    try { return new URL(url).host; } catch { return url; }
+  };
+
+  const pace = async (url?: string) => {
+    const extra = url ? (hostBackoff.get(hostOf(url)) ?? 0) : 0;
+    const wait = PER_HOST_DELAY_MS + extra - (Date.now() - lastRequestAt);
     if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
     lastRequestAt = Date.now();
   };
@@ -664,7 +701,7 @@ async function extractAndProbe(
   // domain, its trust subdomain and each portal answer for themselves.
   const robots = new RobotsCache(async (robotsUrl) => {
     budget -= 1;
-    await pace();
+    await pace(robotsUrl);
     return fetchRobots(robotsUrl);
   });
   const softNotFound = new Map<string, boolean>();
@@ -688,7 +725,7 @@ async function extractAndProbe(
     const known = softNotFound.get(host);
     if (known !== undefined) return known;
     budget -= 1;
-    await pace();
+    await pace(origin);
     const control = await fetchDocument(negativeControlUrl(origin));
     const soft = detectSoftNotFound(
       control.ok ? { ok: true, httpStatus: control.httpStatus, body: control.body } : { ok: false },
@@ -730,11 +767,42 @@ async function extractAndProbe(
     if (budget <= 0) return;
 
     budget -= 1;
-    await pace();
-    const outcome = await probeUrl(candidate.url, candidate.type, {
+    await pace(candidate.url);
+    let outcome = await probeUrl(candidate.url, candidate.type, {
       hostSoftNotFound: soft,
       siteTokens: vocabulary[candidate.type] ?? [],
     });
+
+    /**
+     * A rate limit is "not yet", so ask again once.
+     *
+     * Exactly once, and only inside the wait bound. A second 429 means the host
+     * wants more room than a run can give it, and hammering past that would turn
+     * a polite crawler into the thing the bot wall exists for. The retry is
+     * charged to the budget like any other request, because it is one.
+     */
+    if (outcome.failureClass === 'rate_limited' && budget > 0) {
+      const asked = outcome.retryAfterMs ?? RATE_LIMIT_BACKOFF_MS;
+      const host = hostOf(candidate.url);
+      hostBackoff.set(host, Math.max(hostBackoff.get(host) ?? 0, RATE_LIMIT_BACKOFF_MS));
+
+      if (asked <= MAX_RETRY_AFTER_WAIT_MS) {
+        log(`  429 ${host} asked for ${Math.round(asked / 1000)}s — waiting, then one retry`);
+        await new Promise((resolve) => setTimeout(resolve, asked));
+        budget -= 1;
+        lastRequestAt = Date.now();
+        outcome = await probeUrl(candidate.url, candidate.type, {
+          hostSoftNotFound: soft,
+          siteTokens: vocabulary[candidate.type] ?? [],
+        });
+      } else {
+        log(
+          `  429 ${host} asked for ${Math.round(asked / 1000)}s, longer than a run waits — ` +
+          'recorded as rate_limited, worth re-running later',
+        );
+      }
+    }
+
     cache.set(candidate.url, outcome);
 
     const verdict = outcome.status === 'verified'
@@ -802,7 +870,7 @@ async function extractAndProbe(
       if (!(await robots.allows(indexUrl))) continue;
       if (budget <= 0) break;
       budget -= 1;
-      await pace();
+      await pace(indexUrl);
       const page = await fetchDocument(indexUrl);
       if (!page.ok || page.isPdf) continue;
       for (const candidate of extractLinkCandidates(page.body, page.resolvedUrl, website)) {

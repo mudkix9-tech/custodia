@@ -32,6 +32,7 @@ import { csvCell, csvRow, csvDocument } from '../utils/csv.js';
 import { dpfConditionMet, vendorAdequacyState, dpfLapseNotices } from './vendorAdequacy.js';
 import { shapeCandidateReview, shapeCatalogueReview } from './vendorReviewQueues.js';
 import { deriveLocator, applyLocator, MAX_EXTRACTED_CHARS } from './vendorLocator.js';
+import { parseRetryAfter } from './vendorProbe.js';
 import { validateRule, validateTaughtValue, applyFieldRules, urlRulesFor } from './vendorExtractionRules.js';
 import {
   parseCsvRows,
@@ -679,7 +680,9 @@ import {
 } from './vendorProbe.js';
 
 check(classifyResponse(403, '', false) === 'blocked_bot_protection', '403 is a bot block, not bad data');
-check(classifyResponse(429, '', false) === 'blocked_bot_protection', '429 likewise');
+// 429 used to answer the same as 403 here. It no longer does, and the reasoning
+// is with the split further down — "not you" and "not yet" are different
+// findings and only one of them is worth retrying.
 check(classifyResponse(404, '', false) === 'url_not_found', '404 is a missing URL');
 check(classifyResponse(200, '<html>Access Denied</html>', false) === 'blocked_bot_protection',
   'a bot-wall body is recognised even on a 200');
@@ -2696,6 +2699,47 @@ check(
   ).length,
   'the unresolved count is the fields with neither a value nor a source',
 );
+
+// ---------------------------------------------------------------------------
+// Bot walls, rate limits and auth walls are three different findings
+// ---------------------------------------------------------------------------
+//
+// They shared one failure class, which is VD-4's collapse committed a second
+// time in the same file: "not you", "not yet" and "not without a login" send a
+// reviewer to three different places, and writing off a rate-limited vendor as
+// having refused us is the expensive one.
+
+check(classifyResponse(429, '', false) === 'rate_limited',
+  'a 429 is a rate limit, not a refusal',
+  'It means the site is willing and we asked too fast. Filing it as blocked writes off a vendor who would have answered.');
+check(classifyResponse(403, '', false) === 'blocked_bot_protection',
+  'a 403 is the site declining to serve a crawler');
+check(classifyResponse(401, '', false) === 'gated_content',
+  'a 401 is an authentication wall, which is a fact about the page',
+  'Calling it bot protection sends someone to ask for an allowlist that would not help.');
+check(classifyResponse(404, '', false) === 'url_not_found', 'and a 404 is still just absent');
+check(classifyResponse(200, 'Attention Required! Cloudflare Ray ID 123', false) === 'blocked_bot_protection',
+  'a bot wall served as 200 is still a bot wall');
+
+// All three "we could not see it" outcomes are worth more than "it is not
+// there" — 15 against 5 — because the reviewer's next move is to go and look.
+for (const failureClass of ['gated_content', 'blocked_bot_protection', 'rate_limited']) {
+  check(statusFromOutcome({ status: 'failed', failureClass }) === 'failed_gated',
+    `${failureClass} scores as "could not see it"`);
+}
+check(statusFromOutcome({ status: 'failed', failureClass: 'url_not_found' }) === 'failed_probed',
+  'while a 404 scores as "not there"');
+
+// Retry-After, both forms that appear in the wild.
+const retryNow = new Date('2026-08-31T12:00:00Z');
+check(parseRetryAfter('120', retryNow) === 120_000, 'a delay in seconds is read as seconds');
+check(parseRetryAfter('Mon, 31 Aug 2026 12:00:30 GMT', retryNow) === 30_000,
+  'and an HTTP date is read as the delta to it');
+check(parseRetryAfter('Mon, 31 Aug 2026 11:59:00 GMT', retryNow) === 0,
+  'a date already past means retry now, not a negative wait');
+check(parseRetryAfter(null) === null && parseRetryAfter('soon') === null,
+  'an absent or unparseable header returns null rather than a guess',
+  'A wrong wait either hammers a host that asked for room or stalls a run for an hour.');
 
 // ---------------------------------------------------------------------------
 // Teaching the scraper: locators, rules, and refusing to guess
