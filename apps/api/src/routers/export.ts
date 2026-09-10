@@ -174,11 +174,12 @@ export const exportRouter = router({
       const { assessmentId } = input;
       const orgId = ctx.user!.orgId;
 
-      const org = await ctx.db.query.organizations.findFirst({
-        where: eq(organizations.id, orgId)
-      });
-
-      const { assessments, assessmentAnswers, assessmentTemplates, auditLogs } = await import('db');
+      const [org, { assessments, assessmentAnswers, assessmentTemplates, auditLogs }] = await Promise.all([
+        ctx.db.query.organizations.findFirst({
+          where: eq(organizations.id, orgId)
+        }),
+        import('db'),
+      ]);
       
       let [foundAssessment] = await ctx.db.select().from(assessments)
         .where(and(eq(assessments.id, assessmentId), eq(assessments.organizationId, orgId)));

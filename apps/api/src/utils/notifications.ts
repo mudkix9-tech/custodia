@@ -113,9 +113,11 @@ export async function queueNotification(params: QueueNotificationParams) {
   // Merge defaults with org preferences
   const channelsToUse = orgPrefs[params.type]?.channels || notificationType.defaultChannels;
 
-  // For each configured channel, insert a job into the queue
-  for (const channel of channelsToUse) {
-    await db.insert(notificationQueue).values({
+  // One queue row per configured channel. The channel list is the type's own
+  // defaults or the org's override — a handful either way, and each row is
+  // independent of the others, so they go in together.
+  await Promise.all(channelsToUse.map((channel: string) =>
+    db.insert(notificationQueue).values({
       organizationId: params.organizationId,
       userId: params.userId || undefined,
       channel,
@@ -127,6 +129,6 @@ export async function queueNotification(params: QueueNotificationParams) {
       payload: params.metadata || null,
       priority: notificationType.urgency,
       status: 'pending',
-    });
-  }
+    })
+  ));
 }

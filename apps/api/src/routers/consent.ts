@@ -84,10 +84,11 @@ export const consentRouter = router({
         ));
       if (!domain) return null;
       
-      const cookies = await ctx.db.select().from(consentCookies).where(eq(consentCookies.domainId, domain.id));
-      
-      // Basic stats
-      const result = await ctx.db.select({ total: count() }).from(consentRecords).where(eq(consentRecords.domainId, domain.id));
+      // Basic stats fetched alongside the cookie list: neither reads the other.
+      const [cookies, result] = await Promise.all([
+        ctx.db.select().from(consentCookies).where(eq(consentCookies.domainId, domain.id)),
+        ctx.db.select({ total: count() }).from(consentRecords).where(eq(consentRecords.domainId, domain.id)),
+      ]);
       const total = result[0]?.total ?? 0;
       
       return { domain, cookies, stats: { total } };

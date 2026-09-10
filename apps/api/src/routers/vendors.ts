@@ -213,15 +213,17 @@ export async function updateVendorRiskScore(dbInstance: any, orgId: string, vend
 
   const scoreModifier = questionnaireScoreModifier(assessments[0]);
 
-  // Retrieve DPIA compliance gaps for this vendor
-  const dpiaGaps = await dbInstance.select().from(complianceGaps).where(and(
-    eq(complianceGaps.organizationId, orgId),
-    eq(complianceGaps.entityType, 'vendor'),
-    eq(complianceGaps.entityId, orgVendor.id),
-    eq(complianceGaps.source, 'dpia')
-  ));
-
-  const { dpfStatus, dpfLapsedDate } = await resolveDpfStatus(dbInstance, vendor);
+  // Retrieve DPIA compliance gaps for this vendor, alongside the DPF lookup —
+  // the register read and the certification read do not depend on each other.
+  const [dpiaGaps, { dpfStatus, dpfLapsedDate }] = await Promise.all([
+    dbInstance.select().from(complianceGaps).where(and(
+      eq(complianceGaps.organizationId, orgId),
+      eq(complianceGaps.entityType, 'vendor'),
+      eq(complianceGaps.entityId, orgVendor.id),
+      eq(complianceGaps.source, 'dpia')
+    )),
+    resolveDpfStatus(dbInstance, vendor),
+  ]);
 
   const enrichedVendor = {
     ...vendor,
@@ -287,18 +289,19 @@ export async function recalculateVendorRiskForAllOrgs(
     ...(dpfStatus ? { dpfStatus, dpfLapsedDate } : {}),
   };
 
-  const orgVendors = await dbInstance.select().from(organizationVendors).where(eq(organizationVendors.vendorId, vendorId));
-
-  const subs = await dbInstance.select()
-    .from(vendorSubProcessors)
-    .where(eq(vendorSubProcessors.parentVendorId, vendorId));
+  // The linked tenants and both sub-processor tables are read together. The
+  // entity rows are fetched once for the whole catalogue row rather than per
+  // organisation: the sub-processor list belongs to the vendor, and the
+  // cross-check needs it for every tenant linked to it.
+  const [orgVendors, subs, entitySubs] = await Promise.all([
+    dbInstance.select().from(organizationVendors).where(eq(organizationVendors.vendorId, vendorId)),
+    dbInstance.select()
+      .from(vendorSubProcessors)
+      .where(eq(vendorSubProcessors.parentVendorId, vendorId)),
+    dbInstance.select().from(vendorSubProcessorEntities)
+      .where(eq(vendorSubProcessorEntities.parentVendorId, vendorId)),
+  ]);
   const subProcessorsCount = subs.length;
-
-  // Fetched once for the whole catalogue row rather than per organisation: the
-  // sub-processor list belongs to the vendor, and the cross-check needs it for
-  // every tenant linked to it.
-  const entitySubs = await dbInstance.select().from(vendorSubProcessorEntities)
-    .where(eq(vendorSubProcessorEntities.parentVendorId, vendorId));
   const mergedSubs = mergeSubProcessorRows(subs, entitySubs);
 
   // Retrieve DPIA compliance gaps for all matched organization vendors at once to avoid N+1 queries
@@ -1103,35 +1106,37 @@ export const vendorsRouter = router({
       // derive them from the 25 rows it happened to have loaded -- so pulling
       // every column of every row back to call .filter() on it scaled the wrong
       // way for the one caller that most needed it not to.
-      const [row] = await ctx.db.select({
-        total: sql<number>`count(*)::int`,
-        highOrCritical: sql<number>`count(*) filter (where ${inArray(organizationVendors.riskLevel, ['high', 'critical'])})::int`,
-        low: sql<number>`count(*) filter (where ${eq(organizationVendors.riskLevel, 'low')})::int`,
-        medium: sql<number>`count(*) filter (where ${eq(organizationVendors.riskLevel, 'medium')})::int`,
-        dpasSigned: sql<number>`count(*) filter (where ${eq(organizationVendors.dpaStatus, DPA_STATUS_SIGNED)})::int`,
-        missingDpas: sql<number>`count(*) filter (where ${inArray(organizationVendors.dpaStatus, [...DPA_STATUS_MISSING])})::int`,
-      })
-        .from(organizationVendors)
-        .where(and(
-          eq(organizationVendors.organizationId, ctx.user!.orgId),
-          // D30's other half. Recording an offboarding is easy; making the rest
-          // of the product believe it is the point. While these tiles counted
-          // every row, offboarding Salesforce left "1 DPA missing" on the
-          // dashboard for ever and the register's compliance score could never
-          // improve by ending a relationship — which is one of the two ways it
-          // is supposed to be able to improve.
-          liveVendorPredicate(),
-        ));
-
-      // Counted separately so the number can be shown rather than merely
-      // excluded: "6 offboarded" is a fact about the register, and a total that
-      // silently shrank would read as data loss.
-      const [offboarded] = await ctx.db.select({ n: count() })
-        .from(organizationVendors)
-        .where(and(
-          eq(organizationVendors.organizationId, ctx.user!.orgId),
-          eq(organizationVendors.status, VENDOR_STATUS_OFFBOARDED),
-        ));
+      // The offboarded tally is counted separately so the number can be shown
+      // rather than merely excluded: "6 offboarded" is a fact about the
+      // register, and a total that silently shrank would read as data loss.
+      // Separate predicates over the same table, so the two counts race.
+      const [[row], [offboarded]] = await Promise.all([
+        ctx.db.select({
+          total: sql<number>`count(*)::int`,
+          highOrCritical: sql<number>`count(*) filter (where ${inArray(organizationVendors.riskLevel, ['high', 'critical'])})::int`,
+          low: sql<number>`count(*) filter (where ${eq(organizationVendors.riskLevel, 'low')})::int`,
+          medium: sql<number>`count(*) filter (where ${eq(organizationVendors.riskLevel, 'medium')})::int`,
+          dpasSigned: sql<number>`count(*) filter (where ${eq(organizationVendors.dpaStatus, DPA_STATUS_SIGNED)})::int`,
+          missingDpas: sql<number>`count(*) filter (where ${inArray(organizationVendors.dpaStatus, [...DPA_STATUS_MISSING])})::int`,
+        })
+          .from(organizationVendors)
+          .where(and(
+            eq(organizationVendors.organizationId, ctx.user!.orgId),
+            // D30's other half. Recording an offboarding is easy; making the rest
+            // of the product believe it is the point. While these tiles counted
+            // every row, offboarding Salesforce left "1 DPA missing" on the
+            // dashboard for ever and the register's compliance score could never
+            // improve by ending a relationship — which is one of the two ways it
+            // is supposed to be able to improve.
+            liveVendorPredicate(),
+          )),
+        ctx.db.select({ n: count() })
+          .from(organizationVendors)
+          .where(and(
+            eq(organizationVendors.organizationId, ctx.user!.orgId),
+            eq(organizationVendors.status, VENDOR_STATUS_OFFBOARDED),
+          )),
+      ]);
 
       return {
         total: row?.total ?? 0,
@@ -1368,12 +1373,15 @@ export const vendorsRouter = router({
       if (!incident) throw new TRPCError({ code: 'NOT_FOUND', message: 'Incident not found' });
       if (incident.status === 'published') return incident;
 
-      const [updated] = await ctx.db.update(vendorIncidents)
-        .set({ status: 'published' })
-        .where(eq(vendorIncidents.id, input.incidentId))
-        .returning();
-
-      const [vendor] = await ctx.db.select().from(vendors).where(eq(vendors.slug, incident.vendorSlug));
+      // The catalogue row is looked up by the slug already read above, so it does
+      // not observe the publish and the two run together.
+      const [[updated], [vendor]] = await Promise.all([
+        ctx.db.update(vendorIncidents)
+          .set({ status: 'published' })
+          .where(eq(vendorIncidents.id, input.incidentId))
+          .returning(),
+        ctx.db.select().from(vendors).where(eq(vendors.slug, incident.vendorSlug)),
+      ]);
       if (vendor) {
         const { publishIncidentAndAlertOrgs } = await import('../workers/incidents.js');
         await publishIncidentAndAlertOrgs(input.incidentId, vendor, updated);
@@ -1747,21 +1755,24 @@ export const vendorsRouter = router({
         conditions.push(eq(vendorDiscoveries.status, input.status));
       }
 
-      const list = await ctx.db.select({
-        discovery: vendorDiscoveries,
-        matchedVendor: vendors
-      })
-      .from(vendorDiscoveries)
-      .leftJoin(vendors, eq(vendorDiscoveries.matchedVendorId, vendors.id))
-      .where(and(...conditions))
-      .orderBy(desc(vendorDiscoveries.lastDetectedAt))
-      .limit(input.limit);
-
-      // Resolve each detected host against the tracker registry, so a discovery
+      // Each detected host is resolved against the tracker registry, so a discovery
       // arrives with the consent category it needs already attached. Whoever
       // triages this inbox is the person who has to decide whether the banner
-      // covers it, and that decision is unanswerable from a bare hostname.
-      const { loadTrackerRegistry, matchTrackerByDomain } = await import('../lib/trackerRegistry.js');
+      // covers it, and that decision is unanswerable from a bare hostname. The
+      // registry module does not depend on the discovery list, so both are loaded
+      // together; only `loadTrackerRegistry` has to wait for its own import.
+      const [list, { loadTrackerRegistry, matchTrackerByDomain }] = await Promise.all([
+        ctx.db.select({
+          discovery: vendorDiscoveries,
+          matchedVendor: vendors
+        })
+        .from(vendorDiscoveries)
+        .leftJoin(vendors, eq(vendorDiscoveries.matchedVendorId, vendors.id))
+        .where(and(...conditions))
+        .orderBy(desc(vendorDiscoveries.lastDetectedAt))
+        .limit(input.limit),
+        import('../lib/trackerRegistry.js'),
+      ]);
       const registry = await loadTrackerRegistry(ctx.db);
 
       return list.map((row: any) => {
@@ -2679,27 +2690,28 @@ export const vendorsRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor record not found for organisation' });
       }
 
-      const [org] = await ctx.db.select().from(organizations).where(eq(organizations.id, orgId));
-
-      const subProcessors = await ctx.db
-        .select()
-        .from(vendorSubProcessorEntities)
-        .where(eq(vendorSubProcessorEntities.parentVendorId, input.vendorId));
-
-      const [tia] = await ctx.db
-        .select()
-        .from(transferImpactAssessments)
-        .where(
-          and(
-            eq(transferImpactAssessments.organizationId, orgId),
-            eq(transferImpactAssessments.vendorId, input.vendorId)
-          )
-        );
-
-      const provenanceRows = await ctx.db
-        .select()
-        .from(vendorFieldProvenance)
-        .where(eq(vendorFieldProvenance.vendorId, input.vendorId));
+      // Organisation, sub-processors, TIA and provenance are four independent
+      // reads that the response below only assembles once all four are back.
+      const [[org], subProcessors, [tia], provenanceRows] = await Promise.all([
+        ctx.db.select().from(organizations).where(eq(organizations.id, orgId)),
+        ctx.db
+          .select()
+          .from(vendorSubProcessorEntities)
+          .where(eq(vendorSubProcessorEntities.parentVendorId, input.vendorId)),
+        ctx.db
+          .select()
+          .from(transferImpactAssessments)
+          .where(
+            and(
+              eq(transferImpactAssessments.organizationId, orgId),
+              eq(transferImpactAssessments.vendorId, input.vendorId)
+            )
+          ),
+        ctx.db
+          .select()
+          .from(vendorFieldProvenance)
+          .where(eq(vendorFieldProvenance.vendorId, input.vendorId)),
+      ]);
 
       /**
        * Sprint 10. The rows are still returned as they are stored, because a
@@ -3093,9 +3105,11 @@ export const vendorsRouter = router({
         )
         .returning();
 
-      // Upsert field provenance rows for transparency
-      for (const [key, snippet] of Object.entries(profile.evidenceSnippets)) {
-        await ctx.db
+      // Upsert field provenance rows for transparency. One row per field, and the
+      // conflict target is keyed on the field name, so no two of these contend for
+      // the same row.
+      await Promise.all(Object.entries(profile.evidenceSnippets).map(([key, snippet]) =>
+        ctx.db
           .insert(vendorFieldProvenance)
           .values({
             vendorId: existing.vendor.id,
@@ -3123,8 +3137,8 @@ export const vendorsRouter = router({
               verifiedBy: ctx.user!.id || 'Trust Center Importer',
               verifiedAt: new Date(),
             },
-          });
-      }
+          })
+      ));
 
       await updateVendorRiskScore(ctx.db, ctx.user!.orgId, input.vendorId);
 
@@ -3171,19 +3185,18 @@ export const vendorsRouter = router({
       const orgVendorIds = orgVendors.map((ov: any) => ov.orgVendor.id);
       const vendorIds = orgVendors.map((ov: any) => ov.vendor.id);
 
-      // Fetch completed assessments
-      const assessmentsList = await ctx.db
-        .select()
-        .from(vendorAssessments)
-        .where(
-          and(
-            eq(vendorAssessments.organizationId, ctx.user!.orgId),
-            inArray(vendorAssessments.vendorId, orgVendorIds)
-          )
-        );
-
-      // Fetch sub-processors
-      const [legacySubs, entitySubs] = await Promise.all([
+      // Completed assessments and both sub-processor tables: independent reads
+      // over the same vendor set, so they race rather than queue.
+      const [assessmentsList, legacySubs, entitySubs] = await Promise.all([
+        ctx.db
+          .select()
+          .from(vendorAssessments)
+          .where(
+            and(
+              eq(vendorAssessments.organizationId, ctx.user!.orgId),
+              inArray(vendorAssessments.vendorId, orgVendorIds)
+            )
+          ),
         ctx.db.select().from(vendorSubProcessors).where(inArray(vendorSubProcessors.parentVendorId, vendorIds)),
         ctx.db.select().from(vendorSubProcessorEntities).where(inArray(vendorSubProcessorEntities.parentVendorId, vendorIds)),
       ]);

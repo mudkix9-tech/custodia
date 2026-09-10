@@ -22,13 +22,15 @@ export async function generatePolicyMarkdown(orgId: string, previousMarkdown?: s
   if (!org) return { markdown: '', diffs: null, hasChanges: false };
   
   // Fetch ROPA data
-  const activities = await db.select().from(processingActivities).where(eq(processingActivities.organizationId, orgId));
-  const orgVends = await db.select({
-    orgVendor: organizationVendors,
-    vendor: vendors
-  }).from(organizationVendors)
-    .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
-    .where(eq(organizationVendors.organizationId, orgId));
+  const [activities, orgVends] = await Promise.all([
+    db.select().from(processingActivities).where(eq(processingActivities.organizationId, orgId)),
+    db.select({
+      orgVendor: organizationVendors,
+      vendor: vendors
+    }).from(organizationVendors)
+      .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+      .where(eq(organizationVendors.organizationId, orgId)),
+  ]);
 
   let currentRopaState = `Organization Name: ${org.name}\n`;
   if (activities.length > 0) {

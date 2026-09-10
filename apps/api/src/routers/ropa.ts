@@ -469,11 +469,13 @@ async function snapshotActivity(
   activity: any,
   opts: { reason: string; userId: string; note?: string | null },
 ): Promise<any> {
-  const bundle = await loadBundle(dbc, activity);
-  const [{ value: highest } = { value: 0 }] = await dbc
-    .select({ value: sql<number>`coalesce(max(${processingActivityVersions.version}), 0)` })
-    .from(processingActivityVersions)
-    .where(eq(processingActivityVersions.processingActivityId, activity.id));
+  const [bundle, [{ value: highest } = { value: 0 }]] = await Promise.all([
+    loadBundle(dbc, activity),
+    dbc
+      .select({ value: sql<number>`coalesce(max(${processingActivityVersions.version}), 0)` })
+      .from(processingActivityVersions)
+      .where(eq(processingActivityVersions.processingActivityId, activity.id)),
+  ]);
 
   const version = Number(highest ?? 0) + 1;
   const snapshot = buildSnapshot(bundle, new Date());
@@ -1300,8 +1302,10 @@ export const ropaRouter = router({
       // worth an email — it is usually a field being cleared by accident, and it is
       // invisible until somebody exports the register for a regulator.
       if (changedKeys.length > 0) {
-        for (const userId of stakeholderIds(updated, ctx.user!.id)) {
-          await queueNotification({
+        // At most three recipients each — business owner, privacy owner, current
+        // reviewer — and one recipient's notification does not depend on another's.
+        await Promise.all(stakeholderIds(updated, ctx.user!.id).map((userId) =>
+          queueNotification({
             organizationId: ctx.user!.orgId,
             userId,
             type: 'ropa.activity_changed',
@@ -1309,11 +1313,11 @@ export const ropaRouter = router({
             body: `${changedKeys.length} field${changedKeys.length === 1 ? '' : 's'} changed on a processing activity you are responsible for.`,
             actionUrl: `/ropa/${updated.id}`,
             metadata: { activityId: updated.id, fields: changedKeys },
-          });
-        }
+          })
+        ));
         if (scoreMove && scoreMove.after < scoreMove.before) {
-          for (const userId of stakeholderIds(updated, ctx.user!.id)) {
-            await queueNotification({
+          await Promise.all(stakeholderIds(updated, ctx.user!.id).map((userId) =>
+            queueNotification({
               organizationId: ctx.user!.orgId,
               userId,
               type: 'ropa.completeness_dropped',
@@ -1321,8 +1325,8 @@ export const ropaRouter = router({
               body: `Completeness fell from ${scoreMove.before}% to ${scoreMove.after}%.`,
               actionUrl: `/ropa/${updated.id}`,
               metadata: { activityId: updated.id, before: scoreMove.before, after: scoreMove.after },
-            });
-          }
+            })
+          ));
         }
       }
 
@@ -1441,7 +1445,11 @@ export const ropaRouter = router({
         return Number(row?.value ?? 0);
       };
 
-      const [dataSubjects, dataCategories, recipients, transfers, clients, flags, tasks, comments, versions] = await Promise.all([
+      // Gaps are keyed by (entityType, entityId) rather than a foreign key, so they
+      // need the org predicate of their own that the others get through the parent.
+      // That is the only thing separating the gap count from the rest; it races
+      // with them rather than waiting behind them.
+      const [dataSubjects, dataCategories, recipients, transfers, clients, flags, tasks, comments, versions, [gapRow], [liaRow]] = await Promise.all([
         countOf(processingDataSubjects, processingDataSubjects.processingActivityId),
         countOf(processingDataCategories, processingDataCategories.processingActivityId),
         countOf(processingRecipients, processingRecipients.processingActivityId),
@@ -1451,19 +1459,15 @@ export const ropaRouter = router({
         countOf(processingActivityTasks, processingActivityTasks.processingActivityId),
         countOf(processingActivityComments, processingActivityComments.processingActivityId),
         countOf(processingActivityVersions, processingActivityVersions.processingActivityId),
+        ctx.db.select({ value: count() }).from(complianceGaps)
+          .where(and(
+            eq(complianceGaps.organizationId, ctx.user!.orgId),
+            eq(complianceGaps.entityType, 'processing_activity'),
+            eq(complianceGaps.entityId, input.id),
+          )),
+        ctx.db.select({ value: count() }).from(legitimateInterestAssessments)
+          .where(eq(legitimateInterestAssessments.processingActivityId, input.id)),
       ]);
-
-      // Gaps are keyed by (entityType, entityId) rather than a foreign key, so they
-      // need the org predicate of their own that the others get through the parent.
-      const [gapRow] = await ctx.db.select({ value: count() }).from(complianceGaps)
-        .where(and(
-          eq(complianceGaps.organizationId, ctx.user!.orgId),
-          eq(complianceGaps.entityType, 'processing_activity'),
-          eq(complianceGaps.entityId, input.id),
-        ));
-
-      const [liaRow] = await ctx.db.select({ value: count() }).from(legitimateInterestAssessments)
-        .where(eq(legitimateInterestAssessments.processingActivityId, input.id));
 
       return {
         status: activity.status,
@@ -2774,8 +2778,10 @@ export const ropaRouter = router({
           authorId: ctx.user!.id,
         }).returning();
 
-        for (const userId of mentions.filter((id) => id !== ctx.user!.id)) {
-          await queueNotification({
+        // The mentions on one comment; each recipient's row is independent.
+        const mentionRecipients = mentions.filter((id) => id !== ctx.user!.id);
+        await Promise.all(mentionRecipients.map((userId: string) =>
+          queueNotification({
             organizationId: ctx.user!.orgId,
             userId,
             type: 'ropa.comment_mention',
@@ -2783,8 +2789,8 @@ export const ropaRouter = router({
             body: body.slice(0, 280),
             actionUrl: `/ropa/${input.processingActivityId}`,
             metadata: { activityId: input.processingActivityId, commentId: comment?.id },
-          });
-        }
+          })
+        ));
 
         return comment;
       }),
@@ -3535,17 +3541,18 @@ export const ropaRouter = router({
       .query(async ({ ctx, input }) => {
         const activity = await assertParentOwned(ctx.db, processingActivities, input.processingActivityId, ctx.user!.orgId, 'Activity');
 
-        const [current] = await ctx.db.select().from(dpiaScreenings)
-          .where(and(
-            eq(dpiaScreenings.processingActivityId, input.processingActivityId),
-            eq(dpiaScreenings.organizationId, ctx.user!.orgId),
-            ne(dpiaScreenings.status, 'superseded'),
-          ))
-          .orderBy(desc(dpiaScreenings.createdAt))
-          .limit(1);
-
-        const [org] = await ctx.db.select({ countryCode: organizations.countryCode })
-          .from(organizations).where(eq(organizations.id, ctx.user!.orgId));
+        const [[current], [org]] = await Promise.all([
+          ctx.db.select().from(dpiaScreenings)
+            .where(and(
+              eq(dpiaScreenings.processingActivityId, input.processingActivityId),
+              eq(dpiaScreenings.organizationId, ctx.user!.orgId),
+              ne(dpiaScreenings.status, 'superseded'),
+            ))
+            .orderBy(desc(dpiaScreenings.createdAt))
+            .limit(1),
+          ctx.db.select({ countryCode: organizations.countryCode })
+            .from(organizations).where(eq(organizations.id, ctx.user!.orgId)),
+        ]);
 
         // A screening that has never been started still needs an opening position,
         // and the register already answers half the questionnaire. Returning the

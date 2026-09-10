@@ -12,8 +12,10 @@ const checkOrgContext = (user: any) => {
 export const settingsRouter = router({
   getUsageStats: protectedProcedure.query(async ({ ctx }) => {
     checkOrgContext(ctx.user);
-    const ropaRes = await db.select({ count: count() }).from(processingActivities).where(eq(processingActivities.organizationId, ctx.user!.orgId));
-    const vendorRes = await db.select({ count: count() }).from(organizationVendors).where(eq(organizationVendors.organizationId, ctx.user!.orgId));
+    const [ropaRes, vendorRes] = await Promise.all([
+      db.select({ count: count() }).from(processingActivities).where(eq(processingActivities.organizationId, ctx.user!.orgId)),
+      db.select({ count: count() }).from(organizationVendors).where(eq(organizationVendors.organizationId, ctx.user!.orgId)),
+    ]);
     
     return {
       ropaEntries: ropaRes[0]?.count ?? 0,

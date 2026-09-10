@@ -234,8 +234,10 @@ export const assessmentsRouter = router({
   getResults: publicProcedure
     .input(z.object({ assessmentId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      let [assessment] = await db.select().from(assessments).where(eq(assessments.id, input.assessmentId));
-      let items = await db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId));
+      let [[assessment], items] = await Promise.all([
+        db.select().from(assessments).where(eq(assessments.id, input.assessmentId)),
+        db.select().from(actionItems).where(eq(actionItems.assessmentId, input.assessmentId)),
+      ]);
       let categoryScores: Array<{ category: string; score: number }> = [];
 
       if (assessment) {
@@ -615,26 +617,29 @@ Only return valid JSON, nothing else.`;
         }`;
       }
 
-      const [updated] = await db.update(vendorAssessments)
-        .set({
-          status: 'completed',
-          completedAt: new Date(),
-          responses: input.responses,
-          score: baseScore,
-          aiSummary,
-          scoreAdjustment,
-          respondentEmail: input.respondentEmail,
-          respondentIp: (ctx.req.ip as string) || null,
-          submissionLocked: true
+      // The link row is read for the rescore below; it is a different table from
+      // the one being written and does not observe the update, so both run at once.
+      const [[updated], [orgVendor]] = await Promise.all([
+        db.update(vendorAssessments)
+          .set({
+            status: 'completed',
+            completedAt: new Date(),
+            responses: input.responses,
+            score: baseScore,
+            aiSummary,
+            scoreAdjustment,
+            respondentEmail: input.respondentEmail,
+            respondentIp: (ctx.req.ip as string) || null,
+            submissionLocked: true
+          })
+          .where(eq(vendorAssessments.id, record.id))
+          .returning(),
+        db.select({
+          vendorId: organizationVendors.vendorId
         })
-        .where(eq(vendorAssessments.id, record.id))
-        .returning();
-
-      const [orgVendor] = await db.select({
-        vendorId: organizationVendors.vendorId
-      })
-      .from(organizationVendors)
-      .where(eq(organizationVendors.id, record.vendorId));
+        .from(organizationVendors)
+        .where(eq(organizationVendors.id, record.vendorId)),
+      ]);
 
       if (orgVendor) {
         await updateVendorRiskScore(db, record.organizationId, orgVendor.vendorId);
@@ -677,21 +682,24 @@ Only return valid JSON, nothing else.`;
         });
       }
 
-      const [updated] = await db.update(vendorAssessments)
-        .set({
-          scoreAdjustment: input.scoreAdjustment,
-          aiSummary: input.aiSummary || assessment.aiSummary,
-          reviewedBy: ctx.user!.id,
-          reviewedAt: new Date()
+      // As above: the link row is a different table from the one written and does
+      // not observe the update, so the rescore lookup runs alongside it.
+      const [[updated], [orgVendor]] = await Promise.all([
+        db.update(vendorAssessments)
+          .set({
+            scoreAdjustment: input.scoreAdjustment,
+            aiSummary: input.aiSummary || assessment.aiSummary,
+            reviewedBy: ctx.user!.id,
+            reviewedAt: new Date()
+          })
+          .where(eq(vendorAssessments.id, input.assessmentId))
+          .returning(),
+        db.select({
+          vendorId: organizationVendors.vendorId
         })
-        .where(eq(vendorAssessments.id, input.assessmentId))
-        .returning();
-
-      const [orgVendor] = await db.select({
-        vendorId: organizationVendors.vendorId
-      })
-      .from(organizationVendors)
-      .where(eq(organizationVendors.id, assessment.vendorId));
+        .from(organizationVendors)
+        .where(eq(organizationVendors.id, assessment.vendorId)),
+      ]);
 
       if (orgVendor) {
         await updateVendorRiskScore(db, assessment.organizationId, orgVendor.vendorId);

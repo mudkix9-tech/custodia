@@ -6,14 +6,15 @@ export async function computeGroupComplianceScores(dbInstance: any, parentOrgId:
     return { averageScore: 0, worstScore: 0, breakdown: [] };
   }
 
-  const childOrgs = await dbInstance.select({ id: organizations.id, name: organizations.name, slug: organizations.slug })
-    .from(organizations)
-    .where(inArray(organizations.id, childOrgIds));
-
-  const allReports = await dbInstance.select()
-    .from(complianceReports)
-    .where(inArray(complianceReports.organizationId, childOrgIds))
-    .orderBy(desc(complianceReports.snapshotDate));
+  const [childOrgs, allReports] = await Promise.all([
+    dbInstance.select({ id: organizations.id, name: organizations.name, slug: organizations.slug })
+      .from(organizations)
+      .where(inArray(organizations.id, childOrgIds)),
+    dbInstance.select()
+      .from(complianceReports)
+      .where(inArray(complianceReports.organizationId, childOrgIds))
+      .orderBy(desc(complianceReports.snapshotDate)),
+  ]);
 
   const breakdown = childOrgs.map((org: any) => {
     const orgReports = allReports.filter((r: any) => r.organizationId === org.id);
@@ -48,22 +49,23 @@ export async function computeGroupComplianceScores(dbInstance: any, parentOrgId:
 export async function computeGroupVendorConsistency(dbInstance: any, parentOrgId: string, childOrgIds: string[]) {
   if (childOrgIds.length === 0) return [];
 
-  const childOrgs = await dbInstance.select({ id: organizations.id, name: organizations.name, slug: organizations.slug })
-    .from(organizations)
-    .where(inArray(organizations.id, childOrgIds));
-
-  const orgVendors = await dbInstance.select({
-    id: organizationVendors.id,
-    orgId: organizationVendors.organizationId,
-    vendorId: organizationVendors.vendorId,
-    vendorName: vendors.name,
-    dpaStatus: organizationVendors.dpaStatus,
-    riskScore: organizationVendors.riskScore,
-    riskLevel: organizationVendors.riskLevel
-  })
-  .from(organizationVendors)
-  .innerJoin(vendors, eq(vendors.id, organizationVendors.vendorId))
-  .where(inArray(organizationVendors.organizationId, childOrgIds));
+  const [childOrgs, orgVendors] = await Promise.all([
+    dbInstance.select({ id: organizations.id, name: organizations.name, slug: organizations.slug })
+      .from(organizations)
+      .where(inArray(organizations.id, childOrgIds)),
+    dbInstance.select({
+      id: organizationVendors.id,
+      orgId: organizationVendors.organizationId,
+      vendorId: organizationVendors.vendorId,
+      vendorName: vendors.name,
+      dpaStatus: organizationVendors.dpaStatus,
+      riskScore: organizationVendors.riskScore,
+      riskLevel: organizationVendors.riskLevel
+    })
+    .from(organizationVendors)
+    .innerJoin(vendors, eq(vendors.id, organizationVendors.vendorId))
+    .where(inArray(organizationVendors.organizationId, childOrgIds)),
+  ]);
 
   // Group by vendor ID
   const grouped: Record<string, any> = {};

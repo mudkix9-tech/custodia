@@ -434,19 +434,20 @@ export const ropaRetentionRouter = router({
       const now = new Date();
       const horizon = new Date(now.getTime() + input.horizonDays * 24 * 60 * 60 * 1000);
 
-      const rows = await ctx.db.select({
-        activity: processingActivities,
-        schedule: retentionSchedules,
-      })
-        .from(processingActivities)
-        .leftJoin(retentionSchedules, eq(processingActivities.retentionScheduleId, retentionSchedules.id))
-        .where(and(
-          eq(processingActivities.organizationId, orgId),
-          isNull(processingActivities.deletedAt),
-          eq(processingActivities.status, 'active'),
-        ));
-
-      const heldActivityIds = await activeHoldActivityIds(ctx.db, orgId, now);
+      const [rows, heldActivityIds] = await Promise.all([
+        ctx.db.select({
+          activity: processingActivities,
+          schedule: retentionSchedules,
+        })
+          .from(processingActivities)
+          .leftJoin(retentionSchedules, eq(processingActivities.retentionScheduleId, retentionSchedules.id))
+          .where(and(
+            eq(processingActivities.organizationId, orgId),
+            isNull(processingActivities.deletedAt),
+            eq(processingActivities.status, 'active'),
+          )),
+        activeHoldActivityIds(ctx.db, orgId, now),
+      ]);
 
       const due: any[] = [];
       const blocked: any[] = [];

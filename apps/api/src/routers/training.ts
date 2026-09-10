@@ -175,16 +175,18 @@ export const trainingRouter = router({
   // COMPLETIONS (EMPLOYEE)
   myModules: protectedProcedure.query(async ({ ctx }) => {
     checkOrgContext(ctx.user);
-    const myComps = await ctx.db.query.trainingCompletions.findMany({
-      where: eq(trainingCompletions.userId, ctx.user!.id),
-      with: { module: true },
-      orderBy: desc(trainingCompletions.createdAt)
-    });
-
-    // Also inject global modules if missing
-    const globals = await ctx.db.query.trainingModules.findMany({
-      where: and(eq(trainingModules.isGlobal, true), eq(trainingModules.status, 'published'))
-    });
+    // Global modules are injected where missing, so they are fetched alongside
+    // the user's own completions rather than after them.
+    const [myComps, globals] = await Promise.all([
+      ctx.db.query.trainingCompletions.findMany({
+        where: eq(trainingCompletions.userId, ctx.user!.id),
+        with: { module: true },
+        orderBy: desc(trainingCompletions.createdAt)
+      }),
+      ctx.db.query.trainingModules.findMany({
+        where: and(eq(trainingModules.isGlobal, true), eq(trainingModules.status, 'published'))
+      }),
+    ]);
 
     const missingCompsToInsert: any[] = [];
     const missingModules: any[] = [];

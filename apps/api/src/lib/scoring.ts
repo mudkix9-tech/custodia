@@ -262,14 +262,15 @@ async function calculateBreachScore(orgId: string) {
 }
 
 async function calculateTrainingScore(orgId: string) {
-  const completions = await db.query.trainingCompletions.findMany({
-    where: eq(trainingCompletions.organizationId, orgId),
-  });
-
-  const usersCountResult = await db.query.users.findMany({
-    where: eq(users.organizationId, orgId),
-    columns: { id: true },
-  });
+  const [completions, usersCountResult] = await Promise.all([
+    db.query.trainingCompletions.findMany({
+      where: eq(trainingCompletions.organizationId, orgId),
+    }),
+    db.query.users.findMany({
+      where: eq(users.organizationId, orgId),
+      columns: { id: true },
+    }),
+  ]);
 
   if (usersCountResult.length === 0 || completions.length === 0) return 100;
 

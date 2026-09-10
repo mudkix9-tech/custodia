@@ -79,17 +79,18 @@ export const ropaReviewsWorker = createWorker('ropa-reviews', async (job: Job) =
   // Only records that are live and scheduled. An archived or deleted activity has
   // no review cycle, and reminding somebody about one is how the queue becomes
   // noise they stop reading.
-  const due = await db.select().from(processingActivities).where(and(
-    eq(processingActivities.organizationId, orgId),
-    isNull(processingActivities.deletedAt),
-    ne(processingActivities.status, 'archived'),
-    isNotNull(processingActivities.nextReviewAt),
-  ));
-
-  const [fallback] = await db.select({ id: users.id }).from(users).where(and(
-    eq(users.organizationId, orgId),
-    inArray(users.role, ['owner', 'admin']),
-  ));
+  const [due, [fallback]] = await Promise.all([
+    db.select().from(processingActivities).where(and(
+      eq(processingActivities.organizationId, orgId),
+      isNull(processingActivities.deletedAt),
+      ne(processingActivities.status, 'archived'),
+      isNotNull(processingActivities.nextReviewAt),
+    )),
+    db.select({ id: users.id }).from(users).where(and(
+      eq(users.organizationId, orgId),
+      inArray(users.role, ['owner', 'admin']),
+    )),
+  ]);
 
   for (const activity of due) {
     // Exactly one rung per record per run. "Anything in the past" would email the

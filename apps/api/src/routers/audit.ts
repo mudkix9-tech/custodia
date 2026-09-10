@@ -156,18 +156,19 @@ export const auditRouter = router({
   getDashboardMetrics: protectedProcedure.query(async ({ ctx }) => {
     const orgId = ctx.user!.orgId;
     
-    const latestReport = await ctx.db.query.complianceReports.findFirst({
-      where: eq(complianceReports.organizationId, orgId),
-      orderBy: [desc(complianceReports.snapshotDate)],
-    });
-
-    const activeGaps = await ctx.db.query.complianceGaps.findMany({
-      where: and(
-        eq(complianceGaps.organizationId, orgId),
-        inArray(complianceGaps.status, ['open', 'in_progress'])
-      ),
-      orderBy: [desc(complianceGaps.createdAt)],
-    });
+    const [latestReport, activeGaps] = await Promise.all([
+      ctx.db.query.complianceReports.findFirst({
+        where: eq(complianceReports.organizationId, orgId),
+        orderBy: [desc(complianceReports.snapshotDate)],
+      }),
+      ctx.db.query.complianceGaps.findMany({
+        where: and(
+          eq(complianceGaps.organizationId, orgId),
+          inArray(complianceGaps.status, ['open', 'in_progress'])
+        ),
+        orderBy: [desc(complianceGaps.createdAt)],
+      }),
+    ]);
 
     const gapsBySeverity = {
       critical: activeGaps.filter((g: any) => g.severity === 'critical').length,
@@ -274,15 +275,16 @@ export const auditRouter = router({
     .input(z.object({ format: z.enum(['json', 'csv']) }))
     .query(async ({ ctx, input }) => {
       const orgId = ctx.user!.orgId;
-      const org = await ctx.db.query.organizations.findFirst({ where: eq(organizations.id, orgId) });
-      
-      const activities = await ctx.db.query.processingActivities.findMany({
-        where: eq(processingActivities.organizationId, orgId),
-        with: {
-          dataCategories: true,
-          recipients: { with: { vendor: true } },
-        }
-      });
+      const [org, activities] = await Promise.all([
+        ctx.db.query.organizations.findFirst({ where: eq(organizations.id, orgId) }),
+        ctx.db.query.processingActivities.findMany({
+          where: eq(processingActivities.organizationId, orgId),
+          with: {
+            dataCategories: true,
+            recipients: { with: { vendor: true } },
+          }
+        }),
+      ]);
 
       const controllerRecords = activities.filter((a: any) => !a.clientId);
       const processorRecords = activities.filter((a: any) => a.clientId);

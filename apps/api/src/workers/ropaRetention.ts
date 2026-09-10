@@ -68,21 +68,22 @@ async function scanRetention(orgId?: string) {
   if (!orgId) return { skipped: true, reason: 'No organisation' };
   const now = new Date();
 
-  const rows = await db.select({
-    activity: processingActivities,
-    schedule: retentionSchedules,
-  })
-    .from(processingActivities)
-    .leftJoin(retentionSchedules, eq(processingActivities.retentionScheduleId, retentionSchedules.id))
-    .where(and(
-      eq(processingActivities.organizationId, orgId),
-      isNull(processingActivities.deletedAt),
-      // A draft has not asserted anything yet, and an archived activity has stopped.
-      // Neither has a retention obligation the register can act on.
-      eq(processingActivities.status, 'active'),
-    ));
-
-  const held = await heldActivityIds(orgId, now);
+  const [rows, held] = await Promise.all([
+    db.select({
+      activity: processingActivities,
+      schedule: retentionSchedules,
+    })
+      .from(processingActivities)
+      .leftJoin(retentionSchedules, eq(processingActivities.retentionScheduleId, retentionSchedules.id))
+      .where(and(
+        eq(processingActivities.organizationId, orgId),
+        isNull(processingActivities.deletedAt),
+        // A draft has not asserted anything yet, and an archived activity has stopped.
+        // Neither has a retention obligation the register can act on.
+        eq(processingActivities.status, 'active'),
+      )),
+    heldActivityIds(orgId, now),
+  ]);
   let created = 0;
   let onHold = 0;
 

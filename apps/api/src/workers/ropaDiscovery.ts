@@ -322,18 +322,19 @@ async function scanConnectors(orgId: string): Promise<DiscoverySignal[]> {
     ));
   if (integrations.length === 0) return [];
 
-  const activities = await db.select({
-    name: processingActivities.name,
-    purpose: processingActivities.purpose,
-    description: processingActivities.description,
-  })
-    .from(processingActivities)
-    .where(and(eq(processingActivities.organizationId, orgId), isNull(processingActivities.deletedAt)));
-
-  const recipients = await db.select({ name: processingRecipients.name })
-    .from(processingRecipients)
-    .innerJoin(processingActivities, eq(processingRecipients.processingActivityId, processingActivities.id))
-    .where(and(eq(processingActivities.organizationId, orgId), isNull(processingActivities.deletedAt)));
+  const [activities, recipients] = await Promise.all([
+    db.select({
+      name: processingActivities.name,
+      purpose: processingActivities.purpose,
+      description: processingActivities.description,
+    })
+      .from(processingActivities)
+      .where(and(eq(processingActivities.organizationId, orgId), isNull(processingActivities.deletedAt))),
+    db.select({ name: processingRecipients.name })
+      .from(processingRecipients)
+      .innerJoin(processingActivities, eq(processingRecipients.processingActivityId, processingActivities.id))
+      .where(and(eq(processingActivities.organizationId, orgId), isNull(processingActivities.deletedAt))),
+  ]);
 
   const haystack = [
     ...activities.flatMap((a: any) => [a.name, a.purpose, a.description]),

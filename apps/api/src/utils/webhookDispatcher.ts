@@ -43,8 +43,11 @@ export async function dispatchWebhook(organizationId: string, eventType: string,
     data: payload
   };
 
-  // 3. Create delivery records
-  for (const hook of relevantHooks) {
+  // 3. Create delivery records, then 4. enqueue each one. The enqueue needs its
+  // own delivery row back, so that pairing stays sequential inside a hook — but
+  // one subscriber's delivery has nothing to do with another's, so the hooks run
+  // together.
+  await Promise.all(relevantHooks.map(async (hook: any) => {
     const [delivery] = await db.insert(webhookDeliveries).values({
       webhookId: hook.id,
       eventId: eventPayload.id,
@@ -53,7 +56,6 @@ export async function dispatchWebhook(organizationId: string, eventType: string,
       status: 'pending',
     }).returning();
 
-    // 4. Enqueue job
     if (delivery) {
       await webhookQueue.add('deliver', { deliveryId: delivery.id }, {
         attempts: (hook as any).maxAttempts || 5,
@@ -63,5 +65,5 @@ export async function dispatchWebhook(organizationId: string, eventType: string,
         }
       });
     }
-  }
+  }));
 }

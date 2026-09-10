@@ -287,20 +287,22 @@ export const tiaRouter = router({
 
       if (!tia) throw new TRPCError({ code: 'NOT_FOUND', message: 'No TIA recorded for this vendor.' });
 
-      const [ov] = await ctx.db.select({ name: vendors.name })
-        .from(organizationVendors)
-        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
-        .where(and(
-          eq(organizationVendors.organizationId, ctx.user!.orgId),
-          eq(organizationVendors.vendorId, input.vendorId),
-        ));
-
       // The controller's own name belongs on a Chapter V document — the
       // exporting organisation is half of the transfer being assessed, and
-      // `dataExporter` is free text the wizard may not have collected.
-      const [org] = await ctx.db.select({ name: organizations.name })
-        .from(organizations)
-        .where(eq(organizations.id, ctx.user!.orgId));
+      // `dataExporter` is free text the wizard may not have collected. Both
+      // halves of the transfer are read at once; neither depends on the other.
+      const [[ov], [org]] = await Promise.all([
+        ctx.db.select({ name: vendors.name })
+          .from(organizationVendors)
+          .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+          .where(and(
+            eq(organizationVendors.organizationId, ctx.user!.orgId),
+            eq(organizationVendors.vendorId, input.vendorId),
+          )),
+        ctx.db.select({ name: organizations.name })
+          .from(organizations)
+          .where(eq(organizations.id, ctx.user!.orgId)),
+      ]);
 
       try {
         const pdfBuffer = await renderPdf('vendors-tia', {

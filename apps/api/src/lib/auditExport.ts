@@ -42,8 +42,10 @@ export async function generateGroupAuditArchive(parentOrgId: string, childOrgIds
   const logoUrl = (org.branding as any)?.logoUrl;
 
   // 1. Generate Group Executive Summary using shared groupMetrics
-  const complianceScores = await computeGroupComplianceScores(db, parentOrgId, childOrgIds);
-  const vendorConsistency = await computeGroupVendorConsistency(db, parentOrgId, childOrgIds);
+  const [complianceScores, vendorConsistency] = await Promise.all([
+    computeGroupComplianceScores(db, parentOrgId, childOrgIds),
+    computeGroupVendorConsistency(db, parentOrgId, childOrgIds),
+  ]);
   
   const groupData = {
     orgName: org.name,
@@ -482,26 +484,25 @@ export async function generateAuditFile(
   archive.append(breachCsv, { name: 'breaches/breach-register.csv' });
 
   // ── TRAINING ──────────────────────────────────────────────
-  const modules = await db.query.trainingModules.findMany({
-    where: and(
-      eq(trainingModules.organizationId, orgId),
-      isNull(trainingModules.deletedAt),
-    ),
-  });
-
-  const globalModules = await db.query.trainingModules.findMany({
-    where: and(eq(trainingModules.isGlobal, true), isNull(trainingModules.deletedAt)),
-  });
+  const [modules, globalModules, completions, orgUsers] = await Promise.all([
+    db.query.trainingModules.findMany({
+      where: and(
+        eq(trainingModules.organizationId, orgId),
+        isNull(trainingModules.deletedAt),
+      ),
+    }),
+    db.query.trainingModules.findMany({
+      where: and(eq(trainingModules.isGlobal, true), isNull(trainingModules.deletedAt)),
+    }),
+    db.query.trainingCompletions.findMany({
+      where: eq(trainingCompletions.organizationId, orgId),
+    }),
+    db.query.users.findMany({
+      where: and(eq(users.organizationId, orgId), isNull(users.deletedAt)),
+    }),
+  ]);
 
   const allModules = [...modules, ...globalModules];
-
-  const completions = await db.query.trainingCompletions.findMany({
-    where: eq(trainingCompletions.organizationId, orgId),
-  });
-
-  const orgUsers = await db.query.users.findMany({
-    where: and(eq(users.organizationId, orgId), isNull(users.deletedAt)),
-  });
 
   const userMap = new Map(orgUsers.map((u: any) => [u.id, { name: u.name, email: u.email }]));
   const moduleMap = new Map(allModules.map((m: any) => [m.id, m]));
@@ -613,23 +614,23 @@ export async function generateAuditFile(
   archive.append(consentCsv, { name: 'consent/consent-summary.csv' });
 
   // ── COMPLIANCE ────────────────────────────────────────────
-  const latestReport = await db.query.complianceReports.findFirst({
-    where: eq(complianceReports.organizationId, orgId),
-    orderBy: desc(complianceReports.snapshotDate),
-  });
-
-  const scoreHistory = await db.query.complianceReports.findMany({
-    where: eq(complianceReports.organizationId, orgId),
-    orderBy: desc(complianceReports.snapshotDate),
-    limit: 12,
-  });
-
-  const activeGaps = await db.query.complianceGaps.findMany({
-    where: and(
-      eq(complianceGaps.organizationId, orgId),
-      eq(complianceGaps.status, 'open'),
-    ),
-  });
+  const [latestReport, scoreHistory, activeGaps] = await Promise.all([
+    db.query.complianceReports.findFirst({
+      where: eq(complianceReports.organizationId, orgId),
+      orderBy: desc(complianceReports.snapshotDate),
+    }),
+    db.query.complianceReports.findMany({
+      where: eq(complianceReports.organizationId, orgId),
+      orderBy: desc(complianceReports.snapshotDate),
+      limit: 12,
+    }),
+    db.query.complianceGaps.findMany({
+      where: and(
+        eq(complianceGaps.organizationId, orgId),
+        eq(complianceGaps.status, 'open'),
+      ),
+    }),
+  ]);
 
   const complianceData = {
     orgName: org.name,

@@ -685,44 +685,40 @@ export const onboardingRouter = router({
 
       if (!org) return null;
 
-      // Get vendors count
-      const [vendorsCountRes] = await ctx.db.select({ count: sql<number>`count(*)` })
-        .from(organizationVendors)
-        .where(eq(organizationVendors.organizationId, ctx.user!.orgId));
+      // Vendor, activity and policy counts, the published-policy check, the team
+      // roster and the cookie domain: independent reads that only meet again in
+      // the progress tiles below.
+      const [[vendorsCountRes], [activitiesCountRes], [policiesCountRes], [publishedPolicy], teamMembers, [domainData]] = await Promise.all([
+        ctx.db.select({ count: sql<number>`count(*)` })
+          .from(organizationVendors)
+          .where(eq(organizationVendors.organizationId, ctx.user!.orgId)),
+        ctx.db.select({ count: sql<number>`count(*)` })
+          .from(processingActivities)
+          .where(and(
+            eq(processingActivities.organizationId, ctx.user!.orgId),
+            isNull(processingActivities.deletedAt)
+          )),
+        ctx.db.select({ count: sql<number>`count(*)` })
+          .from(privacyPolicies)
+          .where(eq(privacyPolicies.organizationId, ctx.user!.orgId)),
+        ctx.db.select()
+          .from(privacyPolicies)
+          .where(and(
+            eq(privacyPolicies.organizationId, ctx.user!.orgId),
+            sql`published_at is not null`
+          ))
+          .limit(1),
+        ctx.db.select()
+          .from(users)
+          .where(eq(users.organizationId, ctx.user!.orgId)),
+        ctx.db.select()
+          .from(consentDomains)
+          .where(eq(consentDomains.organizationId, ctx.user!.orgId))
+          .limit(1),
+      ]);
 
-      // Get activities count
-      const [activitiesCountRes] = await ctx.db.select({ count: sql<number>`count(*)` })
-        .from(processingActivities)
-        .where(and(
-          eq(processingActivities.organizationId, ctx.user!.orgId),
-          isNull(processingActivities.deletedAt)
-        ));
-
-      // Get policies count
-      const [policiesCountRes] = await ctx.db.select({ count: sql<number>`count(*)` })
-        .from(privacyPolicies)
-        .where(eq(privacyPolicies.organizationId, ctx.user!.orgId));
-
-      // Get published policy check
-      const [publishedPolicy] = await ctx.db.select()
-        .from(privacyPolicies)
-        .where(and(
-          eq(privacyPolicies.organizationId, ctx.user!.orgId),
-          sql`published_at is not null`
-        ))
-        .limit(1);
-
-      // Get team invites count (excluding current user)
-      const teamMembers = await ctx.db.select()
-        .from(users)
-        .where(eq(users.organizationId, ctx.user!.orgId));
+      // Team invites count excludes the current user.
       const invitesCount = Math.max(0, teamMembers.length - 1);
-
-      // Get cookie scan details
-      const [domainData] = await ctx.db.select()
-        .from(consentDomains)
-        .where(eq(consentDomains.organizationId, ctx.user!.orgId))
-        .limit(1);
 
       let cookieCount = 0;
       let domainName = '';
@@ -1082,27 +1078,26 @@ export const onboardingRouter = router({
   generatePolicy: protectedProcedure
     .input(z.object({}))
     .mutation(async ({ ctx }) => {
-      // Fetch organization info
-      const [org] = await ctx.db.select()
-        .from(organizations)
-        .where(eq(organizations.id, ctx.user!.orgId));
-
-      // Fetch processing activities
-      const activities = await ctx.db.select({
-        name: processingActivities.name,
-        description: processingActivities.description,
-        lawfulBasis: processingActivities.lawfulBasis,
-      })
-      .from(processingActivities)
-      .where(eq(processingActivities.organizationId, ctx.user!.orgId));
-
-      // Fetch organization vendors
-      const orgVendors = await ctx.db.select({
-        name: vendors.name,
-      })
-      .from(organizationVendors)
-      .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
-      .where(eq(organizationVendors.organizationId, ctx.user!.orgId));
+      // Organisation, activities and vendors: three independent reads that the
+      // policy template only combines once all three are back.
+      const [[org], activities, orgVendors] = await Promise.all([
+        ctx.db.select()
+          .from(organizations)
+          .where(eq(organizations.id, ctx.user!.orgId)),
+        ctx.db.select({
+          name: processingActivities.name,
+          description: processingActivities.description,
+          lawfulBasis: processingActivities.lawfulBasis,
+        })
+        .from(processingActivities)
+        .where(eq(processingActivities.organizationId, ctx.user!.orgId)),
+        ctx.db.select({
+          name: vendors.name,
+        })
+        .from(organizationVendors)
+        .innerJoin(vendors, eq(organizationVendors.vendorId, vendors.id))
+        .where(eq(organizationVendors.organizationId, ctx.user!.orgId)),
+      ]);
 
       const vendorNames = orgVendors.map((v: any) => v.name);
 

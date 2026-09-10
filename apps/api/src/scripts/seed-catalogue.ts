@@ -89,21 +89,22 @@ async function verifyProvenance(): Promise<number> {
   // facts and are deliberately not in this list — the seed asserts them, the
   // probe does not, and a provenance row claiming otherwise would be a lie
   // about where they came from.
-  const rows = await db
-    .select({
-      id: vendors.id,
-      name: vendors.name,
-      legalEntityName: vendors.legalEntityName,
-      headquartersCountry: vendors.headquartersCountry,
-      transferMechanisms: vendors.transferMechanisms,
-      dpaUrl: vendors.dpaUrl,
-      subProcessorListUrl: vendors.subProcessorListUrl,
-    })
-    .from(vendors);
-
-  const provenance = await db
-    .select({ vendorId: vendorFieldProvenance.vendorId, fieldName: vendorFieldProvenance.fieldName })
-    .from(vendorFieldProvenance);
+  const [rows, provenance] = await Promise.all([
+    db
+      .select({
+        id: vendors.id,
+        name: vendors.name,
+        legalEntityName: vendors.legalEntityName,
+        headquartersCountry: vendors.headquartersCountry,
+        transferMechanisms: vendors.transferMechanisms,
+        dpaUrl: vendors.dpaUrl,
+        subProcessorListUrl: vendors.subProcessorListUrl,
+      })
+      .from(vendors),
+    db
+      .select({ vendorId: vendorFieldProvenance.vendorId, fieldName: vendorFieldProvenance.fieldName })
+      .from(vendorFieldProvenance),
+  ]);
   const have = new Set(provenance.map((p: any) => `${p.vendorId}::${p.fieldName}`));
 
   const sourced: Array<[string, (r: any) => unknown]> = [
@@ -310,12 +311,14 @@ async function writeSeedSummary(
   outcomes: Array<{ slug: string; legalEntityName: string | null; dpfStatus: string }>,
   breaches: number,
 ): Promise<void> {
-  const provenanceRows = await db
-    .select({ n: sql<number>`count(*)::int` })
-    .from(vendorFieldProvenance);
-  const edgeRows = await db
-    .select({ n: sql<number>`count(*)::int` })
-    .from(vendorSubProcessors);
+  const [provenanceRows, edgeRows] = await Promise.all([
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(vendorFieldProvenance),
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(vendorSubProcessors),
+  ]);
 
   const summary = {
     generatedAt: new Date().toISOString().slice(0, 10),
