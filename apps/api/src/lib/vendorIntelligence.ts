@@ -100,6 +100,7 @@ import {
   type StoredCatalogueFields,
   type ReverifyOutcome,
   buildCatalogueWrites,
+  collapseProbeDocuments,
   diffFreshAgainstCatalogue,
   normaliseCandidateDomain,
   slugify,
@@ -1094,9 +1095,9 @@ export async function upsertCandidate(input: {
 async function recordRuleOutcomes(
   outcomes: readonly { ruleId: string; matched: boolean }[],
 ): Promise<void> {
-  for (const outcome of outcomes) {
-    await markRuleOutcome(db, outcome.ruleId, outcome.matched);
-  }
+  // One row per rule that ran against this vendor; the writes touch different
+  // rules and do not read each other.
+  await Promise.all(outcomes.map((outcome) => markRuleOutcome(db, outcome.ruleId, outcome.matched)));
 }
 
 /**
@@ -1120,7 +1121,9 @@ export async function storeProbeDocuments(
   if (documents.length === 0) return;
 
   const byCandidate = 'candidateId' in parent;
-  const rows = documents.map((doc) => ({
+
+  // One row per URL, or the insert dies — see `collapseProbeDocuments`.
+  const rows = collapseProbeDocuments(documents).map((doc) => ({
     candidateId: byCandidate ? parent.candidateId : null,
     vendorId: byCandidate ? null : parent.vendorId,
     url: doc.url,

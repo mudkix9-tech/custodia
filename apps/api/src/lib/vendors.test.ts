@@ -1485,7 +1485,7 @@ check(
 
 console.log('\nSprint 2 — candidate assessment mapping\n');
 
-import { buildCatalogueWrites, diffFreshAgainstCatalogue } from './vendorIntelligenceMappers.js';
+import { buildCatalogueWrites, diffFreshAgainstCatalogue, collapseProbeDocuments } from './vendorIntelligenceMappers.js';
 
 const catalogueResult = buildCatalogueWrites(
   {
@@ -2699,6 +2699,23 @@ check(
   ).length,
   'the unresolved count is the fields with neither a value nor a source',
 );
+
+// Two candidates redirecting to one page must collapse before the insert.
+// Postgres refuses a statement whose ON CONFLICT DO UPDATE would touch a row
+// twice, so a site answering /legal/dpa and /dpa from the same URL killed an
+// entire sweep on the first vendor that did it. The shaping is what is testable;
+// the insert is not.
+const dupDocs = [
+  { url: 'https://acme.com/legal/dpa', docType: 'dpa', httpStatus: 200, outcome: 'content_mismatch', text: 'short', isPdf: false },
+  { url: 'https://acme.com/legal/dpa', docType: 'privacy', httpStatus: 200, outcome: 'verified', text: 'a much longer body', isPdf: false },
+  { url: 'https://acme.com/privacy', docType: 'privacy', httpStatus: 200, outcome: 'verified', text: 'other page', isPdf: false },
+];
+const collapsed = collapseProbeDocuments(dupDocs);
+check(collapsed.length === 2, 'two readings of one URL collapse to one row',
+  `Got ${collapsed.length}.`);
+check(collapsed.find((d) => d.url.endsWith('/legal/dpa'))!.outcome === 'verified',
+  'and the verified reading is the one kept',
+  'A probe asking for the wrong document type does not make the page unreadable.');
 
 // ---------------------------------------------------------------------------
 // Bot walls, rate limits and auth walls are three different findings

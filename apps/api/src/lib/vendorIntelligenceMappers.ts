@@ -62,6 +62,53 @@ export interface RejectedCandidateUrl {
   httpStatus?: number | null;
 }
 
+/** One page a run read, on its way to `vendor_probe_documents`. */
+export interface StoredProbeDocument {
+  url: string;
+  docType: string;
+  httpStatus: number | null;
+  outcome: string;
+  text: string;
+  isPdf: boolean;
+}
+
+/**
+ * Collapse a run's documents to one row per URL.
+ *
+ * Two enumerated candidates can redirect to the *same* resolved URL — a site
+ * answering `/legal/dpa`, `/dpa` and `/privacy/dpa` from one page is ordinary —
+ * and each pushes a document keyed on where it landed. Postgres refuses a
+ * statement whose `ON CONFLICT DO UPDATE` would touch one row twice (`cannot
+ * affect row a second time`), so a sweep died on the first vendor that
+ * redirected two paths together. Same collapse-before-insert the DPF sync needs
+ * for its duplicate participant listings, and found the same way: by running it
+ * over enough real sites.
+ *
+ * A verified reading wins over a failed one for the same URL, because the row
+ * answers "what is on this page" and one probe having asked for the wrong
+ * document type does not make the page unreadable. Between two readings of equal
+ * standing, the longer body wins — a truncated or partial fetch tells a reviewer
+ * less than a complete one.
+ */
+export function collapseProbeDocuments(
+  documents: readonly StoredProbeDocument[],
+): StoredProbeDocument[] {
+  const byUrl = new Map<string, StoredProbeDocument>();
+  for (const doc of documents) {
+    const key = doc.url.toLowerCase();
+    const held = byUrl.get(key);
+    if (!held) {
+      byUrl.set(key, doc);
+      continue;
+    }
+    const better =
+      (doc.outcome === 'verified' && held.outcome !== 'verified') ||
+      (doc.outcome === held.outcome && doc.text.length > held.text.length);
+    if (better) byUrl.set(key, doc);
+  }
+  return [...byUrl.values()];
+}
+
 /** What a taught `field_extract` rule produced on this run. */
 export interface FieldRuleOutcome {
   ruleId: string;
