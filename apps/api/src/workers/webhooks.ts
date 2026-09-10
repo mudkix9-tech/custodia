@@ -91,7 +91,12 @@ export const webhookWorker = createWorker('webhook-deliveries', async (job) => {
     // retryLimit / retryDelay / retryBackoff, so the retry is real now.
     throw error;
   }
-}, { drainDelay: 15 });
+  // A delivery is a promise to somebody else's system, so this queue polls far
+  // faster than the thirty-second default set in queue.ts — but not at the old
+  // two seconds. Two queues at 2s cost more per day than the eighteen at 30s put
+  // together; 5s keeps pickup imperceptible and cuts that bill by three fifths.
+  // (`drainDelay` is a BullMQ leftover — pg-boss 9 does not read it.)
+}, { drainDelay: 15, newJobCheckIntervalSeconds: 5 });
 
 webhookWorker.on('failed', (job: any, err: any) => {
   console.error(`Webhook job ${job?.id} failed:`, err);

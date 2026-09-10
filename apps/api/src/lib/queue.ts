@@ -11,7 +11,24 @@ export async function getBoss() {
     return null as any;
   }
   if (!boss) {
-    boss = new PgBoss({ connectionString, max: 2 });
+    boss = new PgBoss({
+      connectionString,
+      max: 2,
+      // Every registered worker polls its own queue on this interval whether or
+      // not anything is ever enqueued, so the cost is (queues x 1/interval),
+      // forever, at idle. On pg-boss 9 the default is two seconds: with ~20 live
+      // queues that measured 916,000 calls a day against Supabase — 96% of every
+      // query the database received, and the bulk of a 200MB/day egress bill,
+      // for an answer that was empty 99.8% of the time. Thirty seconds cuts it
+      // fifteenfold. Nothing scheduled here is interactive; the two queues that
+      // are closer to a user override this individually.
+      //
+      // The option is `newJobCheckIntervalSeconds` on pg-boss 9. It was renamed
+      // `pollingIntervalSeconds` in 10 — passing that name here is accepted and
+      // silently ignored, leaving the two-second default in place with no error
+      // and nothing in the logs to say so. Check the version before changing it.
+      newJobCheckIntervalSeconds: 30,
+    });
     boss.on('error', (error) => console.error('pg-boss error:', error));
     await boss.start();
   }

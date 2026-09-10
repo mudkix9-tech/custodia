@@ -17,4 +17,8 @@ export const orgEmbeddingsWorker = createWorker('org-embeddings', async (job: an
     console.error(`Failed to process org-embeddings job for orgId=${orgId}, entityType=${entityType}, entityId=${entityId}:`, err);
     throw err;
   }
-});
+  // Enqueued as a side effect of saving a record, and the Copilot's answers are
+  // only as current as this queue, so it polls far faster than the thirty-second
+  // default set in queue.ts. See the note in workers/webhooks.ts for why this is
+  // five seconds rather than the two it used to inherit.
+}, { newJobCheckIntervalSeconds: 5 });
