@@ -467,7 +467,7 @@ async function retrieveContext(ctx: any, query: string, orgId?: string, locale?:
           FROM document_embeddings
           WHERE document_id = ${doc.documentId}
             AND authority = ${doc.authority}
-            AND chunk_index IN (${sql.raw(targets.join(','))})
+            AND chunk_index IN (${sql.join(targets.map((t) => sql`${t}`), sql`, `)})
         `);
         const adjRows = (adjacentResults.rows || []) as any[];
         adjRows.forEach(row => {
