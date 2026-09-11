@@ -31,6 +31,17 @@ export async function getBoss() {
     });
     boss.on('error', (error) => console.error('pg-boss error:', error));
     await boss.start();
+
+    // Says out loud what this process actually resolved, because the poll rate
+    // against the database disagreed with the source for a full day and there was
+    // no way to tell from outside which of the two was wrong. Reads the value back
+    // off the constructed instance rather than reprinting the literal above, so a
+    // version that ignored the option (see the note on the pg-boss 10 rename)
+    // prints 2000 here and says so.
+    console.log(
+      `[queue] pg-boss ready — newJobCheckInterval=${(boss as any).config?.newJobCheckInterval}ms ` +
+      `build=${process.env.APP_VERSION ?? 'unset'}`
+    );
   }
   return boss;
 }
