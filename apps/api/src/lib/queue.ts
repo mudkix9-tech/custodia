@@ -147,53 +147,37 @@ export function translateJobOptions(opts?: any): Record<string, any> {
 }
 
 // ---------------------------------------------------------------------------
-// Revival gate
+// Revival gate — open as of 11 September 2026. Everything runs.
 //
-// Fixing the envelope above brings roughly 25 job branches to life that have
-// never executed in production, several of which email customers or fire
-// webhooks on a schedule. Ungated, the first deploy emits a burst of backdated
-// notifications, so those jobs stay off until explicitly enabled.
+// Why it existed: fixing the envelope above brought roughly 25 job branches to
+// life that had never executed in production, several of which email customers
+// or fire webhooks on a schedule. Ungated, the first deploy after that fix would
+// have emitted a burst of backdated notifications, so they were held off.
+//
+// Why it is empty now: that risk was measured rather than assumed before
+// opening it. The estate was one organisation and three users, with no open
+// DSARs, no overdue ROPA reviews, no expired DPAs, no retention disposals due
+// and nothing in the notification queue for a week — so there was no backlog to
+// blast anyone with. The one real backlog, 1,341 `impact-assessment-dispatcher`
+// jobs queued since 28 August by a 15-minute cron that never ran, was discarded
+// first: they are repeats of a periodic sweep, so the next run does the same
+// work and nothing is lost.
+//
+// Read that as a dated measurement, not a standing fact. Once this carries real
+// customers, anything that emails them on a schedule deserves the same question
+// asked again before it is switched on for the first time — the list below is
+// the switch, and parking one job is a single line.
 //
 // WORKERS_ENABLED_JOBS is a comma-separated allowlist of `queue:job`, or a bare
 // `job` to match that job on any queue, or `*` for everything. When it is set,
-// only listed jobs run. When it is unset, everything runs except the dormant set
-// below.
+// only listed jobs run — so naming one job disables every other, silently. When
+// it is unset, everything runs except the set below.
 // ---------------------------------------------------------------------------
 
 const DORMANT_JOBS = new Set<string>([
-  'compliance:scheduled-reports',
-  'dsar-automation:dsar-deadline-monitor',
-  'dsar-automation:dsar-verification-reminder',
-  'dpia-reminders:dpia-mitigation-reminder-checker',
-  'dpia-dispatcher:dpia-dispatcher',
-  'impact-assessment:impact-assessment-dispatcher',
-  'impact-assessment:match-org-semantic',
-  'impact-assessment:match-catchup',
-  'impact-assessment:generate-assessment',
-  'policies-automation:policy-ropa-sync',
-  'regulatory-jobs:scrape',
-  'regulatory-jobs:quality-check',
-  'vendor-incidents-ingest:ingest-daily',
-  'vendor-intelligence:sub-processor-change-detector',
-  'vendor-intelligence:breach-alert-monitor',
-  'vendor-intelligence:dpa-expiry-checker',
-  'vendor-intelligence:dpa-page-change-detector',
-  'vendor-intelligence:assessment-reminder-checker',
-  'vendor-intelligence:weekly-organization-discovery-trigger',
-  'vendor-intelligence:vendor-review-reminder',
-  'ropa-reviews:ropa-review-reminder-checker',
-  'ropa-reviews-dispatcher:ropa-reviews-dispatcher',
-  // Sprint 4. Each of these either emails somebody or fills a queue a customer then
-  // has to work through, and the first run against an established register finds
-  // real work — forty vendors nothing references, a decade of elapsed retention.
-  // That should arrive because an organisation switched the feature on.
-  'ropa-discovery:ropa-discovery-dispatch',
-  'ropa-discovery:ropa-discovery-scan',
-  'ropa-retention:ropa-retention-dispatch',
-  'ropa-retention:ropa-retention-scan',
-  'ropa-intake:ropa-intake-dispatch',
-  'ropa-intake:ropa-intake-reminders',
-  'material-change:material-change',
+  // Empty by decision, not by accident — see the note above. Add a
+  // `queue:job` string here to park a single job without touching anything
+  // else; `isJobDormant` then reports it at startup.
 ]);
 
 export function parseJobAllowlist(raw = process.env.WORKERS_ENABLED_JOBS): Set<string> | null {
