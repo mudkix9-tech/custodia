@@ -37,7 +37,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "devDependencies": {
     "@types/archiver": "^7.0.0",
